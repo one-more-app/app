@@ -11,6 +11,10 @@ export type ExerciseStandardType =
   | 'row'
   | 'triceps'
   | 'biceps'
+  | 'pullup'   // Tractions/chinups : charge = corps + lest, ratio = total/BW
+  | 'dips'     // Dips : idem
+  | 'pushup'   // Pompes : petits paliers
+  | 'inverted_row' // Tirage inversé
   | null
 
 export type LeagueLevel =
@@ -49,7 +53,7 @@ export interface LeagueInfo {
 // Standards H/F : ratio 1RM / poids du corps
 // Paliers équidistants, max réduit (surtout pour exos haltère)
 const STANDARDS: Record<
-  ExerciseStandardType,
+  Exclude<ExerciseStandardType, null>,
   Record<'male' | 'female', { ratio: number; label: string }[]>
 > = {
   bench: {
@@ -234,6 +238,112 @@ const STANDARDS: Record<
       { ratio: 0.68, label: 'Légende' },
     ],
   },
+
+  // Poids du corps lesté : ratio = (corps + lest) / corps. Palier à partir de 1.0 (PDC seul)
+  pullup: {
+    male: [
+      { ratio: 1.0, label: 'Fer' },
+      { ratio: 1.08, label: 'Bronze' },
+      { ratio: 1.16, label: 'Argent' },
+      { ratio: 1.24, label: 'Or' },
+      { ratio: 1.32, label: 'Platine' },
+      { ratio: 1.4, label: 'Émeraude' },
+      { ratio: 1.48, label: 'Diamant' },
+      { ratio: 1.56, label: 'Maître' },
+      { ratio: 1.65, label: 'Elite' },
+      { ratio: 1.75, label: 'Légende' },
+    ],
+    female: [
+      { ratio: 1.0, label: 'Fer' },
+      { ratio: 1.05, label: 'Bronze' },
+      { ratio: 1.1, label: 'Argent' },
+      { ratio: 1.15, label: 'Or' },
+      { ratio: 1.2, label: 'Platine' },
+      { ratio: 1.25, label: 'Émeraude' },
+      { ratio: 1.3, label: 'Diamant' },
+      { ratio: 1.35, label: 'Maître' },
+      { ratio: 1.4, label: 'Elite' },
+      { ratio: 1.5, label: 'Légende' },
+    ],
+  },
+  dips: {
+    male: [
+      { ratio: 1.0, label: 'Fer' },
+      { ratio: 1.1, label: 'Bronze' },
+      { ratio: 1.2, label: 'Argent' },
+      { ratio: 1.3, label: 'Or' },
+      { ratio: 1.4, label: 'Platine' },
+      { ratio: 1.5, label: 'Émeraude' },
+      { ratio: 1.6, label: 'Diamant' },
+      { ratio: 1.7, label: 'Maître' },
+      { ratio: 1.8, label: 'Elite' },
+      { ratio: 2.0, label: 'Légende' },
+    ],
+    female: [
+      { ratio: 1.0, label: 'Fer' },
+      { ratio: 1.05, label: 'Bronze' },
+      { ratio: 1.1, label: 'Argent' },
+      { ratio: 1.15, label: 'Or' },
+      { ratio: 1.2, label: 'Platine' },
+      { ratio: 1.25, label: 'Émeraude' },
+      { ratio: 1.3, label: 'Diamant' },
+      { ratio: 1.35, label: 'Maître' },
+      { ratio: 1.4, label: 'Elite' },
+      { ratio: 1.5, label: 'Légende' },
+    ],
+  },
+  pushup: {
+    male: [
+      { ratio: 1.0, label: 'Fer' },
+      { ratio: 1.03, label: 'Bronze' },
+      { ratio: 1.06, label: 'Argent' },
+      { ratio: 1.09, label: 'Or' },
+      { ratio: 1.12, label: 'Platine' },
+      { ratio: 1.15, label: 'Émeraude' },
+      { ratio: 1.18, label: 'Diamant' },
+      { ratio: 1.21, label: 'Maître' },
+      { ratio: 1.24, label: 'Elite' },
+      { ratio: 1.28, label: 'Légende' },
+    ],
+    female: [
+      { ratio: 1.0, label: 'Fer' },
+      { ratio: 1.02, label: 'Bronze' },
+      { ratio: 1.04, label: 'Argent' },
+      { ratio: 1.06, label: 'Or' },
+      { ratio: 1.08, label: 'Platine' },
+      { ratio: 1.1, label: 'Émeraude' },
+      { ratio: 1.12, label: 'Diamant' },
+      { ratio: 1.14, label: 'Maître' },
+      { ratio: 1.16, label: 'Elite' },
+      { ratio: 1.2, label: 'Légende' },
+    ],
+  },
+  inverted_row: {
+    male: [
+      { ratio: 1.0, label: 'Fer' },
+      { ratio: 1.05, label: 'Bronze' },
+      { ratio: 1.1, label: 'Argent' },
+      { ratio: 1.15, label: 'Or' },
+      { ratio: 1.2, label: 'Platine' },
+      { ratio: 1.25, label: 'Émeraude' },
+      { ratio: 1.3, label: 'Diamant' },
+      { ratio: 1.35, label: 'Maître' },
+      { ratio: 1.4, label: 'Elite' },
+      { ratio: 1.5, label: 'Légende' },
+    ],
+    female: [
+      { ratio: 1.0, label: 'Fer' },
+      { ratio: 1.03, label: 'Bronze' },
+      { ratio: 1.06, label: 'Argent' },
+      { ratio: 1.09, label: 'Or' },
+      { ratio: 1.12, label: 'Platine' },
+      { ratio: 1.15, label: 'Émeraude' },
+      { ratio: 1.18, label: 'Diamant' },
+      { ratio: 1.21, label: 'Maître' },
+      { ratio: 1.24, label: 'Elite' },
+      { ratio: 1.3, label: 'Légende' },
+    ],
+  },
 }
 
 const LEAGUE_ORDER: LeagueLevel[] = [
@@ -283,19 +393,43 @@ const EXPLICIT_MAP: Record<string, ExerciseStandardType> = {
   'dumbbell incline press': 'bench',
   'chest press': 'bench',
   'close grip bench press': 'bench',
+  'decline bench press': 'bench',
+  'barbell decline bench press': 'bench',
+  'dumbbell decline bench press': 'bench',
+  'cable bench press': 'bench',
+  'cable incline bench press': 'bench',
+  'cable decline press': 'bench',
+  'cable seated chest press': 'bench',
 
-  // Squat (exclut bodyweight, bulgarian, hack, leg press)
+  // Squat (exclut bodyweight uniquement)
   'squat': 'squat',
   'barbell squat': 'squat',
   'front squat': 'squat',
   'barbell front squat': 'squat',
   'goblet squat': 'squat',
+  'barbell hack squat': 'squat',
+  'hack squat': 'squat',
+  'lever hack squat': 'squat',
+  'bulgarian split squat': 'squat',
+  'dumbbell bulgarian split squat': 'squat',
+  'leg press': 'squat',
+  'lever leg press': 'squat',
+  '45° leg press': 'squat',
+  'barbell zercher squat': 'squat',
+  'zercher squat': 'squat',
+  'barbell full zercher squat': 'squat',
+  'barbell jefferson squat': 'squat',
+  'jefferson squat': 'squat',
 
   // Deadlift
   'deadlift': 'deadlift',
   'barbell deadlift': 'deadlift',
   'romanian deadlift': 'deadlift',
   'sumo deadlift': 'deadlift',
+  'barbell rack pull': 'deadlift',
+  'rack pull': 'deadlift',
+  'barbell straight leg deadlift': 'deadlift',
+  'stiff leg deadlift': 'deadlift',
 
   // Overhead (exclut upright row)
   'military press': 'overhead',
@@ -303,6 +437,10 @@ const EXPLICIT_MAP: Record<string, ExerciseStandardType> = {
   'barbell military press': 'overhead',
   'dumbbell shoulder press': 'overhead',
   'arnold press': 'overhead',
+  'barbell seated overhead press': 'overhead',
+  'barbell standing close grip military press': 'overhead',
+  'barbell standing wide military press': 'overhead',
+  'cable shoulder press': 'overhead',
 
   // Row / tirage dos (exclut upright row, chin-up, pull-up, face pull, inverted row)
   'bent over row': 'row',
@@ -321,12 +459,30 @@ const EXPLICIT_MAP: Record<string, ExerciseStandardType> = {
   'cable pulldown': 'row',
   'close grip lat pulldown': 'row',
   'straight arm pulldown': 'row',
+  'cable straight arm pulldown': 'row',
+  'cable straight arm pulldown (with rope)': 'row',
+  'cable bar lateral pulldown': 'row',
+  'cable lateral pulldown (with rope attachment)': 'row',
+  'cable lateral pulldown with v-bar': 'row',
+  'cable underhand pulldown': 'row',
+  'cable rear pulldown': 'row',
+  'cable one arm pulldown': 'row',
+  'cable standing pulldown (with rope)': 'row',
+  'barbell pendlay row': 'row',
+  'barbell incline row': 'row',
+  'dumbbell incline row': 'row',
+  'cable incline bench row': 'row',
 
   // Triceps
   'tricep extension': 'triceps',
   'triceps extension': 'triceps',
   'skull crusher': 'triceps',
   'lying triceps extension': 'triceps',
+  'barbell lying extension': 'triceps',
+  'barbell lying triceps extension': 'triceps',
+  'barbell lying triceps extension skull crusher': 'triceps',
+  'barbell standing overhead triceps extension': 'triceps',
+  'barbell seated overhead triceps extension': 'triceps',
   'overhead tricep extension': 'triceps',
   'dumbbell tricep extension': 'triceps',
   'cable tricep pushdown': 'triceps',
@@ -345,6 +501,47 @@ const EXPLICIT_MAP: Record<string, ExerciseStandardType> = {
   'incline dumbbell curl': 'biceps',
   'ez bar curl': 'biceps',
   'reverse curl': 'biceps',
+  'barbell drag curl': 'biceps',
+  'cable drag curl': 'biceps',
+  'barbell lying preacher curl': 'biceps',
+  'cable preacher curl': 'biceps',
+  'cable close grip curl': 'biceps',
+  'barbell standing concentration curl': 'biceps',
+  'cable concentration curl': 'biceps',
+  'dumbbell concentration curl': 'biceps',
+  'barbell standing wide grip biceps curl': 'biceps',
+  'barbell standing wide-grip curl': 'biceps',
+  'cable hammer curl (with rope)': 'biceps',
+  'dumbbell high curl': 'biceps',
+  'cable reverse curl': 'biceps',
+  'barbell reverse curl': 'biceps',
+  'cable lying bicep curl': 'biceps',
+  'cable seated curl': 'biceps',
+  'cable one arm curl': 'biceps',
+
+  // Poids du corps lesté (weight = lest additionnel)
+  'pull-up': 'pullup',
+  'chin-up': 'pullup',
+  'wide grip pull-up': 'pullup',
+  'close grip chin-up': 'pullup',
+  'assisted pull-up': 'pullup',
+  'assisted standing pull-up': 'pullup',
+  'assisted standing chin-up': 'pullup',
+  'assisted parallel close grip pull-up': 'pullup',
+  'chin-ups (narrow parallel grip)': 'pullup',
+  'bench pull-ups': 'pullup',
+  'chest dip': 'dips',
+  'chest dip on straight bar': 'dips',
+  'bench dip (knees bent)': 'dips',
+  'bench dip on floor': 'dips',
+  'tricep dip': 'dips',
+  'push-up': 'pushup',
+  'wide push-up': 'pushup',
+  'diamond push-up': 'pushup',
+  'decline push-up': 'pushup',
+  'close grip push-up': 'pushup',
+  'inverted row': 'inverted_row',
+  'inverted row bent knees': 'inverted_row',
 }
 
 // Exercices sans suivi ligue (poids du corps, isolation, ratio inadapté)
@@ -352,23 +549,12 @@ const EXPLICIT_EXCLUSIONS = new Set([
   'bodyweight squat',
   'upright row',
   'barbell upright row',
-  'chin-ups (narrow parallel grip)',
-  'pull-up',
-  'chin-up',
-  'wide grip pull-up',
-  'inverted row',
-  'inverted row bent knees',
+  'barbell upright row v. 2',
+  'barbell upright row v. 3',
+  'barbell wide-grip upright row',
+  'cable upright row',
+  'dumbbell one arm upright row',
   'face pull',
-  'push-up',
-  'wide push-up',
-  'diamond push-up',
-  'decline push-up',
-  'dips',
-  'bench dip',
-  'tricep dip',
-  'bulgarian split squat',
-  'hack squat',
-  'leg press',
   'dumbbell pullover',
   'cable crossover',
   'pec deck fly',
@@ -427,14 +613,8 @@ export function getExerciseStandardType(exerciseName: string): ExerciseStandardT
 
   // Fallback par mots-clés (variantes API non listées)
   if (n.includes('bench press') || n.includes('chest press')) return 'bench'
-  if (
-    n.includes('squat') &&
-    !n.includes('bulgarian') &&
-    !n.includes('hack') &&
-    !n.includes('leg press') &&
-    !n.includes('bodyweight')
-  )
-    return 'squat'
+  if (n.includes('squat') && !n.includes('bodyweight')) return 'squat'
+  if (n.includes('leg press')) return 'squat'
   if (
     n.includes('deadlift') ||
     n.includes('romanian') ||
@@ -465,6 +645,10 @@ export function getExerciseStandardType(exerciseName: string): ExerciseStandardT
     (n.includes('seated row') || n.includes('t-bar row'))
   )
     return 'row'
+  if (n.includes('pull-up') || n.includes('chin-up') || n.includes('pullup')) return 'pullup'
+  if (n.includes('dip') && !n.includes('bench hip')) return 'dips'
+  if (n.includes('push-up') || n.includes('push up') || n.includes('pushup')) return 'pushup'
+  if (n.includes('inverted row')) return 'inverted_row'
 
   return null
 }
@@ -483,10 +667,17 @@ export function getAllTiers(
 ): TierInfo[] | null {
   const type = getExerciseStandardType(exerciseName)
   if (!type || bodyWeightKg <= 0) return null
-  const rawStandards = STANDARDS[type][gender]
-  const standards = isDumbbellExercise(exerciseName)
-    ? rawStandards.map((s) => ({ ...s, ratio: s.ratio * DUMBBELL_RATIO_FACTOR }))
-    : rawStandards
+  let rawStandards = STANDARDS[type][gender]
+  if (!isBodyweightAdditiveType(type)) {
+    if (isDumbbellExercise(exerciseName)) {
+      rawStandards = rawStandards.map((s) => ({ ...s, ratio: s.ratio * DUMBBELL_RATIO_FACTOR }))
+    }
+    const variantFactor = getVariantRatioFactor(exerciseName)
+    if (variantFactor !== 1) {
+      rawStandards = rawStandards.map((s) => ({ ...s, ratio: s.ratio * variantFactor }))
+    }
+  }
+  const standards = rawStandards
   return standards.map((s, i) => ({
     level: LEAGUE_ORDER[i] as LeagueLevel,
     label: s.label,
@@ -501,9 +692,42 @@ export function getAllTiers(
 /** Facteur de correction pour exercices haltères : standards plus accessibles */
 const DUMBBELL_RATIO_FACTOR = 0.6
 
+/**
+ * Facteurs de ratio par variante d'exercice (appliqués en plus du facteur haltère si applicable).
+ * Référence : ANALYSE_MAPPING_LIGUES.md, ExRx.net.
+ */
+function getVariantRatioFactor(exerciseName: string): number {
+  const n = exerciseName.toLowerCase()
+  // Ordre important : vérifications les plus spécifiques en premier
+  if (n.includes('leg press')) return 1.35 // Machine, charge plus élevée
+  if (n.includes('bulgarian split squat')) return 0.5 // Unilatéral
+  if (n.includes('hack squat')) return 0.95 // Proche squat, angle différent
+  if (n.includes('goblet squat')) return 0.7 // Charge limitée
+  if (n.includes('zercher squat')) return 0.9 // Position différente
+  if (n.includes('jefferson squat')) return 0.85 // Position différente
+  if (n.includes('rack pull')) return 0.9 // ROM partiel
+  if (n.includes('straight arm pulldown')) return 0.6 // Isolation dos
+  if (n.includes('rear delt row')) return 0.6 // Isolation trapèzes/dos
+  if (n.includes('incline') && (n.includes('bench') || n.includes('press'))) return 0.88 // ~10-15% moins
+  if (n.includes('decline') && (n.includes('bench') || n.includes('press'))) return 1.05 // Légèrement plus
+  return 1
+}
+
 function isDumbbellExercise(exerciseName: string): boolean {
   const n = exerciseName.toLowerCase()
   return n.includes('dumbbell') || n.includes('haltère') || n.includes('haltères')
+}
+
+/** Exos poids du corps : weight = lest additionnel, 1RM = corps + lest */
+const BODYWEIGHT_TYPES = new Set<ExerciseStandardType>(['pullup', 'dips', 'pushup', 'inverted_row'])
+
+function isBodyweightAdditiveType(type: ExerciseStandardType): boolean {
+  return type !== null && BODYWEIGHT_TYPES.has(type)
+}
+
+/** Vrai si l'exercice utilise le poids du corps + lest (tractions, dips, pompes, tirage inversé) */
+export function isBodyweightAdditiveExercise(exerciseName: string): boolean {
+  return isBodyweightAdditiveType(getExerciseStandardType(exerciseName))
 }
 
 export interface LeagueInput {
@@ -521,11 +745,23 @@ export function getLeagueInfo(input: LeagueInput): LeagueInfo | null {
   const type = getExerciseStandardType(input.exerciseName)
   if (!type) return null
 
-  const rawStandards = STANDARDS[type][input.gender]
-  const standards = isDumbbellExercise(input.exerciseName)
-    ? rawStandards.map((s) => ({ ...s, ratio: s.ratio * DUMBBELL_RATIO_FACTOR }))
-    : rawStandards
-  const oneRM = estimate1RM(input.weight, input.reps)
+  let rawStandards = STANDARDS[type][input.gender]
+  if (!isBodyweightAdditiveType(type)) {
+    if (isDumbbellExercise(input.exerciseName)) {
+      rawStandards = rawStandards.map((s) => ({ ...s, ratio: s.ratio * DUMBBELL_RATIO_FACTOR }))
+    }
+    const variantFactor = getVariantRatioFactor(input.exerciseName)
+    if (variantFactor !== 1) {
+      rawStandards = rawStandards.map((s) => ({ ...s, ratio: s.ratio * variantFactor }))
+    }
+  }
+  const standards = rawStandards
+
+  // Exos poids du corps : weight = lest, charge totale = corps + lest
+  const totalLoad = isBodyweightAdditiveType(type)
+    ? input.bodyWeightKg + input.weight
+    : input.weight
+  const oneRM = estimate1RM(totalLoad, input.reps)
   const ratio = input.bodyWeightKg > 0 ? oneRM / input.bodyWeightKg : 0
 
   let levelIndex = 0

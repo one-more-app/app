@@ -91,6 +91,8 @@ export const UI = {
   record: "Record",
   reps: "Reps",
   weight: "Poids",
+  addedWeight: "Lest additionnel (kg)",
+  totalLoadHint: "Charge totale (corps + lest)",
   bodyWeightOnly: "Poids du corps",
   bodyWeightAbbr: "PDC",
   save: "Enregistrer",

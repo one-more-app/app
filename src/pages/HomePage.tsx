@@ -18,7 +18,7 @@ import {
 import type { ExerciseWithPerf } from '@/hooks/use-home-data'
 import { useHomeData } from '@/hooks/use-home-data'
 import { getLastPerformance, getUserProfile, savePerformance } from '@/lib/storage'
-import { getLeagueInfo } from '@/lib/strength-standards'
+import { getLeagueInfo, isBodyweightAdditiveExercise } from '@/lib/strength-standards'
 import { UI, translateBodyPart } from '@/lib/translations'
 import { Dumbbell, Plus, Settings } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
@@ -195,7 +195,15 @@ function HomePage() {
                                                         min={0}
                                                         max={500}
                                                         step={0.5}
-                                                        label={UI.weight}
+                                                        label={
+                                                            drawerState &&
+                                                            isBodyweightAdditiveExercise(
+                                                                drawerState.exercise.originalName ??
+                                                                    drawerState.exercise.name
+                                                            )
+                                                                ? UI.addedWeight
+                                                                : UI.weight
+                                                        }
                                                         unit="kg"
                                                     />
                                                     <HorizontalWheelPicker

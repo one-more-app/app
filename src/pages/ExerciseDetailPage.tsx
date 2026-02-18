@@ -19,7 +19,7 @@ import {
     removeTrackedExercise,
     updateTrackedExercise,
 } from '@/lib/storage'
-import { getAllTiers, getLeagueInfo } from '@/lib/strength-standards'
+import { getAllTiers, getLeagueInfo, isBodyweightAdditiveExercise } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
 import { ArrowLeft, ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -108,6 +108,14 @@ export function ExerciseDetailPage() {
                         </CardHeader>
                         <CardContent className="flex flex-col pb-1">
                             <LeagueBadge league={leagueInfo} showNextTarget />
+                            {exercise &&
+                                isBodyweightAdditiveExercise(
+                                    exercise.originalName ?? exercise.name
+                                ) && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        {UI.totalLoadHint}
+                                    </p>
+                                )}
                             {allTiers && allTiers.length > 0 && (
                                 <div className="mt-4 pt-4 border-t border-border">
                                     <Button
