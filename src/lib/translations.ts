@@ -54,6 +54,8 @@ export const EQUIPMENT: Record<string, string> = {
   "exercise ball": "Ballon d'exercice",
   assisted: "Assisté",
   leverage: "Levier",
+  "smith machine": "Machine smith",
+  "leverage machine": "Machine à levier",
 };
 
 export function translateBodyPart(en: string): string {
@@ -82,6 +84,7 @@ export const UI = {
   name: "Nom",
   category: "Catégorie",
   filterByBodyPart: "Filtrer par partie du corps",
+  filterByEquipment: "Filtrer par matériel",
   add: "Ajouter",
   added: "Ajouté",
   last: "Dernier",

@@ -4,6 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "fetch:popular-exercises": "node scripts/fetch-popular-exercises.js",
+    "fetch:popular-exercises:filter": "node scripts/fetch-popular-exercises.js --filter-only",
+    "fetch:popular-exercises:filter-broken-images": "node scripts/fetch-popular-exercises.js --filter-broken-images",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",

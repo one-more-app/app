@@ -1,11 +1,7 @@
 import type { ExerciseDBExercise } from '@/types'
 import { getFromCache, setInCache } from '@/lib/api-cache'
-import { EXERCISE_NAMES } from '@/lib/exercise-translations'
 
 const BASE_URL = 'https://www.exercisedb.dev/api/v1'
-
-/** Exercices populaires = ceux qu'on a traduits (les plus courants) */
-const POPULAR_EXERCISE_NAMES = new Set(Object.keys(EXERCISE_NAMES))
 
 interface ApiResponse<T> {
   success: boolean
@@ -180,17 +176,4 @@ export async function fetchEquipmentList(): Promise<string[]> {
 // v1 API provides gifUrl directly in each exercise - no API key needed
 export function getExerciseImageUrl(gifUrl: string | undefined): string {
   return gifUrl ?? ''
-}
-
-/** Trie les exercices : populaires en premier, puis par nom */
-export function sortExercisesByPopularity(
-  exercises: ExerciseDBExercise[]
-): ExerciseDBExercise[] {
-  return [...exercises].sort((a, b) => {
-    const aPopular = POPULAR_EXERCISE_NAMES.has(a.name.trim().toLowerCase())
-    const bPopular = POPULAR_EXERCISE_NAMES.has(b.name.trim().toLowerCase())
-    if (aPopular && !bPopular) return -1
-    if (!aPopular && bPopular) return 1
-    return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })
-  })
 }
