@@ -20,11 +20,11 @@ import {
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
 import {
     CARDIO_EQUIPMENT,
-    fetchBodyPartList,
     fetchEquipmentList,
     fetchExercises,
-    fetchExercisesByBodyPart,
-    fetchExercisesFiltered,
+    fetchExercisesByTarget,
+    fetchExercisesFilteredByTarget,
+    fetchMuscleList,
     getExerciseImageUrl,
     sortExercisesByPopularity,
 } from '@/lib/exercisedb'
@@ -33,7 +33,7 @@ import { UI, translateBodyPart, translateEquipment, translateTarget } from '@/li
 import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
 import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Plus, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 // Aligné avec l'API ExerciseDB v1 /bodyparts
 const CUSTOM_CATEGORIES = [
@@ -48,36 +48,63 @@ const CUSTOM_CATEGORIES = [
     { value: 'waist', label: 'Taille' },
 ]
 
+function getParamsFromUrl(searchParams: URLSearchParams) {
+    return {
+        target: searchParams.get('target') || 'all',
+        eq: searchParams.get('eq') || 'all',
+        q: searchParams.get('q') || '',
+        page: Math.max(0, parseInt(searchParams.get('page') || '0', 10)),
+    }
+}
+
 export function ExerciseListPage() {
     const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams()
     const { exercises: tracked, addExercise } = useTrackedExercises()
     const [apiExercises, setApiExercises] = useState<ExerciseDBExercise[]>([])
-    const [bodyParts, setBodyParts] = useState<string[]>([])
+    const [targets, setTargets] = useState<string[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [filter, setFilter] = useState<string>('all')
-    const [equipmentFilter, setEquipmentFilter] = useState<string>('all')
+    const paramsFromUrl = getParamsFromUrl(searchParams)
+    const [targetFilter, setTargetFilter] = useState<string>(paramsFromUrl.target)
+    const [equipmentFilter, setEquipmentFilter] = useState<string>(paramsFromUrl.eq)
     const [equipmentList, setEquipmentList] = useState<string[]>([])
-    const [searchInput, setSearchInput] = useState('')
-    const [searchQuery, setSearchQuery] = useState('')
-    const [page, setPage] = useState(0)
+    const [searchInput, setSearchInput] = useState(paramsFromUrl.q)
+    const [searchQuery, setSearchQuery] = useState(paramsFromUrl.q)
+    const [page, setPage] = useState(paramsFromUrl.page)
     const [customOpen, setCustomOpen] = useState(false)
     const [customName, setCustomName] = useState('')
     const [customCategory, setCustomCategory] = useState('chest' as string)
+    const [brokenImageIds, setBrokenImageIds] = useState<Set<string>>(new Set())
 
     const trackedIds = new Set(
         tracked.map((e) => (e.isCustom ? e.exerciseId : `api-${e.exerciseId}`))
     )
 
+    // Sync state from URL (back/forward navigation)
+    useEffect(() => {
+        const { target, eq, q, page: p } = getParamsFromUrl(searchParams)
+        setTargetFilter(target)
+        setEquipmentFilter(eq)
+        setSearchInput(q)
+        setSearchQuery(q)
+        setPage(p)
+    }, [searchParams])
+
+    // Reset broken images when exercises list changes (new search/filter)
+    useEffect(() => {
+        setBrokenImageIds(new Set())
+    }, [targetFilter, equipmentFilter, searchQuery])
+
     useEffect(() => {
         let cancelled = false
         async function load() {
-            const [bps, eqs] = await Promise.all([
-                fetchBodyPartList(),
+            const [muscles, eqs] = await Promise.all([
+                fetchMuscleList(),
                 fetchEquipmentList(),
             ])
             if (!cancelled) {
-                setBodyParts(bps.filter((bp) => bp !== 'cardio'))
+                setTargets(muscles)
                 setEquipmentList(
                     [...eqs]
                         .filter((eq) => !CARDIO_EQUIPMENT.has(eq))
@@ -94,6 +121,18 @@ export function ExerciseListPage() {
         return () => clearTimeout(t)
     }, [searchInput])
 
+    // Update URL when search query changes (replace to avoid history spam while typing)
+    useEffect(() => {
+        const next = new URLSearchParams(searchParams)
+        const currentQ = next.get('q') || ''
+        if (currentQ !== searchQuery) {
+            if (searchQuery) next.set('q', searchQuery)
+            else next.delete('q')
+            next.delete('page')
+            setSearchParams(next, { replace: true })
+        }
+    }, [searchQuery, searchParams, setSearchParams])
+
     useEffect(() => {
         let cancelled = false
         setLoading(true)
@@ -106,14 +145,14 @@ export function ExerciseListPage() {
                     ? translateSearchQueryToEnglish(searchQuery.trim())
                     : ''
                 const equip = equipmentFilter !== 'all' ? equipmentFilter : ''
-                if (apiQuery && filter !== 'all') {
-                    exercises = await fetchExercisesFiltered(filter, apiQuery, 25, offset, equip)
+                if (apiQuery && targetFilter !== 'all') {
+                    exercises = await fetchExercisesFilteredByTarget(targetFilter, apiQuery, 25, offset, equip)
                 } else if (apiQuery) {
                     exercises = await fetchExercises(25, offset, apiQuery, equip)
-                } else if (filter === 'all') {
+                } else if (targetFilter === 'all') {
                     exercises = await fetchExercises(25, offset, '', equip)
                 } else {
-                    exercises = await fetchExercisesByBodyPart(filter, 25, offset, equip)
+                    exercises = await fetchExercisesByTarget(targetFilter, 25, offset, equip)
                 }
                 if (!cancelled) setApiExercises(exercises)
             } catch (e) {
@@ -124,29 +163,68 @@ export function ExerciseListPage() {
         }
         load()
         return () => { cancelled = true }
-    }, [filter, equipmentFilter, page, searchQuery])
+    }, [targetFilter, equipmentFilter, page, searchQuery])
 
     const filteredExercises = sortExercisesByPopularity(
-        apiExercises.filter(
-            (ex) =>
-                ex.bodyPart !== 'cardio' &&
-                !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
-        )
+        apiExercises
+            .filter(
+                (ex) =>
+                    ex.bodyPart !== 'cardio' &&
+                    !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
+            )
+            .filter(
+                (ex) =>
+                    ex.gifUrl?.trim() &&
+                    !brokenImageIds.has(ex.id)
+            )
     )
 
-    const handleFilterChange = (value: string) => {
-        setFilter(value)
+    const handleImageError = (exId: string) => {
+        setBrokenImageIds((prev) => new Set(prev).add(exId))
+    }
+
+    const updateUrl = (updates: { target?: string; eq?: string; q?: string; page?: number }, replace = false) => {
+        const next = new URLSearchParams(searchParams)
+        if (updates.target !== undefined) {
+            if (updates.target === 'all') next.delete('target')
+            else next.set('target', updates.target)
+        }
+        if (updates.eq !== undefined) {
+            if (updates.eq === 'all') next.delete('eq')
+            else next.set('eq', updates.eq)
+        }
+        if (updates.q !== undefined) {
+            if (updates.q) next.set('q', updates.q)
+            else next.delete('q')
+        }
+        if (updates.page !== undefined) {
+            if (updates.page === 0) next.delete('page')
+            else next.set('page', String(updates.page))
+        }
+        setSearchParams(next, { replace })
+    }
+
+    const handleTargetFilterChange = (value: string) => {
+        setTargetFilter(value)
         setPage(0)
+        updateUrl({ target: value, page: 0 })
     }
 
     const handleEquipmentFilterChange = (value: string) => {
         setEquipmentFilter(value)
         setPage(0)
+        updateUrl({ eq: value, page: 0 })
     }
 
     const handleSearchChange = (value: string) => {
         setSearchInput(value)
         setPage(0)
+    }
+
+    const handlePageChange = (delta: number) => {
+        const newPage = Math.max(0, page + delta)
+        setPage(newPage)
+        updateUrl({ page: newPage })
     }
 
     const handleAddFromApi = (ex: ExerciseDBExercise) => {
@@ -204,16 +282,16 @@ export function ExerciseListPage() {
                 </div>
                 <div className="flex flex-col gap-3 mb-4">
                     <div className="flex flex-row items-center justify-between gap-3 flex-wrap">
-                        {bodyParts.length > 0 && (
-                            <Select value={filter} onValueChange={handleFilterChange}>
+                        {targets.length > 0 && (
+                            <Select value={targetFilter} onValueChange={handleTargetFilterChange}>
                                 <SelectTrigger className="flex-1 min-w-[140px]">
-                                    <SelectValue placeholder={UI.filterByBodyPart} />
+                                    <SelectValue placeholder={UI.filterByTarget} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">{UI.all}</SelectItem>
-                                    {bodyParts.map((bp) => (
-                                        <SelectItem key={bp} value={bp}>
-                                            {translateBodyPart(bp)}
+                                    {targets.map((t) => (
+                                        <SelectItem key={t} value={t}>
+                                            {translateTarget(t)}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -311,9 +389,7 @@ export function ExerciseListPage() {
                                                 src={getExerciseImageUrl(ex.gifUrl)}
                                                 alt=""
                                                 className="size-12 rounded-lg object-cover bg-muted"
-                                                onError={(e) => {
-                                                    (e.target as HTMLImageElement).style.display = 'none'
-                                                }}
+                                                onError={() => handleImageError(ex.id)}
                                             />
                                             <div className="min-w-0 flex-1">
                                                 <p className="font-medium truncate capitalize">{ex.name}</p>
@@ -356,7 +432,7 @@ export function ExerciseListPage() {
                             variant="outline"
                             size="icon"
                             disabled={page === 0}
-                            onClick={() => setPage((p) => Math.max(0, p - 1))}
+                            onClick={() => handlePageChange(-1)}
                         >
                             <ChevronLeft className="size-4" />
                         </Button>
@@ -364,7 +440,7 @@ export function ExerciseListPage() {
                         <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => setPage((p) => p + 1)}
+                            onClick={() => handlePageChange(1)}
                         >
                             <ChevronRight className="size-4" />
                         </Button>

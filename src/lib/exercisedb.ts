@@ -143,6 +143,64 @@ export async function fetchExercisesFiltered(
   return exercises
 }
 
+/** Filtre par muscle cible (ex: biceps, triceps, quadriceps) via l'endpoint /exercises/filter */
+export async function fetchExercisesByTarget(
+  target: string,
+  limit = 25,
+  offset = 0,
+  equipment = ''
+): Promise<ExerciseDBExercise[]> {
+  const params: Record<string, string | number> = {
+    limit,
+    offset,
+    muscles: target,
+  }
+  if (equipment) params.equipment = equipment
+
+  const cacheKey = `/exercises/filter`
+  const cached = getFromCache<ExerciseDBExercise[]>(cacheKey, params)
+  if (cached) return cached
+
+  const res = await fetchApi<ApiResponse<unknown[]>>('/exercises/filter', params)
+  const list = Array.isArray(res.data) ? res.data : []
+  const exercises = list.map((item) =>
+    mapExercise(item as Parameters<typeof mapExercise>[0])
+  )
+
+  setInCache(cacheKey, exercises, params)
+  return exercises
+}
+
+/** Filtre par muscle cible + recherche via l'endpoint /exercises/filter */
+export async function fetchExercisesFilteredByTarget(
+  target: string,
+  search: string,
+  limit = 25,
+  offset = 0,
+  equipment = ''
+): Promise<ExerciseDBExercise[]> {
+  const params: Record<string, string | number> = {
+    limit,
+    offset,
+    muscles: target,
+    search: search.trim(),
+  }
+  if (equipment) params.equipment = equipment
+
+  const cacheKey = `/exercises/filter`
+  const cached = getFromCache<ExerciseDBExercise[]>(cacheKey, params)
+  if (cached) return cached
+
+  const res = await fetchApi<ApiResponse<unknown[]>>('/exercises/filter', params)
+  const list = Array.isArray(res.data) ? res.data : []
+  const exercises = list.map((item) =>
+    mapExercise(item as Parameters<typeof mapExercise>[0])
+  )
+
+  setInCache(cacheKey, exercises, params)
+  return exercises
+}
+
 export async function fetchExercisesByBodyPart(
   bodyPart: string,
   limit = 25,
@@ -180,6 +238,22 @@ export async function fetchBodyPartList(): Promise<string[]> {
   const res = await fetchApi<ApiResponse<{ name: string }[]>>('/bodyparts')
   const list = Array.isArray(res.data)
     ? res.data.map((item) => item.name)
+    : []
+  setInCache(cacheKey, list)
+  return list
+}
+
+export async function fetchMuscleList(): Promise<string[]> {
+  const cacheKey = '/muscles'
+  const cached = getFromCache<string[]>(cacheKey)
+  if (cached) return cached
+
+  const res = await fetchApi<ApiResponse<{ name: string }[]>>('/muscles')
+  const list = Array.isArray(res.data)
+    ? res.data
+        .map((item) => item.name)
+        .filter((m) => m !== 'cardio')
+        .sort((a, b) => a.localeCompare(b))
     : []
   setInCache(cacheKey, list)
   return list
