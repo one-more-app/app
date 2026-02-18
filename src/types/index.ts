@@ -14,6 +14,8 @@ export interface TrackedExercise {
   id: string
   exerciseId: string // API id or 'custom-xxx'
   name: string
+  /** Nom d'origine (API) conservé pour les calculs de ligue après renommage */
+  originalName?: string
   bodyPart?: string
   target?: string
   equipment?: string

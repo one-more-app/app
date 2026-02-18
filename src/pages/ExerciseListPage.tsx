@@ -129,6 +129,7 @@ export function ExerciseListPage() {
         addExercise({
             exerciseId: ex.id,
             name: ex.name,
+            originalName: ex.name,
             bodyPart: ex.bodyPart,
             target: ex.target,
             equipment: ex.equipment,
@@ -143,6 +144,7 @@ export function ExerciseListPage() {
         addExercise({
             exerciseId: id,
             name: customName.trim(),
+            originalName: customName.trim(),
             bodyPart: customCategory,
             isCustom: true,
         })

@@ -7,7 +7,17 @@ const USER_PROFILE_KEY = 'one-more-user-profile'
 export function getTrackedExercises(): TrackedExercise[] {
   try {
     const raw = localStorage.getItem(TRACKED_KEY)
-    return raw ? JSON.parse(raw) : []
+    const list: TrackedExercise[] = raw ? JSON.parse(raw) : []
+    const needsMigration = list.some((e) => e.originalName === undefined)
+    if (needsMigration) {
+      const migrated = list.map((e) => ({
+        ...e,
+        originalName: e.originalName ?? e.name,
+      }))
+      setTrackedExercises(migrated)
+      return migrated
+    }
+    return list
   } catch {
     return []
   }
@@ -27,6 +37,21 @@ export function addTrackedExercise(exercise: TrackedExercise): void {
 
 export function removeTrackedExercise(id: string): void {
   setTrackedExercises(getTrackedExercises().filter((e) => e.id !== id))
+}
+
+export function updateTrackedExercise(
+  id: string,
+  updates: Partial<Pick<TrackedExercise, 'name'>>
+): void {
+  const list = getTrackedExercises()
+  const idx = list.findIndex((e) => e.id === id)
+  if (idx === -1) return
+  const { name } = updates
+  list[idx] = {
+    ...list[idx],
+    ...(name !== undefined && { name }),
+  }
+  setTrackedExercises([...list])
 }
 
 export function getTrackedExerciseById(id: string): TrackedExercise | undefined {

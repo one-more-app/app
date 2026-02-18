@@ -121,7 +121,7 @@ function HomePage() {
                                             reps: ex.personalBest.reps,
                                             bodyWeightKg: profile.weightKg,
                                             gender: profile.gender,
-                                            exerciseName: ex.name,
+                                            exerciseName: ex.originalName ?? ex.name,
                                         })
                                         : null
                                 return (

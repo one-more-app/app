@@ -48,6 +48,7 @@ export function ExerciseCatalogDetailPage() {
         addExercise({
             exerciseId: exercise.id,
             name: exercise.name,
+            originalName: exercise.name,
             bodyPart: exercise.bodyPart,
             target: exercise.target,
             equipment: exercise.equipment,

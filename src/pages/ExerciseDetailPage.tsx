@@ -5,32 +5,53 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { usePerformance } from '@/hooks/use-performance'
-import { getTrackedExerciseById, getUserProfile, removeTrackedExercise } from '@/lib/storage'
+import {
+  getTrackedExerciseById,
+  getUserProfile,
+  removeTrackedExercise,
+  updateTrackedExercise,
+} from '@/lib/storage'
 import { getAllTiers, getLeagueInfo } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
-import { ArrowLeft, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { ArrowLeft, ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 export function ExerciseDetailPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
-    const exercise = id ? getTrackedExerciseById(id) : null
+    const [exercise, setExercise] = useState(() =>
+        id ? getTrackedExerciseById(id) : null
+    )
+    const [renameOpen, setRenameOpen] = useState(false)
+    const [renameValue, setRenameValue] = useState('')
+
+    useEffect(() => {
+        setExercise(id ? getTrackedExerciseById(id) : null)
+    }, [id])
     const { entries, lastPerf, personalBest } = usePerformance(id ?? null)
     const profile = getUserProfile()
     const leagueInfo =
-        !exercise?.isCustom && personalBest
+        exercise && !exercise.isCustom && personalBest
             ? getLeagueInfo({
                 weight: personalBest.weight,
                 reps: personalBest.reps,
                 bodyWeightKg: profile.weightKg,
                 gender: profile.gender,
-                exerciseName: exercise.name,
+                exerciseName: exercise.originalName ?? exercise.name,
             })
             : null
     const allTiers =
         leagueInfo && exercise && !exercise.isCustom
-            ? getAllTiers(profile.weightKg, profile.gender, exercise.name)
+            ? getAllTiers(profile.weightKg, profile.gender, exercise.originalName ?? exercise.name)
             : null
     const [showAllTiers, setShowAllTiers] = useState(false)
 
@@ -48,13 +69,26 @@ export function ExerciseDetailPage() {
     return (
         <div className="min-h-screen bg-background">
             <header className="sticky top-0 z-10 border-b border-white/10 bg-black px-4 py-4">
-                <div className="mx-auto flex max-w-2xl items-center gap-4">
+                <div className="mx-auto flex max-w-2xl items-center gap-2">
                     <Button variant="ghost" size="icon" asChild>
                         <Link to="/">
                             <ArrowLeft className="size-5" />
                         </Link>
                     </Button>
-                    <h1 className="truncate text-lg font-semibold capitalize">{exercise.name}</h1>
+                    <h1 className="flex-1 truncate text-lg font-semibold capitalize">
+                        {exercise.name}
+                    </h1>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                            setRenameValue(exercise.name)
+                            setRenameOpen(true)
+                        }}
+                        aria-label={UI.rename}
+                    >
+                        <Pencil className="size-4" />
+                    </Button>
                 </div>
             </header>
 
@@ -91,7 +125,7 @@ export function ExerciseDetailPage() {
                                     </Button>
                                     {showAllTiers && (
                                         <ul className="mt-2 space-y-1.5">
-                                            {allTiers.map((tier, i) => (
+                                            {allTiers.map((tier) => (
                                                 <li
                                                     key={tier.level}
                                                     className="flex items-center justify-between gap-2 text-sm"
@@ -147,6 +181,67 @@ export function ExerciseDetailPage() {
                         </Button>
                     </CardHeader>
                 </Card>
+
+                <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>{UI.renameExercise}</DialogTitle>
+                        </DialogHeader>
+                        <Input
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            placeholder={UI.placeholderExerciseName}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    if (id && renameValue.trim()) {
+                                        updateTrackedExercise(id, {
+                                            name: renameValue.trim(),
+                                        })
+                                        setExercise((prev) =>
+                                            prev
+                                                ? {
+                                                      ...prev,
+                                                      name: renameValue.trim(),
+                                                  }
+                                                : null
+                                        )
+                                        setRenameOpen(false)
+                                    }
+                                }
+                            }}
+                        />
+                        <DialogFooter className="gap-2 sm:gap-0">
+                            <Button
+                                variant="outline"
+                                onClick={() => setRenameOpen(false)}
+                            >
+                                {UI.cancel}
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    if (id && renameValue.trim()) {
+                                        updateTrackedExercise(id, {
+                                            name: renameValue.trim(),
+                                        })
+                                        setExercise((prev) =>
+                                            prev
+                                                ? {
+                                                      ...prev,
+                                                      name: renameValue.trim(),
+                                                  }
+                                                : null
+                                        )
+                                        setRenameOpen(false)
+                                    }
+                                }}
+                                disabled={!renameValue.trim()}
+                            >
+                                {UI.save}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
 
             </main>
         </div>
