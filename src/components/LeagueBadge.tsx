@@ -48,12 +48,17 @@ interface LeagueBadgeProps {
     showNextTarget?: boolean
     /** Version compacte (badge seul) ou détaillée */
     compact?: boolean
+    /** Suffixe pour les poids (ex: " kg" ou " kg (par haltère)") */
+    weightSuffix?: string
 }
+
+const DEFAULT_WEIGHT_SUFFIX = ' kg'
 
 export function LeagueBadge({
     league,
     showNextTarget = false,
     compact = false,
+    weightSuffix = DEFAULT_WEIGHT_SUFFIX,
 }: LeagueBadgeProps) {
     const colorClass = LEAGUE_COLORS[league.level] ?? 'bg-muted text-muted-foreground'
     const oneRMStyle = LEAGUE_1RM_STYLES[league.level] ?? 'border border-muted bg-muted/20'
@@ -90,7 +95,7 @@ export function LeagueBadge({
                     <span className="block text-2xl font-bold italic text-primary">
                         {league.oneRM.toFixed(1)}
                     </span>
-                    <span className="text-sm text-muted-foreground">kg</span>
+                    <span className="text-sm text-muted-foreground">{weightSuffix}</span>
                 </div>
             </div>
 
@@ -110,7 +115,7 @@ export function LeagueBadge({
                     )}
                     <div className="flex justify-between items-center gap-2 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1.5">
-                            {league.weightTierStart.toFixed(1)} kg
+                            {league.weightTierStart.toFixed(1)}{weightSuffix}
                             <Badge variant="outline" className={`shrink-0 text-[10px] py-0 ${colorClass}`}>
                                 {league.label}
                             </Badge>
@@ -118,7 +123,7 @@ export function LeagueBadge({
                         <span className="flex items-center gap-1.5">
                             {league.weightTierEnd != null ? (
                                 <>
-                                    {league.weightTierEnd.toFixed(1)} kg
+                                    {league.weightTierEnd.toFixed(1)}{weightSuffix}
                                     {NEXT_TIER[league.level] && (
                                         <Badge
                                             variant="outline"

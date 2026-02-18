@@ -19,7 +19,7 @@ import {
     removeTrackedExercise,
     updateTrackedExercise,
 } from '@/lib/storage'
-import { getAllTiers, getLeagueInfo, isBodyweightAdditiveExercise } from '@/lib/strength-standards'
+import { getAllTiers, getLeagueInfo, isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
 import { ArrowLeft, ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -47,11 +47,21 @@ export function ExerciseDetailPage() {
                 bodyWeightKg: profile.weightKg,
                 gender: profile.gender,
                 exerciseName: exercise.originalName ?? exercise.name,
+                exerciseMetadata: exercise.equipment && exercise.target
+                    ? { equipment: exercise.equipment, target: exercise.target, bodyPart: exercise.bodyPart }
+                    : undefined,
             })
             : null
     const allTiers =
         leagueInfo && exercise && !exercise.isCustom
-            ? getAllTiers(profile.weightKg, profile.gender, exercise.originalName ?? exercise.name)
+            ? getAllTiers(
+                profile.weightKg,
+                profile.gender,
+                exercise.originalName ?? exercise.name,
+                exercise.equipment && exercise.target
+                    ? { equipment: exercise.equipment, target: exercise.target, bodyPart: exercise.bodyPart }
+                    : undefined
+            )
             : null
     const [showAllTiers, setShowAllTiers] = useState(false)
 
@@ -107,13 +117,41 @@ export function ExerciseDetailPage() {
                             <h2 className="font-semibold m-0 p-0">{UI.league}</h2>
                         </CardHeader>
                         <CardContent className="flex flex-col pb-1">
-                            <LeagueBadge league={leagueInfo} showNextTarget />
+                            <LeagueBadge
+                                league={leagueInfo}
+                                showNextTarget
+                                weightSuffix={
+                                    exercise &&
+                                    isDumbbellExercise(
+                                        exercise.originalName ?? exercise.name,
+                                        exercise.equipment && exercise.target
+                                            ? { equipment: exercise.equipment, target: exercise.target }
+                                            : undefined
+                                    )
+                                        ? ' kg (par haltère)'
+                                        : ' kg'
+                                }
+                            />
                             {exercise &&
                                 isBodyweightAdditiveExercise(
-                                    exercise.originalName ?? exercise.name
+                                    exercise.originalName ?? exercise.name,
+                                    exercise.equipment && exercise.target
+                                        ? { equipment: exercise.equipment, target: exercise.target }
+                                        : undefined
                                 ) && (
                                     <p className="text-xs text-muted-foreground mt-1">
                                         {UI.totalLoadHint}
+                                    </p>
+                                )}
+                            {exercise &&
+                                isDumbbellExercise(
+                                    exercise.originalName ?? exercise.name,
+                                    exercise.equipment && exercise.target
+                                        ? { equipment: exercise.equipment, target: exercise.target }
+                                        : undefined
+                                ) && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        {UI.dumbbellWeightHint}
                                     </p>
                                 )}
                             {allTiers && allTiers.length > 0 && (
@@ -133,26 +171,41 @@ export function ExerciseDetailPage() {
                                     </Button>
                                     {showAllTiers && (
                                         <ul className="mt-2 space-y-1.5">
-                                            {allTiers.map((tier) => (
-                                                <li
-                                                    key={tier.level}
-                                                    className="flex items-center justify-between gap-2 text-sm"
-                                                >
-                                                    <Badge
-                                                        variant="outline"
-                                                        className={
-                                                            LEAGUE_COLORS[tier.level] ?? 'bg-muted'
-                                                        }
+                                            {allTiers.map((tier) => {
+                                                const weightSuffix =
+                                                    exercise &&
+                                                    isDumbbellExercise(
+                                                        exercise.originalName ?? exercise.name,
+                                                        exercise.equipment && exercise.target
+                                                            ? {
+                                                                  equipment: exercise.equipment,
+                                                                  target: exercise.target,
+                                                              }
+                                                            : undefined
+                                                    )
+                                                        ? ' kg (par haltère)'
+                                                        : ' kg'
+                                                return (
+                                                    <li
+                                                        key={tier.level}
+                                                        className="flex items-center justify-between gap-2 text-sm"
                                                     >
-                                                        {tier.label}
-                                                    </Badge>
-                                                    <span className="text-muted-foreground">
-                                                        {tier.weightMax != null
-                                                            ? `${tier.weightMin.toFixed(1)} → ${tier.weightMax.toFixed(1)} kg`
-                                                            : `≥ ${tier.weightMin.toFixed(1)} kg`}
-                                                    </span>
-                                                </li>
-                                            ))}
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={
+                                                                LEAGUE_COLORS[tier.level] ?? 'bg-muted'
+                                                            }
+                                                        >
+                                                            {tier.label}
+                                                        </Badge>
+                                                        <span className="text-muted-foreground">
+                                                            {tier.weightMax != null
+                                                                ? `${tier.weightMin.toFixed(1)} → ${tier.weightMax.toFixed(1)}${weightSuffix}`
+                                                                : `≥ ${tier.weightMin.toFixed(1)}${weightSuffix}`}
+                                                        </span>
+                                                    </li>
+                                                )
+                                            })}
                                         </ul>
                                     )}
                                 </div>

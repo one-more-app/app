@@ -1,7 +1,21 @@
 import type { ExerciseDBExercise } from '@/types'
 import { getFromCache, setInCache } from '@/lib/api-cache'
+import { EXERCISE_NAMES } from '@/lib/exercise-translations'
 
 const BASE_URL = 'https://www.exercisedb.dev/api/v1'
+
+/** Équipements exclusivement cardio (vélo, elliptique, stepper, corde à sauter, etc.) */
+export const CARDIO_EQUIPMENT = new Set([
+  'stationary bike',
+  'stepmill machine',
+  'elliptical machine',
+  'skierg machine',
+  'upper body ergometer',
+  'rope',
+])
+
+/** Exercices populaires = ceux qu'on a traduits (les plus courants) */
+const POPULAR_EXERCISE_NAMES = new Set(Object.keys(EXERCISE_NAMES))
 
 interface ApiResponse<T> {
   success: boolean
@@ -58,16 +72,20 @@ function mapExercise(raw: {
 export async function fetchExercises(
   limit = 25,
   offset = 0,
-  search = ''
+  search = '',
+  equipment = ''
 ): Promise<ExerciseDBExercise[]> {
   const params: Record<string, string | number> = { limit, offset }
   if (search) params.search = search
+  if (equipment) params.equipment = equipment
 
   const cacheKey = `/exercises`
   const cached = getFromCache<ExerciseDBExercise[]>(cacheKey, params)
   if (cached) return cached
 
-  const res = await fetchApi<ApiResponse<unknown[]>>('/exercises', params)
+  const res = equipment
+    ? await fetchApi<ApiResponse<unknown[]>>('/exercises/filter', params)
+    : await fetchApi<ApiResponse<unknown[]>>('/exercises', params)
   const list = Array.isArray(res.data) ? res.data : []
   const exercises = list.map((item) =>
     mapExercise(item as Parameters<typeof mapExercise>[0])
@@ -100,7 +118,8 @@ export async function fetchExercisesFiltered(
   bodyPart: string,
   search: string,
   limit = 25,
-  offset = 0
+  offset = 0,
+  equipment = ''
 ): Promise<ExerciseDBExercise[]> {
   const params: Record<string, string | number> = {
     limit,
@@ -108,6 +127,8 @@ export async function fetchExercisesFiltered(
     bodyParts: bodyPart,
     search: search.trim(),
   }
+  if (equipment) params.equipment = equipment
+
   const cacheKey = `/exercises/filter`
   const cached = getFromCache<ExerciseDBExercise[]>(cacheKey, params)
   if (cached) return cached
@@ -125,8 +146,12 @@ export async function fetchExercisesFiltered(
 export async function fetchExercisesByBodyPart(
   bodyPart: string,
   limit = 25,
-  offset = 0
+  offset = 0,
+  equipment = ''
 ): Promise<ExerciseDBExercise[]> {
+  if (equipment) {
+    return fetchExercisesFiltered(bodyPart, '', limit, offset, equipment)
+  }
   const encoded = encodeURIComponent(bodyPart)
   const params = { limit, offset }
   const cacheKey = `/bodyparts/${encoded}/exercises`
@@ -176,4 +201,17 @@ export async function fetchEquipmentList(): Promise<string[]> {
 // v1 API provides gifUrl directly in each exercise - no API key needed
 export function getExerciseImageUrl(gifUrl: string | undefined): string {
   return gifUrl ?? ''
+}
+
+/** Trie les exercices : populaires en premier, puis par nom */
+export function sortExercisesByPopularity(
+  exercises: ExerciseDBExercise[]
+): ExerciseDBExercise[] {
+  return [...exercises].sort((a, b) => {
+    const aPopular = POPULAR_EXERCISE_NAMES.has(a.name.trim().toLowerCase())
+    const bPopular = POPULAR_EXERCISE_NAMES.has(b.name.trim().toLowerCase())
+    if (aPopular && !bPopular) return -1
+    if (!aPopular && bPopular) return 1
+    return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })
+  })
 }

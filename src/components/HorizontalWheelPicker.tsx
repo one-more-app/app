@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { hapticImpact, hapticSelectionChanged } from '@/lib/haptics'
 import { cn } from '@/lib/utils'
 import { Minus, Plus } from 'lucide-react'
@@ -77,6 +78,45 @@ export function HorizontalWheelPicker({
     }, [options.length])
 
     const [isDragging, setIsDragging] = useState(false)
+    const [inputText, setInputText] = useState<string | null>(null)
+    const inputRef = useRef<HTMLInputElement>(null)
+
+    const parseAndClamp = useCallback(
+        (raw: string): number => {
+            const parsed = parseFloat(raw.replace(',', '.'))
+            if (Number.isNaN(parsed)) return value
+            const clamped = Math.max(min, Math.min(max, parsed))
+            const steps = Math.round((clamped - min) / step)
+            return Number((min + steps * step).toFixed(step < 1 ? 1 : 0))
+        },
+        [min, max, step, value]
+    )
+
+    const commitInput = useCallback(() => {
+        if (inputText === null) return
+        const newValue = parseAndClamp(inputText)
+        setInputText(null)
+        if (newValue !== value) {
+            onChange(newValue)
+            hapticImpact()
+        }
+    }, [inputText, parseAndClamp, value, onChange])
+
+    const handleInputKeyDown = useCallback(
+        (e: React.KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                e.preventDefault()
+                inputRef.current?.blur()
+            }
+        },
+        []
+    )
+
+    const handleInputFocus = useCallback(() => {
+        const str = step < 1 ? value.toFixed(1) : String(Math.round(value))
+        setInputText(str)
+        requestAnimationFrame(() => inputRef.current?.select())
+    }, [value, step])
 
     const syncToValue = useCallback(() => {
         if (!isDragging) scrollToIndex(clampedIndex)
@@ -124,6 +164,14 @@ export function HorizontalWheelPicker({
     }, [clampedIndex, options, onChange, scrollToIndex])
 
     useEffect(() => {
+        if (document.activeElement === inputRef.current) {
+            setInputText(step < 1 ? value.toFixed(1) : String(Math.round(value)))
+        } else {
+            setInputText(null)
+        }
+    }, [value, step])
+
+    useEffect(() => {
         const onMouseUp = () => setIsDragging(false)
         window.addEventListener('mouseup', onMouseUp)
         return () => window.removeEventListener('mouseup', onMouseUp)
@@ -163,7 +211,7 @@ export function HorizontalWheelPicker({
                                     key={opt.value}
                                     className={cn(
                                         'flex shrink-0 items-center justify-center font-semibold tabular-nums',
-                                        opt.value === value ? 'text-foreground text-xl' : 'text-muted-foreground/50 text-base'
+                                        opt.value === value ? 'text-transparent text-xl' : 'text-muted-foreground/50 text-base'
                                     )}
                                     style={{ width: ITEM_WIDTH, height: 56, scrollSnapAlign: 'center' }}
                                 >
@@ -172,6 +220,22 @@ export function HorizontalWheelPicker({
                             ))}
                             <div className="shrink-0" style={{ width: PADDING }} />
                         </div>
+                        <Input
+                            ref={inputRef}
+                            type="text"
+                            inputMode="decimal"
+                            className={cn(
+                                'absolute left-1/2 top-0 z-20 h-14 -translate-x-1/2 px-0 py-0 text-center text-xl font-semibold tabular-nums leading-[3.5rem]',
+                                'border-0 bg-transparent shadow-none focus-visible:border focus-visible:bg-background focus-visible:ring-2'
+                            )}
+                            style={{ width: ITEM_WIDTH }}
+                            value={inputText ?? (step < 1 ? value.toFixed(1) : String(Math.round(value)))}
+                            onChange={(e) => setInputText(e.target.value)}
+                            onBlur={commitInput}
+                            onFocus={handleInputFocus}
+                            onKeyDown={handleInputKeyDown}
+                            aria-label={label}
+                        />
                         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 h-14 w-30 bg-gradient-to-r from-background to-transparent" />
                         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 h-14 w-30 bg-gradient-to-l from-background to-transparent" />
                     </div>

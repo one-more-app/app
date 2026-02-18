@@ -18,7 +18,8 @@ import {
 import type { ExerciseWithPerf } from '@/hooks/use-home-data'
 import { useHomeData } from '@/hooks/use-home-data'
 import { getLastPerformance, getUserProfile, savePerformance } from '@/lib/storage'
-import { getLeagueInfo, isBodyweightAdditiveExercise } from '@/lib/strength-standards'
+import { CARDIO_EQUIPMENT } from '@/lib/exercisedb'
+import { getLeagueInfo, isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import { UI, translateBodyPart } from '@/lib/translations'
 import { Dumbbell, Plus, Settings } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
@@ -35,8 +36,13 @@ function HomePage() {
     const navigate = useNavigate()
 
     const bodyParts = useMemo(() => {
+        const nonCardio = exercises.filter(
+            (ex) =>
+                (ex.bodyPart || ex.target) !== 'cardio' &&
+                !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
+        )
         const parts = new Set(
-            exercises
+            nonCardio
                 .map((ex) => ex.bodyPart || ex.target)
                 .filter((p): p is string => !!p)
         )
@@ -44,8 +50,13 @@ function HomePage() {
     }, [exercises])
 
     const filteredExercises = useMemo(() => {
-        if (bodyPartFilter === 'all') return exercises
-        return exercises.filter(
+        const nonCardio = exercises.filter(
+            (ex) =>
+                (ex.bodyPart || ex.target) !== 'cardio' &&
+                !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
+        )
+        if (bodyPartFilter === 'all') return nonCardio
+        return nonCardio.filter(
             (ex) => (ex.bodyPart || ex.target) === bodyPartFilter
         )
     }, [exercises, bodyPartFilter])
@@ -122,6 +133,10 @@ function HomePage() {
                                             bodyWeightKg: profile.weightKg,
                                             gender: profile.gender,
                                             exerciseName: ex.originalName ?? ex.name,
+                                            exerciseMetadata:
+                                                ex.equipment && ex.target
+                                                    ? { equipment: ex.equipment, target: ex.target, bodyPart: ex.bodyPart }
+                                                    : undefined,
                                         })
                                         : null
                                 return (
@@ -197,12 +212,31 @@ function HomePage() {
                                                         step={0.5}
                                                         label={
                                                             drawerState &&
-                                                            isBodyweightAdditiveExercise(
+                                                            (isBodyweightAdditiveExercise(
                                                                 drawerState.exercise.originalName ??
-                                                                    drawerState.exercise.name
+                                                                    drawerState.exercise.name,
+                                                                drawerState.exercise.equipment &&
+                                                                    drawerState.exercise.target
+                                                                    ? {
+                                                                        equipment: drawerState.exercise.equipment,
+                                                                        target: drawerState.exercise.target,
+                                                                    }
+                                                                    : undefined
                                                             )
                                                                 ? UI.addedWeight
-                                                                : UI.weight
+                                                                : isDumbbellExercise(
+                                                                      drawerState.exercise.originalName ??
+                                                                          drawerState.exercise.name,
+                                                                      drawerState.exercise.equipment &&
+                                                                          drawerState.exercise.target
+                                                                          ? {
+                                                                                equipment: drawerState.exercise.equipment,
+                                                                                target: drawerState.exercise.target,
+                                                                            }
+                                                                          : undefined
+                                                                  )
+                                                                  ? UI.weightPerDumbbell
+                                                                  : UI.weight)
                                                         }
                                                         unit="kg"
                                                     />
