@@ -1,26 +1,26 @@
 import { ExerciseCard } from '@/components/ExerciseCard'
-import { LeagueBadge, LEAGUE_COLORS } from '@/components/LeagueBadge'
+import { LEAGUE_COLORS, LeagueBadge } from '@/components/LeagueBadge'
 import { PerformanceChart } from '@/components/PerformanceChart'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { usePerformance } from '@/hooks/use-performance'
 import {
-  getTrackedExerciseById,
-  getUserProfile,
-  removeTrackedExercise,
-  updateTrackedExercise,
+    getTrackedExerciseById,
+    getUserProfile,
+    removeTrackedExercise,
+    updateTrackedExercise,
 } from '@/lib/storage'
 import { getAllTiers, getLeagueInfo } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { ArrowLeft, ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -109,9 +109,9 @@ export function ExerciseDetailPage() {
                         <CardContent className="flex flex-col pb-1">
                             <LeagueBadge league={leagueInfo} showNextTarget />
                             {allTiers && allTiers.length > 0 && (
-                                <div className="mt-3 pt-3 border-t border-border">
+                                <div className="mt-4 pt-4 border-t border-border">
                                     <Button
-                                        variant="ghost"
+                                        variant="secondary"
                                         size="sm"
                                         className="w-full justify-between text-muted-foreground"
                                         onClick={() => setShowAllTiers((v) => !v)}
@@ -201,9 +201,9 @@ export function ExerciseDetailPage() {
                                         setExercise((prev) =>
                                             prev
                                                 ? {
-                                                      ...prev,
-                                                      name: renameValue.trim(),
-                                                  }
+                                                    ...prev,
+                                                    name: renameValue.trim(),
+                                                }
                                                 : null
                                         )
                                         setRenameOpen(false)
@@ -227,9 +227,9 @@ export function ExerciseDetailPage() {
                                         setExercise((prev) =>
                                             prev
                                                 ? {
-                                                      ...prev,
-                                                      name: renameValue.trim(),
-                                                  }
+                                                    ...prev,
+                                                    name: renameValue.trim(),
+                                                }
                                                 : null
                                         )
                                         setRenameOpen(false)
