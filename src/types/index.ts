@@ -30,3 +30,9 @@ export interface PerformanceEntry {
   reps: number
   createdAt: string // ISO timestamp
 }
+
+export interface UserProfile {
+  weightKg: number
+  heightCm: number
+  gender: 'male' | 'female'
+}

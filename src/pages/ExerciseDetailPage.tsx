@@ -1,13 +1,15 @@
+import { ExerciseCard } from '@/components/ExerciseCard'
+import { LeagueBadge, LEAGUE_COLORS } from '@/components/LeagueBadge'
 import { PerformanceChart } from '@/components/PerformanceChart'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { usePerformance } from '@/hooks/use-performance'
-import { translateExerciseName } from '@/lib/exercise-translations'
-import { getExerciseImageUrl } from '@/lib/exercisedb'
-import { getTrackedExerciseById, removeTrackedExercise } from '@/lib/storage'
-import { UI, translateBodyPart, translateTarget } from '@/lib/translations'
-import { ArrowLeft, Dumbbell, Trash2, Trophy } from 'lucide-react'
+import { getTrackedExerciseById, getUserProfile, removeTrackedExercise } from '@/lib/storage'
+import { getAllTiers, getLeagueInfo } from '@/lib/strength-standards'
+import { UI } from '@/lib/translations'
+import { ArrowLeft, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 export function ExerciseDetailPage() {
@@ -15,6 +17,22 @@ export function ExerciseDetailPage() {
     const navigate = useNavigate()
     const exercise = id ? getTrackedExerciseById(id) : null
     const { entries, lastPerf, personalBest } = usePerformance(id ?? null)
+    const profile = getUserProfile()
+    const leagueInfo =
+        !exercise?.isCustom && personalBest
+            ? getLeagueInfo({
+                weight: personalBest.weight,
+                reps: personalBest.reps,
+                bodyWeightKg: profile.weightKg,
+                gender: profile.gender,
+                exerciseName: exercise.name,
+            })
+            : null
+    const allTiers =
+        leagueInfo && exercise && !exercise.isCustom
+            ? getAllTiers(profile.weightKg, profile.gender, exercise.name)
+            : null
+    const [showAllTiers, setShowAllTiers] = useState(false)
 
     if (!exercise) {
         return (
@@ -36,79 +54,70 @@ export function ExerciseDetailPage() {
                             <ArrowLeft className="size-5" />
                         </Link>
                     </Button>
-                    <h1 className="truncate text-lg font-semibold">{translateExerciseName(exercise.name)}</h1>
+                    <h1 className="truncate text-lg font-semibold capitalize">{exercise.name}</h1>
                 </div>
             </header>
 
             <main className="mx-auto max-w-2xl px-4 py-4 space-y-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center">
-                        {!exercise.isCustom ? (
-                            <img
-                                src={getExerciseImageUrl(exercise.gifUrl)}
-                                alt=""
-                                className="size-12 rounded-lg object-cover bg-muted"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none'
-                                }}
-                            />
-                        ) : (
-                            <div className="flex size-12 items-center justify-center rounded-lg bg-muted">
-                                <Dumbbell className="size-6 text-muted-foreground" />
-                            </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                            <p className="font-medium truncate">{translateExerciseName(exercise.name)}</p>
-                            {(exercise.bodyPart || exercise.target) && (
-                                <p className="text-xs text-muted-foreground">
-                                    {exercise.bodyPart && (
-                                        <Badge variant="secondary" className="mt-1">
-                                            {translateBodyPart(exercise.bodyPart)}
-                                        </Badge>
+                <ExerciseCard
+                    exercise={exercise}
+                    lastPerf={lastPerf ?? undefined}
+                    personalBest={personalBest ?? undefined}
+                    leagueInfo={leagueInfo}
+                    imageSize="sm"
+                />
+
+                {leagueInfo && (
+                    <Card className="gap-0">
+                        <CardHeader className="gap-0">
+                            <h2 className="font-semibold m-0 p-0">{UI.league}</h2>
+                        </CardHeader>
+                        <CardContent className="flex flex-col pb-1">
+                            <LeagueBadge league={leagueInfo} showNextTarget />
+                            {allTiers && allTiers.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-border">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="w-full justify-between text-muted-foreground"
+                                        onClick={() => setShowAllTiers((v) => !v)}
+                                    >
+                                        {UI.allTiers}
+                                        {showAllTiers ? (
+                                            <ChevronUp className="size-4" />
+                                        ) : (
+                                            <ChevronDown className="size-4" />
+                                        )}
+                                    </Button>
+                                    {showAllTiers && (
+                                        <ul className="mt-2 space-y-1.5">
+                                            {allTiers.map((tier, i) => (
+                                                <li
+                                                    key={tier.level}
+                                                    className="flex items-center justify-between gap-2 text-sm"
+                                                >
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={
+                                                            LEAGUE_COLORS[tier.level] ?? 'bg-muted'
+                                                        }
+                                                    >
+                                                        {tier.label}
+                                                    </Badge>
+                                                    <span className="text-muted-foreground">
+                                                        {tier.weightMax != null
+                                                            ? `${tier.weightMin.toFixed(1)} → ${tier.weightMax.toFixed(1)} kg`
+                                                            : `≥ ${tier.weightMin.toFixed(1)} kg`}
+                                                    </span>
+                                                </li>
+                                            ))}
+                                        </ul>
                                     )}
-                                    {exercise.target && (
-                                        <Badge variant="secondary" className="mt-1">
-                                            {translateTarget(exercise.target)}
-                                        </Badge>
-                                    )}
-                                </p>
+                                </div>
                             )}
-                        </div>
-                    </CardHeader>
-                    <CardContent className="border-t pb-0">
-                        <div className="flex gap-4 text-sm">
-                            <div className="flex flex-1 flex-col items-start gap-1 rounded-lg border bg-muted/30 p-3">
-                                <span className="text-muted-foreground">{UI.last}</span>
-                                {lastPerf ? (
-                                    <span className="flex items-center gap-1">
-                                        <span className="text-2xl font-bold italic text-primary">
-                                            {lastPerf.weight}
-                                        </span>{' '}
-                                        kg × {lastPerf.reps} reps
-                                    </span>
-                                ) : (
-                                    <span className="text-muted-foreground">—</span>
-                                )}
-                            </div>
-                            <div className="flex flex-1 flex-col items-start gap-1 rounded-lg border-2 border-accent/30 bg-accent/5 p-3">
-                                <span className="flex items-center gap-1.5 text-primary font-medium">
-                                    <Trophy className="size-4" />
-                                    {UI.record}
-                                </span>
-                                {personalBest ? (
-                                    <span className="flex items-center gap-1">
-                                        <span className="text-2xl font-bold italic text-primary">
-                                            {personalBest.weight}
-                                        </span>{' '}
-                                        kg × {personalBest.reps} reps
-                                    </span>
-                                ) : (
-                                    <span className="text-muted-foreground">—</span>
-                                )}
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {entries.length > 0 && (
                     <Card>

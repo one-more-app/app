@@ -1,7 +1,8 @@
-import type { TrackedExercise, PerformanceEntry } from '@/types'
+import type { TrackedExercise, PerformanceEntry, UserProfile } from '@/types'
 
 const TRACKED_KEY = 'one-more-tracked'
 const PERFORMANCE_KEY = 'one-more-performance'
+const USER_PROFILE_KEY = 'one-more-user-profile'
 
 export function getTrackedExercises(): TrackedExercise[] {
   try {
@@ -95,6 +96,42 @@ export function getPersonalBest(trackedExerciseId: string): PerformanceEntry | u
   const entries = getEntriesByTrackedId(trackedExerciseId)
   if (entries.length === 0) return undefined
   return entries.reduce((best, curr) =>
-    curr.weight > best.weight ? curr : best
+    curr.weight > best.weight ||
+    (curr.weight === best.weight && curr.reps > best.reps)
+      ? curr
+      : best
   )
+}
+
+// --- User Profile (poids, taille pour le système de ligues) ---
+
+const DEFAULT_PROFILE: UserProfile = {
+  weightKg: 75,
+  heightCm: 175,
+  gender: 'male',
+}
+
+export function getUserProfile(): UserProfile {
+  try {
+    const raw = localStorage.getItem(USER_PROFILE_KEY)
+    if (!raw) return DEFAULT_PROFILE
+    const parsed = JSON.parse(raw) as Partial<UserProfile>
+    return {
+      weightKg: parsed.weightKg ?? DEFAULT_PROFILE.weightKg,
+      heightCm: parsed.heightCm ?? DEFAULT_PROFILE.heightCm,
+      gender: parsed.gender === 'female' ? 'female' : 'male',
+    }
+  } catch {
+    return DEFAULT_PROFILE
+  }
+}
+
+export function setUserProfile(profile: Partial<UserProfile>): void {
+  const current = getUserProfile()
+  const updated: UserProfile = {
+    weightKg: profile.weightKg ?? current.weightKg,
+    heightCm: profile.heightCm ?? current.heightCm,
+    gender: profile.gender ?? current.gender,
+  }
+  localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(updated))
 }

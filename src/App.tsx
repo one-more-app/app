@@ -7,6 +7,7 @@ import HomePage from '@/pages/HomePage'
 import { ExerciseCatalogDetailPage } from '@/pages/ExerciseCatalogDetailPage'
 import { ExerciseListPage } from '@/pages/ExerciseListPage'
 import { ExerciseDetailPage } from '@/pages/ExerciseDetailPage'
+import { SettingsPage } from '@/pages/SettingsPage'
 
 function App() {
   useEffect(() => {
@@ -40,6 +41,7 @@ function App() {
         <Route path="/exercises/:id" element={<ExerciseCatalogDetailPage />} />
         <Route path="/exercises" element={<ExerciseListPage />} />
         <Route path="/exercise/:id" element={<ExerciseDetailPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Routes>
     </HashRouter>
   )

@@ -28,7 +28,7 @@ import {
 } from '@/lib/exercisedb'
 import type { ExerciseDBExercise } from '@/types'
 import { UI, translateBodyPart, translateTarget } from '@/lib/translations'
-import { translateExerciseName, translateSearchQueryToEnglish } from '@/lib/exercise-translations'
+import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
 import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Plus, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -272,7 +272,7 @@ export function ExerciseListPage() {
                                                 }}
                                             />
                                             <div className="min-w-0 flex-1">
-                                                <p className="font-medium truncate">{translateExerciseName(ex.name)}</p>
+                                                <p className="font-medium truncate capitalize">{ex.name}</p>
                                                 <p className="text-xs text-muted-foreground">
                                                     <Badge variant="secondary" className="mt-1">
                                                         {translateBodyPart(ex.bodyPart)}

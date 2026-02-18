@@ -2,7 +2,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
-import { translateExerciseName } from '@/lib/exercise-translations'
 import { fetchExerciseById, getExerciseImageUrl } from '@/lib/exercisedb'
 import { translateBodyPart, translateEquipment, translateTarget, UI } from '@/lib/translations'
 import type { ExerciseDBExercise } from '@/types'
@@ -86,8 +85,8 @@ export function ExerciseCatalogDetailPage() {
                             <ArrowLeft className="size-5" />
                         </Link>
                     </Button>
-                    <h1 className="flex-1 truncate text-lg font-semibold">
-                        {translateExerciseName(exercise.name)}
+                    <h1 className="flex-1 truncate text-lg font-semibold capitalize">
+                        {exercise.name}
                     </h1>
                     <Button
                         size="sm"
@@ -123,8 +122,8 @@ export function ExerciseCatalogDetailPage() {
                             </div>
                         )}
                         <div className="min-w-0 flex-1 space-y-2">
-                            <h2 className="font-semibold text-lg">
-                                {translateExerciseName(exercise.name)}
+                            <h2 className="font-semibold text-lg capitalize">
+                                {exercise.name}
                             </h2>
                             <div className="flex flex-wrap gap-1">
                                 {exercise.bodyPart && (

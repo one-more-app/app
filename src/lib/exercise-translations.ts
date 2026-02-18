@@ -1,10 +1,10 @@
 /**
- * Traduction des noms d'exercices ExerciseDB (anglais → français).
- * L'API ne fournit que des noms en anglais. Ce dictionnaire permet de les afficher en français.
- * Clés en minuscules pour correspondre à l'API.
+ * Dictionnaire exercices (nom API lowercase → français) pour la recherche :
+ * permet de traduire les requêtes françaises vers l'anglais pour l'API.
+ * Également utilisé pour le tri des exercices "populaires" (exercisedb).
  */
 
-// Dictionnaire exact : nom API (lowercase) → français
+// Dictionnaire exact : nom API (lowercase) → français (pour recherche fr→en)
 export const EXERCISE_NAMES: Record<string, string> = {
   // Pectoraux
   'bench press': 'Développé couché',
@@ -289,85 +289,3 @@ export function translateSearchQueryToEnglish(query: string): string {
   return withTerms.trim() || trimmed
 }
 
-// Termes courants pour traduction partielle (quand pas de correspondance exacte)
-const EXERCISE_TERMS: Record<string, string> = {
-  barbell: 'barre',
-  dumbbell: 'haltère',
-  dumbbells: 'haltères',
-  kettlebell: 'kettlebell',
-  cable: 'poulie',
-  machine: 'machine',
-  'body weight': 'poids du corps',
-  'bodyweight': 'poids du corps',
-  band: 'bande élastique',
-  'smith machine': 'barre guidée',
-  'ez barbell': 'barre EZ',
-  'medicine ball': 'médecine-ball',
-  row: 'rowing',
-  rows: 'rowing',
-  press: 'développé',
-  curl: 'flexion',
-  squat: 'squat',
-  deadlift: 'soulevé de terre',
-  lunge: 'fente',
-  lunges: 'fentes',
-  raise: 'élévation',
-  fly: 'écarté',
-  extension: 'extension',
-  incline: 'incliné',
-  pull: 'tirage',
-  push: 'poussée',
-  pullup: 'traction',
-  'pull-up': 'traction',
-  pulldown: 'tirage vertical',
-  decline: 'décliné',
-  'bent over': 'buste penché',
-  'bent-over': 'buste penché',
-  'one arm': 'un bras',
-  'one-arm': 'un bras',
-  alternating: 'alterné',
-  standing: 'debout',
-  seated: 'assis',
-  lying: 'allongé',
-  'reverse grip': 'prise inversée',
-  'reverse-grip': 'prise inversée',
-  narrow: 'prise serrée',
-  wide: 'prise large',
-  'high row': 'rowing haut',
-  'low row': 'rowing bas',
-  vertical: 'vertical',
-  horizontal: 'horizontal',
-}
-
-function capitalize(str: string): string {
-  if (!str) return str
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
-}
-
-/**
- * Traduit un nom d'exercice de l'API (anglais) vers le français.
- * - Correspondance exacte d'abord
- * - Sinon, remplacement des termes connus
- * - Sinon, retour du nom original
- */
-export function translateExerciseName(name: string): string {
-  if (!name || typeof name !== 'string') return name
-  const key = name.trim().toLowerCase()
-  const exact = EXERCISE_NAMES[key]
-  if (exact) return exact
-
-  // Traduction partielle par termes
-  let result = key
-  const sortedTerms = Object.entries(EXERCISE_TERMS).sort(
-    (a, b) => b[0].length - a[0].length
-  )
-  for (const [en, fr] of sortedTerms) {
-    const regex = new RegExp(`\\b${en.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
-    result = result.replace(regex, fr)
-  }
-
-  // Éviter de retourner la même chose si aucune traduction
-  if (result === key) return name
-
-  return capitalize(result.split(/\s+/).map(capitalize).join(' '))
-}
