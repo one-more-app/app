@@ -133,17 +133,6 @@ export function ExerciseDetailPage() {
                                 }
                             />
                             {exercise &&
-                                isBodyweightAdditiveExercise(
-                                    exercise.originalName ?? exercise.name,
-                                    exercise.equipment && exercise.target
-                                        ? { equipment: exercise.equipment, target: exercise.target }
-                                        : undefined
-                                ) && (
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        {UI.totalLoadHint}
-                                    </p>
-                                )}
-                            {exercise &&
                                 isDumbbellExercise(
                                     exercise.originalName ?? exercise.name,
                                     exercise.equipment && exercise.target

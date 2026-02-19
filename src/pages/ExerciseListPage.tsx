@@ -8,6 +8,13 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog'
+import {
+    Drawer,
+    DrawerContent,
+    DrawerHeader,
+    DrawerTitle,
+} from '@/components/ui/drawer'
+import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -18,6 +25,8 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
+import { savePerformance } from '@/lib/storage'
+import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import {
     CARDIO_EQUIPMENT,
     fetchEquipmentList,
@@ -76,6 +85,9 @@ export function ExerciseListPage() {
     const [customName, setCustomName] = useState('')
     const [customCategory, setCustomCategory] = useState('chest' as string)
     const [brokenImageIds, setBrokenImageIds] = useState<Set<string>>(new Set())
+    const [addWithPerfExercise, setAddWithPerfExercise] = useState<ExerciseDBExercise | null>(null)
+    const [perfWeight, setPerfWeight] = useState(0)
+    const [perfReps, setPerfReps] = useState(1)
 
     const trackedIds = new Set(
         tracked.map((e) => (e.isCustom ? e.exerciseId : `api-${e.exerciseId}`))
@@ -227,8 +239,17 @@ export function ExerciseListPage() {
         updateUrl({ page: newPage })
     }
 
-    const handleAddFromApi = (ex: ExerciseDBExercise) => {
+    const openAddWithPerf = (ex: ExerciseDBExercise) => {
         if (trackedIds.has(`api-${ex.id}`)) return
+        setAddWithPerfExercise(ex)
+        setPerfWeight(0)
+        setPerfReps(1)
+    }
+
+    const handleAddWithPerfSubmit = () => {
+        if (!addWithPerfExercise || perfReps <= 0) return
+        const ex = addWithPerfExercise
+        const trackedId = `api-${ex.id}`
         addExercise({
             exerciseId: ex.id,
             name: ex.name,
@@ -239,6 +260,19 @@ export function ExerciseListPage() {
             gifUrl: ex.gifUrl,
             isCustom: false,
         })
+        savePerformance(trackedId, perfWeight, perfReps)
+        setAddWithPerfExercise(null)
+        navigate(`/exercise/${trackedId}`)
+    }
+
+    function getWeightLabel(ex: ExerciseDBExercise): string {
+        const name = ex.name
+        const meta = ex.equipment && ex.target
+            ? { equipment: ex.equipment, target: ex.target }
+            : undefined
+        if (isBodyweightAdditiveExercise(name, meta)) return UI.addedWeight
+        if (isDumbbellExercise(name, meta)) return UI.weightPerDumbbell
+        return UI.weight
     }
 
     const handleAddCustom = () => {
@@ -407,7 +441,7 @@ export function ExerciseListPage() {
                                                 disabled={isTracked}
                                                 onClick={(e) => {
                                                     e.stopPropagation()
-                                                    handleAddFromApi(ex)
+                                                    openAddWithPerf(ex)
                                                 }}
                                             >
                                                 {isTracked ? UI.added : UI.add}
@@ -446,6 +480,55 @@ export function ExerciseListPage() {
                         </Button>
                     </div>
                 )}
+
+                <Drawer open={!!addWithPerfExercise} onOpenChange={(open) => !open && setAddWithPerfExercise(null)}>
+                    <DrawerContent>
+                        <div className="w-full p-4">
+                            <DrawerHeader>
+                                <DrawerTitle>{UI.addAndRecordPerf}</DrawerTitle>
+                            </DrawerHeader>
+                            {addWithPerfExercise && (
+                                <form
+                                    className="space-y-6 pt-4"
+                                    onSubmit={(e) => {
+                                        e.preventDefault()
+                                        handleAddWithPerfSubmit()
+                                    }}
+                                >
+                                    <div className="flex flex-col items-center gap-6 w-full">
+                                        <HorizontalWheelPicker
+                                            className="w-full"
+                                            value={perfWeight}
+                                            onChange={setPerfWeight}
+                                            min={0}
+                                            max={500}
+                                            step={0.5}
+                                            label={getWeightLabel(addWithPerfExercise)}
+                                            unit="kg"
+                                        />
+                                        <HorizontalWheelPicker
+                                            className="w-full"
+                                            value={perfReps}
+                                            onChange={setPerfReps}
+                                            min={1}
+                                            max={100}
+                                            step={1}
+                                            label={UI.reps}
+                                        />
+                                    </div>
+                                    <Button
+                                        type="submit"
+                                        className="w-full"
+                                        size="lg"
+                                        disabled={perfReps <= 0}
+                                    >
+                                        {UI.save}
+                                    </Button>
+                                </form>
+                            )}
+                        </div>
+                    </DrawerContent>
+                </Drawer>
             </main>
         </div>
     )

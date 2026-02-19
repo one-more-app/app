@@ -1,19 +1,42 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import {
+    Drawer,
+    DrawerContent,
+    DrawerHeader,
+    DrawerTitle,
+} from '@/components/ui/drawer'
+import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
 import { fetchExerciseById, getExerciseImageUrl } from '@/lib/exercisedb'
+import { savePerformance } from '@/lib/storage'
+import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import { translateBodyPart, translateEquipment, translateTarget, UI } from '@/lib/translations'
 import type { ExerciseDBExercise } from '@/types'
 import { ArrowLeft, Dumbbell, Loader2, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+
+function getWeightLabel(exercise: ExerciseDBExercise): string {
+    const name = exercise.name
+    const meta = exercise.equipment && exercise.target
+        ? { equipment: exercise.equipment, target: exercise.target }
+        : undefined
+    if (isBodyweightAdditiveExercise(name, meta)) return UI.addedWeight
+    if (isDumbbellExercise(name, meta)) return UI.weightPerDumbbell
+    return UI.weight
+}
 
 export function ExerciseCatalogDetailPage() {
     const { id } = useParams<{ id: string }>()
+    const navigate = useNavigate()
     const [exercise, setExercise] = useState<ExerciseDBExercise | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [addWithPerfOpen, setAddWithPerfOpen] = useState(false)
+    const [perfWeight, setPerfWeight] = useState(0)
+    const [perfReps, setPerfReps] = useState(1)
     const { exercises: tracked, addExercise } = useTrackedExercises()
 
     const trackedIds = new Set(
@@ -43,8 +66,16 @@ export function ExerciseCatalogDetailPage() {
         return () => { cancelled = true }
     }, [id])
 
-    const handleAdd = () => {
+    const openAddWithPerf = () => {
         if (!exercise || isTracked) return
+        setPerfWeight(0)
+        setPerfReps(1)
+        setAddWithPerfOpen(true)
+    }
+
+    const handleAddWithPerfSubmit = () => {
+        if (!exercise || perfReps <= 0) return
+        const trackedId = `api-${exercise.id}`
         addExercise({
             exerciseId: exercise.id,
             name: exercise.name,
@@ -55,6 +86,9 @@ export function ExerciseCatalogDetailPage() {
             gifUrl: exercise.gifUrl,
             isCustom: false,
         })
+        savePerformance(trackedId, perfWeight, perfReps)
+        setAddWithPerfOpen(false)
+        navigate(`/exercise/${trackedId}`)
     }
 
     if (loading) {
@@ -92,7 +126,7 @@ export function ExerciseCatalogDetailPage() {
                     <Button
                         size="sm"
                         disabled={isTracked}
-                        onClick={handleAdd}
+                        onClick={openAddWithPerf}
                         className="shrink-0"
                     >
                         {isTracked ? UI.added : (
@@ -104,6 +138,55 @@ export function ExerciseCatalogDetailPage() {
                     </Button>
                 </div>
             </header>
+
+            <Drawer open={addWithPerfOpen} onOpenChange={setAddWithPerfOpen}>
+                <DrawerContent>
+                    <div className="w-full p-4">
+                        <DrawerHeader>
+                            <DrawerTitle>{UI.addAndRecordPerf}</DrawerTitle>
+                        </DrawerHeader>
+                        {exercise && (
+                            <form
+                                className="space-y-6 pt-4"
+                                onSubmit={(e) => {
+                                    e.preventDefault()
+                                    handleAddWithPerfSubmit()
+                                }}
+                            >
+                                <div className="flex flex-col items-center gap-6 w-full">
+                                    <HorizontalWheelPicker
+                                        className="w-full"
+                                        value={perfWeight}
+                                        onChange={setPerfWeight}
+                                        min={0}
+                                        max={500}
+                                        step={0.5}
+                                        label={getWeightLabel(exercise)}
+                                        unit="kg"
+                                    />
+                                    <HorizontalWheelPicker
+                                        className="w-full"
+                                        value={perfReps}
+                                        onChange={setPerfReps}
+                                        min={1}
+                                        max={100}
+                                        step={1}
+                                        label={UI.reps}
+                                    />
+                                </div>
+                                <Button
+                                    type="submit"
+                                    className="w-full"
+                                    size="lg"
+                                    disabled={perfReps <= 0}
+                                >
+                                    {UI.save}
+                                </Button>
+                            </form>
+                        )}
+                    </div>
+                </DrawerContent>
+            </Drawer>
 
             <main className="mx-auto max-w-2xl px-4 py-4 space-y-4">
                 <Card>

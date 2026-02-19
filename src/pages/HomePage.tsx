@@ -43,7 +43,7 @@ function HomePage() {
         )
         const parts = new Set(
             nonCardio
-                .map((ex) => ex.bodyPart || ex.target)
+                .map((ex) => ex.bodyPart)
                 .filter((p): p is string => !!p)
         )
         return Array.from(parts).sort((a, b) => a.localeCompare(b))
@@ -56,9 +56,7 @@ function HomePage() {
                 !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
         )
         if (bodyPartFilter === 'all') return nonCardio
-        return nonCardio.filter(
-            (ex) => (ex.bodyPart || ex.target) === bodyPartFilter
-        )
+        return nonCardio.filter((ex) => ex.bodyPart === bodyPartFilter)
     }, [exercises, bodyPartFilter])
 
     useEffect(() => {
@@ -109,7 +107,7 @@ function HomePage() {
                             <div className="mb-4">
                                 <Select value={bodyPartFilter} onValueChange={setBodyPartFilter}>
                                     <SelectTrigger className="w-full sm:w-[200px]">
-                                        <SelectValue placeholder={UI.muscleGroup} />
+                                        <SelectValue placeholder={UI.bodyPartLabel} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">{UI.all}</SelectItem>
@@ -175,7 +173,7 @@ function HomePage() {
                         </ul>
                         {filteredExercises.length === 0 && bodyPartFilter !== 'all' && (
                             <p className="py-8 text-center text-muted-foreground">
-                                {UI.noExerciseInGroup}
+                                {UI.noExerciseForBodyPart}
                             </p>
                         )}
 

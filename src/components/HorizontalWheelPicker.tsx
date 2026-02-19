@@ -86,8 +86,9 @@ export function HorizontalWheelPicker({
             const parsed = parseFloat(raw.replace(',', '.'))
             if (Number.isNaN(parsed)) return value
             const clamped = Math.max(min, Math.min(max, parsed))
-            const steps = Math.round((clamped - min) / step)
-            return Number((min + steps * step).toFixed(step < 1 ? 1 : 0))
+            // En saisie manuelle on accepte toute valeur dans [min, max], pas seulement les valeurs du step
+            const decimals = step < 1 ? 1 : 0
+            return Number(clamped.toFixed(decimals))
         },
         [min, max, step, value]
     )

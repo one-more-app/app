@@ -203,34 +203,34 @@ const STANDARDS_BY_EQUIPMENT_TARGET: Record<string, StandardsEntry> = {
     female: tiers([0, 0.07, 0.14, 0.21, 0.28, 0.35, 0.42, 0.49, 0.56, 0.63]),
   },
 
-  // --- POIDS DU CORPS (ratio = total/BW, min 1.0) ---
+  // --- POIDS DU CORPS (ratio = lest/BW uniquement, pas corps+lest) ---
   'body weight_lats': {
-    male: tiers([1, 1.08, 1.16, 1.24, 1.32, 1.4, 1.48, 1.56, 1.65, 1.75]),
-    female: tiers([1, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.5]),
+    male: tiers([0, 0.08, 0.16, 0.24, 0.32, 0.4, 0.48, 0.56, 0.65, 0.75]),
+    female: tiers([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5]),
   },
   'leverage machine_lats': {
-    male: tiers([1, 1.08, 1.16, 1.24, 1.32, 1.4, 1.48, 1.56, 1.65, 1.75]),
-    female: tiers([1, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.5]),
+    male: tiers([0, 0.08, 0.16, 0.24, 0.32, 0.4, 0.48, 0.56, 0.65, 0.75]),
+    female: tiers([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5]),
   },
   'body weight_triceps': {
-    male: tiers([1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 2]),
-    female: tiers([1, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.5]),
+    male: tiers([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1]),
+    female: tiers([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5]),
   },
   lever_triceps: {
-    male: tiers([1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 2]),
-    female: tiers([1, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.5]),
+    male: tiers([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1]),
+    female: tiers([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5]),
   },
   'body weight_pectorals_pushup': {
-    male: tiers([1, 1.03, 1.06, 1.09, 1.12, 1.15, 1.18, 1.21, 1.24, 1.28]),
-    female: tiers([1, 1.02, 1.04, 1.06, 1.08, 1.1, 1.12, 1.14, 1.16, 1.2]),
+    male: tiers([0, 0.03, 0.06, 0.09, 0.12, 0.15, 0.18, 0.21, 0.24, 0.28]),
+    female: tiers([0, 0.02, 0.04, 0.06, 0.08, 0.1, 0.12, 0.14, 0.16, 0.2]),
   },
   'body weight_pectorals_dips': {
-    male: tiers([1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 2]),
-    female: tiers([1, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.5]),
+    male: tiers([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1]),
+    female: tiers([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5]),
   },
   'body weight_upper back': {
-    male: tiers([1, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.5]),
-    female: tiers([1, 1.03, 1.06, 1.09, 1.12, 1.15, 1.18, 1.21, 1.24, 1.3]),
+    male: tiers([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5]),
+    female: tiers([0, 0.03, 0.06, 0.09, 0.12, 0.15, 0.18, 0.21, 0.24, 0.3]),
   },
 }
 
@@ -504,10 +504,8 @@ export function getLeagueInfo(input: LeagueInput): LeagueInfo | null {
 
   const tiers = standards[input.gender]
   const key = equipment && target ? getStandardsKey(equipment, target, input.exerciseName) : null
-  const useTotalLoad = isBodyweightAdditiveKey(key)
-  // Pour dumbbell/kettlebell : input.weight = poids d'un seul haltère (ratio = weight/BW)
-  const totalLoad = useTotalLoad ? input.bodyWeightKg + input.weight : input.weight
-  const oneRM = estimate1RM(totalLoad, input.reps)
+  // Exos poids du corps : 1RM = poids lesté uniquement (pas corps + lest). Autres : charge ou poids/haltère.
+  const oneRM = estimate1RM(input.weight, input.reps)
   const ratio = input.bodyWeightKg > 0 ? oneRM / input.bodyWeightKg : 0
 
   let levelIndex = 0
