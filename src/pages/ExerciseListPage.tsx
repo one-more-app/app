@@ -1,3 +1,4 @@
+import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader } from '@/components/ui/card'
@@ -14,7 +15,6 @@ import {
     DrawerHeader,
     DrawerTitle,
 } from '@/components/ui/drawer'
-import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -24,22 +24,22 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
+import {
+    localEquipmentList as localEquipmentRaw,
+    localTargets,
+    popularExercises,
+} from '@/data/popular-exercises'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
-import { savePerformance } from '@/lib/storage'
-import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
+import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
 import {
     CARDIO_EQUIPMENT,
-    fetchEquipmentList,
-    fetchExercises,
-    fetchExercisesByTarget,
-    fetchExercisesFilteredByTarget,
-    fetchMuscleList,
     getExerciseImageUrl,
     sortExercisesByPopularity,
 } from '@/lib/exercisedb'
-import type { ExerciseDBExercise } from '@/types'
+import { savePerformance } from '@/lib/storage'
+import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import { UI, translateBodyPart, translateEquipment, translateTarget } from '@/lib/translations'
-import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
+import type { ExerciseDBExercise } from '@/types'
 import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Plus, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -71,13 +71,14 @@ export function ExerciseListPage() {
     const [searchParams, setSearchParams] = useSearchParams()
     const { exercises: tracked, addExercise } = useTrackedExercises()
     const [apiExercises, setApiExercises] = useState<ExerciseDBExercise[]>([])
-    const [targets, setTargets] = useState<string[]>([])
-    const [loading, setLoading] = useState(true)
+    const [totalFilteredCount, setTotalFilteredCount] = useState(0)
+    const targets = localTargets
+    const equipmentList = localEquipmentRaw.filter((eq) => !CARDIO_EQUIPMENT.has(eq))
+    const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const paramsFromUrl = getParamsFromUrl(searchParams)
     const [targetFilter, setTargetFilter] = useState<string>(paramsFromUrl.target)
     const [equipmentFilter, setEquipmentFilter] = useState<string>(paramsFromUrl.eq)
-    const [equipmentList, setEquipmentList] = useState<string[]>([])
     const [searchInput, setSearchInput] = useState(paramsFromUrl.q)
     const [searchQuery, setSearchQuery] = useState(paramsFromUrl.q)
     const [page, setPage] = useState(paramsFromUrl.page)
@@ -109,26 +110,6 @@ export function ExerciseListPage() {
     }, [targetFilter, equipmentFilter, searchQuery])
 
     useEffect(() => {
-        let cancelled = false
-        async function load() {
-            const [muscles, eqs] = await Promise.all([
-                fetchMuscleList(),
-                fetchEquipmentList(),
-            ])
-            if (!cancelled) {
-                setTargets(muscles)
-                setEquipmentList(
-                    [...eqs]
-                        .filter((eq) => !CARDIO_EQUIPMENT.has(eq))
-                        .sort((a, b) => a.localeCompare(b))
-                )
-            }
-        }
-        load()
-        return () => { cancelled = true }
-    }, [])
-
-    useEffect(() => {
         const t = setTimeout(() => setSearchQuery(searchInput), 300)
         return () => clearTimeout(t)
     }, [searchInput])
@@ -145,36 +126,36 @@ export function ExerciseListPage() {
         }
     }, [searchQuery, searchParams, setSearchParams])
 
+    // Données locales : filtre et pagination sur popularExercises
     useEffect(() => {
-        let cancelled = false
-        setLoading(true)
         setError(null)
-        async function load() {
-            try {
-                const offset = page * 25
-                let exercises: ExerciseDBExercise[]
-                const apiQuery = searchQuery.trim()
-                    ? translateSearchQueryToEnglish(searchQuery.trim())
-                    : ''
-                const equip = equipmentFilter !== 'all' ? equipmentFilter : ''
-                if (apiQuery && targetFilter !== 'all') {
-                    exercises = await fetchExercisesFilteredByTarget(targetFilter, apiQuery, 25, offset, equip)
-                } else if (apiQuery) {
-                    exercises = await fetchExercises(25, offset, apiQuery, equip)
-                } else if (targetFilter === 'all') {
-                    exercises = await fetchExercises(25, offset, '', equip)
-                } else {
-                    exercises = await fetchExercisesByTarget(targetFilter, 25, offset, equip)
-                }
-                if (!cancelled) setApiExercises(exercises)
-            } catch (e) {
-                if (!cancelled) setError(e instanceof Error ? e.message : 'Erreur')
-            } finally {
-                if (!cancelled) setLoading(false)
-            }
+        const offset = page * 25
+        const apiQuery = searchQuery.trim()
+            ? translateSearchQueryToEnglish(searchQuery.trim()).toLowerCase()
+            : ''
+        const searchRaw = searchQuery.trim().toLowerCase()
+        let list = popularExercises.filter(
+            (ex) =>
+                ex.bodyPart !== 'cardio' &&
+                !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
+        )
+        if (targetFilter !== 'all') {
+            list = list.filter((ex) => ex.target === targetFilter)
         }
-        load()
-        return () => { cancelled = true }
+        if (equipmentFilter !== 'all') {
+            list = list.filter((ex) => ex.equipment === equipmentFilter)
+        }
+        if (apiQuery || searchRaw) {
+            list = list.filter((ex) => {
+                const matchEn = apiQuery && ex.name.toLowerCase().includes(apiQuery)
+                const exFr = (ex as { nameFr?: string }).nameFr
+                const matchFr = searchRaw && exFr?.toLowerCase().includes(searchRaw)
+                return matchEn || matchFr || (searchRaw && ex.name.toLowerCase().includes(searchRaw))
+            })
+        }
+        const sorted = sortExercisesByPopularity(list)
+        setTotalFilteredCount(sorted.length)
+        setApiExercises(sorted.slice(offset, offset + 25))
     }, [targetFilter, equipmentFilter, page, searchQuery])
 
     const filteredExercises = sortExercisesByPopularity(
@@ -347,54 +328,54 @@ export function ExerciseListPage() {
                             </Select>
                         )}
                         <Dialog open={customOpen} onOpenChange={setCustomOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                                <Plus className="mr-1 size-4" />
-                                {UI.custom}
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>{UI.newCustomExercise}</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="flex flex-col gap-2">
-                                    <Label htmlFor="name">{UI.name}</Label>
-                                    <Input
-                                        id="name"
-                                        value={customName}
-                                        onChange={(e) => setCustomName(e.target.value)}
-                                        placeholder={UI.placeholderExerciseName}
-                                    />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <Label>{UI.category}</Label>
-                                    <Select
-                                        value={customCategory}
-                                        onValueChange={setCustomCategory}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {CUSTOM_CATEGORIES.map((c) => (
-                                                <SelectItem key={c.value} value={c.value}>
-                                                    {c.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <Button
-                                    onClick={handleAddCustom}
-                                    disabled={!customName.trim()}
-                                    className="w-full"
-                                >
-                                    {UI.add}
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                    <Plus className="mr-1 size-4" />
+                                    {UI.custom}
                                 </Button>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>{UI.newCustomExercise}</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                    <div className="flex flex-col gap-2">
+                                        <Label htmlFor="name">{UI.name}</Label>
+                                        <Input
+                                            id="name"
+                                            value={customName}
+                                            onChange={(e) => setCustomName(e.target.value)}
+                                            placeholder={UI.placeholderExerciseName}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <Label>{UI.category}</Label>
+                                        <Select
+                                            value={customCategory}
+                                            onValueChange={setCustomCategory}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {CUSTOM_CATEGORIES.map((c) => (
+                                                    <SelectItem key={c.value} value={c.value}>
+                                                        {c.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <Button
+                                        onClick={handleAddCustom}
+                                        disabled={!customName.trim()}
+                                        className="w-full"
+                                    >
+                                        {UI.add}
+                                    </Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 </div>
                 {loading ? (
@@ -460,7 +441,7 @@ export function ExerciseListPage() {
                     </p>
                 )}
 
-                {!loading && filteredExercises.length > 0 && (
+                {!loading && filteredExercises.length > 0 && totalFilteredCount > 25 && (
                     <div className="mt-4 flex items-center justify-center gap-2">
                         <Button
                             variant="outline"
@@ -474,6 +455,7 @@ export function ExerciseListPage() {
                         <Button
                             variant="outline"
                             size="icon"
+                            disabled={(page + 1) * 25 >= totalFilteredCount}
                             onClick={() => handlePageChange(1)}
                         >
                             <ChevronRight className="size-4" />

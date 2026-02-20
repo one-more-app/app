@@ -1,4 +1,5 @@
 import { ExerciseCard } from '@/components/ExerciseCard'
+import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { LEAGUE_COLORS, LeagueBadge } from '@/components/LeagueBadge'
 import { PerformanceChart } from '@/components/PerformanceChart'
 import { Badge } from '@/components/ui/badge'
@@ -33,11 +34,14 @@ export function ExerciseDetailPage() {
     )
     const [renameOpen, setRenameOpen] = useState(false)
     const [renameValue, setRenameValue] = useState('')
+    const [addPerfOpen, setAddPerfOpen] = useState(false)
+    const [addPerfWeight, setAddPerfWeight] = useState(0)
+    const [addPerfReps, setAddPerfReps] = useState(1)
 
     useEffect(() => {
         setExercise(id ? getTrackedExerciseById(id) : null)
     }, [id])
-    const { entries, lastPerf, personalBest } = usePerformance(id ?? null)
+    const { entries, lastPerf, personalBest, savePerformance, refresh } = usePerformance(id ?? null)
     const profile = getUserProfile()
     const leagueInfo =
         exercise && !exercise.isCustom && personalBest
@@ -109,6 +113,11 @@ export function ExerciseDetailPage() {
                     personalBest={personalBest ?? undefined}
                     leagueInfo={leagueInfo}
                     imageSize="sm"
+                    onAddPerf={() => {
+                        setAddPerfWeight(lastPerf?.weight ?? 0)
+                        setAddPerfReps(lastPerf?.reps ?? 1)
+                        setAddPerfOpen(true)
+                    }}
                 />
 
                 {leagueInfo && (
@@ -122,12 +131,12 @@ export function ExerciseDetailPage() {
                                 showNextTarget
                                 weightSuffix={
                                     exercise &&
-                                    isDumbbellExercise(
-                                        exercise.originalName ?? exercise.name,
-                                        exercise.equipment && exercise.target
-                                            ? { equipment: exercise.equipment, target: exercise.target }
-                                            : undefined
-                                    )
+                                        isDumbbellExercise(
+                                            exercise.originalName ?? exercise.name,
+                                            exercise.equipment && exercise.target
+                                                ? { equipment: exercise.equipment, target: exercise.target }
+                                                : undefined
+                                        )
                                         ? ' kg (par haltère)'
                                         : ' kg'
                                 }
@@ -163,15 +172,15 @@ export function ExerciseDetailPage() {
                                             {allTiers.map((tier) => {
                                                 const weightSuffix =
                                                     exercise &&
-                                                    isDumbbellExercise(
-                                                        exercise.originalName ?? exercise.name,
-                                                        exercise.equipment && exercise.target
-                                                            ? {
-                                                                  equipment: exercise.equipment,
-                                                                  target: exercise.target,
-                                                              }
-                                                            : undefined
-                                                    )
+                                                        isDumbbellExercise(
+                                                            exercise.originalName ?? exercise.name,
+                                                            exercise.equipment && exercise.target
+                                                                ? {
+                                                                    equipment: exercise.equipment,
+                                                                    target: exercise.target,
+                                                                }
+                                                                : undefined
+                                                        )
                                                         ? ' kg (par haltère)'
                                                         : ' kg'
                                                 return (
@@ -290,6 +299,82 @@ export function ExerciseDetailPage() {
                                 {UI.save}
                             </Button>
                         </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog open={addPerfOpen} onOpenChange={setAddPerfOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>{UI.newPerf}</DialogTitle>
+                        </DialogHeader>
+                        <form
+                            className="space-y-6 pt-4"
+                            onSubmit={(e) => {
+                                e.preventDefault()
+                                if (addPerfWeight >= 0 && addPerfReps > 0 && id) {
+                                    savePerformance(addPerfWeight, addPerfReps)
+                                    refresh()
+                                    setAddPerfOpen(false)
+                                }
+                            }}
+                        >
+                            <div className="flex flex-col items-center gap-6 w-full">
+                                <HorizontalWheelPicker
+                                    className="w-full"
+                                    value={addPerfWeight}
+                                    onChange={setAddPerfWeight}
+                                    min={0}
+                                    max={500}
+                                    step={0.5}
+                                    label={
+                                        exercise &&
+                                        (isBodyweightAdditiveExercise(
+                                            exercise.originalName ?? exercise.name,
+                                            exercise.equipment && exercise.target
+                                                ? {
+                                                    equipment: exercise.equipment,
+                                                    target: exercise.target,
+                                                }
+                                                : undefined
+                                        )
+                                            ? UI.addedWeight
+                                            : isDumbbellExercise(
+                                                exercise.originalName ?? exercise.name,
+                                                exercise.equipment && exercise.target
+                                                    ? {
+                                                        equipment: exercise.equipment,
+                                                        target: exercise.target,
+                                                    }
+                                                    : undefined
+                                            )
+                                                ? UI.weightPerDumbbell
+                                                : UI.weight
+                                        )}
+                                    unit="kg"
+                                />
+                                <HorizontalWheelPicker
+                                    className="w-full"
+                                    value={addPerfReps}
+                                    onChange={setAddPerfReps}
+                                    min={1}
+                                    max={100}
+                                    step={1}
+                                    label={UI.reps}
+                                />
+                            </div>
+                            <DialogFooter className="gap-2 sm:gap-0">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setAddPerfOpen(false)}
+                                >
+                                    {UI.cancel}
+                                </Button>
+                                <Button type="submit" disabled={addPerfReps <= 0}>
+                                    {UI.save}
+                                </Button>
+                            </DialogFooter>
+                        </form>
                     </DialogContent>
                 </Dialog>
 

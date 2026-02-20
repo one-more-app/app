@@ -1,3 +1,4 @@
+import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -7,9 +8,9 @@ import {
     DrawerHeader,
     DrawerTitle,
 } from '@/components/ui/drawer'
-import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
+import { getExerciseById } from '@/data/popular-exercises'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
-import { fetchExerciseById, getExerciseImageUrl } from '@/lib/exercisedb'
+import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { savePerformance } from '@/lib/storage'
 import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import { translateBodyPart, translateEquipment, translateTarget, UI } from '@/lib/translations'
@@ -46,24 +47,15 @@ export function ExerciseCatalogDetailPage() {
 
     useEffect(() => {
         if (!id) {
+            setExercise(null)
             setLoading(false)
             setError('ID manquant')
             return
         }
-        let cancelled = false
-        setLoading(true)
         setError(null)
-        fetchExerciseById(id)
-            .then((data) => {
-                if (!cancelled) setExercise(data)
-            })
-            .catch((e) => {
-                if (!cancelled) setError(e instanceof Error ? e.message : 'Erreur')
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-        return () => { cancelled = true }
+        const data = getExerciseById(id)
+        setExercise(data)
+        setLoading(false)
     }, [id])
 
     const openAddWithPerf = () => {

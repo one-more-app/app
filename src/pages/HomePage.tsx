@@ -17,8 +17,8 @@ import {
 } from '@/components/ui/select'
 import type { ExerciseWithPerf } from '@/hooks/use-home-data'
 import { useHomeData } from '@/hooks/use-home-data'
-import { getLastPerformance, getUserProfile, savePerformance } from '@/lib/storage'
 import { CARDIO_EQUIPMENT } from '@/lib/exercisedb'
+import { getLastPerformance, getUserProfile, savePerformance } from '@/lib/storage'
 import { getLeagueInfo, isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import { UI, translateBodyPart } from '@/lib/translations'
 import { Dumbbell, Plus, Settings } from 'lucide-react'
@@ -138,36 +138,25 @@ function HomePage() {
                                         })
                                         : null
                                 return (
-                                <li key={ex.id}>
-                                    <ExerciseCard
-                                        exercise={ex}
-                                        lastPerf={ex.lastPerf}
-                                        personalBest={ex.personalBest}
-                                        leagueInfo={leagueInfo}
-                                        onClick={() => navigate(`/exercise/${ex.id}`)}
-                                        action={
-                                            <Button
-                                                size="icon"
-                                                variant="accent"
-                                                className="size-11 shrink-0 rounded-full"
-                                                onClick={(e) => {
-                                                    e.preventDefault()
-                                                    e.stopPropagation()
-                                                    const last = getLastPerformance(ex.id)
-                                                    const weight = last?.weight ?? 0
-                                                    const reps = last?.reps ?? 1
-                                                    setDrawerState({
-                                                        exercise: ex,
-                                                        weight,
-                                                        reps,
-                                                    })
-                                                }}
-                                            >
-                                                <Plus className="size-5" />
-                                            </Button>
-                                        }
-                                    />
-                                </li>
+                                    <li key={ex.id}>
+                                        <ExerciseCard
+                                            exercise={ex}
+                                            lastPerf={ex.lastPerf}
+                                            personalBest={ex.personalBest}
+                                            leagueInfo={leagueInfo}
+                                            onClick={() => navigate(`/exercise/${ex.id}`)}
+                                            onAddPerf={() => {
+                                                const last = getLastPerformance(ex.id)
+                                                const weight = last?.weight ?? 0
+                                                const reps = last?.reps ?? 1
+                                                setDrawerState({
+                                                    exercise: ex,
+                                                    weight,
+                                                    reps,
+                                                })
+                                            }}
+                                        />
+                                    </li>
                                 )
                             })}
                         </ul>
@@ -212,7 +201,7 @@ function HomePage() {
                                                             drawerState &&
                                                             (isBodyweightAdditiveExercise(
                                                                 drawerState.exercise.originalName ??
-                                                                    drawerState.exercise.name,
+                                                                drawerState.exercise.name,
                                                                 drawerState.exercise.equipment &&
                                                                     drawerState.exercise.target
                                                                     ? {
@@ -223,18 +212,18 @@ function HomePage() {
                                                             )
                                                                 ? UI.addedWeight
                                                                 : isDumbbellExercise(
-                                                                      drawerState.exercise.originalName ??
-                                                                          drawerState.exercise.name,
-                                                                      drawerState.exercise.equipment &&
-                                                                          drawerState.exercise.target
-                                                                          ? {
-                                                                                equipment: drawerState.exercise.equipment,
-                                                                                target: drawerState.exercise.target,
-                                                                            }
-                                                                          : undefined
-                                                                  )
-                                                                  ? UI.weightPerDumbbell
-                                                                  : UI.weight)
+                                                                    drawerState.exercise.originalName ??
+                                                                    drawerState.exercise.name,
+                                                                    drawerState.exercise.equipment &&
+                                                                        drawerState.exercise.target
+                                                                        ? {
+                                                                            equipment: drawerState.exercise.equipment,
+                                                                            target: drawerState.exercise.target,
+                                                                        }
+                                                                        : undefined
+                                                                )
+                                                                    ? UI.weightPerDumbbell
+                                                                    : UI.weight)
                                                         }
                                                         unit="kg"
                                                     />
