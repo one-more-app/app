@@ -1,3 +1,4 @@
+import { ExerciseSearchFilters } from '@/components/ExerciseSearchFilters'
 import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,8 @@ import {
     localTargets,
     popularExercises,
 } from '@/data/popular-exercises'
+import { useBack } from '@/hooks/use-back'
+import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
 import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
 import {
@@ -38,11 +41,17 @@ import {
 } from '@/lib/exercisedb'
 import { savePerformance } from '@/lib/storage'
 import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
-import { UI, translateBodyPart, translateEquipment, translateTarget } from '@/lib/translations'
+import {
+    equipmentMatchesFilter,
+    getGroupedEquipmentList,
+    UI,
+    translateBodyPart,
+    translateTarget,
+} from '@/lib/translations'
 import type { ExerciseDBExercise } from '@/types'
-import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Plus, Search } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 // Aligné avec l'API ExerciseDB v1 /bodyparts
 const CUSTOM_CATEGORIES = [
@@ -57,31 +66,31 @@ const CUSTOM_CATEGORIES = [
     { value: 'waist', label: 'Taille' },
 ]
 
-function getParamsFromUrl(searchParams: URLSearchParams) {
-    return {
-        target: searchParams.get('target') || 'all',
-        eq: searchParams.get('eq') || 'all',
-        q: searchParams.get('q') || '',
-        page: Math.max(0, parseInt(searchParams.get('page') || '0', 10)),
-    }
-}
-
 export function ExerciseListPage() {
     const navigate = useNavigate()
-    const [searchParams, setSearchParams] = useSearchParams()
+    const goBack = useBack()
     const { exercises: tracked, addExercise } = useTrackedExercises()
     const [apiExercises, setApiExercises] = useState<ExerciseDBExercise[]>([])
     const [totalFilteredCount, setTotalFilteredCount] = useState(0)
     const targets = localTargets
-    const equipmentList = localEquipmentRaw.filter((eq) => !CARDIO_EQUIPMENT.has(eq))
+    const equipmentList = getGroupedEquipmentList(
+        localEquipmentRaw.filter((eq) => !CARDIO_EQUIPMENT.has(eq))
+    )
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const paramsFromUrl = getParamsFromUrl(searchParams)
-    const [targetFilter, setTargetFilter] = useState<string>(paramsFromUrl.target)
-    const [equipmentFilter, setEquipmentFilter] = useState<string>(paramsFromUrl.eq)
-    const [searchInput, setSearchInput] = useState(paramsFromUrl.q)
-    const [searchQuery, setSearchQuery] = useState(paramsFromUrl.q)
-    const [page, setPage] = useState(paramsFromUrl.page)
+
+    const {
+        searchInput,
+        searchQuery,
+        targetFilter,
+        equipmentFilter,
+        page = 0,
+        handleTargetChange,
+        handleEquipmentChange,
+        handleSearchChange,
+        handlePageChange,
+    } = useExerciseFilters({ includePage: true })
+
     const [customOpen, setCustomOpen] = useState(false)
     const [customName, setCustomName] = useState('')
     const [customCategory, setCustomCategory] = useState('chest' as string)
@@ -94,37 +103,10 @@ export function ExerciseListPage() {
         tracked.map((e) => (e.isCustom ? e.exerciseId : `api-${e.exerciseId}`))
     )
 
-    // Sync state from URL (back/forward navigation)
-    useEffect(() => {
-        const { target, eq, q, page: p } = getParamsFromUrl(searchParams)
-        setTargetFilter(target)
-        setEquipmentFilter(eq)
-        setSearchInput(q)
-        setSearchQuery(q)
-        setPage(p)
-    }, [searchParams])
-
     // Reset broken images when exercises list changes (new search/filter)
     useEffect(() => {
         setBrokenImageIds(new Set())
     }, [targetFilter, equipmentFilter, searchQuery])
-
-    useEffect(() => {
-        const t = setTimeout(() => setSearchQuery(searchInput), 300)
-        return () => clearTimeout(t)
-    }, [searchInput])
-
-    // Update URL when search query changes (replace to avoid history spam while typing)
-    useEffect(() => {
-        const next = new URLSearchParams(searchParams)
-        const currentQ = next.get('q') || ''
-        if (currentQ !== searchQuery) {
-            if (searchQuery) next.set('q', searchQuery)
-            else next.delete('q')
-            next.delete('page')
-            setSearchParams(next, { replace: true })
-        }
-    }, [searchQuery, searchParams, setSearchParams])
 
     // Données locales : filtre et pagination sur popularExercises
     useEffect(() => {
@@ -143,7 +125,9 @@ export function ExerciseListPage() {
             list = list.filter((ex) => ex.target === targetFilter)
         }
         if (equipmentFilter !== 'all') {
-            list = list.filter((ex) => ex.equipment === equipmentFilter)
+            list = list.filter((ex) =>
+                equipmentMatchesFilter(ex.equipment, equipmentFilter)
+            )
         }
         if (apiQuery || searchRaw) {
             list = list.filter((ex) => {
@@ -174,50 +158,6 @@ export function ExerciseListPage() {
 
     const handleImageError = (exId: string) => {
         setBrokenImageIds((prev) => new Set(prev).add(exId))
-    }
-
-    const updateUrl = (updates: { target?: string; eq?: string; q?: string; page?: number }, replace = false) => {
-        const next = new URLSearchParams(searchParams)
-        if (updates.target !== undefined) {
-            if (updates.target === 'all') next.delete('target')
-            else next.set('target', updates.target)
-        }
-        if (updates.eq !== undefined) {
-            if (updates.eq === 'all') next.delete('eq')
-            else next.set('eq', updates.eq)
-        }
-        if (updates.q !== undefined) {
-            if (updates.q) next.set('q', updates.q)
-            else next.delete('q')
-        }
-        if (updates.page !== undefined) {
-            if (updates.page === 0) next.delete('page')
-            else next.set('page', String(updates.page))
-        }
-        setSearchParams(next, { replace })
-    }
-
-    const handleTargetFilterChange = (value: string) => {
-        setTargetFilter(value)
-        setPage(0)
-        updateUrl({ target: value, page: 0 })
-    }
-
-    const handleEquipmentFilterChange = (value: string) => {
-        setEquipmentFilter(value)
-        setPage(0)
-        updateUrl({ eq: value, page: 0 })
-    }
-
-    const handleSearchChange = (value: string) => {
-        setSearchInput(value)
-        setPage(0)
-    }
-
-    const handlePageChange = (delta: number) => {
-        const newPage = Math.max(0, page + delta)
-        setPage(newPage)
-        updateUrl({ page: newPage })
     }
 
     const openAddWithPerf = (ex: ExerciseDBExercise) => {
@@ -274,10 +214,8 @@ export function ExerciseListPage() {
         <div className="min-h-screen bg-background">
             <header className="sticky top-0 z-10 border-b border-white/10 bg-black px-4 py-4">
                 <div className="mx-auto flex max-w-2xl items-center gap-2">
-                    <Button variant="ghost" size="icon" asChild>
-                        <Link to="/">
-                            <ArrowLeft className="size-5" />
-                        </Link>
+                    <Button variant="ghost" size="icon" onClick={goBack}>
+                        <ArrowLeft className="size-5" />
                     </Button>
                     <h1 className="text-lg font-semibold">{UI.chooseExercises}</h1>
 
@@ -285,48 +223,16 @@ export function ExerciseListPage() {
             </header>
 
             <main className="mx-auto max-w-2xl px-4 py-4">
-                <div className="relative mb-4">
-                    <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                        type="search"
-                        placeholder={UI.searchExercise}
-                        value={searchInput}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                        className="pl-9"
-                    />
-                </div>
-                <div className="flex flex-col gap-3 mb-4">
-                    <div className="flex flex-row items-center justify-between gap-3 flex-wrap">
-                        {targets.length > 0 && (
-                            <Select value={targetFilter} onValueChange={handleTargetFilterChange}>
-                                <SelectTrigger className="flex-1 min-w-[140px]">
-                                    <SelectValue placeholder={UI.filterByTarget} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">{UI.all}</SelectItem>
-                                    {targets.map((t) => (
-                                        <SelectItem key={t} value={t}>
-                                            {translateTarget(t)}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        )}
-                        {equipmentList.length > 0 && (
-                            <Select value={equipmentFilter} onValueChange={handleEquipmentFilterChange}>
-                                <SelectTrigger className="flex-1 min-w-[140px]">
-                                    <SelectValue placeholder={UI.filterByEquipment} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">{UI.all}</SelectItem>
-                                    {equipmentList.map((eq) => (
-                                        <SelectItem key={eq} value={eq}>
-                                            {translateEquipment(eq)}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        )}
+                <ExerciseSearchFilters
+                    searchInput={searchInput}
+                    onSearchChange={handleSearchChange}
+                    targetFilter={targetFilter}
+                    onTargetFilterChange={handleTargetChange}
+                    targets={targets}
+                    equipmentFilter={equipmentFilter}
+                    onEquipmentFilterChange={handleEquipmentChange}
+                    equipmentList={equipmentList}
+                    extraSlot={
                         <Dialog open={customOpen} onOpenChange={setCustomOpen}>
                             <DialogTrigger asChild>
                                 <Button variant="outline" size="sm">
@@ -376,8 +282,8 @@ export function ExerciseListPage() {
                                 </div>
                             </DialogContent>
                         </Dialog>
-                    </div>
-                </div>
+                    }
+                />
                 {loading ? (
                     <div className="flex justify-center py-20">
                         <Loader2 className="size-8 animate-spin text-muted-foreground" />

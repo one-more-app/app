@@ -1,69 +1,117 @@
 import logo from '@/assets/logo-white.png'
 import { ExerciseCard } from '@/components/ExerciseCard'
-import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
+import { ExerciseSearchFilters } from '@/components/ExerciseSearchFilters'
 import { Button } from '@/components/ui/button'
-import {
-    Drawer,
-    DrawerContent,
-    DrawerHeader,
-    DrawerTitle,
-} from '@/components/ui/drawer'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
-import type { ExerciseWithPerf } from '@/hooks/use-home-data'
+import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useHomeData } from '@/hooks/use-home-data'
+import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
 import { CARDIO_EQUIPMENT } from '@/lib/exercisedb'
-import { getLastPerformance, getUserProfile, savePerformance } from '@/lib/storage'
-import { getLeagueInfo, isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
-import { UI, translateBodyPart } from '@/lib/translations'
+import { equipmentMatchesFilter, getGroupedEquipmentList } from '@/lib/translations'
+import { getUserProfile, savePerformance } from '@/lib/storage'
+import { getLeagueInfo } from '@/lib/strength-standards'
+import { UI } from '@/lib/translations'
 import { Dumbbell, Plus, Settings } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 function HomePage() {
     const { exercises, refresh } = useHomeData()
-    const [drawerState, setDrawerState] = useState<{
-        exercise: ExerciseWithPerf
-        weight: number
-        reps: number
-    } | null>(null)
-    const [bodyPartFilter, setBodyPartFilter] = useState<string>('all')
     const navigate = useNavigate()
 
+    const {
+        searchInput,
+        searchQuery,
+        targetFilter,
+        equipmentFilter,
+        bodyPartFilter = 'all',
+        handleTargetChange,
+        handleEquipmentChange,
+        handleBodyPartChange,
+        handleSearchChange,
+    } = useExerciseFilters({ includeBodyPart: true })
+
+    const nonCardioExercises = useMemo(
+        () =>
+            exercises.filter(
+                (ex) =>
+                    (ex.bodyPart || ex.target) !== 'cardio' &&
+                    !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
+            ),
+        [exercises]
+    )
+
     const bodyParts = useMemo(() => {
-        const nonCardio = exercises.filter(
-            (ex) =>
-                (ex.bodyPart || ex.target) !== 'cardio' &&
-                !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
-        )
         const parts = new Set(
-            nonCardio
+            nonCardioExercises
                 .map((ex) => ex.bodyPart)
                 .filter((p): p is string => !!p)
         )
         return Array.from(parts).sort((a, b) => a.localeCompare(b))
-    }, [exercises])
+    }, [nonCardioExercises])
+
+    const targets = useMemo(() => {
+        const t = new Set(
+            nonCardioExercises.map((ex) => ex.target).filter((p): p is string => !!p)
+        )
+        return Array.from(t).sort((a, b) => a.localeCompare(b))
+    }, [nonCardioExercises])
+
+    const equipmentList = useMemo(() => {
+        const eq = new Set(
+            nonCardioExercises.map((ex) => ex.equipment).filter((p): p is string => !!p)
+        )
+        return getGroupedEquipmentList(Array.from(eq))
+    }, [nonCardioExercises])
 
     const filteredExercises = useMemo(() => {
-        const nonCardio = exercises.filter(
-            (ex) =>
-                (ex.bodyPart || ex.target) !== 'cardio' &&
-                !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
-        )
-        if (bodyPartFilter === 'all') return nonCardio
-        return nonCardio.filter((ex) => ex.bodyPart === bodyPartFilter)
-    }, [exercises, bodyPartFilter])
+        let list = nonCardioExercises
+        if (bodyPartFilter !== 'all') {
+            list = list.filter((ex) => ex.bodyPart === bodyPartFilter)
+        }
+        if (targetFilter !== 'all') {
+            list = list.filter((ex) => ex.target === targetFilter)
+        }
+        if (equipmentFilter !== 'all') {
+            list = list.filter((ex) => equipmentMatchesFilter(ex.equipment, equipmentFilter))
+        }
+        const apiQuery = searchQuery.trim()
+            ? translateSearchQueryToEnglish(searchQuery.trim()).toLowerCase()
+            : ''
+        const searchRaw = searchQuery.trim().toLowerCase()
+        if (apiQuery || searchRaw) {
+            list = list.filter((ex) => {
+                const name = ex.name.toLowerCase()
+                const orig = (ex.originalName ?? ex.name).toLowerCase()
+                const matchEn = (apiQuery && name.includes(apiQuery)) || (apiQuery && orig.includes(apiQuery))
+                const matchFr = searchRaw && (name.includes(searchRaw) || orig.includes(searchRaw))
+                return matchEn || matchFr
+            })
+        }
+        return list
+    }, [nonCardioExercises, bodyPartFilter, targetFilter, equipmentFilter, searchQuery])
 
+    // Réinitialiser les filtres si les options ne les contiennent plus (ex: exercice supprimé)
     useEffect(() => {
         if (bodyPartFilter !== 'all' && !bodyParts.includes(bodyPartFilter)) {
-            setBodyPartFilter('all')
+            handleBodyPartChange('all')
         }
-    }, [bodyParts, bodyPartFilter])
+        if (targetFilter !== 'all' && !targets.includes(targetFilter)) {
+            handleTargetChange('all')
+        }
+        if (equipmentFilter !== 'all' && !equipmentList.includes(equipmentFilter)) {
+            handleEquipmentChange('all')
+        }
+    }, [
+        bodyParts,
+        bodyPartFilter,
+        targets,
+        targetFilter,
+        equipmentList,
+        equipmentFilter,
+        handleBodyPartChange,
+        handleTargetChange,
+        handleEquipmentChange,
+    ])
 
     return (
         <div className="min-h-screen bg-background">
@@ -103,23 +151,18 @@ function HomePage() {
                     </div>
                 ) : (
                     <>
-                        {bodyParts.length > 0 && (
-                            <div className="mb-4">
-                                <Select value={bodyPartFilter} onValueChange={setBodyPartFilter}>
-                                    <SelectTrigger className="w-full sm:w-[200px]">
-                                        <SelectValue placeholder={UI.bodyPartLabel} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">{UI.all}</SelectItem>
-                                        {bodyParts.map((bp) => (
-                                            <SelectItem key={bp} value={bp}>
-                                                {translateBodyPart(bp)}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
+                        <ExerciseSearchFilters
+                            searchInput={searchInput}
+                            onSearchChange={handleSearchChange}
+                            targetFilter={targetFilter}
+                            onTargetFilterChange={handleTargetChange}
+                            targets={targets}
+                            equipmentFilter={equipmentFilter}
+                            onEquipmentFilterChange={handleEquipmentChange}
+                            equipmentList={equipmentList}
+                            onBodyPartFilterChange={handleBodyPartChange}
+                            bodyParts={bodyParts}
+                        />
                         <ul className="space-y-3">
                             {filteredExercises.map((ex) => {
                                 const profile = getUserProfile()
@@ -145,112 +188,24 @@ function HomePage() {
                                             personalBest={ex.personalBest}
                                             leagueInfo={leagueInfo}
                                             onClick={() => navigate(`/exercise/${ex.id}`)}
-                                            onAddPerf={() => {
-                                                const last = getLastPerformance(ex.id)
-                                                const weight = last?.weight ?? 0
-                                                const reps = last?.reps ?? 1
-                                                setDrawerState({
-                                                    exercise: ex,
-                                                    weight,
-                                                    reps,
-                                                })
+                                            onSavePerf={(weight, reps) => {
+                                                savePerformance(ex.id, weight, reps)
+                                                refresh()
                                             }}
                                         />
                                     </li>
                                 )
-                            })}
+                            }                            )}
                         </ul>
-                        {filteredExercises.length === 0 && bodyPartFilter !== 'all' && (
-                            <p className="py-8 text-center text-muted-foreground">
-                                {UI.noExerciseForBodyPart}
-                            </p>
-                        )}
-
-                        <Drawer
-                            open={!!drawerState}
-                            onOpenChange={(open) => !open && setDrawerState(null)}
-                        >
-                            <DrawerContent>
-                                <div className="w-full p-4">
-                                    <DrawerHeader>
-                                        <DrawerTitle>{UI.newPerf}</DrawerTitle>
-                                    </DrawerHeader>
-                                    {drawerState && (
-                                        <>
-                                            <form
-                                                key={drawerState.exercise.id}
-                                                className="space-y-6 pt-4"
-                                                onSubmit={(e) => {
-                                                    e.preventDefault()
-                                                    if (drawerState.weight >= 0 && drawerState.reps > 0) {
-                                                        savePerformance(drawerState.exercise.id, drawerState.weight, drawerState.reps)
-                                                        refresh()
-                                                        setDrawerState(null)
-                                                    }
-                                                }}
-                                            >
-                                                <div className="flex flex-col items-center gap-6 w-full">
-                                                    <HorizontalWheelPicker
-                                                        className="w-full"
-                                                        value={drawerState.weight}
-                                                        onChange={(w) => setDrawerState((s) => (s ? { ...s, weight: w } : null))}
-                                                        min={0}
-                                                        max={500}
-                                                        step={0.5}
-                                                        label={
-                                                            drawerState &&
-                                                            (isBodyweightAdditiveExercise(
-                                                                drawerState.exercise.originalName ??
-                                                                drawerState.exercise.name,
-                                                                drawerState.exercise.equipment &&
-                                                                    drawerState.exercise.target
-                                                                    ? {
-                                                                        equipment: drawerState.exercise.equipment,
-                                                                        target: drawerState.exercise.target,
-                                                                    }
-                                                                    : undefined
-                                                            )
-                                                                ? UI.addedWeight
-                                                                : isDumbbellExercise(
-                                                                    drawerState.exercise.originalName ??
-                                                                    drawerState.exercise.name,
-                                                                    drawerState.exercise.equipment &&
-                                                                        drawerState.exercise.target
-                                                                        ? {
-                                                                            equipment: drawerState.exercise.equipment,
-                                                                            target: drawerState.exercise.target,
-                                                                        }
-                                                                        : undefined
-                                                                )
-                                                                    ? UI.weightPerDumbbell
-                                                                    : UI.weight)
-                                                        }
-                                                        unit="kg"
-                                                    />
-                                                    <HorizontalWheelPicker
-                                                        className="w-full"
-                                                        value={drawerState.reps}
-                                                        onChange={(r) => setDrawerState((s) => (s ? { ...s, reps: r } : null))}
-                                                        min={1}
-                                                        max={100}
-                                                        step={1}
-                                                        label={UI.reps}
-                                                    />
-                                                </div>
-                                                <Button
-                                                    type="submit"
-                                                    className="w-full"
-                                                    size="lg"
-                                                    disabled={drawerState.reps <= 0}
-                                                >
-                                                    {UI.save}
-                                                </Button>
-                                            </form>
-                                        </>
-                                    )}
-                                </div>
-                            </DrawerContent>
-                        </Drawer>
+                        {filteredExercises.length === 0 &&
+                            (bodyPartFilter !== 'all' ||
+                                targetFilter !== 'all' ||
+                                equipmentFilter !== 'all' ||
+                                searchQuery.trim()) && (
+                                <p className="py-8 text-center text-muted-foreground">
+                                    {UI.noExerciseFound}
+                                </p>
+                            )}
                     </>
                 )}
             </main>

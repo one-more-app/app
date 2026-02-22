@@ -1,10 +1,12 @@
 import { useState, useCallback, useEffect } from 'react'
 import type { PerformanceEntry } from '@/types'
 import {
+  deletePerformance as deleteFromStorage,
   getEntriesByTrackedId,
   getLastPerformance,
   getPersonalBest,
   savePerformance as saveToStorage,
+  updatePerformance as updateInStorage,
 } from '@/lib/storage'
 
 export function usePerformance(trackedExerciseId: string | null) {
@@ -38,5 +40,29 @@ export function usePerformance(trackedExerciseId: string | null) {
     [trackedExerciseId, load]
   )
 
-  return { entries, lastPerf, personalBest, savePerformance, refresh: load }
+  const deletePerformance = useCallback(
+    (entryId: string) => {
+      deleteFromStorage(entryId)
+      load()
+    },
+    [load]
+  )
+
+  const updatePerformance = useCallback(
+    (entryId: string, weight: number, reps: number) => {
+      updateInStorage(entryId, weight, reps)
+      load()
+    },
+    [load]
+  )
+
+  return {
+    entries,
+    lastPerf,
+    personalBest,
+    savePerformance,
+    deletePerformance,
+    updatePerformance,
+    refresh: load,
+  }
 }

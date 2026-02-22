@@ -1,5 +1,4 @@
 import { ExerciseCard } from '@/components/ExerciseCard'
-import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { LEAGUE_COLORS, LeagueBadge } from '@/components/LeagueBadge'
 import { PerformanceChart } from '@/components/PerformanceChart'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +12,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { useBack } from '@/hooks/use-back'
 import { usePerformance } from '@/hooks/use-performance'
 import {
     getTrackedExerciseById,
@@ -20,28 +20,32 @@ import {
     removeTrackedExercise,
     updateTrackedExercise,
 } from '@/lib/storage'
-import { getAllTiers, getLeagueInfo, isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
+import { getAllTiers, getLeagueInfo, isDumbbellExercise } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
 import { ArrowLeft, ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 export function ExerciseDetailPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
+    const goBack = useBack()
     const [exercise, setExercise] = useState(() =>
         id ? getTrackedExerciseById(id) : null
     )
     const [renameOpen, setRenameOpen] = useState(false)
     const [renameValue, setRenameValue] = useState('')
-    const [addPerfOpen, setAddPerfOpen] = useState(false)
-    const [addPerfWeight, setAddPerfWeight] = useState(0)
-    const [addPerfReps, setAddPerfReps] = useState(1)
 
     useEffect(() => {
         setExercise(id ? getTrackedExerciseById(id) : null)
     }, [id])
-    const { entries, lastPerf, personalBest, savePerformance, refresh } = usePerformance(id ?? null)
+    const {
+        entries,
+        lastPerf,
+        personalBest,
+        savePerformance,
+        refresh,
+    } = usePerformance(id ?? null)
     const profile = getUserProfile()
     const leagueInfo =
         exercise && !exercise.isCustom && personalBest
@@ -73,9 +77,7 @@ export function ExerciseDetailPage() {
         return (
             <div className="flex min-h-screen flex-col items-center justify-center gap-4">
                 <p className="text-muted-foreground">{UI.exerciseNotFound}</p>
-                <Button asChild>
-                    <Link to="/">{UI.back}</Link>
-                </Button>
+                <Button onClick={goBack}>{UI.back}</Button>
             </div>
         )
     }
@@ -84,10 +86,8 @@ export function ExerciseDetailPage() {
         <div className="min-h-screen bg-background">
             <header className="sticky top-0 z-10 border-b border-white/10 bg-black px-4 py-4">
                 <div className="mx-auto flex max-w-2xl items-center gap-2">
-                    <Button variant="ghost" size="icon" asChild>
-                        <Link to="/">
-                            <ArrowLeft className="size-5" />
-                        </Link>
+                    <Button variant="ghost" size="icon" onClick={goBack}>
+                        <ArrowLeft className="size-5" />
                     </Button>
                     <h1 className="flex-1 truncate text-lg font-semibold capitalize">
                         {exercise.name}
@@ -113,10 +113,9 @@ export function ExerciseDetailPage() {
                     personalBest={personalBest ?? undefined}
                     leagueInfo={leagueInfo}
                     imageSize="sm"
-                    onAddPerf={() => {
-                        setAddPerfWeight(lastPerf?.weight ?? 0)
-                        setAddPerfReps(lastPerf?.reps ?? 1)
-                        setAddPerfOpen(true)
+                    onSavePerf={(weight, reps) => {
+                        savePerformance(weight, reps)
+                        refresh()
                     }}
                 />
 
@@ -218,7 +217,10 @@ export function ExerciseDetailPage() {
                             <h2 className="font-semibold">{UI.history} (poids)</h2>
                         </CardHeader>
                         <CardContent className="pl-0 pb-0">
-                            <PerformanceChart entries={entries} />
+                            <PerformanceChart
+                                entries={entries}
+                                onDayClick={(date) => id && navigate(`/exercise/${id}/day/${date}`)}
+                            />
                         </CardContent>
                     </Card>
                 )}
@@ -299,82 +301,6 @@ export function ExerciseDetailPage() {
                                 {UI.save}
                             </Button>
                         </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-
-                <Dialog open={addPerfOpen} onOpenChange={setAddPerfOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>{UI.newPerf}</DialogTitle>
-                        </DialogHeader>
-                        <form
-                            className="space-y-6 pt-4"
-                            onSubmit={(e) => {
-                                e.preventDefault()
-                                if (addPerfWeight >= 0 && addPerfReps > 0 && id) {
-                                    savePerformance(addPerfWeight, addPerfReps)
-                                    refresh()
-                                    setAddPerfOpen(false)
-                                }
-                            }}
-                        >
-                            <div className="flex flex-col items-center gap-6 w-full">
-                                <HorizontalWheelPicker
-                                    className="w-full"
-                                    value={addPerfWeight}
-                                    onChange={setAddPerfWeight}
-                                    min={0}
-                                    max={500}
-                                    step={0.5}
-                                    label={
-                                        exercise &&
-                                        (isBodyweightAdditiveExercise(
-                                            exercise.originalName ?? exercise.name,
-                                            exercise.equipment && exercise.target
-                                                ? {
-                                                    equipment: exercise.equipment,
-                                                    target: exercise.target,
-                                                }
-                                                : undefined
-                                        )
-                                            ? UI.addedWeight
-                                            : isDumbbellExercise(
-                                                exercise.originalName ?? exercise.name,
-                                                exercise.equipment && exercise.target
-                                                    ? {
-                                                        equipment: exercise.equipment,
-                                                        target: exercise.target,
-                                                    }
-                                                    : undefined
-                                            )
-                                                ? UI.weightPerDumbbell
-                                                : UI.weight
-                                        )}
-                                    unit="kg"
-                                />
-                                <HorizontalWheelPicker
-                                    className="w-full"
-                                    value={addPerfReps}
-                                    onChange={setAddPerfReps}
-                                    min={1}
-                                    max={100}
-                                    step={1}
-                                    label={UI.reps}
-                                />
-                            </div>
-                            <DialogFooter className="gap-2 sm:gap-0">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setAddPerfOpen(false)}
-                                >
-                                    {UI.cancel}
-                                </Button>
-                                <Button type="submit" disabled={addPerfReps <= 0}>
-                                    {UI.save}
-                                </Button>
-                            </DialogFooter>
-                        </form>
                     </DialogContent>
                 </Dialog>
 

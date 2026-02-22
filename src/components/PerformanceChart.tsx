@@ -12,6 +12,8 @@ import {
 
 interface Props {
     entries: PerformanceEntry[]
+    /** Appelé au clic sur un point (date au format YYYY-MM-DD) */
+    onDayClick?: (date: string) => void
 }
 
 function formatDate(dateStr: string) {
@@ -22,12 +24,45 @@ function formatDate(dateStr: string) {
     })
 }
 
-export function PerformanceChart({ entries }: Props) {
-    const data = entries.map((e) => ({
+/** Regroupe les entries par jour et garde la meilleure perf (poids puis reps) */
+function getBestPerDayAndAllByDate(entries: PerformanceEntry[]) {
+    const allByDate = new Map<string, PerformanceEntry[]>()
+    const bestByDate = new Map<string, PerformanceEntry>()
+    for (const e of entries) {
+        const key = e.date
+        if (!allByDate.has(key)) allByDate.set(key, [])
+        allByDate.get(key)!.push(e)
+        const existing = bestByDate.get(key)
+        if (
+            !existing ||
+            e.weight > existing.weight ||
+            (e.weight === existing.weight && e.reps > existing.reps)
+        ) {
+            bestByDate.set(key, e)
+        }
+    }
+    const bestList = [...bestByDate.values()].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    )
+    return { bestList, allByDate }
+}
+
+function formatPerfLabel(weight: number, reps: number): string {
+    const weightLabel =
+        weight === 0
+            ? `${UI.bodyWeightAbbr} (${UI.bodyWeightOnly})`
+            : `${weight} kg`
+    return `${weightLabel} × ${reps} reps`
+}
+
+export function PerformanceChart({ entries, onDayClick }: Props) {
+    const { bestList, allByDate } = getBestPerDayAndAllByDate(entries)
+    const data = bestList.map((e) => ({
         date: formatDate(e.date),
         weight: e.weight,
         reps: e.reps,
         fullDate: e.date,
+        allEntries: allByDate.get(e.date) ?? [],
     }))
 
     const lineColor = '#97d756'
@@ -59,28 +94,30 @@ export function PerformanceChart({ entries }: Props) {
                             borderRadius: '8px',
                             color: '#fff',
                         }}
-                        labelFormatter={(_, payload) =>
-                            payload[0]?.payload?.fullDate
-                                ? new Date(payload[0].payload.fullDate).toLocaleDateString(
-                                    'fr-FR',
-                                    {
-                                        weekday: 'long',
-                                        day: 'numeric',
-                                        month: 'long',
-                                    }
-                                )
-                                : ''
-                        }
-                        formatter={(value: number, _name, item: { payload?: { reps?: number } }) => {
-                            const reps = item?.payload?.reps
-                            const weightLabel =
-                                value === 0
-                                    ? `${UI.bodyWeightAbbr} (${UI.bodyWeightOnly})`
-                                    : `${value} kg`
-                            const label = reps != null
-                                ? `${weightLabel} × ${reps} reps`
-                                : weightLabel
-                            return [label, '']
+                        content={({ active, payload }) => {
+                            if (!active || !payload?.length) return null
+                            const { fullDate, allEntries } = payload[0].payload as {
+                                fullDate: string
+                                allEntries: PerformanceEntry[]
+                            }
+                            if (!fullDate) return null
+                            const dateLabel = new Date(fullDate).toLocaleDateString('fr-FR', {
+                                weekday: 'long',
+                                day: 'numeric',
+                                month: 'long',
+                            })
+                            return (
+                                <div className="px-3 py-2 min-w-[140px]">
+                                    <div className="font-medium mb-2">{dateLabel}</div>
+                                    <ul className="space-y-1 text-sm text-muted-foreground">
+                                        {allEntries.map((entry, i) => (
+                                            <li key={entry.id ?? i}>
+                                                {formatPerfLabel(entry.weight, entry.reps)}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )
                         }}
                     />
                     <Line
@@ -88,8 +125,49 @@ export function PerformanceChart({ entries }: Props) {
                         dataKey="weight"
                         stroke={lineColor}
                         strokeWidth={2.5}
-                        dot={{ fill: lineColor, strokeWidth: 0, r: 4 }}
-                        activeDot={{ fill: lineColor, stroke: '#fff', strokeWidth: 2, r: 5 }}
+                        dot={(props) => {
+                            const { cx, cy, payload, key } = props
+                            if (cx == null || cy == null) return null
+                            return (
+                                <g
+                                    key={key}
+                                    onClick={() => onDayClick?.(payload.fullDate)}
+                                    style={{
+                                        cursor: onDayClick ? 'pointer' : 'default',
+                                    }}
+                                >
+                                    <circle
+                                        cx={cx}
+                                        cy={cy}
+                                        r={4}
+                                        fill={lineColor}
+                                        strokeWidth={0}
+                                    />
+                                </g>
+                            )
+                        }}
+                        activeDot={(props) => {
+                            const { cx, cy, payload, key } = props
+                            if (cx == null || cy == null) return null
+                            return (
+                                <g
+                                    key={key}
+                                    onClick={() => onDayClick?.(payload.fullDate)}
+                                    style={{
+                                        cursor: onDayClick ? 'pointer' : 'default',
+                                    }}
+                                >
+                                    <circle
+                                        cx={cx}
+                                        cy={cy}
+                                        r={5}
+                                        fill={lineColor}
+                                        stroke="#fff"
+                                        strokeWidth={2}
+                                    />
+                                </g>
+                            )
+                        }}
                     />
                 </LineChart>
             </ResponsiveContainer>

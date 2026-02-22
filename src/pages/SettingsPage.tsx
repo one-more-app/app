@@ -11,9 +11,10 @@ import { getUserProfile, setUserProfile } from '@/lib/storage'
 import { UI } from '@/lib/translations'
 import { ArrowLeft } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useBack } from '@/hooks/use-back'
 
 export function SettingsPage() {
+    const goBack = useBack()
     const [weightKg, setWeightKg] = useState<string>('')
     const [heightCm, setHeightCm] = useState<string>('')
     const [gender, setGender] = useState<'male' | 'female'>('male')
@@ -37,10 +38,8 @@ export function SettingsPage() {
         <div className="min-h-screen bg-background">
             <header className="sticky top-0 z-10 border-b border-white/10 bg-black px-4 py-4">
                 <div className="mx-auto flex max-w-2xl items-center gap-4">
-                    <Button variant="ghost" size="icon" asChild>
-                        <Link to="/">
-                            <ArrowLeft className="size-5" />
-                        </Link>
+                    <Button variant="ghost" size="icon" onClick={goBack}>
+                        <ArrowLeft className="size-5" />
                     </Button>
                     <h1 className="truncate text-lg font-semibold">{UI.settings}</h1>
                 </div>

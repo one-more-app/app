@@ -7,6 +7,7 @@ import HomePage from '@/pages/HomePage'
 import { ExerciseCatalogDetailPage } from '@/pages/ExerciseCatalogDetailPage'
 import { ExerciseListPage } from '@/pages/ExerciseListPage'
 import { ExerciseDetailPage } from '@/pages/ExerciseDetailPage'
+import { ExerciseDayDetailPage } from '@/pages/ExerciseDayDetailPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
         <Route path="/exercises/:id" element={<ExerciseCatalogDetailPage />} />
         <Route path="/exercises" element={<ExerciseListPage />} />
         <Route path="/exercise/:id" element={<ExerciseDetailPage />} />
+        <Route path="/exercise/:id/day/:date" element={<ExerciseDayDetailPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Routes>
     </HashRouter>

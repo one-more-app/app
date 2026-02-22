@@ -1,3 +1,4 @@
+import { AddPerfDrawer } from '@/components/AddPerfDrawer'
 import { BodyWeightLabel } from '@/components/BodyWeightLabel'
 import { LeagueBadge } from '@/components/LeagueBadge'
 import { Badge } from '@/components/ui/badge'
@@ -7,12 +8,15 @@ import { getExerciseImageUrl } from '@/lib/exercisedb'
 import type { LeagueInfo } from '@/lib/strength-standards'
 import { UI, translateBodyPart, translateTarget } from '@/lib/translations'
 import { Dumbbell, Plus, Trophy } from 'lucide-react'
+import { useState } from 'react'
 
 export interface ExerciseCardExercise {
     id: string
     name: string
+    originalName?: string
     bodyPart?: string
     target?: string
+    equipment?: string
     gifUrl?: string
     isCustom?: boolean
 }
@@ -28,8 +32,8 @@ interface ExerciseCardProps {
     personalBest?: ExerciseCardPerf | null
     /** Info ligue (calculée à partir du PB et du profil) */
     leagueInfo?: LeagueInfo | null
-    /** Callback au clic sur le bouton d'ajout de performance */
-    onAddPerf: () => void
+    /** Callback après sauvegarde d'une performance (ouvre le drawer puis sauvegarde) */
+    onSavePerf: (weight: number, reps: number) => void
     /** Rendre la carte cliquable (ex: navigation vers la page détail) */
     onClick?: () => void
     /** Taille de l'image : 'sm' (12) ou 'md' (14) */
@@ -43,13 +47,15 @@ export function ExerciseCard({
     lastPerf,
     personalBest,
     leagueInfo,
-    onAddPerf,
+    onSavePerf,
     onClick,
     imageSize = 'md',
 }: ExerciseCardProps) {
     const sizeClass = imageSizes[imageSize]
+    const [drawerOpen, setDrawerOpen] = useState(false)
 
     return (
+        <>
         <Card
             className={onClick ? 'relative transition-colors hover:bg-muted/50 gap-2 cursor-pointer' : 'gap-2'}
             onClick={onClick}
@@ -94,7 +100,7 @@ export function ExerciseCard({
                     onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
-                        onAddPerf()
+                        setDrawerOpen(true)
                     }}
                     aria-label={UI.newPerf}
                 >
@@ -153,5 +159,15 @@ export function ExerciseCard({
                 </div>
             </CardContent>
         </Card>
+
+        <AddPerfDrawer
+            open={drawerOpen}
+            onOpenChange={setDrawerOpen}
+            exercise={exercise}
+            initialWeight={lastPerf?.weight ?? 0}
+            initialReps={lastPerf?.reps ?? 1}
+            onSave={onSavePerf}
+        />
+        </>
     )
 }

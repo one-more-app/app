@@ -95,10 +95,6 @@ export function savePerformance(
   const entries = getPerformanceEntries();
   const today = new Date().toISOString().slice(0, 10);
 
-  const lastEntryForExercise = entries
-    .filter((e) => e.trackedExerciseId === trackedExerciseId)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-
   const newEntry: PerformanceEntry = {
     id: crypto.randomUUID(),
     trackedExerciseId,
@@ -108,23 +104,33 @@ export function savePerformance(
     createdAt: new Date().toISOString(),
   };
 
-  if (lastEntryForExercise && lastEntryForExercise.date === today) {
-    const updated = entries.map((e) =>
-      e.id === lastEntryForExercise.id
-        ? { ...e, weight, reps, createdAt: newEntry.createdAt }
-        : e,
-    );
-    setPerformanceEntries(updated);
-    return {
-      ...lastEntryForExercise,
-      weight,
-      reps,
-      createdAt: newEntry.createdAt,
-    };
-  }
-
   setPerformanceEntries([...entries, newEntry]);
   return newEntry;
+}
+
+export function deletePerformance(entryId: string): void {
+  const entries = getPerformanceEntries().filter((e) => e.id !== entryId);
+  setPerformanceEntries(entries);
+}
+
+export function updatePerformance(
+  entryId: string,
+  weight: number,
+  reps: number,
+): PerformanceEntry | null {
+  const entries = getPerformanceEntries();
+  const idx = entries.findIndex((e) => e.id === entryId);
+  if (idx === -1) return null;
+  const updated: PerformanceEntry = {
+    ...entries[idx],
+    weight,
+    reps,
+    createdAt: new Date().toISOString(),
+  };
+  const newEntries = [...entries];
+  newEntries[idx] = updated;
+  setPerformanceEntries(newEntries);
+  return updated;
 }
 
 export function getLastPerformance(

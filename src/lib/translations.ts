@@ -52,7 +52,7 @@ export const TARGETS: Record<string, string> = {
   rhomboids: "Rhomboïdes",
   "levator scapulae": "Élévateur de la scapula",
   neck: "Cou",
-  "sternocleidomastoid": "Sterno-cléido-mastoïdien",
+  sternocleidomastoid: "Sterno-cléido-mastoïdien",
   cardio: "Cardio",
   "cardiovascular system": "Système cardiovasculaire",
   back: "Dos",
@@ -75,6 +75,25 @@ export const TARGETS: Record<string, string> = {
   "ankle stabilizers": "Stabilisateurs de cheville",
   "full body": "Corps entier",
 };
+
+/** Groupes d'équipements unifiés dans les filtres */
+export const EQUIPMENT_GROUPS: Record<
+  string,
+  { ids: string[]; label: string }
+> = {
+  barres: {
+    ids: ["barbell", "olympic barbell", "ez barbell"],
+    label: "Barre / Barre EZ",
+  },
+  machines_lever_smith: {
+    ids: ["leverage machine", "smith machine"],
+    label: "Machine à levier / Smith",
+  },
+};
+
+const EQUIPMENT_IN_GROUPS = new Set(
+  Object.values(EQUIPMENT_GROUPS).flatMap((g) => g.ids),
+);
 
 export const EQUIPMENT: Record<string, string> = {
   // Liste complète ExerciseDB API v1
@@ -111,7 +130,43 @@ export const EQUIPMENT: Record<string, string> = {
   tire: "Pneu",
   "pull-up bar": "Barre de traction",
   "yoga mat": "Tapis de yoga",
+  // Groupes d'équipements (pour les filtres)
+  barres: "Barre",
+  machines_lever_smith: "Machine",
 };
+
+/** Transforme une liste brute d'équipements en liste avec groupes unifiés */
+export function getGroupedEquipmentList(rawList: string[]): string[] {
+  const result: string[] = [];
+  const hasBarres = rawList.some((e) =>
+    EQUIPMENT_GROUPS.barres.ids.includes(e.toLowerCase()),
+  );
+  const hasMachines = rawList.some((e) =>
+    EQUIPMENT_GROUPS.machines_lever_smith.ids.includes(e.toLowerCase()),
+  );
+  if (hasBarres) result.push("barres");
+  if (hasMachines) result.push("machines_lever_smith");
+  for (const eq of rawList) {
+    if (!EQUIPMENT_IN_GROUPS.has(eq.toLowerCase())) result.push(eq);
+  }
+  return result.sort((a, b) => {
+    const labelA = translateEquipment(a);
+    const labelB = translateEquipment(b);
+    return labelA.localeCompare(labelB);
+  });
+}
+
+/** Indique si un équipement d'exercice correspond au filtre (inclut les groupes) */
+export function equipmentMatchesFilter(
+  exEquipment: string | undefined,
+  filterValue: string,
+): boolean {
+  if (!exEquipment) return false;
+  const eq = exEquipment.toLowerCase();
+  const group = EQUIPMENT_GROUPS[filterValue];
+  if (group) return group.ids.includes(eq);
+  return eq === filterValue.toLowerCase();
+}
 
 export function translateBodyPart(en: string): string {
   return BODY_PARTS[en.toLowerCase()] ?? en;
@@ -158,6 +213,8 @@ export const UI = {
   save: "Enregistrer",
   delete: "Supprimer",
   history: "Historique",
+  performanceList: "Liste des performances",
+  noPerfForDay: "Aucune performance pour ce jour.",
   recordPerf: "Enregistrer une perf",
   newPerf: "Nouvelle performance",
   options: "Options",
@@ -173,6 +230,9 @@ export const UI = {
   apiErrorCustom:
     "Vous pouvez créer des exercices personnalisés avec le bouton « Personnalisé ».",
   confirmDelete: "Supprimer cet exercice de votre suivi ?",
+  confirmDeletePerf: "Supprimer cette performance ?",
+  modifyPerf: "Modifier",
+  deletePerf: "Supprimer",
   placeholderExerciseName: "Ex: Développé militaire",
   searchExercise: "Rechercher un exercice...",
   loading: "Chargement...",

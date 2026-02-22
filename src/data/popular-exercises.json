@@ -1,91 +1,22 @@
 [
   {
-    "id": "vrhHa6D",
-    "name": "assisted parallel close grip pull-up",
-    "bodyPart": "back",
-    "target": "lats",
-    "equipment": "leverage machine",
+    "id": "NAkmgdx",
+    "name": "arms overhead full sit-up (male)",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
     "secondaryMuscles": [
-      "biceps",
-      "forearms"
+      "hip flexors",
+      "lower back"
     ],
     "instructions": [
-      "Step:1 Adjust the machine to your desired weight and height.",
-      "Step:2 Place your hands on the parallel bars with a close grip, palms facing each other.",
-      "Step:3 Hang from the bars with your arms fully extended and your feet off the ground.",
-      "Step:4 Engage your back muscles and pull your body up towards the bars, keeping your elbows close to your body.",
-      "Step:5 Continue pulling until your chin is above the bars.",
-      "Step:6 Pause for a moment at the top, then slowly lower your body back down to the starting position.",
-      "Step:7 Repeat for the desired number of repetitions."
+      "Step:1 Lie flat on your back with your knees bent and feet flat on the ground.",
+      "Step:2 Extend your arms overhead, keeping them straight.",
+      "Step:3 Engaging your abs, slowly lift your upper body off the ground, curling forward until your torso is upright.",
+      "Step:4 Pause for a moment at the top, then slowly lower your upper body back down to the starting position.",
+      "Step:5 Repeat for the desired number of repetitions."
     ],
-    "gifUrl": "https://static.exercisedb.dev/media/vrhHa6D.gif",
-    "nameFr": "Assisted Parallel Prise serrée Prise Tractions"
-  },
-  {
-    "id": "kiJ4Z2K",
-    "name": "assisted pull-up",
-    "bodyPart": "back",
-    "target": "lats",
-    "equipment": "leverage machine",
-    "secondaryMuscles": [
-      "biceps",
-      "forearms"
-    ],
-    "instructions": [
-      "Step:1 Adjust the machine to your desired weight and height settings.",
-      "Step:2 Grasp the handles with an overhand grip, slightly wider than shoulder-width apart.",
-      "Step:3 Hang with your arms fully extended and your feet off the ground.",
-      "Step:4 Engage your back muscles and pull your body up towards the handles, keeping your elbows close to your body.",
-      "Step:5 Continue pulling until your chin is above the handles.",
-      "Step:6 Pause for a moment at the top, then slowly lower your body back down to the starting position.",
-      "Step:7 Repeat for the desired number of repetitions."
-    ],
-    "gifUrl": "https://static.exercisedb.dev/media/kiJ4Z2K.gif",
-    "nameFr": "Assisted Tractions"
-  },
-  {
-    "id": "7OeHptV",
-    "name": "assisted standing chin-up",
-    "bodyPart": "back",
-    "target": "lats",
-    "equipment": "leverage machine",
-    "secondaryMuscles": [
-      "biceps",
-      "forearms"
-    ],
-    "instructions": [
-      "Step:1 Adjust the machine to your desired assistance level.",
-      "Step:2 Stand on the foot platform and grip the handles with an overhand grip, slightly wider than shoulder-width apart.",
-      "Step:3 Keep your chest up and shoulders back, engage your core, and slightly bend your knees.",
-      "Step:4 Pull your body up by flexing your elbows and driving your elbows down towards your sides.",
-      "Step:5 Continue pulling until your chin is above the bar.",
-      "Step:6 Pause for a moment at the top, then slowly lower your body back down to the starting position.",
-      "Step:7 Repeat for the desired number of repetitions."
-    ],
-    "gifUrl": "https://static.exercisedb.dev/media/7OeHptV.gif",
-    "nameFr": "Assisted Debout Tractions supination"
-  },
-  {
-    "id": "f4xtKBj",
-    "name": "assisted standing pull-up",
-    "bodyPart": "back",
-    "target": "lats",
-    "equipment": "leverage machine",
-    "secondaryMuscles": [
-      "biceps",
-      "forearms"
-    ],
-    "instructions": [
-      "Step:1 Adjust the machine to your desired weight and height settings.",
-      "Step:2 Stand facing the machine with your feet shoulder-width apart.",
-      "Step:3 Grasp the handles with an overhand grip, slightly wider than shoulder-width apart.",
-      "Step:4 Engage your lats and biceps, and pull yourself up towards the handles.",
-      "Step:5 Pause for a moment at the top, squeezing your back muscles.",
-      "Step:6 Slowly lower yourself back down to the starting position.",
-      "Step:7 Repeat for the desired number of repetitions."
-    ],
-    "gifUrl": "https://static.exercisedb.dev/media/f4xtKBj.gif",
-    "nameFr": "Assisted Debout Tractions"
+    "gifUrl": "https://static.exercisedb.dev/media/NAkmgdx.gif"
   },
   {
     "id": "Y7YcmIJ",
@@ -2121,6 +2052,96 @@
     "nameFr": "Couché Pull-ups"
   },
   {
+    "id": "sJFIDIp",
+    "name": "biceps leg concentration curl",
+    "bodyPart": "upper arms",
+    "target": "biceps",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "forearms"
+    ],
+    "instructions": [
+      "Step:1 Sit on a bench with your legs spread apart and your feet flat on the ground.",
+      "Step:2 Hold a dumbbell in one hand and place your elbow on the inside of your thigh, just above the knee.",
+      "Step:3 With your palm facing up, curl the dumbbell towards your shoulder while keeping your upper arm stationary.",
+      "Step:4 Squeeze your biceps at the top of the movement, then slowly lower the dumbbell back to the starting position.",
+      "Step:5 Repeat for the desired number of repetitions, then switch arms."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/sJFIDIp.gif"
+  },
+  {
+    "id": "50BETrz",
+    "name": "biceps narrow pull-ups",
+    "bodyPart": "upper arms",
+    "target": "biceps",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "forearms",
+      "shoulders"
+    ],
+    "instructions": [
+      "Step:1 Hang from a pull-up bar with your palms facing towards you and your hands shoulder-width apart.",
+      "Step:2 Engage your core and pull yourself up towards the bar, focusing on using your biceps to lift your body.",
+      "Step:3 Pause for a moment at the top, then slowly lower yourself back down to the starting position.",
+      "Step:4 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/50BETrz.gif"
+  },
+  {
+    "id": "guT8YnS",
+    "name": "biceps pull-up",
+    "bodyPart": "upper arms",
+    "target": "biceps",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "forearms",
+      "shoulders"
+    ],
+    "instructions": [
+      "Step:1 Hang from a pull-up bar with your palms facing away from you and your hands shoulder-width apart.",
+      "Step:2 Engage your core and pull yourself up by bending your elbows, bringing your chest towards the bar.",
+      "Step:3 Pause at the top of the movement, then slowly lower yourself back down to the starting position.",
+      "Step:4 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/guT8YnS.gif"
+  },
+  {
+    "id": "5VXmnV5",
+    "name": "bodyweight incline side plank",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "obliques",
+      "shoulders"
+    ],
+    "instructions": [
+      "Step:1 Start by lying on your side with your legs extended and stacked on top of each other.",
+      "Step:2 Place your forearm on the ground directly below your shoulder, with your elbow bent at a 90-degree angle.",
+      "Step:3 Engage your core and lift your hips off the ground, creating a straight line from your head to your feet.",
+      "Step:4 Hold this position for the desired amount of time.",
+      "Step:5 Lower your hips back down to the ground and repeat on the other side."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/5VXmnV5.gif"
+  },
+  {
+    "id": "gscGLOU",
+    "name": "bodyweight side lying biceps curl",
+    "bodyPart": "upper arms",
+    "target": "biceps",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "forearms"
+    ],
+    "instructions": [
+      "Step:1 Lie on your side with your legs extended and your head supported by your arm.",
+      "Step:2 Hold your upper arm against your side and bend your elbow to curl your forearm towards your shoulder.",
+      "Step:3 Pause for a moment at the top, then slowly lower your forearm back down to the starting position.",
+      "Step:4 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/gscGLOU.gif"
+  },
+  {
     "id": "3xK09Sk",
     "name": "bodyweight squatting row",
     "bodyPart": "back",
@@ -2159,6 +2180,25 @@
     ],
     "gifUrl": "https://static.exercisedb.dev/media/BReCuOn.gif",
     "nameFr": "Poids du corps Squatting Rowing Avec Towel)"
+  },
+  {
+    "id": "bJYHBIN",
+    "name": "bodyweight standing calf raise",
+    "bodyPart": "lower legs",
+    "target": "calves",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "ankles",
+      "feet"
+    ],
+    "instructions": [
+      "Step:1 Stand with your feet shoulder-width apart, toes pointing forward.",
+      "Step:2 Place your hands on a wall or stable surface for balance.",
+      "Step:3 Slowly raise your heels off the ground, lifting your body weight onto the balls of your feet.",
+      "Step:4 Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
+      "Step:5 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/bJYHBIN.gif"
   },
   {
     "id": "xbkPfaw",
@@ -2223,28 +2263,6 @@
     ],
     "gifUrl": "https://static.exercisedb.dev/media/uTv34oq.gif",
     "nameFr": "Poids du corps Debout Rowing Avec Towel)"
-  },
-  {
-    "id": "zHEpuuc",
-    "name": "cable assisted inverse leg curl",
-    "bodyPart": "upper legs",
-    "target": "hamstrings",
-    "equipment": "cable",
-    "secondaryMuscles": [
-      "glutes",
-      "calves"
-    ],
-    "instructions": [
-      "Step:1 Adjust the cable machine so that the ankle attachment is at the lowest setting.",
-      "Step:2 Lie face down on the bench with your legs straight and the ankle attachment secured to your ankles.",
-      "Step:3 Hold onto the handles of the bench for stability.",
-      "Step:4 Keeping your upper body stationary, exhale and curl your legs up towards your glutes by flexing your knees.",
-      "Step:5 Pause for a moment at the top of the movement, squeezing your hamstrings.",
-      "Step:6 Inhale and slowly lower your legs back to the starting position.",
-      "Step:7 Repeat for the desired number of repetitions."
-    ],
-    "gifUrl": "https://static.exercisedb.dev/media/zHEpuuc.gif",
-    "nameFr": "Poulie Assisted Inverse Jambe Curl"
   },
   {
     "id": "eYnzaCm",
@@ -4299,6 +4317,25 @@
     "nameFr": "Poulie Poignet Curl"
   },
   {
+    "id": "m0tCHqc",
+    "name": "calf stretch with hands against wall",
+    "bodyPart": "lower legs",
+    "target": "calves",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "hamstrings"
+    ],
+    "instructions": [
+      "Step:1 Stand facing a wall with your feet hip-width apart.",
+      "Step:2 Place your hands against the wall at shoulder height.",
+      "Step:3 Step your right foot back, keeping your heel on the ground and your leg straight.",
+      "Step:4 Bend your left knee and lean forward, keeping your back leg straight and your heel on the ground.",
+      "Step:5 Hold the stretch for 20-30 seconds.",
+      "Step:6 Switch legs and repeat the stretch."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/m0tCHqc.gif"
+  },
+  {
     "id": "R5swFnc",
     "name": "cambered bar lying row",
     "bodyPart": "back",
@@ -4482,6 +4519,79 @@
     "nameFr": "Prise serrée Prise Tractions supination"
   },
   {
+    "id": "rbu5UUb",
+    "name": "cross body crunch",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "obliques"
+    ],
+    "instructions": [
+      "Step:1 Lie flat on your back with your knees bent and feet flat on the ground.",
+      "Step:2 Place your hands behind your head with your elbows pointing outwards.",
+      "Step:3 Engaging your abs, lift your upper body off the ground and twist to bring your right elbow towards your left knee.",
+      "Step:4 Pause for a moment at the top, then slowly lower your upper body back down to the starting position.",
+      "Step:5 Repeat on the other side, bringing your left elbow towards your right knee.",
+      "Step:6 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/rbu5UUb.gif"
+  },
+  {
+    "id": "kjJ3VoQ",
+    "name": "crunch (hands overhead)",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "hip flexors"
+    ],
+    "instructions": [
+      "Step:1 Lie flat on your back with your knees bent and feet flat on the ground.",
+      "Step:2 Extend your arms straight above your head.",
+      "Step:3 Engaging your abs, lift your upper body off the ground, curling forward towards your knees.",
+      "Step:4 Pause for a moment at the top, then slowly lower your upper body back down to the starting position.",
+      "Step:5 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/kjJ3VoQ.gif"
+  },
+  {
+    "id": "TFqbd8t",
+    "name": "crunch floor",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "hip flexors"
+    ],
+    "instructions": [
+      "Step:1 Lie flat on your back with your knees bent and feet flat on the ground.",
+      "Step:2 Place your hands behind your head with your elbows pointing outwards.",
+      "Step:3 Engage your abs and lift your shoulders off the ground, curling forward towards your knees.",
+      "Step:4 Pause for a moment at the top, then slowly lower your shoulders back down to the starting position.",
+      "Step:5 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/TFqbd8t.gif"
+  },
+  {
+    "id": "g2oKspu",
+    "name": "curl-up",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "hip flexors"
+    ],
+    "instructions": [
+      "Step:1 Lie flat on your back with your knees bent and feet flat on the ground.",
+      "Step:2 Place your hands behind your head with your elbows pointing outwards.",
+      "Step:3 Engaging your abs, slowly lift your upper body off the ground, curling forward until your torso is at a 45-degree angle.",
+      "Step:4 Pause for a moment at the top, then slowly lower your upper body back down to the starting position.",
+      "Step:5 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/g2oKspu.gif"
+  },
+  {
     "id": "gUjqdei",
     "name": "curtsey squat",
     "bodyPart": "upper legs",
@@ -4502,6 +4612,24 @@
     ],
     "gifUrl": "https://static.exercisedb.dev/media/gUjqdei.gif",
     "nameFr": "Curtsey Squat"
+  },
+  {
+    "id": "9Ap7miY",
+    "name": "decline crunch",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "hip flexors"
+    ],
+    "instructions": [
+      "Step:1 Lie on a decline bench with your feet secured and your knees bent at a 90-degree angle.",
+      "Step:2 Place your hands behind your head or across your chest.",
+      "Step:3 Engage your abs and lift your upper body towards your knees, curling your torso.",
+      "Step:4 Pause for a moment at the top, then slowly lower your upper body back down to the starting position.",
+      "Step:5 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/9Ap7miY.gif"
   },
   {
     "id": "i5cEhka",
@@ -4561,6 +4689,25 @@
     ],
     "gifUrl": "https://static.exercisedb.dev/media/soIB2rj.gif",
     "nameFr": "Diamond Push-up"
+  },
+  {
+    "id": "u5ESqzH",
+    "name": "donkey calf raise",
+    "bodyPart": "lower legs",
+    "target": "calves",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "hamstrings",
+      "glutes"
+    ],
+    "instructions": [
+      "Step:1 Stand with your toes on an elevated surface, such as a step or block.",
+      "Step:2 Place your hands on a stable support, such as a wall or railing, for balance.",
+      "Step:3 Raise your heels as high as possible, lifting your body weight onto the balls of your feet.",
+      "Step:4 Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
+      "Step:5 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/u5ESqzH.gif"
   },
   {
     "id": "Q497lAE",
@@ -8044,6 +8191,45 @@
     "nameFr": "Forward Fente (male)"
   },
   {
+    "id": "FFRP97T",
+    "name": "frog crunch",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "hip flexors"
+    ],
+    "instructions": [
+      "Step:1 Lie flat on your back with your knees bent and feet flat on the ground.",
+      "Step:2 Place your hands behind your head with your elbows pointing outwards.",
+      "Step:3 Engaging your abs, lift your upper body off the ground, curling forward until your torso is at a 45-degree angle.",
+      "Step:4 Pause for a moment at the top, then slowly lower your upper body back down to the starting position.",
+      "Step:5 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/FFRP97T.gif"
+  },
+  {
+    "id": "CosupLu",
+    "name": "front plank with twist",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "obliques",
+      "shoulders"
+    ],
+    "instructions": [
+      "Step:1 Start in a high plank position with your hands directly under your shoulders and your body in a straight line from head to toe.",
+      "Step:2 Engage your core and glutes to maintain a stable position.",
+      "Step:3 Rotate your torso to the right, lifting your right arm and extending it towards the ceiling.",
+      "Step:4 Keep your hips and legs stable as you twist.",
+      "Step:5 Hold for a moment, then return to the starting position.",
+      "Step:6 Repeat the twist on the left side.",
+      "Step:7 Continue alternating sides for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/CosupLu.gif"
+  },
+  {
     "id": "IL0JUxR",
     "name": "gironda sternum chin",
     "bodyPart": "back",
@@ -8064,6 +8250,45 @@
     ],
     "gifUrl": "https://static.exercisedb.dev/media/IL0JUxR.gif",
     "nameFr": "Gironda Sternum Chin"
+  },
+  {
+    "id": "bmwlYvD",
+    "name": "gorilla chin",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "forearms",
+      "biceps"
+    ],
+    "instructions": [
+      "Step:1 Stand with your feet shoulder-width apart and your knees slightly bent.",
+      "Step:2 Grasp a pull-up bar with an overhand grip, slightly wider than shoulder-width apart.",
+      "Step:3 Hang from the bar with your arms fully extended and your palms facing away from you.",
+      "Step:4 Engage your core and pull your body up towards the bar, bringing your chin above the bar.",
+      "Step:5 Pause for a moment at the top, then slowly lower your body back down to the starting position.",
+      "Step:6 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/bmwlYvD.gif"
+  },
+  {
+    "id": "mWppALS",
+    "name": "groin crunch",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "hip flexors",
+      "inner thighs"
+    ],
+    "instructions": [
+      "Step:1 Lie flat on your back with your knees bent and feet flat on the ground.",
+      "Step:2 Place your hands behind your head with your elbows pointing outwards.",
+      "Step:3 Engaging your abs, lift your legs off the ground, bringing your knees towards your chest.",
+      "Step:4 Pause for a moment at the top, then slowly lower your legs back down to the starting position.",
+      "Step:5 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/mWppALS.gif"
   },
   {
     "id": "P9ZRyLT",
@@ -8275,6 +8500,24 @@
     "nameFr": "Inversé Rowing Avec Straps"
   },
   {
+    "id": "dTg95eZ",
+    "name": "knee touch crunch",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "hip flexors"
+    ],
+    "instructions": [
+      "Step:1 Lie flat on your back with your knees bent and feet flat on the ground.",
+      "Step:2 Place your hands behind your head with your elbows pointing outwards.",
+      "Step:3 Engaging your abs, lift your shoulder blades off the ground and reach your right hand towards your left knee.",
+      "Step:4 Return to the starting position and repeat, this time reaching your left hand towards your right knee.",
+      "Step:5 Continue alternating sides for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/dTg95eZ.gif"
+  },
+  {
     "id": "d1GgzTU",
     "name": "l-pull-up",
     "bodyPart": "back",
@@ -8316,26 +8559,23 @@
     "nameFr": "Landmine Latéral Élévation"
   },
   {
-    "id": "MaMuGH6",
-    "name": "lever assisted chin-up",
-    "bodyPart": "back",
-    "target": "lats",
-    "equipment": "leverage machine",
+    "id": "OyoZ3Pu",
+    "name": "leg pull in flat bench",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
     "secondaryMuscles": [
-      "biceps",
-      "forearms"
+      "hip flexors",
+      "lower back"
     ],
     "instructions": [
-      "Step:1 Adjust the leverage machine to your desired resistance level.",
-      "Step:2 Stand on the foot platform and grip the handles with an overhand grip, slightly wider than shoulder-width apart.",
-      "Step:3 Hang with your arms fully extended, keeping your body straight.",
-      "Step:4 Engage your back muscles and pull your body up towards the handles, leading with your chest.",
-      "Step:5 Continue pulling until your chin is above the handles.",
-      "Step:6 Pause for a moment at the top, then slowly lower your body back down to the starting position.",
-      "Step:7 Repeat for the desired number of repetitions."
+      "Step:1 Sit on a flat bench with your legs extended straight out in front of you.",
+      "Step:2 Place your hands on the bench beside your hips for support.",
+      "Step:3 Engage your abs and lift your legs off the ground, bringing your knees towards your chest.",
+      "Step:4 Pause for a moment at the top, then slowly lower your legs back down to the starting position.",
+      "Step:5 Repeat for the desired number of repetitions."
     ],
-    "gifUrl": "https://static.exercisedb.dev/media/MaMuGH6.gif",
-    "nameFr": "Levier Assisted Tractions supination"
+    "gifUrl": "https://static.exercisedb.dev/media/OyoZ3Pu.gif"
   },
   {
     "id": "rUXfn3R",
@@ -9398,6 +9638,45 @@
     "nameFr": "Lower Dos Curl"
   },
   {
+    "id": "K9VL0Jq",
+    "name": "lunge with twist",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "quadriceps",
+      "glutes",
+      "hamstrings"
+    ],
+    "instructions": [
+      "Step:1 Start by standing with your feet shoulder-width apart.",
+      "Step:2 Take a step forward with your right foot, lowering your body into a lunge position.",
+      "Step:3 As you lunge, twist your torso to the right, bringing your left elbow towards your right knee.",
+      "Step:4 Pause for a moment, then return to the starting position.",
+      "Step:5 Repeat on the other side, stepping forward with your left foot and twisting your torso to the left.",
+      "Step:6 Continue alternating sides for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/K9VL0Jq.gif"
+  },
+  {
+    "id": "WhuFnR7",
+    "name": "lying leg raise flat bench",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "hip flexors"
+    ],
+    "instructions": [
+      "Step:1 Lie flat on a flat bench with your back pressed against it.",
+      "Step:2 Place your hands under your glutes for support.",
+      "Step:3 Keep your legs straight and together, and lift them up towards the ceiling.",
+      "Step:4 Pause for a moment at the top, then slowly lower your legs back down to the starting position.",
+      "Step:5 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/WhuFnR7.gif"
+  },
+  {
     "id": "wDN97Ca",
     "name": "machine inner chest press",
     "bodyPart": "chest",
@@ -9479,6 +9758,43 @@
     ],
     "gifUrl": "https://static.exercisedb.dev/media/arvaszz.gif",
     "nameFr": "Modified Poussée Up To Lower Arms"
+  },
+  {
+    "id": "szIn2UK",
+    "name": "negative crunch",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "hip flexors"
+    ],
+    "instructions": [
+      "Step:1 Lie flat on your back with your knees bent and feet flat on the ground.",
+      "Step:2 Place your hands behind your head with your elbows pointing outwards.",
+      "Step:3 Engaging your abs, slowly lift your upper body off the ground, curling forward until your torso is at a 45-degree angle.",
+      "Step:4 Pause for a moment at the top, then slowly lower your upper body back down to the starting position.",
+      "Step:5 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/szIn2UK.gif"
+  },
+  {
+    "id": "cJgSTmh",
+    "name": "oblique crunch v. 2",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "obliques"
+    ],
+    "instructions": [
+      "Step:1 Lie on your back with your knees bent and feet flat on the ground.",
+      "Step:2 Place your hands behind your head or cross them over your chest.",
+      "Step:3 Engage your abs and lift your shoulder blades off the ground, rotating your torso to one side.",
+      "Step:4 Pause for a moment, then lower your shoulder blades back down to the starting position.",
+      "Step:5 Repeat on the other side.",
+      "Step:6 Continue alternating sides for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/cJgSTmh.gif"
   },
   {
     "id": "HjdqmZa",
@@ -9582,6 +9898,27 @@
     ],
     "gifUrl": "https://static.exercisedb.dev/media/Z5YStHW.gif",
     "nameFr": "Au-dessus de la tête Triceps Stretch"
+  },
+  {
+    "id": "hCjGsRQ",
+    "name": "power point plank",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "shoulders",
+      "triceps",
+      "glutes"
+    ],
+    "instructions": [
+      "Step:1 Start in a high plank position with your hands directly under your shoulders and your body in a straight line from head to toe.",
+      "Step:2 Engage your core and squeeze your glutes to maintain a stable position.",
+      "Step:3 Lower your body down onto your forearms, one arm at a time, maintaining a straight line from head to toe.",
+      "Step:4 Hold this position for the desired amount of time, keeping your core and glutes engaged.",
+      "Step:5 To return to the starting position, push through your forearms and lift your body back up into a high plank position.",
+      "Step:6 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/hCjGsRQ.gif"
   },
   {
     "id": "0V2YQjW",
@@ -9772,6 +10109,28 @@
     "nameFr": "Push-up Plus"
   },
   {
+    "id": "KhHJ338",
+    "name": "push-up to side plank",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "shoulders",
+      "chest",
+      "triceps"
+    ],
+    "instructions": [
+      "Step:1 Start in a push-up position with your hands shoulder-width apart and your body in a straight line.",
+      "Step:2 Lower your body towards the ground by bending your elbows, keeping your core engaged.",
+      "Step:3 Push back up to the starting position.",
+      "Step:4 Shift your weight onto your left hand and rotate your body to the right, lifting your right arm towards the ceiling.",
+      "Step:5 Hold the side plank position for a few seconds, then return to the starting position.",
+      "Step:6 Repeat the push-up and side plank on the opposite side.",
+      "Step:7 Continue alternating sides for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/KhHJ338.gif"
+  },
+  {
     "id": "13TpY4H",
     "name": "raise single arm push-up",
     "bodyPart": "chest",
@@ -9812,6 +10171,24 @@
     ],
     "gifUrl": "https://static.exercisedb.dev/media/CbFSYC1.gif",
     "nameFr": "Arrière Tractions"
+  },
+  {
+    "id": "nCU1Ekp",
+    "name": "reverse crunch",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "hip flexors"
+    ],
+    "instructions": [
+      "Step:1 Lie flat on your back with your arms extended along your sides.",
+      "Step:2 Bend your knees and lift your feet off the ground, bringing your thighs perpendicular to the floor.",
+      "Step:3 Contract your abs and curl your hips off the floor, bringing your knees towards your chest.",
+      "Step:4 Pause for a moment at the top, then slowly lower your hips back down to the starting position.",
+      "Step:5 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/nCU1Ekp.gif"
   },
   {
     "id": "NZ5Qqkz",
@@ -9896,6 +10273,27 @@
     "nameFr": "Prise inversée Hyper On Flat Couché"
   },
   {
+    "id": "tFToB7l",
+    "name": "reverse plank with leg lift",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "shoulders"
+    ],
+    "instructions": [
+      "Step:1 Sit on the ground with your legs extended in front of you and your hands resting on the ground behind you, fingers pointing towards your feet.",
+      "Step:2 Press through your hands and lift your hips off the ground, coming into a reverse plank position.",
+      "Step:3 Engage your core and lift one leg off the ground, extending it straight up towards the ceiling.",
+      "Step:4 Hold for a moment, then lower your leg back down.",
+      "Step:5 Repeat with the other leg.",
+      "Step:6 Continue alternating legs for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/tFToB7l.gif"
+  },
+  {
     "id": "cQ19bBP",
     "name": "rocky pull-up pulldown",
     "bodyPart": "back",
@@ -9958,6 +10356,44 @@
     "nameFr": "Scapular Tractions"
   },
   {
+    "id": "17bqEXD",
+    "name": "seated calf stretch (male)",
+    "bodyPart": "lower legs",
+    "target": "calves",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "hamstrings"
+    ],
+    "instructions": [
+      "Step:1 Sit on the edge of a chair or bench with your feet flat on the ground.",
+      "Step:2 Extend one leg straight out in front of you, keeping your heel on the ground.",
+      "Step:3 Lean forward slightly, feeling a stretch in your calf muscle.",
+      "Step:4 Hold the stretch for 20-30 seconds.",
+      "Step:5 Switch legs and repeat the stretch."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/17bqEXD.gif"
+  },
+  {
+    "id": "Y9hNPcN",
+    "name": "seated side crunch (wall)",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "obliques"
+    ],
+    "instructions": [
+      "Step:1 Sit on the floor with your back against a wall and your legs extended in front of you.",
+      "Step:2 Bend your knees and place your feet flat on the floor, hip-width apart.",
+      "Step:3 Place your hands behind your head with your elbows pointing outwards.",
+      "Step:4 Engage your abs and lean to one side, bringing your elbow towards your hip.",
+      "Step:5 Pause for a moment, then return to the starting position.",
+      "Step:6 Repeat on the other side.",
+      "Step:7 Continue alternating sides for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/Y9hNPcN.gif"
+  },
+  {
     "id": "YtgD7Xq",
     "name": "shoulder grip pull-up",
     "bodyPart": "back",
@@ -9998,6 +10434,26 @@
     ],
     "gifUrl": "https://static.exercisedb.dev/media/qEse6fe.gif",
     "nameFr": "Épaule Tap Push-up"
+  },
+  {
+    "id": "VO2qeJg",
+    "name": "side plank hip adduction",
+    "bodyPart": "upper legs",
+    "target": "adductors",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "obliques",
+      "glutes"
+    ],
+    "instructions": [
+      "Step:1 Start by lying on your side with your legs extended and stacked on top of each other.",
+      "Step:2 Prop yourself up on your forearm, keeping your elbow directly below your shoulder.",
+      "Step:3 Engage your core and lift your hips off the ground, creating a straight line from your head to your feet.",
+      "Step:4 While maintaining the side plank position, lift your top leg towards the ceiling, keeping it straight.",
+      "Step:5 Slowly lower your leg back down to the starting position.",
+      "Step:6 Repeat for the desired number of repetitions, then switch sides."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/VO2qeJg.gif"
   },
   {
     "id": "wpbD28t",
@@ -11063,6 +11519,27 @@
     "nameFr": "Debout Behind Neck Développé"
   },
   {
+    "id": "qOKcgVP",
+    "name": "standing calves calf stretch",
+    "bodyPart": "lower legs",
+    "target": "calves",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "hamstrings",
+      "glutes"
+    ],
+    "instructions": [
+      "Step:1 Stand facing a wall or sturdy object, about an arm's length away.",
+      "Step:2 Place your hands on the wall or object at shoulder height.",
+      "Step:3 Step back with one foot, keeping your heel flat on the ground.",
+      "Step:4 Bend your front knee slightly and lean forward, keeping your back leg straight.",
+      "Step:5 You should feel a stretch in your calf muscle.",
+      "Step:6 Hold the stretch for 20-30 seconds.",
+      "Step:7 Repeat on the other leg."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/qOKcgVP.gif"
+  },
+  {
     "id": "DQ0cqkT",
     "name": "three bench dip",
     "bodyPart": "upper arms",
@@ -11162,6 +11639,24 @@
     "nameFr": "Triceps Développé"
   },
   {
+    "id": "BMMolZ3",
+    "name": "tuck crunch",
+    "bodyPart": "waist",
+    "target": "abs",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "hip flexors"
+    ],
+    "instructions": [
+      "Step:1 Lie flat on your back with your knees bent and feet flat on the ground.",
+      "Step:2 Place your hands behind your head with your elbows pointing outwards.",
+      "Step:3 Engaging your abs, lift your shoulder blades off the ground and bring your knees towards your chest, simultaneously curling your upper body towards your knees.",
+      "Step:4 Pause for a moment at the top, then slowly lower your shoulder blades and extend your legs back to the starting position.",
+      "Step:5 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/BMMolZ3.gif"
+  },
+  {
     "id": "rkg41Fb",
     "name": "twin handle parallel grip lat pulldown",
     "bodyPart": "back",
@@ -11184,6 +11679,29 @@
     ],
     "gifUrl": "https://static.exercisedb.dev/media/rkg41Fb.gif",
     "nameFr": "Twin Handle Parallel Prise Lat Tirage vertical"
+  },
+  {
+    "id": "J9zIWig",
+    "name": "walking high knees lunge",
+    "bodyPart": "cardio",
+    "target": "cardiovascular system",
+    "equipment": "body weight",
+    "secondaryMuscles": [
+      "quadriceps",
+      "hamstrings",
+      "glutes",
+      "calves"
+    ],
+    "instructions": [
+      "Step:1 Stand with your feet hip-width apart.",
+      "Step:2 Lift your right knee up towards your chest as high as you can while balancing on your left leg.",
+      "Step:3 Step forward with your right foot and lower your body into a lunge position, bending both knees to a 90-degree angle.",
+      "Step:4 Push off with your right foot and bring your left knee up towards your chest.",
+      "Step:5 Step forward with your left foot and lower your body into a lunge position.",
+      "Step:6 Continue alternating legs and lunging forward, keeping your core engaged and maintaining a steady pace.",
+      "Step:7 Repeat for the desired number of repetitions."
+    ],
+    "gifUrl": "https://static.exercisedb.dev/media/J9zIWig.gif"
   },
   {
     "id": "IZVHb27",
