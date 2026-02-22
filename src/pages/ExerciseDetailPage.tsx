@@ -44,6 +44,8 @@ export function ExerciseDetailPage() {
         lastPerf,
         personalBest,
         savePerformance,
+        deletePerformance,
+        updatePerformance,
         refresh,
     } = usePerformance(id ?? null)
     const profile = getUserProfile()
@@ -219,7 +221,16 @@ export function ExerciseDetailPage() {
                         <CardContent className="pl-0 pb-0">
                             <PerformanceChart
                                 entries={entries}
-                                onDayClick={(date) => id && navigate(`/exercise/${id}/day/${date}`)}
+                                exercise={{
+                                    id: exercise.id,
+                                    name: exercise.name,
+                                    originalName: exercise.originalName,
+                                    equipment: exercise.equipment,
+                                    target: exercise.target,
+                                }}
+                                onDelete={deletePerformance}
+                                onUpdate={updatePerformance}
+                                onRefresh={refresh}
                             />
                         </CardContent>
                     </Card>

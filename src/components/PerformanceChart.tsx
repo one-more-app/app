@@ -1,19 +1,29 @@
+import { useState } from 'react'
+import { AddPerfDrawer, type AddPerfDrawerExercise } from '@/components/AddPerfDrawer'
+import { Button } from '@/components/ui/button'
+import {
+    Popover,
+    PopoverAnchor,
+    PopoverContent,
+} from '@/components/ui/popover'
 import { UI } from '@/lib/translations'
 import type { PerformanceEntry } from '@/types'
+import { Pencil, Trash2 } from 'lucide-react'
 import {
     CartesianGrid,
     Line,
     LineChart,
     ResponsiveContainer,
-    Tooltip,
     XAxis,
     YAxis,
 } from 'recharts'
 
 interface Props {
     entries: PerformanceEntry[]
-    /** Appelé au clic sur un point (date au format YYYY-MM-DD) */
-    onDayClick?: (date: string) => void
+    exercise: AddPerfDrawerExercise
+    onDelete: (entryId: string) => void
+    onUpdate: (entryId: string, weight: number, reps: number) => void
+    onRefresh: () => void
 }
 
 function formatDate(dateStr: string) {
@@ -55,7 +65,14 @@ function formatPerfLabel(weight: number, reps: number): string {
     return `${weightLabel} × ${reps} reps`
 }
 
-export function PerformanceChart({ entries, onDayClick }: Props) {
+export function PerformanceChart({ entries, exercise, onDelete, onUpdate, onRefresh }: Props) {
+    const [selectedPoint, setSelectedPoint] = useState<{
+        fullDate: string
+        allEntries: PerformanceEntry[]
+        x: number
+        y: number
+    } | null>(null)
+    const [editPerfEntry, setEditPerfEntry] = useState<PerformanceEntry | null>(null)
     const { bestList, allByDate } = getBestPerDayAndAllByDate(entries)
     const data = bestList.map((e) => ({
         date: formatDate(e.date),
@@ -69,8 +86,116 @@ export function PerformanceChart({ entries, onDayClick }: Props) {
     const gridColor = 'rgba(255, 255, 255, 0.1)'
     const tickColor = 'rgba(255, 255, 255, 0.6)'
 
+    const handleDotClick = (e: React.MouseEvent, fullDate: string, allEntries: PerformanceEntry[]) => {
+        setSelectedPoint({
+            fullDate,
+            allEntries,
+            x: e.clientX,
+            y: e.clientY,
+        })
+    }
+
+    const handleDelete = (entryId: string) => {
+        if (confirm(UI.confirmDeletePerf)) {
+            onDelete(entryId)
+            onRefresh()
+            setSelectedPoint((prev) =>
+                prev && prev.allEntries.length <= 1
+                    ? null
+                    : prev
+                        ? {
+                            ...prev,
+                            allEntries: prev.allEntries.filter((e) => e.id !== entryId),
+                        }
+                        : null
+            )
+        }
+    }
+
     return (
-        <div className="h-[250px] w-full">
+        <div className="h-[250px] w-full relative">
+            <Popover
+                open={!!selectedPoint}
+                onOpenChange={(open) => !open && setSelectedPoint(null)}
+            >
+                {selectedPoint && (
+                    <PopoverAnchor
+                        style={{
+                            position: 'fixed',
+                            left: selectedPoint.x,
+                            top: selectedPoint.y,
+                            width: 1,
+                            height: 1,
+                        }}
+                    />
+                )}
+                <PopoverContent
+                    className="w-auto min-w-[160px] p-0 bg-popover border border-border"
+                    align="center"
+                    side="top"
+                    sideOffset={8}
+                >
+                    {selectedPoint && (
+                        <div className="px-3 py-2">
+                            <div className="font-medium mb-2">
+                                {new Date(selectedPoint.fullDate).toLocaleDateString('fr-FR', {
+                                    weekday: 'long',
+                                    day: 'numeric',
+                                    month: 'long',
+                                })}
+                            </div>
+                            <ul className="space-y-2">
+                                {[...selectedPoint.allEntries].reverse().map((entry, i) => (
+                                    <li
+                                        key={entry.id ?? i}
+                                        className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-2 py-1.5"
+                                    >
+                                        <span className="text-sm font-medium">
+                                            {formatPerfLabel(entry.weight, entry.reps)}
+                                        </span>
+                                        <div className="flex items-center gap-0.5">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7"
+                                                onClick={() => {
+                                                    setEditPerfEntry(entry)
+                                                    setSelectedPoint(null)
+                                                }}
+                                                aria-label={UI.modifyPerf}
+                                            >
+                                                <Pencil className="size-3.5" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                                onClick={() => handleDelete(entry.id)}
+                                                aria-label={UI.deletePerf}
+                                            >
+                                                <Trash2 className="size-3.5" />
+                                            </Button>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </PopoverContent>
+            </Popover>
+            <AddPerfDrawer
+                open={editPerfEntry !== null}
+                onOpenChange={(open) => !open && setEditPerfEntry(null)}
+                exercise={exercise}
+                initialWeight={editPerfEntry?.weight ?? 0}
+                initialReps={editPerfEntry?.reps ?? 1}
+                entryId={editPerfEntry?.id}
+                onUpdate={(entryId, weight, reps) => {
+                    onUpdate(entryId, weight, reps)
+                    onRefresh()
+                    setEditPerfEntry(null)
+                }}
+            />
             <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -87,39 +212,6 @@ export function PerformanceChart({ entries, onDayClick }: Props) {
                         axisLine={{ stroke: gridColor }}
                         tickLine={{ stroke: gridColor }}
                     />
-                    <Tooltip
-                        contentStyle={{
-                            backgroundColor: 'hsl(220 13% 18%)',
-                            border: '1px solid rgba(255,255,255,0.15)',
-                            borderRadius: '8px',
-                            color: '#fff',
-                        }}
-                        content={({ active, payload }) => {
-                            if (!active || !payload?.length) return null
-                            const { fullDate, allEntries } = payload[0].payload as {
-                                fullDate: string
-                                allEntries: PerformanceEntry[]
-                            }
-                            if (!fullDate) return null
-                            const dateLabel = new Date(fullDate).toLocaleDateString('fr-FR', {
-                                weekday: 'long',
-                                day: 'numeric',
-                                month: 'long',
-                            })
-                            return (
-                                <div className="px-3 py-2 min-w-[140px]">
-                                    <div className="font-medium mb-2">{dateLabel}</div>
-                                    <ul className="space-y-1 text-sm text-muted-foreground">
-                                        {allEntries.map((entry, i) => (
-                                            <li key={entry.id ?? i}>
-                                                {formatPerfLabel(entry.weight, entry.reps)}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )
-                        }}
-                    />
                     <Line
                         type="monotone"
                         dataKey="weight"
@@ -128,13 +220,15 @@ export function PerformanceChart({ entries, onDayClick }: Props) {
                         dot={(props) => {
                             const { cx, cy, payload, key } = props
                             if (cx == null || cy == null) return null
+                            const { fullDate, allEntries } = payload as {
+                                fullDate: string
+                                allEntries: PerformanceEntry[]
+                            }
                             return (
                                 <g
                                     key={key}
-                                    onClick={() => onDayClick?.(payload.fullDate)}
-                                    style={{
-                                        cursor: onDayClick ? 'pointer' : 'default',
-                                    }}
+                                    onClick={(e) => handleDotClick(e, fullDate, allEntries)}
+                                    style={{ cursor: 'pointer' }}
                                 >
                                     <circle
                                         cx={cx}
@@ -149,13 +243,15 @@ export function PerformanceChart({ entries, onDayClick }: Props) {
                         activeDot={(props) => {
                             const { cx, cy, payload, key } = props
                             if (cx == null || cy == null) return null
+                            const { fullDate, allEntries } = payload as {
+                                fullDate: string
+                                allEntries: PerformanceEntry[]
+                            }
                             return (
                                 <g
                                     key={key}
-                                    onClick={() => onDayClick?.(payload.fullDate)}
-                                    style={{
-                                        cursor: onDayClick ? 'pointer' : 'default',
-                                    }}
+                                    onClick={(e) => handleDotClick(e, fullDate, allEntries)}
+                                    style={{ cursor: 'pointer' }}
                                 >
                                     <circle
                                         cx={cx}
