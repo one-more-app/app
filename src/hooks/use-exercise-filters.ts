@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 export interface ExerciseFilterParams {
   target: string;
@@ -35,7 +35,9 @@ function getParamsFromUrl(
 }
 
 export function useExerciseFilters(options: UseExerciseFiltersOptions = {}) {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const paramsFromUrl = getParamsFromUrl(searchParams, options);
 
   const [targetFilter, setTargetFilter] = useState(paramsFromUrl.target);
@@ -66,7 +68,7 @@ export function useExerciseFilters(options: UseExerciseFiltersOptions = {}) {
 
   const updateUrl = (
     updates: Partial<ExerciseFilterParams> & { page?: number },
-    replace = false,
+    replace = true,
   ) => {
     const next = new URLSearchParams(searchParams);
     if (updates.target !== undefined) {
@@ -89,7 +91,11 @@ export function useExerciseFilters(options: UseExerciseFiltersOptions = {}) {
       if (updates.page === 0) next.delete("page");
       else next.set("page", String(updates.page));
     }
-    setSearchParams(next, { replace });
+    const search = next.toString();
+    navigate(
+      { pathname: location.pathname, search: search ? `?${search}` : "" },
+      { replace },
+    );
   };
 
   // Update URL when search query changes (replace to avoid history spam while typing)
@@ -100,9 +106,19 @@ export function useExerciseFilters(options: UseExerciseFiltersOptions = {}) {
       if (searchQuery) next.set("q", searchQuery);
       else next.delete("q");
       if (options.includePage) next.delete("page");
-      setSearchParams(next, { replace: true });
+      const search = next.toString();
+      navigate(
+        { pathname: location.pathname, search: search ? `?${search}` : "" },
+        { replace: true },
+      );
     }
-  }, [searchQuery, searchParams, setSearchParams, options.includePage]);
+  }, [
+    searchQuery,
+    searchParams,
+    navigate,
+    location.pathname,
+    options.includePage,
+  ]);
 
   const handleTargetChange = (value: string) => {
     setTargetFilter(value);

@@ -44,9 +44,9 @@ import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength
 import {
     equipmentMatchesFilter,
     getGroupedEquipmentList,
-    UI,
     translateBodyPart,
     translateTarget,
+    UI,
 } from '@/lib/translations'
 import type { ExerciseDBExercise } from '@/types'
 import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react'

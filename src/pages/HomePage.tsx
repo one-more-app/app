@@ -6,10 +6,9 @@ import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useHomeData } from '@/hooks/use-home-data'
 import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
 import { CARDIO_EQUIPMENT } from '@/lib/exercisedb'
-import { equipmentMatchesFilter, getGroupedEquipmentList } from '@/lib/translations'
 import { getUserProfile, savePerformance } from '@/lib/storage'
 import { getLeagueInfo } from '@/lib/strength-standards'
-import { UI } from '@/lib/translations'
+import { equipmentMatchesFilter, getGroupedEquipmentList, UI } from '@/lib/translations'
 import { Dumbbell, Plus, Settings } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -187,7 +186,7 @@ function HomePage() {
                                             lastPerf={ex.lastPerf}
                                             personalBest={ex.personalBest}
                                             leagueInfo={leagueInfo}
-                                            onClick={() => navigate(`/exercise/${ex.id}`)}
+                                            onClick={() => navigate(`/exercise/${ex.id}`, { replace: false })}
                                             onSavePerf={(weight, reps) => {
                                                 savePerformance(ex.id, weight, reps)
                                                 refresh()
@@ -195,7 +194,7 @@ function HomePage() {
                                         />
                                     </li>
                                 )
-                            }                            )}
+                            })}
                         </ul>
                         {filteredExercises.length === 0 &&
                             (bodyPartFilter !== 'all' ||
