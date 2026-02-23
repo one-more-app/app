@@ -56,118 +56,118 @@ export function ExerciseCard({
 
     return (
         <>
-        <Card
-            className={onClick ? 'relative transition-colors hover:bg-muted/50 gap-2 cursor-pointer' : 'gap-2'}
-            onClick={onClick}
-        >
-            <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                {!exercise.isCustom && exercise.gifUrl ? (
-                    <img
-                        src={getExerciseImageUrl(exercise.gifUrl)}
-                        alt=""
-                        className={`${sizeClass} rounded-lg object-cover bg-muted`}
-                        onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none'
+            <Card
+                className={onClick ? 'relative transition-colors hover:bg-muted/50 gap-2 cursor-pointer' : 'gap-2'}
+                onClick={onClick}
+            >
+                <CardHeader className="flex flex-row items-center gap-4 pb-2">
+                    {!exercise.isCustom && exercise.gifUrl ? (
+                        <img
+                            src={getExerciseImageUrl(exercise.gifUrl)}
+                            alt=""
+                            className={`${sizeClass} rounded-lg object-cover bg-muted`}
+                            onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none'
+                            }}
+                        />
+                    ) : (
+                        <div className={`${sizeClass} flex items-center justify-center rounded-lg bg-muted`}>
+                            <Dumbbell className="size-6 text-accent" />
+                        </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                        <CardTitle className="truncate text-base capitalize">
+                            {exercise.name}
+                        </CardTitle>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            {(exercise.bodyPart || exercise.target) && (
+                                <Badge variant="secondary">
+                                    {(exercise.bodyPart && translateBodyPart(exercise.bodyPart)) ||
+                                        (exercise.target && translateTarget(exercise.target)) ||
+                                        exercise.bodyPart ||
+                                        exercise.target}
+                                </Badge>
+                            )}
+                            {leagueInfo && (
+                                <LeagueBadge league={leagueInfo} compact />
+                            )}
+                        </div>
+                    </div>
+                    <Button
+                        size="icon"
+                        variant="accent"
+                        className="size-11 shrink-0 rounded-full"
+                        onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setDrawerOpen(true)
                         }}
-                    />
-                ) : (
-                    <div className={`${sizeClass} flex items-center justify-center rounded-lg bg-muted`}>
-                        <Dumbbell className="size-6 text-accent" />
-                    </div>
-                )}
-                <div className="min-w-0 flex-1">
-                    <CardTitle className="truncate text-base capitalize">
-                        {exercise.name}
-                    </CardTitle>
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                        {(exercise.bodyPart || exercise.target) && (
-                            <Badge variant="secondary">
-                                {(exercise.bodyPart && translateBodyPart(exercise.bodyPart)) ||
-                                    (exercise.target && translateTarget(exercise.target)) ||
-                                    exercise.bodyPart ||
-                                    exercise.target}
-                            </Badge>
-                        )}
-                        {leagueInfo && (
-                            <LeagueBadge league={leagueInfo} compact />
-                        )}
-                    </div>
-                </div>
-                <Button
-                    size="icon"
-                    variant="accent"
-                    className="size-11 shrink-0 rounded-full"
-                    onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        setDrawerOpen(true)
-                    }}
-                    aria-label={UI.newPerf}
-                >
-                    <Plus className="size-5" />
-                </Button>
-            </CardHeader>
-            <CardContent className="border-t pb-0">
-                <div className="flex gap-4 text-sm">
-                    <div className="flex flex-1 flex-col items-start gap-1 rounded-lg border bg-muted/30 p-3">
-                        <span className="text-muted-foreground">{UI.last}</span>
-                        {lastPerf ? (
-                            <span className="flex items-center gap-1">
-                                <span className="text-2xl font-bold text-primary">
-                                    {lastPerf.weight === 0 ? (
-                                        <BodyWeightLabel className="text-2xl font-bold italic text-primary" />
-                                    ) : (
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-2xl font-bold italic text-primary">
-                                                {lastPerf.weight}
-                                            </span>
-                                            <span className="text-sm font-normal">kg</span>
-                                        </div>
-                                    )}
+                        aria-label={UI.newPerf}
+                    >
+                        <Plus className="size-5" />
+                    </Button>
+                </CardHeader>
+                <CardContent className="border-t pb-0">
+                    <div className="flex gap-4 text-sm">
+                        <div className="flex flex-1 flex-col items-start gap-1 rounded-lg border bg-muted/30 p-3">
+                                <span className="text-muted-foreground">{UI.last}</span>
+                                {lastPerf ? (
+                                    <span className="flex items-center gap-1">
+                                        <span className="text-2xl font-bold text-primary">
+                                            {lastPerf.weight === 0 ? (
+                                                <BodyWeightLabel className="text-2xl font-bold italic text-primary" />
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-2xl font-bold italic text-primary">
+                                                        {lastPerf.weight}
+                                                    </span>
+                                                    <span className="text-sm font-normal">kg</span>
+                                                </div>
+                                            )}
+                                        </span>
+                                        <span>× {lastPerf.reps} reps</span>
+                                    </span>
+                                ) : (
+                                    <span className="text-muted-foreground">—</span>
+                                )}
+                        </div>
+                        <div className="flex flex-1 flex-col items-start gap-1 rounded-lg border border-accent/30 bg-accent/5 p-3">
+                                <span className="flex items-center gap-1.5 font-medium text-primary">
+                                    <Trophy className="size-4" />
+                                    {UI.record}
                                 </span>
-                                <span>× {lastPerf.reps} reps</span>
-                            </span>
-                        ) : (
-                            <span className="text-muted-foreground">—</span>
-                        )}
+                                {personalBest ? (
+                                    <span className="flex items-center gap-1">
+                                        <span className="text-2xl font-bold text-primary">
+                                            {personalBest.weight === 0 ? (
+                                                <BodyWeightLabel className="text-2xl font-bold italic text-primary" />
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-2xl font-bold italic text-primary">
+                                                        {personalBest.weight}
+                                                    </span>
+                                                    <span className="text-sm font-normal">kg</span>
+                                                </div>
+                                            )}
+                                        </span>
+                                        <span>× {personalBest.reps} reps</span>
+                                    </span>
+                                ) : (
+                                    <span className="text-muted-foreground">—</span>
+                                )}
+                        </div>
                     </div>
-                    <div className="flex flex-1 flex-col items-start gap-1 rounded-lg border border-accent/30 bg-accent/5 p-3">
-                        <span className="flex items-center gap-1.5 font-medium text-primary">
-                            <Trophy className="size-4" />
-                            {UI.record}
-                        </span>
-                        {personalBest ? (
-                            <span className="flex items-center gap-1">
-                                <span className="text-2xl font-bold text-primary">
-                                    {personalBest.weight === 0 ? (
-                                        <BodyWeightLabel className="text-2xl font-bold italic text-primary" />
-                                    ) : (
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-2xl font-bold italic text-primary">
-                                                {personalBest.weight}
-                                            </span>
-                                            <span className="text-sm font-normal">kg</span>
-                                        </div>
-                                    )}
-                                </span>
-                                <span>× {personalBest.reps} reps</span>
-                            </span>
-                        ) : (
-                            <span className="text-muted-foreground">—</span>
-                        )}
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
 
-        <AddPerfDrawer
-            open={drawerOpen}
-            onOpenChange={setDrawerOpen}
-            exercise={exercise}
-            initialWeight={lastPerf?.weight ?? 0}
-            initialReps={lastPerf?.reps ?? 1}
-            onSave={onSavePerf}
-        />
+            <AddPerfDrawer
+                open={drawerOpen}
+                onOpenChange={setDrawerOpen}
+                exercise={exercise}
+                initialWeight={lastPerf?.weight ?? 0}
+                initialReps={lastPerf?.reps ?? 1}
+                onSave={onSavePerf}
+            />
         </>
     )
 }

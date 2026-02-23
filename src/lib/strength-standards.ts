@@ -936,3 +936,99 @@ export function getLeagueInfo(input: LeagueInput): LeagueInfo | null {
     percentileEstimate: Math.min(99, Math.max(1, percentileEstimate)),
   };
 }
+
+/**
+ * Recommandations de charge de travail selon le niveau (ligue).
+ *
+ * Références scientifiques :
+ * - Schoenfeld et al. (2017) J Sports Sci : 10+ sets/muscle/semaine pour hypertrophie optimale.
+ * - Schoenfeld et al. (2021) Sports : zone hypertrophie 60–80 % 1RM, 8–12 reps ; zone force 80–100 % 1RM, 1–5 reps.
+ * - ACSM (2009) Med Sci Sports Exerc : novice 8–12 RM ; intermédiaire 1–12 RM périodisé.
+ * - Baz-Valle et al. (2022) : 12–20 sets/semaine = volume modéré efficace.
+ *
+ * Hypothèse : 2 séances/semaine sur cet exercice → sets/séance × 2 ≈ volume hebdo.
+ */
+export interface WorkloadRecommendation {
+  /** Cible principale : ex. "4 séries × 8 reps à 57,5 kg" */
+  targetPrescription: string;
+  /** Nombre de séries cible (valeur exacte) */
+  targetSets: number;
+  /** Nombre de reps cible (valeur exacte) */
+  targetReps: number;
+  /** Charge cible en kg (arrondie au palier pratique) */
+  targetWeight: number;
+  /** Charge min de la plage (kg) */
+  weightMin: number;
+  /** Charge max de la plage (kg) */
+  weightMax: number;
+  /** Intensité cible en % du 1RM */
+  targetIntensity: number;
+  /** Plage d'intensité (ex: "65–75 %") */
+  intensityRange: string;
+  /** Clé de traduction pour le conseil */
+  tipKey: string;
+}
+
+/** Prescriptions basées sur la littérature : volume/séance × 2 séances ≈ 10 sets/semaine (Schoenfeld 2017). */
+const WORKLOAD_BY_LEVEL: Record<
+  LeagueLevel,
+  {
+    intensityTarget: number;
+    intensityMin: number;
+    intensityMax: number;
+    sets: number;
+    reps: number;
+    tipKey: string;
+  }
+> = {
+  // Débutant : 6–8 sets/sem (3–4 × 2) — ACSM novice 8–12 RM
+  iron: { intensityTarget: 65, intensityMin: 60, intensityMax: 70, sets: 3, reps: 10, tipKey: "workloadTipBeginner" },
+  bronze: { intensityTarget: 65, intensityMin: 60, intensityMax: 70, sets: 4, reps: 10, tipKey: "workloadTipBeginner" },
+  // Novice : 8–10 sets/sem — approche du seuil 10 sets (Schoenfeld)
+  silver: { intensityTarget: 70, intensityMin: 65, intensityMax: 75, sets: 4, reps: 8, tipKey: "workloadTipNovice" },
+  gold: { intensityTarget: 70, intensityMin: 65, intensityMax: 75, sets: 5, reps: 8, tipKey: "workloadTipNovice" },
+  // Intermédiaire : 10 sets/sem — Schoenfeld 2017 seuil minimal hypertrophie
+  platinum: { intensityTarget: 72, intensityMin: 65, intensityMax: 80, sets: 5, reps: 8, tipKey: "workloadTipIntermediate" },
+  emerald: { intensityTarget: 72, intensityMin: 65, intensityMax: 80, sets: 5, reps: 8, tipKey: "workloadTipIntermediate" },
+  // Avancé : 10–12 sets/sem — zone 12–20 (Baz-Valle 2022)
+  diamond: { intensityTarget: 75, intensityMin: 70, intensityMax: 85, sets: 5, reps: 6, tipKey: "workloadTipAdvanced" },
+  master: { intensityTarget: 80, intensityMin: 75, intensityMax: 88, sets: 5, reps: 5, tipKey: "workloadTipAdvanced" },
+  // Elite : périodisation force (80–100 % 1RM, 1–5 reps) — Schoenfeld 2021
+  elite: { intensityTarget: 85, intensityMin: 80, intensityMax: 92, sets: 4, reps: 4, tipKey: "workloadTipElite" },
+  legend: { intensityTarget: 87, intensityMin: 82, intensityMax: 95, sets: 4, reps: 4, tipKey: "workloadTipElite" },
+};
+
+/** Arrondit au palier pratique : 0.5 kg si < 40 kg, 1 kg si 40–120, 2.5 kg au-delà */
+function roundToPracticalStep(kg: number): number {
+  if (kg < 40) return Math.round(kg * 2) / 2;
+  if (kg < 120) return Math.round(kg);
+  return Math.round(kg / 2.5) * 2.5;
+}
+
+export function getRecommendedWorkload(
+  level: LeagueLevel,
+  oneRM: number,
+): WorkloadRecommendation {
+  const w = WORKLOAD_BY_LEVEL[level];
+  const rawTarget = (oneRM * w.intensityTarget) / 100;
+  const targetWeight = roundToPracticalStep(rawTarget);
+  const weightMin = roundToPracticalStep((oneRM * w.intensityMin) / 100);
+  const weightMax = roundToPracticalStep((oneRM * w.intensityMax) / 100);
+
+  const prescription =
+    weightMax === 0
+      ? `${w.reps} reps (poids du corps)`
+      : `${w.reps} reps à ${weightMax} kg`;
+
+  return {
+    targetPrescription: prescription,
+    targetSets: w.sets,
+    targetReps: w.reps,
+    targetWeight: weightMax,
+    weightMin,
+    weightMax,
+    targetIntensity: w.intensityTarget,
+    intensityRange: `${w.intensityMin}–${w.intensityMax} %`,
+    tipKey: w.tipKey,
+  };
+}

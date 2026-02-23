@@ -1,3 +1,4 @@
+import { BodyWeightLabel } from '@/components/BodyWeightLabel'
 import { ExerciseCard } from '@/components/ExerciseCard'
 import { LEAGUE_COLORS, LeagueBadge } from '@/components/LeagueBadge'
 import { PerformanceChart } from '@/components/PerformanceChart'
@@ -20,7 +21,7 @@ import {
     removeTrackedExercise,
     updateTrackedExercise,
 } from '@/lib/storage'
-import { getAllTiers, getLeagueInfo, isDumbbellExercise } from '@/lib/strength-standards'
+import { getAllTiers, getLeagueInfo, getRecommendedWorkload, isDumbbellExercise } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
 import { ArrowLeft, ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -120,6 +121,45 @@ export function ExerciseDetailPage() {
                         refresh()
                     }}
                 />
+
+                {leagueInfo && !exercise.isCustom && (
+                    <Card className="gap-0">
+                        <CardHeader className="gap-0">
+                            <div className="flex flex-wrap items-center justify-between gap-1.5">
+                                <h2 className="font-semibold m-0 p-0 flex items-center gap-2">
+                                    {UI.workloadRecommended}
+                                </h2>
+                                <Badge variant="secondary" className="text-xs font-normal">
+                                    {UI.workloadEvidenceBadge}
+                                </Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="flex gap-4 text-sm pb-0">
+                            <div className="flex flex-1 flex-col items-start gap-1 rounded-lg border border-accent/30 bg-accent/5 p-3">
+                                {(() => {
+                                    const workload = getRecommendedWorkload(leagueInfo.level, leagueInfo.oneRM)
+                                    return (
+                                        <span className="flex items-center gap-1">
+                                            <span className="text-2xl font-bold text-primary">
+                                                {workload.targetWeight === 0 ? (
+                                                    <BodyWeightLabel className="text-2xl font-bold italic text-primary" />
+                                                ) : (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-2xl font-bold italic text-primary">
+                                                            {workload.targetWeight}
+                                                        </span>
+                                                        <span className="text-sm font-normal">kg</span>
+                                                    </div>
+                                                )}
+                                            </span>
+                                            <span>× {workload.targetReps} reps</span>
+                                        </span>
+                                    )
+                                })()}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {leagueInfo && (
                     <Card className="gap-0">
