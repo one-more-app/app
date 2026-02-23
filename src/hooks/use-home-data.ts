@@ -16,6 +16,7 @@ export interface ExerciseWithPerf extends TrackedExercise {
 
 export function useHomeData() {
   const [exercisesWithPerf, setExercisesWithPerf] = useState<ExerciseWithPerf[]>([])
+  const [hasLoaded, setHasLoaded] = useState(false)
 
   const load = useCallback(() => {
     const tracked = getTrackedExercises()
@@ -25,6 +26,7 @@ export function useHomeData() {
       personalBest: getPersonalBest(ex.id),
     }))
     setExercisesWithPerf(withPerf)
+    setHasLoaded(true)
   }, [])
 
   useEffect(() => {
@@ -36,5 +38,5 @@ export function useHomeData() {
     load()
   }, [load])
 
-  return { exercises: exercisesWithPerf, removeExercise, refresh: load }
+  return { exercises: exercisesWithPerf, hasLoaded, removeExercise, refresh: load }
 }

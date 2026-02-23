@@ -244,7 +244,7 @@ export function ExerciseDetailPage() {
                             onClick={() => {
                                 if (id && confirm(UI.confirmDelete)) {
                                     removeTrackedExercise(id)
-                                    navigate('/')
+                                    navigate('/home')
                                 }
                             }}
                         >

@@ -14,7 +14,7 @@ import { useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 function HomePage() {
-    const { exercises, refresh } = useHomeData()
+    const { exercises, hasLoaded, refresh } = useHomeData()
     const navigate = useNavigate()
 
     const {
@@ -89,8 +89,11 @@ function HomePage() {
         return list
     }, [nonCardioExercises, bodyPartFilter, targetFilter, equipmentFilter, searchQuery])
 
-    // Réinitialiser les filtres si les options ne les contiennent plus (ex: exercice supprimé)
+    // Réinitialiser les filtres si les options ne les contiennent plus (ex: exercice supprimé).
+    // Ne s'exécute qu'après chargement des données pour éviter de réinitialiser à tort au retour
+    // arrière (quand exercises est encore vide, bodyParts/targets/equipmentList le seraient aussi).
     useEffect(() => {
+        if (!hasLoaded) return
         if (bodyPartFilter !== 'all' && !bodyParts.includes(bodyPartFilter)) {
             handleBodyPartChange('all')
         }
@@ -101,6 +104,7 @@ function HomePage() {
             handleEquipmentChange('all')
         }
     }, [
+        hasLoaded,
         bodyParts,
         bodyPartFilter,
         targets,

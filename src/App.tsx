@@ -7,7 +7,7 @@ import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { useEffect } from 'react'
-import { HashRouter, Route, Routes } from 'react-router-dom'
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 function App() {
     useEffect(() => {
@@ -37,7 +37,8 @@ function App() {
     return (
         <HashRouter>
             <Routes>
-                <Route path="/" element={<HomePage />} />
+                <Route path="/" element={<Navigate to="/home" replace />} />
+                <Route path="/home" element={<HomePage />} />
                 <Route path="/exercises/:id" element={<ExerciseCatalogDetailPage />} />
                 <Route path="/exercises" element={<ExerciseListPage />} />
                 <Route path="/exercise/:id" element={<ExerciseDetailPage />} />
