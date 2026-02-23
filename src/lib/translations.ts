@@ -261,22 +261,4 @@ export const UI = {
   tierRangeElite: "≥ {start} kg",
   remainingForNext: "Il te manque {kg} kg pour",
   allTiers: "Tous les paliers",
-
-  // Charge de travail conseillée
-  recommendedWorkload: "Charge de travail conseillée",
-  workloadRecommended: "Conseillé",
-  workloadEvidenceBadge: "Basé sur des études scientifiques",
-  workloadTarget: "Objectif",
-  workloadIntensity: "Intensité",
-  workloadWeight: "Plage",
-  workloadTipBeginner:
-    "ACSM : priorité à la technique. 2–3 séances/sem. Augmente la charge quand tu dépasses la cible de 1–2 reps.",
-  workloadTipNovice:
-    "Schoenfeld : vise 10 sets/sem pour cet exercice (5 × 2 séances). Progression : +2–5 % charge ou +1–2 reps quand cible atteinte.",
-  workloadTipIntermediate:
-    "10+ sets/sem = seuil minimal hypertrophie (Schoenfeld 2017). Périodise : 2 sem volume (10 sets), 1 sem force (6–8 sets lourd).",
-  workloadTipAdvanced:
-    "12–20 sets/sem optimal (Baz-Valle 2022). Alterne hypertrophie (6–10 reps) et force (4–6 reps) selon la phase.",
-  workloadTipElite:
-    "Zone force 80–100 % 1RM pour maximiser le 1RM (Schoenfeld 2021). Récupération 3–5 min entre séries. Spécificité = clé.",
 };

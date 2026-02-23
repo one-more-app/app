@@ -110,51 +110,51 @@ export function ExerciseCard({
                 <CardContent className="border-t pb-0">
                     <div className="flex gap-4 text-sm">
                         <div className="flex flex-1 flex-col items-start gap-1 rounded-lg border bg-muted/30 p-3">
-                                <span className="text-muted-foreground">{UI.last}</span>
-                                {lastPerf ? (
-                                    <span className="flex items-center gap-1">
-                                        <span className="text-2xl font-bold text-primary">
-                                            {lastPerf.weight === 0 ? (
-                                                <BodyWeightLabel className="text-2xl font-bold italic text-primary" />
-                                            ) : (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-2xl font-bold italic text-primary">
-                                                        {lastPerf.weight}
-                                                    </span>
-                                                    <span className="text-sm font-normal">kg</span>
-                                                </div>
-                                            )}
-                                        </span>
-                                        <span>× {lastPerf.reps} reps</span>
+                            <span className="text-muted-foreground">{UI.last}</span>
+                            {lastPerf ? (
+                                <span className="flex items-center gap-1">
+                                    <span className="text-2xl font-bold text-primary">
+                                        {lastPerf.weight === 0 ? (
+                                            <BodyWeightLabel className="text-2xl font-bold italic text-primary" />
+                                        ) : (
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-2xl font-bold italic text-primary">
+                                                    {lastPerf.weight}
+                                                </span>
+                                                <span className="text-sm font-normal">kg</span>
+                                            </div>
+                                        )}
                                     </span>
-                                ) : (
-                                    <span className="text-muted-foreground">—</span>
-                                )}
+                                    <span>× {lastPerf.reps} reps</span>
+                                </span>
+                            ) : (
+                                <span className="text-muted-foreground">—</span>
+                            )}
                         </div>
                         <div className="flex flex-1 flex-col items-start gap-1 rounded-lg border border-accent/30 bg-accent/5 p-3">
-                                <span className="flex items-center gap-1.5 font-medium text-primary">
-                                    <Trophy className="size-4" />
-                                    {UI.record}
-                                </span>
-                                {personalBest ? (
-                                    <span className="flex items-center gap-1">
-                                        <span className="text-2xl font-bold text-primary">
-                                            {personalBest.weight === 0 ? (
-                                                <BodyWeightLabel className="text-2xl font-bold italic text-primary" />
-                                            ) : (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-2xl font-bold italic text-primary">
-                                                        {personalBest.weight}
-                                                    </span>
-                                                    <span className="text-sm font-normal">kg</span>
-                                                </div>
-                                            )}
-                                        </span>
-                                        <span>× {personalBest.reps} reps</span>
+                            <span className="flex items-center gap-1.5 font-medium text-primary">
+                                <Trophy className="size-4" />
+                                {UI.record}
+                            </span>
+                            {personalBest ? (
+                                <span className="flex items-center gap-1">
+                                    <span className="text-2xl font-bold text-primary">
+                                        {personalBest.weight === 0 ? (
+                                            <BodyWeightLabel className="text-2xl font-bold italic text-primary" />
+                                        ) : (
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-2xl font-bold italic text-primary">
+                                                    {personalBest.weight}
+                                                </span>
+                                                <span className="text-sm font-normal">kg</span>
+                                            </div>
+                                        )}
                                     </span>
-                                ) : (
-                                    <span className="text-muted-foreground">—</span>
-                                )}
+                                    <span>× {personalBest.reps} reps</span>
+                                </span>
+                            ) : (
+                                <span className="text-muted-foreground">—</span>
+                            )}
                         </div>
                     </div>
                 </CardContent>
