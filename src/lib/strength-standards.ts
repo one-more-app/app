@@ -118,8 +118,8 @@ const STANDARDS_BY_EQUIPMENT_TARGET: Record<string, StandardsEntry> = {
     female: tiers([0, 0.1, 0.2, 0.31, 0.41, 0.51, 0.61, 0.72, 0.82, 0.92]),
   },
   dumbbell_upper_back: {
-    male: tiers([0, 0.05, 0.09, 0.14, 0.18, 0.23, 0.27, 0.32, 0.36, 0.41]),
-    female: tiers([0, 0.03, 0.07, 0.11, 0.14, 0.18, 0.21, 0.25, 0.28, 0.31]),
+    male: tiers([0, 0.12, 0.24, 0.36, 0.48, 0.6, 0.72, 0.84, 0.9, 0.96]),
+    female: tiers([0, 0.09, 0.17, 0.26, 0.34, 0.43, 0.51, 0.6, 0.64, 0.69]),
   },
   cable_upper_back: {
     male: tiers([0, 0.12, 0.25, 0.37, 0.5, 0.62, 0.75, 0.87, 1, 1.12]),
@@ -192,8 +192,8 @@ const STANDARDS_BY_EQUIPMENT_TARGET: Record<string, StandardsEntry> = {
     female: tiers([0, 0.3, 0.59, 0.89, 1.18, 1.48, 1.77, 2.07, 2.36, 2.66]),
   },
   barbell_hamstrings_rack: {
-    male: tiers([0, 0.31, 0.61, 0.92, 1.22, 1.54, 1.84, 2.15, 2.46, 2.76]),
-    female: tiers([0, 0.25, 0.5, 0.76, 1.01, 1.26, 1.51, 1.76, 2.02, 2.26]),
+    male: tiers([0, 0.45, 0.91, 1.36, 1.82, 2.27, 2.73, 3.18, 3.64, 4.1]),
+    female: tiers([0, 0.38, 0.76, 1.14, 1.51, 1.89, 2.27, 2.65, 3.02, 3.4]),
   },
 
   // --- TRICEPS ---
@@ -202,8 +202,8 @@ const STANDARDS_BY_EQUIPMENT_TARGET: Record<string, StandardsEntry> = {
     female: tiers([0, 0.08, 0.15, 0.23, 0.3, 0.38, 0.45, 0.53, 0.6, 0.68]),
   },
   dumbbell_triceps: {
-    male: tiers([0, 0.03, 0.07, 0.1, 0.14, 0.17, 0.2, 0.24, 0.27, 0.31]),
-    female: tiers([0, 0.03, 0.05, 0.08, 0.1, 0.13, 0.15, 0.18, 0.2, 0.23]),
+    male: tiers([0, 0.08, 0.16, 0.24, 0.32, 0.4, 0.48, 0.55, 0.62, 0.7]),
+    female: tiers([0, 0.06, 0.12, 0.18, 0.24, 0.3, 0.36, 0.42, 0.48, 0.53]),
   },
   cable_triceps: {
     male: tiers([0, 0.09, 0.18, 0.27, 0.36, 0.45, 0.54, 0.63, 0.72, 0.81]),
@@ -226,12 +226,12 @@ const STANDARDS_BY_EQUIPMENT_TARGET: Record<string, StandardsEntry> = {
 
   // --- POIDS DU CORPS (ratio = lest/BW uniquement, pas corps+lest) ---
   "body weight_lats": {
-    male: tiers([0, 0.08, 0.16, 0.24, 0.32, 0.4, 0.48, 0.56, 0.65, 0.75]),
-    female: tiers([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5]),
+    male: tiers([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.95]),
+    female: tiers([0, 0.06, 0.12, 0.18, 0.24, 0.3, 0.36, 0.42, 0.47, 0.55]),
   },
   "leverage machine_lats": {
-    male: tiers([0, 0.08, 0.16, 0.24, 0.32, 0.4, 0.48, 0.56, 0.65, 0.75]),
-    female: tiers([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5]),
+    male: tiers([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.95]),
+    female: tiers([0, 0.06, 0.12, 0.18, 0.24, 0.3, 0.36, 0.42, 0.47, 0.55]),
   },
   "body weight_triceps": {
     male: tiers([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1]),
@@ -254,14 +254,14 @@ const STANDARDS_BY_EQUIPMENT_TARGET: Record<string, StandardsEntry> = {
     female: tiers([0, 0.03, 0.06, 0.09, 0.12, 0.15, 0.18, 0.21, 0.24, 0.3]),
   },
 
-  // --- ISOLEMENT JAMBES ---
+  // --- ISOLEMENT JAMBES (Strength Level: extension Elite 2.5×, curl ~80% extension) ---
   machine_quads_extension: {
-    male: tiers([0, 0.14, 0.28, 0.42, 0.57, 0.71, 0.85, 0.99, 1.13, 1.27]),
-    female: tiers([0, 0.11, 0.23, 0.34, 0.45, 0.57, 0.68, 0.79, 0.9, 1.02]),
+    male: tiers([0, 0.28, 0.56, 0.83, 1.11, 1.39, 1.67, 1.94, 2.22, 2.5]),
+    female: tiers([0, 0.22, 0.44, 0.67, 0.89, 1.11, 1.33, 1.56, 1.78, 2.0]),
   },
   machine_hamstrings: {
-    male: tiers([0, 0.11, 0.22, 0.33, 0.44, 0.55, 0.66, 0.77, 0.88, 0.98]),
-    female: tiers([0, 0.09, 0.18, 0.27, 0.36, 0.44, 0.53, 0.62, 0.71, 0.8]),
+    male: tiers([0, 0.22, 0.44, 0.67, 0.89, 1.11, 1.33, 1.56, 1.78, 2.0]),
+    female: tiers([0, 0.18, 0.36, 0.53, 0.71, 0.89, 1.07, 1.24, 1.42, 1.6]),
   },
 
   // --- MOLETS ---
@@ -286,18 +286,18 @@ const STANDARDS_BY_EQUIPMENT_TARGET: Record<string, StandardsEntry> = {
     female: tiers([0, 0.02, 0.05, 0.07, 0.1, 0.12, 0.15, 0.17, 0.2, 0.22]),
   },
 
-  // --- HIP THRUST / GLUTE BRIDGE ---
+  // --- HIP THRUST / GLUTE BRIDGE (Strength Level: Elite 3.5×) ---
   barbell_glutes_hipthrust: {
-    male: tiers([0, 0.28, 0.57, 0.85, 1.13, 1.42, 1.7, 1.98, 2.27, 2.55]),
-    female: tiers([0, 0.23, 0.45, 0.68, 0.9, 1.13, 1.35, 1.58, 1.8, 2.03]),
+    male: tiers([0, 0.39, 0.78, 1.17, 1.56, 1.94, 2.33, 2.72, 3.11, 3.5]),
+    female: tiers([0, 0.31, 0.62, 0.93, 1.24, 1.56, 1.87, 2.18, 2.49, 2.8]),
   },
   barbell_glutes_bridge: {
-    male: tiers([0, 0.22, 0.45, 0.67, 0.9, 1.13, 1.35, 1.58, 1.8, 2.03]),
-    female: tiers([0, 0.18, 0.36, 0.54, 0.72, 0.9, 1.08, 1.26, 1.44, 1.62]),
+    male: tiers([0, 0.36, 0.71, 1.07, 1.42, 1.78, 2.13, 2.49, 2.84, 3.2]),
+    female: tiers([0, 0.28, 0.56, 0.83, 1.11, 1.39, 1.67, 1.94, 2.22, 2.5]),
   },
   cable_glutes: {
-    male: tiers([0, 0.25, 0.51, 0.76, 1.02, 1.27, 1.53, 1.78, 2.04, 2.29]),
-    female: tiers([0, 0.2, 0.41, 0.61, 0.81, 1.02, 1.22, 1.42, 1.63, 1.83]),
+    male: tiers([0, 0.35, 0.7, 1.05, 1.4, 1.75, 2.1, 2.45, 2.8, 3.15]),
+    female: tiers([0, 0.28, 0.56, 0.84, 1.12, 1.4, 1.68, 1.96, 2.24, 2.52]),
   },
   dumbbell_glutes_bridge: {
     male: tiers([0, 0.07, 0.14, 0.2, 0.27, 0.34, 0.41, 0.47, 0.54, 0.6]),
