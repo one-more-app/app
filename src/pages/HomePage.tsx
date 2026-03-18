@@ -6,7 +6,8 @@ import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useHomeData } from '@/hooks/use-home-data'
 import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
 import { CARDIO_EQUIPMENT } from '@/lib/exercisedb'
-import { getUserProfile, savePerformance } from '@/lib/storage'
+import { getPersonalBest, getUserProfile, savePerformance } from '@/lib/storage'
+import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
 import { getLeagueInfo } from '@/lib/strength-standards'
 import { equipmentMatchesFilter, getGroupedEquipmentList, UI } from '@/lib/translations'
 import { Dumbbell, Plus, Settings } from 'lucide-react'
@@ -192,7 +193,24 @@ function HomePage() {
                                             leagueInfo={leagueInfo}
                                             onClick={() => navigate(`/exercise/${ex.id}`, { replace: false })}
                                             onSavePerf={(weight, reps) => {
+                                                const prevPB = ex.personalBest ?? null
+                                                const prevLeague = leagueInfo ?? null
                                                 savePerformance(ex.id, weight, reps)
+                                                const nextPB = getPersonalBest(ex.id) ?? null
+                                                const profile = getUserProfile()
+                                                const nextLeague = computeLeagueFromPB({
+                                                    exercise: ex,
+                                                    personalBest: nextPB,
+                                                    profile,
+                                                })
+
+                                                notifyPerfMilestones({
+                                                    exerciseName: ex.name,
+                                                    prevPB,
+                                                    nextPB,
+                                                    prevLeague,
+                                                    nextLeague,
+                                                })
                                                 refresh()
                                             }}
                                         />

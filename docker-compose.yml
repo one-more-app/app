@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: onemore
+      POSTGRES_PASSWORD: onemore
+      POSTGRES_DB: onemore
+    ports:
+      - "5433:5432"
+    volumes:
+      - onemore_pg:/var/lib/postgresql/data
+
+volumes:
+  onemore_pg:
+

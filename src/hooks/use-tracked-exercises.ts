@@ -1,42 +1,43 @@
-import { useState, useCallback, useEffect } from 'react'
-import type { TrackedExercise } from '@/types'
 import {
-  getTrackedExercises,
-  setTrackedExercises,
   addTrackedExercise as addStorage,
+  getTrackedExercises,
   removeTrackedExercise as removeStorage,
-} from '@/lib/storage'
+} from "@/lib/storage";
+import type { TrackedExercise } from "@/types";
+import { useCallback, useEffect, useState } from "react";
 
 export function useTrackedExercises() {
-  const [exercises, setExercises] = useState<TrackedExercise[]>([])
+  const [exercises, setExercises] = useState<TrackedExercise[]>([]);
 
   const load = useCallback(() => {
-    setExercises(getTrackedExercises())
-  }, [])
+    setExercises(getTrackedExercises());
+  }, []);
 
   useEffect(() => {
-    load()
-  }, [load])
+    load();
+  }, [load]);
 
   const addExercise = useCallback(
-    (exercise: Omit<TrackedExercise, 'id'>) => {
+    (exercise: Omit<TrackedExercise, "id">) => {
       const withId: TrackedExercise = {
         ...exercise,
-        id: exercise.isCustom ? exercise.exerciseId : `api-${exercise.exerciseId}`,
-      }
-      addStorage(withId)
-      load()
+        id: exercise.isCustom
+          ? exercise.exerciseId
+          : `api-${exercise.exerciseId}`,
+      };
+      addStorage(withId);
+      load();
     },
-    [load]
-  )
+    [load],
+  );
 
   const removeExercise = useCallback(
     (id: string) => {
-      removeStorage(id)
-      load()
+      removeStorage(id);
+      load();
     },
-    [load]
-  )
+    [load],
+  );
 
-  return { exercises, addExercise, removeExercise, refresh: load }
+  return { exercises, addExercise, removeExercise, refresh: load };
 }

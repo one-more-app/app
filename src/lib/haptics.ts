@@ -21,3 +21,14 @@ export async function hapticImpact(): Promise<void> {
         // Ignore si Haptics indisponible
     }
 }
+
+/** Retour haptique type succès (record, palier, etc.) */
+export async function hapticNotificationSuccess(): Promise<void> {
+    if (!Capacitor.isNativePlatform()) return
+    try {
+        const { Haptics, NotificationType } = await import('@capacitor/haptics')
+        await Haptics.notification({ type: NotificationType.Success })
+    } catch {
+        // Ignore si Haptics indisponible
+    }
+}

@@ -7,14 +7,21 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
+import { useBack } from '@/hooks/use-back'
+import { useAuth } from '@/hooks/use-auth'
+import { openStoreListing } from '@/lib/app-review'
 import { getUserProfile, setUserProfile } from '@/lib/storage'
 import { UI } from '@/lib/translations'
 import { ArrowLeft } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useBack } from '@/hooks/use-back'
+import { Link } from 'react-router-dom'
+import { syncNow } from '@/lib/sync'
+import { toast } from 'sonner'
 
 export function SettingsPage() {
     const goBack = useBack()
+    const auth = useAuth()
+    const [isSyncing, setIsSyncing] = useState(false)
     const [weightKg, setWeightKg] = useState<string>('')
     const [heightCm, setHeightCm] = useState<string>('')
     const [gender, setGender] = useState<'male' | 'female'>('male')
@@ -46,6 +53,62 @@ export function SettingsPage() {
             </header>
 
             <main className="mx-auto max-w-2xl px-4 py-4 space-y-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{UI.accountAndSync}</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                            {UI.accountSyncDescription}
+                        </p>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-2">
+                        {auth.status === 'authenticated' ? (
+                            <>
+                                <p className="text-sm text-muted-foreground">
+                                    {UI.connectedAs}{' '}
+                                    <span className="text-foreground font-medium">
+                                        {auth.user?.email ?? auth.user?.id}
+                                    </span>
+                                </p>
+                                <Button
+                                    variant="secondary"
+                                    className="w-full"
+                                    disabled={isSyncing}
+                                    onClick={() => {
+                                        if (!auth.accessToken || !auth.refreshToken || !auth.user) return
+                                        setIsSyncing(true)
+                                        void syncNow({
+                                            accessToken: auth.accessToken,
+                                            refreshToken: auth.refreshToken,
+                                            user: auth.user,
+                                        })
+                                            .then(() => toast.success('Synchronisation terminée'))
+                                            .catch(() => toast.error('Synchronisation échouée'))
+                                            .finally(() => setIsSyncing(false))
+                                    }}
+                                >
+                                    {UI.syncNow}
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    className="w-full"
+                                    onClick={() => {
+                                        void auth.logout()
+                                    }}
+                                >
+                                    {UI.signOut}
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-sm text-muted-foreground">{UI.notConnected}</p>
+                                <Button asChild className="w-full">
+                                    <Link to="/auth">{UI.signIn}</Link>
+                                </Button>
+                            </>
+                        )}
+                    </CardContent>
+                </Card>
+
                 <Card>
                     <CardHeader>
                         <CardTitle>{UI.profile}</CardTitle>
@@ -102,6 +165,23 @@ export function SettingsPage() {
                         </div>
                         <Button onClick={handleSave} className="w-full">
                             {UI.save}
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{UI.rateApp}</CardTitle>
+                        <p className="text-sm text-muted-foreground">{UI.rateAppDescription}</p>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-2">
+                        <Button
+                            onClick={() => {
+                                void openStoreListing()
+                            }}
+                            className="w-full"
+                        >
+                            {UI.rateNow}
                         </Button>
                     </CardContent>
                 </Card>

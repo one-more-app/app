@@ -1,5 +1,5 @@
 import { ExerciseCard } from '@/components/ExerciseCard'
-import { LEAGUE_COLORS, LeagueBadge } from '@/components/LeagueBadge'
+import { LeagueBadge } from '@/components/LeagueBadge'
 import { PerformanceChart } from '@/components/PerformanceChart'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -14,15 +14,27 @@ import {
 import { Input } from '@/components/ui/input'
 import { useBack } from '@/hooks/use-back'
 import { usePerformance } from '@/hooks/use-performance'
+import { LEAGUE_COLORS } from '@/lib/league-colors'
 import {
+    computeLeagueFromPB,
+    isNewPersonalBest,
+    notifyPerfMilestones,
+} from '@/lib/perf-notifications'
+import {
+    getPersonalBest,
     getTrackedExerciseById,
     getUserProfile,
     removeTrackedExercise,
     updateTrackedExercise,
 } from '@/lib/storage'
-import { getAllTiers, getLeagueInfo, isDumbbellExercise } from '@/lib/strength-standards'
+import {
+    getAllTiers,
+    getLeagueInfo,
+    getLeagueLevelIndex,
+    isDumbbellExercise,
+} from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
-import { ArrowLeft, ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -74,6 +86,11 @@ export function ExerciseDetailPage() {
             )
             : null
     const [showAllTiers, setShowAllTiers] = useState(false)
+    const [historySessionIndex, setHistorySessionIndex] = useState(0)
+
+    useEffect(() => {
+        setHistorySessionIndex(0)
+    }, [id])
 
     if (!exercise) {
         return (
@@ -116,7 +133,27 @@ export function ExerciseDetailPage() {
                     leagueInfo={leagueInfo}
                     imageSize="sm"
                     onSavePerf={(weight, reps) => {
+                        const prevPB = personalBest ?? null
+                        const prevLeague = leagueInfo ?? null
                         savePerformance(weight, reps)
+                        const nextPB = id ? getPersonalBest(id) ?? null : null
+                        const profile = getUserProfile()
+                        const nextLeague =
+                            exercise
+                                ? computeLeagueFromPB({
+                                    exercise,
+                                    personalBest: nextPB,
+                                    profile,
+                                })
+                                : null
+
+                        notifyPerfMilestones({
+                            exerciseName: exercise.name,
+                            prevPB,
+                            nextPB,
+                            prevLeague,
+                            nextLeague,
+                        })
                         refresh()
                     }}
                 />
@@ -218,8 +255,9 @@ export function ExerciseDetailPage() {
                         <CardHeader>
                             <h2 className="font-semibold">{UI.history} (poids)</h2>
                         </CardHeader>
-                        <CardContent className="pl-0 pb-0">
+                        <CardContent className='pb-0 pt-0'>
                             <PerformanceChart
+                                className="p-0"
                                 entries={entries}
                                 exercise={{
                                     id: exercise.id,
@@ -232,6 +270,204 @@ export function ExerciseDetailPage() {
                                 onUpdate={updatePerformance}
                                 onRefresh={refresh}
                             />
+                            {(() => {
+                                const byDate = entries.reduce<Record<string, typeof entries>>(
+                                    (acc, e) => {
+                                        (acc[e.date] ??= []).push(e)
+                                        return acc
+                                    },
+                                    {}
+                                )
+                                const dates = Object.keys(byDate).sort(
+                                    (a, b) => new Date(b).getTime() - new Date(a).getTime()
+                                )
+                                const safeIndex = Math.min(
+                                    historySessionIndex,
+                                    Math.max(0, dates.length - 1)
+                                )
+                                const lastDate = dates[safeIndex]
+                                const lastSessionEntries = lastDate
+                                    ? [...(byDate[lastDate] ?? [])].sort(
+                                        (a, b) =>
+                                            new Date(a.createdAt).getTime() -
+                                            new Date(b.createdAt).getTime()
+                                    )
+                                    : []
+                                if (lastSessionEntries.length === 0) return null
+                                const formatDate = (d: string) =>
+                                    new Date(d + 'T12:00:00').toLocaleDateString(undefined, {
+                                        weekday: 'long',
+                                        day: 'numeric',
+                                        month: 'long',
+                                        year: 'numeric',
+                                    })
+                                const canGoNewer = safeIndex > 0
+                                const canGoOlder = safeIndex < dates.length - 1
+                                const entriesBeforeLastSession = entries.filter(
+                                    (e) => e.date < lastDate
+                                )
+                                const bestBeforeSession =
+                                    entriesBeforeLastSession.length === 0
+                                        ? null
+                                        : entriesBeforeLastSession.reduce((best, e) =>
+                                            !best ||
+                                                e.weight > best.weight ||
+                                                (e.weight === best.weight && e.reps > best.reps)
+                                                ? e
+                                                : best
+                                        )
+                                return (
+                                    <div className="border-t border-border pt-2">
+                                        <div className="flex items-center justify-between gap-2 mb-2">
+                                            <h3 className="text-sm font-medium text-muted-foreground">
+                                                {UI.lastSession} — {formatDate(lastDate)}
+                                            </h3>
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    variant="secondary"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground"
+                                                    disabled={!canGoOlder}
+                                                    onClick={() =>
+                                                        setHistorySessionIndex((i) =>
+                                                            Math.min(dates.length - 1, i + 1)
+                                                        )
+                                                    }
+                                                    aria-label={UI.nextSession}
+                                                >
+                                                    <ChevronLeft className="size-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="secondary"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground"
+                                                    disabled={!canGoNewer}
+                                                    onClick={() =>
+                                                        setHistorySessionIndex((i) => Math.max(0, i - 1))
+                                                    }
+                                                    aria-label={UI.previousSession}
+                                                >
+                                                    <ChevronRight className="size-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        <ul className="space-y-1.5">
+                                            {lastSessionEntries.map((entry, i) => {
+                                                const prevPB =
+                                                    i === 0
+                                                        ? bestBeforeSession
+                                                            ? {
+                                                                weight: bestBeforeSession.weight,
+                                                                reps: bestBeforeSession.reps,
+                                                            }
+                                                            : null
+                                                        : (() => {
+                                                            const prevInSession = lastSessionEntries
+                                                                .slice(0, i)
+                                                                .reduce(
+                                                                    (best, e) =>
+                                                                        !best ||
+                                                                            e.weight > best.weight ||
+                                                                            (e.weight === best.weight &&
+                                                                                e.reps > best.reps)
+                                                                            ? e
+                                                                            : best,
+                                                                    null as {
+                                                                        weight: number
+                                                                        reps: number
+                                                                    } | null
+                                                                )
+                                                            if (!prevInSession)
+                                                                return bestBeforeSession
+                                                                    ? {
+                                                                        weight:
+                                                                            bestBeforeSession.weight,
+                                                                        reps: bestBeforeSession.reps,
+                                                                    }
+                                                                    : null
+                                                            const fromBefore = bestBeforeSession
+                                                                ? (bestBeforeSession.weight >
+                                                                    prevInSession.weight ||
+                                                                    (bestBeforeSession.weight ===
+                                                                        prevInSession.weight &&
+                                                                        bestBeforeSession.reps >
+                                                                        prevInSession.reps)
+                                                                    ? {
+                                                                        weight: bestBeforeSession.weight,
+                                                                        reps: bestBeforeSession.reps,
+                                                                    }
+                                                                    : {
+                                                                        weight: prevInSession.weight,
+                                                                        reps: prevInSession.reps,
+                                                                    }
+                                                                )
+                                                                : {
+                                                                    weight: prevInSession.weight,
+                                                                    reps: prevInSession.reps,
+                                                                }
+                                                            return fromBefore
+                                                        })()
+                                                const isRecord = isNewPersonalBest(prevPB, {
+                                                    weight: entry.weight,
+                                                    reps: entry.reps,
+                                                })
+                                                const newPB = !prevPB
+                                                    ? { weight: entry.weight, reps: entry.reps }
+                                                    : isRecord
+                                                        ? { weight: entry.weight, reps: entry.reps }
+                                                        : prevPB
+                                                const prevLeague = computeLeagueFromPB({
+                                                    exercise,
+                                                    personalBest: prevPB,
+                                                    profile,
+                                                })
+                                                const nextLeague = computeLeagueFromPB({
+                                                    exercise,
+                                                    personalBest: newPB,
+                                                    profile,
+                                                })
+                                                const leagueUp =
+                                                    nextLeague &&
+                                                    (!prevLeague ||
+                                                        getLeagueLevelIndex(nextLeague.level) >
+                                                        getLeagueLevelIndex(prevLeague.level))
+                                                return (
+                                                    <li
+                                                        key={entry.id}
+                                                        className="flex items-center justify-between gap-2 text-sm py-1.5 px-3 rounded-md bg-muted/50"
+                                                    >
+                                                        <span className="font-medium">
+                                                            {entry.weight} kg × {entry.reps} reps
+                                                        </span>
+                                                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                                                            {isRecord && (
+                                                                <Badge
+                                                                    variant="secondary"
+                                                                    className="text-xs shrink-0"
+                                                                >
+                                                                    {UI.record}
+                                                                </Badge>
+                                                            )}
+                                                            {leagueUp && nextLeague && (
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className={`shrink-0 text-xs ${LEAGUE_COLORS[nextLeague.level] ?? 'bg-muted'}`}
+                                                                    title={UI.leaguePromotion}
+                                                                >
+                                                                    {nextLeague.label}
+                                                                </Badge>
+                                                            )}
+                                                            <span className="text-muted-foreground">
+                                                                Série {i + 1}
+                                                            </span>
+                                                        </div>
+                                                    </li>
+                                                )
+                                            })}
+                                        </ul>
+                                    </div>
+                                )
+                            })()}
                         </CardContent>
                     </Card>
                 )}

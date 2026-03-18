@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { AddPerfDrawer, type AddPerfDrawerExercise } from '@/components/AddPerfDrawer'
 import { Button } from '@/components/ui/button'
 import {
@@ -7,8 +6,10 @@ import {
     PopoverContent,
 } from '@/components/ui/popover'
 import { UI } from '@/lib/translations'
+import { cn } from '@/lib/utils'
 import type { PerformanceEntry } from '@/types'
 import { Pencil, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 import {
     CartesianGrid,
     Line,
@@ -19,6 +20,7 @@ import {
 } from 'recharts'
 
 interface Props {
+    className?: string
     entries: PerformanceEntry[]
     exercise: AddPerfDrawerExercise
     onDelete: (entryId: string) => void
@@ -65,7 +67,7 @@ function formatPerfLabel(weight: number, reps: number): string {
     return `${weightLabel} × ${reps} reps`
 }
 
-export function PerformanceChart({ entries, exercise, onDelete, onUpdate, onRefresh }: Props) {
+export function PerformanceChart({ className, entries, exercise, onDelete, onUpdate, onRefresh }: Props) {
     const [selectedPoint, setSelectedPoint] = useState<{
         fullDate: string
         allEntries: PerformanceEntry[]
@@ -113,7 +115,7 @@ export function PerformanceChart({ entries, exercise, onDelete, onUpdate, onRefr
     }
 
     return (
-        <div className="h-[250px] w-full relative">
+        <div className={cn("h-[250px] w-full relative", className)}>
             <Popover
                 open={!!selectedPoint}
                 onOpenChange={(open) => !open && setSelectedPoint(null)}

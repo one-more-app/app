@@ -56,7 +56,13 @@ const LEAGUE_ORDER: LeagueLevel[] = [
   "master",
   "elite",
   "legend",
-];
+]
+
+/** Index du niveau de ligue (0 = fer, 9 = légende). Pour comparer deux ligues. */
+export function getLeagueLevelIndex(level: LeagueLevel): number {
+  const i = LEAGUE_ORDER.indexOf(level)
+  return i === -1 ? 0 : i
+}
 
 const RATIO_TO_PERCENTILE: Record<LeagueLevel, { min: number; max: number }> = {
   iron: { min: 0, max: 10 },

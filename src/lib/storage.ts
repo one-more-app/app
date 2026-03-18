@@ -3,6 +3,33 @@ import type { PerformanceEntry, TrackedExercise, UserProfile } from "@/types";
 const TRACKED_KEY = "one-more-tracked";
 const PERFORMANCE_KEY = "one-more-performance";
 const USER_PROFILE_KEY = "one-more-user-profile";
+const ONBOARDING_V1_KEY = "one-more-onboarding-v1";
+const SYNC_META_KEY = "one-more-sync-meta-v1";
+
+type SyncMeta = { lastSyncAt: string | null };
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+function readSyncMeta(): SyncMeta {
+  try {
+    const raw = localStorage.getItem(SYNC_META_KEY);
+    if (!raw) return { lastSyncAt: null };
+    const parsed = JSON.parse(raw) as Partial<SyncMeta>;
+    return { lastSyncAt: typeof parsed.lastSyncAt === "string" ? parsed.lastSyncAt : null };
+  } catch {
+    return { lastSyncAt: null };
+  }
+}
+
+export function getLastSyncAt(): string | null {
+  return readSyncMeta().lastSyncAt;
+}
+
+export function setLastSyncAt(iso: string | null): void {
+  localStorage.setItem(SYNC_META_KEY, JSON.stringify({ lastSyncAt: iso } satisfies SyncMeta));
+}
 
 export function getTrackedExercises(): TrackedExercise[] {
   try {
@@ -13,11 +40,13 @@ export function getTrackedExercises(): TrackedExercise[] {
       const migrated = list.map((e) => ({
         ...e,
         originalName: e.originalName ?? e.name,
+        updatedAt: e.updatedAt ?? nowIso(),
+        deletedAt: e.deletedAt ?? null,
       }));
       setTrackedExercises(migrated);
-      return migrated;
+      return migrated.filter((e) => !e.deletedAt);
     }
-    return list;
+    return list.filter((e) => !e.deletedAt);
   } catch {
     return [];
   }
@@ -28,7 +57,8 @@ export function setTrackedExercises(exercises: TrackedExercise[]): void {
 }
 
 export function addTrackedExercise(exercise: TrackedExercise): void {
-  const list = getTrackedExercises();
+  const raw = getTrackedExercisesForSync();
+  const list = raw.filter((e) => !e.deletedAt);
   if (
     list.some(
       (e) =>
@@ -38,24 +68,34 @@ export function addTrackedExercise(exercise: TrackedExercise): void {
   ) {
     return;
   }
-  setTrackedExercises([...list, exercise]);
+  const toStore: TrackedExercise = {
+    ...exercise,
+    updatedAt: nowIso(),
+    deletedAt: null,
+  };
+  setTrackedExercises([...raw, toStore]);
 }
 
 export function removeTrackedExercise(id: string): void {
-  setTrackedExercises(getTrackedExercises().filter((e) => e.id !== id));
+  const raw = getTrackedExercisesForSync();
+  const next = raw.map((e) =>
+    e.id === id ? { ...e, deletedAt: nowIso(), updatedAt: nowIso() } : e,
+  );
+  setTrackedExercises(next);
 }
 
 export function updateTrackedExercise(
   id: string,
   updates: Partial<Pick<TrackedExercise, "name">>,
 ): void {
-  const list = getTrackedExercises();
+  const list = getTrackedExercisesForSync();
   const idx = list.findIndex((e) => e.id === id);
   if (idx === -1) return;
   const { name } = updates;
   list[idx] = {
     ...list[idx],
     ...(name !== undefined && { name }),
+    updatedAt: nowIso(),
   };
   setTrackedExercises([...list]);
 }
@@ -69,7 +109,16 @@ export function getTrackedExerciseById(
 export function getPerformanceEntries(): PerformanceEntry[] {
   try {
     const raw = localStorage.getItem(PERFORMANCE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const list: PerformanceEntry[] = raw ? JSON.parse(raw) : [];
+    const migrated = list.map((e) => ({
+      ...e,
+      updatedAt: e.updatedAt ?? e.createdAt ?? nowIso(),
+      deletedAt: e.deletedAt ?? null,
+    }));
+    if (JSON.stringify(migrated) !== JSON.stringify(list)) {
+      setPerformanceEntries(migrated);
+    }
+    return migrated.filter((e) => !e.deletedAt);
   } catch {
     return [];
   }
@@ -77,6 +126,35 @@ export function getPerformanceEntries(): PerformanceEntry[] {
 
 export function setPerformanceEntries(entries: PerformanceEntry[]): void {
   localStorage.setItem(PERFORMANCE_KEY, JSON.stringify(entries));
+}
+
+export function getTrackedExercisesForSync(): TrackedExercise[] {
+  try {
+    const raw = localStorage.getItem(TRACKED_KEY);
+    const list: TrackedExercise[] = raw ? JSON.parse(raw) : [];
+    return list.map((e) => ({
+      ...e,
+      updatedAt: e.updatedAt ?? nowIso(),
+      deletedAt: e.deletedAt ?? null,
+      originalName: e.originalName ?? e.name,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export function getPerformanceEntriesForSync(): PerformanceEntry[] {
+  try {
+    const raw = localStorage.getItem(PERFORMANCE_KEY);
+    const list: PerformanceEntry[] = raw ? JSON.parse(raw) : [];
+    return list.map((e) => ({
+      ...e,
+      updatedAt: e.updatedAt ?? e.createdAt ?? nowIso(),
+      deletedAt: e.deletedAt ?? null,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export function getEntriesByTrackedId(
@@ -92,7 +170,7 @@ export function savePerformance(
   weight: number,
   reps: number,
 ): PerformanceEntry {
-  const entries = getPerformanceEntries();
+  const entries = getPerformanceEntriesForSync();
   const today = new Date().toISOString().slice(0, 10);
 
   const newEntry: PerformanceEntry = {
@@ -102,6 +180,8 @@ export function savePerformance(
     weight,
     reps,
     createdAt: new Date().toISOString(),
+    updatedAt: nowIso(),
+    deletedAt: null,
   };
 
   setPerformanceEntries([...entries, newEntry]);
@@ -109,8 +189,11 @@ export function savePerformance(
 }
 
 export function deletePerformance(entryId: string): void {
-  const entries = getPerformanceEntries().filter((e) => e.id !== entryId);
-  setPerformanceEntries(entries);
+  const entries = getPerformanceEntriesForSync();
+  const next = entries.map((e) =>
+    e.id === entryId ? { ...e, deletedAt: nowIso(), updatedAt: nowIso() } : e,
+  );
+  setPerformanceEntries(next);
 }
 
 export function updatePerformance(
@@ -118,14 +201,14 @@ export function updatePerformance(
   weight: number,
   reps: number,
 ): PerformanceEntry | null {
-  const entries = getPerformanceEntries();
+  const entries = getPerformanceEntriesForSync();
   const idx = entries.findIndex((e) => e.id === entryId);
   if (idx === -1) return null;
   const updated: PerformanceEntry = {
     ...entries[idx],
     weight,
     reps,
-    createdAt: new Date().toISOString(),
+    updatedAt: nowIso(),
   };
   const newEntries = [...entries];
   newEntries[idx] = updated;
@@ -184,4 +267,18 @@ export function setUserProfile(profile: Partial<UserProfile>): void {
     gender: profile.gender ?? current.gender,
   };
   localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(updated));
+}
+
+export function needsOnboarding(): boolean {
+  // On considère l'onboarding requis uniquement si le profil n'a jamais été enregistré.
+  // `getUserProfile()` retourne des valeurs par défaut sans persister, donc ce check
+  // permet un "premier lancement" fiable.
+  return (
+    localStorage.getItem(USER_PROFILE_KEY) === null &&
+    localStorage.getItem(ONBOARDING_V1_KEY) !== "done"
+  );
+}
+
+export function markOnboardingDone(): void {
+  localStorage.setItem(ONBOARDING_V1_KEY, "done");
 }

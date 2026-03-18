@@ -8,8 +8,14 @@ Application de suivi de progression en musculation — MVP cross-platform (web +
 # Installer les dépendances
 npm install
 
-# Lancer en développement
-npm run dev
+# (Optionnel) Lancer Postgres pour l’API (port hôte 5433)
+docker compose up -d
+
+# Lancer en développement (web uniquement)
+npm run dev:web
+
+# Lancer web + API NestJS en parallèle
+npm run dev:all
 ```
 
 L'app utilise l'API [ExerciseDB v1](https://www.exercisedb.dev/docs) — **gratuite et sans clé API**.
@@ -39,3 +45,9 @@ npm run cap:open:ios
 - Mise à jour ou nouvelle entrée selon le jour (même jour = mise à jour)
 - Historique sous forme de graphique par exercice
 - Stockage local uniquement, thème sombre
+
+## API (compte + sync)
+- L’API NestJS vit dans [`backend/`](backend/).
+- Config:
+  - Front: `VITE_API_URL` (voir `.env.example`)
+  - API: `backend/.env` (voir `backend/.env.example`)

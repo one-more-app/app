@@ -1,20 +1,8 @@
 import { Badge } from '@/components/ui/badge'
 import type { LeagueInfo } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
+import { LEAGUE_COLORS } from '@/lib/league-colors'
 import { Trophy } from 'lucide-react'
-
-export const LEAGUE_COLORS: Record<string, string> = {
-    iron: 'bg-zinc-700/50 text-zinc-200 border-zinc-500',
-    bronze: 'bg-amber-900/50 text-amber-200 border-amber-700',
-    silver: 'bg-slate-600/50 text-slate-200 border-slate-500',
-    gold: 'bg-amber-600/50 text-amber-100 border-amber-500',
-    platinum: 'bg-cyan-800/50 text-cyan-200 border-cyan-600',
-    emerald: 'bg-emerald-800/50 text-emerald-200 border-emerald-600',
-    diamond: 'bg-violet-600/50 text-violet-100 border-violet-500',
-    master: 'bg-rose-800/50 text-rose-100 border-rose-600',
-    elite: 'bg-emerald-700/50 text-emerald-100 border-emerald-500',
-    legend: 'bg-amber-500/60 text-amber-950 border-amber-400',
-}
 
 const NEXT_TIER: Record<string, { label: string; level: string } | null> = {
     iron: { label: 'Bronze', level: 'bronze' },

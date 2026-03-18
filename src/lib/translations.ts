@@ -213,6 +213,10 @@ export const UI = {
   save: "Enregistrer",
   delete: "Supprimer",
   history: "Historique",
+  lastSession: "Dernière session",
+  previousSession: "Session plus récente",
+  nextSession: "Session plus ancienne",
+  leaguePromotion: "Passage de ligue",
   performanceList: "Liste des performances",
   noPerfForDay: "Aucune performance pour ce jour.",
   recordPerf: "Enregistrer une perf",
@@ -247,6 +251,43 @@ export const UI = {
   gender: "Genre",
   male: "Homme",
   female: "Femme",
+
+  // Compte & synchronisation
+  account: "Compte",
+  accountAndSync: "Compte & synchronisation",
+  accountSyncDescription:
+    "Créez un compte pour sauvegarder et synchroniser vos données entre appareils.",
+  backToSettings: "Retour",
+  createAccount: "Créer un compte",
+  login: "Se connecter",
+  email: "Email",
+  password: "Mot de passe",
+  passwordHint: "Minimum 8 caractères.",
+  switchToRegister: "Créer un compte",
+  switchToLogin: "J'ai déjà un compte",
+  continueWith: "Ou continuer avec",
+  continueWithGoogle: "Continuer avec Google",
+  continueWithApple: "Continuer avec Apple",
+  oauthComingSoon:
+    "Connexion via Google/Apple (nécessite la configuration OAuth).",
+  connectedAs: "Connecté en tant que",
+  notConnected: "Non connecté",
+  signIn: "Se connecter",
+  signOut: "Se déconnecter",
+  syncNow: "Synchroniser maintenant",
+
+  // Onboarding (premier lancement)
+  onboardingTitle: "Avant de commencer",
+  onboardingDescription:
+    "Ces informations servent aux calculs (ligues, ratios). Tu pourras les modifier plus tard dans Paramètres.",
+  continue: "Continuer",
+
+  // Avis
+  rateApp: "Laisser un avis",
+  rateAppDescription:
+    "Si l’app t’aide à progresser, une note sur le Store fait vraiment la différence.",
+  rateNow: "Noter l’app",
+  dontAskAgain: "Ne plus demander",
 
   // Ligues
   league: "Ligue",
