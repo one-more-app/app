@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OAuthProvider {
+  google
+  apple
+}
+
+model User {
+  id        String       @id @default(uuid())
+  email     String?      @unique
+  password  String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  profile   UserProfile?
+  sessions  Session[]
+  oauth     OAuthAccount[]
+
+  trackedExercises TrackedExercise[]
+  performanceEntries PerformanceEntry[]
+}
+
+model UserProfile {
+  userId   String   @id
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  weightKg Float
+  heightCm Float
+  gender   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OAuthAccount {
+  id             String        @id @default(uuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider       OAuthProvider
+  providerUserId String
+  email          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+}
+
+model Session {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash String
+  deviceId         String?
+  createdAt        DateTime @default(now())
+  lastSeenAt       DateTime @default(now())
+  revokedAt        DateTime?
+}
+
+model TrackedExercise {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Identifiant fourni par le client (ex: `api-barbell`), unique par utilisateur
+  clientId     String
+
+  exerciseId   String
+  name         String
+  originalName String?
+  bodyPart     String?
+  target       String?
+  equipment    String?
+  category     String?
+  gifUrl       String?
+  isCustom     Boolean
+
+  updatedAt    DateTime @default(now())
+  deletedAt    DateTime?
+
+  entries      PerformanceEntry[]
+
+  @@index([userId])
+  @@unique([userId, clientId])
+}
+
+model PerformanceEntry {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Identifiant fourni par le client (ex: `entry-...`), unique par utilisateur
+  clientId        String
+
+  trackedExerciseId String
+  trackedExercise   TrackedExercise @relation(fields: [trackedExerciseId], references: [id], onDelete: Cascade)
+
+  date            DateTime
+  weight          Float
+  reps            Int
+
+  updatedAt       DateTime @default(now())
+  deletedAt       DateTime?
+
+  @@index([userId])
+  @@index([trackedExerciseId])
+  @@unique([userId, clientId])
+}

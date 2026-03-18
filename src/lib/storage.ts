@@ -6,7 +6,19 @@ const USER_PROFILE_KEY = "one-more-user-profile";
 const ONBOARDING_V1_KEY = "one-more-onboarding-v1";
 const SYNC_META_KEY = "one-more-sync-meta-v1";
 
-type SyncMeta = { lastSyncAt: string | null };
+type SyncMeta = { lastSyncAt: string | null; userId: string | null };
+
+type LocalChangeKind = "trackedExercise" | "performance" | "profile";
+
+function notifyLocalDataChanged(kind: LocalChangeKind): void {
+  // Permet d'auto-synchroniser côté front quand l'utilisateur est connecté.
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent("one-more:local-data-changed", {
+      detail: { kind, at: Date.now() },
+    }),
+  );
+}
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -17,18 +29,26 @@ function readSyncMeta(): SyncMeta {
     const raw = localStorage.getItem(SYNC_META_KEY);
     if (!raw) return { lastSyncAt: null };
     const parsed = JSON.parse(raw) as Partial<SyncMeta>;
-    return { lastSyncAt: typeof parsed.lastSyncAt === "string" ? parsed.lastSyncAt : null };
+    return {
+      lastSyncAt: typeof parsed.lastSyncAt === "string" ? parsed.lastSyncAt : null,
+      userId: typeof parsed.userId === "string" ? parsed.userId : null,
+    };
   } catch {
-    return { lastSyncAt: null };
+    return { lastSyncAt: null, userId: null };
   }
 }
 
-export function getLastSyncAt(): string | null {
-  return readSyncMeta().lastSyncAt;
+export function getLastSyncAt(userId: string): string | null {
+  const meta = readSyncMeta();
+  if (!meta.userId || meta.userId !== userId) return null;
+  return meta.lastSyncAt;
 }
 
-export function setLastSyncAt(iso: string | null): void {
-  localStorage.setItem(SYNC_META_KEY, JSON.stringify({ lastSyncAt: iso } satisfies SyncMeta));
+export function setLastSyncAt(userId: string, iso: string | null): void {
+  localStorage.setItem(
+    SYNC_META_KEY,
+    JSON.stringify({ userId, lastSyncAt: iso } satisfies SyncMeta),
+  );
 }
 
 export function getTrackedExercises(): TrackedExercise[] {
@@ -74,6 +94,7 @@ export function addTrackedExercise(exercise: TrackedExercise): void {
     deletedAt: null,
   };
   setTrackedExercises([...raw, toStore]);
+  notifyLocalDataChanged("trackedExercise");
 }
 
 export function removeTrackedExercise(id: string): void {
@@ -82,6 +103,7 @@ export function removeTrackedExercise(id: string): void {
     e.id === id ? { ...e, deletedAt: nowIso(), updatedAt: nowIso() } : e,
   );
   setTrackedExercises(next);
+  notifyLocalDataChanged("trackedExercise");
 }
 
 export function updateTrackedExercise(
@@ -98,6 +120,7 @@ export function updateTrackedExercise(
     updatedAt: nowIso(),
   };
   setTrackedExercises([...list]);
+  notifyLocalDataChanged("trackedExercise");
 }
 
 export function getTrackedExerciseById(
@@ -185,6 +208,7 @@ export function savePerformance(
   };
 
   setPerformanceEntries([...entries, newEntry]);
+  notifyLocalDataChanged("performance");
   return newEntry;
 }
 
@@ -194,6 +218,7 @@ export function deletePerformance(entryId: string): void {
     e.id === entryId ? { ...e, deletedAt: nowIso(), updatedAt: nowIso() } : e,
   );
   setPerformanceEntries(next);
+  notifyLocalDataChanged("performance");
 }
 
 export function updatePerformance(
@@ -213,6 +238,7 @@ export function updatePerformance(
   const newEntries = [...entries];
   newEntries[idx] = updated;
   setPerformanceEntries(newEntries);
+  notifyLocalDataChanged("performance");
   return updated;
 }
 
@@ -259,7 +285,10 @@ export function getUserProfile(): UserProfile {
   }
 }
 
-export function setUserProfile(profile: Partial<UserProfile>): void {
+export function setUserProfile(
+  profile: Partial<UserProfile>,
+  opts?: { silent?: boolean },
+): void {
   const current = getUserProfile();
   const updated: UserProfile = {
     weightKg: profile.weightKg ?? current.weightKg,
@@ -267,6 +296,7 @@ export function setUserProfile(profile: Partial<UserProfile>): void {
     gender: profile.gender ?? current.gender,
   };
   localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(updated));
+  if (!opts?.silent) notifyLocalDataChanged("profile");
 }
 
 export function needsOnboarding(): boolean {

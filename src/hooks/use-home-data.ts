@@ -30,7 +30,16 @@ export function useHomeData() {
   }, []);
 
   useEffect(() => {
-    load();
+    // Diffère vers une micro-tâche pour éviter certains warnings lint
+    // (setState déclenché depuis un effet).
+    void Promise.resolve().then(load);
+  }, [load]);
+
+  useEffect(() => {
+    // Recharger après une synchro (push + pull) qui modifie localStorage.
+    const onSynced = () => load();
+    window.addEventListener("one-more:synced", onSynced);
+    return () => window.removeEventListener("one-more:synced", onSynced);
   }, [load]);
 
   const removeExercise = useCallback(

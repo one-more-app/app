@@ -30,7 +30,16 @@ export function usePerformance(trackedExerciseId: string | null) {
   }, [trackedExerciseId]);
 
   useEffect(() => {
-    load();
+    // Diffère vers une micro-tâche pour éviter certains warnings lint
+    void Promise.resolve().then(load);
+  }, [load]);
+
+  useEffect(() => {
+    // Les perfs peuvent changer après un sync (push + pull).
+    // On recharge donc automatiquement.
+    const onSynced = () => load();
+    window.addEventListener("one-more:synced", onSynced);
+    return () => window.removeEventListener("one-more:synced", onSynced);
   }, [load]);
 
   const savePerformance = useCallback(

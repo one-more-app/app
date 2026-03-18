@@ -44,7 +44,7 @@ export async function syncNow(session: AuthSession): Promise<void> {
   const perfs = getPerformanceEntriesForSync();
   const profile = getUserProfile();
 
-  const lastSyncAt = getLastSyncAt();
+  const lastSyncAt = getLastSyncAt(session.user.id);
 
   // push
   await apiFetch<{ ok: true }>("/sync/push", {
@@ -107,13 +107,22 @@ export async function syncNow(session: AuthSession): Promise<void> {
   // merge profile (LWW)
   if (pull.profile) {
     // côté app on n'a pas encore updatedAt dans le profil; on applique simplement la version serveur.
-    setUserProfile({
-      weightKg: pull.profile.weightKg,
-      heightCm: pull.profile.heightCm,
-      gender: pull.profile.gender,
-    });
+    setUserProfile(
+      {
+        weightKg: pull.profile.weightKg,
+        heightCm: pull.profile.heightCm,
+        gender: pull.profile.gender,
+      },
+      { silent: true },
+    );
   }
 
-  setLastSyncAt(pull.serverTime);
+  setLastSyncAt(session.user.id, pull.serverTime);
+
+  // Notifie les écrans/hooks qui chargent les données depuis le stockage local.
+  // (Sinon, ils ne se mettent pas à jour automatiquement après un sync.)
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("one-more:synced", { detail: { serverTime: pull.serverTime } }));
+  }
 }
 

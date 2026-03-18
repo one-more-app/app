@@ -4,8 +4,10 @@ import { ExerciseListPage } from '@/pages/ExerciseListPage'
 import HomePage from '@/pages/HomePage'
 import { AuthPage } from '@/pages/AuthPage'
 import { OnboardingPage } from '@/pages/OnboardingPage'
+import StatsPage from '@/pages/StatsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { Toaster } from '@/components/ui/sonner'
+import { BottomNav } from '@/components/BottomNav'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
@@ -20,6 +22,21 @@ function OnboardingGate({ children }: { children: React.ReactNode }) {
         return <Navigate to="/onboarding" replace />
     }
     return <>{children}</>
+}
+
+function BottomNavHost({ children }: { children: React.ReactNode }) {
+    const location = useLocation()
+    const show =
+        location.pathname === '/home' ||
+        location.pathname === '/stats' ||
+        location.pathname === '/settings'
+
+    return (
+        <div className={show ? 'pb-20' : undefined}>
+            {children}
+            {show ? <BottomNav /> : null}
+        </div>
+    )
 }
 
 function App() {
@@ -52,16 +69,19 @@ function App() {
             <Toaster />
             <AuthProvider>
                 <OnboardingGate>
-                    <Routes>
-                        <Route path="/" element={<Navigate to="/home" replace />} />
-                        <Route path="/onboarding" element={<OnboardingPage />} />
-                        <Route path="/home" element={<HomePage />} />
-                        <Route path="/auth" element={<AuthPage />} />
-                        <Route path="/exercises/:id" element={<ExerciseCatalogDetailPage />} />
-                        <Route path="/exercises" element={<ExerciseListPage />} />
-                        <Route path="/exercise/:id" element={<ExerciseDetailPage />} />
-                        <Route path="/settings" element={<SettingsPage />} />
-                    </Routes>
+                    <BottomNavHost>
+                        <Routes>
+                            <Route path="/" element={<Navigate to="/home" replace />} />
+                            <Route path="/onboarding" element={<OnboardingPage />} />
+                            <Route path="/home" element={<HomePage />} />
+                            <Route path="/stats" element={<StatsPage />} />
+                            <Route path="/auth" element={<AuthPage />} />
+                            <Route path="/exercises/:id" element={<ExerciseCatalogDetailPage />} />
+                            <Route path="/exercises" element={<ExerciseListPage />} />
+                            <Route path="/exercise/:id" element={<ExerciseDetailPage />} />
+                            <Route path="/settings" element={<SettingsPage />} />
+                        </Routes>
+                    </BottomNavHost>
                 </OnboardingGate>
             </AuthProvider>
         </HashRouter>
