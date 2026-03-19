@@ -279,10 +279,11 @@ export const UI = {
   syncNow: "Synchroniser maintenant",
 
   // Onboarding (premier lancement)
-  onboardingTitle: "Avant de commencer",
+  onboardingTitle: 'Prêt à progresser ?',
   onboardingDescription:
-    "Ces informations servent aux calculs (ligues, ratios). Tu pourras les modifier plus tard dans Paramètres.",
+    "Regarde la vidéo, puis crée ton compte (Google/Apple) ou commence sans prise de tête. Tu pourras régler ton profil plus tard.",
   continue: "Continuer",
+  later: "Plus tard",
 
   // Avis
   rateApp: "Laisser un avis",

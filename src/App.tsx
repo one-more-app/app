@@ -18,7 +18,11 @@ import { AuthProvider } from '@/hooks/use-auth'
 
 function OnboardingGate({ children }: { children: React.ReactNode }) {
     const location = useLocation()
-    if (needsOnboarding() && location.pathname !== '/onboarding') {
+    if (
+        needsOnboarding() &&
+        location.pathname !== '/onboarding' &&
+        location.pathname !== '/auth'
+    ) {
         return <Navigate to="/onboarding" replace />
     }
     return <>{children}</>

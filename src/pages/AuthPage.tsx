@@ -5,12 +5,24 @@ import { useAuth } from "@/hooks/use-auth";
 import { UI } from "@/lib/translations";
 import { signInWithOAuth } from "@/lib/oauth";
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 export function AuthPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const auth = useAuth();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const rawRedirect = searchParams.get("redirect");
+  const redirect = useMemo(() => {
+    if (!rawRedirect) return "/settings";
+    try {
+      return decodeURIComponent(rawRedirect);
+    } catch {
+      return rawRedirect;
+    }
+  }, [rawRedirect]);
+  const [mode, setMode] = useState<"login" | "register">(
+    searchParams.get("mode") === "register" ? "register" : "login",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -35,7 +47,7 @@ export function AuthPage() {
       } else {
         await auth.login({ email: email.trim(), password });
       }
-      navigate("/settings", { replace: true });
+      navigate(redirect, { replace: true });
     } finally {
       setIsBusy(false);
     }
@@ -145,7 +157,7 @@ export function AuthPage() {
                   try {
                     const session = await signInWithOAuth("google");
                     auth.acceptSession(session);
-                    navigate("/settings", { replace: true });
+                    navigate(redirect, { replace: true });
                   } catch (e) {
                     auth.setError(
                       e instanceof Error ? e.message : "Connexion Google impossible",
@@ -169,7 +181,7 @@ export function AuthPage() {
                   try {
                     const session = await signInWithOAuth("apple");
                     auth.acceptSession(session);
-                    navigate("/settings", { replace: true });
+                    navigate(redirect, { replace: true });
                   } catch (e) {
                     auth.setError(
                       e instanceof Error ? e.message : "Connexion Apple impossible",
