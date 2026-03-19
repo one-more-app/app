@@ -29,8 +29,8 @@ export function BackHeader({
                     compact ? 'gap-2' : 'gap-4',
                 ].join(' ')}
             >
-                <Button variant="ghost" size="icon" onClick={handleBack} aria-label={UI.back}>
-                    <ArrowLeft className="size-5" />
+                <Button variant="secondary" size="icon" onClick={handleBack} aria-label={UI.back}>
+                    <ArrowLeft className="size-4" />
                 </Button>
 
                 <h1

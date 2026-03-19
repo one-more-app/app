@@ -30,7 +30,8 @@ function readSyncMeta(): SyncMeta {
     if (!raw) return { lastSyncAt: null };
     const parsed = JSON.parse(raw) as Partial<SyncMeta>;
     return {
-      lastSyncAt: typeof parsed.lastSyncAt === "string" ? parsed.lastSyncAt : null,
+      lastSyncAt:
+        typeof parsed.lastSyncAt === "string" ? parsed.lastSyncAt : null,
       userId: typeof parsed.userId === "string" ? parsed.userId : null,
     };
   } catch {

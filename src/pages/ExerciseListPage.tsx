@@ -1,9 +1,9 @@
+import { BackHeader } from '@/components/BackHeader'
 import { ExerciseSearchFilters } from '@/components/ExerciseSearchFilters'
 import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader } from '@/components/ui/card'
-import { BackHeader } from '@/components/BackHeader'
 import {
     Dialog,
     DialogContent,
@@ -49,22 +49,84 @@ import {
     UI,
 } from '@/lib/translations'
 import type { ExerciseDBExercise } from '@/types'
-import { ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-// Aligné avec l'API ExerciseDB v1 /bodyparts
-const CUSTOM_CATEGORIES = [
-    { value: 'back', label: 'Dos' },
-    { value: 'chest', label: 'Pectoraux' },
-    { value: 'lower arms', label: 'Avant-bras' },
-    { value: 'lower legs', label: 'Jambes' },
-    { value: 'neck', label: 'Cou' },
-    { value: 'shoulders', label: 'Épaules' },
-    { value: 'upper arms', label: 'Bras' },
-    { value: 'upper legs', label: 'Cuisses' },
-    { value: 'waist', label: 'Taille' },
-]
+function inferBodyPartFromTarget(target: string): string | undefined {
+    // Heuristique pour garder les filtres Home cohérents :
+    // Home filtre par `target` (muscle) ET par `bodyPart` (partie du corps).
+    // Pour un exo custom, on stocke `target` + on déduit un `bodyPart` approximatif.
+    const t = target.toLowerCase()
+    const map: Record<string, string> = {
+        // Dos
+        'upper back': 'back',
+        'lower back': 'back',
+        lats: 'back',
+        'latissimus dorsi': 'back',
+        traps: 'back',
+        trapezius: 'back',
+        rhomboids: 'back',
+        'levator scapulae': 'back',
+
+        // Poitrine
+        chest: 'chest',
+        pectorals: 'chest',
+        'upper chest': 'chest',
+        'serratus anterior': 'chest',
+
+        // Épaules
+        shoulders: 'shoulders',
+        delts: 'shoulders',
+        deltoids: 'shoulders',
+        'rear deltoids': 'shoulders',
+
+        // Bras / avant-bras
+        'upper arms': 'upper arms',
+        biceps: 'upper arms',
+        triceps: 'upper arms',
+        brachialis: 'upper arms',
+        'lower arms': 'lower arms',
+        forearms: 'lower arms',
+        'wrist flexors': 'lower arms',
+        'wrist extensors': 'lower arms',
+        'grip muscles': 'lower arms',
+        wrists: 'lower arms',
+        hands: 'lower arms',
+
+        // Gainage
+        abs: 'waist',
+        abdominals: 'waist',
+        core: 'waist',
+        obliques: 'waist',
+        'lower abs': 'waist',
+
+        // Jambes (haut)
+        'upper legs': 'upper legs',
+        glutes: 'upper legs',
+        hamstrings: 'upper legs',
+        quadriceps: 'upper legs',
+        quads: 'upper legs',
+        'hip flexors': 'upper legs',
+        groin: 'upper legs',
+        'inner thighs': 'upper legs',
+        adductors: 'upper legs',
+        abductors: 'upper legs',
+        'rotator cuff': 'shoulders', // fallback rare mais évite un trou
+
+        // Jambes (bas)
+        calves: 'lower legs',
+        soleus: 'lower legs',
+        shins: 'lower legs',
+        ankles: 'lower legs',
+        'ankle stabilizers': 'lower legs',
+        feet: 'lower legs',
+
+        // Cou
+        neck: 'neck',
+    }
+    return map[t]
+}
 
 export function ExerciseListPage() {
     const navigate = useNavigate()
@@ -75,7 +137,6 @@ export function ExerciseListPage() {
     const equipmentList = getGroupedEquipmentList(
         localEquipmentRaw.filter((eq) => !CARDIO_EQUIPMENT.has(eq))
     )
-    const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
     const {
@@ -92,7 +153,9 @@ export function ExerciseListPage() {
 
     const [customOpen, setCustomOpen] = useState(false)
     const [customName, setCustomName] = useState('')
-    const [customCategory, setCustomCategory] = useState('chest' as string)
+    const [customTarget, setCustomTarget] = useState(
+        () => targets[0] ?? ('chest' as string),
+    )
     const [brokenImageIds, setBrokenImageIds] = useState<Set<string>>(new Set())
     const [addWithPerfExercise, setAddWithPerfExercise] = useState<ExerciseDBExercise | null>(null)
     const [perfWeight, setPerfWeight] = useState(0)
@@ -104,12 +167,12 @@ export function ExerciseListPage() {
 
     // Reset broken images when exercises list changes (new search/filter)
     useEffect(() => {
-        setBrokenImageIds(new Set())
+        void Promise.resolve().then(() => setBrokenImageIds(new Set()))
     }, [targetFilter, equipmentFilter, searchQuery])
 
     // Données locales : filtre et pagination sur popularExercises
     useEffect(() => {
-        setError(null)
+        void Promise.resolve().then(() => setError(null))
         const offset = page * 25
         const apiQuery = searchQuery.trim()
             ? translateSearchQueryToEnglish(searchQuery.trim()).toLowerCase()
@@ -137,8 +200,12 @@ export function ExerciseListPage() {
             })
         }
         const sorted = sortExercisesByPopularity(list)
-        setTotalFilteredCount(sorted.length)
-        setApiExercises(sorted.slice(offset, offset + 25))
+        const nextTotalFilteredCount = sorted.length
+        const nextApiExercises = sorted.slice(offset, offset + 25)
+        void Promise.resolve().then(() => {
+            setTotalFilteredCount(nextTotalFilteredCount)
+            setApiExercises(nextApiExercises)
+        })
     }, [targetFilter, equipmentFilter, page, searchQuery])
 
     const filteredExercises = sortExercisesByPopularity(
@@ -198,11 +265,13 @@ export function ExerciseListPage() {
     const handleAddCustom = () => {
         if (!customName.trim()) return
         const id = `custom-${crypto.randomUUID()}`
+        const bodyPart = inferBodyPartFromTarget(customTarget)
         addExercise({
             exerciseId: id,
             name: customName.trim(),
             originalName: customName.trim(),
-            bodyPart: customCategory,
+            bodyPart,
+            target: customTarget,
             isCustom: true,
         })
         setCustomName('')
@@ -226,7 +295,7 @@ export function ExerciseListPage() {
                     extraSlot={
                         <Dialog open={customOpen} onOpenChange={setCustomOpen}>
                             <DialogTrigger asChild>
-                                <Button variant="outline" size="sm">
+                                <Button size="sm" className="w-full">
                                     <Plus className="mr-1 size-4" />
                                     {UI.custom}
                                 </Button>
@@ -246,18 +315,18 @@ export function ExerciseListPage() {
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <Label>{UI.category}</Label>
+                                        <Label>{UI.muscleGroup}</Label>
                                         <Select
-                                            value={customCategory}
-                                            onValueChange={setCustomCategory}
+                                            value={customTarget}
+                                            onValueChange={setCustomTarget}
                                         >
                                             <SelectTrigger>
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {CUSTOM_CATEGORIES.map((c) => (
-                                                    <SelectItem key={c.value} value={c.value}>
-                                                        {c.label}
+                                                {targets.map((t) => (
+                                                    <SelectItem key={t} value={t}>
+                                                        {translateTarget(t)}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -275,11 +344,7 @@ export function ExerciseListPage() {
                         </Dialog>
                     }
                 />
-                {loading ? (
-                    <div className="flex justify-center py-20">
-                        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-                    </div>
-                ) : error ? (
+                {error ? (
                     <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
                         <p className="text-destructive">{error}</p>
                         <p className="mt-2 text-sm text-muted-foreground">
@@ -332,13 +397,13 @@ export function ExerciseListPage() {
                     </ul>
                 )}
 
-                {!loading && filteredExercises.length === 0 && !error && (
+                {filteredExercises.length === 0 && !error && (
                     <p className="py-8 text-center text-muted-foreground">
                         {UI.noExerciseFound}
                     </p>
                 )}
 
-                {!loading && filteredExercises.length > 0 && totalFilteredCount > 25 && (
+                {filteredExercises.length > 0 && totalFilteredCount > 25 && (
                     <div className="mt-4 flex items-center justify-center gap-2">
                         <Button
                             variant="outline"
