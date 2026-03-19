@@ -1,19 +1,19 @@
-import type { JSX } from 'react'
 import { Home, LayoutGrid, Settings } from 'lucide-react'
+import type { JSX } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
-import { cn } from '@/lib/utils'
 import { UI } from '@/lib/translations'
+import { cn } from '@/lib/utils'
 
 const NAV_ITEMS: Array<{
     to: string
     label: string
     Icon: (props: { className?: string }) => JSX.Element
 }> = [
-    { to: '/home', label: 'Accueil', Icon: Home },
-    { to: '/stats', label: 'Stats', Icon: LayoutGrid },
-    { to: '/settings', label: UI.settings, Icon: Settings },
-]
+        { to: '/home', label: 'Accueil', Icon: Home },
+        { to: '/stats', label: 'Stats', Icon: LayoutGrid },
+        { to: '/settings', label: UI.settings, Icon: Settings },
+    ]
 
 function BottomNav() {
     const location = useLocation()
@@ -40,13 +40,13 @@ function BottomNav() {
                             <item.Icon
                                 className={cn(
                                     'size-5',
-                                    active ? 'text-accent' : 'text-muted-foreground'
+                                    active ? 'text-default' : 'text-muted-foreground'
                                 )}
                             />
                             <span
                                 className={cn(
                                     'text-[11px] leading-none',
-                                    active ? 'text-accent' : 'text-muted-foreground'
+                                    active ? 'text-primary' : 'text-muted-foreground'
                                 )}
                             >
                                 {item.label}

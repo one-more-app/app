@@ -3,6 +3,7 @@ import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader } from '@/components/ui/card'
+import { BackHeader } from '@/components/BackHeader'
 import {
     Dialog,
     DialogContent,
@@ -30,7 +31,6 @@ import {
     localTargets,
     popularExercises,
 } from '@/data/popular-exercises'
-import { useBack } from '@/hooks/use-back'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
 import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
@@ -49,7 +49,7 @@ import {
     UI,
 } from '@/lib/translations'
 import type { ExerciseDBExercise } from '@/types'
-import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -68,7 +68,6 @@ const CUSTOM_CATEGORIES = [
 
 export function ExerciseListPage() {
     const navigate = useNavigate()
-    const goBack = useBack()
     const { exercises: tracked, addExercise } = useTrackedExercises()
     const [apiExercises, setApiExercises] = useState<ExerciseDBExercise[]>([])
     const [totalFilteredCount, setTotalFilteredCount] = useState(0)
@@ -212,15 +211,7 @@ export function ExerciseListPage() {
 
     return (
         <div className="min-h-screen bg-background">
-            <header className="sticky top-0 z-10 border-b border-white/10 bg-black px-4 py-4">
-                <div className="mx-auto flex max-w-2xl items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={goBack}>
-                        <ArrowLeft className="size-5" />
-                    </Button>
-                    <h1 className="text-lg font-semibold">{UI.chooseExercises}</h1>
-
-                </div>
-            </header>
+            <BackHeader compact title={UI.chooseExercises} />
 
             <main className="mx-auto max-w-2xl px-4 py-4">
                 <ExerciseSearchFilters

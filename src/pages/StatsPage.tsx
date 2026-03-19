@@ -1,27 +1,14 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { BackHeader } from '@/components/BackHeader'
 import { UI } from '@/lib/translations'
-import { ArrowLeft, Sparkles } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Sparkles } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 export default function StatsPage() {
-    const navigate = useNavigate()
-
     return (
         <div className="min-h-screen bg-background">
-            <header className="sticky top-0 z-10 border-b border-white/10 bg-black px-4 py-4">
-                <div className="mx-auto flex max-w-2xl items-center gap-4">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => navigate(-1)}
-                        aria-label={UI.back}
-                    >
-                        <ArrowLeft className="size-5" />
-                    </Button>
-                    <h1 className="truncate text-lg font-semibold">Stats</h1>
-                </div>
-            </header>
+            <BackHeader title="Stats" />
 
             <main className="mx-auto max-w-2xl space-y-4 p-4">
                 <Card>

@@ -1,16 +1,16 @@
-import logo from '@/assets/logo-white.png'
 import { ExerciseCard } from '@/components/ExerciseCard'
 import { ExerciseSearchFilters } from '@/components/ExerciseSearchFilters'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useHomeData } from '@/hooks/use-home-data'
 import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
 import { CARDIO_EQUIPMENT } from '@/lib/exercisedb'
-import { getPersonalBest, getUserProfile, savePerformance } from '@/lib/storage'
 import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
+import { getPersonalBest, getUserProfile, savePerformance } from '@/lib/storage'
 import { getLeagueInfo } from '@/lib/strength-standards'
 import { equipmentMatchesFilter, getGroupedEquipmentList, UI } from '@/lib/translations'
-import { Dumbbell, Plus, Settings } from 'lucide-react'
+import { Dumbbell, Plus } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -119,54 +119,41 @@ function HomePage() {
 
     return (
         <div className="min-h-screen bg-background">
-            <header className="sticky top-0 z-10 border-b border-white/10 bg-black p-4">
-                <div className="mx-auto flex max-w-2xl items-center justify-between">
-                    <img src={logo} alt="One More" className="h-8" />
-                    <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" asChild>
-                            <Link to="/settings">
-                                <Settings className="size-5" />
-                            </Link>
-                        </Button>
-                        <Button asChild size="sm">
-                            <Link to="/exercises">
-                                <Plus className="mr-2 size-4" />
-                                {UI.addExercise}
-                            </Link>
-                        </Button>
-                    </div>
-                </div>
-            </header>
-
             <main className="mx-auto max-w-2xl p-4">
-                {exercises.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <Dumbbell className="mb-4 size-12 text-accent" />
-                        <h2 className="mb-2 text-lg font-medium">{UI.noTrackedExercises}</h2>
-                        <p className="mb-6 text-muted-foreground">
-                            {UI.noTrackedDescription}
-                        </p>
-                        <Button asChild>
-                            <Link to="/exercises">
-                                <Plus className="mr-2 size-4" />
-                                {UI.chooseExercises}
-                            </Link>
-                        </Button>
+                <ExerciseSearchFilters
+                    searchInput={searchInput}
+                    onSearchChange={handleSearchChange}
+                    targetFilter={targetFilter}
+                    onTargetFilterChange={handleTargetChange}
+                    targets={targets}
+                    equipmentFilter={equipmentFilter}
+                    onEquipmentFilterChange={handleEquipmentChange}
+                    equipmentList={equipmentList}
+                    onBodyPartFilterChange={handleBodyPartChange}
+                    bodyParts={bodyParts}
+                />
+
+                <div className="mb-4">
+                    <Button size="sm" asChild className="w-full">
+                        <Link to="/exercises">
+                            <Plus className="mr-2 size-4" />
+                            {UI.addExercise}
+                        </Link>
+                    </Button>
+                </div>
+
+                {nonCardioExercises.length === 0 ? (
+                    <div className="mt-4 flex flex-col items-center justify-center text-center">
+                        <Card className="w-full ">
+                            <CardContent className="flex flex-col items-center gap-3 p-6">
+                                <Dumbbell className="size-7 text-muted-foreground" />
+                                <h2 className="text-lg font-medium">{UI.noTrackedExercises}</h2>
+                                <p className="text-muted-foreground">{UI.noTrackedDescription}</p>
+                            </CardContent>
+                        </Card>
                     </div>
                 ) : (
                     <>
-                        <ExerciseSearchFilters
-                            searchInput={searchInput}
-                            onSearchChange={handleSearchChange}
-                            targetFilter={targetFilter}
-                            onTargetFilterChange={handleTargetChange}
-                            targets={targets}
-                            equipmentFilter={equipmentFilter}
-                            onEquipmentFilterChange={handleEquipmentChange}
-                            equipmentList={equipmentList}
-                            onBodyPartFilterChange={handleBodyPartChange}
-                            bodyParts={bodyParts}
-                        />
                         <ul className="space-y-3">
                             {filteredExercises.map((ex) => {
                                 const profile = getUserProfile()
@@ -218,14 +205,20 @@ function HomePage() {
                                 )
                             })}
                         </ul>
+
                         {filteredExercises.length === 0 &&
                             (bodyPartFilter !== 'all' ||
                                 targetFilter !== 'all' ||
                                 equipmentFilter !== 'all' ||
                                 searchQuery.trim()) && (
-                                <p className="py-8 text-center text-muted-foreground">
-                                    {UI.noExerciseFound}
-                                </p>
+                                <div className="mt-6 flex flex-col items-center justify-center text-center">
+                                    <Card className="w-full max-w-md shadow-none">
+                                        <CardContent className="flex flex-col items-center gap-3 p-6">
+                                            <Dumbbell className="size-12 text-accent" />
+                                            <p className="text-muted-foreground">{UI.noExerciseFound}</p>
+                                        </CardContent>
+                                    </Card>
+                                </div>
                             )}
                     </>
                 )}

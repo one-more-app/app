@@ -8,15 +8,15 @@ import {
     DrawerHeader,
     DrawerTitle,
 } from '@/components/ui/drawer'
+import { BackHeader } from '@/components/BackHeader'
 import { getExerciseById } from '@/data/popular-exercises'
-import { useBack } from '@/hooks/use-back'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { savePerformance } from '@/lib/storage'
 import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import { translateBodyPart, translateEquipment, translateTarget, UI } from '@/lib/translations'
 import type { ExerciseDBExercise } from '@/types'
-import { ArrowLeft, Dumbbell, Loader2, Plus } from 'lucide-react'
+import { Dumbbell, Loader2, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -33,7 +33,6 @@ function getWeightLabel(exercise: ExerciseDBExercise): string {
 export function ExerciseCatalogDetailPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
-    const goBack = useBack()
     const [exercise, setExercise] = useState<ExerciseDBExercise | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -98,21 +97,17 @@ export function ExerciseCatalogDetailPage() {
         return (
             <div className="flex min-h-screen flex-col items-center justify-center gap-4">
                 <p className="text-muted-foreground">{error ?? UI.exerciseNotFound}</p>
-                <Button onClick={goBack}>{UI.back}</Button>
+                <Button onClick={() => navigate(-1)}>{UI.back}</Button>
             </div>
         )
     }
 
     return (
         <div className="min-h-screen bg-background">
-            <header className="sticky top-0 z-10 border-b border-white/10 bg-black px-4 py-4">
-                <div className="mx-auto flex max-w-2xl items-center justify-between gap-4">
-                    <Button variant="ghost" size="icon" onClick={goBack}>
-                        <ArrowLeft className="size-5" />
-                    </Button>
-                    <h1 className="flex-1 truncate text-lg font-semibold capitalize">
-                        {exercise.name}
-                    </h1>
+            <BackHeader
+                title={exercise.name}
+                titleClassName="capitalize"
+                right={
                     <Button
                         size="sm"
                         disabled={isTracked}
@@ -126,8 +121,8 @@ export function ExerciseCatalogDetailPage() {
                             </>
                         )}
                     </Button>
-                </div>
-            </header>
+                }
+            />
 
             <Drawer open={addWithPerfOpen} onOpenChange={setAddWithPerfOpen}>
                 <DrawerContent>

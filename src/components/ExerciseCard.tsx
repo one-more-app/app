@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
 import type { LeagueInfo } from '@/lib/strength-standards'
+import { LEAGUE_1RM_STYLES } from '@/lib/league-colors'
 import { UI, translateBodyPart, translateTarget } from '@/lib/translations'
 import { Dumbbell, Plus, Trophy } from 'lucide-react'
 import { useState } from 'react'
@@ -53,6 +54,10 @@ export function ExerciseCard({
 }: ExerciseCardProps) {
     const sizeClass = imageSizes[imageSize]
     const [drawerOpen, setDrawerOpen] = useState(false)
+    const isLeagueRecord = !!leagueInfo
+    const recordContainerClassName = isLeagueRecord
+        ? `flex flex-1 flex-col items-start gap-1 rounded-lg p-3 ${LEAGUE_1RM_STYLES[leagueInfo.level]}`
+        : 'flex flex-1 flex-col items-start gap-1 rounded-lg border border-accent/70 bg-accent/10 p-3 text-primary'
 
     return (
         <>
@@ -95,7 +100,7 @@ export function ExerciseCard({
                     </div>
                     <Button
                         size="icon"
-                        variant="accent"
+                        variant="default"
                         className="size-11 shrink-0 rounded-full"
                         onClick={(e) => {
                             e.preventDefault()
@@ -131,14 +136,20 @@ export function ExerciseCard({
                                 <span className="text-muted-foreground">—</span>
                             )}
                         </div>
-                        <div className="flex flex-1 flex-col items-start gap-1 rounded-lg border border-accent/30 bg-accent/5 p-3">
-                            <span className="flex items-center gap-1.5 font-medium text-primary">
+                        <div className={recordContainerClassName}>
+                            <span
+                                className={
+                                    isLeagueRecord
+                                        ? 'flex items-center gap-1.5 font-medium text-muted-foreground'
+                                        : 'flex items-center gap-1.5 font-medium text-primary'
+                                }
+                            >
                                 <Trophy className="size-4" />
                                 {UI.record}
                             </span>
                             {personalBest ? (
                                 <span className="flex items-center gap-1">
-                                    <span className="text-2xl font-bold text-primary">
+                                    <span className="text-2xl font-bold italic text-primary">
                                         {personalBest.weight === 0 ? (
                                             <BodyWeightLabel className="text-2xl font-bold italic text-primary" />
                                         ) : (
@@ -146,11 +157,21 @@ export function ExerciseCard({
                                                 <span className="text-2xl font-bold italic text-primary">
                                                     {personalBest.weight}
                                                 </span>
-                                                <span className="text-sm font-normal">kg</span>
+                                                <span
+                                                    className={
+                                                        isLeagueRecord
+                                                            ? 'text-sm font-normal text-muted-foreground'
+                                                            : 'text-sm font-normal'
+                                                    }
+                                                >
+                                                    kg
+                                                </span>
                                             </div>
                                         )}
                                     </span>
-                                    <span>× {personalBest.reps} reps</span>
+                                    <span className={isLeagueRecord ? 'text-muted-foreground' : undefined}>
+                                        × {personalBest.reps} reps
+                                    </span>
                                 </span>
                             ) : (
                                 <span className="text-muted-foreground">—</span>

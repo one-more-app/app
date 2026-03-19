@@ -1,10 +1,10 @@
 import { Badge } from '@/components/ui/badge'
-import type { LeagueInfo } from '@/lib/strength-standards'
+import type { LeagueInfo, LeagueLevel } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
-import { LEAGUE_COLORS } from '@/lib/league-colors'
+import { LEAGUE_1RM_STYLES, LEAGUE_COLORS } from '@/lib/league-colors'
 import { Trophy } from 'lucide-react'
 
-const NEXT_TIER: Record<string, { label: string; level: string } | null> = {
+const NEXT_TIER: Record<LeagueLevel, { label: string; level: LeagueLevel } | null> = {
     iron: { label: 'Bronze', level: 'bronze' },
     bronze: { label: 'Argent', level: 'silver' },
     silver: { label: 'Or', level: 'gold' },
@@ -15,19 +15,6 @@ const NEXT_TIER: Record<string, { label: string; level: string } | null> = {
     master: { label: 'Elite', level: 'elite' },
     elite: { label: 'Légende', level: 'legend' },
     legend: null,
-}
-
-const LEAGUE_1RM_STYLES: Record<string, string> = {
-    iron: 'border border-zinc-500/80 bg-zinc-700/20',
-    bronze: 'border border-amber-700/80 bg-amber-900/20',
-    silver: 'border border-slate-500/80 bg-slate-600/20',
-    gold: 'border border-amber-500/80 bg-amber-600/20',
-    platinum: 'border border-cyan-600/80 bg-cyan-800/20',
-    emerald: 'border border-emerald-600/80 bg-emerald-800/20',
-    diamond: 'border border-violet-500/80 bg-violet-600/20',
-    master: 'border border-rose-600/80 bg-rose-800/20',
-    elite: 'border border-emerald-500/80 bg-emerald-700/20',
-    legend: 'border border-amber-400/80 bg-amber-500/20',
 }
 
 interface LeagueBadgeProps {

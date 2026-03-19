@@ -6,7 +6,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { UI, translateEquipment, translateTarget } from '@/lib/translations'
+import { UI, translateBodyPart, translateEquipment, translateTarget } from '@/lib/translations'
 import { Search } from 'lucide-react'
 
 export interface ExerciseSearchFiltersProps {
@@ -15,6 +15,11 @@ export interface ExerciseSearchFiltersProps {
     targetFilter: string
     onTargetFilterChange: (value: string) => void
     targets: string[]
+
+    bodyPartFilter?: string
+    onBodyPartFilterChange?: (value: string) => void
+    bodyParts?: string[]
+
     equipmentFilter: string
     onEquipmentFilterChange: (value: string) => void
     equipmentList: string[]
@@ -31,6 +36,9 @@ export function ExerciseSearchFilters({
     equipmentFilter,
     onEquipmentFilterChange,
     equipmentList,
+    bodyPartFilter,
+    onBodyPartFilterChange,
+    bodyParts = [],
     extraSlot,
 }: ExerciseSearchFiltersProps) {
 
@@ -47,36 +55,49 @@ export function ExerciseSearchFilters({
                 />
             </div>
             <div className="mb-4 flex flex-row gap-3">
-                {targets.length > 0 && (
-                    <Select value={targetFilter} onValueChange={onTargetFilterChange}>
-                        <SelectTrigger className="min-w-[140px] flex-1">
-                            <SelectValue placeholder={UI.filterByTarget} />
+                <Select value={targetFilter} onValueChange={onTargetFilterChange}>
+                    <SelectTrigger className="min-w-[140px] flex-1">
+                        <SelectValue placeholder={UI.filterByTarget} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">{UI.all}</SelectItem>
+                        {targets.map((t) => (
+                            <SelectItem key={t} value={t}>
+                                {translateTarget(t)}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                {bodyPartFilter && onBodyPartFilterChange && (
+                    <Select value={bodyPartFilter} onValueChange={onBodyPartFilterChange}>
+                        <SelectTrigger className="min-w-[170px] flex-1">
+                            <SelectValue placeholder={UI.filterByBodyPart} />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">{UI.all}</SelectItem>
-                            {targets.map((t) => (
-                                <SelectItem key={t} value={t}>
-                                    {translateTarget(t)}
+                            {bodyParts.map((bp) => (
+                                <SelectItem key={bp} value={bp}>
+                                    {translateBodyPart(bp)}
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                 )}
-                {equipmentList.length > 0 && (
-                    <Select value={equipmentFilter} onValueChange={onEquipmentFilterChange}>
-                        <SelectTrigger className="min-w-[140px] flex-1">
-                            <SelectValue placeholder={UI.filterByEquipment} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">{UI.all}</SelectItem>
-                            {equipmentList.map((eq) => (
-                                <SelectItem key={eq} value={eq}>
-                                    {translateEquipment(eq)}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                )}
+
+                <Select value={equipmentFilter} onValueChange={onEquipmentFilterChange}>
+                    <SelectTrigger className="min-w-[140px] flex-1">
+                        <SelectValue placeholder={UI.filterByEquipment} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">{UI.all}</SelectItem>
+                        {equipmentList.map((eq) => (
+                            <SelectItem key={eq} value={eq}>
+                                {translateEquipment(eq)}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
                 {extraSlot}
             </div>
         </>

@@ -84,7 +84,7 @@ export function PerformanceChart({ className, entries, exercise, onDelete, onUpd
         allEntries: allByDate.get(e.date) ?? [],
     }))
 
-    const lineColor = '#97d756'
+    const lineColor = '#E1FD54'
     const gridColor = 'rgba(255, 255, 255, 0.1)'
     const tickColor = 'rgba(255, 255, 255, 0.6)'
 

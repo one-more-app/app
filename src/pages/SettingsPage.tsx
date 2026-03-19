@@ -7,19 +7,17 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { useBack } from '@/hooks/use-back'
 import { useAuth } from '@/hooks/use-auth'
 import { openStoreListing } from '@/lib/app-review'
 import { getUserProfile, setUserProfile } from '@/lib/storage'
 import { UI } from '@/lib/translations'
-import { ArrowLeft } from 'lucide-react'
+import { BackHeader } from '@/components/BackHeader'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { syncNow } from '@/lib/sync'
 import { toast } from 'sonner'
 
 export function SettingsPage() {
-    const goBack = useBack()
     const auth = useAuth()
     const [isSyncing, setIsSyncing] = useState(false)
     const [weightKg, setWeightKg] = useState<string>('')
@@ -43,14 +41,7 @@ export function SettingsPage() {
 
     return (
         <div className="min-h-screen bg-background">
-            <header className="sticky top-0 z-10 border-b border-white/10 bg-black px-4 py-4">
-                <div className="mx-auto flex max-w-2xl items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={goBack}>
-                        <ArrowLeft className="size-5" />
-                    </Button>
-                    <h1 className="truncate text-lg font-semibold">{UI.settings}</h1>
-                </div>
-            </header>
+            <BackHeader title={UI.settings} />
 
             <main className="mx-auto max-w-2xl px-4 py-4 space-y-4">
                 <Card>

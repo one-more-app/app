@@ -1,6 +1,7 @@
 import { ExerciseCard } from '@/components/ExerciseCard'
 import { LeagueBadge } from '@/components/LeagueBadge'
 import { PerformanceChart } from '@/components/PerformanceChart'
+import { BackHeader } from '@/components/BackHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -12,7 +13,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { useBack } from '@/hooks/use-back'
 import { usePerformance } from '@/hooks/use-performance'
 import { LEAGUE_COLORS } from '@/lib/league-colors'
 import {
@@ -34,14 +34,13 @@ import {
     isDumbbellExercise,
 } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
-import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Pencil, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 export function ExerciseDetailPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
-    const goBack = useBack()
     const [exercise, setExercise] = useState(() =>
         id ? getTrackedExerciseById(id) : null
     )
@@ -96,21 +95,18 @@ export function ExerciseDetailPage() {
         return (
             <div className="flex min-h-screen flex-col items-center justify-center gap-4">
                 <p className="text-muted-foreground">{UI.exerciseNotFound}</p>
-                <Button onClick={goBack}>{UI.back}</Button>
+                <Button onClick={() => navigate(-1)}>{UI.back}</Button>
             </div>
         )
     }
 
     return (
         <div className="min-h-screen bg-background">
-            <header className="sticky top-0 z-10 border-b border-white/10 bg-black px-4 py-4">
-                <div className="mx-auto flex max-w-2xl items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={goBack}>
-                        <ArrowLeft className="size-5" />
-                    </Button>
-                    <h1 className="flex-1 truncate text-lg font-semibold capitalize">
-                        {exercise.name}
-                    </h1>
+            <BackHeader
+                compact
+                title={exercise.name}
+                titleClassName="capitalize"
+                right={
                     <Button
                         variant="ghost"
                         size="icon"
@@ -122,8 +118,8 @@ export function ExerciseDetailPage() {
                     >
                         <Pencil className="size-4" />
                     </Button>
-                </div>
-            </header>
+                }
+            />
 
             <main className="mx-auto max-w-2xl px-4 py-4 space-y-4">
                 <ExerciseCard
