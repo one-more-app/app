@@ -84,9 +84,9 @@ export function PerformanceChart({ className, entries, exercise, onDelete, onUpd
         allEntries: allByDate.get(e.date) ?? [],
     }))
 
-    const lineColor = '#E1FD54'
-    const gridColor = 'rgba(255, 255, 255, 0.1)'
-    const tickColor = 'rgba(255, 255, 255, 0.6)'
+    const lineColor = 'var(--primary)'
+    const gridColor = 'var(--border)'
+    const tickColor = 'var(--muted-foreground)'
 
     const handleDotClick = (e: React.MouseEvent, fullDate: string, allEntries: PerformanceEntry[]) => {
         setSelectedPoint({
@@ -219,13 +219,18 @@ export function PerformanceChart({ className, entries, exercise, onDelete, onUpd
                         dataKey="weight"
                         stroke={lineColor}
                         strokeWidth={2.5}
-                        dot={(props) => {
-                            const { cx, cy, payload, key } = props
-                            if (cx == null || cy == null) return null
-                            const { fullDate, allEntries } = payload as {
-                                fullDate: string
-                                allEntries: PerformanceEntry[]
+                        dot={(props: unknown) => {
+                            const { cx, cy, payload, key } = props as {
+                                cx?: number
+                                cy?: number
+                                payload: {
+                                    fullDate: string
+                                    allEntries: PerformanceEntry[]
+                                }
+                                key?: string | number
                             }
+                            if (cx == null || cy == null) return <g />
+                            const { fullDate, allEntries } = payload
                             return (
                                 <g
                                     key={key}
@@ -242,13 +247,18 @@ export function PerformanceChart({ className, entries, exercise, onDelete, onUpd
                                 </g>
                             )
                         }}
-                        activeDot={(props) => {
-                            const { cx, cy, payload, key } = props
-                            if (cx == null || cy == null) return null
-                            const { fullDate, allEntries } = payload as {
-                                fullDate: string
-                                allEntries: PerformanceEntry[]
+                        activeDot={(props: unknown) => {
+                            const { cx, cy, payload, key } = props as {
+                                cx?: number
+                                cy?: number
+                                payload: {
+                                    fullDate: string
+                                    allEntries: PerformanceEntry[]
+                                }
+                                key?: string | number
                             }
+                            if (cx == null || cy == null) return <g />
+                            const { fullDate, allEntries } = payload
                             return (
                                 <g
                                     key={key}
@@ -260,7 +270,7 @@ export function PerformanceChart({ className, entries, exercise, onDelete, onUpd
                                         cy={cy}
                                         r={5}
                                         fill={lineColor}
-                                        stroke="#fff"
+                                        stroke="var(--background)"
                                         strokeWidth={2}
                                     />
                                 </g>
