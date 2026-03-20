@@ -245,6 +245,12 @@ export const UI = {
 
   // Paramètres / Profil
   settings: "Paramètres",
+  appearance: "Apparence",
+  theme: "Thème",
+  themeDescription: "Choisis entre le thème système, clair ou sombre.",
+  themeSystem: "Système",
+  themeLight: "Clair",
+  themeDark: "Sombre",
   profile: "Profil",
   bodyWeight: "Poids du corps (kg)",
   height: "Taille (cm)",

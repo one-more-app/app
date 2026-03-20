@@ -1,6 +1,6 @@
 import logo from '@/assets/logo-white.png'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useHomeData } from '@/hooks/use-home-data'
 import { UI } from '@/lib/translations'
 import { Calendar, Dumbbell, Loader2, Plus, Trophy } from 'lucide-react'

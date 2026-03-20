@@ -22,7 +22,7 @@ export function BackHeader({
     const hasRight = right != null
 
     return (
-        <header className="sticky top-0 z-10 border-b border-white/10 bg-black px-4 py-4">
+        <header className="sticky top-0 z-1 bg-card px-4 py-3">
             <div
                 className={[
                     'mx-auto flex max-w-2xl items-center',

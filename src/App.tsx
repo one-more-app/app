@@ -15,6 +15,7 @@ import { useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { needsOnboarding } from '@/lib/storage'
 import { AuthProvider } from '@/hooks/use-auth'
+import { useTheme } from '@/hooks/use-theme'
 
 function OnboardingGate({ children }: { children: React.ReactNode }) {
     const location = useLocation()
@@ -44,12 +45,14 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+    const { resolvedTheme } = useTheme()
+
     useEffect(() => {
         if (Capacitor.isNativePlatform()) {
-            StatusBar.setStyle({ style: Style.Dark })
-            StatusBar.setBackgroundColor({ color: '#000000' }).catch(() => { })
+            StatusBar.setStyle({ style: resolvedTheme === 'dark' ? Style.Light : Style.Dark })
+            StatusBar.setBackgroundColor({ color: resolvedTheme === 'dark' ? '#000000' : '#ffffff' }).catch(() => { })
         }
-    }, [])
+    }, [resolvedTheme])
 
     useEffect(() => {
         if (Capacitor.getPlatform() !== 'android') return

@@ -62,7 +62,7 @@ export function ExerciseCard({
     return (
         <>
             <Card
-                className={onClick ? 'relative transition-colors hover:bg-muted/50 gap-2 cursor-pointer' : 'gap-2'}
+                className={onClick ? 'relative gap-2 cursor-pointer' : 'gap-2'}
                 onClick={onClick}
             >
                 <CardHeader className="flex flex-row items-center gap-4 pb-2">

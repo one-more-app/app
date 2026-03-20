@@ -1,3 +1,4 @@
+import { BackHeader } from '@/components/BackHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -8,17 +9,19 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { useAuth } from '@/hooks/use-auth'
+import { useTheme } from '@/hooks/use-theme'
 import { openStoreListing } from '@/lib/app-review'
+import type { ThemePreference } from '@/lib/storage'
 import { getUserProfile, setUserProfile } from '@/lib/storage'
+import { syncNow } from '@/lib/sync'
 import { UI } from '@/lib/translations'
-import { BackHeader } from '@/components/BackHeader'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { syncNow } from '@/lib/sync'
 import { toast } from 'sonner'
 
 export function SettingsPage() {
     const auth = useAuth()
+    const { theme, setTheme } = useTheme()
     const [isSyncing, setIsSyncing] = useState(false)
     const [weightKg, setWeightKg] = useState<string>('')
     const [heightCm, setHeightCm] = useState<string>('')
@@ -102,6 +105,29 @@ export function SettingsPage() {
 
                 <Card>
                     <CardHeader>
+                        <CardTitle>{UI.appearance}</CardTitle>
+                        <p className="text-sm text-muted-foreground">{UI.themeDescription}</p>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        <label className="text-sm font-medium">{UI.theme}</label>
+                        <Select
+                            value={theme}
+                            onValueChange={(v) => setTheme(v as ThemePreference)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="system">{UI.themeSystem}</SelectItem>
+                                <SelectItem value="light">{UI.themeLight}</SelectItem>
+                                <SelectItem value="dark">{UI.themeDark}</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
                         <CardTitle>{UI.profile}</CardTitle>
                         <p className="text-sm text-muted-foreground">
                             Utilisé pour calculer ta ligue (ratio force / poids du corps).
@@ -154,7 +180,10 @@ export function SettingsPage() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <Button onClick={handleSave} className="w-full">
+                        <Button onClick={() => {
+                            handleSave()
+                            toast.success('Profil sauvegardé')
+                        }} className="w-full">
                             {UI.save}
                         </Button>
                     </CardContent>

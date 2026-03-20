@@ -5,10 +5,12 @@ const PERFORMANCE_KEY = "one-more-performance";
 const USER_PROFILE_KEY = "one-more-user-profile";
 const ONBOARDING_V1_KEY = "one-more-onboarding-v1";
 const SYNC_META_KEY = "one-more-sync-meta-v1";
+const THEME_PREFERENCE_KEY = "one-more-theme-preference-v1";
 
 type SyncMeta = { lastSyncAt: string | null; userId: string | null };
 
 type LocalChangeKind = "trackedExercise" | "performance" | "profile";
+export type ThemePreference = "system" | "light" | "dark";
 
 function notifyLocalDataChanged(kind: LocalChangeKind): void {
   // Permet d'auto-synchroniser côté front quand l'utilisateur est connecté.
@@ -312,4 +314,18 @@ export function needsOnboarding(): boolean {
 
 export function markOnboardingDone(): void {
   localStorage.setItem(ONBOARDING_V1_KEY, "done");
+}
+
+export function getThemePreference(): ThemePreference {
+  try {
+    const raw = localStorage.getItem(THEME_PREFERENCE_KEY);
+    if (raw === "light" || raw === "dark" || raw === "system") return raw;
+    return "system";
+  } catch {
+    return "system";
+  }
+}
+
+export function setThemePreference(theme: ThemePreference): void {
+  localStorage.setItem(THEME_PREFERENCE_KEY, theme);
 }

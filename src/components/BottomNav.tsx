@@ -21,7 +21,7 @@ function BottomNav() {
 
     return (
         <nav
-            className="fixed bottom-0 left-0 right-0 z-20 border-t border-white/10 bg-black/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
+            className="fixed bottom-0 left-0 right-0 z-20 bg-card backdrop-blur pb-[env(safe-area-inset-bottom)]"
             aria-label="Navigation"
         >
             <div className="mx-auto flex h-16 max-w-2xl items-center justify-around px-4">
@@ -33,24 +33,19 @@ function BottomNav() {
                             to={item.to}
                             aria-current={active ? 'page' : undefined}
                             className={cn(
-                                'flex flex-1 flex-col items-center justify-center gap-1 text-center rounded-md outline-none transition-transform active:scale-[0.97]',
+                                'flex flex-1 flex-col items-center justify-center gap-1 text-center rounded-lg outline-none transition-transform active:scale-[0.97]',
                                 'transition-colors'
                             )}
                         >
-                            <item.Icon
-                                className={cn(
-                                    'size-5',
-                                    active ? 'text-default' : 'text-muted-foreground'
-                                )}
-                            />
-                            <span
-                                className={cn(
-                                    'text-[11px] leading-none',
-                                    active ? 'text-primary' : 'text-muted-foreground'
-                                )}
-                            >
-                                {item.label}
-                            </span>
+                            <div className={cn('flex flex-col items-center justify-center gap-1 w-12 h-12', active ? 'bg-accent p-1 rounded-lg w-' : 'text-muted-foreground')}>
+                                <item.Icon
+                                    className={cn(
+                                        'size-5',
+                                        active ? 'text-accent-foreground' : 'text-muted-foreground'
+                                    )}
+                                />
+
+                            </div>
                         </Link>
                     )
                 })}
