@@ -13,7 +13,7 @@ import { getGlobalLeagueGauge, leagueLevelToFrenchLabel } from '@/lib/strength-s
 import { translateTarget, UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import type { UserProfile } from '@/types'
-import { BarChart3, ChevronDown, Loader2, Settings } from 'lucide-react'
+import { ChevronDown, Loader2, Settings } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -69,199 +69,174 @@ export default function StatsPage() {
             <BackHeader title="Stats" />
 
             <main className="mx-auto max-w-2xl space-y-4 p-4">
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="flex items-center gap-2 text-base">
-                            <BarChart3 className="size-5" />
-                            Tes ligues par muscle
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4 pt-0">
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            className="w-full gap-2"
-                            onClick={() => {
-                                setProfileDialogKey((k) => k + 1)
-                                setProfileDialogOpen(true)
-                            }}
-                        >
-                            <Settings className="size-4" />
-                            {UI.settings} — poids, taille, sexe (ligues)
-                        </Button>
-                        <ProfileLeagueSettingsDialog
-                            key={profileDialogKey}
-                            open={profileDialogOpen}
-                            onOpenChange={setProfileDialogOpen}
-                            onSaved={() => setProfile(getUserProfile())}
-                        />
+                <Button
+                    type="button"
+                    size="sm"
+                    className="w-full gap-2"
+                    onClick={() => {
+                        setProfileDialogKey((k) => k + 1)
+                        setProfileDialogOpen(true)
+                    }}
+                >
+                    <Settings className="size-4" />
+                    {UI.settings} — poids, taille, sexe (ligues)
+                </Button>
+                <ProfileLeagueSettingsDialog
+                    key={profileDialogKey}
+                    open={profileDialogOpen}
+                    onOpenChange={setProfileDialogOpen}
+                    onSaved={() => setProfile(getUserProfile())}
+                />
 
-                        {!leagueSummary ? (
-                            <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                                <p className="mb-3">
-                                    Ajoute des records sur des exercices du catalogue (non personnalisés)
-                                    pour voir ta ligue globale et ta carte musculaire.
+                {leagueSummary && globalGauge ? (
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base">Ligue globale (tout le corps)</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4 pt-0 text-center">
+                            <div className="flex flex-col items-center gap-2">
+                                <Badge
+                                    className={`px-3 py-1 text-sm font-semibold ${LEAGUE_COLORS[leagueSummary.globalLevel]}`}
+                                >
+                                    {leagueLevelToFrenchLabel(leagueSummary.globalLevel)}
+                                </Badge>
+                                <p className="text-xs text-muted-foreground">
+                                    Moyenne sur {leagueSummary.exerciseCount} exercice
+                                    {leagueSummary.exerciseCount > 1 ? 's' : ''} · score{' '}
+                                    {leagueSummary.globalAvgLeagueScore.toFixed(2)}
                                 </p>
-                                <Button asChild>
-                                    <Link to="/home">{UI.chooseExercises}</Link>
-                                </Button>
                             </div>
-                        ) : (
-                            <>
-                                {globalGauge ? (
-                                    <div className="rounded-xl border border-border  p-4 text-center">
-                                        <p className="text-sm font-medium  tracking-wide">
-                                            Ligue globale (tout le corps)
-                                        </p>
-                                        <div className="mt-3 flex flex-col items-center gap-2">
-                                            <Badge
-                                                className={`px-3 py-1 text-sm font-semibold ${LEAGUE_COLORS[leagueSummary.globalLevel]}`}
-                                            >
-                                                {leagueLevelToFrenchLabel(leagueSummary.globalLevel)}
-                                            </Badge>
-                                            <p className="text-xs text-muted-foreground">
-                                                Moyenne sur {leagueSummary.exerciseCount} exercice
-                                                {leagueSummary.exerciseCount > 1 ? 's' : ''} · score{' '}
-                                                {leagueSummary.globalAvgLeagueScore.toFixed(2)}
-                                            </p>
-                                        </div>
 
-                                        <div className="mt-4 w-full border-t border-border pt-4 text-left">
-                                            <p className="text-center text-xs font-medium text-foreground">
-                                                {UI.statsGlobalGaugeTitle}
-                                            </p>
-                                            {globalGauge.toLevel ? (
-                                                <>
-                                                    <div className="mt-2 flex items-center justify-between gap-1">
-                                                        <div className="flex min-w-0 flex-1 items-center justify-start gap-1">
-                                                            <span className="shrink-0  tabular-nums text-xs text-muted-foreground">
-                                                                {globalGauge.segmentStartScore.toFixed(2)}
-                                                            </span>
-                                                            <Badge
-                                                                className={`max-w-[min(100%,8rem)] truncate px-2 py-0 text-[10px] ${LEAGUE_COLORS[globalGauge.fromLevel]}`}
-                                                            >
-                                                                {leagueLevelToFrenchLabel(globalGauge.fromLevel)}
-                                                            </Badge>
-                                                        </div>
-                                                        <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
-                                                            {globalGauge.segmentEndScore != null ? (
-                                                                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                                                                    {globalGauge.segmentEndScore.toFixed(2)}
-                                                                </span>
-                                                            ) : null}
-                                                            <Badge
-                                                                className={`max-w-[min(100%,8rem)] truncate px-2 py-0 text-[10px] ${LEAGUE_COLORS[globalGauge.toLevel]}`}
-                                                            >
-                                                                {leagueLevelToFrenchLabel(globalGauge.toLevel)}
-                                                            </Badge>
-                                                        </div>
-                                                    </div>
-                                                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                                                        <div
-                                                            className="h-full rounded-full bg-primary transition-[width] duration-300"
-                                                            style={{
-                                                                width: `${Math.round(globalGauge.progress * 100)}%`,
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
-                                                    <div className="h-full w-full rounded-full bg-primary" />
-                                                </div>
-                                            )}
-
+                            <div className="w-full border-t border-border pt-4 text-left">
+                                <p className="text-center text-xs font-medium text-foreground">
+                                    {UI.statsGlobalGaugeTitle}
+                                </p>
+                                {globalGauge.toLevel ? (
+                                    <>
+                                        <div className="mt-2 flex items-center justify-between gap-1">
+                                            <div className="flex min-w-0 flex-1 items-center justify-start gap-1">
+                                                <span className="shrink-0  tabular-nums text-xs text-muted-foreground">
+                                                    {globalGauge.segmentStartScore.toFixed(2)}
+                                                </span>
+                                                <Badge
+                                                    className={`max-w-[min(100%,8rem)] truncate px-2 py-0 text-[10px] ${LEAGUE_COLORS[globalGauge.fromLevel]}`}
+                                                >
+                                                    {leagueLevelToFrenchLabel(globalGauge.fromLevel)}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
+                                                {globalGauge.segmentEndScore != null ? (
+                                                    <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                                                        {globalGauge.segmentEndScore.toFixed(2)}
+                                                    </span>
+                                                ) : null}
+                                                <Badge
+                                                    className={`max-w-[min(100%,8rem)] truncate px-2 py-0 text-[10px] ${LEAGUE_COLORS[globalGauge.toLevel]}`}
+                                                >
+                                                    {leagueLevelToFrenchLabel(globalGauge.toLevel)}
+                                                </Badge>
+                                            </div>
                                         </div>
+                                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                            <div
+                                                className="h-full rounded-full bg-primary transition-[width] duration-300"
+                                                style={{
+                                                    width: `${Math.round(globalGauge.progress * 100)}%`,
+                                                }}
+                                            />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
+                                        <div className="h-full w-full rounded-full bg-primary" />
                                     </div>
-                                ) : null}
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                ) : null}
 
-                                <div>
-                                    <h2 className="mb-2 text-sm font-medium text-foreground">
-                                        Carte musculaire
-                                    </h2>
-                                    <BodyMuscleLeagueMap
-                                        byMuscle={leagueSummary.byMuscle}
-                                        isDark={resolvedTheme === 'dark'}
-                                        gender={profile.gender}
-                                    />
-                                </div>
-
-                                <div>
-                                    <h2 className="mb-2 text-sm font-medium text-foreground">
-                                        Détail par muscle
-                                    </h2>
-                                    <ul className="divide-y divide-border rounded-lg border border-border">
-                                        {leagueSummary.byMuscle.map((m) => {
-                                            const open = openMuscles.has(m.target)
-                                            return (
-                                                <li key={m.target}>
-                                                    <button
-                                                        type="button"
-                                                        className="flex w-full flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-left text-sm outline-none transition-colors hover:bg-muted/40 focus-visible:bg-muted/40"
-                                                        onClick={() => toggleMuscle(m.target)}
-                                                        aria-expanded={open}
-                                                    >
-                                                        <span className="flex min-w-0 flex-1 items-center gap-2">
-                                                            <ChevronDown
-                                                                className={cn(
-                                                                    'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
-                                                                    open && 'rotate-180',
-                                                                )}
-                                                                aria-hidden
-                                                            />
-                                                            <span className="min-w-0 font-medium">
-                                                                {translateTarget(m.target)}
-                                                            </span>
+                {leagueSummary ? (
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base">Carte musculaire</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6 pt-0">
+                            <BodyMuscleLeagueMap
+                                byMuscle={leagueSummary.byMuscle}
+                                isDark={resolvedTheme === 'dark'}
+                                gender={profile.gender}
+                            />
+                            <div>
+                                <h2 className="mb-2 text-sm font-medium text-foreground">
+                                    Détail par muscle
+                                </h2>
+                                <ul className="divide-y divide-border rounded-lg border border-border">
+                                    {leagueSummary.byMuscle.map((m) => {
+                                        const open = openMuscles.has(m.target)
+                                        return (
+                                            <li key={m.target}>
+                                                <button
+                                                    type="button"
+                                                    className="flex w-full flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-left text-sm outline-none transition-colors hover:bg-muted/40 focus-visible:bg-muted/40"
+                                                    onClick={() => toggleMuscle(m.target)}
+                                                    aria-expanded={open}
+                                                >
+                                                    <span className="flex min-w-0 flex-1 items-center gap-2">
+                                                        <ChevronDown
+                                                            className={cn(
+                                                                'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                                                                open && 'rotate-180',
+                                                            )}
+                                                            aria-hidden
+                                                        />
+                                                        <span className="min-w-0 font-medium">
+                                                            {translateTarget(m.target)}
                                                         </span>
-                                                        <div className="flex shrink-0 flex-wrap items-center gap-2">
-                                                            <Badge
-                                                                className={`text-xs ${LEAGUE_COLORS[m.representativeLevel]}`}
-                                                            >
-                                                                {leagueLevelToFrenchLabel(m.representativeLevel)}
-                                                            </Badge>
-                                                            <span className="text-xs text-muted-foreground tabular-nums">
-                                                                {m.exerciseCount} ex.
-                                                            </span>
-                                                        </div>
-                                                    </button>
-                                                    {open ? (
-                                                        <ul
-                                                            className="space-y-0.5 border-t border-border bg-muted/20 px-2 py-2"
-                                                            role="list"
+                                                    </span>
+                                                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                                                        <Badge
+                                                            className={`text-xs ${LEAGUE_COLORS[m.representativeLevel]}`}
                                                         >
-                                                            {m.exercises.map((row) => (
-                                                                <li key={row.trackedExerciseId}>
-                                                                    <Link
-                                                                        to={`/exercise/${row.trackedExerciseId}`}
-                                                                        className="flex items-center justify-between gap-2 rounded-md px-2 py-2 text-sm outline-none transition-colors hover:bg-muted/80 focus-visible:ring-2 focus-visible:ring-ring"
+                                                            {leagueLevelToFrenchLabel(m.representativeLevel)}
+                                                        </Badge>
+                                                        <span className="text-xs text-muted-foreground tabular-nums">
+                                                            {m.exerciseCount} ex.
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                                {open ? (
+                                                    <ul
+                                                        className="space-y-0.5 border-t border-border bg-muted/20 px-2 py-2"
+                                                        role="list"
+                                                    >
+                                                        {m.exercises.map((row) => (
+                                                            <li key={row.trackedExerciseId}>
+                                                                <Link
+                                                                    to={`/exercise/${row.trackedExerciseId}`}
+                                                                    className="flex items-center justify-between gap-2 rounded-md px-2 py-2 text-sm outline-none transition-colors hover:bg-muted/80 focus-visible:ring-2 focus-visible:ring-ring"
+                                                                >
+                                                                    <span className="min-w-0 truncate capitalize">
+                                                                        {row.name}
+                                                                    </span>
+                                                                    <Badge
+                                                                        className={`shrink-0 text-xs ${LEAGUE_COLORS[row.league.level]}`}
                                                                     >
-                                                                        <span className="min-w-0 truncate capitalize">
-                                                                            {row.name}
-                                                                        </span>
-                                                                        <Badge
-                                                                            className={`shrink-0 text-xs ${LEAGUE_COLORS[row.league.level]}`}
-                                                                        >
-                                                                            {row.league.label}
-                                                                        </Badge>
-                                                                    </Link>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    ) : null}
-                                                </li>
-                                            )
-                                        })}
-                                    </ul>
-                                </div>
-                            </>
-                        )}
-
-                        <Button asChild className="w-full" variant="secondary">
-                            <Link to="/home">Mes exercices</Link>
-                        </Button>
-                    </CardContent>
-                </Card>
+                                                                        {row.league.label}
+                                                                    </Badge>
+                                                                </Link>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                ) : null}
+                                            </li>
+                                        )
+                                    })}
+                                </ul>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ) : null}
             </main>
         </div>
     )
