@@ -214,7 +214,9 @@ export const UI = {
   delete: "Supprimer",
   history: "Historique",
   historyGlobalSubtitle:
-    "Toutes tes séries enregistrées, tous exercices confondus.",
+    "Par jour, puis par exercice ; chaque exercice se déplie pour voir les séries.",
+  historySeriesCount: "{count} séries",
+  historyOpenExerciseSheet: "Ouvrir la fiche exercice",
   noHistoryEntries: "Aucune performance enregistrée pour le moment.",
   exerciseRemovedFromTracking: "Exercice retiré du suivi",
   historyTruncated:

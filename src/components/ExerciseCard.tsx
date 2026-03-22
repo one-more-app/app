@@ -77,7 +77,7 @@ export function ExerciseCard({
                         />
                     ) : (
                         <div className={`${sizeClass} flex items-center justify-center rounded-lg bg-muted`}>
-                            <Dumbbell className="size-6 text-accent" />
+                            <Dumbbell className="size-6 text-default" />
                         </div>
                     )}
                     <div className="min-w-0 flex-1">

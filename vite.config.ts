@@ -11,7 +11,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo.png', 'vite.svg'],
+      includeAssets: ['logo.png', 'vite.svg', 'icons/*.webp'],
       manifest: {
         name: 'One More',
         short_name: 'One More',
@@ -20,23 +20,19 @@ export default defineConfig({
         background_color: '#000000',
         display: 'standalone',
         icons: [
-          {
-            src: '/logo.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: '/logo.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
+          { src: '/icons/icon-48.webp', sizes: '48x48', type: 'image/webp', purpose: 'any' },
+          { src: '/icons/icon-72.webp', sizes: '72x72', type: 'image/webp', purpose: 'any' },
+          { src: '/icons/icon-96.webp', sizes: '96x96', type: 'image/webp', purpose: 'any' },
+          { src: '/icons/icon-128.webp', sizes: '128x128', type: 'image/webp', purpose: 'any' },
+          { src: '/icons/icon-192.webp', sizes: '192x192', type: 'image/webp', purpose: 'any' },
+          { src: '/icons/icon-256.webp', sizes: '256x256', type: 'image/webp', purpose: 'any' },
+          { src: '/icons/icon-512.webp', sizes: '512x512', type: 'image/webp', purpose: 'any' },
+          { src: '/icons/icon-512.webp', sizes: '512x512', type: 'image/webp', purpose: 'maskable' },
+        ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
-      }
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webp}'],
+      },
     })
   ],
   resolve: {

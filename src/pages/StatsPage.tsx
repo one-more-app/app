@@ -144,9 +144,6 @@ export default function StatsPage() {
                                                                 {leagueLevelToFrenchLabel(globalGauge.fromLevel)}
                                                             </Badge>
                                                         </div>
-                                                        <span className="shrink-0 px-0.5 text-xs tabular-nums text-muted-foreground">
-                                                            {Math.round(globalGauge.progress * 100)}%
-                                                        </span>
                                                         <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
                                                             {globalGauge.segmentEndScore != null ? (
                                                                 <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
@@ -160,7 +157,7 @@ export default function StatsPage() {
                                                             </Badge>
                                                         </div>
                                                     </div>
-                                                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                                                         <div
                                                             className="h-full rounded-full bg-primary transition-[width] duration-300"
                                                             style={{
@@ -174,11 +171,7 @@ export default function StatsPage() {
                                                     <div className="h-full w-full rounded-full bg-primary" />
                                                 </div>
                                             )}
-                                            <p className="mt-2 text-center text-[10px] leading-snug text-muted-foreground">
-                                                {globalGauge.toLevel
-                                                    ? UI.statsGlobalGaugeCaption
-                                                    : UI.statsGlobalGaugeMax}
-                                            </p>
+
                                         </div>
                                     </div>
                                 ) : null}

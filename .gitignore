@@ -8,6 +8,8 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+# Sortie PWA avant copie vers public/icons (npm run assets:generate)
+/icons
 dist
 dist-ssr
 *.local
