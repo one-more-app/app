@@ -213,6 +213,12 @@ export const UI = {
   save: "Enregistrer",
   delete: "Supprimer",
   history: "Historique",
+  historyGlobalSubtitle:
+    "Toutes tes séries enregistrées, tous exercices confondus.",
+  noHistoryEntries: "Aucune performance enregistrée pour le moment.",
+  exerciseRemovedFromTracking: "Exercice retiré du suivi",
+  historyTruncated:
+    "Affichage des {shown} entrées les plus récentes sur {total} au total.",
   lastSession: "Dernière session",
   previousSession: "Session plus récente",
   nextSession: "Session plus ancienne",
@@ -252,6 +258,7 @@ export const UI = {
   themeLight: "Clair",
   themeDark: "Sombre",
   profile: "Profil",
+  profileLeagueHint: "Utilisé pour calculer ta ligue (ratio force / poids du corps).",
   bodyWeight: "Poids du corps (kg)",
   height: "Taille (cm)",
   gender: "Genre",
@@ -285,7 +292,7 @@ export const UI = {
   syncNow: "Synchroniser maintenant",
 
   // Onboarding (premier lancement)
-  onboardingTitle: 'Prêt à progresser ?',
+  onboardingTitle: "Prêt à progresser ?",
   onboardingDescription:
     "Regarde la vidéo, puis crée ton compte (Google/Apple) ou commence sans prise de tête. Tu pourras régler ton profil plus tard.",
   continue: "Continuer",
@@ -311,4 +318,33 @@ export const UI = {
   tierRangeElite: "≥ {start} kg",
   remainingForNext: "Il te manque {kg} kg pour",
   allTiers: "Tous les paliers",
+
+  // Carte musculaire (stats)
+  bodyMapSilhouetteMale: "Silhouette masculine",
+  bodyMapSilhouetteFemale: "Silhouette féminine",
+  bodyMapLegendLow: "Fer",
+  bodyMapLegendHigh: "Légende",
+  bodyMapLeagueColorsCaption:
+    "Chaque zone colorée = la couleur du palier moyen sur ce muscle (comme Fer, Or, Diamant…).",
+  bodyMapFace: "Face",
+  bodyMapBack: "Dos",
+  bodyMapHint:
+    "Touche un muscle coloré (face ou dos) pour ouvrir le détail. Touche à nouveau la même zone pour fermer, ou utilise la croix / Échap.",
+  bodyMapZoneDetail: "Muscles de cette zone",
+  /** Carte stats : modal après tap sur une zone */
+  bodyMapZoneAverageTier: "Palier moyen de la zone",
+  /** Une seule cible muscle sur la zone SVG */
+  bodyMapMuscleAverageTier: "Palier moyen sur ce muscle",
+  bodyMapMuscleExercisesHeading: "Exercices et paliers",
+  bodyMapClearSelection: "Fermer le détail",
+
+  /** Stats : jauge ligue globale */
+  statsGlobalGaugeTitle: "Vers le palier suivant (moyenne)",
+  statsGlobalGaugeCaption:
+    "Ta moyenne combine palier + progression sur chaque exo. La jauge montre l’avancement entre deux paliers d’affilée (Fer → Bronze → …).",
+  statsGlobalGaugeMax: "En moyenne tu es au palier Légende — objectif maintenu ou records sur de nouveaux exos.",
+  statsProfileInvalid: "Indique un poids et une taille valides.",
+  statsProfileSaved: "Profil enregistré",
+  /** Lien sous la modal profil ligues vers la page paramètres complète */
+  statsFullSettingsLink: "Tous les paramètres",
 };

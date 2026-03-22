@@ -4,6 +4,7 @@ import { ExerciseListPage } from '@/pages/ExerciseListPage'
 import HomePage from '@/pages/HomePage'
 import { AuthPage } from '@/pages/AuthPage'
 import { OnboardingPage } from '@/pages/OnboardingPage'
+import { HistoryPage } from '@/pages/HistoryPage'
 import StatsPage from '@/pages/StatsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { Toaster } from '@/components/ui/sonner'
@@ -34,6 +35,7 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
     const show =
         location.pathname === '/home' ||
         location.pathname === '/stats' ||
+        location.pathname === '/history' ||
         location.pathname === '/settings'
 
     return (
@@ -82,6 +84,7 @@ function App() {
                             <Route path="/onboarding" element={<OnboardingPage />} />
                             <Route path="/home" element={<HomePage />} />
                             <Route path="/stats" element={<StatsPage />} />
+                            <Route path="/history" element={<HistoryPage />} />
                             <Route path="/auth" element={<AuthPage />} />
                             <Route path="/exercises/:id" element={<ExerciseCatalogDetailPage />} />
                             <Route path="/exercises" element={<ExerciseListPage />} />

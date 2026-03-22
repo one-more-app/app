@@ -191,6 +191,14 @@ export function getEntriesByTrackedId(
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
+/** Toutes les perfs actives, les plus récentes en premier (createdAt). */
+export function getAllPerformanceEntriesRecentFirst(): PerformanceEntry[] {
+  return [...getPerformanceEntries()].sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+}
+
 export function savePerformance(
   trackedExerciseId: string,
   weight: number,

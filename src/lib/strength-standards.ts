@@ -45,7 +45,8 @@ const TIER_LABELS = [
   "Légende",
 ] as const;
 
-const LEAGUE_ORDER: LeagueLevel[] = [
+/** Ordre d’affichage des paliers (Fer → Légende). */
+export const LEAGUE_ORDER: readonly LeagueLevel[] = [
   "iron",
   "bronze",
   "silver",
@@ -56,12 +57,66 @@ const LEAGUE_ORDER: LeagueLevel[] = [
   "master",
   "elite",
   "legend",
-]
+] as const satisfies readonly LeagueLevel[]
 
 /** Index du niveau de ligue (0 = fer, 9 = légende). Pour comparer deux ligues. */
 export function getLeagueLevelIndex(level: LeagueLevel): number {
   const i = LEAGUE_ORDER.indexOf(level)
   return i === -1 ? 0 : i
+}
+
+/** Libellé français du palier (Fer, Bronze, Argent, …). */
+export function leagueLevelToFrenchLabel(level: LeagueLevel): string {
+  const i = getLeagueLevelIndex(level)
+  return TIER_LABELS[i] ?? level
+}
+
+/**
+ * Score ligue moyen (indice 0–9 + progression vers le palier suivant) → palier le plus proche.
+ */
+export function averageLeagueScoreToLevel(score: number): LeagueLevel {
+  const idx = Math.min(
+    LEAGUE_ORDER.length - 1,
+    Math.max(0, Math.round(score)),
+  )
+  return LEAGUE_ORDER[idx]!
+}
+
+/**
+ * Jauge « global » : le score moyen est un indice 0–9 + décimale (comme par exo).
+ * La partie entière = palier de base, la décimale = avancement jusqu’au palier suivant.
+ */
+export function getGlobalLeagueGauge(score: number): {
+  fromLevel: LeagueLevel;
+  toLevel: LeagueLevel | null;
+  /** 0–1, vers le palier `toLevel` ; 1 si déjà au dernier palier (Légende). */
+  progress: number;
+  /** Borne basse du segment sur l’échelle score moyenne (entier = début du palier `fromLevel`). */
+  segmentStartScore: number;
+  /** Borne haute pour atteindre `toLevel` ; null si déjà Légende. */
+  segmentEndScore: number | null;
+} {
+  const s = Math.max(0, Math.min(9.999, score))
+  const i = Math.min(LEAGUE_ORDER.length - 1, Math.floor(s))
+  const fromLevel = LEAGUE_ORDER[i]!
+  if (i >= LEAGUE_ORDER.length - 1) {
+    return {
+      fromLevel,
+      toLevel: null,
+      progress: 1,
+      segmentStartScore: i,
+      segmentEndScore: null,
+    }
+  }
+  const toLevel = LEAGUE_ORDER[i + 1]!
+  const progress = Math.min(1, Math.max(0, s - i))
+  return {
+    fromLevel,
+    toLevel,
+    progress,
+    segmentStartScore: i,
+    segmentEndScore: i + 1,
+  }
 }
 
 const RATIO_TO_PERCENTILE: Record<LeagueLevel, { min: number; max: number }> = {
@@ -941,4 +996,18 @@ export function getLeagueInfo(input: LeagueInput): LeagueInfo | null {
     progressToNext,
     percentileEstimate: Math.min(99, Math.max(1, percentileEstimate)),
   };
+}
+
+/** Muscle cible pour regrouper les stats (métadonnées ou inférence depuis le nom). */
+export function inferTargetForLeague(
+  exerciseName: string,
+  metadata?: ExerciseMetadata,
+): string | null {
+  const raw = metadata?.target?.toLowerCase().trim();
+  if (raw && raw !== "cardio") {
+    return normalizeTarget(raw);
+  }
+  const fb = getEquipmentTargetFromName(exerciseName);
+  if (!fb) return null;
+  return normalizeTarget(fb.target);
 }

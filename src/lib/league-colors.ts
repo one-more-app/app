@@ -1,5 +1,28 @@
 import type { LeagueLevel } from "@/lib/strength-standards";
 
+/**
+ * Remplissage SVG / zones muscle (carte stats). Cohérent avec l’identité visuelle des paliers.
+ */
+export const LEAGUE_MAP_FILL: Record<
+  LeagueLevel,
+  { light: string; dark: string }
+> = {
+  iron: { light: "hsl(240 6% 52%)", dark: "hsl(240 10% 40%)" },
+  bronze: { light: "hsl(32 62% 44%)", dark: "hsl(28 55% 36%)" },
+  silver: { light: "hsl(215 20% 46%)", dark: "hsl(215 18% 38%)" },
+  gold: { light: "hsl(38 88% 44%)", dark: "hsl(38 82% 36%)" },
+  platinum: { light: "hsl(192 72% 40%)", dark: "hsl(192 65% 33%)" },
+  emerald: { light: "hsl(158 58% 36%)", dark: "hsl(158 52% 30%)" },
+  diamond: { light: "hsl(263 58% 52%)", dark: "hsl(263 52% 44%)" },
+  master: { light: "hsl(350 58% 48%)", dark: "hsl(350 52% 40%)" },
+  elite: { light: "hsl(152 62% 34%)", dark: "hsl(152 55% 28%)" },
+  legend: { light: "hsl(43 92% 46%)", dark: "hsl(43 88% 40%)" },
+};
+
+export function leagueMapFill(level: LeagueLevel, isDark: boolean): string {
+  return isDark ? LEAGUE_MAP_FILL[level].dark : LEAGUE_MAP_FILL[level].light;
+}
+
 export const LEAGUE_COLORS: Record<LeagueLevel, string> = {
   iron: "bg-zinc-700/50 text-zinc-200 border-zinc-500",
   bronze: "bg-amber-900/50 text-amber-200 border-amber-700",

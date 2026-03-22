@@ -316,7 +316,7 @@ export function ExerciseDetailPage() {
                                     <div className="border-t border-border pt-2">
                                         <div className="flex items-center justify-between gap-2 mb-2">
                                             <h3 className="text-sm font-medium text-muted-foreground">
-                                                {UI.lastSession} — {formatDate(lastDate)}
+                                                {formatDate(lastDate)}
                                             </h3>
                                             <div className="flex items-center gap-1">
                                                 <Button

@@ -1,4 +1,4 @@
-import { Home, LayoutGrid, Settings } from 'lucide-react'
+import { History, Home, LayoutGrid, Settings } from 'lucide-react'
 import type { JSX } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
@@ -12,6 +12,7 @@ const NAV_ITEMS: Array<{
 }> = [
         { to: '/home', label: 'Accueil', Icon: Home },
         { to: '/stats', label: 'Stats', Icon: LayoutGrid },
+        { to: '/history', label: UI.history, Icon: History },
         { to: '/settings', label: UI.settings, Icon: Settings },
     ]
 

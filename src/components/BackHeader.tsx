@@ -6,6 +6,7 @@ import type { ReactNode } from 'react'
 
 export function BackHeader({
     title,
+    description,
     right,
     compact,
     titleClassName,
@@ -22,7 +23,7 @@ export function BackHeader({
     const hasRight = right != null
 
     return (
-        <header className="sticky top-0 z-1 bg-card px-4 py-3">
+        <header className="sticky top-0 z-100 bg-card px-4 py-3">
             <div
                 className={[
                     'mx-auto flex max-w-2xl items-center',
@@ -32,20 +33,21 @@ export function BackHeader({
                 <Button variant="secondary" size="icon" onClick={handleBack} aria-label={UI.back}>
                     <ArrowLeft className="size-4" />
                 </Button>
-
-                <h1
-                    className={[
-                        'truncate text-lg font-semibold',
-                        hasRight ? 'flex-1 min-w-0' : '',
-                        titleClassName ?? '',
-                    ].join(' ')}
-                >
-                    {title}
-                </h1>
-
+                <div className="flex flex-col">
+                    <h1
+                        className={[
+                            'truncate text-lg font-semibold',
+                            hasRight ? 'flex-1 min-w-0' : '',
+                            titleClassName ?? '',
+                        ].join(' ')}
+                    >
+                        {title}
+                    </h1>
+                    {description && <p className="text-sm text-muted-foreground">{description}</p>}
+                </div>
                 {right && <div className="shrink-0">{right}</div>}
             </div>
-        </header>
+        </header >
     )
 }
 

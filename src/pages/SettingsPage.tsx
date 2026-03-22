@@ -1,5 +1,7 @@
 import { BackHeader } from '@/components/BackHeader'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
     Select,
@@ -129,14 +131,13 @@ export function SettingsPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>{UI.profile}</CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                            Utilisé pour calculer ta ligue (ratio force / poids du corps).
-                        </p>
+                        <p className="text-sm text-muted-foreground">{UI.profileLeagueHint}</p>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">{UI.bodyWeight}</label>
-                            <input
+                        <div className="flex flex-col gap-2">
+                            <Label htmlFor="settings-weight">{UI.bodyWeight}</Label>
+                            <Input
+                                id="settings-weight"
                                 type="number"
                                 inputMode="decimal"
                                 min={30}
@@ -145,12 +146,12 @@ export function SettingsPage() {
                                 value={weightKg}
                                 onChange={(e) => setWeightKg(e.target.value)}
                                 onBlur={handleSave}
-                                className="w-full rounded-lg border border-input bg-background px-4 py-2 text-base"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">{UI.height}</label>
-                            <input
+                        <div className="flex flex-col gap-2">
+                            <Label htmlFor="settings-height">{UI.height}</Label>
+                            <Input
+                                id="settings-height"
                                 type="number"
                                 inputMode="numeric"
                                 min={100}
@@ -159,11 +160,10 @@ export function SettingsPage() {
                                 value={heightCm}
                                 onChange={(e) => setHeightCm(e.target.value)}
                                 onBlur={handleSave}
-                                className="w-full rounded-lg border border-input bg-background px-4 py-2 text-base"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">{UI.gender}</label>
+                        <div className="flex flex-col gap-2">
+                            <Label>{UI.gender}</Label>
                             <Select
                                 value={gender}
                                 onValueChange={(v) => {
