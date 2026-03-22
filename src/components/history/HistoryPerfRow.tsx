@@ -58,7 +58,6 @@ export function HistoryPerfRow({
                             <Button
                                 variant="secondary"
                                 size="icon"
-                                className="h-9 w-9"
                                 disabled={!canEdit}
                                 onClick={onEdit}
                                 aria-label={UI.modifyPerf}
@@ -68,7 +67,7 @@ export function HistoryPerfRow({
                             <Button
                                 variant="secondary"
                                 size="icon"
-                                className="h-9 w-9 text-destructive hover:text-destructive"
+                                className="text-destructive"
                                 onClick={onDelete}
                                 aria-label={UI.deletePerf}
                             >
