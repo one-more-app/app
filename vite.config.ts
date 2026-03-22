@@ -20,7 +20,7 @@ export default defineConfig({
         background_color: '#000000',
         display: 'standalone',
         icons: [
-          { src: '/icons/icon-48.webp', sizes: '48x48', type: 'image/webp', purpose: 'any' },
+            { src: '/icons/icon-48.webp', sizes: '48x48', type: 'image/webp', purpose: 'any' },
           { src: '/icons/icon-72.webp', sizes: '72x72', type: 'image/webp', purpose: 'any' },
           { src: '/icons/icon-96.webp', sizes: '96x96', type: 'image/webp', purpose: 'any' },
           { src: '/icons/icon-128.webp', sizes: '128x128', type: 'image/webp', purpose: 'any' },

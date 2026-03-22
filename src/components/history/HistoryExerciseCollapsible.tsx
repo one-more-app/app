@@ -49,7 +49,7 @@ export function HistoryExerciseCollapsible({
                             >
                                 <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-muted">
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <Dumbbell className="size-6 text-accent" />
+                                        <Dumbbell className="size-6" />
                                     </div>
                                     {showGif ? (
                                         <img
