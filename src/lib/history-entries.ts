@@ -52,6 +52,14 @@ function recentFirstOrder(a: PerformanceEntry, b: PerformanceEntry): number {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
 }
 
+/** Plus récent d’abord (même ordre que le détail historique par exercice). */
+export function comparePerfEntriesRecentFirst(
+    a: PerformanceEntry,
+    b: PerformanceEntry,
+): number {
+    return recentFirstOrder(a, b)
+}
+
 /** Regroupe par exercice suivi ; ordre des groupes = dernière perf la plus récente ; entrées récentes d’abord dans chaque groupe. */
 function groupEntriesByExerciseRecentFirst(
     list: PerformanceEntry[],

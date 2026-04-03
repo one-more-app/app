@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { useBack } from '@/hooks/use-back'
 import { UI } from '@/lib/translations'
+import { cn } from '@/lib/utils'
 import { ArrowLeft } from 'lucide-react'
 import type { ReactNode } from 'react'
 
@@ -20,34 +21,31 @@ export function BackHeader({
 }) {
     const goBack = useBack()
     const handleBack = onBack ?? goBack
-    const hasRight = right != null
 
     return (
         <header className="sticky top-0 z-100 bg-card px-4 py-3">
             <div
-                className={[
+                className={cn(
                     'mx-auto flex max-w-2xl items-center',
                     compact ? 'gap-2' : 'gap-4',
-                ].join(' ')}
+                )}
             >
-                <Button variant="secondary" size="icon" onClick={handleBack} aria-label={UI.back}>
+                <Button
+                    variant="secondary"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={handleBack}
+                    aria-label={UI.back}
+                >
                     <ArrowLeft className="size-4" />
                 </Button>
-                <div className="flex flex-col">
-                    <h1
-                        className={[
-                            'truncate text-lg font-semibold',
-                            hasRight ? 'flex-1 min-w-0' : '',
-                            titleClassName ?? '',
-                        ].join(' ')}
-                    >
-                        {title}
-                    </h1>
+                <div className="min-w-0 flex-1 flex flex-col">
+                    <h1 className={cn('truncate text-lg font-semibold', titleClassName)}>{title}</h1>
                     {description && <p className="text-sm text-muted-foreground">{description}</p>}
                 </div>
-                {right && <div className="shrink-0">{right}</div>}
+                {right != null ? <div className="shrink-0">{right}</div> : null}
             </div>
-        </header >
+        </header>
     )
 }
 

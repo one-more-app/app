@@ -65,7 +65,7 @@ export function ExerciseCard({
                 className={onClick ? 'relative gap-2 cursor-pointer' : 'gap-2'}
                 onClick={onClick}
             >
-                <CardHeader className="flex flex-row items-center gap-4 pb-2">
+                <CardHeader className="flex min-w-0 flex-row items-center gap-4 pb-2">
                     {!exercise.isCustom && exercise.gifUrl ? (
                         <img
                             src={getExerciseImageUrl(exercise.gifUrl)}
@@ -81,7 +81,7 @@ export function ExerciseCard({
                         </div>
                     )}
                     <div className="min-w-0 flex-1">
-                        <CardTitle className="truncate text-base capitalize">
+                        <CardTitle className="min-w-0 truncate text-base capitalize">
                             {exercise.name}
                         </CardTitle>
                         <div className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -120,17 +120,17 @@ export function ExerciseCard({
                                 <span className="flex items-center gap-1">
                                     <span className="text-2xl font-bold text-primary">
                                         {lastPerf.weight === 0 ? (
-                                            <BodyWeightLabel className="text-2xl font-bold italic text-primary" />
+                                            <BodyWeightLabel className="text-2xl font-one-more font-bold italic text-primary" />
                                         ) : (
                                             <div className="flex items-center gap-2">
-                                                <span className="text-2xl font-bold italic text-primary">
+                                                <span className="font-one-more text-2xl font-bold italic text-primary">
                                                     {lastPerf.weight}
                                                 </span>
-                                                <span className="text-sm font-normal">kg</span>
+                                                <span className="text-sm font-normal text-muted-foreground">kg</span>
                                             </div>
                                         )}
                                     </span>
-                                    <span>× {lastPerf.reps} reps</span>
+                                    <span className="text-muted-foreground">× {lastPerf.reps} reps</span>
                                 </span>
                             ) : (
                                 <span className="text-muted-foreground">—</span>
@@ -149,12 +149,12 @@ export function ExerciseCard({
                             </span>
                             {personalBest ? (
                                 <span className="flex items-center gap-1">
-                                    <span className="text-2xl font-bold italic text-primary">
+                                    <span className="text-2xl font-bold text-primary">
                                         {personalBest.weight === 0 ? (
-                                            <BodyWeightLabel className="text-2xl font-bold italic text-primary" />
+                                            <BodyWeightLabel className="font-one-more text-2xl font-bold italic text-primary" />
                                         ) : (
                                             <div className="flex items-center gap-2">
-                                                <span className="text-2xl font-bold italic text-primary">
+                                                <span className="font-one-more text-2xl font-bold italic text-primary">
                                                     {personalBest.weight}
                                                 </span>
                                                 <span

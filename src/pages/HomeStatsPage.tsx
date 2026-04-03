@@ -1,6 +1,7 @@
 import logo from '@/assets/logo-white.png'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useHomeData } from '@/hooks/use-home-data'
 import { UI } from '@/lib/translations'
 import { Calendar, Dumbbell, Loader2, Plus, Trophy } from 'lucide-react'
@@ -92,17 +93,21 @@ export default function HomeStatsPage() {
 
             <main className="mx-auto max-w-2xl space-y-4 p-4">
                 {exercises.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <Dumbbell className="mb-4 size-12 text-accent" />
-                        <h2 className="mb-2 text-lg font-medium">{UI.noTrackedExercises}</h2>
-                        <p className="mb-6 text-muted-foreground">{UI.noTrackedDescription}</p>
+                    <EmptyState
+                        variant="plain"
+                        className="py-20"
+                        icon={Dumbbell}
+                        iconClassName="text-accent"
+                        title={UI.noTrackedExercises}
+                        description={UI.noTrackedDescription}
+                    >
                         <Button asChild>
                             <Link to="/exercises">
                                 <Plus className="mr-2 size-4" />
                                 {UI.chooseExercises}
                             </Link>
                         </Button>
-                    </div>
+                    </EmptyState>
                 ) : (
                     <>
                         <div>

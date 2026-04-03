@@ -3,7 +3,8 @@ import { ExerciseSearchFilters } from '@/components/ExerciseSearchFilters'
 import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
     Dialog,
     DialogContent,
@@ -31,6 +32,7 @@ import {
     localTargets,
     popularExercises,
 } from '@/data/popular-exercises'
+import { exerciseMatchesEquipmentSelection } from '@/lib/equipment-filter'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
 import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
@@ -39,94 +41,21 @@ import {
     getExerciseImageUrl,
     sortExercisesByPopularity,
 } from '@/lib/exercisedb'
-import { savePerformance } from '@/lib/storage'
+import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
+import { exerciseMatchesMuscleSelection } from '@/lib/muscle-filter'
+import { getLatestPerformanceCreatedAt, savePerformance } from '@/lib/storage'
 import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import {
-    equipmentMatchesFilter,
     getGroupedEquipmentList,
     translateBodyPart,
+    translateEquipment,
     translateTarget,
     UI,
 } from '@/lib/translations'
 import type { ExerciseDBExercise } from '@/types'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Dumbbell, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-function inferBodyPartFromTarget(target: string): string | undefined {
-    // Heuristique pour garder les filtres Home cohérents :
-    // Home filtre par `target` (muscle) ET par `bodyPart` (partie du corps).
-    // Pour un exo custom, on stocke `target` + on déduit un `bodyPart` approximatif.
-    const t = target.toLowerCase()
-    const map: Record<string, string> = {
-        // Dos
-        'upper back': 'back',
-        'lower back': 'back',
-        lats: 'back',
-        'latissimus dorsi': 'back',
-        traps: 'back',
-        trapezius: 'back',
-        rhomboids: 'back',
-        'levator scapulae': 'back',
-
-        // Poitrine
-        chest: 'chest',
-        pectorals: 'chest',
-        'upper chest': 'chest',
-        'serratus anterior': 'chest',
-
-        // Épaules
-        shoulders: 'shoulders',
-        delts: 'shoulders',
-        deltoids: 'shoulders',
-        'rear deltoids': 'shoulders',
-
-        // Bras / avant-bras
-        'upper arms': 'upper arms',
-        biceps: 'upper arms',
-        triceps: 'upper arms',
-        brachialis: 'upper arms',
-        'lower arms': 'lower arms',
-        forearms: 'lower arms',
-        'wrist flexors': 'lower arms',
-        'wrist extensors': 'lower arms',
-        'grip muscles': 'lower arms',
-        wrists: 'lower arms',
-        hands: 'lower arms',
-
-        // Gainage
-        abs: 'waist',
-        abdominals: 'waist',
-        core: 'waist',
-        obliques: 'waist',
-        'lower abs': 'waist',
-
-        // Jambes (haut)
-        'upper legs': 'upper legs',
-        glutes: 'upper legs',
-        hamstrings: 'upper legs',
-        quadriceps: 'upper legs',
-        quads: 'upper legs',
-        'hip flexors': 'upper legs',
-        groin: 'upper legs',
-        'inner thighs': 'upper legs',
-        adductors: 'upper legs',
-        abductors: 'upper legs',
-        'rotator cuff': 'shoulders', // fallback rare mais évite un trou
-
-        // Jambes (bas)
-        calves: 'lower legs',
-        soleus: 'lower legs',
-        shins: 'lower legs',
-        ankles: 'lower legs',
-        'ankle stabilizers': 'lower legs',
-        feet: 'lower legs',
-
-        // Cou
-        neck: 'neck',
-    }
-    return map[t]
-}
 
 export function ExerciseListPage() {
     const navigate = useNavigate()
@@ -142,10 +71,10 @@ export function ExerciseListPage() {
     const {
         searchInput,
         searchQuery,
-        targetFilter,
+        muscleFilter,
         equipmentFilter,
         page = 0,
-        handleTargetChange,
+        handleMuscleFilterChange,
         handleEquipmentChange,
         handleSearchChange,
         handlePageChange,
@@ -158,6 +87,7 @@ export function ExerciseListPage() {
     )
     const [brokenImageIds, setBrokenImageIds] = useState<Set<string>>(new Set())
     const [addWithPerfExercise, setAddWithPerfExercise] = useState<ExerciseDBExercise | null>(null)
+    const [selectedExercise, setSelectedExercise] = useState<ExerciseDBExercise | null>(null)
     const [perfWeight, setPerfWeight] = useState(0)
     const [perfReps, setPerfReps] = useState(1)
 
@@ -168,7 +98,7 @@ export function ExerciseListPage() {
     // Reset broken images when exercises list changes (new search/filter)
     useEffect(() => {
         void Promise.resolve().then(() => setBrokenImageIds(new Set()))
-    }, [targetFilter, equipmentFilter, searchQuery])
+    }, [muscleFilter, equipmentFilter, searchQuery])
 
     // Données locales : filtre et pagination sur popularExercises
     useEffect(() => {
@@ -183,14 +113,12 @@ export function ExerciseListPage() {
                 ex.bodyPart !== 'cardio' &&
                 !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
         )
-        if (targetFilter !== 'all') {
-            list = list.filter((ex) => ex.target === targetFilter)
-        }
-        if (equipmentFilter !== 'all') {
-            list = list.filter((ex) =>
-                equipmentMatchesFilter(ex.equipment, equipmentFilter)
-            )
-        }
+        list = list.filter((ex) =>
+            exerciseMatchesMuscleSelection(ex, muscleFilter),
+        )
+        list = list.filter((ex) =>
+            exerciseMatchesEquipmentSelection(ex.equipment, equipmentFilter),
+        )
         if (apiQuery || searchRaw) {
             list = list.filter((ex) => {
                 const matchEn = apiQuery && ex.name.toLowerCase().includes(apiQuery)
@@ -199,28 +127,33 @@ export function ExerciseListPage() {
                 return matchEn || matchFr || (searchRaw && ex.name.toLowerCase().includes(searchRaw))
             })
         }
-        const sorted = sortExercisesByPopularity(list)
+        const sorted = [...sortExercisesByPopularity(list)].sort((a, b) => {
+            const ta = getLatestPerformanceCreatedAt(`api-${a.id}`)
+            const tb = getLatestPerformanceCreatedAt(`api-${b.id}`)
+            if (ta !== null && tb !== null) return tb - ta
+            if (ta !== null) return -1
+            if (tb !== null) return 1
+            return 0
+        })
         const nextTotalFilteredCount = sorted.length
         const nextApiExercises = sorted.slice(offset, offset + 25)
         void Promise.resolve().then(() => {
             setTotalFilteredCount(nextTotalFilteredCount)
             setApiExercises(nextApiExercises)
         })
-    }, [targetFilter, equipmentFilter, page, searchQuery])
+    }, [muscleFilter, equipmentFilter, page, searchQuery])
 
-    const filteredExercises = sortExercisesByPopularity(
-        apiExercises
-            .filter(
-                (ex) =>
-                    ex.bodyPart !== 'cardio' &&
-                    !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
-            )
-            .filter(
-                (ex) =>
-                    ex.gifUrl?.trim() &&
-                    !brokenImageIds.has(ex.id)
-            )
-    )
+    const filteredExercises = apiExercises
+        .filter(
+            (ex) =>
+                ex.bodyPart !== 'cardio' &&
+                !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
+        )
+        .filter(
+            (ex) =>
+                ex.gifUrl?.trim() &&
+                !brokenImageIds.has(ex.id)
+        )
 
     const handleImageError = (exId: string) => {
         setBrokenImageIds((prev) => new Set(prev).add(exId))
@@ -286,12 +219,13 @@ export function ExerciseListPage() {
                 <ExerciseSearchFilters
                     searchInput={searchInput}
                     onSearchChange={handleSearchChange}
-                    targetFilter={targetFilter}
-                    onTargetFilterChange={handleTargetChange}
+                    muscleFilter={muscleFilter}
+                    onMuscleFilterChange={handleMuscleFilterChange}
                     targets={targets}
                     equipmentFilter={equipmentFilter}
                     onEquipmentFilterChange={handleEquipmentChange}
                     equipmentList={equipmentList}
+                    availableRawEquipment={localEquipmentRaw.filter((eq) => !CARDIO_EQUIPMENT.has(eq))}
                     extraSlot={
                         <Dialog open={customOpen} onOpenChange={setCustomOpen}>
                             <DialogTrigger asChild>
@@ -358,10 +292,10 @@ export function ExerciseListPage() {
                             return (
                                 <li key={ex.id}>
                                     <Card
-                                        className="cursor-pointer transition-colors hover:bg-muted/50"
-                                        onClick={() => navigate(`/exercises/${ex.id}`)}
+                                        className="cursor-pointer transition-colors"
+                                        onClick={() => setSelectedExercise(ex)}
                                     >
-                                        <CardHeader className="flex flex-row items-center">
+                                        <CardHeader className="flex min-w-0 flex-row items-center gap-3">
                                             <img
                                                 src={getExerciseImageUrl(ex.gifUrl)}
                                                 alt=""
@@ -370,7 +304,7 @@ export function ExerciseListPage() {
                                             />
                                             <div className="min-w-0 flex-1">
                                                 <p className="font-medium truncate capitalize">{ex.name}</p>
-                                                <p className="text-xs text-muted-foreground">
+                                                <p className="flex gap-1 text-xs text-muted-foreground">
                                                     <Badge variant="secondary" className="mt-1">
                                                         {translateBodyPart(ex.bodyPart)}
                                                     </Badge>
@@ -381,6 +315,7 @@ export function ExerciseListPage() {
                                             </div>
                                             <Button
                                                 size="sm"
+                                                className="shrink-0"
                                                 disabled={isTracked}
                                                 onClick={(e) => {
                                                     e.stopPropagation()
@@ -398,9 +333,13 @@ export function ExerciseListPage() {
                 )}
 
                 {filteredExercises.length === 0 && !error && (
-                    <p className="py-8 text-center text-muted-foreground">
-                        {UI.noExerciseFound}
-                    </p>
+                    <EmptyState
+                        className="mt-6"
+                        icon={Dumbbell}
+                        iconClassName="text-accent"
+                        description={UI.noExerciseFound}
+                        cardClassName="max-w-md shadow-none"
+                    />
                 )}
 
                 {filteredExercises.length > 0 && totalFilteredCount > 25 && (
@@ -473,6 +412,83 @@ export function ExerciseListPage() {
                         </div>
                     </DrawerContent>
                 </Drawer>
+
+                <Dialog open={!!selectedExercise} onOpenChange={(open) => !open && setSelectedExercise(null)}>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                        {selectedExercise && (
+                            <>
+                                <DialogHeader>
+                                    <DialogTitle className="break-words pr-10 text-left capitalize">
+                                        {selectedExercise.name}
+                                    </DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-start gap-4">
+                                            <img
+                                                src={getExerciseImageUrl(selectedExercise.gifUrl)}
+                                                alt=""
+                                                className="size-28 rounded-lg object-cover bg-muted shrink-0"
+                                            />
+                                            <div className="min-w-0 flex-1 space-y-2">
+                                                <h2 className="break-words font-semibold text-lg capitalize">
+                                                    {selectedExercise.name}
+                                                </h2>
+                                                <div className="flex flex-wrap gap-1">
+                                                    <Badge variant="secondary">
+                                                        {translateBodyPart(selectedExercise.bodyPart)}
+                                                    </Badge>
+                                                    <Badge variant="secondary">
+                                                        {translateTarget(selectedExercise.target)}
+                                                    </Badge>
+                                                    {selectedExercise.equipment && (
+                                                        <Badge variant="outline">
+                                                            {translateEquipment(selectedExercise.equipment)}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+                                    </Card>
+
+                                    {selectedExercise.secondaryMuscles?.length > 0 && (
+                                        <Card>
+                                            <CardHeader>
+                                                <h3 className="font-semibold">{UI.secondaryMuscles}</h3>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {selectedExercise.secondaryMuscles.map((m) => (
+                                                        <Badge key={m} variant="secondary">
+                                                            {translateTarget(m)}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    )}
+
+                                    {selectedExercise.instructions?.length > 0 && (
+                                        <Card>
+                                            <CardHeader>
+                                                <h3 className="font-semibold">{UI.instructions}</h3>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <ol className="space-y-2 list-decimal list-inside text-muted-foreground text-sm">
+                                                    {selectedExercise.instructions.map((step, i) => (
+                                                        <li key={i} className="leading-relaxed">
+                                                            {step}
+                                                        </li>
+                                                    ))}
+                                                </ol>
+                                            </CardContent>
+                                        </Card>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </DialogContent>
+                </Dialog>
             </main>
         </div>
     )

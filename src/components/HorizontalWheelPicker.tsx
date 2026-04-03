@@ -193,7 +193,7 @@ export function HorizontalWheelPicker({
                     >
                         <Minus className="size-4 sm:size-5" />
                     </Button>
-                    <div className="relative min-w-0 flex-1">
+                    <div className="relative min-w-0 flex-1 font-one-more">
                         <div
                             ref={scrollRef}
                             className="flex h-14 w-full overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"

@@ -1,11 +1,11 @@
-import { hapticSelectionChanged } from '@/lib/haptics'
-import { cn } from '@/lib/utils'
-import { useEffect, useMemo, useRef } from 'react'
 import {
     WheelPicker,
     WheelPickerWrapper,
     type WheelPickerOption,
 } from '@/components/wheel-picker/wheel-picker'
+import { hapticSelectionChanged } from '@/lib/haptics'
+import { cn } from '@/lib/utils'
+import { useEffect, useMemo, useRef } from 'react'
 
 interface NumberWheelPickerProps {
     value: number

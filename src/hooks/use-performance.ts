@@ -43,9 +43,9 @@ export function usePerformance(trackedExerciseId: string | null) {
   }, [load]);
 
   const savePerformance = useCallback(
-    (weight: number, reps: number) => {
+    (weight: number, reps: number, opts?: { date?: string }) => {
       if (!trackedExerciseId) return;
-      saveToStorage(trackedExerciseId, weight, reps);
+      saveToStorage(trackedExerciseId, weight, reps, opts);
       load();
     },
     [trackedExerciseId, load],

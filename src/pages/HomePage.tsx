@@ -1,15 +1,33 @@
 import { ExerciseCard } from '@/components/ExerciseCard'
 import { ExerciseSearchFilters } from '@/components/ExerciseSearchFilters'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useHomeData } from '@/hooks/use-home-data'
+import {
+    buildEquipmentByParent,
+    exerciseMatchesEquipmentSelection,
+    isEquipmentSelectionEmpty,
+    sanitizeEquipmentSelection,
+    serializeEquipmentSelection,
+} from '@/lib/equipment-filter'
 import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
 import { CARDIO_EQUIPMENT } from '@/lib/exercisedb'
+import {
+    exerciseMatchesMuscleSelection,
+    isMuscleSelectionEmpty,
+    sanitizeMuscleSelection,
+    serializeMuscleSelection,
+} from '@/lib/muscle-filter'
 import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
-import { getPersonalBest, getUserProfile, savePerformance } from '@/lib/storage'
+import {
+    getLatestPerformanceCreatedAt,
+    getPersonalBest,
+    getUserProfile,
+    savePerformance,
+} from '@/lib/storage'
 import { getLeagueInfo } from '@/lib/strength-standards'
-import { equipmentMatchesFilter, getGroupedEquipmentList, UI } from '@/lib/translations'
+import { getGroupedEquipmentList, UI } from '@/lib/translations'
 import { Dumbbell, Plus } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -21,14 +39,12 @@ function HomePage() {
     const {
         searchInput,
         searchQuery,
-        targetFilter,
+        muscleFilter,
         equipmentFilter,
-        bodyPartFilter = 'all',
-        handleTargetChange,
+        handleMuscleFilterChange,
         handleEquipmentChange,
-        handleBodyPartChange,
         handleSearchChange,
-    } = useExerciseFilters({ includeBodyPart: true })
+    } = useExerciseFilters()
 
     const nonCardioExercises = useMemo(
         () =>
@@ -39,15 +55,6 @@ function HomePage() {
             ),
         [exercises]
     )
-
-    const bodyParts = useMemo(() => {
-        const parts = new Set(
-            nonCardioExercises
-                .map((ex) => ex.bodyPart)
-                .filter((p): p is string => !!p)
-        )
-        return Array.from(parts).sort((a, b) => a.localeCompare(b))
-    }, [nonCardioExercises])
 
     const targets = useMemo(() => {
         const t = new Set(
@@ -62,18 +69,18 @@ function HomePage() {
         )
         return getGroupedEquipmentList(Array.from(eq))
     }, [nonCardioExercises])
+    const availableRawEquipment = useMemo(() => {
+        const eq = new Set(
+            nonCardioExercises.map((ex) => ex.equipment).filter((p): p is string => !!p)
+        )
+        return Array.from(eq)
+    }, [nonCardioExercises])
 
     const filteredExercises = useMemo(() => {
         let list = nonCardioExercises
-        if (bodyPartFilter !== 'all') {
-            list = list.filter((ex) => ex.bodyPart === bodyPartFilter)
-        }
-        if (targetFilter !== 'all') {
-            list = list.filter((ex) => ex.target === targetFilter)
-        }
-        if (equipmentFilter !== 'all') {
-            list = list.filter((ex) => equipmentMatchesFilter(ex.equipment, equipmentFilter))
-        }
+        list = list.filter((ex) => exerciseMatchesMuscleSelection(ex, muscleFilter))
+        list = list.filter((ex) =>
+            exerciseMatchesEquipmentSelection(ex.equipment, equipmentFilter))
         const apiQuery = searchQuery.trim()
             ? translateSearchQueryToEnglish(searchQuery.trim()).toLowerCase()
             : ''
@@ -87,33 +94,37 @@ function HomePage() {
                 return matchEn || matchFr
             })
         }
+        list = [...list].sort((a, b) => {
+            const ta = getLatestPerformanceCreatedAt(a.id)
+            const tb = getLatestPerformanceCreatedAt(b.id)
+            if (ta !== null && tb !== null) return tb - ta
+            if (ta !== null) return -1
+            if (tb !== null) return 1
+            return 0
+        })
         return list
-    }, [nonCardioExercises, bodyPartFilter, targetFilter, equipmentFilter, searchQuery])
+    }, [nonCardioExercises, muscleFilter, equipmentFilter, searchQuery])
 
-    // Réinitialiser les filtres si les options ne les contiennent plus (ex: exercice supprimé).
-    // Ne s'exécute qu'après chargement des données pour éviter de réinitialiser à tort au retour
-    // arrière (quand exercises est encore vide, bodyParts/targets/equipmentList le seraient aussi).
+    // Retire muscles / groupes qui ne correspondent plus aux exercices suivis.
     useEffect(() => {
         if (!hasLoaded) return
-        if (bodyPartFilter !== 'all' && !bodyParts.includes(bodyPartFilter)) {
-            handleBodyPartChange('all')
+        const next = sanitizeMuscleSelection(muscleFilter, targets)
+        if (serializeMuscleSelection(next) !== serializeMuscleSelection(muscleFilter)) {
+            handleMuscleFilterChange(next)
         }
-        if (targetFilter !== 'all' && !targets.includes(targetFilter)) {
-            handleTargetChange('all')
-        }
-        if (equipmentFilter !== 'all' && !equipmentList.includes(equipmentFilter)) {
-            handleEquipmentChange('all')
+        const tree = buildEquipmentByParent(equipmentList, availableRawEquipment)
+        const nextEq = sanitizeEquipmentSelection(equipmentFilter, tree)
+        if (serializeEquipmentSelection(nextEq) !== serializeEquipmentSelection(equipmentFilter)) {
+            handleEquipmentChange(nextEq)
         }
     }, [
         hasLoaded,
-        bodyParts,
-        bodyPartFilter,
         targets,
-        targetFilter,
+        muscleFilter,
         equipmentList,
+        availableRawEquipment,
         equipmentFilter,
-        handleBodyPartChange,
-        handleTargetChange,
+        handleMuscleFilterChange,
         handleEquipmentChange,
     ])
 
@@ -123,14 +134,13 @@ function HomePage() {
                 <ExerciseSearchFilters
                     searchInput={searchInput}
                     onSearchChange={handleSearchChange}
-                    targetFilter={targetFilter}
-                    onTargetFilterChange={handleTargetChange}
+                    muscleFilter={muscleFilter}
+                    onMuscleFilterChange={handleMuscleFilterChange}
                     targets={targets}
                     equipmentFilter={equipmentFilter}
                     onEquipmentFilterChange={handleEquipmentChange}
                     equipmentList={equipmentList}
-                    onBodyPartFilterChange={handleBodyPartChange}
-                    bodyParts={bodyParts}
+                    availableRawEquipment={availableRawEquipment}
                 />
 
                 <div className="mb-4">
@@ -143,15 +153,13 @@ function HomePage() {
                 </div>
 
                 {nonCardioExercises.length === 0 ? (
-                    <div className="mt-4 flex flex-col items-center justify-center text-center">
-                        <Card className="w-full ">
-                            <CardContent className="flex flex-col items-center gap-3 p-6">
-                                <Dumbbell className="size-7 text-muted-foreground" />
-                                <h2 className="text-lg font-medium">{UI.noTrackedExercises}</h2>
-                                <p className="text-muted-foreground">{UI.noTrackedDescription}</p>
-                            </CardContent>
-                        </Card>
-                    </div>
+                    <EmptyState
+                        className="mt-4"
+                        icon={Dumbbell}
+                        iconClassName="size-7 text-muted-foreground"
+                        title={UI.noTrackedExercises}
+                        description={UI.noTrackedDescription}
+                    />
                 ) : (
                     <>
                         <ul className="space-y-3">
@@ -207,18 +215,16 @@ function HomePage() {
                         </ul>
 
                         {filteredExercises.length === 0 &&
-                            (bodyPartFilter !== 'all' ||
-                                targetFilter !== 'all' ||
-                                equipmentFilter !== 'all' ||
+                            (!isMuscleSelectionEmpty(muscleFilter) ||
+                                !isEquipmentSelectionEmpty(equipmentFilter) ||
                                 searchQuery.trim()) && (
-                                <div className="mt-6 flex flex-col items-center justify-center text-center">
-                                    <Card className="w-full max-w-md shadow-none">
-                                        <CardContent className="flex flex-col items-center gap-3 p-6">
-                                            <Dumbbell className="size-12 text-accent" />
-                                            <p className="text-muted-foreground">{UI.noExerciseFound}</p>
-                                        </CardContent>
-                                    </Card>
-                                </div>
+                                <EmptyState
+                                    className="mt-6"
+                                    icon={Dumbbell}
+                                    iconClassName="text-accent"
+                                    description={UI.noExerciseFound}
+                                    cardClassName="max-w-md shadow-none"
+                                />
                             )}
                     </>
                 )}

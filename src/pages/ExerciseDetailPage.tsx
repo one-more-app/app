@@ -1,10 +1,13 @@
+import { AddPerfDrawer } from '@/components/AddPerfDrawer'
 import { BackHeader } from '@/components/BackHeader'
 import { ExerciseCard } from '@/components/ExerciseCard'
+import { PerfEntryList } from '@/components/history/PerfEntryList'
 import { LeagueBadge } from '@/components/LeagueBadge'
 import { PerformanceChart } from '@/components/PerformanceChart'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
     Dialog,
     DialogContent,
@@ -14,12 +17,13 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { usePerformance } from '@/hooks/use-performance'
-import { LEAGUE_COLORS } from '@/lib/league-colors'
 import {
-    computeLeagueFromPB,
-    isNewPersonalBest,
-    notifyPerfMilestones,
-} from '@/lib/perf-notifications'
+    buildEntryInsights,
+    comparePerfEntriesRecentFirst,
+    formatDayHeading,
+} from '@/lib/history-entries'
+import { LEAGUE_COLORS } from '@/lib/league-colors'
+import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
     getPersonalBest,
     getTrackedExerciseById,
@@ -27,15 +31,19 @@ import {
     removeTrackedExercise,
     updateTrackedExercise,
 } from '@/lib/storage'
-import {
-    getAllTiers,
-    getLeagueInfo,
-    getLeagueLevelIndex,
-    isDumbbellExercise,
-} from '@/lib/strength-standards'
+import { getAllTiers, getLeagueInfo, isDumbbellExercise } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Pencil, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import type { PerformanceEntry } from '@/types'
+import {
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    ChevronUp,
+    Pencil,
+    SearchX,
+    Trash2,
+} from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 export function ExerciseDetailPage() {
@@ -91,11 +99,58 @@ export function ExerciseDetailPage() {
         setHistorySessionIndex(0)
     }, [id])
 
+    const [sessionDrawer, setSessionDrawer] = useState<
+        | { mode: 'closed' }
+        | { mode: 'edit'; entry: PerformanceEntry }
+        | { mode: 'add'; date: string }
+    >({ mode: 'closed' })
+
+    useEffect(() => {
+        setSessionDrawer({ mode: 'closed' })
+    }, [id])
+
+    const entryInsights = useMemo(
+        () => buildEntryInsights(entries, profile),
+        [entries, profile.weightKg, profile.heightCm, profile.gender],
+    )
+
+    const viewedSession = useMemo(() => {
+        if (entries.length === 0) return null
+        const byDate = entries.reduce<Record<string, PerformanceEntry[]>>((acc, e) => {
+            (acc[e.date] ??= []).push(e)
+            return acc
+        }, {})
+        const dates = Object.keys(byDate).sort(
+            (a, b) => new Date(b).getTime() - new Date(a).getTime(),
+        )
+        const safeIndex = Math.min(
+            historySessionIndex,
+            Math.max(0, dates.length - 1),
+        )
+        const lastDate = dates[safeIndex]!
+        const sessionRaw = byDate[lastDate] ?? []
+        if (sessionRaw.length === 0) return null
+        const sortedForList = [...sessionRaw].sort(comparePerfEntriesRecentFirst)
+        return {
+            lastDate,
+            sortedForList,
+            dates,
+            canGoNewer: safeIndex > 0,
+            canGoOlder: safeIndex < dates.length - 1,
+        }
+    }, [entries, historySessionIndex])
+
     if (!exercise) {
         return (
-            <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-                <p className="text-muted-foreground">{UI.exerciseNotFound}</p>
-                <Button onClick={() => navigate(-1)}>{UI.back}</Button>
+            <div className="flex min-h-screen flex-col items-center justify-center px-4">
+                <EmptyState
+                    variant="plain"
+                    icon={SearchX}
+                    iconClassName="text-muted-foreground"
+                    description={UI.exerciseNotFound}
+                >
+                    <Button onClick={() => navigate(-1)}>{UI.back}</Button>
+                </EmptyState>
             </div>
         )
     }
@@ -266,204 +321,64 @@ export function ExerciseDetailPage() {
                                 onUpdate={updatePerformance}
                                 onRefresh={refresh}
                             />
-                            {(() => {
-                                const byDate = entries.reduce<Record<string, typeof entries>>(
-                                    (acc, e) => {
-                                        (acc[e.date] ??= []).push(e)
-                                        return acc
-                                    },
-                                    {}
-                                )
-                                const dates = Object.keys(byDate).sort(
-                                    (a, b) => new Date(b).getTime() - new Date(a).getTime()
-                                )
-                                const safeIndex = Math.min(
-                                    historySessionIndex,
-                                    Math.max(0, dates.length - 1)
-                                )
-                                const lastDate = dates[safeIndex]
-                                const lastSessionEntries = lastDate
-                                    ? [...(byDate[lastDate] ?? [])].sort(
-                                        (a, b) =>
-                                            new Date(a.createdAt).getTime() -
-                                            new Date(b.createdAt).getTime()
-                                    )
-                                    : []
-                                if (lastSessionEntries.length === 0) return null
-                                const formatDate = (d: string) =>
-                                    new Date(d + 'T12:00:00').toLocaleDateString(undefined, {
-                                        weekday: 'long',
-                                        day: 'numeric',
-                                        month: 'long',
-                                        year: 'numeric',
-                                    })
-                                const canGoNewer = safeIndex > 0
-                                const canGoOlder = safeIndex < dates.length - 1
-                                const entriesBeforeLastSession = entries.filter(
-                                    (e) => e.date < lastDate
-                                )
-                                const bestBeforeSession =
-                                    entriesBeforeLastSession.length === 0
-                                        ? null
-                                        : entriesBeforeLastSession.reduce((best, e) =>
-                                            !best ||
-                                                e.weight > best.weight ||
-                                                (e.weight === best.weight && e.reps > best.reps)
-                                                ? e
-                                                : best
-                                        )
-                                return (
-                                    <div className="border-t border-border pt-2">
-                                        <div className="flex items-center justify-between gap-2 mb-2">
-                                            <h3 className="text-sm font-medium text-muted-foreground">
-                                                {formatDate(lastDate)}
-                                            </h3>
-                                            <div className="flex items-center gap-1">
-                                                <Button
-                                                    variant="secondary"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-muted-foreground"
-                                                    disabled={!canGoOlder}
-                                                    onClick={() =>
-                                                        setHistorySessionIndex((i) =>
-                                                            Math.min(dates.length - 1, i + 1)
-                                                        )
-                                                    }
-                                                    aria-label={UI.nextSession}
-                                                >
-                                                    <ChevronLeft className="size-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="secondary"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-muted-foreground"
-                                                    disabled={!canGoNewer}
-                                                    onClick={() =>
-                                                        setHistorySessionIndex((i) => Math.max(0, i - 1))
-                                                    }
-                                                    aria-label={UI.previousSession}
-                                                >
-                                                    <ChevronRight className="size-4" />
-                                                </Button>
-                                            </div>
+                            {viewedSession ? (
+                                <div className="border-t border-border pt-2">
+                                    <div className="flex items-center justify-between gap-2 mb-2">
+                                        <h3 className="text-sm font-medium text-muted-foreground">
+                                            {formatDayHeading(viewedSession.lastDate)}
+                                        </h3>
+                                        <div className="flex items-center gap-1">
+                                            <Button
+                                                variant="secondary"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground"
+                                                disabled={!viewedSession.canGoOlder}
+                                                onClick={() =>
+                                                    setHistorySessionIndex((i) =>
+                                                        Math.min(viewedSession.dates.length - 1, i + 1),
+                                                    )
+                                                }
+                                                aria-label={UI.nextSession}
+                                            >
+                                                <ChevronLeft className="size-4" />
+                                            </Button>
+                                            <Button
+                                                variant="secondary"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground"
+                                                disabled={!viewedSession.canGoNewer}
+                                                onClick={() =>
+                                                    setHistorySessionIndex((i) => Math.max(0, i - 1))
+                                                }
+                                                aria-label={UI.previousSession}
+                                            >
+                                                <ChevronRight className="size-4" />
+                                            </Button>
                                         </div>
-                                        <ul className="space-y-1.5">
-                                            {lastSessionEntries.map((entry, i) => {
-                                                const prevPB =
-                                                    i === 0
-                                                        ? bestBeforeSession
-                                                            ? {
-                                                                weight: bestBeforeSession.weight,
-                                                                reps: bestBeforeSession.reps,
-                                                            }
-                                                            : null
-                                                        : (() => {
-                                                            const prevInSession = lastSessionEntries
-                                                                .slice(0, i)
-                                                                .reduce(
-                                                                    (best, e) =>
-                                                                        !best ||
-                                                                            e.weight > best.weight ||
-                                                                            (e.weight === best.weight &&
-                                                                                e.reps > best.reps)
-                                                                            ? e
-                                                                            : best,
-                                                                    null as {
-                                                                        weight: number
-                                                                        reps: number
-                                                                    } | null
-                                                                )
-                                                            if (!prevInSession)
-                                                                return bestBeforeSession
-                                                                    ? {
-                                                                        weight:
-                                                                            bestBeforeSession.weight,
-                                                                        reps: bestBeforeSession.reps,
-                                                                    }
-                                                                    : null
-                                                            const fromBefore = bestBeforeSession
-                                                                ? (bestBeforeSession.weight >
-                                                                    prevInSession.weight ||
-                                                                    (bestBeforeSession.weight ===
-                                                                        prevInSession.weight &&
-                                                                        bestBeforeSession.reps >
-                                                                        prevInSession.reps)
-                                                                    ? {
-                                                                        weight: bestBeforeSession.weight,
-                                                                        reps: bestBeforeSession.reps,
-                                                                    }
-                                                                    : {
-                                                                        weight: prevInSession.weight,
-                                                                        reps: prevInSession.reps,
-                                                                    }
-                                                                )
-                                                                : {
-                                                                    weight: prevInSession.weight,
-                                                                    reps: prevInSession.reps,
-                                                                }
-                                                            return fromBefore
-                                                        })()
-                                                const isRecord = isNewPersonalBest(prevPB, {
-                                                    weight: entry.weight,
-                                                    reps: entry.reps,
-                                                })
-                                                const newPB = !prevPB
-                                                    ? { weight: entry.weight, reps: entry.reps }
-                                                    : isRecord
-                                                        ? { weight: entry.weight, reps: entry.reps }
-                                                        : prevPB
-                                                const prevLeague = computeLeagueFromPB({
-                                                    exercise,
-                                                    personalBest: prevPB,
-                                                    profile,
-                                                })
-                                                const nextLeague = computeLeagueFromPB({
-                                                    exercise,
-                                                    personalBest: newPB,
-                                                    profile,
-                                                })
-                                                const leagueUp =
-                                                    nextLeague &&
-                                                    (!prevLeague ||
-                                                        getLeagueLevelIndex(nextLeague.level) >
-                                                        getLeagueLevelIndex(prevLeague.level))
-                                                return (
-                                                    <li
-                                                        key={entry.id}
-                                                        className="flex items-center justify-between gap-2 text-sm py-1.5 px-3 rounded-md bg-muted/50"
-                                                    >
-                                                        <span className="font-medium">
-                                                            {entry.weight} kg × {entry.reps} reps
-                                                        </span>
-                                                        <div className="flex items-center gap-2 flex-wrap justify-end">
-                                                            {isRecord && (
-                                                                <Badge
-                                                                    variant="secondary"
-                                                                    className="text-xs shrink-0"
-                                                                >
-                                                                    {UI.record}
-                                                                </Badge>
-                                                            )}
-                                                            {leagueUp && nextLeague && (
-                                                                <Badge
-                                                                    variant="outline"
-                                                                    className={`shrink-0 text-xs ${LEAGUE_COLORS[nextLeague.level] ?? 'bg-muted'}`}
-                                                                    title={UI.leaguePromotion}
-                                                                >
-                                                                    {nextLeague.label}
-                                                                </Badge>
-                                                            )}
-                                                            <span className="text-muted-foreground">
-                                                                Série {i + 1}
-                                                            </span>
-                                                        </div>
-                                                    </li>
-                                                )
-                                            })}
-                                        </ul>
                                     </div>
-                                )
-                            })()}
+                                    <PerfEntryList
+                                        listClassName="pb-0 pt-0 border-0"
+                                        entries={viewedSession.sortedForList}
+                                        entryInsights={entryInsights}
+                                        canEdit
+                                        onEditEntry={(entry) =>
+                                            setSessionDrawer({ mode: 'edit', entry })
+                                        }
+                                        onDeleteEntry={(entry) => {
+                                            if (confirm(UI.confirmDeletePerf)) {
+                                                deletePerformance(entry.id)
+                                                refresh()
+                                            }
+                                        }}
+                                        onAddSet={() =>
+                                            setSessionDrawer({
+                                                mode: 'add',
+                                                date: viewedSession.lastDate,
+                                            })
+                                        }
+                                    />
+                                </div>
+                            ) : null}
                         </CardContent>
                     </Card>
                 )}
@@ -547,6 +462,79 @@ export function ExerciseDetailPage() {
                     </DialogContent>
                 </Dialog>
 
+                <AddPerfDrawer
+                    open={sessionDrawer.mode !== 'closed'}
+                    onOpenChange={(open) => {
+                        if (!open) setSessionDrawer({ mode: 'closed' })
+                    }}
+                    exercise={{
+                        id: exercise.id,
+                        name: exercise.name,
+                        originalName: exercise.originalName,
+                        equipment: exercise.equipment,
+                        target: exercise.target,
+                    }}
+                    initialWeight={
+                        sessionDrawer.mode === 'edit'
+                            ? sessionDrawer.entry.weight
+                            : sessionDrawer.mode === 'add'
+                                ? ((viewedSession?.lastDate === sessionDrawer.date
+                                    ? viewedSession.sortedForList[0]?.weight
+                                    : undefined) ??
+                                    lastPerf?.weight ??
+                                    20)
+                                : 20
+                    }
+                    initialReps={
+                        sessionDrawer.mode === 'edit'
+                            ? sessionDrawer.entry.reps
+                            : sessionDrawer.mode === 'add'
+                                ? ((viewedSession?.lastDate === sessionDrawer.date
+                                    ? viewedSession.sortedForList[0]?.reps
+                                    : undefined) ??
+                                    lastPerf?.reps ??
+                                    8)
+                                : 8
+                    }
+                    entryId={
+                        sessionDrawer.mode === 'edit'
+                            ? sessionDrawer.entry.id
+                            : undefined
+                    }
+                    onUpdate={
+                        sessionDrawer.mode === 'edit'
+                            ? (entryId, weight, reps) => {
+                                updatePerformance(entryId, weight, reps)
+                                refresh()
+                            }
+                            : undefined
+                    }
+                    onSave={
+                        sessionDrawer.mode === 'add'
+                            ? (weight, reps) => {
+                                const prevPB = personalBest ?? null
+                                const prevLeague = leagueInfo ?? null
+                                savePerformance(weight, reps, {
+                                    date: sessionDrawer.date,
+                                })
+                                const nextPB = id ? getPersonalBest(id) ?? null : null
+                                const p = getUserProfile()
+                                const nextLeague = computeLeagueFromPB({
+                                    exercise,
+                                    personalBest: nextPB,
+                                    profile: p,
+                                })
+                                notifyPerfMilestones({
+                                    exerciseName: exercise.name,
+                                    prevPB,
+                                    nextPB,
+                                    prevLeague,
+                                    nextLeague,
+                                })
+                            }
+                            : undefined
+                    }
+                />
             </main>
         </div>
     )

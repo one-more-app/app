@@ -67,7 +67,7 @@ export function LeagueBadge({
             <div className={`rounded-lg p-3 ${oneRMStyle}`}>
                 <span className="text-sm text-muted-foreground">{UI.your1RM}</span>
                 <div className="flex items-center gap-2">
-                    <span className="block text-2xl font-bold italic text-primary">
+                    <span className="font-one-more block text-2xl font-bold italic text-primary">
                         {league.oneRM.toFixed(1)}
                     </span>
                     <span className="text-sm text-muted-foreground">{weightSuffix}</span>

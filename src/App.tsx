@@ -1,4 +1,3 @@
-import { ExerciseCatalogDetailPage } from '@/pages/ExerciseCatalogDetailPage'
 import { ExerciseDetailPage } from '@/pages/ExerciseDetailPage'
 import { ExerciseListPage } from '@/pages/ExerciseListPage'
 import HomePage from '@/pages/HomePage'
@@ -86,7 +85,6 @@ function App() {
                             <Route path="/stats" element={<StatsPage />} />
                             <Route path="/history" element={<HistoryPage />} />
                             <Route path="/auth" element={<AuthPage />} />
-                            <Route path="/exercises/:id" element={<ExerciseCatalogDetailPage />} />
                             <Route path="/exercises" element={<ExerciseListPage />} />
                             <Route path="/exercise/:id" element={<ExerciseDetailPage />} />
                             <Route path="/settings" element={<SettingsPage />} />

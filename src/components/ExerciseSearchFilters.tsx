@@ -1,28 +1,22 @@
+import { EquipmentFilterControl } from '@/components/EquipmentFilterControl'
+import { MuscleFilterControl } from '@/components/MuscleFilterControl'
 import { Input } from '@/components/ui/input'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
-import { UI, translateBodyPart, translateEquipment, translateTarget } from '@/lib/translations'
+import type { EquipmentSelection } from '@/lib/equipment-filter'
+import type { MuscleSelection } from '@/lib/muscle-filter'
+import { UI } from '@/lib/translations'
 import { Search } from 'lucide-react'
 
 export interface ExerciseSearchFiltersProps {
     searchInput: string
     onSearchChange: (value: string) => void
-    targetFilter: string
-    onTargetFilterChange: (value: string) => void
+    muscleFilter: MuscleSelection
+    onMuscleFilterChange: (value: MuscleSelection) => void
     targets: string[]
 
-    bodyPartFilter?: string
-    onBodyPartFilterChange?: (value: string) => void
-    bodyParts?: string[]
-
-    equipmentFilter: string
-    onEquipmentFilterChange: (value: string) => void
+    equipmentFilter: EquipmentSelection
+    onEquipmentFilterChange: (value: EquipmentSelection) => void
     equipmentList: string[]
+    availableRawEquipment: string[]
     /** Contenu additionnel à afficher sous les filtres (ex: bouton Créer) */
     extraSlot?: React.ReactNode
 }
@@ -30,21 +24,18 @@ export interface ExerciseSearchFiltersProps {
 export function ExerciseSearchFilters({
     searchInput,
     onSearchChange,
-    targetFilter,
-    onTargetFilterChange,
+    muscleFilter,
+    onMuscleFilterChange,
     targets,
     equipmentFilter,
     onEquipmentFilterChange,
     equipmentList,
-    bodyPartFilter,
-    onBodyPartFilterChange,
-    bodyParts = [],
+    availableRawEquipment,
     extraSlot,
 }: ExerciseSearchFiltersProps) {
-
     return (
         <>
-            <div className="relative mb-4">
+            <div className="relative mb-2">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                     type="search"
@@ -54,56 +45,21 @@ export function ExerciseSearchFilters({
                     className="pl-9"
                 />
             </div>
-            <div className="mb-4 space-y-4">
-                <div className="flex flex-row gap-3">
-                    <Select value={targetFilter} onValueChange={onTargetFilterChange}>
-                        <SelectTrigger className="min-w-[140px] flex-1">
-                            <SelectValue placeholder={UI.filterByTarget} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">{UI.all}</SelectItem>
-                            {targets.map((t) => (
-                                <SelectItem key={t} value={t}>
-                                    {translateTarget(t)}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+            <div className="mb-4 space-y-2">
+                <MuscleFilterControl
+                    selection={muscleFilter}
+                    onChange={onMuscleFilterChange}
+                    targets={targets}
+                />
+                <EquipmentFilterControl
+                    selection={equipmentFilter}
+                    onChange={onEquipmentFilterChange}
+                    parentOptions={equipmentList}
+                    availableRawEquipment={availableRawEquipment}
+                />
 
-                    {bodyPartFilter && onBodyPartFilterChange && (
-                        <Select value={bodyPartFilter} onValueChange={onBodyPartFilterChange}>
-                            <SelectTrigger className="min-w-[170px] flex-1">
-                                <SelectValue placeholder={UI.filterByBodyPart} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">{UI.all}</SelectItem>
-                                {bodyParts.map((bp) => (
-                                    <SelectItem key={bp} value={bp}>
-                                        {translateBodyPart(bp)}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
-
-                    <Select
-                        value={equipmentFilter}
-                        onValueChange={onEquipmentFilterChange}
-                    >
-                        <SelectTrigger className="min-w-[140px] flex-1">
-                            <SelectValue placeholder={UI.filterByEquipment} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">{UI.all}</SelectItem>
-                            {equipmentList.map((eq) => (
-                                <SelectItem key={eq} value={eq}>
-                                    {translateEquipment(eq)}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
+            </div>
+            <div className="mb-4">
                 {extraSlot}
             </div>
         </>

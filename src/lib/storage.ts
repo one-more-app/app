@@ -203,14 +203,19 @@ export function savePerformance(
   trackedExerciseId: string,
   weight: number,
   reps: number,
+  opts?: { date?: string },
 ): PerformanceEntry {
   const entries = getPerformanceEntriesForSync();
   const today = new Date().toISOString().slice(0, 10);
+  const day =
+    opts?.date && /^\d{4}-\d{2}-\d{2}$/.test(opts.date)
+      ? opts.date
+      : today;
 
   const newEntry: PerformanceEntry = {
     id: crypto.randomUUID(),
     trackedExerciseId,
-    date: today,
+    date: day,
     weight,
     reps,
     createdAt: new Date().toISOString(),
@@ -258,6 +263,48 @@ export function getLastPerformance(
 ): PerformanceEntry | undefined {
   const entries = getEntriesByTrackedId(trackedExerciseId);
   return entries[entries.length - 1];
+}
+
+/** Horodatage (ms) de la performance la plus récemment ajoutée pour cet exercice suivi, ou null. */
+export function getLatestPerformanceCreatedAt(
+  trackedExerciseId: string,
+): number | null {
+  const entries = getPerformanceEntries().filter(
+    (e) => e.trackedExerciseId === trackedExerciseId,
+  );
+  if (entries.length === 0) return null;
+  let max = 0;
+  for (const e of entries) {
+    const t = new Date(e.createdAt).getTime();
+    if (t > max) max = t;
+  }
+  return max;
+}
+
+/** Dernière date de perf (ms) par `target` (tous exos suivis confondus). */
+export function getLatestPerformanceTimeByTarget(): Map<string, number> {
+  const byTarget = new Map<string, number>();
+  for (const ex of getTrackedExercises()) {
+    const target = ex.target?.toLowerCase();
+    if (!target) continue;
+    const t = getLatestPerformanceCreatedAt(ex.id) ?? 0;
+    const prev = byTarget.get(target) ?? 0;
+    if (t > prev) byTarget.set(target, t);
+  }
+  return byTarget;
+}
+
+/**
+ * Trie les `target` : les muscles avec une perf récente en premier, puis ordre alphabétique.
+ */
+export function sortTargetsByRecentPerformanceFirst(targets: string[]): string[] {
+  const latest = getLatestPerformanceTimeByTarget();
+  return [...targets].sort((a, b) => {
+    const ta = latest.get(a.toLowerCase()) ?? 0;
+    const tb = latest.get(b.toLowerCase()) ?? 0;
+    if (tb !== ta) return tb - ta;
+    return a.localeCompare(b);
+  });
 }
 
 export function getPersonalBest(

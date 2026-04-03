@@ -1,13 +1,12 @@
-import { HistoryPerfRow } from '@/components/history/HistoryPerfRow'
+import { PerfEntryList } from '@/components/history/PerfEntryList'
 import { Card } from '@/components/ui/card'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
 import type { HistoryEntryInsight } from '@/lib/history-entries'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import type { PerformanceEntry, TrackedExercise } from '@/types'
-import { ChevronDown, ChevronRight, Dumbbell } from 'lucide-react'
+import { ChevronDown, Dumbbell } from 'lucide-react'
 import { Collapsible } from 'radix-ui'
-import { Link } from 'react-router-dom'
 
 type HistoryExerciseCollapsibleProps = {
     trackedExerciseId: string
@@ -18,10 +17,12 @@ type HistoryExerciseCollapsibleProps = {
     entryInsights: Map<string, HistoryEntryInsight>
     onEditEntry: (entry: PerformanceEntry) => void
     onDeleteEntry: (entry: PerformanceEntry) => void
+    /** Ouvre l’ajout d’une perf pour ce jour et cet exercice (ex. depuis l’historique global). */
+    onAddEntry?: () => void
 }
 
 export function HistoryExerciseCollapsible({
-    trackedExerciseId,
+    trackedExerciseId: _trackedExerciseId,
     items,
     exercise,
     stillTracked,
@@ -29,6 +30,7 @@ export function HistoryExerciseCollapsible({
     entryInsights,
     onEditEntry,
     onDeleteEntry,
+    onAddEntry,
 }: HistoryExerciseCollapsibleProps) {
     const title = exercise?.name ?? UI.exerciseNotFound
     const showGif =
@@ -63,10 +65,10 @@ export function HistoryExerciseCollapsible({
                                     ) : null}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-base font-semibold capitalize leading-tight text-foreground">
-                                        {title}
+                                    <p className="flex min-w-0 items-baseline gap-1 text-base font-semibold capitalize leading-tight text-foreground">
+                                        <span className="min-w-0 flex-1 truncate">{title}</span>
                                         {!stillTracked && exercise?.deletedAt ? (
-                                            <span className="ml-1 text-xs font-normal normal-case text-muted-foreground">
+                                            <span className="shrink-0 text-xs font-normal normal-case text-muted-foreground">
                                                 ({UI.exerciseRemovedFromTracking})
                                             </span>
                                         ) : null}
@@ -82,29 +84,19 @@ export function HistoryExerciseCollapsible({
                                 />
                             </button>
                         </Collapsible.Trigger>
-                        {stillTracked ? (
-                            <Link
-                                to={`/exercise/${trackedExerciseId}`}
-                                className="inline-flex items-center border-l border-border px-3 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-                                aria-label={UI.historyOpenExerciseSheet}
-                            >
-                                <ChevronRight className="size-4" aria-hidden />
-                            </Link>
-                        ) : null}
                     </div>
                     <Collapsible.Content className="data-[state=closed]:hidden">
-                        <ul className="space-y-2 border-t border-border p-3">
-                            {items.map((entry) => (
-                                <HistoryPerfRow
-                                    key={entry.id}
-                                    entry={entry}
-                                    insight={entryInsights.get(entry.id)}
-                                    canEdit={canEdit}
-                                    onEdit={() => onEditEntry(entry)}
-                                    onDelete={() => onDeleteEntry(entry)}
-                                />
-                            ))}
-                        </ul>
+                        <PerfEntryList
+                            listClassName="px-3 pb-3 pt-2"
+                            entries={items}
+                            entryInsights={entryInsights}
+                            canEdit={canEdit}
+                            onEditEntry={onEditEntry}
+                            onDeleteEntry={onDeleteEntry}
+                            onAddSet={
+                                canEdit && onAddEntry ? onAddEntry : undefined
+                            }
+                        />
                     </Collapsible.Content>
                 </Card>
             </Collapsible.Root>

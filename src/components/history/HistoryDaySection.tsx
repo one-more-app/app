@@ -14,6 +14,7 @@ type HistoryDaySectionProps = {
     entryInsights: Map<string, HistoryEntryInsight>
     onEditEntry: (entry: PerformanceEntry) => void
     onDeleteEntry: (entry: PerformanceEntry) => void
+    onAddEntry?: (trackedExerciseId: string, dayKey: string) => void
 }
 
 export function HistoryDaySection({
@@ -24,6 +25,7 @@ export function HistoryDaySection({
     entryInsights,
     onEditEntry,
     onDeleteEntry,
+    onAddEntry,
 }: HistoryDaySectionProps) {
     return (
         <li className="space-y-3">
@@ -48,6 +50,11 @@ export function HistoryDaySection({
                             entryInsights={entryInsights}
                             onEditEntry={onEditEntry}
                             onDeleteEntry={onDeleteEntry}
+                            onAddEntry={
+                                onAddEntry
+                                    ? () => onAddEntry(trackedExerciseId, dayKey)
+                                    : undefined
+                            }
                         />
                     )
                 })}

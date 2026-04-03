@@ -1,17 +1,20 @@
 import { AddPerfDrawer } from '@/components/AddPerfDrawer'
 import { BackHeader } from '@/components/BackHeader'
 import { HistoryDaySection } from '@/components/history/HistoryDaySection'
-import { Card, CardContent } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
     buildEntryInsights,
     groupByDayThenExercise,
     resolveTrackedExercise,
 } from '@/lib/history-entries'
+import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
     deletePerformance,
     getAllPerformanceEntriesRecentFirst,
+    getPersonalBest,
     getTrackedExerciseById,
     getUserProfile,
+    savePerformance,
     updatePerformance,
 } from '@/lib/storage'
 import { UI } from '@/lib/translations'
@@ -25,6 +28,10 @@ export function HistoryPage() {
         getAllPerformanceEntriesRecentFirst(),
     )
     const [editEntry, setEditEntry] = useState<PerformanceEntry | null>(null)
+    const [addPerf, setAddPerf] = useState<{
+        date: string
+        trackedExerciseId: string
+    } | null>(null)
 
     const reload = useCallback(() => {
         setEntries(getAllPerformanceEntriesRecentFirst())
@@ -62,6 +69,35 @@ export function HistoryPage() {
         ? resolveTrackedExercise(editEntry.trackedExerciseId)
         : undefined
 
+    const addExercise = addPerf
+        ? resolveTrackedExercise(addPerf.trackedExerciseId)
+        : undefined
+
+    const addInitialWeightReps = useMemo(() => {
+        if (!addPerf) return { weight: 20, reps: 8 }
+        const sameDay = entries.filter(
+            (e) =>
+                e.date === addPerf.date &&
+                e.trackedExerciseId === addPerf.trackedExerciseId,
+        )
+        const newestSameDay = sameDay.reduce<PerformanceEntry | undefined>(
+            (best, e) =>
+                !best ||
+                new Date(e.createdAt).getTime() >
+                    new Date(best.createdAt).getTime()
+                    ? e
+                    : best,
+            undefined,
+        )
+        const latestAny = entries.find(
+            (e) => e.trackedExerciseId === addPerf.trackedExerciseId,
+        )
+        return {
+            weight: newestSameDay?.weight ?? latestAny?.weight ?? 20,
+            reps: newestSameDay?.reps ?? latestAny?.reps ?? 8,
+        }
+    }, [addPerf, entries])
+
     const handleDeleteEntry = useCallback(
         (entry: PerformanceEntry) => {
             if (confirm(UI.confirmDeletePerf)) {
@@ -86,11 +122,10 @@ export function HistoryPage() {
                 )}
 
                 {entries.length === 0 ? (
-                    <Card>
-                        <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                            {UI.noHistoryEntries}
-                        </CardContent>
-                    </Card>
+                    <EmptyState
+                        description={UI.noHistoryEntries}
+                        contentClassName="py-8 text-sm"
+                    />
                 ) : (
                     <ul className="space-y-8">
                         {shownByDayThenExercise.map(({ date: dayKey, exercises }) => (
@@ -103,15 +138,18 @@ export function HistoryPage() {
                                 entryInsights={entryInsights}
                                 onEditEntry={setEditEntry}
                                 onDeleteEntry={handleDeleteEntry}
+                                onAddEntry={(trackedExerciseId, dayKey) =>
+                                    setAddPerf({ trackedExerciseId, date: dayKey })
+                                }
                             />
                         ))}
                     </ul>
                 )}
             </main>
 
-            {editEntry && editExercise && (
+            {editEntry && editExercise ? (
                 <AddPerfDrawer
-                    open={!!editEntry}
+                    open
                     onOpenChange={(open) => !open && setEditEntry(null)}
                     exercise={{
                         id: editExercise.id,
@@ -129,7 +167,53 @@ export function HistoryPage() {
                         setEditEntry(null)
                     }}
                 />
-            )}
+            ) : addPerf && addExercise ? (
+                <AddPerfDrawer
+                    open
+                    onOpenChange={(open) => !open && setAddPerf(null)}
+                    exercise={{
+                        id: addExercise.id,
+                        name: addExercise.name,
+                        originalName: addExercise.originalName,
+                        equipment: addExercise.equipment,
+                        target: addExercise.target,
+                    }}
+                    initialWeight={addInitialWeightReps.weight}
+                    initialReps={addInitialWeightReps.reps}
+                    onSave={(weight, reps) => {
+                        const profile = getUserProfile()
+                        const prevPB =
+                            getPersonalBest(addPerf.trackedExerciseId) ?? null
+                        const prevLeague = computeLeagueFromPB({
+                            exercise: addExercise,
+                            personalBest: prevPB,
+                            profile,
+                        })
+                        savePerformance(
+                            addPerf.trackedExerciseId,
+                            weight,
+                            reps,
+                            { date: addPerf.date },
+                        )
+                        reload()
+                        const nextPB =
+                            getPersonalBest(addPerf.trackedExerciseId) ?? null
+                        const nextLeague = computeLeagueFromPB({
+                            exercise: addExercise,
+                            personalBest: nextPB,
+                            profile,
+                        })
+                        notifyPerfMilestones({
+                            exerciseName: addExercise.name,
+                            prevPB,
+                            nextPB,
+                            prevLeague,
+                            nextLeague,
+                        })
+                        setAddPerf(null)
+                    }}
+                />
+            ) : null}
         </div>
     )
 }
