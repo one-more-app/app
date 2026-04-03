@@ -30,7 +30,7 @@ export function PerfEntryList({
         <div className={cn(className)}>
             <ul
                 className={cn(
-                    'space-y-2 border-t border-border',
+                    'space-y-2',
                     listClassName,
                 )}
             >

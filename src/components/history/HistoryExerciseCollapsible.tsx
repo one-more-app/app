@@ -87,7 +87,7 @@ export function HistoryExerciseCollapsible({
                     </div>
                     <Collapsible.Content className="data-[state=closed]:hidden">
                         <PerfEntryList
-                            listClassName="px-3 pb-3 pt-2"
+                            className="px-3 pb-3 pt-2"
                             entries={items}
                             entryInsights={entryInsights}
                             canEdit={canEdit}
