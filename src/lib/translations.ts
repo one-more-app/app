@@ -268,7 +268,8 @@ export const UI = {
   themeLight: "Clair",
   themeDark: "Sombre",
   profile: "Profil",
-  profileLeagueHint: "Utilisé pour calculer ta ligue (ratio force / poids du corps).",
+  profileLeagueHint:
+    "Utilisé pour calculer ta ligue (ratio force / poids du corps).",
   bodyWeight: "Poids du corps (kg)",
   height: "Taille (cm)",
   gender: "Genre",
@@ -303,8 +304,7 @@ export const UI = {
 
   // Onboarding (premier lancement)
   onboardingTitle: "Prêt à progresser ?",
-  onboardingDescription:
-    "Regarde la vidéo, puis crée ton compte (Google/Apple) ou commence sans prise de tête. Tu pourras régler ton profil plus tard.",
+  onboardingDescription: "Pour ceux qui veulent faire une rep de plus.",
   continue: "Continuer",
   later: "Plus tard",
 
@@ -352,7 +352,8 @@ export const UI = {
   statsGlobalGaugeTitle: "Vers le palier suivant (moyenne)",
   statsGlobalGaugeCaption:
     "Ta moyenne combine palier + progression sur chaque exo. La jauge montre l’avancement entre deux paliers d’affilée (Fer → Bronze → …).",
-  statsGlobalGaugeMax: "En moyenne tu es au palier Légende — objectif maintenu ou records sur de nouveaux exos.",
+  statsGlobalGaugeMax:
+    "En moyenne tu es au palier Légende — objectif maintenu ou records sur de nouveaux exos.",
   statsProfileInvalid: "Indique un poids et une taille valides.",
   statsProfileSaved: "Profil enregistré",
   /** Lien sous la modal profil ligues vers la page paramètres complète */

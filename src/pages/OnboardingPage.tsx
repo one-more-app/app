@@ -87,10 +87,10 @@ export function OnboardingPage() {
                 <div className="relative z-10 flex min-h-screen flex-col">
                     <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-10 pb-6 space-y-4">
                         <div className="space-y-2">
-                            <h1 className="text-2xl font-semibold text-foreground">
+                            <h1 className="text-3xl font-one-more font-semibold text-foreground uppercase italic">
                                 {UI.onboardingTitle}
                             </h1>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm font-one-more italic  uppercase text-muted-foreground">
                                 {UI.onboardingDescription}
                             </p>
                         </div>
