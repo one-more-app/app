@@ -33,7 +33,7 @@ export function HistoryPerfRow({
             <Card className="py-0">
                 <CardContent className="flex items-center gap-3 p-2 px-3 rounded-lg bg-secondary/50">
                     <div className="min-w-0 flex-1 space-y-0.5">
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-1">
                             <p className="text-sm font-medium">
                                 {formatPerfLabel(entry.weight, entry.reps)}
                             </p>

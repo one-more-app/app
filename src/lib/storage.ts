@@ -281,32 +281,6 @@ export function getLatestPerformanceCreatedAt(
   return max;
 }
 
-/** Dernière date de perf (ms) par `target` (tous exos suivis confondus). */
-export function getLatestPerformanceTimeByTarget(): Map<string, number> {
-  const byTarget = new Map<string, number>();
-  for (const ex of getTrackedExercises()) {
-    const target = ex.target?.toLowerCase();
-    if (!target) continue;
-    const t = getLatestPerformanceCreatedAt(ex.id) ?? 0;
-    const prev = byTarget.get(target) ?? 0;
-    if (t > prev) byTarget.set(target, t);
-  }
-  return byTarget;
-}
-
-/**
- * Trie les `target` : les muscles avec une perf récente en premier, puis ordre alphabétique.
- */
-export function sortTargetsByRecentPerformanceFirst(targets: string[]): string[] {
-  const latest = getLatestPerformanceTimeByTarget();
-  return [...targets].sort((a, b) => {
-    const ta = latest.get(a.toLowerCase()) ?? 0;
-    const tb = latest.get(b.toLowerCase()) ?? 0;
-    if (tb !== ta) return tb - ta;
-    return a.localeCompare(b);
-  });
-}
-
 export function getPersonalBest(
   trackedExerciseId: string,
 ): PerformanceEntry | undefined {

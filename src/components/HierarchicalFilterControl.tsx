@@ -27,11 +27,12 @@ function selectedChildren(
 
 /** États visuels communs : sélectionné = primary plein ; inactif = fond discret + bordure lisible */
 const chipInactive =
-    'border-border bg-muted/45 text-foreground hover:bg-muted/70 hover:border-muted-foreground/25'
+    'bg-card text-foreground hover:bg-card/70'
 const chipActive =
-    'border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:border-primary'
+    'bg-primary text-primary-foreground hover:bg-primary/90 hover:border-primary'
 const chipActiveInnerHover = 'hover:bg-primary/85 hover:text-primary-foreground'
-const chipInactiveInnerHover = 'hover:bg-muted/60'
+
+const chipInactiveInnerHover = 'hover:bg-card/70'
 
 interface HierarchicalFilterControlProps {
     title: string
@@ -136,7 +137,7 @@ export function HierarchicalFilterControl({
                 <Button
                     type="button"
                     className={cn(
-                        'h-9 border transition-colors',
+                        'h-9 transition-colors',
                         isSelectionEmpty(selection)
                             ? chipActive
                             : cn(
@@ -161,14 +162,13 @@ export function HierarchicalFilterControl({
                         return (
                             <Toggle
                                 key={group}
-                                variant="outline"
                                 pressed={isActive}
                                 onPressedChange={(checked) => setGroupAll(group, checked)}
                                 className={cn(
-                                    'h-9 min-h-9 shrink-0 gap-2 rounded-lg border transition-colors',
-                                    'data-[state=off]:border-border data-[state=off]:bg-muted/45 data-[state=off]:text-foreground',
-                                    'data-[state=off]:hover:bg-muted/70 data-[state=off]:hover:border-muted-foreground/25',
-                                    'data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground',
+                                    'h-9 min-h-9 shrink-0 gap-2 rounded-lg  transition-colors',
+                                    'data-[state=off]:bg-card data-[state=off]:text-foreground',
+                                    'data-[state=off]:hover:bg-card/70',
+                                    'data-[state=on]:bg-primary data-[state=on]:text-primary-foreground',
                                     'data-[state=on]:hover:bg-primary/90 data-[state=on]:hover:border-primary',
                                     !isActive &&
                                     'text-foreground data-[state=off]:text-foreground data-[state=off]:hover:text-foreground',
@@ -190,13 +190,12 @@ export function HierarchicalFilterControl({
                                 role="group"
                                 aria-label={translateGroup(group)}
                                 className={cn(
-                                    'flex h-9 shrink-0 items-stretch overflow-hidden rounded-lg border transition-colors',
+                                    'flex h-9 shrink-0 items-stretch overflow-hidden rounded-lg transition-colors',
                                     isActive ? chipActive : chipInactive,
                                 )}
                             >
                                 <Button
                                     type="button"
-                                    variant="ghost"
                                     className={cn(
                                         'h-9 min-h-9 flex-1 shrink rounded-none border-0 px-2 shadow-none gap-2',
                                         isActive
@@ -237,13 +236,12 @@ export function HierarchicalFilterControl({
                                         'w-px shrink-0 self-stretch my-1',
                                         isActive
                                             ? 'bg-primary-foreground/30'
-                                            : 'bg-muted-foreground/20',
+                                            : 'bg-card/20',
                                     )}
                                     aria-hidden
                                 />
                                 <Button
                                     type="button"
-                                    variant="ghost"
                                     size="icon"
                                     className={cn(
                                         'h-9 w-9 shrink-0 rounded-none border-0 shadow-none',
@@ -279,7 +277,7 @@ export function HierarchicalFilterControl({
                                 type="button"
                                 variant="secondary"
                                 className={cn(
-                                    'border border-primary/25 bg-primary text-primary-foreground shadow-none hover:bg-primary/90',
+                                    ' bg-primary text-primary-foreground shadow-none hover:bg-primary/90',
                                 )}
                                 onClick={() => setOpenGroup(null)}
                                 aria-expanded
@@ -299,7 +297,7 @@ export function HierarchicalFilterControl({
                                 onValueChange={(v) =>
                                     setGroupFromToggleValues(group, v)
                                 }
-                                className="flex max-w-[min(100vw-2rem,28rem)] flex-nowrap gap-1 overflow-x-auto rounded-lg border border-border/90 bg-card/90 p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                                className="flex max-w-[min(100vw-2rem,28rem)] flex-nowrap gap-1 overflow-x-auto -ml-2 rounded-lg rounded-l-none bg-card/90 p-1 pl-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                             >
                                 {children.map((child) => (
                                     <ToggleGroupItem
@@ -307,7 +305,7 @@ export function HierarchicalFilterControl({
                                         value={child}
                                         className={cn(
                                             'h-7 shrink-0 border transition-colors',
-                                            'data-[state=off]:border-border/80 data-[state=off]:bg-muted/40 data-[state=off]:text-foreground data-[state=off]:hover:bg-muted',
+                                            'data-[state=off]:border-border/80 data-[state=off]:bg-card data-[state=off]:text-foreground data-[state=off]:hover:bg-card/70',
                                             'data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90',
                                         )}
                                         aria-label={translateChild(child)}

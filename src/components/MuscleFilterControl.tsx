@@ -6,15 +6,16 @@ import {
     HierarchicalFilterControl,
     type HierarchicalSelection,
 } from '@/components/HierarchicalFilterControl'
-import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
+import { Button } from '@/components/ui/button'
 import {
+    buildTargetsByBodyPart,
     isMuscleSelectionEmpty,
+    orderedMuscleGroups,
     type MuscleSelection,
 } from '@/lib/muscle-filter'
-import { sortTargetsByRecentPerformanceFirst } from '@/lib/storage'
-import { translateTarget, UI } from '@/lib/translations'
+import { translateBodyPart, translateTarget, UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 export interface MuscleFilterControlProps {
     selection: MuscleSelection
@@ -30,42 +31,37 @@ export function MuscleFilterControl({
     targets,
     className,
 }: MuscleFilterControlProps) {
-    const [perfSortTick, setPerfSortTick] = useState(0)
-    useEffect(() => {
-        const bump = () => setPerfSortTick((n) => n + 1)
-        window.addEventListener('one-more:local-data-changed', bump)
-        return () =>
-            window.removeEventListener('one-more:local-data-changed', bump)
-    }, [])
-
-    const orderedTargets = useMemo(
-        () => sortTargetsByRecentPerformanceFirst(targets),
-        [targets, perfSortTick],
-    )
-
-    const byTarget = useMemo(
-        () =>
-            Object.fromEntries(
-                orderedTargets.map((t) => [t, [t]] as const),
-            ) as Record<string, string[]>,
-        [orderedTargets],
-    )
+    const byGroup = useMemo(() => buildTargetsByBodyPart(targets), [targets])
+    const groups = useMemo(() => orderedMuscleGroups(byGroup), [byGroup])
 
     return (
         <HierarchicalFilterControl
             title={UI.filterMusclesTitle}
             selection={selection as HierarchicalSelection}
             onChange={(next) => onChange(next as MuscleSelection)}
-            groups={orderedTargets}
-            byGroup={byTarget}
+            groups={groups}
+            byGroup={byGroup}
             isSelectionEmpty={(sel) => isMuscleSelectionEmpty(sel as MuscleSelection)}
             allLabel={UI.all}
             renderAllIcon={<AllMusclesHealthIcon className="size-5" />}
-            translateGroup={translateTarget}
+            renderHeaderActions={({ clearAll }) =>
+                !isMuscleSelectionEmpty(selection) ? (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={clearAll}
+                    >
+                        {UI.filterMusclesReset}
+                    </Button>
+                ) : null
+            }
+            translateGroup={translateBodyPart}
             translateChild={translateTarget}
             renderGroupIcon={(group, active) => (
                 <BodyPartHealthIcon
-                    bodyPart={inferBodyPartFromTarget(group) ?? 'chest'}
+                    bodyPart={group}
                     className={cn('size-5 shrink-0', !active && 'opacity-70')}
                 />
             )}
