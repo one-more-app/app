@@ -7,6 +7,7 @@ import {
     groupByDayThenExercise,
     resolveTrackedExercise,
 } from '@/lib/history-entries'
+import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
     deletePerformance,
@@ -19,6 +20,7 @@ import {
 } from '@/lib/storage'
 import { UI } from '@/lib/translations'
 import type { PerformanceEntry } from '@/types'
+import { HistoryIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 const MAX_SHOWN = 150
@@ -83,7 +85,7 @@ export function HistoryPage() {
         const newestSameDay = sameDay.reduce<PerformanceEntry | undefined>(
             (best, e) =>
                 !best ||
-                new Date(e.createdAt).getTime() >
+                    new Date(e.createdAt).getTime() >
                     new Date(best.createdAt).getTime()
                     ? e
                     : best,
@@ -123,7 +125,9 @@ export function HistoryPage() {
 
                 {entries.length === 0 ? (
                     <EmptyState
-                        description={UI.noHistoryEntries}
+                        icon={HistoryIcon}
+                        title={UI.noHistoryEntriesTitle}
+                        description={UI.noHistoryEntriesDescription}
                         contentClassName="py-8 text-sm"
                     />
                 ) : (
@@ -209,6 +213,9 @@ export function HistoryPage() {
                             nextPB,
                             prevLeague,
                             nextLeague,
+                            exerciseImageUrl:
+                                getExerciseImageUrl(addExercise.gifUrl) ||
+                                undefined,
                         })
                         setAddPerf(null)
                     }}

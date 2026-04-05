@@ -5,7 +5,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/utils'
 import { ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export type HierarchicalSelection = Record<string, 'all' | string[]>
 
@@ -69,15 +69,8 @@ export function HierarchicalFilterControl({
     const rootRef = useRef<HTMLDivElement | null>(null)
     const [openGroup, setOpenGroup] = useState<string | null>(null)
 
-    const resolvedOpenGroup = useMemo(() => {
-        if (!openGroup) return null
-        if (selection[openGroup] !== undefined) return openGroup
-        if (Object.keys(selection).length === 0) return openGroup
-        return null
-    }, [openGroup, selection])
-
     useEffect(() => {
-        if (!resolvedOpenGroup) return
+        if (!openGroup) return
         const onPointerDown = (event: MouseEvent | TouchEvent) => {
             const target = event.target
             if (!(target instanceof Node)) return
@@ -90,20 +83,25 @@ export function HierarchicalFilterControl({
             document.removeEventListener('mousedown', onPointerDown)
             document.removeEventListener('touchstart', onPointerDown)
         }
-    }, [resolvedOpenGroup])
+    }, [openGroup])
 
     const setGroupAll = (group: string, checked: boolean) => {
         const next = cloneSel(selection)
         if (checked) next[group] = 'all'
-        else delete next[group]
+        else {
+            delete next[group]
+            if (openGroup === group) setOpenGroup(null)
+        }
         onChange(next)
     }
 
     const setGroupFromToggleValues = (group: string, values: string[]) => {
         const children = byGroup[group] ?? []
         const next = cloneSel(selection)
-        if (values.length === 0) delete next[group]
-        else if (values.length >= children.length) next[group] = 'all'
+        if (values.length === 0) {
+            delete next[group]
+            if (openGroup === group) setOpenGroup(null)
+        } else if (values.length >= children.length) next[group] = 'all'
         else next[group] = [...values].sort((a, b) => a.localeCompare(b))
         onChange(next)
     }
@@ -155,7 +153,7 @@ export function HierarchicalFilterControl({
                     const children = byGroup[group] ?? []
                     if (children.length === 0) return null
                     const isActive = Boolean(selection[group])
-                    const isOpen = resolvedOpenGroup === group
+                    const isOpen = openGroup === group
                     const badge = badgeLabel(group)
 
                     if (children.length === 1) {

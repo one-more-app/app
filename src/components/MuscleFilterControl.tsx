@@ -6,7 +6,6 @@ import {
     HierarchicalFilterControl,
     type HierarchicalSelection,
 } from '@/components/HierarchicalFilterControl'
-import { Button } from '@/components/ui/button'
 import {
     buildTargetsByBodyPart,
     isMuscleSelectionEmpty,
@@ -44,19 +43,6 @@ export function MuscleFilterControl({
             isSelectionEmpty={(sel) => isMuscleSelectionEmpty(sel as MuscleSelection)}
             allLabel={UI.all}
             renderAllIcon={<AllMusclesHealthIcon className="size-5" />}
-            renderHeaderActions={({ clearAll }) =>
-                !isMuscleSelectionEmpty(selection) ? (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 text-xs"
-                        onClick={clearAll}
-                    >
-                        {UI.filterMusclesReset}
-                    </Button>
-                ) : null
-            }
             translateGroup={translateBodyPart}
             translateChild={translateTarget}
             renderGroupIcon={(group, active) => (

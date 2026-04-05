@@ -4,6 +4,8 @@ const TRACKED_KEY = "one-more-tracked";
 const PERFORMANCE_KEY = "one-more-performance";
 const USER_PROFILE_KEY = "one-more-user-profile";
 const ONBOARDING_V1_KEY = "one-more-onboarding-v1";
+const ONBOARDING_FIRST_EXERCISE_PENDING_KEY =
+  "one-more-onboarding-first-exercise-pending-v1";
 const SYNC_META_KEY = "one-more-sync-meta-v1";
 const THEME_PREFERENCE_KEY = "one-more-theme-preference-v1";
 
@@ -317,6 +319,10 @@ export function getUserProfile(): UserProfile {
   }
 }
 
+export function hasPersistedUserProfile(): boolean {
+  return localStorage.getItem(USER_PROFILE_KEY) !== null;
+}
+
 export function setUserProfile(
   profile: Partial<UserProfile>,
   opts?: { silent?: boolean },
@@ -331,10 +337,27 @@ export function setUserProfile(
   if (!opts?.silent) notifyLocalDataChanged("profile");
 }
 
+/**
+ * Après le questionnaire corps, le profil est enregistré mais l'utilisateur doit encore
+ * choisir un premier exercice (ou passer). Cette clé garde la gate onboarding active.
+ */
+export function setOnboardingFirstExercisePending(pending: boolean): void {
+  if (pending) {
+    localStorage.setItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY, "1");
+  } else {
+    localStorage.removeItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY);
+  }
+}
+
+export function isOnboardingFirstExercisePending(): boolean {
+  return localStorage.getItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY) === "1";
+}
+
 export function needsOnboarding(): boolean {
-  // On considère l'onboarding requis uniquement si le profil n'a jamais été enregistré.
-  // `getUserProfile()` retourne des valeurs par défaut sans persister, donc ce check
-  // permet un "premier lancement" fiable.
+  if (localStorage.getItem(ONBOARDING_V1_KEY) === "done") return false;
+  if (localStorage.getItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY) === "1") {
+    return true;
+  }
   return (
     localStorage.getItem(USER_PROFILE_KEY) === null &&
     localStorage.getItem(ONBOARDING_V1_KEY) !== "done"
@@ -343,6 +366,7 @@ export function needsOnboarding(): boolean {
 
 export function markOnboardingDone(): void {
   localStorage.setItem(ONBOARDING_V1_KEY, "done");
+  localStorage.removeItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY);
 }
 
 export function getThemePreference(): ThemePreference {

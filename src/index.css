@@ -166,3 +166,64 @@
     padding-top: env(safe-area-inset-top, 0px);
   }
 }
+
+@keyframes league-promo-ring {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 28px 2px var(--league-glow, transparent);
+  }
+}
+
+@keyframes league-promo-trophy {
+  0% {
+    transform: scale(0.85) rotate(-6deg);
+    opacity: 0.85;
+  }
+  45% {
+    transform: scale(1.06) rotate(4deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.league-promo-trophy-anim {
+  animation: league-promo-trophy 0.7s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .league-promo-trophy-anim {
+    animation: none;
+  }
+
+  .league-promo-ring-anim {
+    animation: none !important;
+  }
+
+  .league-promo-nudge-anim {
+    animation: none !important;
+  }
+}
+
+@keyframes league-promo-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+}
+
+.league-promo-ring-anim {
+  animation: league-promo-ring 1.75s ease-in-out infinite;
+}
+
+.league-promo-nudge-anim {
+  animation: league-promo-nudge 0.65s ease-in-out 3 alternate;
+}

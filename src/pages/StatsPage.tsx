@@ -4,6 +4,7 @@ import { ProfileLeagueSettingsDialog } from '@/components/ProfileLeagueSettingsD
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useHomeData } from '@/hooks/use-home-data'
 import { useTheme } from '@/hooks/use-theme'
 import { LEAGUE_COLORS } from '@/lib/league-colors'
@@ -13,7 +14,7 @@ import { getGlobalLeagueGauge, leagueLevelToFrenchLabel } from '@/lib/strength-s
 import { translateTarget, UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import type { UserProfile } from '@/types'
-import { ChevronDown, Loader2, Settings } from 'lucide-react'
+import { BarChart2, ChevronDown, Loader2, Settings } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -87,6 +88,15 @@ export default function StatsPage() {
                     onOpenChange={setProfileDialogOpen}
                     onSaved={() => setProfile(getUserProfile())}
                 />
+
+                {!leagueSummary ? (
+                    <EmptyState
+                        className="mt-2"
+                        icon={BarChart2}
+                        title={UI.statsEmptyTitle}
+                        description={UI.statsEmptyDescription}
+                    />
+                ) : null}
 
                 {leagueSummary && globalGauge ? (
                     <Card>

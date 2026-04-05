@@ -32,18 +32,17 @@ export function EmptyState({
         <>
             {Icon ? (
                 <Icon
-                    className={cn('size-12 shrink-0 ', iconClassName)}
+                    className={cn('size-7 shrink-0 text-muted-foreground ', iconClassName)}
                     aria-hidden
                 />
             ) : null}
             {title ? (
-                <h2 className="text-lg font-medium text-foreground">{title}</h2>
+                <h2 className="text-md font-medium text-foreground">{title}</h2>
             ) : null}
             {description ? (
                 <p
                     className={cn(
-                        'text-muted-foreground',
-                        !title && !Icon && 'text-sm',
+                        'text-muted-foreground text-sm',
                     )}
                 >
                     {description}

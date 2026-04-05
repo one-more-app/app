@@ -224,7 +224,9 @@ export const UI = {
     "Par jour, puis par exercice ; chaque exercice se déplie pour voir les séries.",
   historySeriesCount: "{count} séries",
   historyOpenExerciseSheet: "Ouvrir la fiche exercice",
-  noHistoryEntries: "Aucune performance enregistrée pour le moment.",
+  noHistoryEntriesTitle: "Aucune performance enregistrée",
+  noHistoryEntriesDescription:
+    "Ajoute une performance pour voir ton historique.",
   exerciseRemovedFromTracking: "Exercice retiré du suivi",
   historyTruncated:
     "Affichage des {shown} entrées les plus récentes sur {total} au total.",
@@ -232,6 +234,14 @@ export const UI = {
   previousSession: "Session plus récente",
   nextSession: "Session plus ancienne",
   leaguePromotion: "Passage de ligue",
+  leaguePromotionCelebrationTitle: "Nouveau palier !",
+  leaguePromotionCelebrationFirst: "Premier palier atteint",
+  leaguePromotionCelebrationPerf: "{weight} kg × {reps} reps",
+  newRecordCelebrationTitle: "Nouveau record !",
+  share: "Partager",
+  shareImageSaved: "Image enregistrée",
+  shareImageError: "Impossible de créer ou partager l’image.",
+  sharePreparing: "Préparation…",
   performanceList: "Liste des performances",
   noPerfForDay: "Aucune performance pour ce jour.",
   recordPerf: "Enregistrer une perf",
@@ -305,7 +315,18 @@ export const UI = {
   // Onboarding (premier lancement)
   onboardingTitle: "Prêt à progresser ?",
   onboardingDescription: "Pour ceux qui veulent faire une rep de plus.",
+  onboardingStepIndicator: "Étape {current} sur {total}",
+  onboardingQuestionGenderHint: "Pour adapter les comparatifs et les ligues.",
+  onboardingQuestionWeightHint: "Utilisé pour les paliers et ton classement.",
+  onboardingQuestionHeightHint: "Ta taille complète le calcul de profil.",
+  onboardingFirstExerciseTitle: "Ton premier exercice",
+  onboardingFirstExerciseDescription:
+    "Choisis un mouvement à suivre dans l’app. Les plus pratiqués sont mis en avant.",
+  popularExercise: "Populaire",
+  onboardingFirstExerciseSearch: "Rechercher…",
+  onboardingSkipFirstExercise: "Passer pour l’instant",
   continue: "Continuer",
+  next: "Suivant",
   later: "Plus tard",
 
   // Avis
@@ -347,6 +368,11 @@ export const UI = {
   bodyMapMuscleAverageTier: "Palier moyen sur ce muscle",
   bodyMapMuscleExercisesHeading: "Exercices et paliers",
   bodyMapClearSelection: "Fermer le détail",
+
+  /** Stats : pas de données ligue / carte */
+  statsEmptyTitle: "Aucune statistique de ligue",
+  statsEmptyDescription:
+    "Enregistre au moins un record sur un exercice du catalogue (hors cardio). Les exercices personnalisés ne sont pas classés. Vérifie aussi ton profil pour le calcul des paliers.",
 
   /** Stats : jauge ligue globale */
   statsGlobalGaugeTitle: "Vers le palier suivant (moyenne)",

@@ -11,6 +11,7 @@ import {
     sanitizeEquipmentSelection,
     serializeEquipmentSelection,
 } from '@/lib/equipment-filter'
+import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
 import { CARDIO_EQUIPMENT } from '@/lib/exercisedb'
 import {
@@ -156,7 +157,6 @@ function HomePage() {
                     <EmptyState
                         className="mt-4"
                         icon={Dumbbell}
-                        iconClassName="size-7 text-muted-foreground"
                         title={UI.noTrackedExercises}
                         description={UI.noTrackedDescription}
                     />
@@ -205,6 +205,10 @@ function HomePage() {
                                                     nextPB,
                                                     prevLeague,
                                                     nextLeague,
+                                                    exerciseImageUrl:
+                                                        getExerciseImageUrl(
+                                                            ex.gifUrl,
+                                                        ) || undefined,
                                                 })
                                                 refresh()
                                             }}

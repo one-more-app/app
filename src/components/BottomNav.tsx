@@ -1,4 +1,4 @@
-import { History, Home, LayoutGrid, Settings } from 'lucide-react'
+import { BarChart2, History, Home, Settings } from 'lucide-react'
 import type { JSX } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
@@ -11,7 +11,7 @@ const NAV_ITEMS: Array<{
     Icon: (props: { className?: string }) => JSX.Element
 }> = [
         { to: '/home', label: 'Accueil', Icon: Home },
-        { to: '/stats', label: 'Stats', Icon: LayoutGrid },
+        { to: '/stats', label: 'Stats', Icon: BarChart2 },
         { to: '/history', label: UI.history, Icon: History },
         { to: '/settings', label: UI.settings, Icon: Settings },
     ]

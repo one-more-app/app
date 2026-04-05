@@ -22,6 +22,7 @@ import {
     comparePerfEntriesRecentFirst,
     formatDayHeading,
 } from '@/lib/history-entries'
+import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { LEAGUE_COLORS } from '@/lib/league-colors'
 import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
@@ -204,6 +205,9 @@ export function ExerciseDetailPage() {
                             nextPB,
                             prevLeague,
                             nextLeague,
+                            exerciseImageUrl:
+                                getExerciseImageUrl(exercise.gifUrl) ||
+                                undefined,
                         })
                         refresh()
                     }}
@@ -530,6 +534,10 @@ export function ExerciseDetailPage() {
                                     nextPB,
                                     prevLeague,
                                     nextLeague,
+                                    exerciseImageUrl:
+                                        getExerciseImageUrl(
+                                            exercise.gifUrl,
+                                        ) || undefined,
                                 })
                             }
                             : undefined

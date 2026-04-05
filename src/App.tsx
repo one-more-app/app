@@ -6,6 +6,7 @@ import { OnboardingPage } from '@/pages/OnboardingPage'
 import { HistoryPage } from '@/pages/HistoryPage'
 import StatsPage from '@/pages/StatsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCelebration'
 import { Toaster } from '@/components/ui/sonner'
 import { BottomNav } from '@/components/BottomNav'
 import { App as CapacitorApp } from '@capacitor/app'
@@ -75,6 +76,7 @@ function App() {
     return (
         <HashRouter>
             <Toaster />
+            <LeaguePromotionCelebrationHost />
             <AuthProvider>
                 <OnboardingGate>
                     <BottomNavHost>

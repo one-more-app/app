@@ -48,7 +48,6 @@ import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength
 import {
     getGroupedEquipmentList,
     translateBodyPart,
-    translateEquipment,
     translateTarget,
     UI,
 } from '@/lib/translations'
@@ -414,76 +413,38 @@ export function ExerciseListPage() {
                 </Drawer>
 
                 <Dialog open={!!selectedExercise} onOpenChange={(open) => !open && setSelectedExercise(null)}>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogContent className="max-w-lg gap-0 overflow-hidden p-0 sm:max-w-lg">
                         {selectedExercise && (
                             <>
-                                <DialogHeader>
-                                    <DialogTitle className="break-words pr-10 text-left capitalize">
-                                        {selectedExercise.name}
-                                    </DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                    <Card>
-                                        <CardHeader className="flex flex-row items-start gap-4">
-                                            <img
-                                                src={getExerciseImageUrl(selectedExercise.gifUrl)}
-                                                alt=""
-                                                className="size-28 rounded-lg object-cover bg-muted shrink-0"
-                                            />
-                                            <div className="min-w-0 flex-1 space-y-2">
-                                                <h2 className="break-words font-semibold text-lg capitalize">
-                                                    {selectedExercise.name}
-                                                </h2>
-                                                <div className="flex flex-wrap gap-1">
-                                                    <Badge variant="secondary">
-                                                        {translateBodyPart(selectedExercise.bodyPart)}
-                                                    </Badge>
-                                                    <Badge variant="secondary">
-                                                        {translateTarget(selectedExercise.target)}
-                                                    </Badge>
-                                                    {selectedExercise.equipment && (
-                                                        <Badge variant="outline">
-                                                            {translateEquipment(selectedExercise.equipment)}
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </CardHeader>
-                                    </Card>
-
-                                    {selectedExercise.secondaryMuscles?.length > 0 && (
-                                        <Card>
-                                            <CardHeader>
-                                                <h3 className="font-semibold">{UI.secondaryMuscles}</h3>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {selectedExercise.secondaryMuscles.map((m) => (
-                                                        <Badge key={m} variant="secondary">
-                                                            {translateTarget(m)}
-                                                        </Badge>
-                                                    ))}
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    )}
-
-                                    {selectedExercise.instructions?.length > 0 && (
-                                        <Card>
-                                            <CardHeader>
-                                                <h3 className="font-semibold">{UI.instructions}</h3>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <ol className="space-y-2 list-decimal list-inside text-muted-foreground text-sm">
-                                                    {selectedExercise.instructions.map((step, i) => (
-                                                        <li key={i} className="leading-relaxed">
-                                                            {step}
-                                                        </li>
-                                                    ))}
-                                                </ol>
-                                            </CardContent>
-                                        </Card>
-                                    )}
+                                <div className="bg-muted">
+                                    <img
+                                        src={getExerciseImageUrl(selectedExercise.gifUrl)}
+                                        alt=""
+                                        className="mx-auto max-h-[min(44vh,340px)] w-full object-contain"
+                                        onError={(e) => {
+                                            ;(e.target as HTMLImageElement).style.display = 'none'
+                                        }}
+                                    />
+                                </div>
+                                <div className="space-y-3 p-4 pt-4">
+                                    <DialogHeader className="space-y-0 p-0 text-left">
+                                        <DialogTitle className="break-words pr-8 text-left text-xl capitalize leading-snug">
+                                            {selectedExercise.name}
+                                        </DialogTitle>
+                                    </DialogHeader>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        <Badge variant="secondary">
+                                            {translateBodyPart(selectedExercise.bodyPart)}
+                                        </Badge>
+                                        <Badge variant="secondary">
+                                            {translateTarget(selectedExercise.target)}
+                                        </Badge>
+                                        {selectedExercise.secondaryMuscles?.map((m) => (
+                                            <Badge key={m} variant="outline">
+                                                {translateTarget(m)}
+                                            </Badge>
+                                        ))}
+                                    </div>
                                 </div>
                             </>
                         )}

@@ -1,7 +1,5 @@
 import { toast } from "sonner"
 
-import type { LeagueInfo } from "@/lib/strength-standards"
-import { getLeagueInfo } from "@/lib/strength-standards"
 import { maybeRequestAppReview } from "@/lib/app-review"
 import { hapticNotificationSuccess } from "@/lib/haptics"
 import {
@@ -9,9 +7,53 @@ import {
   toastClassForLeague,
 } from "@/lib/league-colors"
 import { playMilestoneSound } from "@/lib/milestone-sound"
+import type { LeagueInfo } from "@/lib/strength-standards"
+import { getLeagueInfo } from "@/lib/strength-standards"
 import type { PerformanceEntry, TrackedExercise, UserProfile } from "@/types"
 
 type PB = Pick<PerformanceEntry, "weight" | "reps"> | null
+
+/** Données affichées par l’overlay de célébration (passage de palier). */
+export type LeaguePromotionPayload = {
+  exerciseName: string
+  prevLeague: LeagueInfo | null
+  nextLeague: LeagueInfo
+  weight: number
+  reps: number
+  /** URL absolue de l’illo (GIF) pour partage ; optionnel */
+  exerciseImageUrl?: string
+}
+
+/** Données affichées par l’overlay « nouveau record » (sans changement de palier). */
+export type NewRecordCelebrationPayload = {
+  exerciseName: string
+  weight: number
+  reps: number
+  /** Ligue au record (dégradé) ; null si exo perso / non classé */
+  leagueAfter: LeagueInfo | null
+  exerciseImageUrl?: string
+}
+
+let leaguePromotionHandler: ((p: LeaguePromotionPayload) => void) | null =
+  null
+
+let newRecordCelebrationHandler:
+  | ((p: NewRecordCelebrationPayload) => void)
+  | null = null
+
+/** Enregistré par `LeaguePromotionCelebrationHost` ; remplace le toast combo record+palier. */
+export function setLeaguePromotionHandler(
+  handler: ((p: LeaguePromotionPayload) => void) | null,
+): void {
+  leaguePromotionHandler = handler
+}
+
+/** Enregistré par le même hôte ; remplace le toast « Nouveau record » seul. */
+export function setNewRecordCelebrationHandler(
+  handler: ((p: NewRecordCelebrationPayload) => void) | null,
+): void {
+  newRecordCelebrationHandler = handler
+}
 
 export function isNewPersonalBest(prevPB: PB, nextPB: PB): boolean {
   if (!nextPB) return false
@@ -64,8 +106,16 @@ export function notifyPerfMilestones(params: {
   nextPB: PB
   prevLeague: LeagueInfo | null
   nextLeague: LeagueInfo | null
+  exerciseImageUrl?: string
 }): void {
-  const { exerciseName, prevPB, nextPB, prevLeague, nextLeague } = params
+  const {
+    exerciseName,
+    prevPB,
+    nextPB,
+    prevLeague,
+    nextLeague,
+    exerciseImageUrl,
+  } = params
 
   const newRecord = isNewPersonalBest(prevPB, nextPB)
   const leagueUp = didLeagueChange(prevLeague, nextLeague)
@@ -80,6 +130,18 @@ export function notifyPerfMilestones(params: {
     ? toastClassForLeague(nextLeague.level)
     : undefined
 
+  if (newRecord && leagueUp && nextLeague && nextPB && leaguePromotionHandler) {
+    leaguePromotionHandler({
+      exerciseName,
+      prevLeague,
+      nextLeague,
+      weight: nextPB.weight,
+      reps: nextPB.reps,
+      exerciseImageUrl,
+    })
+    return
+  }
+
   if (newRecord && leagueUp) {
     toast.success("Nouveau record et nouveau palier", {
       className: leagueToastClass,
@@ -89,9 +151,20 @@ export function notifyPerfMilestones(params: {
     return
   }
 
-  // Nouveau record seul (passage de ligue = toujours un record, donc pas de cas "palier seul")
-  toast.success("Nouveau record", {
-    description: `${exerciseName} · ${nextPB!.weight} kg × ${nextPB!.reps} reps`,
-  })
-}
+  if (newRecord && nextPB && newRecordCelebrationHandler) {
+    newRecordCelebrationHandler({
+      exerciseName,
+      weight: nextPB.weight,
+      reps: nextPB.reps,
+      leagueAfter: nextLeague,
+      exerciseImageUrl,
+    })
+    return
+  }
 
+  if (newRecord) {
+    toast.success("Nouveau record", {
+      description: `${exerciseName} · ${nextPB!.weight} kg × ${nextPB!.reps} reps`,
+    })
+  }
+}
