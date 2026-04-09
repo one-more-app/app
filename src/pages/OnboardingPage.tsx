@@ -1,19 +1,14 @@
+import { AddPerfDrawer } from '@/components/AddPerfDrawer'
+import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
 import { popularExercises } from '@/data/popular-exercises'
 import { useAuth } from '@/hooks/use-auth'
+import { getExercisePopularityRank } from '@/lib/exercise-popularity'
 import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
 import { CARDIO_EQUIPMENT, getExerciseImageUrl } from '@/lib/exercisedb'
-import { getExercisePopularityRank } from '@/lib/exercise-popularity'
 import { signInWithOAuth } from '@/lib/oauth'
 import {
     addTrackedExercise,
@@ -22,13 +17,25 @@ import {
     isOnboardingFirstExercisePending,
     markOnboardingDone,
     needsOnboarding,
+    removeTrackedExercise,
+    savePerformance,
     setOnboardingFirstExercisePending,
     setUserProfile,
 } from '@/lib/storage'
 import { UI } from '@/lib/translations'
+import { cn } from '@/lib/utils'
 import type { ExerciseDBExercise } from '@/types'
-import { ArrowLeft } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { Capacitor } from '@capacitor/core'
+import {
+    ArrowLeft,
+    Dumbbell,
+    Mars,
+    Ruler,
+    Venus,
+    VenusAndMars,
+    Weight,
+} from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 const BODY_TOTAL = 3
@@ -43,9 +50,67 @@ function isPopularExerciseName(name: string): boolean {
     return Number.isFinite(r) && r < 90
 }
 
-export function OnboardingPage() {
+function OnboardingGenderRadios({
+    value,
+    onChange,
+}: {
+    value: 'male' | 'female'
+    onChange: (v: 'male' | 'female') => void
+}) {
+    const choices: {
+        id: 'male' | 'female'
+        label: string
+        Icon: typeof Mars
+    }[] = [
+            { id: 'male', label: UI.male, Icon: Mars },
+            { id: 'female', label: UI.female, Icon: Venus },
+        ]
+    return (
+        <div
+            className="grid grid-cols-2 gap-3"
+            role="radiogroup"
+            aria-label={UI.gender}
+        >
+            {choices.map(({ id, label, Icon }) => {
+                const selected = value === id
+                return (
+                    <button
+                        key={id}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => onChange(id)}
+                        className={cn(
+                            'flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition-all duration-200',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                            selected
+                                ? 'border-accent bg-accent/15 shadow-md ring-2 ring-accent/40'
+                                : 'border-border/80 bg-muted/20 hover:bg-muted/40 hover:border-border',
+                        )}
+                    >
+                        <div
+                            className={cn(
+                                'flex size-16 items-center justify-center rounded-full bg-muted/50 text-foreground/80',
+                                selected &&
+                                'bg-accent/30 text-accent-foreground scale-[1.02]',
+                            )}
+                        >
+                            <Icon className="size-9 stroke-[1.75]" aria-hidden />
+                        </div>
+                        <span className="text-sm font-semibold font-one-more uppercase tracking-wide">
+                            {label}
+                        </span>
+                    </button>
+                )
+            })}
+        </div>
+    )
+}
+
+function OnboardingPage() {
     const navigate = useNavigate()
     const auth = useAuth()
+    const isNativePlatform = Capacitor.isNativePlatform()
     const [searchParams] = useSearchParams()
     const rawStep = searchParams.get('step')
     const step =
@@ -58,16 +123,21 @@ export function OnboardingPage() {
 
     const [isBusy, setIsBusy] = useState(false)
     const [exerciseSearch, setExerciseSearch] = useState('')
+    const [firstPerfDrawerOpen, setFirstPerfDrawerOpen] = useState(false)
+    const [pendingFirstPerfExercise, setPendingFirstPerfExercise] =
+        useState<ExerciseDBExercise | null>(null)
+    const firstPerfSessionRef = useRef<{ trackedId: string | null; saved: boolean }>({
+        trackedId: null,
+        saved: false,
+    })
 
     const goBody = (q = 0) => {
         navigate(`/onboarding?step=body&bodyQ=${q}`, { replace: true })
     }
 
-    const [weightKg, setWeightKg] = useState('')
-    const [heightCm, setHeightCm] = useState('')
+    const [weightKg, setWeightKg] = useState(75)
+    const [heightCm, setHeightCm] = useState(175)
     const [gender, setGender] = useState<'male' | 'female'>('male')
-    const [hasTriedAdvance, setHasTriedAdvance] = useState(false)
-
     useEffect(() => {
         if (!needsOnboarding()) {
             navigate('/home', { replace: true })
@@ -87,23 +157,12 @@ export function OnboardingPage() {
         if (!hasPersistedUserProfile()) return
         const p = getUserProfile()
         setGender(p.gender)
-        setWeightKg(String(p.weightKg))
-        setHeightCm(String(p.heightCm))
+        setWeightKg(p.weightKg)
+        setHeightCm(p.heightCm)
     }, [step])
 
-    const parsed = useMemo(() => {
-        const w = Number.parseFloat(weightKg)
-        const h = Number.parseFloat(heightCm)
-        return {
-            weightOk: Number.isFinite(w) && w > 0,
-            heightOk: Number.isFinite(h) && h > 0,
-            weight: w,
-            height: h,
-        }
-    }, [weightKg, heightCm])
-
-    const canAdvanceWeight = parsed.weightOk
-    const canAdvanceHeight = parsed.heightOk
+    const canAdvanceWeight = weightKg >= 30 && weightKg <= 300
+    const canAdvanceHeight = heightCm >= 100 && heightCm <= 250
 
     const handleOAuth = async (provider: 'google' | 'apple') => {
         if (isBusy) return
@@ -121,11 +180,10 @@ export function OnboardingPage() {
     }
 
     const finishBodyAndGoExercise = () => {
-        setHasTriedAdvance(true)
         if (!canAdvanceHeight) return
         setUserProfile({
-            weightKg: parsed.weight,
-            heightCm: parsed.height,
+            weightKg,
+            heightCm,
             gender,
         })
         setOnboardingFirstExercisePending(true)
@@ -133,7 +191,6 @@ export function OnboardingPage() {
     }
 
     const advanceBody = () => {
-        setHasTriedAdvance(true)
         if (bodyQ === 1 && !canAdvanceWeight) return
         if (bodyQ === 2) {
             finishBodyAndGoExercise()
@@ -152,7 +209,9 @@ export function OnboardingPage() {
 
     const handlePickExercise = (ex: ExerciseDBExercise) => {
         const trackedId = `api-${ex.id}`
+        firstPerfSessionRef.current = { trackedId, saved: false }
         addTrackedExercise({
+            id: trackedId,
             exerciseId: ex.id,
             name: ex.name,
             originalName: ex.name,
@@ -162,8 +221,34 @@ export function OnboardingPage() {
             gifUrl: ex.gifUrl,
             isCustom: false,
         })
+        setPendingFirstPerfExercise(ex)
+        setFirstPerfDrawerOpen(true)
+    }
+
+    const handleFirstPerfDrawerOpenChange = (open: boolean) => {
+        if (!open) {
+            const { trackedId, saved } = firstPerfSessionRef.current
+            if (trackedId && !saved) {
+                removeTrackedExercise(trackedId)
+            }
+            if (!saved) {
+                firstPerfSessionRef.current = { trackedId: null, saved: false }
+                setPendingFirstPerfExercise(null)
+            }
+        }
+        setFirstPerfDrawerOpen(open)
+    }
+
+    const handleFirstPerfSave = (weight: number, reps: number) => {
+        const trackedId = firstPerfSessionRef.current.trackedId
+        if (!trackedId) return
+        savePerformance(trackedId, weight, reps)
+        firstPerfSessionRef.current.saved = true
         markOnboardingDone()
-        navigate(`/exercise/${trackedId}`, { replace: true })
+        setPendingFirstPerfExercise(null)
+        setFirstPerfDrawerOpen(false)
+        firstPerfSessionRef.current = { trackedId: null, saved: false }
+        navigate(`/exercise/${trackedId}?tour=onboarding`, { replace: true })
     }
 
     const handleSkipExercise = () => {
@@ -203,10 +288,16 @@ export function OnboardingPage() {
     const stepIndicator = UI.onboardingStepIndicator
         .replace('{current}', String(bodyQ + 1))
         .replace('{total}', String(BODY_TOTAL))
+    const bodyProgressPercent = ((bodyQ + 1) / BODY_TOTAL) * 100
 
     const backExercise = () => {
+        if (firstPerfDrawerOpen) return
         navigate(`/onboarding?step=body&bodyQ=${BODY_TOTAL - 1}`, { replace: true })
     }
+
+    const pendingTrackedId = pendingFirstPerfExercise
+        ? `api-${pendingFirstPerfExercise.id}`
+        : ''
 
     return (
         <div className="relative min-h-screen bg-background overflow-hidden">
@@ -222,28 +313,35 @@ export function OnboardingPage() {
             />
 
             <div className="absolute inset-0 bg-black/50 pointer-events-none" />
+            <div className="pointer-events-none absolute -top-20 -left-20 size-64 rounded-full bg-accent/20 blur-3xl animate-pulse" />
+            <div className="pointer-events-none absolute bottom-8 -right-20 size-72 rounded-full bg-primary/20 blur-3xl animate-pulse [animation-delay:700ms]" />
 
             {step === 'intro' ? (
                 <div className="relative z-10 flex min-h-screen flex-col">
-                    <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-10 pb-6 space-y-4">
-                        <div className="space-y-2">
-                            <h1 className="text-3xl font-one-more font-semibold text-foreground uppercase italic">
-                                {UI.onboardingTitle}
-                            </h1>
-                            <p className="text-sm font-one-more italic  uppercase text-muted-foreground">
-                                {UI.onboardingDescription}
-                            </p>
+                    <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-10 pb-6">
+                        <div className="space-y-5 rounded-3xl bg-black/30 p-6 backdrop-blur-md animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-accent/50 bg-accent/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent">
+                                <span>One More Method</span>
+                            </div>
+                            <div className="space-y-2">
+                                <h1 className="text-4xl sm:text-5xl leading-tight font-one-more font-semibold text-white uppercase italic">
+                                    {UI.onboardingTitle}
+                                </h1>
+                                <p className="text-md text-white/80">
+                                    {UI.onboardingDescription}
+                                </p>
+                            </div>
                         </div>
 
                         {auth.lastError && (
-                            <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                            <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                                 {auth.lastError}
                             </div>
                         )}
                     </main>
 
                     <div className="px-4 pb-4 mt-auto">
-                        <div className="mx-auto max-w-2xl space-y-3">
+                        <div className="mx-auto max-w-2xl space-y-3 animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
                             <Button asChild className="w-full" disabled={isBusy}>
                                 <Link
                                     to={`/auth?mode=register&redirect=${encodeURIComponent(
@@ -253,25 +351,29 @@ export function OnboardingPage() {
                                     {UI.createAccount}
                                 </Link>
                             </Button>
-                            <Button
-                                variant="secondary"
-                                className="w-full"
-                                disabled={isBusy}
-                                onClick={() => void handleOAuth('google')}
-                            >
-                                {UI.continueWithGoogle}
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                className="w-full"
-                                disabled={isBusy}
-                                onClick={() => void handleOAuth('apple')}
-                            >
-                                {UI.continueWithApple}
-                            </Button>
+                            {isNativePlatform ? (
+                                <>
+                                    <Button
+                                        variant="secondary"
+                                        className="w-full"
+                                        disabled={isBusy}
+                                        onClick={() => void handleOAuth('google')}
+                                    >
+                                        {UI.continueWithGoogle}
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        className="w-full"
+                                        disabled={isBusy}
+                                        onClick={() => void handleOAuth('apple')}
+                                    >
+                                        {UI.continueWithApple}
+                                    </Button>
+                                </>
+                            ) : null}
                             <Button
                                 variant="ghost"
-                                className="w-full"
+                                className="w-full text-white"
                                 disabled={isBusy}
                                 onClick={() => goBody(0)}
                             >
@@ -282,7 +384,10 @@ export function OnboardingPage() {
                 </div>
             ) : step === 'body' ? (
                 <main className="relative z-10 mx-auto w-full max-w-2xl px-4 py-8">
-                    <Card className="w-full border-border/80 bg-card/95 backdrop-blur-sm">
+                    <Card
+                        key={`body-${bodyQ}`}
+                        className="w-full border-border/80 bg-card/95 backdrop-blur-sm shadow-2xl animate-in fade-in-0 slide-in-from-bottom-4 duration-300"
+                    >
                         <CardHeader className="space-y-2">
                             <div className="flex items-center gap-2">
                                 <Button
@@ -299,70 +404,75 @@ export function OnboardingPage() {
                                     {stepIndicator}
                                 </p>
                             </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                <div
+                                    className="h-full rounded-full bg-accent transition-all duration-300 ease-out"
+                                    style={{ width: `${bodyProgressPercent}%` }}
+                                />
+                            </div>
                             <CardTitle className="text-xl">{UI.onboardingTitle}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             {bodyQ === 0 && (
-                                <div className="space-y-3">
+                                <div className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
                                     <div>
-                                        <p className="text-sm font-medium">{UI.gender}</p>
+                                        <p className="text-sm font-medium flex items-center gap-2">
+                                            <VenusAndMars className="size-4 text-accent-foreground" />
+                                            {UI.gender}
+                                        </p>
                                         <p className="text-sm text-muted-foreground mt-1">
                                             {UI.onboardingQuestionGenderHint}
                                         </p>
                                     </div>
-                                    <Select
+                                    <OnboardingGenderRadios
                                         value={gender}
-                                        onValueChange={(v) => setGender(v as 'male' | 'female')}
-                                    >
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="male">{UI.male}</SelectItem>
-                                            <SelectItem value="female">{UI.female}</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                        onChange={setGender}
+                                    />
                                 </div>
                             )}
 
                             {bodyQ === 1 && (
-                                <div className="space-y-3">
+                                <div className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
                                     <div>
-                                        <p className="text-sm font-medium">{UI.bodyWeight}</p>
+                                        <p className="text-sm font-medium flex items-center gap-2">
+                                            <Weight className="size-4 text-accent-foreground" />
+                                            {UI.bodyWeight}
+                                        </p>
                                         <p className="text-sm text-muted-foreground mt-1">
                                             {UI.onboardingQuestionWeightHint}
                                         </p>
                                     </div>
-                                    <Input
-                                        type="number"
-                                        inputMode="decimal"
+                                    <HorizontalWheelPicker
+                                        label={UI.bodyWeight}
+                                        unit=""
                                         min={30}
                                         max={300}
                                         step={0.5}
                                         value={weightKg}
-                                        onChange={(e) => setWeightKg(e.target.value)}
-                                        aria-invalid={hasTriedAdvance && !parsed.weightOk}
+                                        onChange={setWeightKg}
                                     />
                                 </div>
                             )}
 
                             {bodyQ === 2 && (
-                                <div className="space-y-3">
+                                <div className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
                                     <div>
-                                        <p className="text-sm font-medium">{UI.height}</p>
+                                        <p className="text-sm font-medium flex items-center gap-2">
+                                            <Ruler className="size-4 text-accent-foreground" />
+                                            {UI.height}
+                                        </p>
                                         <p className="text-sm text-muted-foreground mt-1">
                                             {UI.onboardingQuestionHeightHint}
                                         </p>
                                     </div>
-                                    <Input
-                                        type="number"
-                                        inputMode="numeric"
+                                    <HorizontalWheelPicker
+                                        label={UI.height}
+                                        unit=""
                                         min={100}
                                         max={250}
                                         step={1}
                                         value={heightCm}
-                                        onChange={(e) => setHeightCm(e.target.value)}
-                                        aria-invalid={hasTriedAdvance && !parsed.heightOk}
+                                        onChange={setHeightCm}
                                     />
                                 </div>
                             )}
@@ -382,7 +492,24 @@ export function OnboardingPage() {
                 </main>
             ) : (
                 <main className="relative z-10 mx-auto w-full max-w-2xl px-4 py-8">
-                    <Card className="w-full border-border/80 bg-card/95 backdrop-blur-sm">
+                    {pendingFirstPerfExercise ? (
+                        <AddPerfDrawer
+                            open={firstPerfDrawerOpen}
+                            onOpenChange={handleFirstPerfDrawerOpenChange}
+                            exercise={{
+                                id: pendingTrackedId,
+                                name: exerciseDisplayName(pendingFirstPerfExercise),
+                                originalName: pendingFirstPerfExercise.name,
+                                equipment: pendingFirstPerfExercise.equipment,
+                                target: pendingFirstPerfExercise.target,
+                            }}
+                            initialWeight={20}
+                            initialReps={8}
+                            onSave={handleFirstPerfSave}
+                        />
+                    ) : null}
+
+                    <Card className="w-full border-border/80 bg-card/95 backdrop-blur-sm shadow-2xl animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
                         <CardHeader className="space-y-2">
                             <div className="flex items-center gap-2">
                                 <Button
@@ -391,13 +518,17 @@ export function OnboardingPage() {
                                     size="icon"
                                     className="shrink-0 -ml-2"
                                     onClick={backExercise}
+                                    disabled={firstPerfDrawerOpen}
                                     aria-label={UI.back}
                                 >
                                     <ArrowLeft className="size-5" />
                                 </Button>
                             </div>
                             <CardTitle className="text-xl">
-                                {UI.onboardingFirstExerciseTitle}
+                                <span className="inline-flex items-center gap-2">
+                                    <Dumbbell className="size-5 text-accent-foreground" />
+                                    {UI.onboardingFirstExerciseTitle}
+                                </span>
                             </CardTitle>
                             <p className="text-sm text-muted-foreground">
                                 {UI.onboardingFirstExerciseDescription}
@@ -423,8 +554,11 @@ export function OnboardingPage() {
                                             <button
                                                 key={ex.id}
                                                 type="button"
+                                                disabled={
+                                                    firstPerfDrawerOpen
+                                                }
                                                 onClick={() => handlePickExercise(ex)}
-                                                className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-muted/60"
+                                                className="flex w-full items-center gap-3 p-3 text-left transition-all duration-200 hover:bg-muted/60 hover:translate-x-0.5 disabled:pointer-events-none disabled:opacity-50"
                                             >
                                                 {ex.gifUrl ? (
                                                     <img
@@ -432,7 +566,7 @@ export function OnboardingPage() {
                                                         alt=""
                                                         className="size-14 shrink-0 rounded-lg object-cover bg-muted"
                                                         onError={(e) => {
-                                                            ;(e.target as HTMLImageElement).style.display =
+                                                            ; (e.target as HTMLImageElement).style.display =
                                                                 'none'
                                                         }}
                                                     />
@@ -463,6 +597,7 @@ export function OnboardingPage() {
                             <Button
                                 variant="outline"
                                 className="w-full"
+                                disabled={firstPerfDrawerOpen}
                                 onClick={handleSkipExercise}
                             >
                                 {UI.onboardingSkipFirstExercise}
@@ -474,3 +609,5 @@ export function OnboardingPage() {
         </div>
     )
 }
+
+export default OnboardingPage

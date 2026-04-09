@@ -60,10 +60,21 @@ export function getTrackedExercises(): TrackedExercise[] {
   try {
     const raw = localStorage.getItem(TRACKED_KEY);
     const list: TrackedExercise[] = raw ? JSON.parse(raw) : [];
-    const needsMigration = list.some((e) => e.originalName === undefined);
+    const needsMigration = list.some(
+      (e) =>
+        e.originalName === undefined ||
+        typeof e.id !== "string" ||
+        e.id.trim().length === 0,
+    );
     if (needsMigration) {
       const migrated = list.map((e) => ({
         ...e,
+        id:
+          typeof e.id === "string" && e.id.trim().length > 0
+            ? e.id
+            : e.isCustom
+              ? e.exerciseId
+              : `api-${e.exerciseId}`,
         originalName: e.originalName ?? e.name,
         updatedAt: e.updatedAt ?? nowIso(),
         deletedAt: e.deletedAt ?? null,

@@ -321,10 +321,24 @@ export const UI = {
   onboardingQuestionHeightHint: "Ta taille complète le calcul de profil.",
   onboardingFirstExerciseTitle: "Ton premier exercice",
   onboardingFirstExerciseDescription:
-    "Choisis un mouvement à suivre dans l’app. Les plus pratiqués sont mis en avant.",
+    "Choisis un exercice, enregistre une première performance, puis découvre les repères de l’app.",
   popularExercise: "Populaire",
   onboardingFirstExerciseSearch: "Rechercher…",
   onboardingSkipFirstExercise: "Passer pour l’instant",
+  /** Tour guidé (react-joyride) sur la fiche après la première perf */
+  exerciseOnboardingTourOverviewTitle: "Ta fiche exercice",
+  exerciseOnboardingTourOverviewContent:
+    "Résumé du mouvement : dernier set, record, et bouton pour enregistrer une perf rapidement.",
+  exerciseOnboardingTourLeagueTitle: "Ligue",
+  exerciseOnboardingTourLeagueContent:
+    "Ton palier actuel et la cible pour passer au suivant (selon ton profil et l’exercice du catalogue).",
+  exerciseOnboardingTourHistoryTitle: "Progression",
+  exerciseOnboardingTourHistoryContent:
+    "La courbe suit ton poids dans le temps ; en dessous, les séries du jour avec ajout ou modification.",
+  joyrideClose: "Fermer",
+  joyrideLast: "Terminer",
+  joyrideSkip: "Passer",
+  joyrideNextWithProgress: "Suivant ({current} sur {total})",
   continue: "Continuer",
   next: "Suivant",
   later: "Plus tard",

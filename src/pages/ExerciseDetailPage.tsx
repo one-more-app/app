@@ -7,7 +7,6 @@ import { PerformanceChart } from '@/components/PerformanceChart'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { EmptyState } from '@/components/ui/empty-state'
 import {
     Dialog,
     DialogContent,
@@ -15,14 +14,16 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { usePerformance } from '@/hooks/use-performance'
+import { useTheme } from '@/hooks/use-theme'
+import { getExerciseImageUrl } from '@/lib/exercisedb'
 import {
     buildEntryInsights,
     comparePerfEntriesRecentFirst,
     formatDayHeading,
 } from '@/lib/history-entries'
-import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { LEAGUE_COLORS } from '@/lib/league-colors'
 import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
@@ -44,12 +45,15 @@ import {
     SearchX,
     Trash2,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { EVENTS, Joyride, type EventData, type Step } from 'react-joyride'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 export function ExerciseDetailPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
+    const { resolvedTheme } = useTheme()
+    const [searchParams, setSearchParams] = useSearchParams()
     const [exercise, setExercise] = useState(() =>
         id ? getTrackedExerciseById(id) : null
     )
@@ -100,6 +104,23 @@ export function ExerciseDetailPage() {
         setHistorySessionIndex(0)
     }, [id])
 
+    const onboardingTourActive = searchParams.get('tour') === 'onboarding'
+
+    const finishOnboardingTour = useCallback(() => {
+        const next = new URLSearchParams(searchParams)
+        next.delete('tour')
+        setSearchParams(next, { replace: true })
+    }, [searchParams, setSearchParams])
+
+    const handleJoyrideEvent = useCallback(
+        (data: EventData) => {
+            if (data.type === EVENTS.TOUR_END) {
+                finishOnboardingTour()
+            }
+        },
+        [finishOnboardingTour],
+    )
+
     const [sessionDrawer, setSessionDrawer] = useState<
         | { mode: 'closed' }
         | { mode: 'edit'; entry: PerformanceEntry }
@@ -141,6 +162,126 @@ export function ExerciseDetailPage() {
         }
     }, [entries, historySessionIndex])
 
+    const exerciseOnboardingSteps = useMemo<Step[]>(() => {
+        const steps: Step[] = [
+            {
+                target: '[data-tour="exercise-overview"]',
+                title: UI.exerciseOnboardingTourOverviewTitle,
+                content: UI.exerciseOnboardingTourOverviewContent,
+                placement: 'bottom',
+            },
+        ]
+        if (leagueInfo) {
+            steps.push({
+                target: '[data-tour="exercise-league"]',
+                title: UI.exerciseOnboardingTourLeagueTitle,
+                content: UI.exerciseOnboardingTourLeagueContent,
+                placement: 'bottom',
+            })
+        }
+        if (entries.length > 0) {
+            steps.push({
+                target: '[data-tour="exercise-history"]',
+                title: UI.exerciseOnboardingTourHistoryTitle,
+                content: UI.exerciseOnboardingTourHistoryContent,
+                placement: 'top',
+            })
+        }
+        return steps
+    }, [entries.length, leagueInfo])
+
+    const exerciseJoyrideOptions = useMemo(
+        () => ({
+            arrowColor: 'var(--card)',
+            backgroundColor: 'var(--card)',
+            textColor: 'var(--card-foreground)',
+            primaryColor: 'var(--accent)',
+            overlayColor:
+                resolvedTheme === 'dark'
+                    ? 'oklch(0.04 0 0 / 0.82)'
+                    : 'oklch(0.2 0 0 / 0.5)',
+            spotlightPadding: 10,
+            spotlightRadius: 14,
+            zIndex: 120,
+            showProgress: true,
+            skipBeacon: true,
+            buttons: ['back', 'close', 'primary', 'skip'] as const,
+        }),
+        [resolvedTheme],
+    )
+
+    const exerciseJoyrideStyles = useMemo(
+        () => ({
+            tooltip: {
+                backgroundColor: 'var(--card)',
+                color: 'var(--card-foreground)',
+                borderRadius: 'var(--radius-xl)',
+                border: '1px solid var(--border)',
+                boxShadow:
+                    resolvedTheme === 'dark'
+                        ? '0 16px 48px oklch(0 0 0 / 0.55), 0 0 0 1px oklch(1 0 0 / 0.06)'
+                        : '0 16px 40px oklch(0 0 0 / 0.14), 0 0 0 1px oklch(0 0 0 / 0.05)',
+                fontFamily: 'var(--font-sans)',
+                padding: '1rem 1rem 0.75rem',
+            },
+            tooltipContainer: {
+                textAlign: 'left' as const,
+            },
+            tooltipTitle: {
+                fontFamily: 'var(--font-one-more)',
+                fontStyle: 'italic',
+                textTransform: 'uppercase' as const,
+                letterSpacing: '0.04em',
+                fontSize: '0.9375rem',
+                color: 'var(--card-foreground)',
+                marginBottom: '0.35rem',
+            },
+            tooltipContent: {
+                color: 'var(--muted-foreground)',
+                fontSize: '0.875rem',
+                lineHeight: 1.55,
+                padding: '0.25rem 0 0',
+            },
+            tooltipFooter: {
+                marginTop: '0.75rem',
+                paddingTop: '0.75rem',
+                borderTop: '1px solid var(--border)',
+                gap: '0.5rem',
+            },
+            buttonPrimary: {
+                backgroundColor: 'var(--accent)',
+                color: 'var(--accent-foreground)',
+                borderRadius: 'var(--radius-md)',
+                fontFamily: 'var(--font-one-more)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                textTransform: 'uppercase' as const,
+                letterSpacing: '0.06em',
+                padding: '0.5rem 1rem',
+                outline: 'none',
+            },
+            buttonBack: {
+                color: 'var(--muted-foreground)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.8125rem',
+                padding: '0.5rem 0.75rem',
+                marginRight: 'auto',
+            },
+            buttonSkip: {
+                color: 'var(--muted-foreground)',
+                fontSize: '0.8125rem',
+                padding: '0.5rem 0.5rem',
+            },
+            buttonClose: {
+                color: 'var(--muted-foreground)',
+                height: '2rem',
+                width: '2rem',
+                borderRadius: 'var(--radius-md)',
+            },
+        }),
+        [resolvedTheme],
+    )
+
     if (!exercise) {
         return (
             <div className="flex min-h-screen flex-col items-center justify-center px-4">
@@ -178,43 +319,45 @@ export function ExerciseDetailPage() {
             />
 
             <main className="mx-auto max-w-2xl px-4 py-4 space-y-4">
-                <ExerciseCard
-                    exercise={exercise}
-                    lastPerf={lastPerf ?? undefined}
-                    personalBest={personalBest ?? undefined}
-                    leagueInfo={leagueInfo}
-                    imageSize="sm"
-                    onSavePerf={(weight, reps) => {
-                        const prevPB = personalBest ?? null
-                        const prevLeague = leagueInfo ?? null
-                        savePerformance(weight, reps)
-                        const nextPB = id ? getPersonalBest(id) ?? null : null
-                        const profile = getUserProfile()
-                        const nextLeague =
-                            exercise
-                                ? computeLeagueFromPB({
-                                    exercise,
-                                    personalBest: nextPB,
-                                    profile,
-                                })
-                                : null
+                <div data-tour="exercise-overview">
+                    <ExerciseCard
+                        exercise={exercise}
+                        lastPerf={lastPerf ?? undefined}
+                        personalBest={personalBest ?? undefined}
+                        leagueInfo={leagueInfo}
+                        imageSize="sm"
+                        onSavePerf={(weight, reps) => {
+                            const prevPB = personalBest ?? null
+                            const prevLeague = leagueInfo ?? null
+                            savePerformance(weight, reps)
+                            const nextPB = id ? getPersonalBest(id) ?? null : null
+                            const profile = getUserProfile()
+                            const nextLeague =
+                                exercise
+                                    ? computeLeagueFromPB({
+                                        exercise,
+                                        personalBest: nextPB,
+                                        profile,
+                                    })
+                                    : null
 
-                        notifyPerfMilestones({
-                            exerciseName: exercise.name,
-                            prevPB,
-                            nextPB,
-                            prevLeague,
-                            nextLeague,
-                            exerciseImageUrl:
-                                getExerciseImageUrl(exercise.gifUrl) ||
-                                undefined,
-                        })
-                        refresh()
-                    }}
-                />
+                            notifyPerfMilestones({
+                                exerciseName: exercise.name,
+                                prevPB,
+                                nextPB,
+                                prevLeague,
+                                nextLeague,
+                                exerciseImageUrl:
+                                    getExerciseImageUrl(exercise.gifUrl) ||
+                                    undefined,
+                            })
+                            refresh()
+                        }}
+                    />
+                </div>
 
                 {leagueInfo && (
-                    <Card className="gap-0">
+                    <Card className="gap-0" data-tour="exercise-league">
                         <CardHeader className="gap-0">
                             <h2 className="font-semibold m-0 p-0">{UI.league}</h2>
                         </CardHeader>
@@ -306,9 +449,9 @@ export function ExerciseDetailPage() {
                 )}
 
                 {entries.length > 0 && (
-                    <Card>
+                    <Card data-tour="exercise-history">
                         <CardHeader>
-                            <h2 className="font-semibold">{UI.history} (poids)</h2>
+                            <h2 className="font-semibold ">{UI.history} (poids)</h2>
                         </CardHeader>
                         <CardContent className='pb-0 pt-0'>
                             <PerformanceChart
@@ -466,6 +609,27 @@ export function ExerciseDetailPage() {
                     </DialogContent>
                 </Dialog>
 
+                {onboardingTourActive ? (
+                    <Joyride
+                        key={id}
+                        steps={exerciseOnboardingSteps}
+                        run
+                        continuous
+                        scrollToFirstStep
+                        options={exerciseJoyrideOptions}
+                        styles={exerciseJoyrideStyles}
+                        locale={{
+                            back: UI.back,
+                            close: UI.joyrideClose,
+                            last: UI.joyrideLast,
+                            next: UI.next,
+                            skip: UI.joyrideSkip,
+                            nextWithProgress: UI.joyrideNextWithProgress,
+                        }}
+                        onEvent={handleJoyrideEvent}
+                    />
+                ) : null}
+
                 <AddPerfDrawer
                     open={sessionDrawer.mode !== 'closed'}
                     onOpenChange={(open) => {
@@ -543,6 +707,7 @@ export function ExerciseDetailPage() {
                             : undefined
                     }
                 />
+
             </main>
         </div>
     )
