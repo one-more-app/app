@@ -119,7 +119,12 @@ export function notifyPerfMilestones(params: {
 
   const newRecord = isNewPersonalBest(prevPB, nextPB)
   const leagueUp = didLeagueChange(prevLeague, nextLeague)
-  if (!newRecord && !leagueUp) return
+  if (!newRecord && !leagueUp) {
+    toast.success("Performance enregistrée", {
+      description: `${exerciseName} · ${nextPB?.weight ?? "-"} kg × ${nextPB?.reps ?? "-"} reps`,
+    })
+    return
+  }
 
   void maybeRequestAppReview("milestone")
 
