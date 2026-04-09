@@ -1,0 +1,88 @@
+version: "3"
+
+vars:
+  NPM: npm
+
+tasks:
+  default:
+    desc: Liste les tâches disponibles
+    cmds:
+      - task --list
+
+  install:
+    desc: Installe les dépendances (workspaces client + api)
+    cmds:
+      - "{{.NPM}} install"
+
+  dev:
+    desc: Lance le client Vite et l’API Nest en parallèle (défaut)
+    deps: [dev:client, dev:api]
+
+  dev:client:
+    desc: Serveur de dev Vite (client/)
+    cmds:
+      - "{{.NPM}} run dev -w client"
+
+  dev:api:
+    desc: API Nest en mode watch (api/)
+    cmds:
+      - "{{.NPM}} run start:dev -w api"
+
+  build:
+    desc: Build production du client (PWA / Capacitor)
+    cmds:
+      - "{{.NPM}} run build -w client"
+
+  build:api:
+    desc: Compile l’API Nest
+    cmds:
+      - "{{.NPM}} run build -w api"
+
+  lint:
+    desc: ESLint client puis API
+    cmds:
+      - "{{.NPM}} run lint -w client"
+      - "{{.NPM}} run lint -w api"
+
+  preview:
+    desc: Prévisualise le build client (après task build)
+    cmds:
+      - "{{.NPM}} run preview -w client"
+
+  cap:sync:
+    desc: Build client + synchronisation Capacitor (android/ios)
+    cmds:
+      - "{{.NPM}} run cap:sync -w client"
+
+  docker:
+    desc: Démarre Postgres local (docker compose)
+    cmds:
+      - docker compose up -d
+
+  docker:down:
+    desc: Arrête les conteneurs compose
+    cmds:
+      - docker compose down
+
+  prisma:generate:
+    desc: Génère le client Prisma
+    dir: api
+    cmds:
+      - npx prisma generate
+
+  prisma:migrate:
+    desc: Migrations Prisma (dev)
+    dir: api
+    cmds:
+      - npx prisma migrate dev
+
+  prisma:studio:
+    desc: Ouvre Prisma Studio
+    dir: api
+    cmds:
+      - npx prisma studio
+
+  test:api:
+    desc: Tests unitaires API
+    cmds:
+      - "{{.NPM}} run test -w api"
