@@ -3,26 +3,21 @@ import { StepCard } from '@/components/StepCard'
 import { Button } from '@/components/ui/button'
 import { useUserProfileData } from '@/hooks/use-api-data'
 import { useAuth } from '@/hooks/use-auth'
-import { AuthPage } from '@/pages/AuthPage'
 import {
     getOnboardingPostAuthRedirect,
     getUserProfile,
     hasPersistedUserProfile,
-    isOnboardingSyncPending,
     markOnboardingDone,
     needsOnboarding,
     setOnboardingPostAuthRedirect,
-    setOnboardingSyncPending,
     setUserProfile,
-    syncLocalDataToRemote,
 } from '@/lib/storage'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
+import { AuthPage } from '@/pages/AuthPage'
 import {
     Mars,
-    Ruler,
-    Venus,
-    Weight
+    Venus
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -162,26 +157,24 @@ function OnboardingPage() {
         .replace('{total}', String(BODY_TOTAL))
     const bodyProgressPercent = ((bodyQ + 1) / BODY_TOTAL) * 100
 
+    const bodyStepTitle =
+        bodyQ === 0
+            ? UI.onboardingBodyTitleGender
+            : bodyQ === 1
+                ? UI.onboardingBodyTitleWeight
+                : UI.onboardingBodyTitleHeight
+
     const finishOnboarding = async (nextPath: string) => {
         if (auth.status === 'authenticated') {
-            if (isOnboardingSyncPending()) {
-                try {
-                    await syncLocalDataToRemote()
-                } catch {
-                    auth.setError('Le compte est créé mais la synchronisation a échoué. Réessaie dans Paramètres.')
-                }
-            }
             setOnboardingPostAuthRedirect(null)
-            setOnboardingSyncPending(false)
             markOnboardingDone()
             navigate(nextPath, { replace: true })
             return
         }
 
         setOnboardingPostAuthRedirect(nextPath)
-        setOnboardingSyncPending(true)
         const redirect = encodeURIComponent('/onboarding?step=account')
-        navigate(`/onboarding?step=account&mode=login&redirect=${redirect}&sync=onboarding`, {
+        navigate(`/onboarding?step=account&mode=login&redirect=${redirect}`, {
             replace: true,
         })
     }
@@ -199,17 +192,12 @@ function OnboardingPage() {
         if (step !== 'account') return
         if (auth.status === 'authenticated') return
         const mode = searchParams.get('mode')
-        const sync = searchParams.get('sync')
         const currentRedirect = searchParams.get('redirect')
-        if (
-            mode === 'login' &&
-            sync === 'onboarding' &&
-            currentRedirect === '/onboarding?step=account'
-        ) {
+        if (mode === 'login' && currentRedirect === '/onboarding?step=account') {
             return
         }
         const redirect = encodeURIComponent('/onboarding?step=account')
-        navigate(`/onboarding?step=account&mode=login&redirect=${redirect}&sync=onboarding`, {
+        navigate(`/onboarding?step=account&mode=login&redirect=${redirect}`, {
             replace: true,
         })
     }, [step, auth.status, navigate, searchParams])
@@ -272,15 +260,12 @@ function OnboardingPage() {
                         backLabel={UI.back}
                         stepLabel={stepIndicator}
                         progressPercent={bodyProgressPercent}
-                        title={UI.onboardingTitle}
+                        title={bodyStepTitle}
                     >
                         {bodyQ === 0 && (
                             <div className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
                                 <div>
-                                    <p className="text-sm font-medium flex items-center gap-2">
-                                        {UI.gender}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground mt-1">
+                                    <p className="text-sm text-muted-foreground">
                                         {UI.onboardingQuestionGenderHint}
                                     </p>
                                 </div>
@@ -294,11 +279,7 @@ function OnboardingPage() {
                         {bodyQ === 1 && (
                             <div className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
                                 <div>
-                                    <p className="text-sm font-medium flex items-center gap-2">
-                                        <Weight className="size-4 text-accent-foreground" />
-                                        {UI.bodyWeight}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground mt-1">
+                                    <p className="text-sm text-muted-foreground">
                                         {UI.onboardingQuestionWeightHint}
                                     </p>
                                 </div>
@@ -317,11 +298,7 @@ function OnboardingPage() {
                         {bodyQ === 2 && (
                             <div className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
                                 <div>
-                                    <p className="text-sm font-medium flex items-center gap-2">
-                                        <Ruler className="size-4 text-accent-foreground" />
-                                        {UI.height}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground mt-1">
+                                    <p className="text-sm text-muted-foreground">
                                         {UI.onboardingQuestionHeightHint}
                                     </p>
                                 </div>

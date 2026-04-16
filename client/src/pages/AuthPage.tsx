@@ -10,9 +10,7 @@ import { CARDIO_EQUIPMENT } from "@/lib/exercisedb";
 import { signInWithOAuth } from "@/lib/oauth";
 import {
     setOnboardingFirstExercisePending,
-    setOnboardingSyncPending,
     setUserProfile,
-    syncLocalDataToRemote,
 } from "@/lib/storage";
 import { UI } from "@/lib/translations";
 import { useMemo, useState } from "react";
@@ -50,8 +48,6 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
     const [password, setPassword] = useState("");
     const [passwordConfirm, setPasswordConfirm] = useState("");
     const [isBusy, setIsBusy] = useState(false);
-    const shouldSyncOnSuccess = searchParams.get("sync") === "onboarding";
-
     const normalizedEmail = email.trim().toLowerCase();
     const canContinueEmail = normalizedEmail.includes("@") && !isBusy;
     const canLogin = normalizedEmail.includes("@") && password.length >= 8 && !isBusy;
@@ -65,11 +61,6 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
 
     const finishSuccess = async () => {
         try {
-            if (shouldSyncOnSuccess) {
-                await syncLocalDataToRemote();
-                setOnboardingSyncPending(false);
-            }
-
             let nextPath = redirect;
             if (redirect === "/home") {
                 try {
@@ -269,6 +260,10 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                         onChange={(e) => setPassword(e.target.value)}
                                         type="password"
                                         placeholder="••••••••"
+                                        passwordToggle={{
+                                            showLabel: UI.showPassword,
+                                            hideLabel: UI.hidePassword,
+                                        }}
                                     />
                                     <p className="text-xs text-muted-foreground">
                                         {UI.passwordHint}
@@ -282,6 +277,10 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                         onChange={(e) => setPasswordConfirm(e.target.value)}
                                         type="password"
                                         placeholder="••••••••"
+                                        passwordToggle={{
+                                            showLabel: UI.showPassword,
+                                            hideLabel: UI.hidePassword,
+                                        }}
                                     />
                                     {passwordConfirm.length > 0 && passwordConfirm !== password && (
                                         <p className="text-xs text-destructive">{UI.passwordsDoNotMatch}</p>
@@ -351,6 +350,10 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                             onChange={(e) => setPassword(e.target.value)}
                                             type="password"
                                             placeholder="••••••••"
+                                            passwordToggle={{
+                                                showLabel: UI.showPassword,
+                                                hideLabel: UI.hidePassword,
+                                            }}
                                         />
                                         <p className="text-xs text-muted-foreground">
                                             {UI.passwordHint}

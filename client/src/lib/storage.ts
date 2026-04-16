@@ -1,9 +1,6 @@
 import {
   deletePerformanceEntryRemote,
   deleteTrackedExerciseRemote,
-  fetchPerformanceEntries,
-  fetchRemoteProfile,
-  fetchTrackedExercises,
   patchPerformanceEntry,
   patchTrackedExercise,
   upsertPerformanceEntry,
@@ -15,7 +12,6 @@ import type { PerformanceEntry, TrackedExercise, UserProfile } from "@/types";
 const ONBOARDING_V1_KEY = "one-more-onboarding-v1";
 const ONBOARDING_FIRST_EXERCISE_PENDING_KEY =
   "one-more-onboarding-first-exercise-pending-v1";
-const ONBOARDING_SYNC_PENDING_KEY = "one-more-onboarding-sync-pending-v1";
 const ONBOARDING_POST_AUTH_REDIRECT_KEY =
   "one-more-onboarding-post-auth-redirect-v1";
 const THEME_PREFERENCE_KEY = "one-more-theme-preference-v1";
@@ -64,41 +60,12 @@ function updatePerformanceCache(list: PerformanceEntry[]): void {
   performanceCache = list;
 }
 
-export async function refreshStorageFromApi(opts?: {
-  emitEvent?: boolean;
-}): Promise<boolean> {
-  try {
-    const [tracked, perfs, profile] = await Promise.all([
-      fetchTrackedExercises({ includeDeleted: true }),
-      fetchPerformanceEntries({ includeDeleted: true }),
-      fetchRemoteProfile(),
-    ]);
-    updateTrackedCache(tracked);
-    updatePerformanceCache(perfs);
-    if (profile) {
-      profileCache = {
-        weightKg: profile.weightKg,
-        heightCm: profile.heightCm,
-        gender: profile.gender,
-      };
-      hasProfilePersistedCache = true;
-    }
-    if (opts?.emitEvent && typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("one-more:synced", { detail: { at: Date.now() } }),
-      );
-    }
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export function getTrackedExercises(): TrackedExercise[] {
   return trackedCache.filter((e) => !e.deletedAt);
 }
 
-export function getTrackedExercisesForSync(): TrackedExercise[] {
+/** Cache brut (y compris suppressions douces). Pour les mises à jour locales. */
+export function getAllTrackedExercises(): TrackedExercise[] {
   return [...trackedCache];
 }
 
@@ -107,7 +74,7 @@ export function setTrackedExercises(exercises: TrackedExercise[]): void {
 }
 
 export function addTrackedExercise(exercise: TrackedExercise): void {
-  const list = getTrackedExercisesForSync();
+  const list = getAllTrackedExercises();
   if (
     list.some(
       (e) =>
@@ -131,7 +98,7 @@ export function addTrackedExercise(exercise: TrackedExercise): void {
 export async function addTrackedExerciseAndWait(
   exercise: TrackedExercise,
 ): Promise<TrackedExercise> {
-  const list = getTrackedExercisesForSync();
+  const list = getAllTrackedExercises();
   const existing = list.find(
     (e) =>
       !e.deletedAt &&
@@ -150,7 +117,7 @@ export async function addTrackedExerciseAndWait(
   try {
     const remote = await upsertTrackedExercise(next);
     updateTrackedCache(
-      getTrackedExercisesForSync().map((e) => (e.id === next.id ? remote : e)),
+      getAllTrackedExercises().map((e) => (e.id === next.id ? remote : e)),
     );
     return remote;
   } catch (error) {
@@ -160,7 +127,7 @@ export async function addTrackedExerciseAndWait(
 }
 
 export function removeTrackedExercise(id: string): void {
-  const list = getTrackedExercisesForSync();
+  const list = getAllTrackedExercises();
   const next = list.map((e) =>
     e.id === id ? { ...e, updatedAt: nowIso(), deletedAt: nowIso() } : e,
   );
@@ -170,7 +137,7 @@ export function removeTrackedExercise(id: string): void {
 }
 
 export async function removeTrackedExerciseAndWait(id: string): Promise<void> {
-  const list = getTrackedExercisesForSync();
+  const list = getAllTrackedExercises();
   const next = list.map((e) =>
     e.id === id ? { ...e, updatedAt: nowIso(), deletedAt: nowIso() } : e,
   );
@@ -188,7 +155,7 @@ export function updateTrackedExercise(
   id: string,
   updates: Partial<Pick<TrackedExercise, "name">>,
 ): void {
-  const list = getTrackedExercisesForSync();
+  const list = getAllTrackedExercises();
   const idx = list.findIndex((e) => e.id === id);
   if (idx === -1) return;
   list[idx] = {
@@ -205,7 +172,7 @@ export async function updateTrackedExerciseAndWait(
   id: string,
   updates: Partial<Pick<TrackedExercise, "name">>,
 ): Promise<TrackedExercise | null> {
-  const list = getTrackedExercisesForSync();
+  const list = getAllTrackedExercises();
   const idx = list.findIndex((e) => e.id === id);
   if (idx === -1) return null;
   list[idx] = {
@@ -218,7 +185,7 @@ export async function updateTrackedExerciseAndWait(
   try {
     const remote = await patchTrackedExercise(id, updates);
     updateTrackedCache(
-      getTrackedExercisesForSync().map((e) => (e.id === id ? remote : e)),
+      getAllTrackedExercises().map((e) => (e.id === id ? remote : e)),
     );
     return remote;
   } catch (error) {
@@ -235,7 +202,7 @@ export function getPerformanceEntries(): PerformanceEntry[] {
   return performanceCache.filter((e) => !e.deletedAt);
 }
 
-export function getPerformanceEntriesForSync(): PerformanceEntry[] {
+function getAllPerformanceEntries(): PerformanceEntry[] {
   return [...performanceCache];
 }
 
@@ -277,7 +244,7 @@ export function savePerformance(
     updatedAt: nowIso(),
     deletedAt: null,
   };
-  updatePerformanceCache([...getPerformanceEntriesForSync(), entry]);
+  updatePerformanceCache([...getAllPerformanceEntries(), entry]);
   notifyLocalDataChanged("performance");
   void upsertPerformanceEntry(entry).catch(() => notifyRemoteWriteError());
   return entry;
@@ -302,13 +269,13 @@ export async function savePerformanceAndWait(
     updatedAt: nowIso(),
     deletedAt: null,
   };
-  updatePerformanceCache([...getPerformanceEntriesForSync(), entry]);
+  updatePerformanceCache([...getAllPerformanceEntries(), entry]);
   notifyLocalDataChanged("performance");
 
   try {
     const remote = await upsertPerformanceEntry(entry);
     updatePerformanceCache(
-      getPerformanceEntriesForSync().map((e) => (e.id === entry.id ? remote : e)),
+      getAllPerformanceEntries().map((e) => (e.id === entry.id ? remote : e)),
     );
     return remote;
   } catch (error) {
@@ -318,7 +285,7 @@ export async function savePerformanceAndWait(
 }
 
 export function deletePerformance(entryId: string): void {
-  const next = getPerformanceEntriesForSync().map((e) =>
+  const next = getAllPerformanceEntries().map((e) =>
     e.id === entryId ? { ...e, updatedAt: nowIso(), deletedAt: nowIso() } : e,
   );
   updatePerformanceCache(next);
@@ -327,7 +294,7 @@ export function deletePerformance(entryId: string): void {
 }
 
 export async function deletePerformanceAndWait(entryId: string): Promise<void> {
-  const next = getPerformanceEntriesForSync().map((e) =>
+  const next = getAllPerformanceEntries().map((e) =>
     e.id === entryId ? { ...e, updatedAt: nowIso(), deletedAt: nowIso() } : e,
   );
   updatePerformanceCache(next);
@@ -345,7 +312,7 @@ export function updatePerformance(
   weight: number,
   reps: number,
 ): PerformanceEntry | null {
-  const list = getPerformanceEntriesForSync();
+  const list = getAllPerformanceEntries();
   const idx = list.findIndex((e) => e.id === entryId);
   if (idx === -1) return null;
   list[idx] = { ...list[idx], weight, reps, updatedAt: nowIso() };
@@ -363,17 +330,16 @@ export async function updatePerformanceAndWait(
   weight: number,
   reps: number,
 ): Promise<PerformanceEntry | null> {
-  const list = getPerformanceEntriesForSync();
+  const list = getAllPerformanceEntries();
   const idx = list.findIndex((e) => e.id === entryId);
   if (idx === -1) return null;
   list[idx] = { ...list[idx], weight, reps, updatedAt: nowIso() };
-  const updated = list[idx];
   updatePerformanceCache([...list]);
   notifyLocalDataChanged("performance");
   try {
     const remote = await patchPerformanceEntry(entryId, { weight, reps });
     updatePerformanceCache(
-      getPerformanceEntriesForSync().map((e) => (e.id === entryId ? remote : e)),
+      getAllPerformanceEntries().map((e) => (e.id === entryId ? remote : e)),
     );
     return remote;
   } catch (error) {
@@ -483,18 +449,6 @@ export function isOnboardingFirstExercisePending(): boolean {
   return localStorage.getItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY) === "1";
 }
 
-export function setOnboardingSyncPending(pending: boolean): void {
-  if (pending) {
-    localStorage.setItem(ONBOARDING_SYNC_PENDING_KEY, "1");
-  } else {
-    localStorage.removeItem(ONBOARDING_SYNC_PENDING_KEY);
-  }
-}
-
-export function isOnboardingSyncPending(): boolean {
-  return localStorage.getItem(ONBOARDING_SYNC_PENDING_KEY) === "1";
-}
-
 export function setOnboardingPostAuthRedirect(path: string | null): void {
   if (!path) {
     localStorage.removeItem(ONBOARDING_POST_AUTH_REDIRECT_KEY);
@@ -509,24 +463,6 @@ export function getOnboardingPostAuthRedirect(): string | null {
   return raw;
 }
 
-export async function syncLocalDataToRemote(): Promise<void> {
-  const writes: Promise<unknown>[] = [];
-  if (hasProfilePersistedCache) {
-    writes.push(upsertRemoteProfile(profileCache));
-  }
-  for (const exercise of getTrackedExercises()) {
-    writes.push(upsertTrackedExercise(exercise));
-  }
-  for (const perf of getPerformanceEntries()) {
-    writes.push(upsertPerformanceEntry(perf));
-  }
-  const settled = await Promise.allSettled(writes);
-  const failed = settled.some((result) => result.status === "rejected");
-  if (failed) {
-    throw new Error("Impossible de synchroniser toutes les données locales.");
-  }
-}
-
 export function needsOnboarding(): boolean {
   if (localStorage.getItem(ONBOARDING_V1_KEY) === "done") return false;
   if (localStorage.getItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY) === "1") {
@@ -538,7 +474,6 @@ export function needsOnboarding(): boolean {
 export function markOnboardingDone(): void {
   localStorage.setItem(ONBOARDING_V1_KEY, "done");
   localStorage.removeItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY);
-  localStorage.removeItem(ONBOARDING_SYNC_PENDING_KEY);
   localStorage.removeItem(ONBOARDING_POST_AUTH_REDIRECT_KEY);
 }
 

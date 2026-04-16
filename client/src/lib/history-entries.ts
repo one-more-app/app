@@ -4,7 +4,7 @@ import {
 } from '@/lib/perf-notifications'
 import {
     getTrackedExerciseById,
-    getTrackedExercisesForSync,
+    getAllTrackedExercises,
 } from '@/lib/storage'
 import { getLeagueLevelIndex, type LeagueInfo } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
@@ -21,7 +21,7 @@ export function resolveTrackedExercise(
 ): TrackedExercise | undefined {
     const active = getTrackedExerciseById(trackedId)
     if (active) return active
-    return getTrackedExercisesForSync().find((e) => e.id === trackedId)
+    return getAllTrackedExercises().find((e) => e.id === trackedId)
 }
 
 export function formatPerfLabel(weight: number, reps: number): string {
@@ -123,7 +123,7 @@ function bestPbFromList(list: PerformanceEntry[]): Pb {
 function resolveTrackedForInsights(trackedId: string): TrackedExercise | undefined {
     const active = getTrackedExerciseById(trackedId)
     if (active) return active
-    return getTrackedExercisesForSync().find((e) => e.id === trackedId)
+    return getAllTrackedExercises().find((e) => e.id === trackedId)
 }
 
 /** Même logique que la liste « dernière session » sur la fiche exercice : record et palier vs perfs antérieures. */

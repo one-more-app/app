@@ -35,7 +35,7 @@ export function StepCard(props: {
             className={cn(
                 "w-full",
                 animated &&
-                    "animate-in fade-in-0 slide-in-from-bottom-4 duration-300",
+                "animate-in fade-in-0 slide-in-from-bottom-4 duration-300",
                 className,
             )}
         >
@@ -72,7 +72,7 @@ export function StepCard(props: {
                 <CardTitle>{title}</CardTitle>
             </CardHeader>
 
-            <CardContent className={cn("space-y-6", contentClassName)}>
+            <CardContent className={cn("space-y-6 pt-1", contentClassName)}>
                 {children}
             </CardContent>
         </Card>

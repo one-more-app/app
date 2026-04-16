@@ -24,9 +24,9 @@ export interface TrackedExercise {
   gifUrl?: string;
   isCustom: boolean;
 
-  /** Dernière modification locale (ISO). Utilisé pour la sync. */
+  /** Dernière modification (ISO). */
   updatedAt?: string;
-  /** Suppression douce (ISO). Utilisé pour la sync. */
+  /** Suppression douce (ISO). */
   deletedAt?: string | null;
 }
 
@@ -38,9 +38,9 @@ export interface PerformanceEntry {
   reps: number;
   createdAt: string; // ISO timestamp
 
-  /** Dernière modification locale (ISO). Utilisé pour la sync. */
+  /** Dernière modification (ISO). */
   updatedAt?: string;
-  /** Suppression douce (ISO). Utilisé pour la sync. */
+  /** Suppression douce (ISO). */
   deletedAt?: string | null;
 }
 

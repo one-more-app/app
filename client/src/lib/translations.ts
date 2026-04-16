@@ -286,11 +286,11 @@ export const UI = {
   male: "Homme",
   female: "Femme",
 
-  // Compte & synchronisation
+  // Compte
   account: "Compte",
-  accountAndSync: "Compte & synchronisation",
+  accountAndSync: "Compte",
   accountSyncDescription:
-    "Créez un compte pour sauvegarder et synchroniser vos données entre appareils.",
+    "Connecte-toi pour associer tes données à ton compte et les retrouver depuis l’app.",
   backToSettings: "Retour",
   connectOrCreateAccount: "Connectez-vous ou créez un compte",
   createAccount: "Créer un compte",
@@ -304,6 +304,8 @@ export const UI = {
   password: "Mot de passe",
   confirmPassword: "Confirmer le mot de passe",
   passwordHint: "Minimum 8 caractères.",
+  showPassword: "Afficher le mot de passe",
+  hidePassword: "Masquer le mot de passe",
   passwordsDoNotMatch: "Les mots de passe ne correspondent pas.",
   switchToRegister: "Créer un compte",
   switchToLogin: "J'ai déjà un compte",
@@ -315,11 +317,13 @@ export const UI = {
   notConnected: "Non connecté",
   signIn: "Se connecter",
   signOut: "Se déconnecter",
-  syncNow: "Synchroniser maintenant",
 
   // Onboarding (premier lancement)
   onboardingTitle: "Prêt à progresser ?",
   onboardingDescription: "Pour ceux qui veulent faire une rep de plus.",
+  onboardingBodyTitleGender: "Quel est ton genre ?",
+  onboardingBodyTitleWeight: "Quel est ton poids de corps ?",
+  onboardingBodyTitleHeight: "Quelle est ta taille ?",
   onboardingStepIndicator: "Étape {current} sur {total}",
   onboardingQuestionGenderHint: "Pour adapter les comparatifs et les ligues.",
   onboardingQuestionWeightHint: "Utilisé pour les paliers et ton classement.",

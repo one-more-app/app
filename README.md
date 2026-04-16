@@ -46,7 +46,7 @@ npm run cap:open:ios
 - Historique sous forme de graphique par exercice
 - Stockage local uniquement, thème sombre
 
-## API (compte + sync)
+## API (compte)
 - L’API NestJS vit dans [`backend/`](backend/).
 - Config:
   - Front: `VITE_API_URL` (voir `.env.example`)
