@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import dataSource from './data-source.js';
@@ -15,15 +16,23 @@ type SeedExercise = {
   gifUrl?: string;
 };
 
-async function run() {
-  const filePath = join(
-    process.cwd(),
-    '..',
-    'client',
-    'src',
-    'data',
-    'popular-exercises.json',
+function resolveSeedJsonPath(): string {
+  const fromEnv = process.env.EXERCISES_CATALOG_SEED_PATH;
+  if (fromEnv) return fromEnv;
+  const candidates = [
+    join(process.cwd(), 'data', 'popular-exercises.json'),
+    join(process.cwd(), '..', 'client', 'src', 'data', 'popular-exercises.json'),
+  ];
+  for (const p of candidates) {
+    if (existsSync(p)) return p;
+  }
+  throw new Error(
+    'Fichier popular-exercises.json introuvable. Définir EXERCISES_CATALOG_SEED_PATH ou exécuter npm run sync:exercises-catalog depuis api/.',
   );
+}
+
+async function run() {
+  const filePath = resolveSeedJsonPath();
   const raw = await readFile(filePath, 'utf8');
   const exercises = JSON.parse(raw) as SeedExercise[];
 

@@ -20,6 +20,8 @@
     "typeorm:migration:create": "npm run typeorm -- migration:create src/database/migrations/migration",
     "typeorm:migration:generate": "npm run typeorm -- migration:generate src/database/migrations/migration",
     "seed:exercises": "node --loader ts-node/esm src/database/seed-exercises.ts",
+    "seed:exercises:prod": "node dist/database/seed-exercises.js",
+    "sync:exercises-catalog": "mkdir -p data && cp ../client/src/data/popular-exercises.json data/popular-exercises.json",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
