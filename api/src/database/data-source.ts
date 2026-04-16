@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import 'reflect-metadata';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { DataSource } from 'typeorm';
 import { OAuthAccountEntity } from '../auth/entities/oauth-account.entity.js';
 import { SessionEntity } from '../auth/entities/session.entity.js';
@@ -8,6 +10,8 @@ import { ExerciseCatalogEntity } from '../exercises/exercise-catalog.entity.js';
 import { PerformanceEntryEntity } from '../performance/performance-entry.entity.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -29,7 +33,7 @@ export default new DataSource({
     PerformanceEntryEntity,
     ExerciseCatalogEntity,
   ],
-  migrations: ['src/database/migrations/*.ts'],
+  migrations: [join(__dirname, 'migrations', '*.{js,ts}')],
   synchronize: false,
   ssl:
     process.env.DATABASE_SSL === 'true'

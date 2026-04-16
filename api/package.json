@@ -16,6 +16,7 @@
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "typeorm": "typeorm-ts-node-esm -d src/database/data-source.ts",
     "typeorm:migrate": "npm run typeorm -- migration:run",
+    "typeorm:migrate:prod": "node ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js",
     "typeorm:migration:create": "npm run typeorm -- migration:create src/database/migrations/migration",
     "typeorm:migration:generate": "npm run typeorm -- migration:generate src/database/migrations/migration",
     "seed:exercises": "node --loader ts-node/esm src/database/seed-exercises.ts",
