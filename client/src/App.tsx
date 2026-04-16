@@ -83,10 +83,18 @@ function App() {
     const { resolvedTheme } = useTheme()
 
     useEffect(() => {
-        if (Capacitor.isNativePlatform()) {
-            StatusBar.setStyle({ style: resolvedTheme === 'dark' ? Style.Light : Style.Dark })
-            StatusBar.setBackgroundColor({ color: resolvedTheme === 'dark' ? '#000000' : '#ffffff' }).catch(() => { })
-        }
+        if (!Capacitor.isNativePlatform()) return
+
+        void (async () => {
+            try {
+                await StatusBar.setOverlaysWebView({ overlay: true })
+            } catch {
+                /* Non supporté sur certaines versions (ex. Android 15+ selon le plugin). */
+            }
+            await StatusBar.setStyle({
+                style: resolvedTheme === 'dark' ? Style.Dark : Style.Light,
+            })
+        })()
     }, [resolvedTheme])
 
     useEffect(() => {

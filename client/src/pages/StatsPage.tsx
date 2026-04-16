@@ -46,7 +46,7 @@ export default function StatsPage() {
 
     if (!hasLoaded || !profile) {
         return (
-            <div className="min-h-screen bg-background">
+            <div className="min-h-screen-app bg-background">
                 <BackHeader title="Stats" />
                 <div className="flex items-center justify-center py-20">
                     <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -56,7 +56,7 @@ export default function StatsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen-app bg-background">
             <BackHeader title="Stats" />
 
             <main className="mx-auto max-w-2xl space-y-4 p-4">

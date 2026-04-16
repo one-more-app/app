@@ -203,7 +203,7 @@ function OnboardingPage() {
     }, [step, auth.status, navigate, searchParams])
 
     return (
-        <div className="relative min-h-screen bg-black overflow-hidden">
+        <div className="relative flex min-h-screen-app flex-col overflow-hidden bg-black">
             <video
                 className="absolute inset-0 w-full h-full object-cover pointer-events-none bg-black"
                 src="/onboarding-bg.mp4"
@@ -219,7 +219,7 @@ function OnboardingPage() {
             <div className="pointer-events-none absolute bottom-8 -right-20 size-72 rounded-full bg-primary/20 blur-3xl animate-pulse [animation-delay:700ms]" />
 
             {step === 'intro' ? (
-                <div className="relative z-10 flex min-h-screen flex-col">
+                <div className="relative z-10 flex min-h-0 flex-1 flex-col">
                     <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-10 pb-6">
                         <div className="space-y-5 rounded-3xl bg-black/30 p-6 backdrop-blur-md animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
                             <div className="inline-flex items-center gap-2 rounded-full border border-accent/50 bg-accent/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent">

@@ -111,7 +111,7 @@ export function HistoryPage() {
     )
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen-app bg-background">
             <BackHeader title={UI.history} />
 
             <main className="mx-auto max-w-2xl space-y-4 p-4 pb-2">

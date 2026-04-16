@@ -300,7 +300,7 @@ export function ExerciseDetailPage() {
 
     if (!exercise) {
         return (
-            <div className="flex min-h-screen flex-col items-center justify-center px-4">
+            <div className="flex min-h-screen-app flex-col items-center justify-center px-4">
                 <EmptyState
                     variant="plain"
                     icon={SearchX}
@@ -314,7 +314,7 @@ export function ExerciseDetailPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen-app bg-background">
             <BackHeader
                 compact
                 title={exercise.name}

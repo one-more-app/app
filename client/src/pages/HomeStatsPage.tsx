@@ -67,7 +67,7 @@ export default function HomeStatsPage() {
 
     if (!hasLoaded) {
         return (
-            <div className="min-h-screen bg-background">
+            <div className="min-h-screen-app bg-background">
                 <div className="flex items-center justify-center py-20">
                     <Loader2 className="size-8 animate-spin text-muted-foreground" />
                 </div>
@@ -78,7 +78,7 @@ export default function HomeStatsPage() {
     const lastSessionText = stats.lastSession ? formatDate(stats.lastSession.date) : null
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen-app bg-background">
             <header className="sticky top-0 z-10 border-b border-white/10 bg-black p-4">
                 <div className="mx-auto flex max-w-2xl items-center justify-between">
                     <img src={logo} alt="One More" className="h-8" />

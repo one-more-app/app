@@ -133,7 +133,7 @@ function HomePage() {
     ])
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen-app bg-background">
             <main className="mx-auto max-w-2xl p-4">
                 <ExerciseSearchFilters
                     searchInput={searchInput}

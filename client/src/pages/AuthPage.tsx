@@ -486,7 +486,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
     }
 
     return (
-        <div className="relative min-h-screen bg-black overflow-hidden">
+        <div className="relative min-h-screen-app bg-black overflow-hidden">
             <video
                 className="absolute inset-0 h-full w-full object-cover pointer-events-none bg-black"
                 src="/onboarding-bg.mp4"
