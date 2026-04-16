@@ -18,7 +18,20 @@ export class ApiError extends Error {
 
 const AUTH_STORAGE_KEY = "one-more-auth-v1";
 
+declare global {
+  interface Window {
+    __ONE_MORE_API_URL__?: string;
+  }
+}
+
 function getApiBaseUrl(): string {
+  const runtime =
+    typeof window !== "undefined" && typeof window.__ONE_MORE_API_URL__ === "string"
+      ? window.__ONE_MORE_API_URL__
+      : "";
+  if (runtime.trim()) {
+    return runtime.trim().replace(/\/+$/, "");
+  }
   const raw = import.meta.env.VITE_API_URL;
   if (typeof raw === "string" && raw.trim()) return raw.trim().replace(/\/+$/, "");
   return "http://localhost:3000";
