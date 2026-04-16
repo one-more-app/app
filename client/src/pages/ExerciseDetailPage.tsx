@@ -15,6 +15,11 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 import { EmptyState } from '@/components/ui/empty-state'
+import {
+    useTrackedDataRefresh,
+    useTrackedExercisesData,
+    useUserProfileData,
+} from '@/hooks/use-api-data'
 import { Input } from '@/components/ui/input'
 import { usePerformance } from '@/hooks/use-performance'
 import { useTheme } from '@/hooks/use-theme'
@@ -27,11 +32,12 @@ import {
 import { LEAGUE_COLORS } from '@/lib/league-colors'
 import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
-    getPersonalBest,
     getTrackedExerciseById,
-    getUserProfile,
-    removeTrackedExercise,
-    updateTrackedExercise,
+    isOnboardingFirstExercisePending,
+    getPersonalBest,
+    removeTrackedExerciseAndWait,
+    setOnboardingFirstExercisePending,
+    updateTrackedExerciseAndWait,
 } from '@/lib/storage'
 import { getAllTiers, getLeagueInfo, isDumbbellExercise } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
@@ -53,16 +59,21 @@ export function ExerciseDetailPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const { resolvedTheme } = useTheme()
+    const { data: tracked = [] } = useTrackedExercisesData()
+    const refreshAfterTrackedChange = useTrackedDataRefresh()
+    const { data: profile } = useUserProfileData()
     const [searchParams, setSearchParams] = useSearchParams()
-    const [exercise, setExercise] = useState(() =>
-        id ? getTrackedExerciseById(id) : null
+    const exercise = useMemo(
+        () =>
+            id
+                ? tracked.find((item) => item.id === id && !item.deletedAt) ??
+                  getTrackedExerciseById(id) ??
+                  null
+                : null,
+        [id, tracked],
     )
     const [renameOpen, setRenameOpen] = useState(false)
     const [renameValue, setRenameValue] = useState('')
-
-    useEffect(() => {
-        setExercise(id ? getTrackedExerciseById(id) : null)
-    }, [id])
     const {
         entries,
         lastPerf,
@@ -72,9 +83,8 @@ export function ExerciseDetailPage() {
         updatePerformance,
         refresh,
     } = usePerformance(id ?? null)
-    const profile = getUserProfile()
     const leagueInfo =
-        exercise && !exercise.isCustom && personalBest
+        exercise && !exercise.isCustom && personalBest && profile
             ? getLeagueInfo({
                 weight: personalBest.weight,
                 reps: personalBest.reps,
@@ -87,7 +97,7 @@ export function ExerciseDetailPage() {
             })
             : null
     const allTiers =
-        leagueInfo && exercise && !exercise.isCustom
+        leagueInfo && exercise && !exercise.isCustom && profile
             ? getAllTiers(
                 profile.weightKg,
                 profile.gender,
@@ -104,13 +114,19 @@ export function ExerciseDetailPage() {
         setHistorySessionIndex(0)
     }, [id])
 
-    const onboardingTourActive = searchParams.get('tour') === 'onboarding'
+    const onboardingFirstExercisePending = isOnboardingFirstExercisePending()
+    const onboardingTourActive =
+        searchParams.get('tour') === 'onboarding' || onboardingFirstExercisePending
 
     const finishOnboardingTour = useCallback(() => {
         const next = new URLSearchParams(searchParams)
+        if (searchParams.get('from') === 'first-exercise' || onboardingFirstExercisePending) {
+            setOnboardingFirstExercisePending(false)
+        }
         next.delete('tour')
+        next.delete('from')
         setSearchParams(next, { replace: true })
-    }, [searchParams, setSearchParams])
+    }, [onboardingFirstExercisePending, searchParams, setSearchParams])
 
     const handleJoyrideEvent = useCallback(
         (data: EventData) => {
@@ -331,9 +347,8 @@ export function ExerciseDetailPage() {
                             const prevLeague = leagueInfo ?? null
                             savePerformance(weight, reps)
                             const nextPB = id ? getPersonalBest(id) ?? null : null
-                            const profile = getUserProfile()
                             const nextLeague =
-                                exercise
+                                exercise && profile
                                     ? computeLeagueFromPB({
                                         exercise,
                                         personalBest: nextPB,
@@ -537,8 +552,11 @@ export function ExerciseDetailPage() {
                             size="sm"
                             onClick={() => {
                                 if (id && confirm(UI.confirmDelete)) {
-                                    removeTrackedExercise(id)
-                                    navigate('/home')
+                                    void (async () => {
+                                        await removeTrackedExerciseAndWait(id)
+                                        await refreshAfterTrackedChange()
+                                        navigate('/home')
+                                    })()
                                 }
                             }}
                         >
@@ -561,18 +579,13 @@ export function ExerciseDetailPage() {
                                 if (e.key === 'Enter') {
                                     e.preventDefault()
                                     if (id && renameValue.trim()) {
-                                        updateTrackedExercise(id, {
-                                            name: renameValue.trim(),
-                                        })
-                                        setExercise((prev) =>
-                                            prev
-                                                ? {
-                                                    ...prev,
-                                                    name: renameValue.trim(),
-                                                }
-                                                : null
-                                        )
-                                        setRenameOpen(false)
+                                        void (async () => {
+                                            await updateTrackedExerciseAndWait(id, {
+                                                name: renameValue.trim(),
+                                            })
+                                            await refreshAfterTrackedChange()
+                                            setRenameOpen(false)
+                                        })()
                                     }
                                 }
                             }}
@@ -587,18 +600,13 @@ export function ExerciseDetailPage() {
                             <Button
                                 onClick={() => {
                                     if (id && renameValue.trim()) {
-                                        updateTrackedExercise(id, {
-                                            name: renameValue.trim(),
-                                        })
-                                        setExercise((prev) =>
-                                            prev
-                                                ? {
-                                                    ...prev,
-                                                    name: renameValue.trim(),
-                                                }
-                                                : null
-                                        )
-                                        setRenameOpen(false)
+                                        void (async () => {
+                                            await updateTrackedExerciseAndWait(id, {
+                                                name: renameValue.trim(),
+                                            })
+                                            await refreshAfterTrackedChange()
+                                            setRenameOpen(false)
+                                        })()
                                     }
                                 }}
                                 disabled={!renameValue.trim()}
@@ -686,12 +694,14 @@ export function ExerciseDetailPage() {
                                     date: sessionDrawer.date,
                                 })
                                 const nextPB = id ? getPersonalBest(id) ?? null : null
-                                const p = getUserProfile()
-                                const nextLeague = computeLeagueFromPB({
-                                    exercise,
-                                    personalBest: nextPB,
-                                    profile: p,
-                                })
+                                const nextLeague =
+                                    profile
+                                        ? computeLeagueFromPB({
+                                            exercise,
+                                            personalBest: nextPB,
+                                            profile,
+                                        })
+                                        : null
                                 notifyPerfMilestones({
                                     exerciseName: exercise.name,
                                     prevPB,

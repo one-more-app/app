@@ -1,11 +1,22 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
-import { LoginDto, LogoutDto, RefreshDto, RegisterDto } from './auth.dto.js';
+import {
+  IdentifyDto,
+  LoginDto,
+  LogoutDto,
+  RefreshDto,
+  RegisterDto,
+} from './auth.dto.js';
 import { JwtAuthGuard } from './jwt.guard.js';
 
 @Controller()
 export class AuthController {
   constructor(private auth: AuthService) {}
+
+  @Post('/auth/identify')
+  async identify(@Body() body: IdentifyDto) {
+    return await this.auth.identifyEmail(body.email);
+  }
 
   @Post('/auth/register')
   async register(@Body() body: RegisterDto) {

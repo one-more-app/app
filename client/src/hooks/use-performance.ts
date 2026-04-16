@@ -1,70 +1,78 @@
 import {
-  deletePerformance as deleteFromStorage,
-  getEntriesByTrackedId,
-  getLastPerformance,
-  getPersonalBest,
-  savePerformance as saveToStorage,
-  updatePerformance as updateInStorage,
+  deletePerformanceAndWait as deleteFromStorageAndWait,
+  savePerformanceAndWait as saveToStorageAndWait,
+  updatePerformanceAndWait as updateInStorageAndWait,
 } from "@/lib/storage";
+import {
+  usePerformanceDataRefresh,
+  usePerformanceEntriesData,
+} from "@/hooks/use-api-data";
 import type { PerformanceEntry } from "@/types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useMemo } from "react";
 
 export function usePerformance(trackedExerciseId: string | null) {
-  const [entries, setEntries] = useState<PerformanceEntry[]>([]);
-  const [lastPerf, setLastPerf] = useState<PerformanceEntry | undefined>();
-  const [personalBest, setPersonalBest] = useState<
-    PerformanceEntry | undefined
-  >();
+  const { data: allEntries = [] } = usePerformanceEntriesData();
+  const refreshAfterPerfChange = usePerformanceDataRefresh();
 
-  const load = useCallback(() => {
-    if (!trackedExerciseId) {
-      setEntries([]);
-      setLastPerf(undefined);
-      setPersonalBest(undefined);
-      return;
-    }
-    const e = getEntriesByTrackedId(trackedExerciseId);
-    setEntries(e);
-    setLastPerf(getLastPerformance(trackedExerciseId));
-    setPersonalBest(getPersonalBest(trackedExerciseId));
-  }, [trackedExerciseId]);
+  const entries = useMemo<PerformanceEntry[]>(() => {
+    if (!trackedExerciseId) return [];
+    return allEntries
+      .filter(
+        (e) => !e.deletedAt && e.trackedExerciseId === trackedExerciseId,
+      )
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [allEntries, trackedExerciseId]);
 
-  useEffect(() => {
-    // Diffère vers une micro-tâche pour éviter certains warnings lint
-    void Promise.resolve().then(load);
-  }, [load]);
+  const lastPerf = entries[entries.length - 1];
 
-  useEffect(() => {
-    // Les perfs peuvent changer après un sync (push + pull).
-    // On recharge donc automatiquement.
-    const onSynced = () => load();
-    window.addEventListener("one-more:synced", onSynced);
-    return () => window.removeEventListener("one-more:synced", onSynced);
-  }, [load]);
+  const personalBest = useMemo(() => {
+    if (entries.length === 0) return undefined;
+    return entries.reduce((best, curr) =>
+      curr.weight > best.weight ||
+      (curr.weight === best.weight && curr.reps > best.reps)
+        ? curr
+        : best,
+    );
+  }, [entries]);
 
   const savePerformance = useCallback(
     (weight: number, reps: number, opts?: { date?: string }) => {
       if (!trackedExerciseId) return;
-      saveToStorage(trackedExerciseId, weight, reps, opts);
-      load();
+      void (async () => {
+        try {
+          await saveToStorageAndWait(trackedExerciseId, weight, reps, opts);
+        } finally {
+          void refreshAfterPerfChange();
+        }
+      })();
     },
-    [trackedExerciseId, load],
+    [refreshAfterPerfChange, trackedExerciseId],
   );
 
   const deletePerformance = useCallback(
     (entryId: string) => {
-      deleteFromStorage(entryId);
-      load();
+      void (async () => {
+        try {
+          await deleteFromStorageAndWait(entryId);
+        } finally {
+          void refreshAfterPerfChange();
+        }
+      })();
     },
-    [load],
+    [refreshAfterPerfChange],
   );
 
   const updatePerformance = useCallback(
     (entryId: string, weight: number, reps: number) => {
-      updateInStorage(entryId, weight, reps);
-      load();
+      void (async () => {
+        try {
+          await updateInStorageAndWait(entryId, weight, reps);
+        } finally {
+          void refreshAfterPerfChange();
+        }
+      })();
     },
-    [load],
+    [refreshAfterPerfChange],
   );
 
   return {
@@ -74,6 +82,6 @@ export function usePerformance(trackedExerciseId: string | null) {
     savePerformance,
     deletePerformance,
     updatePerformance,
-    refresh: load,
+    refresh: () => void refreshAfterPerfChange(),
   };
 }

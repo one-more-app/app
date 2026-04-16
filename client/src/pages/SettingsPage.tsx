@@ -11,11 +11,11 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { useAuth } from '@/hooks/use-auth'
+import { useProfileDataRefresh, useUserProfileData } from '@/hooks/use-api-data'
 import { useTheme } from '@/hooks/use-theme'
 import { openStoreListing } from '@/lib/app-review'
 import type { ThemePreference } from '@/lib/storage'
-import { getUserProfile, setUserProfile } from '@/lib/storage'
-import { syncNow } from '@/lib/sync'
+import { setUserProfileAndWait } from '@/lib/storage'
 import { UI } from '@/lib/translations'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -24,23 +24,28 @@ import { toast } from 'sonner'
 export function SettingsPage() {
     const auth = useAuth()
     const { theme, setTheme } = useTheme()
-    const [isSyncing, setIsSyncing] = useState(false)
+    const { data: profile } = useUserProfileData()
+    const refreshProfile = useProfileDataRefresh()
     const [weightKg, setWeightKg] = useState<string>('')
     const [heightCm, setHeightCm] = useState<string>('')
     const [gender, setGender] = useState<'male' | 'female'>('male')
 
     useEffect(() => {
-        const p = getUserProfile()
+        if (!profile) return
+        const p = profile
         setWeightKg(String(p.weightKg))
         setHeightCm(String(p.heightCm))
         setGender(p.gender)
-    }, [])
+    }, [profile])
 
     const handleSave = () => {
         const w = parseFloat(weightKg)
         const h = parseFloat(heightCm)
         if (!Number.isNaN(w) && w > 0 && !Number.isNaN(h) && h > 0) {
-            setUserProfile({ weightKg: w, heightCm: h, gender })
+            void (async () => {
+                await setUserProfileAndWait({ weightKg: w, heightCm: h, gender })
+                await refreshProfile()
+            })()
         }
     }
 
@@ -65,25 +70,6 @@ export function SettingsPage() {
                                         {auth.user?.email ?? auth.user?.id}
                                     </span>
                                 </p>
-                                <Button
-                                    variant="secondary"
-                                    className="w-full"
-                                    disabled={isSyncing}
-                                    onClick={() => {
-                                        if (!auth.accessToken || !auth.refreshToken || !auth.user) return
-                                        setIsSyncing(true)
-                                        void syncNow({
-                                            accessToken: auth.accessToken,
-                                            refreshToken: auth.refreshToken,
-                                            user: auth.user,
-                                        })
-                                            .then(() => toast.success('Synchronisation terminée'))
-                                            .catch(() => toast.error('Synchronisation échouée'))
-                                            .finally(() => setIsSyncing(false))
-                                    }}
-                                >
-                                    {UI.syncNow}
-                                </Button>
                                 <Button
                                     variant="destructive"
                                     className="w-full"
@@ -135,9 +121,9 @@ export function SettingsPage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="settings-weight">{UI.bodyWeight}</Label>
                             <Input
                                 id="settings-weight"
+                                label={UI.bodyWeight}
                                 type="number"
                                 inputMode="decimal"
                                 min={30}
@@ -149,9 +135,9 @@ export function SettingsPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="settings-height">{UI.height}</Label>
                             <Input
                                 id="settings-height"
+                                label={UI.height}
                                 type="number"
                                 inputMode="numeric"
                                 min={100}
@@ -167,8 +153,12 @@ export function SettingsPage() {
                             <Select
                                 value={gender}
                                 onValueChange={(v) => {
-                                    setGender(v as 'male' | 'female')
-                                    setUserProfile({ gender: v as 'male' | 'female' })
+                                    const nextGender = v as 'male' | 'female'
+                                    setGender(nextGender)
+                                    void (async () => {
+                                        await setUserProfileAndWait({ gender: nextGender })
+                                        await refreshProfile()
+                                    })()
                                 }}
                             >
                                 <SelectTrigger>

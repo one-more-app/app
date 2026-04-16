@@ -15,19 +15,52 @@ import { StatusBar, Style } from '@capacitor/status-bar'
 import { useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { needsOnboarding } from '@/lib/storage'
-import { AuthProvider } from '@/hooks/use-auth'
+import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import { useTheme } from '@/hooks/use-theme'
 
-function OnboardingGate({ children }: { children: React.ReactNode }) {
+function AccessGate({ children }: { children: React.ReactNode }) {
     const location = useLocation()
+    const auth = useAuth()
+    const isAuthRoute = location.pathname === '/auth'
+    const isOnboardingRoute = location.pathname === '/onboarding'
+    const onboardingNeeded = needsOnboarding()
+
+    if (auth.status !== 'authenticated') {
+        if (onboardingNeeded) {
+            // Pendant l'onboarding, l'écran d'auth doit rester accessible
+            // pour finaliser la connexion/inscription avant de marquer onboarding done.
+            if (isOnboardingRoute || isAuthRoute) return <>{children}</>
+            return <Navigate to="/onboarding" replace />
+        }
+        // Onboarding déjà fait => compte obligatoire: seules les routes d'auth sont accessibles.
+        if (isAuthRoute) return <>{children}</>
+        const redirect = encodeURIComponent(
+            `${location.pathname}${location.search}${location.hash}`,
+        )
+        return <Navigate to={`/auth?redirect=${redirect}`} replace />
+    }
+
+    if (auth.status === 'authenticated' && isAuthRoute) {
+        if (onboardingNeeded) return <Navigate to="/onboarding?step=body&bodyQ=0" replace />
+        return <Navigate to="/home" replace />
+    }
+
     if (
-        needsOnboarding() &&
+        auth.status === 'authenticated' &&
+        onboardingNeeded &&
         location.pathname !== '/onboarding' &&
-        location.pathname !== '/auth'
+        !isAuthRoute
     ) {
-        return <Navigate to="/onboarding" replace />
+        return <Navigate to="/onboarding?step=body&bodyQ=0" replace />
     }
     return <>{children}</>
+}
+
+function IndexRedirect() {
+    const auth = useAuth()
+    if (needsOnboarding()) return <Navigate to="/onboarding" replace />
+    if (auth.status !== 'authenticated') return <Navigate to="/auth" replace />
+    return <Navigate to="/home" replace />
 }
 
 function BottomNavHost({ children }: { children: React.ReactNode }) {
@@ -78,10 +111,15 @@ function App() {
             <Toaster />
             <LeaguePromotionCelebrationHost />
             <AuthProvider>
-                <OnboardingGate>
+                <AccessGate>
                     <BottomNavHost>
                         <Routes>
-                            <Route path="/" element={<Navigate to="/home" replace />} />
+                            <Route
+                                path="/"
+                                element={
+                                    <IndexRedirect />
+                                }
+                            />
                             <Route path="/onboarding" element={<OnboardingPage />} />
                             <Route path="/home" element={<HomePage />} />
                             <Route path="/stats" element={<StatsPage />} />
@@ -92,7 +130,7 @@ function App() {
                             <Route path="/settings" element={<SettingsPage />} />
                         </Routes>
                     </BottomNavHost>
-                </OnboardingGate>
+                </AccessGate>
             </AuthProvider>
         </HashRouter>
     )

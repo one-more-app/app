@@ -2,6 +2,7 @@
 export interface ExerciseDBExercise {
   id: string;
   name: string;
+  nameFr?: string;
   bodyPart: string;
   target: string;
   equipment: string;
@@ -47,4 +48,6 @@ export interface UserProfile {
   weightKg: number;
   heightCm: number;
   gender: "male" | "female";
+  firstName?: string;
+  lastName?: string;
 }

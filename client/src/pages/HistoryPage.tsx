@@ -3,6 +3,12 @@ import { BackHeader } from '@/components/BackHeader'
 import { HistoryDaySection } from '@/components/history/HistoryDaySection'
 import { EmptyState } from '@/components/ui/empty-state'
 import {
+    usePerformanceDataRefresh,
+    usePerformanceEntriesData,
+    useTrackedExercisesData,
+    useUserProfileData,
+} from '@/hooks/use-api-data'
+import {
     buildEntryInsights,
     groupByDayThenExercise,
     resolveTrackedExercise,
@@ -10,49 +16,38 @@ import {
 import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
-    deletePerformance,
-    getAllPerformanceEntriesRecentFirst,
+    deletePerformanceAndWait,
     getPersonalBest,
-    getTrackedExerciseById,
-    getUserProfile,
-    savePerformance,
-    updatePerformance,
+    savePerformanceAndWait,
+    updatePerformanceAndWait,
 } from '@/lib/storage'
 import { UI } from '@/lib/translations'
 import type { PerformanceEntry } from '@/types'
 import { HistoryIcon } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 const MAX_SHOWN = 150
 
 export function HistoryPage() {
-    const [entries, setEntries] = useState<PerformanceEntry[]>(() =>
-        getAllPerformanceEntriesRecentFirst(),
+    const { data: allEntries = [] } = usePerformanceEntriesData()
+    const refreshAfterPerfChange = usePerformanceDataRefresh()
+    const { data: tracked = [] } = useTrackedExercisesData()
+    const { data: profile } = useUserProfileData()
+    const entries = useMemo(
+        () =>
+            allEntries
+                .filter((entry) => !entry.deletedAt)
+                .sort(
+                    (a, b) =>
+                        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+                ),
+        [allEntries],
     )
     const [editEntry, setEditEntry] = useState<PerformanceEntry | null>(null)
     const [addPerf, setAddPerf] = useState<{
         date: string
         trackedExerciseId: string
     } | null>(null)
-
-    const reload = useCallback(() => {
-        setEntries(getAllPerformanceEntriesRecentFirst())
-    }, [])
-
-    useEffect(() => {
-        reload()
-        const onSync = () => reload()
-        const onLocal = (e: Event) => {
-            const kind = (e as CustomEvent<{ kind?: string }>).detail?.kind
-            if (kind === 'performance') reload()
-        }
-        window.addEventListener('one-more:synced', onSync)
-        window.addEventListener('one-more:local-data-changed', onLocal)
-        return () => {
-            window.removeEventListener('one-more:synced', onSync)
-            window.removeEventListener('one-more:local-data-changed', onLocal)
-        }
-    }, [reload])
 
     const shown = useMemo(() => entries.slice(0, MAX_SHOWN), [entries])
     const shownByDayThenExercise = useMemo(
@@ -61,10 +56,13 @@ export function HistoryPage() {
     )
     const truncated = entries.length > MAX_SHOWN
 
-    const profile = getUserProfile()
     const entryInsights = useMemo(
-        () => buildEntryInsights(entries, profile),
-        [entries, profile.weightKg, profile.heightCm, profile.gender],
+        () =>
+            buildEntryInsights(
+                entries,
+                profile ?? { weightKg: 75, heightCm: 175, gender: 'male' },
+            ),
+        [entries, profile],
     )
 
     const editExercise = editEntry
@@ -103,11 +101,13 @@ export function HistoryPage() {
     const handleDeleteEntry = useCallback(
         (entry: PerformanceEntry) => {
             if (confirm(UI.confirmDeletePerf)) {
-                deletePerformance(entry.id)
-                reload()
+                void (async () => {
+                    await deletePerformanceAndWait(entry.id)
+                    await refreshAfterPerfChange()
+                })()
             }
         },
-        [reload],
+        [refreshAfterPerfChange],
     )
 
     return (
@@ -138,7 +138,9 @@ export function HistoryPage() {
                                 dayKey={dayKey}
                                 exercises={exercises}
                                 resolveExercise={resolveTrackedExercise}
-                                isTrackedActive={(id) => !!getTrackedExerciseById(id)}
+                                isTrackedActive={(id) =>
+                                    tracked.some((exercise) => exercise.id === id && !exercise.deletedAt)
+                                }
                                 entryInsights={entryInsights}
                                 onEditEntry={setEditEntry}
                                 onDeleteEntry={handleDeleteEntry}
@@ -166,9 +168,11 @@ export function HistoryPage() {
                     initialReps={editEntry.reps}
                     entryId={editEntry.id}
                     onUpdate={(entryId, weight, reps) => {
-                        updatePerformance(entryId, weight, reps)
-                        reload()
-                        setEditEntry(null)
+                        void (async () => {
+                            await updatePerformanceAndWait(entryId, weight, reps)
+                            await refreshAfterPerfChange()
+                            setEditEntry(null)
+                        })()
                     }}
                 />
             ) : addPerf && addExercise ? (
@@ -185,7 +189,6 @@ export function HistoryPage() {
                     initialWeight={addInitialWeightReps.weight}
                     initialReps={addInitialWeightReps.reps}
                     onSave={(weight, reps) => {
-                        const profile = getUserProfile()
                         const prevPB =
                             getPersonalBest(addPerf.trackedExerciseId) ?? null
                         const prevLeague = computeLeagueFromPB({
@@ -193,31 +196,36 @@ export function HistoryPage() {
                             personalBest: prevPB,
                             profile,
                         })
-                        savePerformance(
-                            addPerf.trackedExerciseId,
-                            weight,
-                            reps,
-                            { date: addPerf.date },
-                        )
-                        reload()
-                        const nextPB =
-                            getPersonalBest(addPerf.trackedExerciseId) ?? null
-                        const nextLeague = computeLeagueFromPB({
-                            exercise: addExercise,
-                            personalBest: nextPB,
-                            profile,
-                        })
-                        notifyPerfMilestones({
-                            exerciseName: addExercise.name,
-                            prevPB,
-                            nextPB,
-                            prevLeague,
-                            nextLeague,
-                            exerciseImageUrl:
-                                getExerciseImageUrl(addExercise.gifUrl) ||
-                                undefined,
-                        })
-                        setAddPerf(null)
+                        void (async () => {
+                            try {
+                                await savePerformanceAndWait(
+                                    addPerf.trackedExerciseId,
+                                    weight,
+                                    reps,
+                                    { date: addPerf.date },
+                                )
+                                const nextPB =
+                                    getPersonalBest(addPerf.trackedExerciseId) ?? null
+                                const nextLeague = computeLeagueFromPB({
+                                    exercise: addExercise,
+                                    personalBest: nextPB,
+                                    profile,
+                                })
+                                notifyPerfMilestones({
+                                    exerciseName: addExercise.name,
+                                    prevPB,
+                                    nextPB,
+                                    prevLeague,
+                                    nextLeague,
+                                    exerciseImageUrl:
+                                        getExerciseImageUrl(addExercise.gifUrl) ||
+                                        undefined,
+                                })
+                            } finally {
+                                void refreshAfterPerfChange()
+                                setAddPerf(null)
+                            }
+                        })()
                     }}
                 />
             ) : null}

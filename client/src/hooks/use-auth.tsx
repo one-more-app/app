@@ -9,8 +9,8 @@ import {
   writeStoredSession,
 } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
-import { syncNow } from "@/lib/sync";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useSWRConfig } from "swr";
 
 type AuthState = {
   status: "anonymous" | "authenticated";
@@ -42,16 +42,12 @@ function sessionToState(session: StoredAuthSession): AuthState {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { mutate } = useSWRConfig();
   const [state, setState] = useState<AuthState>(() => {
     const stored = readStoredSession();
     return stored ? sessionToState(stored) : { status: "anonymous", user: null, accessToken: null, refreshToken: null };
   });
   const [lastError, setLastError] = useState<string | null>(null);
-  const lastSyncedAccessTokenRef = useRef<string | null>(null);
-  const latestSyncSessionRef = useRef<AuthSession | null>(null);
-  const syncInFlightRef = useRef(false);
-  const pendingSyncRef = useRef(false);
-  const debounceTimerRef = useRef<number | null>(null);
 
   const applySession = useCallback((session: AuthSession) => {
     const stored: StoredAuthSession = {
@@ -132,83 +128,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Auto-sync: une fois qu'on a une session valide (auto-connexion ou login),
-    // on push+pull pour récupérer les données manquantes.
     if (state.status !== "authenticated") return;
-    if (!state.accessToken || !state.refreshToken || !state.user) return;
-    if (lastSyncedAccessTokenRef.current === state.accessToken) return;
-
-    lastSyncedAccessTokenRef.current = state.accessToken;
-    latestSyncSessionRef.current = {
-      accessToken: state.accessToken,
-      refreshToken: state.refreshToken,
-      user: state.user,
-    };
-    void syncNow({
-      accessToken: state.accessToken,
-      refreshToken: state.refreshToken,
-      user: state.user,
-    }).catch((e) => {
-      setLastError(normalizeError(e));
-    });
-  }, [state.status, state.accessToken, state.refreshToken, state.user]);
-
-  useEffect(() => {
-    // Maintient à jour la session courante utilisée par l'auto-sync au fil des actions.
-    if (state.status !== "authenticated") {
-      latestSyncSessionRef.current = null;
-      return;
-    }
-    if (!state.accessToken || !state.refreshToken || !state.user) return;
-    latestSyncSessionRef.current = {
-      accessToken: state.accessToken,
-      refreshToken: state.refreshToken,
-      user: state.user,
-    };
-  }, [state.status, state.accessToken, state.refreshToken, state.user]);
-
-  useEffect(() => {
-    const runSync = async () => {
-      const session = latestSyncSessionRef.current;
-      if (!session) return;
-
-      if (syncInFlightRef.current) {
-        pendingSyncRef.current = true;
-        return;
-      }
-
-      syncInFlightRef.current = true;
-      try {
-        await syncNow(session);
-      } catch (e) {
-        setLastError(normalizeError(e));
-      } finally {
-        syncInFlightRef.current = false;
-        if (pendingSyncRef.current) {
-          pendingSyncRef.current = false;
-          void runSync();
-        }
-      }
-    };
-
-    const onLocalDataChanged = () => {
-      if (debounceTimerRef.current != null) {
-        window.clearTimeout(debounceTimerRef.current);
-      }
-      debounceTimerRef.current = window.setTimeout(() => {
-        debounceTimerRef.current = null;
-        void runSync();
-      }, 800);
-    };
-
-    window.addEventListener("one-more:local-data-changed", onLocalDataChanged);
-    return () => {
-      window.removeEventListener("one-more:local-data-changed", onLocalDataChanged);
-      if (debounceTimerRef.current != null) {
-        window.clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, []);
+    void Promise.all([
+      mutate("tracked-exercises"),
+      mutate("performance-entries"),
+      mutate("profile"),
+      mutate("home-exercises"),
+    ]).catch((e) => setLastError(normalizeError(e)));
+  }, [state.status, state.accessToken]);
 
   const value = useMemo<AuthContextValue>(() => {
     return {

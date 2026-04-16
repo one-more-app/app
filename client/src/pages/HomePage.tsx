@@ -3,7 +3,9 @@ import { ExerciseSearchFilters } from '@/components/ExerciseSearchFilters'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
+import { usePerformanceDataRefresh } from '@/hooks/use-api-data'
 import { useHomeData } from '@/hooks/use-home-data'
+import { useUserProfileData } from '@/hooks/use-api-data'
 import {
     buildEquipmentByParent,
     exerciseMatchesEquipmentSelection,
@@ -24,8 +26,7 @@ import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notificati
 import {
     getLatestPerformanceCreatedAt,
     getPersonalBest,
-    getUserProfile,
-    savePerformance,
+    savePerformanceAndWait,
 } from '@/lib/storage'
 import { getLeagueInfo } from '@/lib/strength-standards'
 import { getGroupedEquipmentList, UI } from '@/lib/translations'
@@ -34,7 +35,9 @@ import { useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 function HomePage() {
-    const { exercises, hasLoaded, refresh } = useHomeData()
+    const { exercises, hasLoaded } = useHomeData()
+    const refreshAfterPerfChange = usePerformanceDataRefresh()
+    const { data: profile } = useUserProfileData()
     const navigate = useNavigate()
 
     const {
@@ -164,9 +167,8 @@ function HomePage() {
                     <>
                         <ul className="space-y-3">
                             {filteredExercises.map((ex) => {
-                                const profile = getUserProfile()
                                 const leagueInfo =
-                                    !ex.isCustom && ex.personalBest
+                                    !ex.isCustom && ex.personalBest && profile
                                         ? getLeagueInfo({
                                             weight: ex.personalBest.weight,
                                             reps: ex.personalBest.reps,
@@ -190,27 +192,34 @@ function HomePage() {
                                             onSavePerf={(weight, reps) => {
                                                 const prevPB = ex.personalBest ?? null
                                                 const prevLeague = leagueInfo ?? null
-                                                savePerformance(ex.id, weight, reps)
-                                                const nextPB = getPersonalBest(ex.id) ?? null
-                                                const profile = getUserProfile()
-                                                const nextLeague = computeLeagueFromPB({
-                                                    exercise: ex,
-                                                    personalBest: nextPB,
-                                                    profile,
-                                                })
+                                                void (async () => {
+                                                    try {
+                                                        await savePerformanceAndWait(ex.id, weight, reps)
+                                                        const nextPB = getPersonalBest(ex.id) ?? null
+                                                        const nextLeague =
+                                                            profile
+                                                                ? computeLeagueFromPB({
+                                                                    exercise: ex,
+                                                                    personalBest: nextPB,
+                                                                    profile,
+                                                                })
+                                                                : null
 
-                                                notifyPerfMilestones({
-                                                    exerciseName: ex.name,
-                                                    prevPB,
-                                                    nextPB,
-                                                    prevLeague,
-                                                    nextLeague,
-                                                    exerciseImageUrl:
-                                                        getExerciseImageUrl(
-                                                            ex.gifUrl,
-                                                        ) || undefined,
-                                                })
-                                                refresh()
+                                                        notifyPerfMilestones({
+                                                            exerciseName: ex.name,
+                                                            prevPB,
+                                                            nextPB,
+                                                            prevLeague,
+                                                            nextLeague,
+                                                            exerciseImageUrl:
+                                                                getExerciseImageUrl(
+                                                                    ex.gifUrl,
+                                                                ) || undefined,
+                                                        })
+                                                    } finally {
+                                                        void refreshAfterPerfChange()
+                                                    }
+                                                })()
                                             }}
                                         />
                                     </li>

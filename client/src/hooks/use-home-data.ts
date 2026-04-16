@@ -1,59 +1,41 @@
 import {
-  getLastPerformance,
-  getPersonalBest,
-  getTrackedExercises,
-  removeTrackedExercise,
+  removeTrackedExerciseAndWait,
 } from "@/lib/storage";
+import {
+  useHomeExercisesData,
+  useTrackedDataRefresh,
+} from "@/hooks/use-api-data";
 import type { PerformanceEntry, TrackedExercise } from "@/types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 
 export interface ExerciseWithPerf extends TrackedExercise {
-  lastPerf: PerformanceEntry | undefined;
-  personalBest: PerformanceEntry | undefined;
+  lastPerf: PerformanceEntry | null;
+  personalBest: PerformanceEntry | null;
 }
 
 export function useHomeData() {
-  const [exercisesWithPerf, setExercisesWithPerf] = useState<
-    ExerciseWithPerf[]
-  >([]);
-  const [hasLoaded, setHasLoaded] = useState(false);
-
-  const load = useCallback(() => {
-    const tracked = getTrackedExercises();
-    const withPerf: ExerciseWithPerf[] = tracked.map((ex) => ({
-      ...ex,
-      lastPerf: getLastPerformance(ex.id),
-      personalBest: getPersonalBest(ex.id),
-    }));
-    setExercisesWithPerf(withPerf);
-    setHasLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    // Diffère vers une micro-tâche pour éviter certains warnings lint
-    // (setState déclenché depuis un effet).
-    void Promise.resolve().then(load);
-  }, [load]);
-
-  useEffect(() => {
-    // Recharger après une synchro (push + pull) qui modifie localStorage.
-    const onSynced = () => load();
-    window.addEventListener("one-more:synced", onSynced);
-    return () => window.removeEventListener("one-more:synced", onSynced);
-  }, [load]);
+  const {
+    data: exercises = [],
+    isLoading: isLoadingHome,
+  } = useHomeExercisesData();
+  const refreshAfterTrackedChange = useTrackedDataRefresh();
 
   const removeExercise = useCallback(
-    (id: string) => {
-      removeTrackedExercise(id);
-      load();
+    async (id: string) => {
+      await removeTrackedExerciseAndWait(id);
+      await refreshAfterTrackedChange();
     },
-    [load],
+    [refreshAfterTrackedChange],
   );
 
+  const refresh = useCallback(() => {
+    void refreshAfterTrackedChange();
+  }, [refreshAfterTrackedChange]);
+
   return {
-    exercises: exercisesWithPerf,
-    hasLoaded,
+    exercises,
+    hasLoaded: !isLoadingHome,
     removeExercise,
-    refresh: load,
+    refresh,
   };
 }

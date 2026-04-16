@@ -292,9 +292,15 @@ export const UI = {
   accountSyncDescription:
     "Créez un compte pour sauvegarder et synchroniser vos données entre appareils.",
   backToSettings: "Retour",
+  connectOrCreateAccount: "Connectez-vous ou créez un compte",
   createAccount: "Créer un compte",
   login: "Se connecter",
   email: "Email",
+  firstNameTitle: "Quel est ton prénom ?",
+  firstName: "Prénom",
+  lastNameTitle: "Quel est ton nom de famille ?",
+  lastName: "Nom",
+  passwordTitle: "Crée ton mot de passe",
   password: "Mot de passe",
   confirmPassword: "Confirmer le mot de passe",
   passwordHint: "Minimum 8 caractères.",
@@ -304,8 +310,7 @@ export const UI = {
   continueWith: "Ou continuer avec",
   continueWithGoogle: "Continuer avec Google",
   continueWithApple: "Continuer avec Apple",
-  oauthComingSoon:
-    "Connexion via Google/Apple (nécessite la configuration OAuth).",
+  oauthComingSoon: "Connexion via Google/Apple",
   connectedAs: "Connecté en tant que",
   notConnected: "Non connecté",
   signIn: "Se connecter",
@@ -322,9 +327,14 @@ export const UI = {
   onboardingFirstExerciseTitle: "Ton premier exercice",
   onboardingFirstExerciseDescription:
     "Choisis un exercice, enregistre une première performance, puis découvre les repères de l’app.",
+  onboardingFirstExerciseTourAddTitle: "Ajoute ce premier exercice",
+  onboardingFirstExerciseTourAddContent:
+    "Appuie sur Ajouter pour ouvrir la feuille, enregistrer ta première perf, puis accéder à la fiche détaillée.",
   popularExercise: "Populaire",
   onboardingFirstExerciseSearch: "Rechercher…",
   onboardingSkipFirstExercise: "Passer pour l’instant",
+  onboardingCreateAccountDescription:
+    "Crée ton compte maintenant pour sauvegarder et envoyer les données de ton onboarding.",
   /** Tour guidé (react-joyride) sur la fiche après la première perf */
   exerciseOnboardingTourOverviewTitle: "Ta fiche exercice",
   exerciseOnboardingTourOverviewContent:

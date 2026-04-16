@@ -196,7 +196,7 @@ export function HorizontalWheelPicker({
                     <div className="relative min-w-0 flex-1 font-one-more">
                         <div
                             ref={scrollRef}
-                            className="flex h-14 w-full overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                            className="flex h-14 w-full overflow-x-auto overflow-y-hidden [scrollbar-width:none] [mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)] [&::-webkit-scrollbar]:hidden"
                             style={{
                                 scrollSnapType: 'x mandatory',
                                 WebkitOverflowScrolling: 'touch',
@@ -237,8 +237,6 @@ export function HorizontalWheelPicker({
                             onKeyDown={handleInputKeyDown}
                             aria-label={label}
                         />
-                        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 h-14 w-30 bg-gradient-to-r from-background to-transparent" />
-                        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 h-14 w-30 bg-gradient-to-l from-background to-transparent" />
                     </div>
                     <Button
                         type="button"

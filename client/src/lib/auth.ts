@@ -82,6 +82,15 @@ export async function loginWithEmail(params: {
   });
 }
 
+export async function identifyEmail(params: {
+  email: string;
+}): Promise<{ exists: boolean }> {
+  return await apiFetch<{ exists: boolean }>("/auth/identify", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
 export async function refreshSession(params: {
   refreshToken: string;
   deviceId?: string;

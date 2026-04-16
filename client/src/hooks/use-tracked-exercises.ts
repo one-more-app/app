@@ -1,43 +1,48 @@
 import {
-  addTrackedExercise as addStorage,
-  getTrackedExercises,
-  removeTrackedExercise as removeStorage,
+  addTrackedExerciseAndWait as addStorageAndWait,
+  removeTrackedExerciseAndWait as removeStorageAndWait,
 } from "@/lib/storage";
+import {
+  useTrackedDataRefresh,
+  useTrackedExercisesData,
+} from "@/hooks/use-api-data";
 import type { TrackedExercise } from "@/types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useMemo } from "react";
 
 export function useTrackedExercises() {
-  const [exercises, setExercises] = useState<TrackedExercise[]>([]);
-
-  const load = useCallback(() => {
-    setExercises(getTrackedExercises());
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { data = [] } = useTrackedExercisesData();
+  const refreshAfterTrackedChange = useTrackedDataRefresh();
+  const exercises = useMemo(
+    () => data.filter((exercise) => !exercise.deletedAt),
+    [data],
+  );
 
   const addExercise = useCallback(
-    (exercise: Omit<TrackedExercise, "id">) => {
+    async (exercise: Omit<TrackedExercise, "id">) => {
       const withId: TrackedExercise = {
         ...exercise,
         id: exercise.isCustom
           ? exercise.exerciseId
           : `api-${exercise.exerciseId}`,
       };
-      addStorage(withId);
-      load();
+      await addStorageAndWait(withId);
+      await refreshAfterTrackedChange();
     },
-    [load],
+    [refreshAfterTrackedChange],
   );
 
   const removeExercise = useCallback(
-    (id: string) => {
-      removeStorage(id);
-      load();
+    async (id: string) => {
+      await removeStorageAndWait(id);
+      await refreshAfterTrackedChange();
     },
-    [load],
+    [refreshAfterTrackedChange],
   );
 
-  return { exercises, addExercise, removeExercise, refresh: load };
+  return {
+    exercises,
+    addExercise,
+    removeExercise,
+    refresh: () => void refreshAfterTrackedChange(),
+  };
 }

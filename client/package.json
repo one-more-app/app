@@ -36,6 +36,7 @@
     "@capacitor/status-bar": "^8.0.1",
     "@capawesome/capacitor-app-review": "^8.0.1",
     "@ncdai/react-wheel-picker": "^1.2.0",
+    "@radix-ui/react-progress": "^1.1.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "healthicons-react": "^3.5.0",
@@ -50,6 +51,7 @@
     "react-router-dom": "^7.13.0",
     "recharts": "^2.15.4",
     "sonner": "^2.0.7",
+    "swr": "^2.4.1",
     "tailwind-merge": "^3.4.1",
     "vaul": "^1.1.2"
   },

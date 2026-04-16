@@ -16,9 +16,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { getUserProfile, setUserProfile } from '@/lib/storage'
+import { useProfileDataRefresh, useUserProfileData } from '@/hooks/use-api-data'
+import { getUserProfile, setUserProfileAndWait } from '@/lib/storage'
 import { UI } from '@/lib/translations'
-import { useState } from 'react'
+import type { UserProfile } from '@/types'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 
@@ -29,11 +31,20 @@ export function ProfileLeagueSettingsDialog({
 }: {
     open: boolean
     onOpenChange: (open: boolean) => void
-    onSaved?: () => void
+    onSaved?: (profile: UserProfile) => void
 }) {
+    const { data: remoteProfile } = useUserProfileData()
+    const refreshProfile = useProfileDataRefresh()
     const [weightKg, setWeightKg] = useState(() => String(getUserProfile().weightKg))
     const [heightCm, setHeightCm] = useState(() => String(getUserProfile().heightCm))
     const [gender, setGender] = useState<'male' | 'female'>(() => getUserProfile().gender)
+
+    useEffect(() => {
+        if (!open || !remoteProfile) return
+        setWeightKg(String(remoteProfile.weightKg))
+        setHeightCm(String(remoteProfile.heightCm))
+        setGender(remoteProfile.gender)
+    }, [open, remoteProfile])
 
     const handleSave = () => {
         const w = parseFloat(weightKg)
@@ -42,10 +53,14 @@ export function ProfileLeagueSettingsDialog({
             toast.error(UI.statsProfileInvalid)
             return
         }
-        setUserProfile({ weightKg: w, heightCm: h, gender })
-        toast.success(UI.statsProfileSaved)
-        onSaved?.()
-        onOpenChange(false)
+        const nextProfile: UserProfile = { weightKg: w, heightCm: h, gender }
+        void (async () => {
+            await setUserProfileAndWait(nextProfile)
+            await refreshProfile()
+            toast.success(UI.statsProfileSaved)
+            onSaved?.(nextProfile)
+            onOpenChange(false)
+        })()
     }
 
     return (

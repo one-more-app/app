@@ -1,7 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
 import { decodeJwt, importPKCS8, SignJWT } from 'jose';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { Repository } from 'typeorm';
+import {
+  OAuthAccountEntity,
+  OAuthProvider,
+} from './entities/oauth-account.entity.js';
+import { UserProfileEntity } from '../profile/user-profile.entity.js';
+import { UserEntity } from './entities/user.entity.js';
 import { AuthService } from './auth.service.js';
 
 type Provider = 'google' | 'apple';
@@ -36,7 +43,12 @@ async function postForm(url: string, data: Record<string, string>) {
 export class OAuthService {
   constructor(
     private config: ConfigService,
-    private prisma: PrismaService,
+    @InjectRepository(OAuthAccountEntity)
+    private readonly oauthAccountsRepo: Repository<OAuthAccountEntity>,
+    @InjectRepository(UserEntity)
+    private readonly usersRepo: Repository<UserEntity>,
+    @InjectRepository(UserProfileEntity)
+    private readonly profilesRepo: Repository<UserProfileEntity>,
     private auth: AuthService,
   ) {}
 
@@ -79,10 +91,11 @@ export class OAuthService {
     params: { code: string; redirectUri: string; codeVerifier: string; deviceId?: string },
   ) {
     const { idToken, providerUserId, email } = await this.exchangeCode(provider, params);
+    void idToken;
 
-    const linked = await this.prisma.oAuthAccount.findUnique({
-      where: { provider_providerUserId: { provider, providerUserId } } as any,
-      include: { user: { select: { id: true, email: true } } },
+    const linked = await this.oauthAccountsRepo.findOne({
+      where: { provider: provider as OAuthProvider, providerUserId },
+      relations: { user: true },
     });
 
     let userId: string;
@@ -94,9 +107,9 @@ export class OAuthService {
     } else {
       const normalizedEmail = email ? email.trim().toLowerCase() : null;
       const existingByEmail = normalizedEmail
-        ? await this.prisma.user.findUnique({
+        ? await this.usersRepo.findOne({
             where: { email: normalizedEmail },
-            select: { id: true, email: true },
+            select: ['id', 'email'],
           })
         : null;
 
@@ -104,24 +117,25 @@ export class OAuthService {
         userId = existingByEmail.id;
         userEmail = existingByEmail.email;
       } else {
-        const created = await this.prisma.user.create({
-          data: {
-            email: normalizedEmail,
-            profile: { create: { weightKg: 75, heightCm: 175, gender: 'male' } },
-          },
-          select: { id: true, email: true },
+        const created = await this.usersRepo.save({
+          email: normalizedEmail,
+          password: null,
+        });
+        await this.profilesRepo.save({
+          userId: created.id,
+          weightKg: 75,
+          heightCm: 175,
+          gender: 'male',
         });
         userId = created.id;
         userEmail = created.email;
       }
 
-      await this.prisma.oAuthAccount.create({
-        data: {
-          userId,
-          provider,
-          providerUserId,
-          email: email ? email.trim().toLowerCase() : null,
-        },
+      await this.oauthAccountsRepo.save({
+        userId,
+        provider: provider as OAuthProvider,
+        providerUserId,
+        email: email ? email.trim().toLowerCase() : null,
       });
     }
 

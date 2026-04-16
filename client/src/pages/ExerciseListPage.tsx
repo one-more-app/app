@@ -3,7 +3,7 @@ import { ExerciseSearchFilters } from '@/components/ExerciseSearchFilters'
 import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardHeader } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import {
     Dialog,
@@ -27,11 +27,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import {
-    localEquipmentList as localEquipmentRaw,
-    localTargets,
-    popularExercises,
-} from '@/data/popular-exercises'
+import { fetchExercisesCatalog, fetchExercisesMeta } from '@/lib/data-api'
 import { exerciseMatchesEquipmentSelection } from '@/lib/equipment-filter'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
@@ -39,34 +35,37 @@ import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
 import {
     CARDIO_EQUIPMENT,
     getExerciseImageUrl,
-    sortExercisesByPopularity,
 } from '@/lib/exercisedb'
 import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
 import { exerciseMatchesMuscleSelection } from '@/lib/muscle-filter'
-import { getLatestPerformanceCreatedAt, savePerformance } from '@/lib/storage'
-import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import {
-    getGroupedEquipmentList,
-    translateBodyPart,
-    translateTarget,
-    UI,
-} from '@/lib/translations'
+    addTrackedExerciseAndWait,
+    getLatestPerformanceCreatedAt,
+    isOnboardingFirstExercisePending,
+    savePerformanceAndWait,
+} from '@/lib/storage'
+import { useTheme } from '@/hooks/use-theme'
+import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
+import { getGroupedEquipmentList, translateBodyPart, translateTarget, UI } from '@/lib/translations'
 import type { ExerciseDBExercise } from '@/types'
 import { ChevronLeft, ChevronRight, Dumbbell, Plus } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { EVENTS, Joyride, type EventData, type Step } from 'react-joyride'
+import useSWR from 'swr'
+import { useSWRConfig } from 'swr'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 export function ExerciseListPage() {
     const navigate = useNavigate()
+    const { resolvedTheme } = useTheme()
+    const [searchParams, setSearchParams] = useSearchParams()
+    const { mutate } = useSWRConfig()
     const { exercises: tracked, addExercise } = useTrackedExercises()
-    const [apiExercises, setApiExercises] = useState<ExerciseDBExercise[]>([])
-    const [totalFilteredCount, setTotalFilteredCount] = useState(0)
-    const targets = localTargets
+    const [targets, setTargets] = useState<string[]>([])
+    const [rawEquipment, setRawEquipment] = useState<string[]>([])
     const equipmentList = getGroupedEquipmentList(
-        localEquipmentRaw.filter((eq) => !CARDIO_EQUIPMENT.has(eq))
+        rawEquipment.filter((eq) => !CARDIO_EQUIPMENT.has(eq))
     )
-    const [error, setError] = useState<string | null>(null)
-
     const {
         searchInput,
         searchQuery,
@@ -81,14 +80,30 @@ export function ExerciseListPage() {
 
     const [customOpen, setCustomOpen] = useState(false)
     const [customName, setCustomName] = useState('')
-    const [customTarget, setCustomTarget] = useState(
-        () => targets[0] ?? ('chest' as string),
-    )
+    const [customTarget, setCustomTarget] = useState('chest' as string)
     const [brokenImageIds, setBrokenImageIds] = useState<Set<string>>(new Set())
     const [addWithPerfExercise, setAddWithPerfExercise] = useState<ExerciseDBExercise | null>(null)
     const [selectedExercise, setSelectedExercise] = useState<ExerciseDBExercise | null>(null)
     const [perfWeight, setPerfWeight] = useState(0)
     const [perfReps, setPerfReps] = useState(1)
+    const firstExerciseTourActive =
+        searchParams.get('tour') === 'onboarding-first' &&
+        isOnboardingFirstExercisePending()
+
+    const stopFirstExerciseTour = useCallback(() => {
+        const next = new URLSearchParams(searchParams)
+        next.delete('tour')
+        setSearchParams(next, { replace: true })
+    }, [searchParams, setSearchParams])
+
+    const handleFirstExerciseJoyrideEvent = useCallback(
+        (data: EventData) => {
+            if (data.type === EVENTS.TOUR_END) {
+                stopFirstExerciseTour()
+            }
+        },
+        [stopFirstExerciseTour],
+    )
 
     const trackedIds = new Set(
         tracked.map((e) => (e.isCustom ? e.exerciseId : `api-${e.exerciseId}`))
@@ -99,48 +114,62 @@ export function ExerciseListPage() {
         void Promise.resolve().then(() => setBrokenImageIds(new Set()))
     }, [muscleFilter, equipmentFilter, searchQuery])
 
-    // Données locales : filtre et pagination sur popularExercises
+    const { data: catalogData, error: catalogError } = useSWR(
+        ['exercise-catalog', searchQuery],
+        async () => {
+            const apiQuery = searchQuery.trim()
+                ? translateSearchQueryToEnglish(searchQuery.trim()).toLowerCase()
+                : ''
+            const searchRaw = searchQuery.trim().toLowerCase()
+            const search = apiQuery || searchRaw
+            return await fetchExercisesCatalog({
+                search,
+                limit: 1000,
+                offset: 0,
+            })
+        },
+    )
+
+    const { data: metaData } = useSWR('exercise-meta', fetchExercisesMeta)
+
     useEffect(() => {
-        void Promise.resolve().then(() => setError(null))
-        const offset = page * 25
-        const apiQuery = searchQuery.trim()
-            ? translateSearchQueryToEnglish(searchQuery.trim()).toLowerCase()
-            : ''
-        const searchRaw = searchQuery.trim().toLowerCase()
-        let list = popularExercises.filter(
+        if (!metaData) return
+        setTargets(metaData.targets.filter((t) => t !== 'cardio'))
+        setRawEquipment(metaData.equipment)
+    }, [metaData])
+
+    const sortedExercises = useMemo(() => {
+        const listBase = catalogData?.items ?? []
+        let list = listBase.filter(
             (ex) =>
                 ex.bodyPart !== 'cardio' &&
-                !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
+                !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment)),
         )
-        list = list.filter((ex) =>
-            exerciseMatchesMuscleSelection(ex, muscleFilter),
-        )
+        list = list.filter((ex) => exerciseMatchesMuscleSelection(ex, muscleFilter))
         list = list.filter((ex) =>
             exerciseMatchesEquipmentSelection(ex.equipment, equipmentFilter),
         )
-        if (apiQuery || searchRaw) {
-            list = list.filter((ex) => {
-                const matchEn = apiQuery && ex.name.toLowerCase().includes(apiQuery)
-                const exFr = (ex as { nameFr?: string }).nameFr
-                const matchFr = searchRaw && exFr?.toLowerCase().includes(searchRaw)
-                return matchEn || matchFr || (searchRaw && ex.name.toLowerCase().includes(searchRaw))
-            })
-        }
-        const sorted = [...sortExercisesByPopularity(list)].sort((a, b) => {
+        return [...list].sort((a, b) => {
             const ta = getLatestPerformanceCreatedAt(`api-${a.id}`)
             const tb = getLatestPerformanceCreatedAt(`api-${b.id}`)
             if (ta !== null && tb !== null) return tb - ta
             if (ta !== null) return -1
             if (tb !== null) return 1
-            return 0
+            return a.name.localeCompare(b.name)
         })
-        const nextTotalFilteredCount = sorted.length
-        const nextApiExercises = sorted.slice(offset, offset + 25)
-        void Promise.resolve().then(() => {
-            setTotalFilteredCount(nextTotalFilteredCount)
-            setApiExercises(nextApiExercises)
-        })
-    }, [muscleFilter, equipmentFilter, page, searchQuery])
+    }, [catalogData?.items, equipmentFilter, muscleFilter])
+
+    const totalFilteredCount = sortedExercises.length
+    const apiExercises = useMemo(() => {
+        const offset = page * 25
+        return sortedExercises.slice(offset, offset + 25)
+    }, [page, sortedExercises])
+
+    useEffect(() => {
+        if (targets.length > 0 && !targets.includes(customTarget)) {
+            setCustomTarget(targets[0]!)
+        }
+    }, [targets, customTarget])
 
     const filteredExercises = apiExercises
         .filter(
@@ -154,6 +183,118 @@ export function ExerciseListPage() {
                 !brokenImageIds.has(ex.id)
         )
 
+    const firstExerciseOnboardingSteps = useMemo<Step[]>(() => {
+        const steps: Step[] = [
+            {
+                target: '[data-tour="first-exercise-filters"]',
+                title: UI.onboardingFirstExerciseTitle,
+                content: UI.onboardingFirstExerciseDescription,
+                placement: 'bottom',
+            },
+        ]
+        if (filteredExercises.length > 0) {
+            steps.push({
+                target: '[data-tour="first-exercise-add"]',
+                title: UI.onboardingFirstExerciseTourAddTitle,
+                content: UI.onboardingFirstExerciseTourAddContent,
+                placement: 'left',
+            })
+        }
+        return steps
+    }, [filteredExercises.length])
+
+    const firstExerciseJoyrideOptions = useMemo(
+        () => ({
+            arrowColor: 'var(--card)',
+            backgroundColor: 'var(--card)',
+            textColor: 'var(--card-foreground)',
+            primaryColor: 'var(--accent)',
+            overlayColor:
+                resolvedTheme === 'dark'
+                    ? 'oklch(0.04 0 0 / 0.82)'
+                    : 'oklch(0.2 0 0 / 0.5)',
+            spotlightPadding: 10,
+            spotlightRadius: 14,
+            zIndex: 120,
+            showProgress: true,
+            skipBeacon: true,
+            buttons: ['back', 'close', 'primary', 'skip'] as const,
+        }),
+        [resolvedTheme],
+    )
+
+    const firstExerciseJoyrideStyles = useMemo(
+        () => ({
+            tooltip: {
+                backgroundColor: 'var(--card)',
+                color: 'var(--card-foreground)',
+                borderRadius: 'var(--radius-xl)',
+                border: '1px solid var(--border)',
+                boxShadow:
+                    resolvedTheme === 'dark'
+                        ? '0 16px 48px oklch(0 0 0 / 0.55), 0 0 0 1px oklch(1 0 0 / 0.06)'
+                        : '0 16px 40px oklch(0 0 0 / 0.14), 0 0 0 1px oklch(0 0 0 / 0.05)',
+                fontFamily: 'var(--font-sans)',
+                padding: '1rem 1rem 0.75rem',
+            },
+            tooltipContainer: {
+                textAlign: 'left' as const,
+            },
+            tooltipTitle: {
+                fontFamily: 'var(--font-one-more)',
+                fontStyle: 'italic',
+                textTransform: 'uppercase' as const,
+                letterSpacing: '0.04em',
+                fontSize: '0.9375rem',
+                color: 'var(--card-foreground)',
+                marginBottom: '0.35rem',
+            },
+            tooltipContent: {
+                color: 'var(--muted-foreground)',
+                fontSize: '0.875rem',
+                lineHeight: 1.55,
+                padding: '0.25rem 0 0',
+            },
+            tooltipFooter: {
+                marginTop: '0.75rem',
+                paddingTop: '0.75rem',
+                borderTop: '1px solid var(--border)',
+                gap: '0.5rem',
+            },
+            buttonPrimary: {
+                backgroundColor: 'var(--accent)',
+                color: 'var(--accent-foreground)',
+                borderRadius: 'var(--radius-md)',
+                fontFamily: 'var(--font-one-more)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                textTransform: 'uppercase' as const,
+                letterSpacing: '0.06em',
+                padding: '0.5rem 1rem',
+                outline: 'none',
+            },
+            buttonBack: {
+                color: 'var(--muted-foreground)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.8125rem',
+                padding: '0.5rem 0.75rem',
+                marginRight: 'auto',
+            },
+            buttonSkip: {
+                color: 'var(--muted-foreground)',
+                fontSize: '0.8125rem',
+                padding: '0.5rem 0.5rem',
+            },
+            buttonClose: {
+                color: 'var(--muted-foreground)',
+                height: '2rem',
+                width: '2rem',
+                borderRadius: 'var(--radius-md)',
+            },
+        }),
+        [resolvedTheme],
+    )
+
     const handleImageError = (exId: string) => {
         setBrokenImageIds((prev) => new Set(prev).add(exId))
     }
@@ -165,23 +306,40 @@ export function ExerciseListPage() {
         setPerfReps(1)
     }
 
-    const handleAddWithPerfSubmit = () => {
+    const handleAddWithPerfSubmit = async () => {
         if (!addWithPerfExercise || perfReps <= 0) return
         const ex = addWithPerfExercise
         const trackedId = `api-${ex.id}`
-        addExercise({
-            exerciseId: ex.id,
-            name: ex.name,
-            originalName: ex.name,
-            bodyPart: ex.bodyPart,
-            target: ex.target,
-            equipment: ex.equipment,
-            gifUrl: ex.gifUrl,
-            isCustom: false,
-        })
-        savePerformance(trackedId, perfWeight, perfReps)
-        setAddWithPerfExercise(null)
-        navigate(`/exercise/${trackedId}`)
+        try {
+            await addTrackedExerciseAndWait({
+                id: trackedId,
+                exerciseId: ex.id,
+                name: ex.name,
+                originalName: ex.name,
+                bodyPart: ex.bodyPart,
+                target: ex.target,
+                equipment: ex.equipment,
+                gifUrl: ex.gifUrl,
+                isCustom: false,
+            })
+            await savePerformanceAndWait(trackedId, perfWeight, perfReps)
+            await Promise.all([
+                mutate('tracked-exercises'),
+                mutate('performance-entries'),
+                mutate('home-exercises'),
+            ])
+            setAddWithPerfExercise(null)
+            const shouldLaunchExerciseTour =
+                firstExerciseTourActive && isOnboardingFirstExercisePending()
+            navigate(
+                shouldLaunchExerciseTour
+                    ? `/exercise/${trackedId}?tour=onboarding&from=first-exercise`
+                    : `/exercise/${trackedId}`,
+            )
+        } catch {
+            // Si la création remote échoue, on garde le drawer ouvert et on affiche l'erreur.
+            // L'utilisateur peut corriger/retry sans perdre ses valeurs.
+        }
     }
 
     function getWeightLabel(ex: ExerciseDBExercise): string {
@@ -198,16 +356,18 @@ export function ExerciseListPage() {
         if (!customName.trim()) return
         const id = `custom-${crypto.randomUUID()}`
         const bodyPart = inferBodyPartFromTarget(customTarget)
-        addExercise({
-            exerciseId: id,
-            name: customName.trim(),
-            originalName: customName.trim(),
-            bodyPart,
-            target: customTarget,
-            isCustom: true,
-        })
-        setCustomName('')
-        setCustomOpen(false)
+        void (async () => {
+            await addExercise({
+                exerciseId: id,
+                name: customName.trim(),
+                originalName: customName.trim(),
+                bodyPart,
+                target: customTarget,
+                isCustom: true,
+            })
+            setCustomName('')
+            setCustomOpen(false)
+        })()
     }
 
     return (
@@ -215,78 +375,80 @@ export function ExerciseListPage() {
             <BackHeader compact title={UI.chooseExercises} />
 
             <main className="mx-auto max-w-2xl px-4 py-4">
-                <ExerciseSearchFilters
-                    searchInput={searchInput}
-                    onSearchChange={handleSearchChange}
-                    muscleFilter={muscleFilter}
-                    onMuscleFilterChange={handleMuscleFilterChange}
-                    targets={targets}
-                    equipmentFilter={equipmentFilter}
-                    onEquipmentFilterChange={handleEquipmentChange}
-                    equipmentList={equipmentList}
-                    availableRawEquipment={localEquipmentRaw.filter((eq) => !CARDIO_EQUIPMENT.has(eq))}
-                    extraSlot={
-                        <Dialog open={customOpen} onOpenChange={setCustomOpen}>
-                            <DialogTrigger asChild>
-                                <Button size="sm" className="w-full">
-                                    <Plus className="mr-1 size-4" />
-                                    {UI.custom}
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>{UI.newCustomExercise}</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-4 py-4">
-                                    <div className="flex flex-col gap-2">
-                                        <Label htmlFor="name">{UI.name}</Label>
-                                        <Input
-                                            id="name"
-                                            value={customName}
-                                            onChange={(e) => setCustomName(e.target.value)}
-                                            placeholder={UI.placeholderExerciseName}
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <Label>{UI.muscleGroup}</Label>
-                                        <Select
-                                            value={customTarget}
-                                            onValueChange={setCustomTarget}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {targets.map((t) => (
-                                                    <SelectItem key={t} value={t}>
-                                                        {translateTarget(t)}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <Button
-                                        onClick={handleAddCustom}
-                                        disabled={!customName.trim()}
-                                        className="w-full"
-                                    >
-                                        {UI.add}
+                <div data-tour="first-exercise-filters">
+                    <ExerciseSearchFilters
+                        searchInput={searchInput}
+                        onSearchChange={handleSearchChange}
+                        muscleFilter={muscleFilter}
+                        onMuscleFilterChange={handleMuscleFilterChange}
+                        targets={targets}
+                        equipmentFilter={equipmentFilter}
+                        onEquipmentFilterChange={handleEquipmentChange}
+                        equipmentList={equipmentList}
+                        availableRawEquipment={rawEquipment.filter((eq) => !CARDIO_EQUIPMENT.has(eq))}
+                        extraSlot={
+                            <Dialog open={customOpen} onOpenChange={setCustomOpen}>
+                                <DialogTrigger asChild>
+                                    <Button size="sm" className="w-full">
+                                        <Plus className="mr-1 size-4" />
+                                        {UI.custom}
                                     </Button>
-                                </div>
-                            </DialogContent>
-                        </Dialog>
-                    }
-                />
-                {error ? (
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>{UI.newCustomExercise}</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4 py-4">
+                                        <div className="flex flex-col gap-2">
+                                            <Label htmlFor="name">{UI.name}</Label>
+                                            <Input
+                                                id="name"
+                                                value={customName}
+                                                onChange={(e) => setCustomName(e.target.value)}
+                                                placeholder={UI.placeholderExerciseName}
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <Label>{UI.muscleGroup}</Label>
+                                            <Select
+                                                value={customTarget}
+                                                onValueChange={setCustomTarget}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {targets.map((t) => (
+                                                        <SelectItem key={t} value={t}>
+                                                            {translateTarget(t)}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <Button
+                                            onClick={handleAddCustom}
+                                            disabled={!customName.trim()}
+                                            className="w-full"
+                                        >
+                                            {UI.add}
+                                        </Button>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+                        }
+                    />
+                </div>
+                {catalogError ? (
                     <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
-                        <p className="text-destructive">{error}</p>
+                        <p className="text-destructive">{UI.apiErrorCustom}</p>
                         <p className="mt-2 text-sm text-muted-foreground">
                             {UI.apiErrorCustom}
                         </p>
                     </div>
                 ) : (
                     <ul className="space-y-2">
-                        {filteredExercises.map((ex) => {
+                        {filteredExercises.map((ex, index) => {
                             const isTracked = trackedIds.has(`api-${ex.id}`)
                             return (
                                 <li key={ex.id}>
@@ -315,6 +477,11 @@ export function ExerciseListPage() {
                                             <Button
                                                 size="sm"
                                                 className="shrink-0"
+                                                data-tour={
+                                                    index === 0 && !isTracked
+                                                        ? 'first-exercise-add'
+                                                        : undefined
+                                                }
                                                 disabled={isTracked}
                                                 onClick={(e) => {
                                                     e.stopPropagation()
@@ -331,7 +498,7 @@ export function ExerciseListPage() {
                     </ul>
                 )}
 
-                {filteredExercises.length === 0 && !error && (
+                {filteredExercises.length === 0 && !catalogError && (
                     <EmptyState
                         className="mt-6"
                         icon={Dumbbell}
@@ -450,6 +617,26 @@ export function ExerciseListPage() {
                         )}
                     </DialogContent>
                 </Dialog>
+
+                {firstExerciseTourActive ? (
+                    <Joyride
+                        steps={firstExerciseOnboardingSteps}
+                        run
+                        continuous
+                        scrollToFirstStep
+                        options={firstExerciseJoyrideOptions}
+                        styles={firstExerciseJoyrideStyles}
+                        locale={{
+                            back: UI.back,
+                            close: UI.joyrideClose,
+                            last: UI.joyrideLast,
+                            next: UI.next,
+                            skip: UI.joyrideSkip,
+                            nextWithProgress: UI.joyrideNextWithProgress,
+                        }}
+                        onEvent={handleFirstExerciseJoyrideEvent}
+                    />
+                ) : null}
             </main>
         </div>
     )

@@ -1,21 +1,40 @@
+import {
+  deletePerformanceEntryRemote,
+  deleteTrackedExerciseRemote,
+  fetchPerformanceEntries,
+  fetchRemoteProfile,
+  fetchTrackedExercises,
+  patchPerformanceEntry,
+  patchTrackedExercise,
+  upsertPerformanceEntry,
+  upsertRemoteProfile,
+  upsertTrackedExercise,
+} from "@/lib/data-api";
 import type { PerformanceEntry, TrackedExercise, UserProfile } from "@/types";
 
-const TRACKED_KEY = "one-more-tracked";
-const PERFORMANCE_KEY = "one-more-performance";
-const USER_PROFILE_KEY = "one-more-user-profile";
 const ONBOARDING_V1_KEY = "one-more-onboarding-v1";
 const ONBOARDING_FIRST_EXERCISE_PENDING_KEY =
   "one-more-onboarding-first-exercise-pending-v1";
-const SYNC_META_KEY = "one-more-sync-meta-v1";
+const ONBOARDING_SYNC_PENDING_KEY = "one-more-onboarding-sync-pending-v1";
+const ONBOARDING_POST_AUTH_REDIRECT_KEY =
+  "one-more-onboarding-post-auth-redirect-v1";
 const THEME_PREFERENCE_KEY = "one-more-theme-preference-v1";
-
-type SyncMeta = { lastSyncAt: string | null; userId: string | null };
 
 type LocalChangeKind = "trackedExercise" | "performance" | "profile";
 export type ThemePreference = "system" | "light" | "dark";
 
+const DEFAULT_PROFILE: UserProfile = {
+  weightKg: 75,
+  heightCm: 175,
+  gender: "male",
+};
+
+let trackedCache: TrackedExercise[] = [];
+let performanceCache: PerformanceEntry[] = [];
+let profileCache: UserProfile = DEFAULT_PROFILE;
+let hasProfilePersistedCache = false;
+
 function notifyLocalDataChanged(kind: LocalChangeKind): void {
-  // Permet d'auto-synchroniser côté front quand l'utilisateur est connecté.
   if (typeof window === "undefined") return;
   window.dispatchEvent(
     new CustomEvent("one-more:local-data-changed", {
@@ -24,102 +43,145 @@ function notifyLocalDataChanged(kind: LocalChangeKind): void {
   );
 }
 
+function notifyRemoteWriteError(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent("one-more:remote-write-error", {
+      detail: { at: Date.now() },
+    }),
+  );
+}
+
 function nowIso(): string {
   return new Date().toISOString();
 }
 
-function readSyncMeta(): SyncMeta {
+function updateTrackedCache(list: TrackedExercise[]): void {
+  trackedCache = list;
+}
+
+function updatePerformanceCache(list: PerformanceEntry[]): void {
+  performanceCache = list;
+}
+
+export async function refreshStorageFromApi(opts?: {
+  emitEvent?: boolean;
+}): Promise<boolean> {
   try {
-    const raw = localStorage.getItem(SYNC_META_KEY);
-    if (!raw) return { lastSyncAt: null };
-    const parsed = JSON.parse(raw) as Partial<SyncMeta>;
-    return {
-      lastSyncAt:
-        typeof parsed.lastSyncAt === "string" ? parsed.lastSyncAt : null,
-      userId: typeof parsed.userId === "string" ? parsed.userId : null,
-    };
+    const [tracked, perfs, profile] = await Promise.all([
+      fetchTrackedExercises({ includeDeleted: true }),
+      fetchPerformanceEntries({ includeDeleted: true }),
+      fetchRemoteProfile(),
+    ]);
+    updateTrackedCache(tracked);
+    updatePerformanceCache(perfs);
+    if (profile) {
+      profileCache = {
+        weightKg: profile.weightKg,
+        heightCm: profile.heightCm,
+        gender: profile.gender,
+      };
+      hasProfilePersistedCache = true;
+    }
+    if (opts?.emitEvent && typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("one-more:synced", { detail: { at: Date.now() } }),
+      );
+    }
+    return true;
   } catch {
-    return { lastSyncAt: null, userId: null };
+    return false;
   }
-}
-
-export function getLastSyncAt(userId: string): string | null {
-  const meta = readSyncMeta();
-  if (!meta.userId || meta.userId !== userId) return null;
-  return meta.lastSyncAt;
-}
-
-export function setLastSyncAt(userId: string, iso: string | null): void {
-  localStorage.setItem(
-    SYNC_META_KEY,
-    JSON.stringify({ userId, lastSyncAt: iso } satisfies SyncMeta),
-  );
 }
 
 export function getTrackedExercises(): TrackedExercise[] {
-  try {
-    const raw = localStorage.getItem(TRACKED_KEY);
-    const list: TrackedExercise[] = raw ? JSON.parse(raw) : [];
-    const needsMigration = list.some(
-      (e) =>
-        e.originalName === undefined ||
-        typeof e.id !== "string" ||
-        e.id.trim().length === 0,
-    );
-    if (needsMigration) {
-      const migrated = list.map((e) => ({
-        ...e,
-        id:
-          typeof e.id === "string" && e.id.trim().length > 0
-            ? e.id
-            : e.isCustom
-              ? e.exerciseId
-              : `api-${e.exerciseId}`,
-        originalName: e.originalName ?? e.name,
-        updatedAt: e.updatedAt ?? nowIso(),
-        deletedAt: e.deletedAt ?? null,
-      }));
-      setTrackedExercises(migrated);
-      return migrated.filter((e) => !e.deletedAt);
-    }
-    return list.filter((e) => !e.deletedAt);
-  } catch {
-    return [];
-  }
+  return trackedCache.filter((e) => !e.deletedAt);
+}
+
+export function getTrackedExercisesForSync(): TrackedExercise[] {
+  return [...trackedCache];
 }
 
 export function setTrackedExercises(exercises: TrackedExercise[]): void {
-  localStorage.setItem(TRACKED_KEY, JSON.stringify(exercises));
+  updateTrackedCache(exercises);
 }
 
 export function addTrackedExercise(exercise: TrackedExercise): void {
-  const raw = getTrackedExercisesForSync();
-  const list = raw.filter((e) => !e.deletedAt);
+  const list = getTrackedExercisesForSync();
   if (
     list.some(
       (e) =>
-        e.id === exercise.id ||
-        (e.exerciseId === exercise.exerciseId && !e.isCustom),
+        !e.deletedAt &&
+        (e.id === exercise.id ||
+          (e.exerciseId === exercise.exerciseId && !e.isCustom)),
     )
   ) {
     return;
   }
-  const toStore: TrackedExercise = {
+  const next: TrackedExercise = {
     ...exercise,
     updatedAt: nowIso(),
     deletedAt: null,
   };
-  setTrackedExercises([...raw, toStore]);
+  updateTrackedCache([...list, next]);
   notifyLocalDataChanged("trackedExercise");
+  void upsertTrackedExercise(next).catch(() => notifyRemoteWriteError());
+}
+
+export async function addTrackedExerciseAndWait(
+  exercise: TrackedExercise,
+): Promise<TrackedExercise> {
+  const list = getTrackedExercisesForSync();
+  const existing = list.find(
+    (e) =>
+      !e.deletedAt &&
+      (e.id === exercise.id || (e.exerciseId === exercise.exerciseId && !e.isCustom)),
+  );
+  if (existing) return existing;
+
+  const next: TrackedExercise = {
+    ...exercise,
+    updatedAt: nowIso(),
+    deletedAt: null,
+  };
+  updateTrackedCache([...list, next]);
+  notifyLocalDataChanged("trackedExercise");
+
+  try {
+    const remote = await upsertTrackedExercise(next);
+    updateTrackedCache(
+      getTrackedExercisesForSync().map((e) => (e.id === next.id ? remote : e)),
+    );
+    return remote;
+  } catch (error) {
+    notifyRemoteWriteError();
+    throw error;
+  }
 }
 
 export function removeTrackedExercise(id: string): void {
-  const raw = getTrackedExercisesForSync();
-  const next = raw.map((e) =>
-    e.id === id ? { ...e, deletedAt: nowIso(), updatedAt: nowIso() } : e,
+  const list = getTrackedExercisesForSync();
+  const next = list.map((e) =>
+    e.id === id ? { ...e, updatedAt: nowIso(), deletedAt: nowIso() } : e,
   );
-  setTrackedExercises(next);
+  updateTrackedCache(next);
   notifyLocalDataChanged("trackedExercise");
+  void deleteTrackedExerciseRemote(id).catch(() => notifyRemoteWriteError());
+}
+
+export async function removeTrackedExerciseAndWait(id: string): Promise<void> {
+  const list = getTrackedExercisesForSync();
+  const next = list.map((e) =>
+    e.id === id ? { ...e, updatedAt: nowIso(), deletedAt: nowIso() } : e,
+  );
+  updateTrackedCache(next);
+  notifyLocalDataChanged("trackedExercise");
+  try {
+    await deleteTrackedExerciseRemote(id);
+  } catch (error) {
+    notifyRemoteWriteError();
+    throw error;
+  }
 }
 
 export function updateTrackedExercise(
@@ -129,71 +191,56 @@ export function updateTrackedExercise(
   const list = getTrackedExercisesForSync();
   const idx = list.findIndex((e) => e.id === id);
   if (idx === -1) return;
-  const { name } = updates;
   list[idx] = {
     ...list[idx],
-    ...(name !== undefined && { name }),
+    ...(updates.name !== undefined ? { name: updates.name } : {}),
     updatedAt: nowIso(),
   };
-  setTrackedExercises([...list]);
+  updateTrackedCache([...list]);
   notifyLocalDataChanged("trackedExercise");
+  void patchTrackedExercise(id, updates).catch(() => notifyRemoteWriteError());
 }
 
-export function getTrackedExerciseById(
+export async function updateTrackedExerciseAndWait(
   id: string,
-): TrackedExercise | undefined {
-  return getTrackedExercises().find((e) => e.id === id);
+  updates: Partial<Pick<TrackedExercise, "name">>,
+): Promise<TrackedExercise | null> {
+  const list = getTrackedExercisesForSync();
+  const idx = list.findIndex((e) => e.id === id);
+  if (idx === -1) return null;
+  list[idx] = {
+    ...list[idx],
+    ...(updates.name !== undefined ? { name: updates.name } : {}),
+    updatedAt: nowIso(),
+  };
+  updateTrackedCache([...list]);
+  notifyLocalDataChanged("trackedExercise");
+  try {
+    const remote = await patchTrackedExercise(id, updates);
+    updateTrackedCache(
+      getTrackedExercisesForSync().map((e) => (e.id === id ? remote : e)),
+    );
+    return remote;
+  } catch (error) {
+    notifyRemoteWriteError();
+    throw error;
+  }
+}
+
+export function getTrackedExerciseById(id: string): TrackedExercise | undefined {
+  return trackedCache.find((e) => e.id === id && !e.deletedAt);
 }
 
 export function getPerformanceEntries(): PerformanceEntry[] {
-  try {
-    const raw = localStorage.getItem(PERFORMANCE_KEY);
-    const list: PerformanceEntry[] = raw ? JSON.parse(raw) : [];
-    const migrated = list.map((e) => ({
-      ...e,
-      updatedAt: e.updatedAt ?? e.createdAt ?? nowIso(),
-      deletedAt: e.deletedAt ?? null,
-    }));
-    if (JSON.stringify(migrated) !== JSON.stringify(list)) {
-      setPerformanceEntries(migrated);
-    }
-    return migrated.filter((e) => !e.deletedAt);
-  } catch {
-    return [];
-  }
-}
-
-export function setPerformanceEntries(entries: PerformanceEntry[]): void {
-  localStorage.setItem(PERFORMANCE_KEY, JSON.stringify(entries));
-}
-
-export function getTrackedExercisesForSync(): TrackedExercise[] {
-  try {
-    const raw = localStorage.getItem(TRACKED_KEY);
-    const list: TrackedExercise[] = raw ? JSON.parse(raw) : [];
-    return list.map((e) => ({
-      ...e,
-      updatedAt: e.updatedAt ?? nowIso(),
-      deletedAt: e.deletedAt ?? null,
-      originalName: e.originalName ?? e.name,
-    }));
-  } catch {
-    return [];
-  }
+  return performanceCache.filter((e) => !e.deletedAt);
 }
 
 export function getPerformanceEntriesForSync(): PerformanceEntry[] {
-  try {
-    const raw = localStorage.getItem(PERFORMANCE_KEY);
-    const list: PerformanceEntry[] = raw ? JSON.parse(raw) : [];
-    return list.map((e) => ({
-      ...e,
-      updatedAt: e.updatedAt ?? e.createdAt ?? nowIso(),
-      deletedAt: e.deletedAt ?? null,
-    }));
-  } catch {
-    return [];
-  }
+  return [...performanceCache];
+}
+
+export function setPerformanceEntries(entries: PerformanceEntry[]): void {
+  updatePerformanceCache(entries);
 }
 
 export function getEntriesByTrackedId(
@@ -204,7 +251,6 @@ export function getEntriesByTrackedId(
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
-/** Toutes les perfs actives, les plus récentes en premier (createdAt). */
 export function getAllPerformanceEntriesRecentFirst(): PerformanceEntry[] {
   return [...getPerformanceEntries()].sort(
     (a, b) =>
@@ -218,36 +264,80 @@ export function savePerformance(
   reps: number,
   opts?: { date?: string },
 ): PerformanceEntry {
-  const entries = getPerformanceEntriesForSync();
   const today = new Date().toISOString().slice(0, 10);
   const day =
-    opts?.date && /^\d{4}-\d{2}-\d{2}$/.test(opts.date)
-      ? opts.date
-      : today;
-
-  const newEntry: PerformanceEntry = {
+    opts?.date && /^\d{4}-\d{2}-\d{2}$/.test(opts.date) ? opts.date : today;
+  const entry: PerformanceEntry = {
     id: crypto.randomUUID(),
     trackedExerciseId,
     date: day,
     weight,
     reps,
-    createdAt: new Date().toISOString(),
+    createdAt: nowIso(),
     updatedAt: nowIso(),
     deletedAt: null,
   };
-
-  setPerformanceEntries([...entries, newEntry]);
+  updatePerformanceCache([...getPerformanceEntriesForSync(), entry]);
   notifyLocalDataChanged("performance");
-  return newEntry;
+  void upsertPerformanceEntry(entry).catch(() => notifyRemoteWriteError());
+  return entry;
+}
+
+export async function savePerformanceAndWait(
+  trackedExerciseId: string,
+  weight: number,
+  reps: number,
+  opts?: { date?: string },
+): Promise<PerformanceEntry> {
+  const today = new Date().toISOString().slice(0, 10);
+  const day =
+    opts?.date && /^\d{4}-\d{2}-\d{2}$/.test(opts.date) ? opts.date : today;
+  const entry: PerformanceEntry = {
+    id: crypto.randomUUID(),
+    trackedExerciseId,
+    date: day,
+    weight,
+    reps,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+    deletedAt: null,
+  };
+  updatePerformanceCache([...getPerformanceEntriesForSync(), entry]);
+  notifyLocalDataChanged("performance");
+
+  try {
+    const remote = await upsertPerformanceEntry(entry);
+    updatePerformanceCache(
+      getPerformanceEntriesForSync().map((e) => (e.id === entry.id ? remote : e)),
+    );
+    return remote;
+  } catch (error) {
+    notifyRemoteWriteError();
+    throw error;
+  }
 }
 
 export function deletePerformance(entryId: string): void {
-  const entries = getPerformanceEntriesForSync();
-  const next = entries.map((e) =>
-    e.id === entryId ? { ...e, deletedAt: nowIso(), updatedAt: nowIso() } : e,
+  const next = getPerformanceEntriesForSync().map((e) =>
+    e.id === entryId ? { ...e, updatedAt: nowIso(), deletedAt: nowIso() } : e,
   );
-  setPerformanceEntries(next);
+  updatePerformanceCache(next);
   notifyLocalDataChanged("performance");
+  void deletePerformanceEntryRemote(entryId).catch(() => notifyRemoteWriteError());
+}
+
+export async function deletePerformanceAndWait(entryId: string): Promise<void> {
+  const next = getPerformanceEntriesForSync().map((e) =>
+    e.id === entryId ? { ...e, updatedAt: nowIso(), deletedAt: nowIso() } : e,
+  );
+  updatePerformanceCache(next);
+  notifyLocalDataChanged("performance");
+  try {
+    await deletePerformanceEntryRemote(entryId);
+  } catch (error) {
+    notifyRemoteWriteError();
+    throw error;
+  }
 }
 
 export function updatePerformance(
@@ -255,20 +345,41 @@ export function updatePerformance(
   weight: number,
   reps: number,
 ): PerformanceEntry | null {
-  const entries = getPerformanceEntriesForSync();
-  const idx = entries.findIndex((e) => e.id === entryId);
+  const list = getPerformanceEntriesForSync();
+  const idx = list.findIndex((e) => e.id === entryId);
   if (idx === -1) return null;
-  const updated: PerformanceEntry = {
-    ...entries[idx],
-    weight,
-    reps,
-    updatedAt: nowIso(),
-  };
-  const newEntries = [...entries];
-  newEntries[idx] = updated;
-  setPerformanceEntries(newEntries);
+  list[idx] = { ...list[idx], weight, reps, updatedAt: nowIso() };
+  const updated = list[idx];
+  updatePerformanceCache([...list]);
   notifyLocalDataChanged("performance");
+  void patchPerformanceEntry(entryId, { weight, reps }).catch(() =>
+    notifyRemoteWriteError(),
+  );
   return updated;
+}
+
+export async function updatePerformanceAndWait(
+  entryId: string,
+  weight: number,
+  reps: number,
+): Promise<PerformanceEntry | null> {
+  const list = getPerformanceEntriesForSync();
+  const idx = list.findIndex((e) => e.id === entryId);
+  if (idx === -1) return null;
+  list[idx] = { ...list[idx], weight, reps, updatedAt: nowIso() };
+  const updated = list[idx];
+  updatePerformanceCache([...list]);
+  notifyLocalDataChanged("performance");
+  try {
+    const remote = await patchPerformanceEntry(entryId, { weight, reps });
+    updatePerformanceCache(
+      getPerformanceEntriesForSync().map((e) => (e.id === entryId ? remote : e)),
+    );
+    return remote;
+  } catch (error) {
+    notifyRemoteWriteError();
+    throw error;
+  }
 }
 
 export function getLastPerformance(
@@ -278,7 +389,6 @@ export function getLastPerformance(
   return entries[entries.length - 1];
 }
 
-/** Horodatage (ms) de la performance la plus récemment ajoutée pour cet exercice suivi, ou null. */
 export function getLatestPerformanceCreatedAt(
   trackedExerciseId: string,
 ): number | null {
@@ -307,51 +417,60 @@ export function getPersonalBest(
   );
 }
 
-// --- User Profile (poids, taille pour le système de ligues) ---
-
-const DEFAULT_PROFILE: UserProfile = {
-  weightKg: 75,
-  heightCm: 175,
-  gender: "male",
-};
-
 export function getUserProfile(): UserProfile {
-  try {
-    const raw = localStorage.getItem(USER_PROFILE_KEY);
-    if (!raw) return DEFAULT_PROFILE;
-    const parsed = JSON.parse(raw) as Partial<UserProfile>;
-    return {
-      weightKg: parsed.weightKg ?? DEFAULT_PROFILE.weightKg,
-      heightCm: parsed.heightCm ?? DEFAULT_PROFILE.heightCm,
-      gender: parsed.gender === "female" ? "female" : "male",
-    };
-  } catch {
-    return DEFAULT_PROFILE;
-  }
+  return profileCache;
 }
 
 export function hasPersistedUserProfile(): boolean {
-  return localStorage.getItem(USER_PROFILE_KEY) !== null;
+  return hasProfilePersistedCache;
 }
 
 export function setUserProfile(
   profile: Partial<UserProfile>,
   opts?: { silent?: boolean },
 ): void {
-  const current = getUserProfile();
-  const updated: UserProfile = {
-    weightKg: profile.weightKg ?? current.weightKg,
-    heightCm: profile.heightCm ?? current.heightCm,
-    gender: profile.gender ?? current.gender,
+  profileCache = {
+    weightKg: profile.weightKg ?? profileCache.weightKg,
+    heightCm: profile.heightCm ?? profileCache.heightCm,
+    gender: profile.gender ?? profileCache.gender,
+    ...(profile.firstName !== undefined ? { firstName: profile.firstName } : {}),
+    ...(profile.lastName !== undefined ? { lastName: profile.lastName } : {}),
   };
-  localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(updated));
-  if (!opts?.silent) notifyLocalDataChanged("profile");
+  hasProfilePersistedCache = true;
+  if (!opts?.silent) {
+    notifyLocalDataChanged("profile");
+    void upsertRemoteProfile(profileCache).catch(() => notifyRemoteWriteError());
+  }
 }
 
-/**
- * Après le questionnaire corps, le profil est enregistré mais l'utilisateur doit encore
- * choisir un premier exercice (ou passer). Cette clé garde la gate onboarding active.
- */
+export async function setUserProfileAndWait(
+  profile: Partial<UserProfile>,
+): Promise<UserProfile> {
+  profileCache = {
+    weightKg: profile.weightKg ?? profileCache.weightKg,
+    heightCm: profile.heightCm ?? profileCache.heightCm,
+    gender: profile.gender ?? profileCache.gender,
+    ...(profile.firstName !== undefined ? { firstName: profile.firstName } : {}),
+    ...(profile.lastName !== undefined ? { lastName: profile.lastName } : {}),
+  };
+  hasProfilePersistedCache = true;
+  notifyLocalDataChanged("profile");
+  try {
+    const remote = await upsertRemoteProfile(profileCache);
+    profileCache = {
+      weightKg: remote.weightKg,
+      heightCm: remote.heightCm,
+      gender: remote.gender,
+      ...(remote.firstName !== undefined ? { firstName: remote.firstName } : {}),
+      ...(remote.lastName !== undefined ? { lastName: remote.lastName } : {}),
+    };
+    return profileCache;
+  } catch (error) {
+    notifyRemoteWriteError();
+    throw error;
+  }
+}
+
 export function setOnboardingFirstExercisePending(pending: boolean): void {
   if (pending) {
     localStorage.setItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY, "1");
@@ -364,20 +483,63 @@ export function isOnboardingFirstExercisePending(): boolean {
   return localStorage.getItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY) === "1";
 }
 
+export function setOnboardingSyncPending(pending: boolean): void {
+  if (pending) {
+    localStorage.setItem(ONBOARDING_SYNC_PENDING_KEY, "1");
+  } else {
+    localStorage.removeItem(ONBOARDING_SYNC_PENDING_KEY);
+  }
+}
+
+export function isOnboardingSyncPending(): boolean {
+  return localStorage.getItem(ONBOARDING_SYNC_PENDING_KEY) === "1";
+}
+
+export function setOnboardingPostAuthRedirect(path: string | null): void {
+  if (!path) {
+    localStorage.removeItem(ONBOARDING_POST_AUTH_REDIRECT_KEY);
+    return;
+  }
+  localStorage.setItem(ONBOARDING_POST_AUTH_REDIRECT_KEY, path);
+}
+
+export function getOnboardingPostAuthRedirect(): string | null {
+  const raw = localStorage.getItem(ONBOARDING_POST_AUTH_REDIRECT_KEY);
+  if (!raw || !raw.startsWith("/")) return null;
+  return raw;
+}
+
+export async function syncLocalDataToRemote(): Promise<void> {
+  const writes: Promise<unknown>[] = [];
+  if (hasProfilePersistedCache) {
+    writes.push(upsertRemoteProfile(profileCache));
+  }
+  for (const exercise of getTrackedExercises()) {
+    writes.push(upsertTrackedExercise(exercise));
+  }
+  for (const perf of getPerformanceEntries()) {
+    writes.push(upsertPerformanceEntry(perf));
+  }
+  const settled = await Promise.allSettled(writes);
+  const failed = settled.some((result) => result.status === "rejected");
+  if (failed) {
+    throw new Error("Impossible de synchroniser toutes les données locales.");
+  }
+}
+
 export function needsOnboarding(): boolean {
   if (localStorage.getItem(ONBOARDING_V1_KEY) === "done") return false;
   if (localStorage.getItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY) === "1") {
     return true;
   }
-  return (
-    localStorage.getItem(USER_PROFILE_KEY) === null &&
-    localStorage.getItem(ONBOARDING_V1_KEY) !== "done"
-  );
+  return localStorage.getItem(ONBOARDING_V1_KEY) !== "done";
 }
 
 export function markOnboardingDone(): void {
   localStorage.setItem(ONBOARDING_V1_KEY, "done");
   localStorage.removeItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY);
+  localStorage.removeItem(ONBOARDING_SYNC_PENDING_KEY);
+  localStorage.removeItem(ONBOARDING_POST_AUTH_REDIRECT_KEY);
 }
 
 export function getThemePreference(): ThemePreference {

@@ -1,54 +1,34 @@
-import { AddPerfDrawer } from '@/components/AddPerfDrawer'
 import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
-import { Badge } from '@/components/ui/badge'
+import { StepCard } from '@/components/StepCard'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { popularExercises } from '@/data/popular-exercises'
+import { useUserProfileData } from '@/hooks/use-api-data'
 import { useAuth } from '@/hooks/use-auth'
-import { getExercisePopularityRank } from '@/lib/exercise-popularity'
-import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
-import { CARDIO_EQUIPMENT, getExerciseImageUrl } from '@/lib/exercisedb'
-import { signInWithOAuth } from '@/lib/oauth'
+import { AuthPage } from '@/pages/AuthPage'
 import {
-    addTrackedExercise,
+    getOnboardingPostAuthRedirect,
     getUserProfile,
     hasPersistedUserProfile,
-    isOnboardingFirstExercisePending,
+    isOnboardingSyncPending,
     markOnboardingDone,
     needsOnboarding,
-    removeTrackedExercise,
-    savePerformance,
-    setOnboardingFirstExercisePending,
+    setOnboardingPostAuthRedirect,
+    setOnboardingSyncPending,
     setUserProfile,
+    syncLocalDataToRemote,
 } from '@/lib/storage'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
-import type { ExerciseDBExercise } from '@/types'
-import { Capacitor } from '@capacitor/core'
 import {
-    ArrowLeft,
-    Dumbbell,
     Mars,
     Ruler,
     Venus,
-    VenusAndMars,
-    Weight,
+    Weight
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSWRConfig } from 'swr'
 
 const BODY_TOTAL = 3
-
-function exerciseDisplayName(ex: ExerciseDBExercise): string {
-    const fr = (ex as { nameFr?: string }).nameFr?.trim()
-    return fr || ex.name
-}
-
-function isPopularExerciseName(name: string): boolean {
-    const r = getExercisePopularityRank(name)
-    return Number.isFinite(r) && r < 90
-}
 
 function OnboardingGenderRadios({
     value,
@@ -90,9 +70,7 @@ function OnboardingGenderRadios({
                     >
                         <div
                             className={cn(
-                                'flex size-16 items-center justify-center rounded-full bg-muted/50 text-foreground/80',
-                                selected &&
-                                'bg-accent/30 text-accent-foreground scale-[1.02]',
+                                'flex size-16 items-center justify-center text-foreground/80',
                             )}
                         >
                             <Icon className="size-9 stroke-[1.75]" aria-hidden />
@@ -109,27 +87,22 @@ function OnboardingGenderRadios({
 
 function OnboardingPage() {
     const navigate = useNavigate()
+    const { mutate } = useSWRConfig()
     const auth = useAuth()
-    const isNativePlatform = Capacitor.isNativePlatform()
+    const { data: profile } = useUserProfileData()
     const [searchParams] = useSearchParams()
     const rawStep = searchParams.get('step')
     const step =
-        rawStep === 'body' ? 'body' : rawStep === 'exercise' ? 'exercise' : 'intro'
+        rawStep === 'body'
+            ? 'body'
+            : rawStep === 'account'
+                ? 'account'
+                : 'intro'
     const bodyQRaw = searchParams.get('bodyQ')
     const bodyQ = Math.min(
         BODY_TOTAL - 1,
         Math.max(0, Number.parseInt(bodyQRaw ?? '0', 10) || 0),
     )
-
-    const [isBusy, setIsBusy] = useState(false)
-    const [exerciseSearch, setExerciseSearch] = useState('')
-    const [firstPerfDrawerOpen, setFirstPerfDrawerOpen] = useState(false)
-    const [pendingFirstPerfExercise, setPendingFirstPerfExercise] =
-        useState<ExerciseDBExercise | null>(null)
-    const firstPerfSessionRef = useRef<{ trackedId: string | null; saved: boolean }>({
-        trackedId: null,
-        saved: false,
-    })
 
     const goBody = (q = 0) => {
         navigate(`/onboarding?step=body&bodyQ=${q}`, { replace: true })
@@ -140,60 +113,37 @@ function OnboardingPage() {
     const [gender, setGender] = useState<'male' | 'female'>('male')
     useEffect(() => {
         if (!needsOnboarding()) {
-            navigate('/home', { replace: true })
-            return
+            navigate(auth.status === 'authenticated' ? '/home' : '/auth', { replace: true })
         }
-        if (
-            isOnboardingFirstExercisePending() &&
-            step !== 'exercise' &&
-            step !== 'body'
-        ) {
-            navigate('/onboarding?step=exercise', { replace: true })
-        }
-    }, [navigate, step])
+    }, [auth.status, navigate, step])
 
     useEffect(() => {
         if (step !== 'body') return
-        if (!hasPersistedUserProfile()) return
-        const p = getUserProfile()
+        const p = profile ?? (hasPersistedUserProfile() ? getUserProfile() : null)
+        if (!p) return
         setGender(p.gender)
         setWeightKg(p.weightKg)
         setHeightCm(p.heightCm)
-    }, [step])
+    }, [profile, step])
 
     const canAdvanceWeight = weightKg >= 30 && weightKg <= 300
     const canAdvanceHeight = heightCm >= 100 && heightCm <= 250
 
-    const handleOAuth = async (provider: 'google' | 'apple') => {
-        if (isBusy) return
-        setIsBusy(true)
-        try {
-            auth.clearError()
-            const session = await signInWithOAuth(provider)
-            auth.acceptSession(session)
-            goBody(0)
-        } catch (e) {
-            auth.setError(e instanceof Error ? e.message : 'Connexion impossible')
-        } finally {
-            setIsBusy(false)
-        }
-    }
-
-    const finishBodyAndGoExercise = () => {
+    const finishBodyAndContinue = async () => {
         if (!canAdvanceHeight) return
         setUserProfile({
             weightKg,
             heightCm,
             gender,
         })
-        setOnboardingFirstExercisePending(true)
-        navigate('/onboarding?step=exercise', { replace: true })
+        void mutate('profile')
+        await finishOnboarding('/home')
     }
 
     const advanceBody = () => {
         if (bodyQ === 1 && !canAdvanceWeight) return
         if (bodyQ === 2) {
-            finishBodyAndGoExercise()
+            void finishBodyAndContinue()
             return
         }
         goBody(bodyQ + 1)
@@ -207,109 +157,73 @@ function OnboardingPage() {
         goBody(bodyQ - 1)
     }
 
-    const handlePickExercise = (ex: ExerciseDBExercise) => {
-        const trackedId = `api-${ex.id}`
-        firstPerfSessionRef.current = { trackedId, saved: false }
-        addTrackedExercise({
-            id: trackedId,
-            exerciseId: ex.id,
-            name: ex.name,
-            originalName: ex.name,
-            bodyPart: ex.bodyPart,
-            target: ex.target,
-            equipment: ex.equipment,
-            gifUrl: ex.gifUrl,
-            isCustom: false,
-        })
-        setPendingFirstPerfExercise(ex)
-        setFirstPerfDrawerOpen(true)
-    }
-
-    const handleFirstPerfDrawerOpenChange = (open: boolean) => {
-        if (!open) {
-            const { trackedId, saved } = firstPerfSessionRef.current
-            if (trackedId && !saved) {
-                removeTrackedExercise(trackedId)
-            }
-            if (!saved) {
-                firstPerfSessionRef.current = { trackedId: null, saved: false }
-                setPendingFirstPerfExercise(null)
-            }
-        }
-        setFirstPerfDrawerOpen(open)
-    }
-
-    const handleFirstPerfSave = (weight: number, reps: number) => {
-        const trackedId = firstPerfSessionRef.current.trackedId
-        if (!trackedId) return
-        savePerformance(trackedId, weight, reps)
-        firstPerfSessionRef.current.saved = true
-        markOnboardingDone()
-        setPendingFirstPerfExercise(null)
-        setFirstPerfDrawerOpen(false)
-        firstPerfSessionRef.current = { trackedId: null, saved: false }
-        navigate(`/exercise/${trackedId}?tour=onboarding`, { replace: true })
-    }
-
-    const handleSkipExercise = () => {
-        markOnboardingDone()
-        navigate('/home', { replace: true })
-    }
-
-    const filteredExercises = useMemo(() => {
-        const q = exerciseSearch.trim().toLowerCase()
-        const apiQ = q ? translateSearchQueryToEnglish(exerciseSearch.trim()).toLowerCase() : ''
-        let list = popularExercises.filter(
-            (ex) =>
-                ex.bodyPart !== 'cardio' &&
-                !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment)),
-        )
-        if (q || apiQ) {
-            list = list.filter((ex) => {
-                const display = exerciseDisplayName(ex).toLowerCase()
-                const matchFr = q && display.includes(q)
-                const matchEn = apiQ && ex.name.toLowerCase().includes(apiQ)
-                const matchEnRaw = q && ex.name.toLowerCase().includes(q)
-                return matchFr || matchEn || matchEnRaw
-            })
-        }
-        return [...list].sort((a, b) => {
-            const ra = getExercisePopularityRank(a.name)
-            const rb = getExercisePopularityRank(b.name)
-            const fa = Number.isFinite(ra) ? ra : 9999
-            const fb = Number.isFinite(rb) ? rb : 9999
-            if (fa !== fb) return fa - fb
-            return exerciseDisplayName(a).localeCompare(exerciseDisplayName(b), 'fr', {
-                sensitivity: 'base',
-            })
-        })
-    }, [exerciseSearch])
-
     const stepIndicator = UI.onboardingStepIndicator
         .replace('{current}', String(bodyQ + 1))
         .replace('{total}', String(BODY_TOTAL))
     const bodyProgressPercent = ((bodyQ + 1) / BODY_TOTAL) * 100
 
-    const backExercise = () => {
-        if (firstPerfDrawerOpen) return
-        navigate(`/onboarding?step=body&bodyQ=${BODY_TOTAL - 1}`, { replace: true })
+    const finishOnboarding = async (nextPath: string) => {
+        if (auth.status === 'authenticated') {
+            if (isOnboardingSyncPending()) {
+                try {
+                    await syncLocalDataToRemote()
+                } catch {
+                    auth.setError('Le compte est créé mais la synchronisation a échoué. Réessaie dans Paramètres.')
+                }
+            }
+            setOnboardingPostAuthRedirect(null)
+            setOnboardingSyncPending(false)
+            markOnboardingDone()
+            navigate(nextPath, { replace: true })
+            return
+        }
+
+        setOnboardingPostAuthRedirect(nextPath)
+        setOnboardingSyncPending(true)
+        const redirect = encodeURIComponent('/onboarding?step=account')
+        navigate(`/onboarding?step=account&mode=login&redirect=${redirect}&sync=onboarding`, {
+            replace: true,
+        })
     }
 
-    const pendingTrackedId = pendingFirstPerfExercise
-        ? `api-${pendingFirstPerfExercise.id}`
-        : ''
+    useEffect(() => {
+        if (step !== 'account') return
+        if (auth.status !== 'authenticated') return
+        const nextPath = getOnboardingPostAuthRedirect() ?? '/home'
+        void finishOnboarding(nextPath)
+        // On réagit seulement au passage en step=account + auth.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [step, auth.status])
+
+    useEffect(() => {
+        if (step !== 'account') return
+        if (auth.status === 'authenticated') return
+        const mode = searchParams.get('mode')
+        const sync = searchParams.get('sync')
+        const currentRedirect = searchParams.get('redirect')
+        if (
+            mode === 'login' &&
+            sync === 'onboarding' &&
+            currentRedirect === '/onboarding?step=account'
+        ) {
+            return
+        }
+        const redirect = encodeURIComponent('/onboarding?step=account')
+        navigate(`/onboarding?step=account&mode=login&redirect=${redirect}&sync=onboarding`, {
+            replace: true,
+        })
+    }, [step, auth.status, navigate, searchParams])
 
     return (
-        <div className="relative min-h-screen bg-background overflow-hidden">
+        <div className="relative min-h-screen bg-black overflow-hidden">
             <video
-                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none bg-black"
                 src="/onboarding-bg.mp4"
                 muted
                 autoPlay
                 loop
                 playsInline
                 preload="metadata"
-                poster="/logo.png"
             />
 
             <div className="absolute inset-0 bg-black/50 pointer-events-none" />
@@ -342,270 +256,102 @@ function OnboardingPage() {
 
                     <div className="px-4 pb-4 mt-auto">
                         <div className="mx-auto max-w-2xl space-y-3 animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
-                            <Button asChild className="w-full" disabled={isBusy}>
-                                <Link
-                                    to={`/auth?mode=register&redirect=${encodeURIComponent(
-                                        '/onboarding?step=body&bodyQ=0',
-                                    )}`}
-                                >
-                                    {UI.createAccount}
-                                </Link>
-                            </Button>
-                            {isNativePlatform ? (
-                                <>
-                                    <Button
-                                        variant="secondary"
-                                        className="w-full"
-                                        disabled={isBusy}
-                                        onClick={() => void handleOAuth('google')}
-                                    >
-                                        {UI.continueWithGoogle}
-                                    </Button>
-                                    <Button
-                                        variant="secondary"
-                                        className="w-full"
-                                        disabled={isBusy}
-                                        onClick={() => void handleOAuth('apple')}
-                                    >
-                                        {UI.continueWithApple}
-                                    </Button>
-                                </>
-                            ) : null}
-                            <Button
-                                variant="ghost"
-                                className="w-full text-white"
-                                disabled={isBusy}
-                                onClick={() => goBody(0)}
-                            >
-                                {UI.later}
+                            <Button className="w-full" onClick={() => goBody(0)}>
+                                {UI.continue}
                             </Button>
                         </div>
                     </div>
                 </div>
             ) : step === 'body' ? (
                 <main className="relative z-10 mx-auto w-full max-w-2xl px-4 py-8">
-                    <Card
+                    <StepCard
                         key={`body-${bodyQ}`}
-                        className="w-full border-border/80 bg-card/95 backdrop-blur-sm shadow-2xl animate-in fade-in-0 slide-in-from-bottom-4 duration-300"
+                        animated
+                        className="shadow-2xl"
+                        onBack={backBody}
+                        backLabel={UI.back}
+                        stepLabel={stepIndicator}
+                        progressPercent={bodyProgressPercent}
+                        title={UI.onboardingTitle}
                     >
-                        <CardHeader className="space-y-2">
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="shrink-0 -ml-2"
-                                    onClick={backBody}
-                                    aria-label={UI.back}
-                                >
-                                    <ArrowLeft className="size-5" />
-                                </Button>
-                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                    {stepIndicator}
-                                </p>
-                            </div>
-                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                                <div
-                                    className="h-full rounded-full bg-accent transition-all duration-300 ease-out"
-                                    style={{ width: `${bodyProgressPercent}%` }}
+                        {bodyQ === 0 && (
+                            <div className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                                <div>
+                                    <p className="text-sm font-medium flex items-center gap-2">
+                                        {UI.gender}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        {UI.onboardingQuestionGenderHint}
+                                    </p>
+                                </div>
+                                <OnboardingGenderRadios
+                                    value={gender}
+                                    onChange={setGender}
                                 />
                             </div>
-                            <CardTitle className="text-xl">{UI.onboardingTitle}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            {bodyQ === 0 && (
-                                <div className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-                                    <div>
-                                        <p className="text-sm font-medium flex items-center gap-2">
-                                            <VenusAndMars className="size-4 text-accent-foreground" />
-                                            {UI.gender}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground mt-1">
-                                            {UI.onboardingQuestionGenderHint}
-                                        </p>
-                                    </div>
-                                    <OnboardingGenderRadios
-                                        value={gender}
-                                        onChange={setGender}
-                                    />
-                                </div>
-                            )}
+                        )}
 
-                            {bodyQ === 1 && (
-                                <div className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-                                    <div>
-                                        <p className="text-sm font-medium flex items-center gap-2">
-                                            <Weight className="size-4 text-accent-foreground" />
-                                            {UI.bodyWeight}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground mt-1">
-                                            {UI.onboardingQuestionWeightHint}
-                                        </p>
-                                    </div>
-                                    <HorizontalWheelPicker
-                                        label={UI.bodyWeight}
-                                        unit=""
-                                        min={30}
-                                        max={300}
-                                        step={0.5}
-                                        value={weightKg}
-                                        onChange={setWeightKg}
-                                    />
-                                </div>
-                            )}
-
-                            {bodyQ === 2 && (
-                                <div className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-                                    <div>
-                                        <p className="text-sm font-medium flex items-center gap-2">
-                                            <Ruler className="size-4 text-accent-foreground" />
-                                            {UI.height}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground mt-1">
-                                            {UI.onboardingQuestionHeightHint}
-                                        </p>
-                                    </div>
-                                    <HorizontalWheelPicker
-                                        label={UI.height}
-                                        unit=""
-                                        min={100}
-                                        max={250}
-                                        step={1}
-                                        value={heightCm}
-                                        onChange={setHeightCm}
-                                    />
-                                </div>
-                            )}
-
-                            <Button
-                                onClick={advanceBody}
-                                className="w-full"
-                                disabled={
-                                    (bodyQ === 1 && !canAdvanceWeight) ||
-                                    (bodyQ === 2 && !canAdvanceHeight)
-                                }
-                            >
-                                {bodyQ === BODY_TOTAL - 1 ? UI.continue : UI.next}
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </main>
-            ) : (
-                <main className="relative z-10 mx-auto w-full max-w-2xl px-4 py-8">
-                    {pendingFirstPerfExercise ? (
-                        <AddPerfDrawer
-                            open={firstPerfDrawerOpen}
-                            onOpenChange={handleFirstPerfDrawerOpenChange}
-                            exercise={{
-                                id: pendingTrackedId,
-                                name: exerciseDisplayName(pendingFirstPerfExercise),
-                                originalName: pendingFirstPerfExercise.name,
-                                equipment: pendingFirstPerfExercise.equipment,
-                                target: pendingFirstPerfExercise.target,
-                            }}
-                            initialWeight={20}
-                            initialReps={8}
-                            onSave={handleFirstPerfSave}
-                        />
-                    ) : null}
-
-                    <Card className="w-full border-border/80 bg-card/95 backdrop-blur-sm shadow-2xl animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
-                        <CardHeader className="space-y-2">
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="shrink-0 -ml-2"
-                                    onClick={backExercise}
-                                    disabled={firstPerfDrawerOpen}
-                                    aria-label={UI.back}
-                                >
-                                    <ArrowLeft className="size-5" />
-                                </Button>
-                            </div>
-                            <CardTitle className="text-xl">
-                                <span className="inline-flex items-center gap-2">
-                                    <Dumbbell className="size-5 text-accent-foreground" />
-                                    {UI.onboardingFirstExerciseTitle}
-                                </span>
-                            </CardTitle>
-                            <p className="text-sm text-muted-foreground">
-                                {UI.onboardingFirstExerciseDescription}
-                            </p>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <Input
-                                placeholder={UI.onboardingFirstExerciseSearch}
-                                value={exerciseSearch}
-                                onChange={(e) => setExerciseSearch(e.target.value)}
-                                aria-label={UI.searchExercise}
-                            />
-
-                            <div className="max-h-[min(420px,55vh)] overflow-y-auto rounded-lg border border-border/60 divide-y divide-border/60">
-                                {filteredExercises.length === 0 ? (
-                                    <p className="p-4 text-sm text-muted-foreground">
-                                        {UI.noExerciseFound}
+                        {bodyQ === 1 && (
+                            <div className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                                <div>
+                                    <p className="text-sm font-medium flex items-center gap-2">
+                                        <Weight className="size-4 text-accent-foreground" />
+                                        {UI.bodyWeight}
                                     </p>
-                                ) : (
-                                    filteredExercises.map((ex) => {
-                                        const popular = isPopularExerciseName(ex.name)
-                                        return (
-                                            <button
-                                                key={ex.id}
-                                                type="button"
-                                                disabled={
-                                                    firstPerfDrawerOpen
-                                                }
-                                                onClick={() => handlePickExercise(ex)}
-                                                className="flex w-full items-center gap-3 p-3 text-left transition-all duration-200 hover:bg-muted/60 hover:translate-x-0.5 disabled:pointer-events-none disabled:opacity-50"
-                                            >
-                                                {ex.gifUrl ? (
-                                                    <img
-                                                        src={getExerciseImageUrl(ex.gifUrl)}
-                                                        alt=""
-                                                        className="size-14 shrink-0 rounded-lg object-cover bg-muted"
-                                                        onError={(e) => {
-                                                            ; (e.target as HTMLImageElement).style.display =
-                                                                'none'
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <div className="size-14 shrink-0 rounded-lg bg-muted" />
-                                                )}
-                                                <div className="min-w-0 flex-1">
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <span className="font-medium leading-tight">
-                                                            {exerciseDisplayName(ex)}
-                                                        </span>
-                                                        {popular ? (
-                                                            <Badge
-                                                                variant="secondary"
-                                                                className="shrink-0 text-xs font-normal"
-                                                            >
-                                                                {UI.popularExercise}
-                                                            </Badge>
-                                                        ) : null}
-                                                    </div>
-                                                </div>
-                                            </button>
-                                        )
-                                    })
-                                )}
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        {UI.onboardingQuestionWeightHint}
+                                    </p>
+                                </div>
+                                <HorizontalWheelPicker
+                                    label={UI.bodyWeight}
+                                    unit=""
+                                    min={30}
+                                    max={300}
+                                    step={0.5}
+                                    value={weightKg}
+                                    onChange={setWeightKg}
+                                />
                             </div>
+                        )}
 
-                            <Button
-                                variant="outline"
-                                className="w-full"
-                                disabled={firstPerfDrawerOpen}
-                                onClick={handleSkipExercise}
-                            >
-                                {UI.onboardingSkipFirstExercise}
-                            </Button>
-                        </CardContent>
-                    </Card>
+                        {bodyQ === 2 && (
+                            <div className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                                <div>
+                                    <p className="text-sm font-medium flex items-center gap-2">
+                                        <Ruler className="size-4 text-accent-foreground" />
+                                        {UI.height}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        {UI.onboardingQuestionHeightHint}
+                                    </p>
+                                </div>
+                                <HorizontalWheelPicker
+                                    label={UI.height}
+                                    unit=""
+                                    min={100}
+                                    max={250}
+                                    step={1}
+                                    value={heightCm}
+                                    onChange={setHeightCm}
+                                />
+                            </div>
+                        )}
+
+                        <Button
+                            onClick={advanceBody}
+                            className="w-full"
+                            disabled={
+                                (bodyQ === 1 && !canAdvanceWeight) ||
+                                (bodyQ === 2 && !canAdvanceHeight)
+                            }
+                        >
+                            {bodyQ === BODY_TOTAL - 1 ? UI.continue : UI.next}
+                        </Button>
+                    </StepCard>
                 </main>
-            )}
+            ) : step === 'account' ? (
+                <AuthPage embedded />
+            ) : null}
         </div>
     )
 }

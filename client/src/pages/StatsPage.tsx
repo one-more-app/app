@@ -5,35 +5,25 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useUserProfileData } from '@/hooks/use-api-data'
 import { useHomeData } from '@/hooks/use-home-data'
 import { useTheme } from '@/hooks/use-theme'
 import { LEAGUE_COLORS } from '@/lib/league-colors'
 import { computeLeagueStatsForTracked } from '@/lib/muscle-league-stats'
-import { getUserProfile } from '@/lib/storage'
 import { getGlobalLeagueGauge, leagueLevelToFrenchLabel } from '@/lib/strength-standards'
 import { translateTarget, UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
-import type { UserProfile } from '@/types'
 import { BarChart2, ChevronDown, Loader2, Settings } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 export default function StatsPage() {
     const { exercises, hasLoaded } = useHomeData()
+    const { data: profile } = useUserProfileData()
     const { resolvedTheme } = useTheme()
-    const [profile, setProfile] = useState<UserProfile>(() => getUserProfile())
     const [profileDialogOpen, setProfileDialogOpen] = useState(false)
     const [profileDialogKey, setProfileDialogKey] = useState(0)
     const [openMuscles, setOpenMuscles] = useState<Set<string>>(() => new Set())
-
-    useEffect(() => {
-        const onLocal = (e: Event) => {
-            const kind = (e as CustomEvent<{ kind?: string }>).detail?.kind
-            if (kind === 'profile') setProfile(getUserProfile())
-        }
-        window.addEventListener('one-more:local-data-changed', onLocal)
-        return () => window.removeEventListener('one-more:local-data-changed', onLocal)
-    }, [])
 
     const toggleMuscle = useCallback((target: string) => {
         setOpenMuscles((prev) => {
@@ -44,17 +34,17 @@ export default function StatsPage() {
         })
     }, [])
 
-    const leagueSummary = useMemo(
-        () => computeLeagueStatsForTracked(exercises, profile),
-        [exercises, profile],
-    )
+    const leagueSummary = useMemo(() => {
+        if (!profile) return null
+        return computeLeagueStatsForTracked(exercises, profile)
+    }, [exercises, profile])
 
     const globalGauge = useMemo(() => {
         if (!leagueSummary) return null
         return getGlobalLeagueGauge(leagueSummary.globalAvgLeagueScore)
     }, [leagueSummary])
 
-    if (!hasLoaded) {
+    if (!hasLoaded || !profile) {
         return (
             <div className="min-h-screen bg-background">
                 <BackHeader title="Stats" />
@@ -86,7 +76,6 @@ export default function StatsPage() {
                     key={profileDialogKey}
                     open={profileDialogOpen}
                     onOpenChange={setProfileDialogOpen}
-                    onSaved={() => setProfile(getUserProfile())}
                 />
 
                 {!leagueSummary ? (

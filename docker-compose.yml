@@ -1,6 +1,10 @@
+name: onemore
+
 services:
   postgres:
     image: postgres:16
+    container_name: onemore-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: onemore
       POSTGRES_PASSWORD: onemore
@@ -9,7 +13,11 @@ services:
       - "5433:5432"
     volumes:
       - onemore_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U onemore -d onemore"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   onemore_pg:
-

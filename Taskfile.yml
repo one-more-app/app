@@ -15,8 +15,8 @@ tasks:
       - "{{.NPM}} install"
 
   dev:
-    desc: Lance le client Vite et l’API Nest en parallèle (défaut)
-    deps: [dev:client, dev:api]
+    desc: Démarre la DB puis lance client + API en parallèle (défaut)
+    deps: [docker, dev:client, dev:api]
 
   dev:client:
     desc: Serveur de dev Vite (client/)
@@ -64,23 +64,31 @@ tasks:
     cmds:
       - docker compose down
 
-  prisma:generate:
-    desc: Génère le client Prisma
+  migration:run:
+    desc: Exécute les migrations TypeORM
+    deps: [docker]
     dir: api
     cmds:
-      - npx prisma generate
+      - npm run typeorm:migrate
 
-  prisma:migrate:
-    desc: Migrations Prisma (dev)
+  migration:create:
+    desc: Crée un squelette de migration TypeORM
     dir: api
     cmds:
-      - npx prisma migrate dev
+      - npm run typeorm:migration:create
 
-  prisma:studio:
-    desc: Ouvre Prisma Studio
+  migration:generate:
+    desc: Génère une migration TypeORM depuis les entities
+    deps: [docker]
     dir: api
     cmds:
-      - npx prisma studio
+      - npm run typeorm:migration:generate
+
+  seed:exercises:
+    desc: Seed du catalogue exercices depuis client
+    dir: api
+    cmds:
+      - npm run seed:exercises
 
   test:api:
     desc: Tests unitaires API

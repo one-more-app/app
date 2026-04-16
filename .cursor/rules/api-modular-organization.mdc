@@ -1,0 +1,70 @@
+---
+description: Organisation modulaire stricte pour l'API
+globs: api/src/**/*.ts
+alwaysApply: false
+---
+
+# Organisation API par module
+
+## Objectif
+Garder une API claire, segmentee et evolutive: chaque fonctionnalite vit dans son propre module, avec des responsabilites nettes.
+
+## Regles
+- Regrouper par domaine metier (`api/src/<module>/...`), jamais par type global (`controllers/`, `services/`, `dto/`, `entities/` a la racine).
+- Chaque module doit contenir uniquement ses propres fichiers et sous-dossiers (pas de partage "en vrac" entre modules).
+- Organiser les fichiers par responsabilite dans des sous-dossiers dedies.
+- Eviter les imports croises non necessaires entre modules; passer par les exports du module quand c'est pertinent.
+- Garder les DTO, entities et tests au plus proche du module qui les utilise.
+- Toute nouvelle feature API doit etre ajoutee dans un module existant coherent, ou dans un nouveau module dedie.
+
+## Structure recommandee par module
+Chaque module doit suivre une structure claire et previsible:
+
+```txt
+api/src/<module>/
+  <module>.module.ts
+  <module>.controller.ts
+  <module>.service.ts
+  dto/
+    create-<entity>.dto.ts
+    update-<entity>.dto.ts
+    <module>-response.dto.ts
+  entities/
+    <entity>.entity.ts
+  tests/
+    <module>.controller.spec.ts
+    <module>.service.spec.ts
+```
+
+Regles associees:
+- `dto/` contient uniquement des DTO (validation, contrat d'entree/sortie).
+- `entities/` contient uniquement les entites du domaine du module.
+- `tests/` contient les tests du module (unitaires/integration si necessaire).
+- Ne pas melanger les types de fichiers au meme niveau si un sous-dossier dedie existe.
+
+## Exemples
+```ts
+// ❌ BAD: fichiers disperses hors module
+api/src/controllers/user.controller.ts
+api/src/services/user.service.ts
+api/src/dto/user.dto.ts
+api/src/entities/user.entity.ts
+
+// ❌ BAD: fichiers du module users melanges sans separation
+api/src/users/users.controller.ts
+api/src/users/users.service.ts
+api/src/users/user.entity.ts
+api/src/users/create-user.dto.ts
+
+// ✅ GOOD: tout segmenter dans le module "users"
+api/src/users/users.controller.ts
+api/src/users/users.service.ts
+api/src/users/users.module.ts
+api/src/users/dto/create-user.dto.ts
+api/src/users/dto/update-user.dto.ts
+api/src/users/entities/user.entity.ts
+api/src/users/tests/users.service.spec.ts
+```
+
+## Rappel
+Avant de creer un fichier, verifier d'abord le module cible, la frontiere de responsabilite et le bon sous-dossier (`dto`, `entities`, `tests`, etc.).
