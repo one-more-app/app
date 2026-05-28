@@ -11,12 +11,12 @@ let package = Package(
             targets: ["CapApp-SPM"])
     ],
     dependencies: [
-        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.1.0"),
-        .package(name: "CapacitorApp", path: "../../../node_modules/@capacitor/app"),
-        .package(name: "CapacitorBrowser", path: "../../../node_modules/@capacitor/browser"),
-        .package(name: "CapacitorHaptics", path: "../../../node_modules/@capacitor/haptics"),
-        .package(name: "CapacitorStatusBar", path: "../../../node_modules/@capacitor/status-bar"),
-        .package(name: "CapawesomeCapacitorAppReview", path: "../../../node_modules/@capawesome/capacitor-app-review")
+        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.3.4"),
+        .package(name: "CapacitorApp", path: "../../../../node_modules/@capacitor/app"),
+        .package(name: "CapacitorBrowser", path: "../../../../node_modules/@capacitor/browser"),
+        .package(name: "CapacitorHaptics", path: "../../../../node_modules/@capacitor/haptics"),
+        .package(name: "CapacitorStatusBar", path: "../../../../node_modules/@capacitor/status-bar"),
+        .package(name: "CapawesomeCapacitorAppReview", path: "../../../../node_modules/@capawesome/capacitor-app-review")
     ],
     targets: [
         .target(
