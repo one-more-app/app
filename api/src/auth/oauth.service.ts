@@ -65,7 +65,7 @@ export class OAuthService {
   start(
     provider: Provider,
     params: {
-      redirectUri: string;
+      redirectUri?: string;
       codeChallenge: string;
       platform: Platform;
       state?: string;
@@ -102,17 +102,23 @@ export class OAuthService {
       return { authorizationUrl: url.toString(), state, redirectUri };
     }
 
-    saveOAuthState(state, {
-      redirectUri: params.redirectUri,
-      platform: params.platform,
-      provider,
-    });
-
     if (provider === 'apple') {
+      const redirectUri = params.redirectUri?.trim();
+      if (!redirectUri) {
+        throw new BadRequestException('redirectUri requis pour Apple Sign-In');
+      }
+      this.assertAllowedRedirectUri(redirectUri);
+
+      saveOAuthState(state, {
+        redirectUri,
+        platform: params.platform,
+        provider,
+      });
+
       const clientId = this.mustGet('APPLE_CLIENT_ID');
       const url = new URL('https://appleid.apple.com/auth/authorize');
       url.searchParams.set('client_id', clientId);
-      url.searchParams.set('redirect_uri', params.redirectUri);
+      url.searchParams.set('redirect_uri', redirectUri);
       url.searchParams.set('response_type', 'code');
       url.searchParams.set('response_mode', 'query');
       url.searchParams.set('scope', 'name email');
