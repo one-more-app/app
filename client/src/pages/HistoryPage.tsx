@@ -1,6 +1,7 @@
 import { AddPerfDrawer } from '@/components/AddPerfDrawer'
 import { BackHeader } from '@/components/BackHeader'
 import { HistoryDaySection } from '@/components/history/HistoryDaySection'
+import { HistoryPageSkeleton } from '@/components/skeletons'
 import { EmptyState } from '@/components/ui/empty-state'
 import {
     usePerformanceDataRefresh,
@@ -29,7 +30,7 @@ import { useCallback, useMemo, useState } from 'react'
 const MAX_SHOWN = 150
 
 export function HistoryPage() {
-    const { data: allEntries = [] } = usePerformanceEntriesData()
+    const { data: allEntries = [], isLoading: isLoadingEntries } = usePerformanceEntriesData()
     const refreshAfterPerfChange = usePerformanceDataRefresh()
     const { data: tracked = [] } = useTrackedExercisesData()
     const { data: profile } = useUserProfileData()
@@ -123,7 +124,9 @@ export function HistoryPage() {
                     </p>
                 )}
 
-                {entries.length === 0 ? (
+                {isLoadingEntries ? (
+                    <HistoryPageSkeleton />
+                ) : entries.length === 0 ? (
                     <EmptyState
                         icon={HistoryIcon}
                         title={UI.noHistoryEntriesTitle}

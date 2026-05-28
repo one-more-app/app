@@ -1,5 +1,6 @@
 import { AddPerfDrawer } from '@/components/AddPerfDrawer'
 import { BackHeader } from '@/components/BackHeader'
+import { ExerciseDetailPageSkeleton } from '@/components/skeletons'
 import { ExerciseCard } from '@/components/ExerciseCard'
 import { PerfEntryList } from '@/components/history/PerfEntryList'
 import { LeagueBadge } from '@/components/LeagueBadge'
@@ -59,7 +60,7 @@ export function ExerciseDetailPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const { resolvedTheme } = useTheme()
-    const { data: tracked = [] } = useTrackedExercisesData()
+    const { data: tracked = [], isLoading: isLoadingTracked } = useTrackedExercisesData()
     const refreshAfterTrackedChange = useTrackedDataRefresh()
     const { data: profile } = useUserProfileData()
     const [searchParams, setSearchParams] = useSearchParams()
@@ -297,6 +298,17 @@ export function ExerciseDetailPage() {
         }),
         [resolvedTheme],
     )
+
+    if (id && isLoadingTracked && !exercise) {
+        return (
+            <div className="min-h-screen-app bg-background">
+                <BackHeader compact title="" />
+                <main className="mx-auto max-w-2xl px-4 py-4">
+                    <ExerciseDetailPageSkeleton />
+                </main>
+            </div>
+        )
+    }
 
     if (!exercise) {
         return (
