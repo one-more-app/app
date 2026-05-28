@@ -15,9 +15,24 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const databaseUrl = process.env.DATABASE_URL;
 
-if (!databaseUrl) {
+if (!databaseUrl || databaseUrl.trim().length === 0) {
   throw new Error(
     'DATABASE_URL is missing. Define it in api/.env before running TypeORM CLI commands.',
+  );
+}
+
+let parsedDatabaseUrl: URL;
+try {
+  parsedDatabaseUrl = new URL(databaseUrl);
+} catch {
+  throw new Error(
+    'DATABASE_URL is invalid. Expected a valid Postgres URL like postgresql://user:password@host:port/db.',
+  );
+}
+
+if (parsedDatabaseUrl.password.length === 0) {
+  throw new Error(
+    'DATABASE_URL must include a non-empty password (postgresql://user:password@host:port/db).',
   );
 }
 

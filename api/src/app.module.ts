@@ -11,7 +11,10 @@ import { TrackedExercisesModule } from './tracked-exercises/tracked-exercises.mo
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['api/.env', '.env'],
+    }),
     TypeormDatabaseModule,
     AuthModule,
     ProfileModule,
