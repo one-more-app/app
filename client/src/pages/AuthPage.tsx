@@ -442,40 +442,6 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 <span>{UI.continueWithGoogle}</span>
                             </span>
                         </Button>
-                        <Button
-                            className="w-full"
-                            variant="secondary"
-                            disabled={isBusy}
-                            onClick={() => {
-                                void (async () => {
-                                    setIsBusy(true);
-                                    auth.clearError();
-                                    try {
-                                        const session = await signInWithOAuth("apple");
-                                        auth.acceptSession(session);
-                                        await finishSuccess();
-                                    } catch (e) {
-                                        auth.setError(
-                                            e instanceof Error ? e.message : "Connexion Apple impossible",
-                                        );
-                                    } finally {
-                                        setIsBusy(false);
-                                    }
-                                })();
-                            }}
-                        >
-                            <span className="inline-flex items-center justify-center gap-2">
-                                <svg
-                                    aria-hidden
-                                    viewBox="0 0 24 24"
-                                    className="size-5 fill-current"
-                                >
-                                    <path d="M16.365 1.43c0 1.14-.43 2.26-1.19 3.08-.83.9-2.2 1.6-3.4 1.5-.15-1.13.4-2.3 1.17-3.1.85-.9 2.3-1.57 3.42-1.48z" />
-                                    <path d="M20.55 17.07c-.46 1.05-.67 1.52-1.26 2.44-.82 1.27-1.98 2.85-3.42 2.86-1.28.01-1.61-.83-3.36-.82-1.75.01-2.12.84-3.4.83-1.44-.01-2.53-1.43-3.35-2.69-2.34-3.6-2.58-7.83-1.14-10.03.96-1.47 2.48-2.33 3.92-2.33 1.47 0 2.39.83 3.6.83 1.17 0 1.88-.84 3.58-.84 1.28 0 2.63.7 3.58 1.91-3.15 1.73-2.64 6.26.65 7.84z" />
-                                </svg>
-                                <span>{UI.continueWithApple}</span>
-                            </span>
-                        </Button>
                     </CardContent>
                 </Card>
         </main>

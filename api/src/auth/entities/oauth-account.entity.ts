@@ -12,8 +12,8 @@ import type { Relation } from 'typeorm';
 import { UserEntity } from './user.entity.js';
 
 export enum OAuthProvider {
-  GOOGLE = 'GOOGLE',
-  APPLE = 'APPLE',
+  GOOGLE = 'google',
+  APPLE = 'apple',
 }
 
 @Entity({ name: 'oauth_accounts' })

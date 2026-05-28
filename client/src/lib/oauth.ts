@@ -2,8 +2,10 @@ import { apiFetch } from "@/lib/api";
 import type { AuthSession } from "@/lib/auth";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
+import { Capacitor } from "@capacitor/core";
 
 type Provider = "google" | "apple";
+type Platform = "android" | "ios";
 
 function base64UrlEncode(bytes: Uint8Array): string {
   let str = "";
@@ -24,75 +26,87 @@ async function sha256Base64Url(input: string): Promise<string> {
 }
 
 function defaultRedirectUri(): string {
-  // IMPORTANT: nécessite de configurer deep links côté iOS/Android.
-  // MVP: on utilise un custom scheme.
   return "com.onemore.app://oauth";
+}
+
+function oauthPlatform(): Platform {
+  const platform = Capacitor.getPlatform();
+  if (platform === "ios") return "ios";
+  if (platform === "android") return "android";
+  throw new Error("OAuth mobile disponible uniquement sur iOS et Android");
 }
 
 export async function signInWithOAuth(provider: Provider): Promise<AuthSession> {
   const codeVerifier = randomString(64);
   const codeChallenge = await sha256Base64Url(codeVerifier);
   const redirectUri = defaultRedirectUri();
+  const platform = oauthPlatform();
 
   const start = await apiFetch<{ authorizationUrl: string; state: string }>(
     `/oauth/${provider}/start`,
     {
       method: "POST",
-      body: JSON.stringify({ redirectUri, codeChallenge }),
+      body: JSON.stringify({ redirectUri, codeChallenge, platform }),
     },
   );
 
-  const code = await new Promise<string>((resolve, reject) => {
-    let done = false;
-    let timeoutId: number | null = null;
+  const { code, state } = await new Promise<{ code: string; state: string }>(
+    (resolve, reject) => {
+      let done = false;
+      let timeoutId: number | null = null;
 
-    const cleanup = async () => {
-      if (timeoutId != null) window.clearTimeout(timeoutId);
-      timeoutId = null;
-      try {
-        const handle = await removePromise;
-        await handle.remove();
-      } catch {
-        // ignore
-      }
-      try {
-        await Browser.close();
-      } catch {
-        // ignore
-      }
-    };
-
-    const removePromise = App.addListener("appUrlOpen", (event) => {
-      if (done) return;
-      try {
-        const url = new URL(event.url);
-        const code = url.searchParams.get("code");
-        if (code) {
-          done = true;
-          void cleanup().finally(() => resolve(code));
+      const cleanup = async () => {
+        if (timeoutId != null) window.clearTimeout(timeoutId);
+        timeoutId = null;
+        try {
+          const handle = await removePromise;
+          await handle.remove();
+        } catch {
+          // ignore
         }
-      } catch {
-        // ignore
-      }
-    });
+        try {
+          await Browser.close();
+        } catch {
+          // ignore
+        }
+      };
 
-    timeoutId = window.setTimeout(() => {
-      if (done) return;
-      done = true;
-      void cleanup().finally(() => reject(new Error("OAuth expiré")));
-    }, 120_000);
+      const removePromise = App.addListener("appUrlOpen", (event) => {
+        if (done) return;
+        try {
+          const url = new URL(event.url);
+          const code = url.searchParams.get("code");
+          const state = url.searchParams.get("state");
+          if (code && state) {
+            done = true;
+            void cleanup().finally(() => resolve({ code, state }));
+          }
+        } catch {
+          // ignore
+        }
+      });
 
-    void Browser.open({ url: start.authorizationUrl }).catch((e) => {
-      if (done) return;
-      done = true;
-      void cleanup().finally(() => reject(e));
-    });
-  });
+      timeoutId = window.setTimeout(() => {
+        if (done) return;
+        done = true;
+        void cleanup().finally(() => reject(new Error("OAuth expiré")));
+      }, 120_000);
+
+      void Browser.open({ url: start.authorizationUrl }).catch((e) => {
+        if (done) return;
+        done = true;
+        void cleanup().finally(() => reject(e));
+      });
+    },
+  );
+
+  if (state !== start.state) {
+    throw new Error("state OAuth incohérent");
+  }
 
   const session = await apiFetch<AuthSession>(`/oauth/${provider}/callback`, {
     method: "POST",
-    body: JSON.stringify({ code, redirectUri, codeVerifier }),
+    body: JSON.stringify({ code, redirectUri, codeVerifier, state }),
   });
   return session;
 }
-

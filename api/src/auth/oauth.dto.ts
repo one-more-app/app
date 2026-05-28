@@ -1,4 +1,4 @@
-import { IsISO8601, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsOptional, IsString } from 'class-validator';
 
 export class OAuthStartDto {
   @IsString()
@@ -6,6 +6,9 @@ export class OAuthStartDto {
 
   @IsString()
   codeChallenge!: string;
+
+  @IsIn(['android', 'ios'])
+  platform!: 'android' | 'ios';
 
   @IsOptional()
   @IsString()
@@ -22,8 +25,10 @@ export class OAuthCallbackDto {
   @IsString()
   codeVerifier!: string;
 
+  @IsString()
+  state!: string;
+
   @IsOptional()
   @IsString()
   deviceId?: string;
 }
-

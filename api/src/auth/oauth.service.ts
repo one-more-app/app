@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { decodeJwt, importPKCS8, SignJWT } from 'jose';
 import { Repository } from 'typeorm';
+import { verifyGoogleIdToken } from './google-id-token.js';
 import {
   OAuthAccountEntity,
   OAuthProvider,
@@ -10,14 +11,17 @@ import {
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { UserEntity } from './entities/user.entity.js';
 import { AuthService } from './auth.service.js';
+import { consumeOAuthState, saveOAuthState } from './oauth-state.store.js';
 
 type Provider = 'google' | 'apple';
+type Platform = 'android' | 'ios';
 
 type IdTokenClaims = {
   sub?: string;
   email?: string;
-  email_verified?: boolean;
 };
+
+const DEFAULT_REDIRECT_URIS = ['com.onemore.app://oauth'];
 
 async function postForm(url: string, data: Record<string, string>) {
   const body = new URLSearchParams(data);
@@ -39,6 +43,10 @@ async function postForm(url: string, data: Record<string, string>) {
   return json;
 }
 
+function toOAuthProvider(provider: Provider): OAuthProvider {
+  return provider === 'google' ? OAuthProvider.GOOGLE : OAuthProvider.APPLE;
+}
+
 @Injectable()
 export class OAuthService {
   constructor(
@@ -52,10 +60,26 @@ export class OAuthService {
     private auth: AuthService,
   ) {}
 
-  start(provider: Provider, params: { redirectUri: string; codeChallenge: string; state?: string }) {
+  start(
+    provider: Provider,
+    params: {
+      redirectUri: string;
+      codeChallenge: string;
+      platform: Platform;
+      state?: string;
+    },
+  ) {
+    this.assertAllowedRedirectUri(params.redirectUri);
     const state = params.state ?? crypto.randomUUID();
+
+    saveOAuthState(state, {
+      redirectUri: params.redirectUri,
+      platform: params.platform,
+      provider,
+    });
+
     if (provider === 'google') {
-      const clientId = this.mustGet('GOOGLE_CLIENT_ID');
+      const clientId = this.googleClientId(params.platform);
       const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
       url.searchParams.set('client_id', clientId);
       url.searchParams.set('redirect_uri', params.redirectUri);
@@ -88,13 +112,33 @@ export class OAuthService {
 
   async callback(
     provider: Provider,
-    params: { code: string; redirectUri: string; codeVerifier: string; deviceId?: string },
+    params: {
+      code: string;
+      redirectUri: string;
+      codeVerifier: string;
+      state: string;
+      deviceId?: string;
+    },
   ) {
-    const { idToken, providerUserId, email } = await this.exchangeCode(provider, params);
-    void idToken;
+    const pending = consumeOAuthState(params.state);
+    if (pending.provider !== provider) {
+      throw new BadRequestException('state OAuth incohérent');
+    }
+    if (pending.redirectUri !== params.redirectUri) {
+      throw new BadRequestException('redirectUri incohérent');
+    }
+    this.assertAllowedRedirectUri(params.redirectUri);
 
+    const { providerUserId, email } = await this.exchangeCode(provider, {
+      code: params.code,
+      redirectUri: params.redirectUri,
+      codeVerifier: params.codeVerifier,
+      platform: pending.platform,
+    });
+
+    const oauthProvider = toOAuthProvider(provider);
     const linked = await this.oauthAccountsRepo.findOne({
-      where: { provider: provider as OAuthProvider, providerUserId },
+      where: { provider: oauthProvider, providerUserId },
       relations: { user: true },
     });
 
@@ -133,7 +177,7 @@ export class OAuthService {
 
       await this.oauthAccountsRepo.save({
         userId,
-        provider: provider as OAuthProvider,
+        provider: oauthProvider,
         providerUserId,
         email: email ? email.trim().toLowerCase() : null,
       });
@@ -148,10 +192,15 @@ export class OAuthService {
 
   private async exchangeCode(
     provider: Provider,
-    params: { code: string; redirectUri: string; codeVerifier: string },
-  ): Promise<{ idToken: string; providerUserId: string; email: string | null }> {
+    params: {
+      code: string;
+      redirectUri: string;
+      codeVerifier: string;
+      platform: Platform;
+    },
+  ): Promise<{ providerUserId: string; email: string | null }> {
     if (provider === 'google') {
-      const clientId = this.mustGet('GOOGLE_CLIENT_ID');
+      const clientId = this.googleClientId(params.platform);
       const clientSecret = this.config.get<string>('GOOGLE_CLIENT_SECRET') ?? '';
       const token = await postForm('https://oauth2.googleapis.com/token', {
         client_id: clientId,
@@ -163,11 +212,8 @@ export class OAuthService {
       });
       const idToken = String(token.id_token ?? '');
       if (!idToken) throw new BadRequestException('id_token manquant');
-      const claims = decodeJwt(idToken) as IdTokenClaims;
-      const sub = claims.sub;
-      if (!sub) throw new BadRequestException('sub manquant');
-      const email = claims.email ? String(claims.email) : null;
-      return { idToken, providerUserId: sub, email };
+      const { sub, email } = await verifyGoogleIdToken(idToken, clientId);
+      return { providerUserId: sub, email };
     }
 
     if (provider === 'apple') {
@@ -187,10 +233,39 @@ export class OAuthService {
       const sub = claims.sub;
       if (!sub) throw new BadRequestException('sub manquant');
       const email = claims.email ? String(claims.email) : null;
-      return { idToken, providerUserId: sub, email };
+      return { providerUserId: sub, email };
     }
 
     throw new BadRequestException('Provider inconnu');
+  }
+
+  private googleClientId(platform: Platform): string {
+    const key =
+      platform === 'ios' ? 'GOOGLE_CLIENT_ID_IOS' : 'GOOGLE_CLIENT_ID_ANDROID';
+    const platformClientId = this.config.get<string>(key)?.trim();
+    if (platformClientId) return platformClientId;
+
+    const legacyClientId = this.config.get<string>('GOOGLE_CLIENT_ID')?.trim();
+    if (legacyClientId) return legacyClientId;
+
+    throw new BadRequestException(`Variable manquante: ${key}`);
+  }
+
+  private assertAllowedRedirectUri(redirectUri: string): void {
+    const normalized = redirectUri.replace(/\/+$/, '');
+    const allowed = this.allowedRedirectUris();
+    if (!allowed.includes(normalized)) {
+      throw new BadRequestException('redirectUri non autorisé');
+    }
+  }
+
+  private allowedRedirectUris(): string[] {
+    const raw = this.config.get<string>('OAUTH_REDIRECT_URIS')?.trim();
+    if (!raw) return DEFAULT_REDIRECT_URIS;
+    return raw
+      .split(',')
+      .map((s) => s.trim().replace(/\/+$/, ''))
+      .filter(Boolean);
   }
 
   private mustGet(key: string): string {
@@ -206,7 +281,7 @@ export class OAuthService {
     const privateKey = this.mustGet('APPLE_PRIVATE_KEY');
 
     const now = Math.floor(Date.now() / 1000);
-    const exp = now + 60 * 10; // 10 min
+    const exp = now + 60 * 10;
 
     const key = await importPKCS8(privateKey.replace(/\\n/g, '\n'), 'ES256');
     return await new SignJWT({})
@@ -219,4 +294,3 @@ export class OAuthService {
       .sign(key);
   }
 }
-
