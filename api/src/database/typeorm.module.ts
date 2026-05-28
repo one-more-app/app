@@ -22,6 +22,34 @@ export const TYPEORM_ENTITIES = [
   ExerciseCatalogEntity,
 ] as const;
 
+const getDatabaseUrl = (config: ConfigService): string => {
+  const rawUrl = config.get<string>('DATABASE_URL');
+
+  if (!rawUrl || rawUrl.trim().length === 0) {
+    throw new Error(
+      'DATABASE_URL is missing. Define it in api/.env (see api/.env.example).',
+    );
+  }
+
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(rawUrl);
+  } catch {
+    throw new Error(
+      'DATABASE_URL is invalid. Expected a valid Postgres URL like postgresql://user:password@host:port/db.',
+    );
+  }
+
+  // pg with SCRAM requires password to be a string; absent password leads to a cryptic runtime error.
+  if (parsedUrl.password.length === 0) {
+    throw new Error(
+      'DATABASE_URL must include a non-empty password (postgresql://user:password@host:port/db).',
+    );
+  }
+
+  return rawUrl;
+};
+
 @Module({
   imports: [
     ConfigModule,
@@ -29,7 +57,7 @@ export const TYPEORM_ENTITIES = [
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres' as const,
-        url: config.get<string>('DATABASE_URL'),
+        url: getDatabaseUrl(config),
         entities: [...TYPEORM_ENTITIES],
         migrations: ['dist/database/migrations/*.js'],
         synchronize: false,
