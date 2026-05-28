@@ -2,16 +2,20 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 
-/** Liste d’origines autorisées (ex. `https://onemore.dokploy.moneyes.app`). Si vide, l’Origin de la requête est renvoyée (pratique en dev). */
-function buildCorsOriginOption():
-  | boolean
-  | string[]
-  | ((origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => void) {
-  const raw = process.env.CORS_ORIGINS?.trim();
-  if (!raw) {
-    return true;
-  }
-  const allowed = raw
+/** Origines Capacitor / Ionic (WebView mobile). */
+const CAPACITOR_CORS_ORIGINS = [
+  'capacitor://localhost',
+  'ionic://localhost',
+  'http://localhost',
+  'https://localhost',
+];
+
+/** Origines web en dev local (Vite, etc.). */
+const DEV_WEB_CORS_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+
+function parseCorsOrigins(raw: string | undefined): string[] {
+  if (!raw?.trim()) return [];
+  return raw
     .split(',')
     .map((s) => {
       let v = s.trim().replace(/\/+$/, '');
@@ -20,6 +24,26 @@ function buildCorsOriginOption():
       return v.trim();
     })
     .filter(Boolean);
+}
+
+/** Liste d’origines autorisées (ex. `https://onemore.dokploy.moneyes.app`). Si vide, l’Origin de la requête est renvoyée (pratique en dev). */
+function buildCorsOriginOption():
+  | boolean
+  | string[]
+  | ((origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => void) {
+  const fromEnv = parseCorsOrigins(process.env.CORS_ORIGINS);
+  const isDev = process.env.NODE_ENV !== 'production';
+  const allowed =
+    fromEnv.length > 0
+      ? [
+          ...new Set([
+            ...fromEnv,
+            ...CAPACITOR_CORS_ORIGINS,
+            ...(isDev ? DEV_WEB_CORS_ORIGINS : []),
+          ]),
+        ]
+      : fromEnv;
+
   if (allowed.length === 0) {
     return true;
   }
