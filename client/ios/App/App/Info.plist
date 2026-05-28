@@ -57,6 +57,14 @@
 				<string>com.onemore.app</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>google-oauth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.512645473000-e1h1bl44shob37ijoceigci5ifkjfpm0</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

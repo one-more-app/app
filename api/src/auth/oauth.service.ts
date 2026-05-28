@@ -5,6 +5,10 @@ import { decodeJwt, importPKCS8, SignJWT } from 'jose';
 import { Repository } from 'typeorm';
 import { verifyGoogleIdToken } from './google-id-token.js';
 import {
+  listAllowedRedirectUris,
+  resolveGoogleRedirectUri,
+} from './google-oauth-config.js';
+import {
   OAuthAccountEntity,
   OAuthProvider,
 } from './entities/oauth-account.entity.js';
@@ -20,8 +24,6 @@ type IdTokenClaims = {
   sub?: string;
   email?: string;
 };
-
-const DEFAULT_REDIRECT_URIS = ['com.onemore.app://oauth'];
 
 async function postForm(url: string, data: Record<string, string>) {
   const body = new URLSearchParams(data);
@@ -69,29 +71,42 @@ export class OAuthService {
       state?: string;
     },
   ) {
-    this.assertAllowedRedirectUri(params.redirectUri);
     const state = params.state ?? crypto.randomUUID();
+
+    if (provider === 'google') {
+      const clientId = this.googleClientId(params.platform);
+      const redirectUri = resolveGoogleRedirectUri(
+        this.config,
+        clientId,
+        params.platform,
+      );
+      this.assertAllowedRedirectUri(redirectUri);
+
+      saveOAuthState(state, {
+        redirectUri,
+        platform: params.platform,
+        provider,
+      });
+
+      const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+      url.searchParams.set('client_id', clientId);
+      url.searchParams.set('redirect_uri', redirectUri);
+      url.searchParams.set('response_type', 'code');
+      url.searchParams.set('scope', 'openid email');
+      url.searchParams.set('code_challenge', params.codeChallenge);
+      url.searchParams.set('code_challenge_method', 'S256');
+      url.searchParams.set('state', state);
+      // #region agent log
+      fetch('http://127.0.0.1:7833/ingest/13ae7a14-0ef6-4bc8-909d-3672502a0001',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f3f17e'},body:JSON.stringify({sessionId:'f3f17e',runId:'post-fix',hypothesisId:'H1',location:'oauth.service.ts:start',message:'google oauth start',data:{platform:params.platform,redirectUri,clientIdSuffix:clientId.slice(-30)},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+      return { authorizationUrl: url.toString(), state, redirectUri };
+    }
 
     saveOAuthState(state, {
       redirectUri: params.redirectUri,
       platform: params.platform,
       provider,
     });
-
-    if (provider === 'google') {
-      const clientId = this.googleClientId(params.platform);
-      const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-      url.searchParams.set('client_id', clientId);
-      url.searchParams.set('redirect_uri', params.redirectUri);
-      url.searchParams.set('response_type', 'code');
-      url.searchParams.set('scope', 'openid email');
-      url.searchParams.set('code_challenge', params.codeChallenge);
-      url.searchParams.set('code_challenge_method', 'S256');
-      url.searchParams.set('state', state);
-      url.searchParams.set('access_type', 'offline');
-      url.searchParams.set('prompt', 'consent');
-      return { authorizationUrl: url.toString(), state };
-    }
 
     if (provider === 'apple') {
       const clientId = this.mustGet('APPLE_CLIENT_ID');
@@ -260,12 +275,7 @@ export class OAuthService {
   }
 
   private allowedRedirectUris(): string[] {
-    const raw = this.config.get<string>('OAUTH_REDIRECT_URIS')?.trim();
-    if (!raw) return DEFAULT_REDIRECT_URIS;
-    return raw
-      .split(',')
-      .map((s) => s.trim().replace(/\/+$/, ''))
-      .filter(Boolean);
+    return listAllowedRedirectUris(this.config);
   }
 
   private mustGet(key: string): string {

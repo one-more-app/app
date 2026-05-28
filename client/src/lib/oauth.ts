@@ -26,7 +26,7 @@ async function sha256Base64Url(input: string): Promise<string> {
 }
 
 function defaultRedirectUri(): string {
-  return "com.onemore.app://oauth";
+  return "com.onemore.app:/oauth";
 }
 
 function oauthPlatform(): Platform {
@@ -39,16 +39,25 @@ function oauthPlatform(): Platform {
 export async function signInWithOAuth(provider: Provider): Promise<AuthSession> {
   const codeVerifier = randomString(64);
   const codeChallenge = await sha256Base64Url(codeVerifier);
-  const redirectUri = defaultRedirectUri();
   const platform = oauthPlatform();
 
-  const start = await apiFetch<{ authorizationUrl: string; state: string }>(
-    `/oauth/${provider}/start`,
-    {
-      method: "POST",
-      body: JSON.stringify({ redirectUri, codeChallenge, platform }),
-    },
-  );
+  const start = await apiFetch<{
+    authorizationUrl: string;
+    state: string;
+    redirectUri?: string;
+  }>(`/oauth/${provider}/start`, {
+    method: "POST",
+    body: JSON.stringify({
+      redirectUri: provider === "apple" ? defaultRedirectUri() : undefined,
+      codeChallenge,
+      platform,
+    }),
+  });
+
+  const redirectUri = start.redirectUri ?? defaultRedirectUri();
+  // #region agent log
+  fetch('http://127.0.0.1:7833/ingest/13ae7a14-0ef6-4bc8-909d-3672502a0001',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f3f17e'},body:JSON.stringify({sessionId:'f3f17e',runId:'post-fix',hypothesisId:'H1',location:'oauth.ts:start',message:'oauth start response',data:{platform,redirectUri},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
 
   const { code, state } = await new Promise<{ code: string; state: string }>(
     (resolve, reject) => {
@@ -77,6 +86,9 @@ export async function signInWithOAuth(provider: Provider): Promise<AuthSession> 
           const url = new URL(event.url);
           const code = url.searchParams.get("code");
           const state = url.searchParams.get("state");
+          // #region agent log
+          fetch('http://127.0.0.1:7833/ingest/13ae7a14-0ef6-4bc8-909d-3672502a0001',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f3f17e'},body:JSON.stringify({sessionId:'f3f17e',runId:'post-fix',hypothesisId:'H1',location:'oauth.ts:appUrlOpen',message:'deep link received',data:{urlPrefix:event.url.slice(0,80),hasCode:!!code,hasState:!!state},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
           if (code && state) {
             done = true;
             void cleanup().finally(() => resolve({ code, state }));
