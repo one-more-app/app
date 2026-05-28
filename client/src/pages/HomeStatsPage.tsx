@@ -1,10 +1,12 @@
 import logo from '@/assets/logo-white.png'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
+import { HomeStatsPageSkeleton } from '@/components/skeletons'
 import { useHomeData } from '@/hooks/use-home-data'
 import { UI } from '@/lib/translations'
-import { Calendar, Dumbbell, Loader2, Plus, Trophy } from 'lucide-react'
+import { Calendar, Dumbbell, Plus, Trophy } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -68,9 +70,15 @@ export default function HomeStatsPage() {
     if (!hasLoaded) {
         return (
             <div className="min-h-screen-app bg-background">
-                <div className="flex items-center justify-center py-20">
-                    <Loader2 className="size-8 animate-spin text-muted-foreground" />
-                </div>
+                <header className="sticky top-0 z-10 border-b border-white/10 bg-black p-4">
+                    <div className="mx-auto flex max-w-2xl items-center justify-between">
+                        <Skeleton className="h-8 w-28" />
+                        <Skeleton className="h-8 w-32 rounded-lg" />
+                    </div>
+                </header>
+                <main className="mx-auto max-w-2xl p-4">
+                    <HomeStatsPageSkeleton />
+                </main>
             </div>
         )
     }
@@ -79,7 +87,7 @@ export default function HomeStatsPage() {
 
     return (
         <div className="min-h-screen-app bg-background">
-            <header className="sticky top-0 z-10 border-b border-white/10 bg-black p-4">
+            <header className="sticky-top-safe z-10 border-b border-white/10 bg-black p-4">
                 <div className="mx-auto flex max-w-2xl items-center justify-between">
                     <img src={logo} alt="One More" className="h-8" />
                     <Button variant="ghost" size="sm" asChild>

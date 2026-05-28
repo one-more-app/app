@@ -1,4 +1,5 @@
 import { ExerciseCard } from '@/components/ExerciseCard'
+import { ExerciseCardSkeletonList } from '@/components/skeletons'
 import { ExerciseSearchFilters } from '@/components/ExerciseSearchFilters'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -156,7 +157,9 @@ function HomePage() {
                     </Button>
                 </div>
 
-                {nonCardioExercises.length === 0 ? (
+                {!hasLoaded ? (
+                    <ExerciseCardSkeletonList count={5} className="mt-2" />
+                ) : nonCardioExercises.length === 0 ? (
                     <EmptyState
                         className="mt-4"
                         icon={Dumbbell}

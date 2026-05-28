@@ -162,6 +162,9 @@
   }
   html {
     height: 100%;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    scroll-padding-top: var(--safe-top);
   }
   body {
     @apply bg-background text-foreground;
@@ -169,6 +172,18 @@
     min-height: 100%;
     /* 100dvh = hauteur visible réelle sur mobile (barres dynamiques) */
     min-height: 100dvh;
+  }
+  /* Avec overlaysWebView, le contenu scrollable ne doit pas passer sous la status bar. */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--safe-top);
+    background-color: var(--color-background);
+    z-index: 90;
+    pointer-events: none;
   }
   #root {
     min-height: 100%;
@@ -181,7 +196,12 @@
     box-sizing: border-box;
     min-height: 100vh;
     min-height: 100dvh;
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: var(--safe-top);
+  }
+
+  .sticky-top-safe {
+    position: sticky;
+    top: var(--safe-top);
   }
 }
 

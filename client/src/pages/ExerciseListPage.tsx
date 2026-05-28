@@ -1,4 +1,5 @@
 import { BackHeader } from '@/components/BackHeader'
+import { ExerciseCatalogSkeletonList } from '@/components/skeletons'
 import { ExerciseSearchFilters } from '@/components/ExerciseSearchFilters'
 import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { Badge } from '@/components/ui/badge'
@@ -114,7 +115,7 @@ export function ExerciseListPage() {
         void Promise.resolve().then(() => setBrokenImageIds(new Set()))
     }, [muscleFilter, equipmentFilter, searchQuery])
 
-    const { data: catalogData, error: catalogError } = useSWR(
+    const { data: catalogData, error: catalogError, isLoading: isLoadingCatalog } = useSWR(
         ['exercise-catalog', searchQuery],
         async () => {
             const apiQuery = searchQuery.trim()
@@ -446,6 +447,8 @@ export function ExerciseListPage() {
                             {UI.apiErrorCustom}
                         </p>
                     </div>
+                ) : isLoadingCatalog && !catalogData ? (
+                    <ExerciseCatalogSkeletonList count={8} />
                 ) : (
                     <ul className="space-y-2">
                         {filteredExercises.map((ex, index) => {
@@ -498,7 +501,7 @@ export function ExerciseListPage() {
                     </ul>
                 )}
 
-                {filteredExercises.length === 0 && !catalogError && (
+                {filteredExercises.length === 0 && !catalogError && !isLoadingCatalog && (
                     <EmptyState
                         className="mt-6"
                         icon={Dumbbell}

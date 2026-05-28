@@ -1,4 +1,5 @@
 import { BackHeader } from '@/components/BackHeader'
+import { SettingsProfileSkeleton } from '@/components/skeletons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -29,6 +30,7 @@ export function SettingsPage() {
     const [weightKg, setWeightKg] = useState<string>('')
     const [heightCm, setHeightCm] = useState<string>('')
     const [gender, setGender] = useState<'male' | 'female'>('male')
+    const [profileHydrated, setProfileHydrated] = useState(false)
 
     useEffect(() => {
         if (!profile) return
@@ -36,6 +38,7 @@ export function SettingsPage() {
         setWeightKg(String(p.weightKg))
         setHeightCm(String(p.heightCm))
         setGender(p.gender)
+        setProfileHydrated(true)
     }, [profile])
 
     const handleSave = () => {
@@ -114,70 +117,74 @@ export function SettingsPage() {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>{UI.profile}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{UI.profileLeagueHint}</p>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex flex-col gap-2">
-                            <Input
-                                id="settings-weight"
-                                label={UI.bodyWeight}
-                                type="number"
-                                inputMode="decimal"
-                                min={30}
-                                max={300}
-                                step={0.5}
-                                value={weightKg}
-                                onChange={(e) => setWeightKg(e.target.value)}
-                                onBlur={handleSave}
-                            />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <Input
-                                id="settings-height"
-                                label={UI.height}
-                                type="number"
-                                inputMode="numeric"
-                                min={100}
-                                max={250}
-                                step={1}
-                                value={heightCm}
-                                onChange={(e) => setHeightCm(e.target.value)}
-                                onBlur={handleSave}
-                            />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <Label>{UI.gender}</Label>
-                            <Select
-                                value={gender}
-                                onValueChange={(v) => {
-                                    const nextGender = v as 'male' | 'female'
-                                    setGender(nextGender)
-                                    void (async () => {
-                                        await setUserProfileAndWait({ gender: nextGender })
-                                        await refreshProfile()
-                                    })()
-                                }}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="male">{UI.male}</SelectItem>
-                                    <SelectItem value="female">{UI.female}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <Button onClick={() => {
-                            handleSave()
-                            toast.success('Profil sauvegardé')
-                        }} className="w-full">
-                            {UI.save}
-                        </Button>
-                    </CardContent>
-                </Card>
+                {!profileHydrated ? (
+                    <SettingsProfileSkeleton />
+                ) : (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{UI.profile}</CardTitle>
+                            <p className="text-sm text-muted-foreground">{UI.profileLeagueHint}</p>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex flex-col gap-2">
+                                <Input
+                                    id="settings-weight"
+                                    label={UI.bodyWeight}
+                                    type="number"
+                                    inputMode="decimal"
+                                    min={30}
+                                    max={300}
+                                    step={0.5}
+                                    value={weightKg}
+                                    onChange={(e) => setWeightKg(e.target.value)}
+                                    onBlur={handleSave}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <Input
+                                    id="settings-height"
+                                    label={UI.height}
+                                    type="number"
+                                    inputMode="numeric"
+                                    min={100}
+                                    max={250}
+                                    step={1}
+                                    value={heightCm}
+                                    onChange={(e) => setHeightCm(e.target.value)}
+                                    onBlur={handleSave}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <Label>{UI.gender}</Label>
+                                <Select
+                                    value={gender}
+                                    onValueChange={(v) => {
+                                        const nextGender = v as 'male' | 'female'
+                                        setGender(nextGender)
+                                        void (async () => {
+                                            await setUserProfileAndWait({ gender: nextGender })
+                                            await refreshProfile()
+                                        })()
+                                    }}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="male">{UI.male}</SelectItem>
+                                        <SelectItem value="female">{UI.female}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <Button onClick={() => {
+                                handleSave()
+                                toast.success('Profil sauvegardé')
+                            }} className="w-full">
+                                {UI.save}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
 
                 <Card>
                     <CardHeader>

@@ -1,4 +1,5 @@
 import { BackHeader } from '@/components/BackHeader'
+import { StatsPageSkeleton } from '@/components/skeletons'
 import { BodyMuscleLeagueMap } from '@/components/BodyMuscleLeagueMap'
 import { ProfileLeagueSettingsDialog } from '@/components/ProfileLeagueSettingsDialog'
 import { Badge } from '@/components/ui/badge'
@@ -13,7 +14,7 @@ import { computeLeagueStatsForTracked } from '@/lib/muscle-league-stats'
 import { getGlobalLeagueGauge, leagueLevelToFrenchLabel } from '@/lib/strength-standards'
 import { translateTarget, UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
-import { BarChart2, ChevronDown, Loader2, Settings } from 'lucide-react'
+import { BarChart2, ChevronDown, Settings } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -44,13 +45,13 @@ export default function StatsPage() {
         return getGlobalLeagueGauge(leagueSummary.globalAvgLeagueScore)
     }, [leagueSummary])
 
-    if (!hasLoaded || !profile) {
+    if (!hasLoaded) {
         return (
             <div className="min-h-screen-app bg-background">
                 <BackHeader title="Stats" />
-                <div className="flex items-center justify-center py-20">
-                    <Loader2 className="size-8 animate-spin text-muted-foreground" />
-                </div>
+                <main className="mx-auto max-w-2xl p-4">
+                    <StatsPageSkeleton />
+                </main>
             </div>
         )
     }
