@@ -10,7 +10,20 @@ tasks:
       - task --list
 
   install:
-    desc: Installe les dépendances (workspaces client + api)
+    desc: Installe les dépendances (client + api)
+    cmds:
+      - task: install:client
+      - task: install:api
+
+  install:client:
+    desc: Installe les dépendances du client
+    dir: client
+    cmds:
+      - "{{.NPM}} install"
+
+  install:api:
+    desc: Installe les dépendances de l’API
+    dir: api
     cmds:
       - "{{.NPM}} install"
 
@@ -20,39 +33,57 @@ tasks:
 
   dev:client:
     desc: Serveur de dev Vite (client/)
+    dir: client
     cmds:
-      - "{{.NPM}} run dev -w client"
+      - "{{.NPM}} run dev"
 
   dev:api:
     desc: API Nest en mode watch (api/)
+    dir: api
     cmds:
-      - "{{.NPM}} run start:dev -w api"
+      - "{{.NPM}} run start:dev"
 
   build:
     desc: Build production du client (PWA / Capacitor)
+    dir: client
     cmds:
-      - "{{.NPM}} run build -w client"
+      - "{{.NPM}} run build"
 
   build:api:
     desc: Compile l’API Nest
+    dir: api
     cmds:
-      - "{{.NPM}} run build -w api"
+      - "{{.NPM}} run build"
 
   lint:
     desc: ESLint client puis API
     cmds:
-      - "{{.NPM}} run lint -w client"
-      - "{{.NPM}} run lint -w api"
+      - task: lint:client
+      - task: lint:api
+
+  lint:client:
+    desc: ESLint du client
+    dir: client
+    cmds:
+      - "{{.NPM}} run lint"
+
+  lint:api:
+    desc: ESLint de l’API
+    dir: api
+    cmds:
+      - "{{.NPM}} run lint"
 
   preview:
     desc: Prévisualise le build client (après task build)
+    dir: client
     cmds:
-      - "{{.NPM}} run preview -w client"
+      - "{{.NPM}} run preview"
 
   cap:sync:
     desc: Build client + synchronisation Capacitor (android/ios)
+    dir: client
     cmds:
-      - "{{.NPM}} run cap:sync -w client"
+      - "{{.NPM}} run cap:sync"
 
   docker:
     desc: Démarre Postgres local (docker compose)
@@ -69,28 +100,29 @@ tasks:
     deps: [docker]
     dir: api
     cmds:
-      - npm run typeorm:migrate
+      - "{{.NPM}} run typeorm:migrate"
 
   migration:create:
     desc: Crée un squelette de migration TypeORM
     dir: api
     cmds:
-      - npm run typeorm:migration:create
+      - "{{.NPM}} run typeorm:migration:create"
 
   migration:generate:
     desc: Génère une migration TypeORM depuis les entities
     deps: [docker]
     dir: api
     cmds:
-      - npm run typeorm:migration:generate
+      - "{{.NPM}} run typeorm:migration:generate"
 
   seed:exercises:
     desc: Seed du catalogue exercices depuis client
     dir: api
     cmds:
-      - npm run seed:exercises
+      - "{{.NPM}} run seed:exercises"
 
   test:api:
     desc: Tests unitaires API
+    dir: api
     cmds:
-      - "{{.NPM}} run test -w api"
+      - "{{.NPM}} run test"

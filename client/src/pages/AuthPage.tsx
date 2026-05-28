@@ -1,4 +1,5 @@
 import logoTextLight from "@/assets/logo-text.png";
+import { OnboardingVideoShell } from "@/components/OnboardingVideoShell";
 import { StepCard } from "@/components/StepCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -144,7 +145,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
     const registerProgress = (current: number) => (current / registerTotal) * 100;
 
     const content = (
-        <main className="relative z-10 mx-auto max-w-2xl px-4 py-6 space-y-4">
+        <main className="relative z-10 mx-auto w-full max-w-2xl px-4 py-6 space-y-4">
                 <div className="flex justify-center pt-2 animate-in fade-in-0 slide-in-from-top-2 duration-500">
                     <img
                         src={logoTextLight}
@@ -308,7 +309,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                 ) : (
                     <Card
                         key={`auth-${step}`}
-                        className="shadow-2xl border-border/80 bg-card/95 backdrop-blur-sm animate-in fade-in-0 slide-in-from-bottom-4 duration-400"
+                        className="w-full shadow-2xl border-border/80 bg-card/95 backdrop-blur-sm animate-in fade-in-0 slide-in-from-bottom-4 duration-400"
                     >
                         <CardHeader>
                             <CardTitle>{UI.connectOrCreateAccount}</CardTitle>
@@ -389,7 +390,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                     <div className="h-px flex-1 bg-border/60" />
                 </div>
 
-                <Card className="shadow-2xl border-border/80 bg-card/95 backdrop-blur-sm animate-in fade-in-0 slide-in-from-bottom-3 duration-500 [animation-delay:120ms]">
+                <Card className="w-full shadow-2xl border-border/80 bg-card/95 backdrop-blur-sm animate-in fade-in-0 slide-in-from-bottom-3 duration-500 [animation-delay:120ms]">
                     <CardHeader>
                         <CardTitle>{UI.continueWith}</CardTitle>
                     </CardHeader>
@@ -451,22 +452,6 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         return content;
     }
 
-    return (
-        <div className="relative min-h-screen-app bg-black overflow-hidden">
-            <video
-                className="absolute inset-0 h-full w-full object-cover pointer-events-none bg-black"
-                src="/onboarding-bg.mp4"
-                muted
-                autoPlay
-                loop
-                playsInline
-                preload="metadata"
-            />
-            <div className="absolute inset-0 bg-black/50 pointer-events-none" />
-            <div className="pointer-events-none absolute -top-20 -left-20 size-64 rounded-full bg-accent/20 blur-3xl animate-pulse" />
-            <div className="pointer-events-none absolute bottom-8 -right-20 size-72 rounded-full bg-primary/20 blur-3xl animate-pulse [animation-delay:700ms]" />
-            {content}
-        </div>
-    );
+    return <OnboardingVideoShell>{content}</OnboardingVideoShell>;
 }
 

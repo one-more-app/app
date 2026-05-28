@@ -1,4 +1,5 @@
 import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
+import { OnboardingVideoShell } from '@/components/OnboardingVideoShell'
 import { StepCard } from '@/components/StepCard'
 import { Button } from '@/components/ui/button'
 import { useUserProfileData } from '@/hooks/use-api-data'
@@ -203,21 +204,7 @@ function OnboardingPage() {
     }, [step, auth.status, navigate, searchParams])
 
     return (
-        <div className="relative flex min-h-screen-app flex-col overflow-hidden bg-black">
-            <video
-                className="absolute inset-0 w-full h-full object-cover pointer-events-none bg-black"
-                src="/onboarding-bg.mp4"
-                muted
-                autoPlay
-                loop
-                playsInline
-                preload="metadata"
-            />
-
-            <div className="absolute inset-0 bg-black/50 pointer-events-none" />
-            <div className="pointer-events-none absolute -top-20 -left-20 size-64 rounded-full bg-accent/20 blur-3xl animate-pulse" />
-            <div className="pointer-events-none absolute bottom-8 -right-20 size-72 rounded-full bg-primary/20 blur-3xl animate-pulse [animation-delay:700ms]" />
-
+        <OnboardingVideoShell>
             {step === 'intro' ? (
                 <div className="relative z-10 flex min-h-0 flex-1 flex-col">
                     <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-10 pb-6">
@@ -329,7 +316,7 @@ function OnboardingPage() {
             ) : step === 'account' ? (
                 <AuthPage embedded />
             ) : null}
-        </div>
+        </OnboardingVideoShell>
     )
 }
 

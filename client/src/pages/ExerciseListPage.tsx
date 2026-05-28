@@ -29,7 +29,10 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { fetchExercisesCatalog, fetchExercisesMeta } from '@/lib/data-api'
-import { exerciseMatchesEquipmentSelection } from '@/lib/equipment-filter'
+import {
+    exerciseMatchesEquipmentSelection,
+    isEquipmentSelectionEmpty,
+} from '@/lib/equipment-filter'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
 import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
@@ -38,10 +41,12 @@ import {
     getExerciseImageUrl,
 } from '@/lib/exercisedb'
 import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
-import { exerciseMatchesMuscleSelection } from '@/lib/muscle-filter'
+import {
+    exerciseMatchesMuscleSelection,
+    isMuscleSelectionEmpty,
+} from '@/lib/muscle-filter'
 import {
     addTrackedExerciseAndWait,
-    getLatestPerformanceCreatedAt,
     isOnboardingFirstExercisePending,
     savePerformanceAndWait,
 } from '@/lib/storage'
@@ -150,14 +155,7 @@ export function ExerciseListPage() {
         list = list.filter((ex) =>
             exerciseMatchesEquipmentSelection(ex.equipment, equipmentFilter),
         )
-        return [...list].sort((a, b) => {
-            const ta = getLatestPerformanceCreatedAt(`api-${a.id}`)
-            const tb = getLatestPerformanceCreatedAt(`api-${b.id}`)
-            if (ta !== null && tb !== null) return tb - ta
-            if (ta !== null) return -1
-            if (tb !== null) return 1
-            return a.name.localeCompare(b.name)
-        })
+        return [...list].sort((a, b) => a.name.localeCompare(b.name))
     }, [catalogData?.items, equipmentFilter, muscleFilter])
 
     const totalFilteredCount = sortedExercises.length
@@ -183,6 +181,13 @@ export function ExerciseListPage() {
                 ex.gifUrl?.trim() &&
                 !brokenImageIds.has(ex.id)
         )
+
+    const showExerciseFilters =
+        (isLoadingCatalog && !catalogData) ||
+        sortedExercises.length > 0 ||
+        !isMuscleSelectionEmpty(muscleFilter) ||
+        !isEquipmentSelectionEmpty(equipmentFilter) ||
+        searchQuery.trim().length > 0
 
     const firstExerciseOnboardingSteps = useMemo<Step[]>(() => {
         const steps: Step[] = [
@@ -371,75 +376,80 @@ export function ExerciseListPage() {
         })()
     }
 
+    const customExerciseDialog = (
+        <Dialog open={customOpen} onOpenChange={setCustomOpen}>
+            <DialogTrigger asChild>
+                <Button size="sm" className="w-full">
+                    <Plus className="mr-1 size-4" />
+                    {UI.custom}
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{UI.newCustomExercise}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="flex flex-col gap-2">
+                        <Label htmlFor="name">{UI.name}</Label>
+                        <Input
+                            id="name"
+                            value={customName}
+                            onChange={(e) => setCustomName(e.target.value)}
+                            placeholder={UI.placeholderExerciseName}
+                        />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <Label>{UI.muscleGroup}</Label>
+                        <Select value={customTarget} onValueChange={setCustomTarget}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {targets.map((t) => (
+                                    <SelectItem key={t} value={t}>
+                                        {translateTarget(t)}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <Button
+                        onClick={handleAddCustom}
+                        disabled={!customName.trim()}
+                        className="w-full"
+                    >
+                        {UI.add}
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
+
     return (
         <div className="min-h-screen-app bg-background">
             <BackHeader compact title={UI.chooseExercises} />
 
             <main className="mx-auto max-w-2xl px-4 py-4">
-                <div data-tour="first-exercise-filters">
-                    <ExerciseSearchFilters
-                        searchInput={searchInput}
-                        onSearchChange={handleSearchChange}
-                        muscleFilter={muscleFilter}
-                        onMuscleFilterChange={handleMuscleFilterChange}
-                        targets={targets}
-                        equipmentFilter={equipmentFilter}
-                        onEquipmentFilterChange={handleEquipmentChange}
-                        equipmentList={equipmentList}
-                        availableRawEquipment={rawEquipment.filter((eq) => !CARDIO_EQUIPMENT.has(eq))}
-                        extraSlot={
-                            <Dialog open={customOpen} onOpenChange={setCustomOpen}>
-                                <DialogTrigger asChild>
-                                    <Button size="sm" className="w-full">
-                                        <Plus className="mr-1 size-4" />
-                                        {UI.custom}
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>{UI.newCustomExercise}</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="space-y-4 py-4">
-                                        <div className="flex flex-col gap-2">
-                                            <Label htmlFor="name">{UI.name}</Label>
-                                            <Input
-                                                id="name"
-                                                value={customName}
-                                                onChange={(e) => setCustomName(e.target.value)}
-                                                placeholder={UI.placeholderExerciseName}
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <Label>{UI.muscleGroup}</Label>
-                                            <Select
-                                                value={customTarget}
-                                                onValueChange={setCustomTarget}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {targets.map((t) => (
-                                                        <SelectItem key={t} value={t}>
-                                                            {translateTarget(t)}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <Button
-                                            onClick={handleAddCustom}
-                                            disabled={!customName.trim()}
-                                            className="w-full"
-                                        >
-                                            {UI.add}
-                                        </Button>
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
-                        }
-                    />
-                </div>
+                {showExerciseFilters ? (
+                    <div data-tour="first-exercise-filters">
+                        <ExerciseSearchFilters
+                            searchInput={searchInput}
+                            onSearchChange={handleSearchChange}
+                            muscleFilter={muscleFilter}
+                            onMuscleFilterChange={handleMuscleFilterChange}
+                            targets={targets}
+                            equipmentFilter={equipmentFilter}
+                            onEquipmentFilterChange={handleEquipmentChange}
+                            equipmentList={equipmentList}
+                            availableRawEquipment={rawEquipment.filter((eq) => !CARDIO_EQUIPMENT.has(eq))}
+                            extraSlot={customExerciseDialog}
+                        />
+                    </div>
+                ) : (
+                    !catalogError && (
+                        <div className="mb-4">{customExerciseDialog}</div>
+                    )
+                )}
                 {catalogError ? (
                     <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
                         <p className="text-destructive">{UI.apiErrorCustom}</p>

@@ -136,17 +136,19 @@ function HomePage() {
     return (
         <div className="min-h-screen-app bg-background">
             <main className="mx-auto max-w-2xl p-4">
-                <ExerciseSearchFilters
-                    searchInput={searchInput}
-                    onSearchChange={handleSearchChange}
-                    muscleFilter={muscleFilter}
-                    onMuscleFilterChange={handleMuscleFilterChange}
-                    targets={targets}
-                    equipmentFilter={equipmentFilter}
-                    onEquipmentFilterChange={handleEquipmentChange}
-                    equipmentList={equipmentList}
-                    availableRawEquipment={availableRawEquipment}
-                />
+                {hasLoaded && nonCardioExercises.length > 0 && (
+                    <ExerciseSearchFilters
+                        searchInput={searchInput}
+                        onSearchChange={handleSearchChange}
+                        muscleFilter={muscleFilter}
+                        onMuscleFilterChange={handleMuscleFilterChange}
+                        targets={targets}
+                        equipmentFilter={equipmentFilter}
+                        onEquipmentFilterChange={handleEquipmentChange}
+                        equipmentList={equipmentList}
+                        availableRawEquipment={availableRawEquipment}
+                    />
+                )}
 
                 <div className="mb-4">
                     <Button size="sm" asChild className="w-full">
