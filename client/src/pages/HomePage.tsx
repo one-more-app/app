@@ -135,7 +135,7 @@ function HomePage() {
 
     return (
         <div className="min-h-screen-app bg-background">
-            <main className="mx-auto max-w-2xl p-4">
+            <main className="mx-auto max-w-2xl p-4 pt-safe-top">
                 {hasLoaded && nonCardioExercises.length > 0 && (
                     <ExerciseSearchFilters
                         searchInput={searchInput}

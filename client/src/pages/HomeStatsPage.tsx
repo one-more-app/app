@@ -70,7 +70,7 @@ export default function HomeStatsPage() {
     if (!hasLoaded) {
         return (
             <div className="min-h-screen-app bg-background">
-                <header className="sticky top-0 z-10 border-b border-white/10 bg-black p-4">
+                <header className="sticky-top-safe z-10 border-b border-white/10 bg-black px-4 pb-4">
                     <div className="mx-auto flex max-w-2xl items-center justify-between">
                         <Skeleton className="h-8 w-28" />
                         <Skeleton className="h-8 w-32 rounded-lg" />
@@ -87,7 +87,7 @@ export default function HomeStatsPage() {
 
     return (
         <div className="min-h-screen-app bg-background">
-            <header className="sticky-top-safe z-10 border-b border-white/10 bg-black p-4">
+            <header className="sticky-top-safe z-10 border-b border-white/10 bg-black px-4 pb-4">
                 <div className="mx-auto flex max-w-2xl items-center justify-between">
                     <img src={logo} alt="One More" className="h-8" />
                     <Button variant="ghost" size="sm" asChild>

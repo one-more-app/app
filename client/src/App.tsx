@@ -10,11 +10,13 @@ import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCele
 import { Toaster } from '@/components/ui/sonner'
 import { BottomNav } from '@/components/BottomNav'
 import { App as CapacitorApp } from '@capacitor/app'
-import { Capacitor } from '@capacitor/core'
+import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core'
 import { initGoogleNativeSignIn } from '@/lib/google-native'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { getSystemBarsStyle, IMMERSIVE_FULL_BLEED_ROUTES } from '@/lib/system-bars-style'
+import { scheduleSafeAreaCssSync } from '@/lib/sync-safe-area-css'
 import { needsOnboarding } from '@/lib/storage'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import { useTheme } from '@/hooks/use-theme'
@@ -80,30 +82,49 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
     )
 }
 
-function App() {
-    const { resolvedTheme } = useTheme()
+function SafeAreaTopScrim() {
+    const { pathname } = useLocation()
+    if (IMMERSIVE_FULL_BLEED_ROUTES.has(pathname)) return null
+    return <div className="safe-area-top-scrim" aria-hidden />
+}
 
-    useEffect(() => {
-        if (!Capacitor.isNativePlatform()) return
-        void initGoogleNativeSignIn().catch(() => {
-            /* Config Google manquante ou plugin indisponible — login au tap. */
-        })
-    }, [])
+function NativeSystemBarsSync() {
+    const { resolvedTheme } = useTheme()
+    const { pathname } = useLocation()
 
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) return
 
         void (async () => {
+            const barStyle = getSystemBarsStyle(pathname, resolvedTheme)
+
             try {
                 await StatusBar.setOverlaysWebView({ overlay: true })
             } catch {
-                /* Non supporté sur certaines versions (ex. Android 15+ selon le plugin). */
+                /* Android 15+ : barres gérées par SystemBars natif. */
             }
-            await StatusBar.setStyle({
-                style: resolvedTheme === 'dark' ? Style.Dark : Style.Light,
-            })
+
+            try {
+                await SystemBars.setStyle({ style: barStyle })
+            } catch {
+                await StatusBar.setStyle({
+                    style: barStyle === SystemBarsStyle.Dark ? Style.Dark : Style.Light,
+                })
+            }
         })()
-    }, [resolvedTheme])
+    }, [pathname, resolvedTheme])
+
+    return null
+}
+
+function App() {
+    useEffect(() => {
+        if (!Capacitor.isNativePlatform()) return
+        scheduleSafeAreaCssSync()
+        void initGoogleNativeSignIn().catch(() => {
+            /* Config Google manquante ou plugin indisponible — login au tap. */
+        })
+    }, [])
 
     useEffect(() => {
         if (Capacitor.getPlatform() !== 'android') return
@@ -124,6 +145,8 @@ function App() {
 
     return (
         <HashRouter>
+            <NativeSystemBarsSync />
+            <SafeAreaTopScrim />
             <Toaster />
             <LeaguePromotionCelebrationHost />
             <AuthProvider>
