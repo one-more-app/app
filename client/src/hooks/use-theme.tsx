@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { getThemePreference, setThemePreference, type ThemePreference } from '@/lib/storage'
 
-type ResolvedTheme = 'light' | 'dark'
+export type ResolvedTheme = 'light' | 'dark'
 
 type ThemeContextValue = {
     theme: ThemePreference

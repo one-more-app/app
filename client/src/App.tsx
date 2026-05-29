@@ -14,19 +14,22 @@ import { Toaster } from '@/components/ui/sonner'
 import { BottomNav } from '@/components/BottomNav'
 import { cn } from '@/lib/utils'
 import { App as CapacitorApp } from '@capacitor/app'
-import { Capacitor } from '@capacitor/core'
-import { setPendingInviteCode } from '@/lib/invite-code'
+import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core'
 import { initGoogleNativeSignIn } from '@/lib/google-native'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { getSystemBarsStyle, IMMERSIVE_FULL_BLEED_ROUTES } from '@/lib/system-bars-style'
+import { scheduleSafeAreaCssSync } from '@/lib/sync-safe-area-css'
+import { needsOnboarding } from '@/lib/storage'
+import { AuthProvider, useAuth } from '@/hooks/use-auth'
+import { useTheme } from '@/hooks/use-theme'
+import { setPendingInviteCode } from '@/lib/invite-code'
+
 
 function StatsRedirect() {
     return <Navigate to="/profile" replace />
 }
-import { needsOnboarding } from '@/lib/storage'
-import { AuthProvider, useAuth } from '@/hooks/use-auth'
-import { useTheme } from '@/hooks/use-theme'
 
 function AccessGate({ children }: { children: React.ReactNode }) {
     const location = useLocation()
@@ -93,33 +96,42 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
     )
 }
 
-function App() {
-    const { resolvedTheme } = useTheme()
+function SafeAreaTopScrim() {
+    const { pathname } = useLocation()
+    if (IMMERSIVE_FULL_BLEED_ROUTES.has(pathname)) return null
+    return <div className="safe-area-top-scrim" aria-hidden />
+}
 
-    useEffect(() => {
-        if (!Capacitor.isNativePlatform()) return
-        void initGoogleNativeSignIn().catch(() => {
-            /* Config Google manquante ou plugin indisponible — login au tap. */
-        })
-    }, [])
+function NativeSystemBarsSync() {
+    const { resolvedTheme } = useTheme()
+    const { pathname } = useLocation()
 
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) return
 
         void (async () => {
+            const barStyle = getSystemBarsStyle(pathname, resolvedTheme)
+
             try {
                 await StatusBar.setOverlaysWebView({ overlay: true })
             } catch {
-                /* Non supporté sur certaines versions (ex. Android 15+ selon le plugin). */
+                /* Android 15+ : barres gérées par SystemBars natif. */
             }
-            await StatusBar.setStyle({
-                style: resolvedTheme === 'dark' ? Style.Dark : Style.Light,
-            })
+
+            try {
+                await SystemBars.setStyle({ style: barStyle })
+            } catch {
+                await StatusBar.setStyle({
+                    style: barStyle === SystemBarsStyle.Dark ? Style.Dark : Style.Light,
+                })
+            }
         })()
-    }, [resolvedTheme])
+    }, [pathname, resolvedTheme])
 
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) return
+
+        scheduleSafeAreaCssSync()
 
         const handlerPromise = CapacitorApp.addListener('appUrlOpen', (event) => {
             try {
@@ -165,35 +177,39 @@ function App() {
 
     return (
         <HashRouter>
-            <div className="app-shell">
-                <Toaster />
-                <LeaguePromotionCelebrationHost />
-                <AuthProvider>
-                    <AccessGate>
-                        <BottomNavHost>
-                            <Routes>
-                                <Route
-                                    path="/"
-                                    element={
-                                        <IndexRedirect />
-                                    }
-                                />
-                                <Route path="/onboarding" element={<OnboardingPage />} />
-                                <Route path="/home" element={<HomePage />} />
-                                <Route path="/profile" element={<ProfilePage />} />
-                                <Route path="/stats" element={<StatsRedirect />} />
-                                <Route path="/history" element={<HistoryPage />} />
-                                <Route path="/auth" element={<AuthPage />} />
-                                <Route path="/exercises" element={<ExerciseListPage />} />
-                                <Route path="/exercise/:id" element={<ExerciseDetailPage />} />
-                                <Route path="/settings" element={<SettingsPage />} />
-                                <Route path="/invite/:code" element={<InviteLandingPage />} />
+             <div className="app-shell">
+                
+            <NativeSystemBarsSync />
+            <SafeAreaTopScrim />
+            <Toaster />
+            <LeaguePromotionCelebrationHost />
+            <AuthProvider>
+                <AccessGate>
+                    <BottomNavHost>
+                        <Routes>
+                            <Route
+                                path="/"
+                                element={
+                                    <IndexRedirect />
+                                }
+                            />
+                            <Route path="/onboarding" element={<OnboardingPage />} />
+                            <Route path="/home" element={<HomePage />} />
+                            <Route path="/stats" element={<StatsPage />} />
+                            <Route path="/profile" element={<ProfilePage />} />
+                            <Route path="/history" element={<HistoryPage />} />
+                            <Route path="/auth" element={<AuthPage />} />
+                            <Route path="/exercises" element={<ExerciseListPage />} />
+                            <Route path="/exercise/:id" element={<ExerciseDetailPage />} />
+                            <Route path="/settings" element={<SettingsPage />} />
+                            <Route path="/invite/:code" element={<InviteLandingPage />} />
                                 <Route path="/friends" element={<FriendsPage />} />
                                 <Route path="/friends/:userId" element={<FriendProfilePage />} />
-                            </Routes>
-                        </BottomNavHost>
-                    </AccessGate>
-                </AuthProvider>
+                        
+                        </Routes>
+                    </BottomNavHost>
+                </AccessGate>
+            </AuthProvider>
             </div>
         </HashRouter>
     )

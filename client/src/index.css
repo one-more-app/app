@@ -162,44 +162,23 @@
   }
   html {
     height: 100%;
-    overflow: hidden;
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --safe-left: env(safe-area-inset-left, 0px);
-    --safe-right: env(safe-area-inset-right, 0px);
+    /* iOS: env() ; Android: --safe-area-inset-* injectées par MainActivity / SystemBars */
+    --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+    --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+    --safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+    --safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
     --bottom-nav-height: 4rem;
     --back-header-height: 3.75rem;
   }
   body {
     @apply bg-background text-foreground;
     margin: 0;
-    height: 100%;
-    /* 100dvh = hauteur visible réelle sur mobile (barres dynamiques) */
-    height: 100dvh;
-    overflow: hidden;
-  }
-  /* Avec overlaysWebView, le contenu scrollable ne doit pas passer sous la status bar. */
-  body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: var(--safe-top);
-    background-color: var(--color-background);
-    z-index: 90;
-    pointer-events: none;
+    min-height: 100%;
+    min-height: 100dvh;
   }
   #root {
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    height: 100dvh;
-    overflow: hidden;
-    padding-top: var(--safe-top);
-    padding-left: var(--safe-left);
-    padding-right: var(--safe-right);
+    min-height: 100%;
+    min-height: 100dvh;
   }
 }
 
@@ -209,6 +188,19 @@
     box-sizing: border-box;
     min-height: 100vh;
     min-height: 100dvh;
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+    padding-bottom: var(--safe-bottom);
+  }
+
+  .pt-safe-top {
+    padding-top: var(--safe-top);
+  }
+
+  .safe-padding {
+    padding-top: var(--safe-top);
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
     padding-bottom: var(--safe-bottom);
   }
 
@@ -238,6 +230,20 @@
   .sticky-top-safe {
     position: sticky;
     top: 0;
+    z-index: 100;
+    /* Repousse titre/boutons sous la barre de statut ; le fond couvre le scroll derrière. */
+    padding-top: var(--safe-top);
+  }
+
+  .safe-area-top-scrim {
+    pointer-events: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    height: var(--safe-top);
+    background: var(--background);
   }
 }
 
