@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { identifyEmail } from "@/lib/auth";
 import { fetchTrackedExercises } from "@/lib/data-api";
 import { CARDIO_EQUIPMENT } from "@/lib/exercisedb";
-import { signInWithOAuth } from "@/lib/oauth";
+import { signInWithGoogle } from "@/lib/oauth";
 import {
     setOnboardingFirstExercisePending,
     setUserProfile,
@@ -404,7 +404,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                     setIsBusy(true);
                                     auth.clearError();
                                     try {
-                                        const session = await signInWithOAuth("google");
+                                        const session = await signInWithGoogle();
                                         auth.acceptSession(session);
                                         await finishSuccess();
                                     } catch (e) {

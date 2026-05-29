@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api";
 import type { AuthSession } from "@/lib/auth";
+import { loginWithGoogleNative } from "@/lib/google-native";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { Capacitor } from "@capacitor/core";
@@ -26,6 +27,8 @@ async function sha256Base64Url(input: string): Promise<string> {
 }
 
 function defaultRedirectUri(): string {
+  const platform = Capacitor.getPlatform();
+  if (platform === "android") return "com.one_more.app:/oauth";
   return "com.onemore.app:/oauth";
 }
 
@@ -36,10 +39,28 @@ function oauthPlatform(): Platform {
   throw new Error("OAuth mobile disponible uniquement sur iOS et Android");
 }
 
+export async function signInWithGoogle(): Promise<AuthSession> {
+  if (!Capacitor.isNativePlatform()) {
+    throw new Error("Connexion Google disponible uniquement sur l'application mobile");
+  }
+
+  const platform = oauthPlatform();
+  const idToken = await loginWithGoogleNative();
+  return apiFetch<AuthSession>("/oauth/google/id-token", {
+    method: "POST",
+    body: JSON.stringify({ idToken, platform }),
+  });
+}
+
 export async function signInWithOAuth(provider: Provider): Promise<AuthSession> {
+  if (provider === "google") {
+    return signInWithGoogle();
+  }
+
   const codeVerifier = randomString(64);
   const codeChallenge = await sha256Base64Url(codeVerifier);
   const platform = oauthPlatform();
+  const redirectUri = defaultRedirectUri();
 
   const start = await apiFetch<{
     authorizationUrl: string;
@@ -48,16 +69,11 @@ export async function signInWithOAuth(provider: Provider): Promise<AuthSession> 
   }>(`/oauth/${provider}/start`, {
     method: "POST",
     body: JSON.stringify({
-      redirectUri: provider === "apple" ? defaultRedirectUri() : undefined,
+      redirectUri,
       codeChallenge,
       platform,
     }),
   });
-
-  const redirectUri = start.redirectUri ?? defaultRedirectUri();
-  // #region agent log
-  fetch('http://127.0.0.1:7833/ingest/13ae7a14-0ef6-4bc8-909d-3672502a0001',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f3f17e'},body:JSON.stringify({sessionId:'f3f17e',runId:'post-fix',hypothesisId:'H1',location:'oauth.ts:start',message:'oauth start response',data:{platform,redirectUri},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
 
   const { code, state } = await new Promise<{ code: string; state: string }>(
     (resolve, reject) => {
@@ -86,9 +102,6 @@ export async function signInWithOAuth(provider: Provider): Promise<AuthSession> 
           const url = new URL(event.url);
           const code = url.searchParams.get("code");
           const state = url.searchParams.get("state");
-          // #region agent log
-          fetch('http://127.0.0.1:7833/ingest/13ae7a14-0ef6-4bc8-909d-3672502a0001',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f3f17e'},body:JSON.stringify({sessionId:'f3f17e',runId:'post-fix',hypothesisId:'H1',location:'oauth.ts:appUrlOpen',message:'deep link received',data:{urlPrefix:event.url.slice(0,80),hasCode:!!code,hasState:!!state},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
           if (code && state) {
             done = true;
             void cleanup().finally(() => resolve({ code, state }));
@@ -118,7 +131,12 @@ export async function signInWithOAuth(provider: Provider): Promise<AuthSession> 
 
   const session = await apiFetch<AuthSession>(`/oauth/${provider}/callback`, {
     method: "POST",
-    body: JSON.stringify({ code, redirectUri, codeVerifier, state }),
+    body: JSON.stringify({
+      code,
+      redirectUri: start.redirectUri ?? redirectUri,
+      codeVerifier,
+      state,
+    }),
   });
   return session;
 }

@@ -47,7 +47,7 @@ export function resolveGoogleRedirectUri(
     return normalizeRedirectUri(fromList);
   }
 
-  return 'com.onemore.app:/oauth';
+  return 'com.one_more.app:/oauth';
 }
 
 function appendReverseRedirectUris(config: ConfigService, allowed: string[]): void {
@@ -64,7 +64,7 @@ function appendReverseRedirectUris(config: ConfigService, allowed: string[]): vo
 
 export function listAllowedRedirectUris(config: ConfigService): string[] {
   const raw = config.get<string>('OAUTH_REDIRECT_URIS')?.trim();
-  const defaults = ['com.onemore.app:/oauth', 'com.onemore.app://oauth'];
+  const defaults = ['com.one_more.app:/oauth', 'com.one_more.app://oauth', 'com.onemore.app:/oauth', 'com.onemore.app://oauth'];
   const fromEnv = raw
     ? raw.split(',').map((s) => normalizeRedirectUri(s)).filter(Boolean)
     : [];

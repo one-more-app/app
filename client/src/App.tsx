@@ -11,6 +11,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { BottomNav } from '@/components/BottomNav'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
+import { initGoogleNativeSignIn } from '@/lib/google-native'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
@@ -81,6 +82,13 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
 
 function App() {
     const { resolvedTheme } = useTheme()
+
+    useEffect(() => {
+        if (!Capacitor.isNativePlatform()) return
+        void initGoogleNativeSignIn().catch(() => {
+            /* Config Google manquante ou plugin indisponible — login au tap. */
+        })
+    }, [])
 
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) return

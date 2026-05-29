@@ -5,6 +5,7 @@ import { AppModule } from './app.module.js';
 /** Origines Capacitor / Ionic (WebView mobile). */
 const CAPACITOR_CORS_ORIGINS = [
   'capacitor://localhost',
+  'one-more://localhost',
   'ionic://localhost',
   'http://localhost',
   'https://localhost',

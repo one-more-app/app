@@ -1,9 +1,13 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+  import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.onemore.app',
+  appId: 'com.one_more.app',
   appName: 'One More',
   webDir: 'dist',
+  server: {
+    iosScheme: 'one-more',
+    androidScheme: 'https',
+  },
   plugins: {
     StatusBar: {
       overlaysWebView: true,

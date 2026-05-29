@@ -96,9 +96,6 @@ export class OAuthService {
       url.searchParams.set('code_challenge', params.codeChallenge);
       url.searchParams.set('code_challenge_method', 'S256');
       url.searchParams.set('state', state);
-      // #region agent log
-      fetch('http://127.0.0.1:7833/ingest/13ae7a14-0ef6-4bc8-909d-3672502a0001',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f3f17e'},body:JSON.stringify({sessionId:'f3f17e',runId:'post-fix',hypothesisId:'H1',location:'oauth.service.ts:start',message:'google oauth start',data:{platform:params.platform,redirectUri,clientIdSuffix:clientId.slice(-30)},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       return { authorizationUrl: url.toString(), state, redirectUri };
     }
 
@@ -157,9 +154,38 @@ export class OAuthService {
       platform: pending.platform,
     });
 
-    const oauthProvider = toOAuthProvider(provider);
+    return await this.linkOAuthUser({
+      provider,
+      providerUserId,
+      email,
+      deviceId: params.deviceId,
+    });
+  }
+
+  async signInWithGoogleIdToken(params: {
+    idToken: string;
+    platform: Platform;
+    deviceId?: string;
+  }) {
+    const audience = this.googleIdTokenAudience(params.platform);
+    const { sub, email } = await verifyGoogleIdToken(params.idToken, audience);
+    return await this.linkOAuthUser({
+      provider: 'google',
+      providerUserId: sub,
+      email,
+      deviceId: params.deviceId,
+    });
+  }
+
+  private async linkOAuthUser(params: {
+    provider: Provider;
+    providerUserId: string;
+    email: string | null;
+    deviceId?: string;
+  }) {
+    const oauthProvider = toOAuthProvider(params.provider);
     const linked = await this.oauthAccountsRepo.findOne({
-      where: { provider: oauthProvider, providerUserId },
+      where: { provider: oauthProvider, providerUserId: params.providerUserId },
       relations: { user: true },
     });
 
@@ -170,7 +196,7 @@ export class OAuthService {
       userId = linked.user.id;
       userEmail = linked.user.email;
     } else {
-      const normalizedEmail = email ? email.trim().toLowerCase() : null;
+      const normalizedEmail = params.email ? params.email.trim().toLowerCase() : null;
       const existingByEmail = normalizedEmail
         ? await this.usersRepo.findOne({
             where: { email: normalizedEmail },
@@ -199,8 +225,8 @@ export class OAuthService {
       await this.oauthAccountsRepo.save({
         userId,
         provider: oauthProvider,
-        providerUserId,
-        email: email ? email.trim().toLowerCase() : null,
+        providerUserId: params.providerUserId,
+        email: params.email ? params.email.trim().toLowerCase() : null,
       });
     }
 
@@ -270,6 +296,18 @@ export class OAuthService {
     if (legacyClientId) return legacyClientId;
 
     throw new BadRequestException(`Variable manquante: ${key}`);
+  }
+
+  /** Audience JWT pour Google Sign-In natif (Capgo SDK). */
+  private googleIdTokenAudience(platform: Platform): string {
+    if (platform === 'ios') {
+      return this.googleClientId('ios');
+    }
+
+    const webClientId = this.config.get<string>('GOOGLE_CLIENT_ID_WEB')?.trim();
+    if (webClientId) return webClientId;
+
+    throw new BadRequestException('Variable manquante: GOOGLE_CLIENT_ID_WEB');
   }
 
   private assertAllowedRedirectUri(redirectUri: string): void {

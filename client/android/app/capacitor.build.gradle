@@ -14,6 +14,7 @@ dependencies {
     implementation project(':capacitor-haptics')
     implementation project(':capacitor-status-bar')
     implementation project(':capawesome-capacitor-app-review')
+    implementation project(':capgo-capacitor-social-login')
 
 }
 

@@ -33,3 +33,15 @@ export class OAuthCallbackDto {
   @IsString()
   deviceId?: string;
 }
+
+export class GoogleIdTokenDto {
+  @IsString()
+  idToken!: string;
+
+  @IsIn(['android', 'ios'])
+  platform!: 'android' | 'ios';
+
+  @IsOptional()
+  @IsString()
+  deviceId?: string;
+}

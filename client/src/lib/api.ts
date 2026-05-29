@@ -143,14 +143,25 @@ export async function apiFetch<T>(
   const { authToken, headers, skipAuthRefresh, ...rest } = init;
   const stored = readStoredSession();
   const tokenToUse = authToken ?? stored?.accessToken ?? null;
-  const res = await fetch(url, {
-    ...rest,
-    headers: {
-      "content-type": "application/json",
-      ...(tokenToUse ? { authorization: `Bearer ${tokenToUse}` } : {}),
-      ...(headers ?? {}),
-    },
-  });
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...rest,
+      headers: {
+        "content-type": "application/json",
+        ...(tokenToUse ? { authorization: `Bearer ${tokenToUse}` } : {}),
+        ...(headers ?? {}),
+      },
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new ApiError(
+      `Impossible de joindre l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}. ${reason}`,
+      0,
+      null,
+    );
+  }
 
   const contentType = res.headers.get("content-type") ?? "";
   const isJson = contentType.includes("application/json");
@@ -187,7 +198,9 @@ export async function apiFetch<T>(
     const p = payload as ApiErrorPayload | null;
     const msg =
       (p && typeof p === "object" && (p.message || p.error)) ||
-      `Requête API échouée (${res.status})`;
+      (res.status === 404 && path.includes("/oauth/google/id-token")
+        ? "Route /oauth/google/id-token absente sur l'API déployée. Redéploie la branche feat/build-mobile (dossier api/)."
+        : `Requête API échouée (${res.status})`);
     throw new ApiError(String(msg), res.status, payload);
   }
   return payload as T;
