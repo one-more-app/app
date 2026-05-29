@@ -140,6 +140,8 @@ export function useUserProfileData() {
             weightKg: remote.weightKg,
             heightCm: remote.heightCm,
             gender: remote.gender,
+            firstName: remote.firstName ?? undefined,
+            lastName: remote.lastName ?? undefined,
           }
         : DEFAULT_PROFILE;
       setUserProfile(profile, { silent: true });

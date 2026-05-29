@@ -15,6 +15,7 @@ type HistoryDaySectionProps = {
     onEditEntry: (entry: PerformanceEntry) => void
     onDeleteEntry: (entry: PerformanceEntry) => void
     onAddEntry?: (trackedExerciseId: string, dayKey: string) => void
+    surface?: 'card' | 'profile'
 }
 
 export function HistoryDaySection({
@@ -26,6 +27,7 @@ export function HistoryDaySection({
     onEditEntry,
     onDeleteEntry,
     onAddEntry,
+    surface = 'card',
 }: HistoryDaySectionProps) {
     return (
         <li className="space-y-3">
@@ -55,6 +57,7 @@ export function HistoryDaySection({
                                     ? () => onAddEntry(trackedExerciseId, dayKey)
                                     : undefined
                             }
+                            surface={surface}
                         />
                     )
                 })}

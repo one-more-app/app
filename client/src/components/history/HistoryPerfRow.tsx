@@ -1,12 +1,8 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-    formatPerfLabel,
-    formatTimeOnly,
-    type HistoryEntryInsight,
-} from '@/lib/history-entries'
-import { LEAGUE_COLORS } from '@/lib/league-colors'
+import { LeaguePromotionBadges } from '@/components/history/LeaguePromotionBadges'
+import { formatPerfLabel, type HistoryEntryInsight } from '@/lib/history-entries'
 import { UI } from '@/lib/translations'
 import type { PerformanceEntry } from '@/types'
 import { Pencil, Trash2 } from 'lucide-react'
@@ -26,8 +22,6 @@ export function HistoryPerfRow({
     onEdit,
     onDelete,
 }: HistoryPerfRowProps) {
-    const when = formatTimeOnly(entry.createdAt)
-
     return (
         <li>
             <Card className="py-0">
@@ -43,13 +37,10 @@ export function HistoryPerfRow({
                                 </Badge>
                             ) : null}
                             {insight?.leagueUp && insight.nextLeague ? (
-                                <Badge
-                                    variant="outline"
-                                    className={`shrink-0 text-xs ${LEAGUE_COLORS[insight.nextLeague.level] ?? 'bg-muted'}`}
-                                    title={UI.leaguePromotion}
-                                >
-                                    {insight.nextLeague.label}
-                                </Badge>
+                                <LeaguePromotionBadges
+                                    prevLeague={insight.prevLeague}
+                                    nextLeague={insight.nextLeague}
+                                />
                             ) : null}
                         </div>
                     </div>

@@ -14,7 +14,44 @@ import type { PerformanceEntry, TrackedExercise, UserProfile } from '@/types'
 export type HistoryEntryInsight = {
     isRecord: boolean
     leagueUp: boolean
+    prevLeague: LeagueInfo | null
     nextLeague: LeagueInfo | null
+}
+
+export type ExerciseGroupInsightSummary = {
+    hasNewRecord: boolean
+    leaguePromotion: {
+        prevLeague: LeagueInfo | null
+        nextLeague: LeagueInfo
+    } | null
+}
+
+/** Agrège record / palier pour l’en-tête replié d’un exercice dans l’historique. */
+export function summarizeExerciseGroupInsights(
+    items: PerformanceEntry[],
+    entryInsights: Map<string, HistoryEntryInsight>,
+): ExerciseGroupInsightSummary {
+    let hasNewRecord = false
+    let leaguePromotion: ExerciseGroupInsightSummary['leaguePromotion'] = null
+    let bestNextIndex = -1
+
+    for (const item of items) {
+        const insight = entryInsights.get(item.id)
+        if (!insight) continue
+        if (insight.isRecord) hasNewRecord = true
+        if (insight.leagueUp && insight.nextLeague) {
+            const nextIndex = getLeagueLevelIndex(insight.nextLeague.level)
+            if (nextIndex > bestNextIndex) {
+                bestNextIndex = nextIndex
+                leaguePromotion = {
+                    prevLeague: insight.prevLeague,
+                    nextLeague: insight.nextLeague,
+                }
+            }
+        }
+    }
+
+    return { hasNewRecord, leaguePromotion }
 }
 
 export function resolveTrackedExercise(
@@ -155,6 +192,7 @@ export function buildEntryInsights(
                 out.set(entry.id, {
                     isRecord,
                     leagueUp: false,
+                    prevLeague: null,
                     nextLeague: null,
                 })
                 continue
@@ -176,7 +214,12 @@ export function buildEntryInsights(
                     getLeagueLevelIndex(nextLeague.level) >
                     getLeagueLevelIndex(prevLeague.level))
 
-            out.set(entry.id, { isRecord, leagueUp, nextLeague })
+            out.set(entry.id, {
+                isRecord,
+                leagueUp,
+                prevLeague,
+                nextLeague,
+            })
         }
     }
     return out

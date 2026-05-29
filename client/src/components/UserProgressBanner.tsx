@@ -2,6 +2,7 @@ import { useUserProgressData } from "@/hooks/use-api-data";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { Flame } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function UserProgressBanner({ className }: { className?: string }) {
     const { data: progress } = useUserProgressData();
@@ -16,11 +17,14 @@ export function UserProgressBanner({ className }: { className?: string }) {
             : 0;
 
     return (
-        <div
+        <Link
+            to="/profile"
             className={cn(
-                "mb-4 rounded-xl bg-card p-3",
+                "mb-4 block rounded-xl bg-card p-3 outline-none transition-colors",
+                "hover:bg-card/90 focus-visible:ring-2 focus-visible:ring-ring",
                 className,
             )}
+            aria-label={UI.xpBannerGoToProfile}
         >
             <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -56,6 +60,6 @@ export function UserProgressBanner({ className }: { className?: string }) {
                     .replace("{current}", String(progress.xpIntoLevel))
                     .replace("{total}", String(progress.xpForNextLevel))}
             </p>
-        </div>
+        </Link>
     );
 }

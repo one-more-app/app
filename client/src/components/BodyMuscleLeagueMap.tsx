@@ -12,9 +12,11 @@ import { LEAGUE_COLORS, leagueMapFill } from "@/lib/league-colors";
 import type { MuscleLeagueAgg } from "@/lib/muscle-league-stats";
 import { muscleTargetToSlug } from "@/lib/muscle-target-to-slug";
 import {
-    averageLeagueScoreToLevel,
+    getLeagueLevelIndex,
+    leagueScoreToRepresentativeLevel,
     LEAGUE_ORDER,
     leagueLevelToFrenchLabel,
+    medianLeagueScore,
 } from "@/lib/strength-standards";
 import { translateTarget, UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
@@ -30,22 +32,22 @@ type SlugBucket = {
 };
 
 function aggregateBySlug(byMuscle: MuscleLeagueAgg[]): Map<Slug, SlugBucket> {
-    const map = new Map<
-        Slug,
-        { sum: number; count: number; muscles: MuscleLeagueAgg[] }
-    >();
+    const map = new Map<Slug, { scores: number[]; muscles: MuscleLeagueAgg[] }>();
     for (const m of byMuscle) {
         const slug = muscleTargetToSlug(m.target);
         if (!slug) continue;
-        const cur = map.get(slug) ?? { sum: 0, count: 0, muscles: [] };
-        cur.sum += m.avgLeagueScore;
-        cur.count += 1;
+        const cur = map.get(slug) ?? { scores: [], muscles: [] };
+        for (const row of m.exercises) {
+            cur.scores.push(
+                getLeagueLevelIndex(row.league.level) + row.league.progressToNext,
+            );
+        }
         cur.muscles.push(m);
         map.set(slug, cur);
     }
     const out = new Map<Slug, SlugBucket>();
-    for (const [slug, { sum, count, muscles }] of map) {
-        out.set(slug, { avgScore: sum / count, muscles });
+    for (const [slug, { scores, muscles }] of map) {
+        out.set(slug, { avgScore: medianLeagueScore(scores), muscles });
     }
     return out;
 }
@@ -112,10 +114,13 @@ export function BodyMuscleLeagueMap({
     byMuscle,
     isDark,
     gender,
+    embedded = false,
 }: {
     byMuscle: MuscleLeagueAgg[];
     isDark: boolean;
     gender: BodyGender;
+    /** Dans une section profil : fond secondary au lieu d’une bordure seule. */
+    embedded?: boolean;
 }) {
     const [pickedSlug, setPickedSlug] = useState<Slug | null>(null);
 
@@ -126,7 +131,7 @@ export function BodyMuscleLeagueMap({
     const bodyData: ExtendedBodyPart[] = useMemo(() => {
         const list: ExtendedBodyPart[] = [];
         for (const [slug, { avgScore }] of bySlug) {
-            const level = averageLeagueScoreToLevel(avgScore);
+            const level = leagueScoreToRepresentativeLevel(avgScore);
             list.push({
                 slug,
                 styles: {
@@ -151,7 +156,12 @@ export function BodyMuscleLeagueMap({
 
     return (
         <div className="w-full space-y-3">
-            <div className="relative overflow-hidden rounded-2xl border border-border/80 p-3">
+            <div
+                className={cn(
+                    "relative overflow-hidden rounded-xl p-3",
+                    embedded ? "bg-secondary" : "rounded-2xl border border-border/80",
+                )}
+            >
                 <div
                     className="mb-1 flex h-2.5 w-full overflow-hidden rounded-full border border-border/40"
                     role="img"
@@ -239,10 +249,10 @@ export function BodyMuscleLeagueMap({
                                             {UI.bodyMapZoneAverageTier}
                                         </p>
                                         <Badge
-                                            className={`w-fit shrink-0 font-semibold ${LEAGUE_COLORS[averageLeagueScoreToLevel(picked.avgScore)]}`}
+                                            className={`w-fit shrink-0 font-semibold ${LEAGUE_COLORS[leagueScoreToRepresentativeLevel(picked.avgScore)]}`}
                                         >
                                             {leagueLevelToFrenchLabel(
-                                                averageLeagueScoreToLevel(picked.avgScore),
+                                                leagueScoreToRepresentativeLevel(picked.avgScore),
                                             )}
                                         </Badge>
                                     </div>

@@ -71,15 +71,32 @@ export function leagueLevelToFrenchLabel(level: LeagueLevel): string {
   return TIER_LABELS[i] ?? level
 }
 
+/** Médiane d’une liste de scores ligue (0–10). */
+export function medianLeagueScore(scores: readonly number[]): number {
+  if (scores.length === 0) return 0
+  const sorted = [...scores].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  if (sorted.length % 2 === 0) {
+    return (sorted[mid - 1]! + sorted[mid]!) / 2
+  }
+  return sorted[mid]!
+}
+
 /**
- * Score ligue moyen (indice 0–9 + progression vers le palier suivant) → palier le plus proche.
+ * Score ligue continu (indice 0–9 + progression) → palier affiché.
+ * Utilise la partie entière (floor) pour ne pas surestimer par rapport aux perfs réelles.
  */
-export function averageLeagueScoreToLevel(score: number): LeagueLevel {
+export function leagueScoreToRepresentativeLevel(score: number): LeagueLevel {
   const idx = Math.min(
     LEAGUE_ORDER.length - 1,
-    Math.max(0, Math.round(score)),
+    Math.max(0, Math.floor(score)),
   )
   return LEAGUE_ORDER[idx]!
+}
+
+/** @deprecated Préférer `leagueScoreToRepresentativeLevel` (même sémantique depuis la correction floor). */
+export function averageLeagueScoreToLevel(score: number): LeagueLevel {
+  return leagueScoreToRepresentativeLevel(score)
 }
 
 /**

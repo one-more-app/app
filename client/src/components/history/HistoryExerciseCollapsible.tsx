@@ -1,11 +1,17 @@
 import { PerfEntryList } from '@/components/history/PerfEntryList'
+import { HistoryCollapsedHighlights } from '@/components/history/HistoryCollapsedHighlights'
 import { Card } from '@/components/ui/card'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
-import type { HistoryEntryInsight } from '@/lib/history-entries'
+import { profileNestedClass } from '@/lib/profile-section'
+import {
+    summarizeExerciseGroupInsights,
+    type HistoryEntryInsight,
+} from '@/lib/history-entries'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import type { PerformanceEntry, TrackedExercise } from '@/types'
 import { ChevronDown, Dumbbell } from 'lucide-react'
+import { useMemo } from 'react'
 import { Collapsible } from 'radix-ui'
 
 type HistoryExerciseCollapsibleProps = {
@@ -19,6 +25,8 @@ type HistoryExerciseCollapsibleProps = {
     onDeleteEntry: (entry: PerformanceEntry) => void
     /** Ouvre l’ajout d’une perf pour ce jour et cet exercice (ex. depuis l’historique global). */
     onAddEntry?: () => void
+    /** Sur le profil : fond secondary au lieu d’une Card imbriquée. */
+    surface?: 'card' | 'profile'
 }
 
 export function HistoryExerciseCollapsible({
@@ -31,6 +39,7 @@ export function HistoryExerciseCollapsible({
     onEditEntry,
     onDeleteEntry,
     onAddEntry,
+    surface = 'card',
 }: HistoryExerciseCollapsibleProps) {
     const title = exercise?.name ?? UI.exerciseNotFound
     const showGif =
@@ -39,17 +48,41 @@ export function HistoryExerciseCollapsible({
         Boolean(exercise.gifUrl?.trim())
     const canEdit = !!exercise
 
+    const Shell = surface === 'profile' ? 'div' : Card
+    const shellClass =
+        surface === 'profile'
+            ? cn(profileNestedClass, 'overflow-hidden')
+            : 'overflow-hidden py-0'
+    const triggerHover =
+        surface === 'profile'
+            ? 'hover:opacity-90'
+            : 'hover:bg-muted/40'
+    const thumbBg = surface === 'profile' ? 'bg-background' : 'bg-muted'
+
+    const groupHighlights = useMemo(
+        () => summarizeExerciseGroupInsights(items, entryInsights),
+        [items, entryInsights],
+    )
+
     return (
         <li>
             <Collapsible.Root className="group/coll">
-                <Card className="overflow-hidden py-0">
+                <Shell className={shellClass}>
                     <div className="flex items-stretch">
                         <Collapsible.Trigger asChild>
                             <button
                                 type="button"
-                                className="flex min-w-0 flex-1 items-center gap-3 p-3 text-left transition-colors hover:bg-muted/40"
+                                className={cn(
+                                    'flex min-w-0 flex-1 items-center gap-3 p-3 text-left transition-colors',
+                                    triggerHover,
+                                )}
                             >
-                                <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-muted">
+                                <div
+                                    className={cn(
+                                        'relative size-12 shrink-0 overflow-hidden rounded-lg',
+                                        thumbBg,
+                                    )}
+                                >
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <Dumbbell className="size-6" />
                                     </div>
@@ -73,7 +106,10 @@ export function HistoryExerciseCollapsible({
                                             </span>
                                         ) : null}
                                     </p>
-                                    <p className="mt-0.5 text-xs text-muted-foreground">{seriesLabel}</p>
+                                    <HistoryCollapsedHighlights
+                                        seriesLabel={seriesLabel}
+                                        summary={groupHighlights}
+                                    />
                                 </div>
                                 <ChevronDown
                                     className={cn(
@@ -98,7 +134,7 @@ export function HistoryExerciseCollapsible({
                             }
                         />
                     </Collapsible.Content>
-                </Card>
+                </Shell>
             </Collapsible.Root>
         </li>
     )

@@ -4,7 +4,7 @@ import HomePage from '@/pages/HomePage'
 import { AuthPage } from '@/pages/AuthPage'
 import OnboardingPage from '@/pages/OnboardingPage'
 import { HistoryPage } from '@/pages/HistoryPage'
-import StatsPage from '@/pages/StatsPage'
+import ProfilePage from '@/pages/ProfilePage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCelebration'
 import { Toaster } from '@/components/ui/sonner'
@@ -16,6 +16,10 @@ import { initGoogleNativeSignIn } from '@/lib/google-native'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+
+function StatsRedirect() {
+    return <Navigate to="/profile" replace />
+}
 import { needsOnboarding } from '@/lib/storage'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import { useTheme } from '@/hooks/use-theme'
@@ -69,6 +73,7 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
     const location = useLocation()
     const show =
         location.pathname === '/home' ||
+        location.pathname === '/profile' ||
         location.pathname === '/stats' ||
         location.pathname === '/history' ||
         location.pathname === '/settings'
@@ -145,7 +150,8 @@ function App() {
                                 />
                                 <Route path="/onboarding" element={<OnboardingPage />} />
                                 <Route path="/home" element={<HomePage />} />
-                                <Route path="/stats" element={<StatsPage />} />
+                                <Route path="/profile" element={<ProfilePage />} />
+                                <Route path="/stats" element={<StatsRedirect />} />
                                 <Route path="/history" element={<HistoryPage />} />
                                 <Route path="/auth" element={<AuthPage />} />
                                 <Route path="/exercises" element={<ExerciseListPage />} />

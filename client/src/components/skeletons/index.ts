@@ -2,6 +2,7 @@ export { ExerciseCardSkeleton, ExerciseCardSkeletonList } from './ExerciseCardSk
 export { ExerciseCatalogCardSkeleton, ExerciseCatalogSkeletonList } from './ExerciseCatalogCardSkeleton'
 export { HistoryPageSkeleton } from './HistoryPageSkeleton'
 export { StatsPageSkeleton } from './StatsPageSkeleton'
+export { ProfilePageSkeleton } from './ProfilePageSkeleton'
 export { ExerciseDetailPageSkeleton } from './ExerciseDetailPageSkeleton'
 export { SettingsProfileSkeleton } from './SettingsProfileSkeleton'
 export { HomeStatsPageSkeleton } from './HomeStatsPageSkeleton'

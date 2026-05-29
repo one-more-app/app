@@ -1,9 +1,10 @@
 import { CARDIO_EQUIPMENT } from "@/lib/exercisedb";
 import {
-  averageLeagueScoreToLevel,
   getLeagueInfo,
   getLeagueLevelIndex,
   inferTargetForLeague,
+  leagueScoreToRepresentativeLevel,
+  medianLeagueScore,
   type LeagueInfo,
   type LeagueLevel,
 } from "@/lib/strength-standards";
@@ -18,10 +19,10 @@ export interface MuscleExerciseLeagueRow {
 export interface MuscleLeagueAgg {
   target: string;
   /**
-   * Score ligue moyen : indice de palier (0 = Fer … 9 = Légende) + progression vers le suivant.
+   * Score ligue médian sur ce muscle (indice 0–9 + progression vers le palier suivant).
    */
-  avgLeagueScore: number;
-  /** Palier représentatif (arrondi du score moyen). */
+  representativeScore: number;
+  /** Palier affiché (floor du score médian, sans arrondi au-dessus). */
   representativeLevel: LeagueLevel;
   exerciseCount: number;
   /** Exercices de ce muscle avec leur ligue (tri du palier le plus bas au plus élevé). */
@@ -29,11 +30,11 @@ export interface MuscleLeagueAgg {
 }
 
 export interface GlobalLeagueSummary {
-  globalAvgLeagueScore: number;
-  /** Ligue globale du corps (arrondi de la moyenne de tous les exos avec ligue). */
+  /** Score médian entre les groupes musculaires (chaque muscle compte autant). */
+  globalRepresentativeScore: number;
   globalLevel: LeagueLevel;
   exerciseCount: number;
-  /** Tri du plus faible au plus fort (score moyen). */
+  /** Tri du plus faible au plus fort (score médian par muscle). */
   byMuscle: MuscleLeagueAgg[];
 }
 
@@ -43,10 +44,15 @@ function isNonCardioTracked(ex: TrackedExercise): boolean {
   return true;
 }
 
+function exerciseLeagueScore(league: LeagueInfo): number {
+  return getLeagueLevelIndex(league.level) + league.progressToNext;
+}
+
 type ExerciseWithPb = TrackedExercise & { personalBest?: PerformanceEntry };
 
 /**
  * Agrège tes ligues à partir des records (catalogue uniquement, exclut cardio et persos sans standards).
+ * Palier global = médiane des médianes par muscle ; palier muscle = médiane des exos du muscle.
  */
 export function computeLeagueStatsForTracked(
   exercises: ExerciseWithPb[],
@@ -85,9 +91,8 @@ export function computeLeagueStatsForTracked(
     const target = inferTargetForLeague(ex.originalName ?? ex.name, meta);
     if (!target) continue;
 
-    const leagueScore = getLeagueLevelIndex(league.level) + league.progressToNext;
     rows.push({
-      leagueScore,
+      leagueScore: exerciseLeagueScore(league),
       target,
       exercise: {
         trackedExerciseId: ex.id,
@@ -99,11 +104,10 @@ export function computeLeagueStatsForTracked(
 
   if (rows.length === 0) return null;
 
-  const globalAvgLeagueScore =
-    rows.reduce((s, r) => s + r.leagueScore, 0) / rows.length;
-  const globalLevel = averageLeagueScoreToLevel(globalAvgLeagueScore);
-
-  const byTarget = new Map<string, { leagueScores: number[]; exercises: MuscleExerciseLeagueRow[] }>();
+  const byTarget = new Map<
+    string,
+    { leagueScores: number[]; exercises: MuscleExerciseLeagueRow[] }
+  >();
   for (const r of rows) {
     if (!byTarget.has(r.target)) {
       byTarget.set(r.target, { leagueScores: [], exercises: [] });
@@ -115,28 +119,30 @@ export function computeLeagueStatsForTracked(
 
   const byMuscle: MuscleLeagueAgg[] = Array.from(byTarget.entries()).map(
     ([target, { leagueScores, exercises }]) => {
-      const avgLeagueScore =
-        leagueScores.reduce((a, b) => a + b, 0) / leagueScores.length;
+      const representativeScore = medianLeagueScore(leagueScores);
       const sortedExercises = [...exercises].sort(
         (a, b) =>
-          getLeagueLevelIndex(a.league.level) +
-          a.league.progressToNext -
-          (getLeagueLevelIndex(b.league.level) + b.league.progressToNext),
+          exerciseLeagueScore(a.league) - exerciseLeagueScore(b.league),
       );
       return {
         target,
-        avgLeagueScore,
-        representativeLevel: averageLeagueScoreToLevel(avgLeagueScore),
+        representativeScore,
+        representativeLevel:
+          leagueScoreToRepresentativeLevel(representativeScore),
         exerciseCount: leagueScores.length,
         exercises: sortedExercises,
       };
     },
   );
 
-  byMuscle.sort((a, b) => a.avgLeagueScore - b.avgLeagueScore);
+  byMuscle.sort((a, b) => a.representativeScore - b.representativeScore);
+
+  const muscleScores = byMuscle.map((m) => m.representativeScore);
+  const globalRepresentativeScore = medianLeagueScore(muscleScores);
+  const globalLevel = leagueScoreToRepresentativeLevel(globalRepresentativeScore);
 
   return {
-    globalAvgLeagueScore,
+    globalRepresentativeScore,
     globalLevel,
     exerciseCount: rows.length,
     byMuscle,
