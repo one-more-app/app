@@ -4,6 +4,8 @@ import type {
   PerformanceEntry,
   TrackedExercise,
   UserProfile,
+  UserProgressState,
+  XpGrantResult,
 } from "@/types";
 
 type RemoteProfile = UserProfile & { updatedAt: string };
@@ -133,20 +135,32 @@ export async function fetchPerformanceEntries(opts?: {
   return items.map(mapPerformance);
 }
 
+type RemotePerformanceCreateResponse = RemotePerformanceEntry & {
+  xp?: XpGrantResult;
+};
+
 export async function upsertPerformanceEntry(
   entry: PerformanceEntry,
-): Promise<PerformanceEntry> {
-  const item = await apiFetch<RemotePerformanceEntry>("/performance-entries", {
-    method: "POST",
-    body: JSON.stringify({
-      id: entry.id,
-      trackedExerciseId: entry.trackedExerciseId,
-      date: entry.date,
-      weight: entry.weight,
-      reps: entry.reps,
-    }),
-  });
-  return mapPerformance(item);
+): Promise<{ entry: PerformanceEntry; xp?: XpGrantResult }> {
+  const item = await apiFetch<RemotePerformanceCreateResponse>(
+    "/performance-entries",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        id: entry.id,
+        trackedExerciseId: entry.trackedExerciseId,
+        date: entry.date,
+        weight: entry.weight,
+        reps: entry.reps,
+      }),
+    },
+  );
+  const { xp, ...rest } = item;
+  return { entry: mapPerformance(rest as RemotePerformanceEntry), xp };
+}
+
+export async function fetchUserProgress(): Promise<UserProgressState> {
+  return await apiFetch<UserProgressState>("/progress", { method: "GET" });
 }
 
 export async function patchPerformanceEntry(

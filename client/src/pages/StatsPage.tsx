@@ -1,6 +1,7 @@
 import { BackHeader } from '@/components/BackHeader'
 import { StatsPageSkeleton } from '@/components/skeletons'
 import { BodyMuscleLeagueMap } from '@/components/BodyMuscleLeagueMap'
+import { UserProgressCard } from '@/components/UserProgressCard'
 import { ProfileLeagueSettingsDialog } from '@/components/ProfileLeagueSettingsDialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -61,6 +62,7 @@ export default function StatsPage() {
             <BackHeader title="Stats" />
 
             <main className="mx-auto max-w-2xl space-y-4 p-4">
+                <UserProgressCard />
                 <Button
                     type="button"
                     size="sm"

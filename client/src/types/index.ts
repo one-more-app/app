@@ -51,3 +51,28 @@ export interface UserProfile {
   firstName?: string;
   lastName?: string;
 }
+
+export type XpGrantItem = {
+  sourceType: string;
+  amount: number;
+};
+
+export type XpGrantResult = {
+  totalXp: number;
+  level: number;
+  xpIntoLevel: number;
+  xpForNextLevel: number;
+  leveledUp: boolean;
+  previousLevel?: number;
+  grants: XpGrantItem[];
+  streak: { current: number; longest: number };
+};
+
+export type UserProgressState = {
+  totalXp: number;
+  level: number;
+  xpIntoLevel: number;
+  xpForNextLevel: number;
+  streak: { current: number; longest: number };
+  recentGrants: XpGrantItem[];
+};

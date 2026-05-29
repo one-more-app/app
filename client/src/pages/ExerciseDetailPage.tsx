@@ -32,6 +32,7 @@ import {
 } from '@/lib/history-entries'
 import { LEAGUE_COLORS } from '@/lib/league-colors'
 import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
+import { notifyXpGrants } from '@/lib/xp-notifications'
 import {
     getTrackedExerciseById,
     isOnboardingFirstExercisePending,
@@ -359,7 +360,11 @@ export function ExerciseDetailPage() {
                             const prevLeague = leagueInfo ?? null
                             void (async () => {
                                 try {
-                                    await savePerformance(weight, reps)
+                                    const result = await savePerformance(
+                                        weight,
+                                        reps,
+                                    )
+                                    notifyXpGrants(result?.xp)
                                     const nextPB = id ? getPersonalBest(id) ?? null : null
                                     const nextLeague =
                                         exercise && profile
@@ -711,9 +716,12 @@ export function ExerciseDetailPage() {
                                 const prevLeague = leagueInfo ?? null
                                 void (async () => {
                                     try {
-                                        await savePerformance(weight, reps, {
-                                            date: sessionDrawer.date,
-                                        })
+                                        const result = await savePerformance(
+                                            weight,
+                                            reps,
+                                            { date: sessionDrawer.date },
+                                        )
+                                        notifyXpGrants(result?.xp)
                                         const nextPB = id ? getPersonalBest(id) ?? null : null
                                         const nextLeague =
                                             profile

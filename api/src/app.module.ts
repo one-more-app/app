@@ -8,6 +8,7 @@ import { ExercisesModule } from './exercises/exercises.module.js';
 import { PerformanceEntriesModule } from './performance/performance-entries.module.js';
 import { ProfileModule } from './profile/profile.module.js';
 import { TrackedExercisesModule } from './tracked-exercises/tracked-exercises.module.js';
+import { ProgressModule } from './progress/progress.module.js';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { TrackedExercisesModule } from './tracked-exercises/tracked-exercises.mo
     TrackedExercisesModule,
     PerformanceEntriesModule,
     ExercisesModule,
+    ProgressModule,
   ],
   controllers: [AppController],
   providers: [AppService],

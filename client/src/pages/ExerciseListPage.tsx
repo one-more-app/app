@@ -28,7 +28,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
+import { SWR_KEYS } from '@/hooks/use-api-data'
 import { fetchExercisesCatalog, fetchExercisesMeta } from '@/lib/data-api'
+import { notifyXpGrants } from '@/lib/xp-notifications'
 import {
     exerciseMatchesEquipmentSelection,
     isEquipmentSelectionEmpty,
@@ -328,11 +330,17 @@ export function ExerciseListPage() {
                 gifUrl: ex.gifUrl,
                 isCustom: false,
             })
-            await savePerformanceAndWait(trackedId, perfWeight, perfReps)
+            const { xp } = await savePerformanceAndWait(
+                trackedId,
+                perfWeight,
+                perfReps,
+            )
+            notifyXpGrants(xp)
             await Promise.all([
-                mutate('tracked-exercises'),
-                mutate('performance-entries'),
-                mutate('home-exercises'),
+                mutate(SWR_KEYS.trackedExercises),
+                mutate(SWR_KEYS.performanceEntries),
+                mutate(SWR_KEYS.homeExercises),
+                mutate(SWR_KEYS.progress),
             ])
             setAddWithPerfExercise(null)
             const shouldLaunchExerciseTour =

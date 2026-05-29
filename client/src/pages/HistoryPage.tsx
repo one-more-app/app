@@ -16,6 +16,7 @@ import {
 } from '@/lib/history-entries'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
+import { notifyXpGrants } from '@/lib/xp-notifications'
 import {
     deletePerformanceAndWait,
     getPersonalBest,
@@ -201,12 +202,13 @@ export function HistoryPage() {
                         })
                         void (async () => {
                             try {
-                                await savePerformanceAndWait(
+                                const { xp } = await savePerformanceAndWait(
                                     addPerf.trackedExerciseId,
                                     weight,
                                     reps,
                                     { date: addPerf.date },
                                 )
+                                notifyXpGrants(xp)
                                 const nextPB =
                                     getPersonalBest(addPerf.trackedExerciseId) ?? null
                                 const nextLeague = computeLeagueFromPB({

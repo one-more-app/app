@@ -1,4 +1,5 @@
 import { ExerciseCard } from '@/components/ExerciseCard'
+import { UserProgressBanner } from '@/components/UserProgressBanner'
 import { ExerciseCardSkeletonList } from '@/components/skeletons'
 import { ExerciseSearchFilters } from '@/components/ExerciseSearchFilters'
 import { Button } from '@/components/ui/button'
@@ -24,6 +25,7 @@ import {
     serializeMuscleSelection,
 } from '@/lib/muscle-filter'
 import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
+import { notifyXpGrants } from '@/lib/xp-notifications'
 import {
     getLatestPerformanceCreatedAt,
     getPersonalBest,
@@ -136,6 +138,7 @@ function HomePage() {
     return (
         <div className="min-h-screen-app bg-background">
             <main className="mx-auto max-w-2xl p-4">
+                <UserProgressBanner />
                 {hasLoaded && nonCardioExercises.length > 0 && (
                     <ExerciseSearchFilters
                         searchInput={searchInput}
@@ -199,7 +202,13 @@ function HomePage() {
                                                 const prevLeague = leagueInfo ?? null
                                                 void (async () => {
                                                     try {
-                                                        await savePerformanceAndWait(ex.id, weight, reps)
+                                                        const { xp } =
+                                                            await savePerformanceAndWait(
+                                                                ex.id,
+                                                                weight,
+                                                                reps,
+                                                            )
+                                                        notifyXpGrants(xp)
                                                         const nextPB = getPersonalBest(ex.id) ?? null
                                                         const nextLeague =
                                                             profile

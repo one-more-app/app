@@ -11,7 +11,13 @@ import {
   chronologicalPerfOrder,
   getLatestPerformanceEntry,
 } from "@/lib/performance-order";
-import type { PerformanceEntry, TrackedExercise, UserProfile } from "@/types";
+import { applyXpGrantResult } from "@/lib/progress-cache";
+import type {
+  PerformanceEntry,
+  TrackedExercise,
+  UserProfile,
+  XpGrantResult,
+} from "@/types";
 
 const ONBOARDING_V1_KEY = "one-more-onboarding-v1";
 const ONBOARDING_FIRST_EXERCISE_PENDING_KEY =
@@ -20,7 +26,7 @@ const ONBOARDING_POST_AUTH_REDIRECT_KEY =
   "one-more-onboarding-post-auth-redirect-v1";
 const THEME_PREFERENCE_KEY = "one-more-theme-preference-v1";
 
-type LocalChangeKind = "trackedExercise" | "performance" | "profile";
+type LocalChangeKind = "trackedExercise" | "performance" | "profile" | "progress";
 export type ThemePreference = "system" | "light" | "dark";
 
 const DEFAULT_PROFILE: UserProfile = {
@@ -250,7 +256,11 @@ export function savePerformance(
   };
   updatePerformanceCache([...getAllPerformanceEntries(), entry]);
   notifyLocalDataChanged("performance");
-  void upsertPerformanceEntry(entry).catch(() => notifyRemoteWriteError());
+  void upsertPerformanceEntry(entry)
+    .then(({ xp }) => {
+      if (xp) applyXpGrantResult(xp);
+    })
+    .catch(() => notifyRemoteWriteError());
   return entry;
 }
 
@@ -259,7 +269,7 @@ export async function savePerformanceAndWait(
   weight: number,
   reps: number,
   opts?: { date?: string },
-): Promise<PerformanceEntry> {
+): Promise<{ entry: PerformanceEntry; xp?: XpGrantResult }> {
   const today = new Date().toISOString().slice(0, 10);
   const day =
     opts?.date && /^\d{4}-\d{2}-\d{2}$/.test(opts.date) ? opts.date : today;
@@ -277,11 +287,12 @@ export async function savePerformanceAndWait(
   notifyLocalDataChanged("performance");
 
   try {
-    const remote = await upsertPerformanceEntry(entry);
+    const { entry: remote, xp } = await upsertPerformanceEntry(entry);
     updatePerformanceCache(
       getAllPerformanceEntries().map((e) => (e.id === entry.id ? remote : e)),
     );
-    return remote;
+    if (xp) applyXpGrantResult(xp);
+    return { entry: remote, xp };
   } catch (error) {
     notifyRemoteWriteError();
     throw error;

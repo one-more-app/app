@@ -21,6 +21,10 @@ import {
     type LeaguePromotionPayload,
     type NewRecordCelebrationPayload,
 } from '@/lib/perf-notifications'
+import {
+    setLevelUpCelebrationHandler,
+    type LevelUpCelebrationPayload,
+} from '@/lib/xp-notifications'
 import { UI } from '@/lib/translations'
 import { ArrowRight, Share2, Trophy } from 'lucide-react'
 import { useEffect, useState, type CSSProperties } from 'react'
@@ -224,6 +228,7 @@ function LeaguePromotionContent({
 type CelebrationOpen =
     | { kind: 'league'; payload: LeaguePromotionPayload }
     | { kind: 'record'; payload: NewRecordCelebrationPayload }
+    | { kind: 'levelup'; payload: LevelUpCelebrationPayload }
 
 export function LeaguePromotionCelebrationHost() {
     const { resolvedTheme } = useTheme()
@@ -235,9 +240,13 @@ export function LeaguePromotionCelebrationHost() {
         setNewRecordCelebrationHandler((p) =>
             setOpen({ kind: 'record', payload: p }),
         )
+        setLevelUpCelebrationHandler((p) =>
+            setOpen({ kind: 'levelup', payload: p }),
+        )
         return () => {
             setLeaguePromotionHandler(null)
             setNewRecordCelebrationHandler(null)
+            setLevelUpCelebrationHandler(null)
         }
     }, [])
 
@@ -248,7 +257,7 @@ export function LeaguePromotionCelebrationHost() {
     const isDark = resolvedTheme === 'dark'
 
     const handleShare = async () => {
-        if (!open || shareBusy) return
+        if (!open || shareBusy || open.kind === 'levelup') return
         setShareBusy(true)
         try {
             const result = await shareCelebrationPng(open, isDark)
@@ -286,13 +295,38 @@ export function LeaguePromotionCelebrationHost() {
                             isDark={isDark}
                         />
                     </div>
+                ) : open?.kind === 'levelup' ? (
+                    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 px-6 py-14 text-center">
+                        <Trophy
+                            className="mx-auto size-14 text-primary"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        <DialogHeader className="space-y-2 text-center sm:text-center">
+                            <DialogTitle className="text-xl font-semibold">
+                                {UI.levelUpCelebrationTitle}
+                            </DialogTitle>
+                            <DialogDescription className="text-base text-foreground/90">
+                                {UI.levelUpCelebrationSubtitle.replace(
+                                    '{level}',
+                                    String(open.payload.level),
+                                )}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <p className="text-sm text-muted-foreground">
+                            {UI.xpTotalLabel.replace(
+                                '{xp}',
+                                String(open.payload.totalXp),
+                            )}
+                        </p>
+                    </div>
                 ) : null}
                 <DialogFooter className="mt-0 flex w-full shrink-0 flex-col gap-4 border-t border-border bg-card/95 px-4 py-4 backdrop-blur-sm sm:flex-row sm:justify-center">
                     <Button
                         className="w-full min-w-[12rem] sm:w-auto sm:order-2"
                         size="lg"
                         variant="secondary"
-                        disabled={!open || shareBusy}
+                        disabled={!open || shareBusy || open?.kind === 'levelup'}
                         onClick={handleShare}
                     >
                         <Share2 className="mr-2 size-4" aria-hidden />

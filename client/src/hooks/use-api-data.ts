@@ -4,14 +4,21 @@ import {
   fetchRemoteProfile,
   fetchTrackedExercises,
   fetchTrackedExercisesWithPerformance,
+  fetchUserProgress,
   type TrackedExerciseWithPerformance,
 } from "@/lib/data-api";
+import { getUserProgress, setUserProgress } from "@/lib/progress-cache";
 import {
   setPerformanceEntries,
   setTrackedExercises,
   setUserProfile,
 } from "@/lib/storage";
-import type { PerformanceEntry, TrackedExercise, UserProfile } from "@/types";
+import type {
+  PerformanceEntry,
+  TrackedExercise,
+  UserProfile,
+  UserProgressState,
+} from "@/types";
 import useSWR from "swr";
 import { useCallback } from "react";
 import { useSWRConfig } from "swr";
@@ -21,6 +28,7 @@ export const SWR_KEYS = {
   performanceEntries: "performance-entries",
   profile: "profile",
   homeExercises: "home-exercises",
+  progress: "progress",
 } as const;
 
 export function usePerformanceDataRefresh() {
@@ -31,7 +39,16 @@ export function usePerformanceDataRefresh() {
       mutate(SWR_KEYS.performanceEntries),
       mutate(SWR_KEYS.homeExercises),
       mutate(SWR_KEYS.trackedExercises),
+      mutate(SWR_KEYS.progress),
     ]);
+  }, [mutate]);
+}
+
+export function useProgressDataRefresh() {
+  const { mutate } = useSWRConfig();
+
+  return useCallback(async () => {
+    await mutate(SWR_KEYS.progress);
   }, [mutate]);
 }
 
@@ -93,6 +110,21 @@ export function useHomeExercisesData() {
       const list = await fetchTrackedExercisesWithPerformance();
       setTrackedExercises(list);
       return list;
+    },
+  );
+}
+
+export function useUserProgressData() {
+  const auth = useAuth();
+  return useSWR<UserProgressState>(
+    auth.status === "authenticated" ? SWR_KEYS.progress : null,
+    async () => {
+      const remote = await fetchUserProgress();
+      setUserProgress(remote);
+      return remote;
+    },
+    {
+      fallbackData: getUserProgress(),
     },
   );
 }

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ProgressService } from '../progress/progress.service.js';
 import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
 import { PerformanceEntryEntity } from './performance-entry.entity.js';
 import type {
@@ -20,6 +21,7 @@ export class PerformanceEntriesService {
     private readonly perfRepo: Repository<PerformanceEntryEntity>,
     @InjectRepository(TrackedExerciseEntity)
     private readonly trackedRepo: Repository<TrackedExerciseEntity>,
+    private readonly progressService: ProgressService,
   ) {}
 
   async list(
@@ -78,6 +80,16 @@ export class PerformanceEntriesService {
       relations: { trackedExercise: true },
     });
 
+    const activityDate = entity.date;
+    const xp = await this.progressService.processPerformanceAdded({
+      userId,
+      perfClientId: body.id,
+      trackedExerciseClientId: body.trackedExerciseId,
+      activityDate,
+      weight: entity.weight,
+      reps: entity.reps,
+    });
+
     return {
       id: entity.clientId,
       trackedExerciseId: entity.trackedExercise.clientId,
@@ -87,6 +99,7 @@ export class PerformanceEntriesService {
       createdAt: entity.updatedAt.toISOString(),
       updatedAt: entity.updatedAt.toISOString(),
       deletedAt: entity.deletedAt ? entity.deletedAt.toISOString() : null,
+      xp,
     };
   }
 
