@@ -100,3 +100,7 @@ Le client iOS Google Console doit correspondre au bundle iOS réel.
 - Ne pas ajouter de scripts `patch-ios-spm` ou hacks workspace.
 - Après ajout d'un plugin Capacitor natif : `npx cap sync ios` puis `cd ios/App && pod install`.
 - Ne pas committer de secrets dans `.env.*.capacitor` au-delà des client IDs Google (publics).
+
+## Voir aussi
+
+- [`mobile-safe-area.mdc`](mobile-safe-area.mdc) — safe area iOS/Android, edge-to-edge, classes CSS et bottom nav.

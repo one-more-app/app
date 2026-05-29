@@ -1,0 +1,62 @@
+---
+description: Safe area iOS/Android edge-to-edge (CSS global, bottom nav, Capacitor)
+globs: client/**/*
+alwaysApply: false
+---
+
+# Safe area mobile (One More)
+
+Stack : React + Capacitor 8 (pas Ionic). Le safe area est **centralisé en CSS** ; ne pas dupliquer `env()` ou des `padding-top` par page.
+
+## Source de vérité
+
+Variables sur `html` dans [`client/src/index.css`](client/src/index.css) :
+
+- `--safe-top`, `--safe-bottom`, `--safe-left`, `--safe-right` → `env(safe-area-inset-*, 0px)`
+- `--bottom-nav-height: 4rem` (hauteur utile de la bottom nav, `h-16`)
+
+## Où le safe area est appliqué
+
+| Zone | Mécanisme |
+|------|-----------|
+| Toutes les routes | `#root` : `padding-top`, `padding-left`, `padding-right` |
+| Overscroll status bar | `body::before` (fond `background`, hauteur `--safe-top`) |
+| Pages plein écran | `.min-h-screen-app` : `min-height: 100dvh` + `padding-bottom: var(--safe-bottom)` |
+| Routes avec bottom nav | `BottomNavHost` : classe `.pb-bottom-nav-host` |
+| Barre fixe bas | `BottomNav` : `pb/pl/pr` via `var(--safe-*)` |
+| Headers sticky au scroll | `.sticky-top-safe` (`top: var(--safe-top)`) |
+
+## Natif / edge-to-edge
+
+- [`client/index.html`](client/index.html) : `viewport-fit=cover` (requis iOS).
+- [`client/capacitor.config.ts`](client/capacitor.config.ts) : `android.adjustMarginsForEdgeToEdge: 'auto'` + `StatusBar.overlaysWebView: true`.
+- Style status bar au runtime : [`client/src/App.tsx`](client/src/App.tsx) (`StatusBar.setStyle` selon le thème).
+
+Après changement config ou CSS global : `cd client && npm run android:build:dev` (ou preprod/prod) puis tester sur device.
+
+## À faire pour une nouvelle UI
+
+```tsx
+// Page standard (tabs ou sans nav)
+<div className="min-h-screen-app bg-background">...</div>
+
+// Header qui reste sous la status bar au scroll
+<header className="sticky-top-safe ...">...</header>
+
+// Contenu au-dessus de la bottom nav (déjà géré par BottomNavHost)
+// Ne pas ajouter pb-20 / env() en dur sur le wrapper des tabs
+```
+
+## Interdits / pièges
+
+- Ne pas remettre `padding-top: var(--safe-top)` sur `.min-h-screen-app` (double marge avec `#root`).
+- Ne pas utiliser `pb-20` fixe pour l’espace sous la bottom nav → `.pb-bottom-nav-host`.
+- Ne pas utiliser `pb-[env(safe-area-inset-bottom)]` en dur → `var(--safe-bottom)`.
+- Ne pas modifier `MainActivity.java` pour le safe area tant que `adjustMarginsForEdgeToEdge` suffit.
+- Éléments `fixed bottom-0` hors `BottomNav` : prévoir `var(--safe-bottom)` (ou padding parent) manuellement.
+
+## Si `env()` reste à 0 sur Android 15+
+
+Fallback documenté (hors défaut actuel) : `@capawesome/capacitor-android-edge-to-edge-support` + `npx cap sync`, et désactiver les insets du plugin SystemBars Capacitor si conflit (voir doc Capawesome).
+
+Voir aussi : [`mobile-builds.mdc`](mobile-builds.mdc) pour env, scripts et builds Capacitor.
