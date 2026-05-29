@@ -22,7 +22,7 @@ function BottomNav() {
 
     return (
         <nav
-            className="fixed bottom-0 left-0 right-0 z-20 bg-card backdrop-blur pl-[var(--safe-left)] pr-[var(--safe-right)] pb-[var(--safe-bottom)]"
+            className="fixed bottom-0 left-0 right-0 z-20 border-t border-border bg-background pl-[var(--safe-left)] pr-[var(--safe-right)] pb-[var(--safe-bottom)]"
             aria-label="Navigation"
         >
             <div className="mx-auto flex h-16 max-w-2xl items-center justify-around px-4">
