@@ -1,0 +1,102 @@
+---
+description: Builds Capacitor (env, scripts, API, Google Sign-In) — client mobile
+globs: client/**/*
+alwaysApply: false
+---
+
+# Builds mobile Capacitor (One More)
+
+## Monorepo
+
+- Dépendances npm à la **racine** (`node_modules/`). Toujours `npm install` depuis la racine avant un build iOS/Android.
+- Le `Podfile` iOS pointe vers `../../../node_modules` (pas `../../` comme un client standalone).
+
+## Fichiers d'environnement mobile
+
+Les variables `VITE_*` sont **figées au build** Vite (`env-cmd`). Un changement d'URL API ou de client Google exige un **rebuild + cap sync**.
+
+| Fichier | Usage | `VITE_API_URL` attendu |
+|---------|--------|-------------------------|
+| `client/.env.dev.capacitor` | Dev local + simulateur | `http://localhost:3000` |
+| `client/.env.preprod.capacitor` | Staging / tests internes | `https://api.staging.one-more.app` |
+| `client/.env.prod.capacitor` | Production App Store / Play | `https://api.one-more.app` |
+
+Créer / mettre à jour depuis les templates :
+
+```bash
+cp client/.env.dev.capacitor.example client/.env.dev.capacitor
+cp client/.env.preprod.capacitor.example client/.env.preprod.capacitor
+cp client/.env.prod.capacitor.example client/.env.prod.capacitor
+```
+
+Variables **obligatoires** dans chaque `.env.*.capacitor` :
+
+- `VITE_API_URL` — sans slash final
+- `VITE_GOOGLE_WEB_CLIENT_ID` — client OAuth **Web** (Android + vérif côté API)
+- `VITE_GOOGLE_CLIENT_ID_IOS` — client OAuth **iOS**
+
+Ne pas confondre : `api.onemore.app` (sans tiret) ≠ `api.one-more.app` (prod).
+
+## Commandes (depuis `client/`)
+
+```bash
+npm run ios:build:dev       # .env.dev.capacitor + cap sync ios
+npm run ios:build:preprod
+npm run ios:build:prod
+npm run android:build:prod  # idem Android
+
+npm run cap:open:ios        # ouvre App.xcworkspace
+npm run cap:open:android
+```
+
+Équivalent racine : `npm run cap:sync` (preprod par défaut) si scripts workspace présents.
+
+Pipeline type prod iOS :
+
+```bash
+cd client && npm run ios:build:prod
+npm run cap:open:ios
+# Xcode : scheme App, Product → Archive
+```
+
+## API backend (obligatoire pour Google natif)
+
+Flux client : `SocialLogin.login()` → `id_token` → `POST /oauth/google/id-token`.
+
+L'API déployée doit exposer cette route (branche `api/`, pas l'ancien `backend/`). Au démarrage Nest, vérifier :
+
+`Mapped {/oauth/google/id-token, POST}`
+
+Variables serveur (`api/.env`) :
+
+- `GOOGLE_CLIENT_ID_IOS` = même valeur que `VITE_GOOGLE_CLIENT_ID_IOS`
+- `GOOGLE_CLIENT_ID_WEB` = même valeur que `VITE_GOOGLE_WEB_CLIENT_ID`
+- `CORS_ORIGINS` si défini : les origines Capacitor (`one-more://localhost`, etc.) sont toujours ajoutées automatiquement.
+
+Test rapide après deploy :
+
+```bash
+curl -X POST "$VITE_API_URL/oauth/google/id-token" \
+  -H "Content-Type: application/json" \
+  -d '{"idToken":"test","platform":"ios"}'
+# Attendu : 400 (token invalide), pas 404
+```
+
+## Identifiants app (ne pas mélanger)
+
+| Contexte | Valeur |
+|----------|--------|
+| `capacitor.config.ts` `appId` | `com.one_more.app` |
+| Android `applicationId` | `com.one_more.app` |
+| iOS Xcode `PRODUCT_BUNDLE_IDENTIFIER` | `com.one-more.app` |
+| Origin WebView iOS | `one-more://localhost` |
+
+Le client iOS Google Console doit correspondre au bundle iOS réel.
+
+## Interdits / pièges
+
+- Ne pas ouvrir `App.xcodeproj` seul → toujours **`App.xcworkspace`** (CocoaPods).
+- Ne pas réintroduire Swift Package Manager / `CapApp-SPM` dans le projet Xcode (CocoaPods uniquement).
+- Ne pas ajouter de scripts `patch-ios-spm` ou hacks workspace.
+- Après ajout d'un plugin Capacitor natif : `npx cap sync ios` puis `cd ios/App && pod install`.
+- Ne pas committer de secrets dans `.env.*.capacitor` au-delà des client IDs Google (publics).

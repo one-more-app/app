@@ -8,6 +8,9 @@ const config: CapacitorConfig = {
     iosScheme: 'one-more',
     androidScheme: 'https',
   },
+  android: {
+    adjustMarginsForEdgeToEdge: 'auto',
+  },
   plugins: {
     StatusBar: {
       overlaysWebView: true,

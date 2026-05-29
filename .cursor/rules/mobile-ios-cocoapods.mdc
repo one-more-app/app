@@ -1,0 +1,52 @@
+---
+description: iOS Capacitor — CocoaPods, Xcode, AppDelegate, plugins natifs
+globs: client/ios/**/*
+alwaysApply: false
+---
+
+# iOS — CocoaPods (référence moneyes)
+
+## Stack validée
+
+- **CocoaPods** via `client/ios/App/Podfile` (pas SPM).
+- Ouvrir **`client/ios/App/App.xcworkspace`** (`npm run cap:open:ios`).
+- Schéma partagé : `App.xcodeproj/xcshareddata/xcschemes/App.xcscheme`.
+
+## Podfile
+
+- `require_relative '../../../node_modules/@capacitor/ios/scripts/pods_helpers'`
+- `platform :ios, '15.0'`, `use_frameworks!`
+- `post_install` : désactiver la signature des Pods (pattern moneyes).
+- Plugins listés dans `capacitor_pods` ; `npx cap sync ios` peut compléter le Podfile.
+
+Après sync :
+
+```bash
+cd client/ios/App && pod install
+```
+
+## AppDelegate
+
+- `import Capacitor` + `import GoogleSignIn`
+- Dans `application(_:open:options:)` : `GIDSignIn.sharedInstance.handle(url)` puis `ApplicationDelegateProxy` Capacitor.
+- Ne pas importer `SocialLoginPlugin` manuellement (enregistré via `capacitor.config.json` → `packageClassList`).
+
+## Info.plist
+
+- URL scheme Google : `com.googleusercontent.apps.<IOS_CLIENT_ID_PREFIX>`
+- Scheme app : aligné avec `capacitor.config.ts` (`iosScheme: 'one-more'`)
+
+## Erreur « No such module Capacitor »
+
+Cause habituelle : projet ouvert via `.xcodeproj` au lieu du `.xcworkspace`, ou `pod install` manquant.
+
+Fix :
+
+1. Fermer Xcode
+2. `cd client/ios/App && pod install`
+3. Ouvrir `App.xcworkspace`
+4. Product → Clean Build Folder → Build
+
+## CapApp-SPM
+
+Le dossier `CapApp-SPM/` peut être recréé par Capacitor 8 ; **ne pas** le référencer dans `project.pbxproj`. Le build officiel reste CocoaPods.

@@ -73,7 +73,7 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
         location.pathname === '/settings'
 
     return (
-        <div className={show ? 'pb-20' : undefined}>
+        <div className={show ? 'pb-bottom-nav-host' : undefined}>
             {children}
             {show ? <BottomNav /> : null}
         </div>
