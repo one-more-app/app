@@ -42,7 +42,7 @@ export function ExerciseSearchFilters({
                     placeholder={UI.searchExercise}
                     value={searchInput}
                     onChange={(e) => onSearchChange(e.target.value)}
-                    className="pl-9 bg-white dark:bg-secondary"
+                    className="pl-9 bg-card"
                 />
             </div>
             <div className="mb-4 space-y-2">
