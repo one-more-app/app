@@ -7,6 +7,10 @@ import {
   upsertRemoteProfile,
   upsertTrackedExercise,
 } from "@/lib/data-api";
+import {
+  chronologicalPerfOrder,
+  getLatestPerformanceEntry,
+} from "@/lib/performance-order";
 import type { PerformanceEntry, TrackedExercise, UserProfile } from "@/types";
 
 const ONBOARDING_V1_KEY = "one-more-onboarding-v1";
@@ -215,7 +219,7 @@ export function getEntriesByTrackedId(
 ): PerformanceEntry[] {
   return getPerformanceEntries()
     .filter((e) => e.trackedExerciseId === trackedExerciseId)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    .sort(chronologicalPerfOrder);
 }
 
 export function getAllPerformanceEntriesRecentFirst(): PerformanceEntry[] {
@@ -351,8 +355,7 @@ export async function updatePerformanceAndWait(
 export function getLastPerformance(
   trackedExerciseId: string,
 ): PerformanceEntry | undefined {
-  const entries = getEntriesByTrackedId(trackedExerciseId);
-  return entries[entries.length - 1];
+  return getLatestPerformanceEntry(getEntriesByTrackedId(trackedExerciseId));
 }
 
 export function getLatestPerformanceCreatedAt(

@@ -214,6 +214,8 @@ function HomePage() {
                                                             exerciseName: ex.name,
                                                             prevPB,
                                                             nextPB,
+                                                            savedWeight: weight,
+                                                            savedReps: reps,
                                                             prevLeague,
                                                             nextLeague,
                                                             exerciseImageUrl:

@@ -218,6 +218,8 @@ export function HistoryPage() {
                                     exerciseName: addExercise.name,
                                     prevPB,
                                     nextPB,
+                                    savedWeight: weight,
+                                    savedReps: reps,
                                     prevLeague,
                                     nextLeague,
                                     exerciseImageUrl:

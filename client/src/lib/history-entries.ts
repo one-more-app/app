@@ -2,6 +2,7 @@ import {
     computeLeagueFromPB,
     isNewPersonalBest,
 } from '@/lib/perf-notifications'
+import { chronologicalPerfOrder } from '@/lib/performance-order'
 import {
     getTrackedExerciseById,
     getAllTrackedExercises,
@@ -97,15 +98,6 @@ export function groupByDayThenExercise(
 }
 
 type Pb = { weight: number; reps: number } | null
-
-function chronologicalPerfOrder(a: PerformanceEntry, b: PerformanceEntry): number {
-    const byDate = a.date.localeCompare(b.date)
-    if (byDate !== 0) return byDate
-    const byCreated =
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    if (byCreated !== 0) return byCreated
-    return a.id.localeCompare(b.id)
-}
 
 function bestPbFromList(list: PerformanceEntry[]): Pb {
     if (list.length === 0) return null

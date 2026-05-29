@@ -1,3 +1,4 @@
+import { getLatestPerformanceEntry } from "@/lib/performance-order";
 import {
   deletePerformanceAndWait as deleteFromStorageAndWait,
   savePerformanceAndWait as saveToStorageAndWait,
@@ -16,14 +17,15 @@ export function usePerformance(trackedExerciseId: string | null) {
 
   const entries = useMemo<PerformanceEntry[]>(() => {
     if (!trackedExerciseId) return [];
-    return allEntries
-      .filter(
-        (e) => !e.deletedAt && e.trackedExerciseId === trackedExerciseId,
-      )
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return allEntries.filter(
+      (e) => !e.deletedAt && e.trackedExerciseId === trackedExerciseId,
+    );
   }, [allEntries, trackedExerciseId]);
 
-  const lastPerf = entries[entries.length - 1];
+  const lastPerf = useMemo(
+    () => getLatestPerformanceEntry(entries),
+    [entries],
+  );
 
   const personalBest = useMemo(() => {
     if (entries.length === 0) return undefined;
@@ -36,15 +38,13 @@ export function usePerformance(trackedExerciseId: string | null) {
   }, [entries]);
 
   const savePerformance = useCallback(
-    (weight: number, reps: number, opts?: { date?: string }) => {
+    async (weight: number, reps: number, opts?: { date?: string }) => {
       if (!trackedExerciseId) return;
-      void (async () => {
-        try {
-          await saveToStorageAndWait(trackedExerciseId, weight, reps, opts);
-        } finally {
-          void refreshAfterPerfChange();
-        }
-      })();
+      try {
+        return await saveToStorageAndWait(trackedExerciseId, weight, reps, opts);
+      } finally {
+        void refreshAfterPerfChange();
+      }
     },
     [refreshAfterPerfChange, trackedExerciseId],
   );

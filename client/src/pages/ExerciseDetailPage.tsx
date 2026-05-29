@@ -357,28 +357,35 @@ export function ExerciseDetailPage() {
                         onSavePerf={(weight, reps) => {
                             const prevPB = personalBest ?? null
                             const prevLeague = leagueInfo ?? null
-                            savePerformance(weight, reps)
-                            const nextPB = id ? getPersonalBest(id) ?? null : null
-                            const nextLeague =
-                                exercise && profile
-                                    ? computeLeagueFromPB({
-                                        exercise,
-                                        personalBest: nextPB,
-                                        profile,
-                                    })
-                                    : null
+                            void (async () => {
+                                try {
+                                    await savePerformance(weight, reps)
+                                    const nextPB = id ? getPersonalBest(id) ?? null : null
+                                    const nextLeague =
+                                        exercise && profile
+                                            ? computeLeagueFromPB({
+                                                exercise,
+                                                personalBest: nextPB,
+                                                profile,
+                                            })
+                                            : null
 
-                            notifyPerfMilestones({
-                                exerciseName: exercise.name,
-                                prevPB,
-                                nextPB,
-                                prevLeague,
-                                nextLeague,
-                                exerciseImageUrl:
-                                    getExerciseImageUrl(exercise.gifUrl) ||
-                                    undefined,
-                            })
-                            refresh()
+                                    notifyPerfMilestones({
+                                        exerciseName: exercise.name,
+                                        prevPB,
+                                        nextPB,
+                                        savedWeight: weight,
+                                        savedReps: reps,
+                                        prevLeague,
+                                        nextLeague,
+                                        exerciseImageUrl:
+                                            getExerciseImageUrl(exercise.gifUrl) ||
+                                            undefined,
+                                    })
+                                } finally {
+                                    refresh()
+                                }
+                            })()
                         }}
                     />
                 </div>
@@ -702,29 +709,37 @@ export function ExerciseDetailPage() {
                             ? (weight, reps) => {
                                 const prevPB = personalBest ?? null
                                 const prevLeague = leagueInfo ?? null
-                                savePerformance(weight, reps, {
-                                    date: sessionDrawer.date,
-                                })
-                                const nextPB = id ? getPersonalBest(id) ?? null : null
-                                const nextLeague =
-                                    profile
-                                        ? computeLeagueFromPB({
-                                            exercise,
-                                            personalBest: nextPB,
-                                            profile,
+                                void (async () => {
+                                    try {
+                                        await savePerformance(weight, reps, {
+                                            date: sessionDrawer.date,
                                         })
-                                        : null
-                                notifyPerfMilestones({
-                                    exerciseName: exercise.name,
-                                    prevPB,
-                                    nextPB,
-                                    prevLeague,
-                                    nextLeague,
-                                    exerciseImageUrl:
-                                        getExerciseImageUrl(
-                                            exercise.gifUrl,
-                                        ) || undefined,
-                                })
+                                        const nextPB = id ? getPersonalBest(id) ?? null : null
+                                        const nextLeague =
+                                            profile
+                                                ? computeLeagueFromPB({
+                                                    exercise,
+                                                    personalBest: nextPB,
+                                                    profile,
+                                                })
+                                                : null
+                                        notifyPerfMilestones({
+                                            exerciseName: exercise.name,
+                                            prevPB,
+                                            nextPB,
+                                            savedWeight: weight,
+                                            savedReps: reps,
+                                            prevLeague,
+                                            nextLeague,
+                                            exerciseImageUrl:
+                                                getExerciseImageUrl(
+                                                    exercise.gifUrl,
+                                                ) || undefined,
+                                        })
+                                    } finally {
+                                        refresh()
+                                    }
+                                })()
                             }
                             : undefined
                     }

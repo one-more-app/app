@@ -9,6 +9,7 @@ import { SettingsPage } from '@/pages/SettingsPage'
 import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCelebration'
 import { Toaster } from '@/components/ui/sonner'
 import { BottomNav } from '@/components/BottomNav'
+import { cn } from '@/lib/utils'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import { initGoogleNativeSignIn } from '@/lib/google-native'
@@ -73,8 +74,13 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
         location.pathname === '/settings'
 
     return (
-        <div className={show ? 'pb-bottom-nav-host' : undefined}>
-            {children}
+        <div className="flex min-h-0 flex-1 flex-col">
+            <div
+                key={location.pathname}
+                className={cn('app-scroll-viewport', show && 'pb-bottom-nav-host')}
+            >
+                {children}
+            </div>
             {show ? <BottomNav /> : null}
         </div>
     )
@@ -124,30 +130,32 @@ function App() {
 
     return (
         <HashRouter>
-            <Toaster />
-            <LeaguePromotionCelebrationHost />
-            <AuthProvider>
-                <AccessGate>
-                    <BottomNavHost>
-                        <Routes>
-                            <Route
-                                path="/"
-                                element={
-                                    <IndexRedirect />
-                                }
-                            />
-                            <Route path="/onboarding" element={<OnboardingPage />} />
-                            <Route path="/home" element={<HomePage />} />
-                            <Route path="/stats" element={<StatsPage />} />
-                            <Route path="/history" element={<HistoryPage />} />
-                            <Route path="/auth" element={<AuthPage />} />
-                            <Route path="/exercises" element={<ExerciseListPage />} />
-                            <Route path="/exercise/:id" element={<ExerciseDetailPage />} />
-                            <Route path="/settings" element={<SettingsPage />} />
-                        </Routes>
-                    </BottomNavHost>
-                </AccessGate>
-            </AuthProvider>
+            <div className="app-shell">
+                <Toaster />
+                <LeaguePromotionCelebrationHost />
+                <AuthProvider>
+                    <AccessGate>
+                        <BottomNavHost>
+                            <Routes>
+                                <Route
+                                    path="/"
+                                    element={
+                                        <IndexRedirect />
+                                    }
+                                />
+                                <Route path="/onboarding" element={<OnboardingPage />} />
+                                <Route path="/home" element={<HomePage />} />
+                                <Route path="/stats" element={<StatsPage />} />
+                                <Route path="/history" element={<HistoryPage />} />
+                                <Route path="/auth" element={<AuthPage />} />
+                                <Route path="/exercises" element={<ExerciseListPage />} />
+                                <Route path="/exercise/:id" element={<ExerciseDetailPage />} />
+                                <Route path="/settings" element={<SettingsPage />} />
+                            </Routes>
+                        </BottomNavHost>
+                    </AccessGate>
+                </AuthProvider>
+            </div>
         </HashRouter>
     )
 }

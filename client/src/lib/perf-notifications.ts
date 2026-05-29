@@ -104,6 +104,9 @@ export function notifyPerfMilestones(params: {
   exerciseName: string
   prevPB: PB
   nextPB: PB
+  /** Poids et reps de la perf venant d’être enregistrée (affichage). */
+  savedWeight: number
+  savedReps: number
   prevLeague: LeagueInfo | null
   nextLeague: LeagueInfo | null
   exerciseImageUrl?: string
@@ -112,6 +115,8 @@ export function notifyPerfMilestones(params: {
     exerciseName,
     prevPB,
     nextPB,
+    savedWeight,
+    savedReps,
     prevLeague,
     nextLeague,
     exerciseImageUrl,
@@ -121,7 +126,7 @@ export function notifyPerfMilestones(params: {
   const leagueUp = didLeagueChange(prevLeague, nextLeague)
   if (!newRecord && !leagueUp) {
     toast.success("Performance enregistrée", {
-      description: `${exerciseName} · ${nextPB?.weight ?? "-"} kg × ${nextPB?.reps ?? "-"} reps`,
+      description: `${exerciseName} · ${savedWeight} kg × ${savedReps} reps`,
     })
     return
   }
@@ -140,8 +145,8 @@ export function notifyPerfMilestones(params: {
       exerciseName,
       prevLeague,
       nextLeague,
-      weight: nextPB.weight,
-      reps: nextPB.reps,
+      weight: savedWeight,
+      reps: savedReps,
       exerciseImageUrl,
     })
     return
@@ -151,7 +156,7 @@ export function notifyPerfMilestones(params: {
     toast.success("Nouveau record et nouveau palier", {
       className: leagueToastClass,
       classNames: { description: LEAGUE_TOAST_DESCRIPTION_CLASS },
-      description: `${exerciseName} · ${nextPB!.weight} kg × ${nextPB!.reps} reps · ${nextLeague!.label}`,
+      description: `${exerciseName} · ${savedWeight} kg × ${savedReps} reps · ${nextLeague!.label}`,
     })
     return
   }
@@ -159,8 +164,8 @@ export function notifyPerfMilestones(params: {
   if (newRecord && nextPB && newRecordCelebrationHandler) {
     newRecordCelebrationHandler({
       exerciseName,
-      weight: nextPB.weight,
-      reps: nextPB.reps,
+      weight: savedWeight,
+      reps: savedReps,
       leagueAfter: nextLeague,
       exerciseImageUrl,
     })
@@ -169,7 +174,7 @@ export function notifyPerfMilestones(params: {
 
   if (newRecord) {
     toast.success("Nouveau record", {
-      description: `${exerciseName} · ${nextPB!.weight} kg × ${nextPB!.reps} reps`,
+      description: `${exerciseName} · ${savedWeight} kg × ${savedReps} reps`,
     })
   }
 }

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 export function OnboardingVideoShell({ children }: { children: ReactNode }) {
     return (
-        <div className="relative flex min-h-screen-app flex-col overflow-hidden bg-black">
+        <div className="relative flex h-full min-h-full flex-col overflow-hidden bg-black">
             <video
                 className="absolute inset-0 h-full w-full object-cover pointer-events-none bg-black"
                 src="/onboarding-bg.mp4"
