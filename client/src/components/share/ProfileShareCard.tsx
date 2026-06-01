@@ -8,9 +8,11 @@ import type {
 } from "@/lib/profile-highlights";
 import type { GlobalLeagueSummary } from "@/lib/muscle-league-stats";
 import { leagueLevelToFrenchLabel } from "@/lib/strength-standards";
+import { StreakFlameCount } from "@/components/StreakFlameCount";
+import { resolveStreak } from "@/lib/streak-display";
 import { UI } from "@/lib/translations";
 import type { UserProgressState } from "@/types";
-import { Flame, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import type { CSSProperties } from "react";
 
 export type ProfileSharePayload = {
@@ -42,6 +44,10 @@ export function ProfileShareCard({
   const logoSrc = resolvePublicAssetUrl("logo-white-text.png");
   const { displayName, progress, leagueSummary, topByLeague, mostTrained } =
     payload;
+  const { current: currentStreak } = resolveStreak(
+    progress.streak,
+    progress.lastActiveDate,
+  );
 
   return (
     <div
@@ -74,12 +80,11 @@ export function ProfileShareCard({
               <Sparkles className="size-10 text-primary" aria-hidden />
               {UI.xpLevelLabel.replace("{level}", String(progress.level))}
             </span>
-            {progress.streak.current > 0 ? (
-              <span className="inline-flex items-center gap-2 font-medium text-orange-500">
-                <Flame className="size-10" aria-hidden />
-                {UI.streakDays.replace("{days}", String(progress.streak.current))}
-              </span>
-            ) : null}
+            <StreakFlameCount
+              count={currentStreak}
+              iconClassName="size-10"
+              textClassName={`${tbase} font-semibold tabular-nums`}
+            />
           </div>
 
           {leagueSummary ? (

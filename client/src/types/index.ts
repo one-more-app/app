@@ -74,6 +74,7 @@ export type UserProgressState = {
   xpIntoLevel: number;
   xpForNextLevel: number;
   streak: { current: number; longest: number };
+  lastActiveDate?: string | null;
   recentGrants: XpGrantItem[];
 };
 

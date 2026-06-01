@@ -20,5 +20,6 @@ export type ProgressStateDto = {
   xpIntoLevel: number;
   xpForNextLevel: number;
   streak: { current: number; longest: number };
+  lastActiveDate: string | null;
   recentGrants: XpGrantItemDto[];
 };

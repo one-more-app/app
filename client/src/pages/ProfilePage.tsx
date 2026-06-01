@@ -1,5 +1,4 @@
 import { BackHeader } from "@/components/BackHeader";
-import { ProfileActivitySection } from "@/components/profile/ProfileActivitySection";
 import { ProfileHighlightsCard } from "@/components/profile/ProfileHighlightsCard";
 import { ProfileIdentityHeader } from "@/components/profile/ProfileIdentityHeader";
 import { ProfileMuscleMapSection } from "@/components/profile/ProfileMuscleMapSection";
@@ -8,7 +7,11 @@ import { ProfileTopExercisesList } from "@/components/profile/ProfileTopExercise
 import { ProfilePageSkeleton } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useUserProfileData } from "@/hooks/use-api-data";
+import {
+  usePerformanceEntriesData,
+  useUserProfileData,
+  useUserProgressData,
+} from "@/hooks/use-api-data";
 import { useHomeData } from "@/hooks/use-home-data";
 import { computeLeagueStatsForTracked } from "@/lib/muscle-league-stats";
 import { getTopExercisesByLeague } from "@/lib/profile-highlights";
@@ -20,6 +23,8 @@ import { Link } from "react-router-dom";
 export default function ProfilePage() {
   const { exercises, hasLoaded } = useHomeData();
   const { data: profile } = useUserProfileData();
+  usePerformanceEntriesData();
+  useUserProgressData();
 
   const leagueSummary = useMemo(() => {
     if (!profile) return null;
@@ -56,8 +61,6 @@ export default function ProfilePage() {
 
       <main className="mx-auto max-w-2xl space-y-4 p-4">
         <ProfileIdentityHeader />
-
-        <ProfileActivitySection />
 
         <ProfileHighlightsCard leagueSummary={leagueSummary} />
 

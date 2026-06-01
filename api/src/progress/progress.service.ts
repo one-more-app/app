@@ -12,7 +12,10 @@ import {
 } from './lib/personal-best.js';
 import { XP_AMOUNTS, XP_DAILY_CAPS } from './lib/xp-config.js';
 import { levelProgressFromTotalXp } from './lib/xp-levels.js';
-import { computeStreakAfterActivity as computeStreak } from './lib/streak-dates.js';
+import {
+  applyStreakExpiry,
+  computeStreakAfterActivity as computeStreak,
+} from './lib/streak-dates.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { PerformanceEntryEntity } from '../performance/performance-entry.entity.js';
 import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
@@ -101,10 +104,7 @@ export class ProgressService {
       month,
       activeDays,
       activeDayCount: activeDays.length,
-      streak: {
-        current: progress.currentStreak,
-        longest: progress.longestStreak,
-      },
+      streak: this.effectiveStreak(progress),
       bounds: {
         earliestMonth,
         latestMonth,
@@ -127,10 +127,8 @@ export class ProgressService {
       level,
       xpIntoLevel,
       xpForNextLevel,
-      streak: {
-        current: progress.currentStreak,
-        longest: progress.longestStreak,
-      },
+      streak: this.effectiveStreak(progress),
+      lastActiveDate: progress.lastActiveDate,
       recentGrants: recent.map((e) => ({
         sourceType: e.sourceType,
         amount: e.amount,
@@ -324,12 +322,22 @@ export class ProgressService {
         leveledUp: level > levelBefore,
         previousLevel: level > levelBefore ? levelBefore : undefined,
         grants,
-        streak: {
-          current: progress.currentStreak,
-          longest: progress.longestStreak,
-        },
+        streak: this.effectiveStreak(progress),
       };
     });
+  }
+
+  private effectiveStreak(progress: UserProgressEntity): {
+    current: number;
+    longest: number;
+  } {
+    return {
+      current: applyStreakExpiry(
+        progress.lastActiveDate,
+        progress.currentStreak,
+      ),
+      longest: progress.longestStreak,
+    };
   }
 
   private async getOrCreateProgress(userId: string): Promise<UserProgressEntity> {
@@ -423,10 +431,7 @@ export class ProgressService {
       xpForNextLevel,
       leveledUp: false,
       grants: [],
-      streak: {
-        current: progress.currentStreak,
-        longest: progress.longestStreak,
-      },
+      streak: this.effectiveStreak(progress),
     };
   }
 }

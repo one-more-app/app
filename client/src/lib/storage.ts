@@ -38,6 +38,8 @@ const DEFAULT_PROFILE: UserProfile = {
 
 let trackedCache: TrackedExercise[] = [];
 let performanceCache: PerformanceEntry[] = [];
+/** Référence stable pour useSyncExternalStore (évite une boucle de rendu). */
+let activePerformanceSnapshot: PerformanceEntry[] = [];
 let profileCache: UserProfile = DEFAULT_PROFILE;
 let hasProfilePersistedCache = false;
 
@@ -67,9 +69,16 @@ function updateTrackedCache(list: TrackedExercise[]): void {
   trackedCache = list;
 }
 
+function syncActivePerformanceSnapshot(): void {
+  activePerformanceSnapshot = performanceCache.filter((e) => !e.deletedAt);
+}
+
 function updatePerformanceCache(list: PerformanceEntry[]): void {
   performanceCache = list;
+  syncActivePerformanceSnapshot();
 }
+
+syncActivePerformanceSnapshot();
 
 export function getTrackedExercises(): TrackedExercise[] {
   return trackedCache.filter((e) => !e.deletedAt);
@@ -210,15 +219,16 @@ export function getTrackedExerciseById(id: string): TrackedExercise | undefined 
 }
 
 export function getPerformanceEntries(): PerformanceEntry[] {
-  return performanceCache.filter((e) => !e.deletedAt);
+  return activePerformanceSnapshot;
 }
 
-function getAllPerformanceEntries(): PerformanceEntry[] {
+export function getAllPerformanceEntries(): PerformanceEntry[] {
   return [...performanceCache];
 }
 
 export function setPerformanceEntries(entries: PerformanceEntry[]): void {
   updatePerformanceCache(entries);
+  notifyLocalDataChanged("performance");
 }
 
 export function getEntriesByTrackedId(

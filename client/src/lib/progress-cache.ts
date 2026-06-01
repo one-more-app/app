@@ -15,8 +15,18 @@ export function getUserProgress(): UserProgressState {
   return progressCache;
 }
 
+function notifyProgressChanged(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent("one-more:local-data-changed", {
+      detail: { kind: "progress", at: Date.now() },
+    }),
+  );
+}
+
 export function setUserProgress(state: UserProgressState): void {
   progressCache = state;
+  notifyProgressChanged();
 }
 
 export function applyXpGrantResult(xp: XpGrantResult): void {
@@ -28,11 +38,5 @@ export function applyXpGrantResult(xp: XpGrantResult): void {
     streak: xp.streak,
     recentGrants: xp.grants,
   };
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(
-      new CustomEvent("one-more:local-data-changed", {
-        detail: { kind: "progress", at: Date.now() },
-      }),
-    );
-  }
+  notifyProgressChanged();
 }

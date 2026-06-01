@@ -1,12 +1,15 @@
 import { useUserProgressData } from "@/hooks/use-api-data";
+import { StreakFlameCount } from "@/components/StreakFlameCount";
+import { resolveProgressStreak } from "@/lib/streak-display";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
-import { Flame } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function UserProgressBanner({ className }: { className?: string }) {
     const { data: progress } = useUserProgressData();
     if (!progress) return null;
+
+    const { current: currentStreak } = resolveProgressStreak(progress);
 
     const pct =
         progress.xpForNextLevel > 0
@@ -32,15 +35,7 @@ export function UserProgressBanner({ className }: { className?: string }) {
                         {UI.xpLevelLabel.replace("{level}", String(progress.level))}
                     </span>
                 </div>
-                {progress.streak.current > 0 ? (
-                    <div
-                        className="flex items-center gap-1 text-xs font-medium text-orange-500"
-                        title={UI.streakLabel}
-                    >
-                        <Flame className="size-3.5" aria-hidden />
-                        {UI.streakDays.replace("{days}", String(progress.streak.current))}
-                    </div>
-                ) : null}
+                <StreakFlameCount count={currentStreak} />
             </div>
             <div
                 className="h-2 overflow-hidden rounded-full bg-secondary"

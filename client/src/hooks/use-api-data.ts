@@ -8,8 +8,10 @@ import {
   fetchUserProgress,
   type TrackedExerciseWithPerformance,
 } from "@/lib/data-api";
+import { mergePerformanceEntriesById } from "@/lib/activity-from-performances";
 import { getUserProgress, setUserProgress } from "@/lib/progress-cache";
 import {
+  getAllPerformanceEntries,
   setPerformanceEntries,
   setTrackedExercises,
   setUserProfile,
@@ -117,7 +119,11 @@ export function usePerformanceEntriesData() {
   return useSWR<PerformanceEntry[]>(
     auth.status === "authenticated" ? SWR_KEYS.performanceEntries : null,
     async () => {
-      const list = await fetchPerformanceEntries({ includeDeleted: true });
+      const remote = await fetchPerformanceEntries({ includeDeleted: true });
+      const list = mergePerformanceEntriesById(
+        remote,
+        getAllPerformanceEntries(),
+      );
       setPerformanceEntries(list);
       return list;
     },
@@ -142,8 +148,19 @@ export function useUserProgressData() {
     auth.status === "authenticated" ? SWR_KEYS.progress : null,
     async () => {
       const remote = await fetchUserProgress();
-      setUserProgress(remote);
-      return remote;
+      const local = getUserProgress();
+      const merged: UserProgressState = {
+        ...remote,
+        streak: {
+          current: remote.streak.current,
+          longest: Math.max(
+            remote.streak.longest,
+            local.streak.longest,
+          ),
+        },
+      };
+      setUserProgress(merged);
+      return merged;
     },
     {
       fallbackData: getUserProgress(),

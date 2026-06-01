@@ -1,11 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUserProgressData } from "@/hooks/use-api-data";
+import { StreakFlameCount } from "@/components/StreakFlameCount";
+import { resolveProgressStreak } from "@/lib/streak-display";
 import { UI } from "@/lib/translations";
-import { Flame, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 export function UserProgressCard() {
   const { data: progress } = useUserProgressData();
   if (!progress) return null;
+
+  const { current: currentStreak } = resolveProgressStreak(progress);
 
   const pct =
     progress.xpForNextLevel > 0
@@ -28,12 +32,11 @@ export function UserProgressCard() {
           <p className="text-2xl font-bold">
             {UI.xpLevelLabel.replace("{level}", String(progress.level))}
           </p>
-          {progress.streak.current > 0 ? (
-            <p className="flex items-center gap-1 text-sm font-medium text-orange-500">
-              <Flame className="size-4" aria-hidden />
-              {UI.streakDays.replace("{days}", String(progress.streak.current))}
-            </p>
-          ) : null}
+          <StreakFlameCount
+            count={currentStreak}
+            iconClassName="size-4"
+            textClassName="text-sm font-semibold tabular-nums"
+          />
         </div>
         <div
           className="h-2.5 overflow-hidden rounded-full bg-muted"
