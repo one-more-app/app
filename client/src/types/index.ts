@@ -76,3 +76,11 @@ export type UserProgressState = {
   streak: { current: number; longest: number };
   recentGrants: XpGrantItem[];
 };
+
+export type UserActivityMonth = {
+  month: string;
+  activeDays: string[];
+  activeDayCount: number;
+  streak: { current: number; longest: number };
+  bounds: { earliestMonth: string; latestMonth: string };
+};

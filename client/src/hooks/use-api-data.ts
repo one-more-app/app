@@ -4,6 +4,7 @@ import {
   fetchRemoteProfile,
   fetchTrackedExercises,
   fetchTrackedExercisesWithPerformance,
+  fetchUserActivityMonth,
   fetchUserProgress,
   type TrackedExerciseWithPerformance,
 } from "@/lib/data-api";
@@ -17,6 +18,7 @@ import type {
   PerformanceEntry,
   TrackedExercise,
   UserProfile,
+  UserActivityMonth,
   UserProgressState,
 } from "@/types";
 import useSWR from "swr";
@@ -29,7 +31,13 @@ export const SWR_KEYS = {
   profile: "profile",
   homeExercises: "home-exercises",
   progress: "progress",
+  activityMonthPrefix: "progress-activity",
+  activityMonth: (month: string) => ["progress-activity", month] as const,
 } as const;
+
+function isActivityMonthKey(key: unknown): boolean {
+  return Array.isArray(key) && key[0] === SWR_KEYS.activityMonthPrefix;
+}
 
 export function usePerformanceDataRefresh() {
   const { mutate } = useSWRConfig();
@@ -40,6 +48,7 @@ export function usePerformanceDataRefresh() {
       mutate(SWR_KEYS.homeExercises),
       mutate(SWR_KEYS.trackedExercises),
       mutate(SWR_KEYS.progress),
+      mutate(isActivityMonthKey),
     ]);
   }, [mutate]);
 }
@@ -48,8 +57,21 @@ export function useProgressDataRefresh() {
   const { mutate } = useSWRConfig();
 
   return useCallback(async () => {
-    await mutate(SWR_KEYS.progress);
+    await Promise.all([
+      mutate(SWR_KEYS.progress),
+      mutate(isActivityMonthKey),
+    ]);
   }, [mutate]);
+}
+
+export function useUserActivityData(month: string) {
+  const auth = useAuth();
+  return useSWR<UserActivityMonth>(
+    auth.status === "authenticated" && month
+      ? SWR_KEYS.activityMonth(month)
+      : null,
+    () => fetchUserActivityMonth(month),
+  );
 }
 
 export function useTrackedDataRefresh() {

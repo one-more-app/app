@@ -28,9 +28,6 @@ import type { PerformanceEntry } from "@/types";
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-/** Nombre max de perfs affichées sur le profil (le reste via Historique). */
-const PROFILE_RECENT_MAX = 50;
-
 export function ProfileRecentHistory() {
   const { data: allEntries = [] } = usePerformanceEntriesData();
   const { data: tracked = [] } = useTrackedExercisesData();
@@ -48,12 +45,17 @@ export function ProfileRecentHistory() {
     [allEntries],
   );
 
-  const shown = useMemo(() => entries.slice(0, PROFILE_RECENT_MAX), [entries]);
+  const shown = useMemo(() => {
+    if (entries.length === 0) return [];
+    const latestDate = [...new Set(entries.map((e) => e.date))].sort((a, b) =>
+      b.localeCompare(a),
+    )[0]!;
+    return entries.filter((e) => e.date === latestDate);
+  }, [entries]);
   const shownByDayThenExercise = useMemo(
     () => groupByDayThenExercise(shown),
     [shown],
   );
-  const truncated = entries.length > PROFILE_RECENT_MAX;
 
   const entryInsights = useMemo(
     () =>
@@ -130,14 +132,6 @@ export function ProfileRecentHistory() {
             {UI.profileHistorySeeAll}
           </Link>
         </div>
-
-        {truncated ? (
-          <p className="mb-4 text-xs text-muted-foreground">
-            {UI.historyTruncated
-              .replace("{shown}", String(PROFILE_RECENT_MAX))
-              .replace("{total}", String(entries.length))}
-          </p>
-        ) : null}
 
         <ul className="space-y-8">
           {shownByDayThenExercise.map(({ date: dayKey, exercises }) => (

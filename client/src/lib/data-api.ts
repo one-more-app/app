@@ -4,6 +4,7 @@ import type {
   PerformanceEntry,
   TrackedExercise,
   UserProfile,
+  UserActivityMonth,
   UserProgressState,
   XpGrantResult,
 } from "@/types";
@@ -161,6 +162,16 @@ export async function upsertPerformanceEntry(
 
 export async function fetchUserProgress(): Promise<UserProgressState> {
   return await apiFetch<UserProgressState>("/progress", { method: "GET" });
+}
+
+export async function fetchUserActivityMonth(
+  month: string,
+): Promise<UserActivityMonth> {
+  const q = new URLSearchParams({ month });
+  return await apiFetch<UserActivityMonth>(
+    `/progress/activity?${q.toString()}`,
+    { method: "GET" },
+  );
 }
 
 export async function patchPerformanceEntry(

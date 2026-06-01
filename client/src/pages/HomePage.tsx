@@ -1,16 +1,15 @@
 import { ExerciseBrowseNavigator } from '@/components/ExerciseBrowseNavigator'
-import { BrowseSectionTitle } from '@/components/exercise-browse-ui'
 import { ExerciseCard } from '@/components/ExerciseCard'
 import { UserProgressBanner } from '@/components/UserProgressBanner'
+import { BrowseSectionTitle } from '@/components/exercise-browse-ui'
 import { ExerciseCardSkeletonList } from '@/components/skeletons'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
+import { usePerformanceDataRefresh, useUserProfileData } from '@/hooks/use-api-data'
 import { useExerciseCatalogBrowse } from '@/hooks/use-exercise-catalog-browse'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
-import { usePerformanceDataRefresh } from '@/hooks/use-api-data'
 import { useHomeData, type ExerciseWithPerf } from '@/hooks/use-home-data'
-import { useUserProfileData } from '@/hooks/use-api-data'
 import {
     sortBrowseableByLatestPerf,
     trackedToBrowseable,
@@ -19,7 +18,6 @@ import { CARDIO_EQUIPMENT, getExerciseImageUrl } from '@/lib/exercisedb'
 import { filterExercisesDoneToday } from '@/lib/home-today-exercises'
 import { computeBrowseLeagueLookups } from '@/lib/muscle-league-stats'
 import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
-import { notifyXpGrants } from '@/lib/xp-notifications'
 import {
     getLatestPerformanceCreatedAt,
     getPersonalBest,
@@ -27,6 +25,7 @@ import {
 } from '@/lib/storage'
 import { getLeagueInfo } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
+import { notifyXpGrants } from '@/lib/xp-notifications'
 import { Dumbbell, Plus, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -119,20 +118,20 @@ function HomePage() {
             const leagueInfo =
                 !ex.isCustom && ex.personalBest && profile
                     ? getLeagueInfo({
-                          weight: ex.personalBest.weight,
-                          reps: ex.personalBest.reps,
-                          bodyWeightKg: profile.weightKg,
-                          gender: profile.gender,
-                          exerciseName: ex.originalName ?? ex.name,
-                          exerciseMetadata:
-                              ex.equipment && ex.target
-                                  ? {
-                                        equipment: ex.equipment,
-                                        target: ex.target,
-                                        bodyPart: ex.bodyPart,
-                                    }
-                                  : undefined,
-                      })
+                        weight: ex.personalBest.weight,
+                        reps: ex.personalBest.reps,
+                        bodyWeightKg: profile.weightKg,
+                        gender: profile.gender,
+                        exerciseName: ex.originalName ?? ex.name,
+                        exerciseMetadata:
+                            ex.equipment && ex.target
+                                ? {
+                                    equipment: ex.equipment,
+                                    target: ex.target,
+                                    bodyPart: ex.bodyPart,
+                                }
+                                : undefined,
+                    })
                     : null
             return (
                 <ExerciseCard
@@ -156,10 +155,10 @@ function HomePage() {
                                 const nextPB = getPersonalBest(ex.id) ?? null
                                 const nextLeague = profile
                                     ? computeLeagueFromPB({
-                                          exercise: ex,
-                                          personalBest: nextPB,
-                                          profile,
-                                      })
+                                        exercise: ex,
+                                        personalBest: nextPB,
+                                        profile,
+                                    })
                                     : null
                                 notifyPerfMilestones({
                                     exerciseName: ex.name,
@@ -225,15 +224,15 @@ function HomePage() {
                                 className="bg-card pl-9"
                             />
                         </div>
-                        <Button asChild className="h-9 w-full">
-                            <Link to={`/exercises${addExerciseLinkSearch}`}>
-                                <Plus className="mr-2 size-4" />
-                                {UI.addExercise}
-                            </Link>
-                        </Button>
+
                     </div>
                 ) : null}
-
+                <Button asChild className="h-9 w-full mb-4">
+                    <Link to={`/exercises${addExerciseLinkSearch}`}>
+                        <Plus className="mr-2 size-4" />
+                        {UI.addExercise}
+                    </Link>
+                </Button>
                 {!hasLoaded ? (
                     <ExerciseCardSkeletonList count={5} compact className="mt-2" />
                 ) : nonCardioExercises.length === 0 ? (
@@ -242,7 +241,14 @@ function HomePage() {
                         icon={Dumbbell}
                         title={UI.noTrackedExercises}
                         description={UI.noTrackedDescription}
-                    />
+                    >
+                        <Button asChild className="mt-2">
+                            <Link to={`/exercises${addExerciseLinkSearch}`}>
+                                <Plus className="mr-2 size-4" />
+                                {UI.addExercise}
+                            </Link>
+                        </Button>
+                    </EmptyState>
                 ) : (
                     <>
                         {showTodaySection && todaySection ? (

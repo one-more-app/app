@@ -8,7 +8,7 @@ import {
   profileSectionClass,
 } from "@/lib/profile-section";
 import { UI } from "@/lib/translations";
-import { Flame, Trophy } from "lucide-react";
+import { Trophy } from "lucide-react";
 
 export function ProfileHighlightsCard({
     leagueSummary,
@@ -29,22 +29,11 @@ export function ProfileHighlightsCard({
         <section className={profileSectionClass}>
             <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                        <span className="flex items-center gap-1.5 text-sm font-medium">
-                            {progress
-                                ? UI.xpLevelLabel.replace("{level}", String(progress.level))
-                                : "—"}
-                        </span>
-                        {progress && progress.streak.current > 0 ? (
-                            <span className="flex items-center gap-1 text-xs font-medium text-orange-500">
-                                <Flame className="size-3.5" aria-hidden />
-                                {UI.streakDays.replace(
-                                    "{days}",
-                                    String(progress.streak.current),
-                                )}
-                            </span>
-                        ) : null}
-                    </div>
+                    <span className="flex items-center gap-1.5 text-sm font-medium">
+                        {progress
+                            ? UI.xpLevelLabel.replace("{level}", String(progress.level))
+                            : "—"}
+                    </span>
                     {progress ? (
                         <>
                             <div

@@ -4,12 +4,16 @@ import type {
   LeaguePromotionPayload,
   NewRecordCelebrationPayload,
 } from "@/lib/perf-notifications";
-import type { LevelUpCelebrationPayload } from "@/lib/xp-notifications";
+import type {
+  LevelUpCelebrationPayload,
+  StreakCelebrationPayload,
+} from "@/lib/xp-notifications";
 
 export type CelebrationItem =
   | { kind: "league"; payload: LeaguePromotionPayload }
   | { kind: "record"; payload: NewRecordCelebrationPayload }
-  | { kind: "levelup"; payload: LevelUpCelebrationPayload };
+  | { kind: "levelup"; payload: LevelUpCelebrationPayload }
+  | { kind: "streak"; payload: StreakCelebrationPayload };
 
 export type CelebrationQueueSnapshot = {
   current: CelebrationItem | null;
@@ -24,6 +28,7 @@ const PRIORITY: Record<CelebrationItem["kind"], number> = {
   league: 0,
   record: 1,
   levelup: 2,
+  streak: 3,
 };
 
 const queue: CelebrationItem[] = [];

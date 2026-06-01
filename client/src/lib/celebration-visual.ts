@@ -4,6 +4,10 @@ import { leagueMapFill } from '@/lib/league-colors'
 import type { NewRecordCelebrationPayload } from '@/lib/perf-notifications'
 
 /** Même dégradé que la modale de célébration (à garder aligné avec `LeaguePromotionCelebration`). */
+export function streakCelebrationRadialBackground(): string {
+  return `radial-gradient(ellipse 85% 65% at 50% 15%, color-mix(in srgb, #f97316 42%, transparent), transparent 72%)`
+}
+
 export function leagueCelebrationRadialBackground(leagueColor: string): string {
   return `radial-gradient(ellipse 118% 72% at 50% -14%, ${leagueColor} 0%, color-mix(in srgb, ${leagueColor} 50%, transparent) 42%, transparent 71%)`
 }

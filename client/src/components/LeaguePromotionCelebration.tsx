@@ -20,10 +20,17 @@ import type {
     LeaguePromotionPayload,
     NewRecordCelebrationPayload,
 } from '@/lib/perf-notifications'
-import type { LevelUpCelebrationPayload } from '@/lib/xp-notifications'
+import type {
+    LevelUpCelebrationPayload,
+    StreakCelebrationPayload,
+} from '@/lib/xp-notifications'
 import { useCelebrationQueueSnapshot } from '@/hooks/use-celebration-queue-active'
+import { useAnimatedCounter } from '@/hooks/use-animated-counter'
+import {
+    streakCelebrationRadialBackground,
+} from '@/lib/celebration-visual'
 import { UI } from '@/lib/translations'
-import { ArrowRight, Share2, Trophy } from 'lucide-react'
+import { ArrowRight, Flame, Share2, Trophy } from 'lucide-react'
 import { useEffect, useState, type CSSProperties } from 'react'
 import { toast } from 'sonner'
 
@@ -222,6 +229,67 @@ function LeaguePromotionContent({
     )
 }
 
+function StreakCelebrationContent({ payload }: { payload: StreakCelebrationPayload }) {
+    const { current, previousStreak, xpGained, level } = payload
+    const displayCount = useAnimatedCounter(previousStreak, current, true)
+
+    const title =
+        current === 1
+            ? UI.streakSheetTitleFirstDay
+            : UI.streakSheetTitleStreak.replace('{days}', String(current))
+
+    const description =
+        current === 1
+            ? UI.streakSheetSubtitleFirstDay
+            : UI.streakSheetSubtitleStreak
+
+    return (
+        <div className="relative min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto">
+            <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 opacity-95 dark:opacity-100"
+                style={{
+                    background: streakCelebrationRadialBackground(),
+                }}
+            />
+            <div className="relative z-[1] flex flex-col items-center gap-4 px-6 pb-4 pt-14 text-center">
+                <div
+                    className="streak-flame-anim relative inline-flex"
+                    aria-label={title}
+                >
+                    <Flame
+                        className="size-16 text-orange-500 [filter:drop-shadow(0_8px_24px_color-mix(in_srgb,#f97316_55%,transparent))]"
+                        strokeWidth={1.5}
+                        aria-hidden
+                    />
+                    <span
+                        key={displayCount}
+                        className="streak-count-anim absolute -bottom-0.5 left-1/2 flex min-w-8 -translate-x-1/2 items-center justify-center rounded-full bg-orange-500 px-2 py-0.5 text-sm font-bold tabular-nums text-white shadow-md ring-2 ring-background"
+                        aria-hidden
+                    >
+                        {displayCount}
+                    </span>
+                </div>
+                <DialogHeader className="flex w-full flex-col items-center gap-2 space-y-0 text-center sm:text-center">
+                    <DialogTitle className="text-balance text-xl font-semibold tracking-tight">
+                        {title}
+                    </DialogTitle>
+                    <DialogDescription className="text-base text-foreground/90">
+                        {description}
+                    </DialogDescription>
+                </DialogHeader>
+                {xpGained != null && xpGained > 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                        {UI.xpGainedToast.replace('{amount}', String(xpGained))}
+                        {' · '}
+                        {UI.xpLevelLabel.replace('{level}', String(level))}
+                    </p>
+                ) : null}
+            </div>
+        </div>
+    )
+}
+
 export function LeaguePromotionCelebrationHost() {
     const { resolvedTheme } = useTheme()
     const { current: open, total, pendingCount } = useCelebrationQueueSnapshot()
@@ -238,7 +306,8 @@ export function LeaguePromotionCelebrationHost() {
     const isDark = resolvedTheme === 'dark'
 
     const handleShare = async () => {
-        if (!open || shareBusy || open.kind === 'levelup') return
+        if (!open || shareBusy || open.kind === 'levelup' || open.kind === 'streak')
+            return
         setShareBusy(true)
         try {
             const result = await shareCelebrationPng(open, isDark)
@@ -274,6 +343,13 @@ export function LeaguePromotionCelebrationHost() {
                         <NewRecordCelebrationContent
                             payload={open.payload}
                             isDark={isDark}
+                        />
+                    </div>
+                ) : open?.kind === 'streak' ? (
+                    <div className="flex min-h-0 flex-1 flex-col">
+                        <StreakCelebrationContent
+                            key={`${open.payload.current}-${open.payload.previousStreak}`}
+                            payload={open.payload}
                         />
                     </div>
                 ) : open?.kind === 'levelup' ? (
@@ -317,7 +393,12 @@ export function LeaguePromotionCelebrationHost() {
                         className="w-full min-w-[12rem] sm:w-auto sm:order-2"
                         size="lg"
                         variant="secondary"
-                        disabled={!open || shareBusy || open?.kind === 'levelup'}
+                        disabled={
+                            !open ||
+                            shareBusy ||
+                            open?.kind === 'levelup' ||
+                            open?.kind === 'streak'
+                        }
                         onClick={handleShare}
                     >
                         <Share2 className="mr-2 size-4" aria-hidden />

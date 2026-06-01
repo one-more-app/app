@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, IsNull, Repository } from 'typeorm';
 import {
@@ -12,16 +12,23 @@ import {
 } from './lib/personal-best.js';
 import { XP_AMOUNTS, XP_DAILY_CAPS } from './lib/xp-config.js';
 import { levelProgressFromTotalXp } from './lib/xp-levels.js';
+import { computeStreakAfterActivity as computeStreak } from './lib/streak-dates.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { PerformanceEntryEntity } from '../performance/performance-entry.entity.js';
 import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
 import { XpEventEntity } from './entities/xp-event.entity.js';
 import { UserProgressEntity } from './entities/user-progress.entity.js';
 import { XpSourceType } from './entities/xp-source-type.enum.js';
+import type { ActivityMonthDto } from './dto/activity-response.dto.js';
 import type {
   ProgressStateDto,
   XpGrantResultDto,
 } from './dto/progress-response.dto.js';
+import {
+  monthKeyFromDate,
+  monthRangeBounds,
+  parseMonthKey,
+} from './lib/activity-month.js';
 
 export type ProcessPerformanceParams = {
   userId: string;
@@ -47,6 +54,63 @@ export class ProgressService {
     @InjectRepository(TrackedExerciseEntity)
     private readonly trackedRepo: Repository<TrackedExerciseEntity>,
   ) {}
+
+  async getActivity(
+    userId: string,
+    monthParam?: string,
+  ): Promise<ActivityMonthDto> {
+    const latestMonth = monthKeyFromDate(new Date());
+    let month = latestMonth;
+    if (monthParam != null && monthParam !== '') {
+      try {
+        parseMonthKey(monthParam);
+        month = monthParam;
+      } catch {
+        throw new BadRequestException('month must be YYYY-MM');
+      }
+    }
+
+    const { start, end } = monthRangeBounds(month);
+    const progress = await this.getOrCreateProgress(userId);
+
+    const rows = await this.perfRepo
+      .createQueryBuilder('p')
+      .select('DISTINCT p.date', 'date')
+      .where('p.userId = :userId', { userId })
+      .andWhere('p.deletedAt IS NULL')
+      .andWhere('p.date >= :start AND p.date <= :end', { start, end })
+      .orderBy('p.date', 'ASC')
+      .getRawMany<{ date: string }>();
+
+    const activeDays = rows.map((r) => r.date);
+
+    const boundsRow = await this.perfRepo
+      .createQueryBuilder('p')
+      .select('MIN(p.date)', 'minDate')
+      .addSelect('MAX(p.date)', 'maxDate')
+      .where('p.userId = :userId', { userId })
+      .andWhere('p.deletedAt IS NULL')
+      .getRawOne<{ minDate: string | null; maxDate: string | null }>();
+
+    let earliestMonth = latestMonth;
+    if (boundsRow?.minDate) {
+      earliestMonth = boundsRow.minDate.slice(0, 7);
+    }
+
+    return {
+      month,
+      activeDays,
+      activeDayCount: activeDays.length,
+      streak: {
+        current: progress.currentStreak,
+        longest: progress.longestStreak,
+      },
+      bounds: {
+        earliestMonth,
+        latestMonth,
+      },
+    };
+  }
 
   async getProgress(userId: string): Promise<ProgressStateDto> {
     const progress = await this.getOrCreateProgress(userId);
@@ -210,8 +274,9 @@ export class ProgressService {
         .getCount();
 
       if (hadPerfToday === 0) {
-        const streakAfter = this.computeStreakAfterActivity(
-          progress,
+        const streakAfter = computeStreak(
+          progress.lastActiveDate,
+          progress.currentStreak,
           params.activityDate,
         );
         progress.currentStreak = streakAfter.current;
@@ -345,21 +410,6 @@ export class ProgressService {
     if (!next) return false;
     if (!prev) return true;
     return getLeagueLevelIndex(next.level) > getLeagueLevelIndex(prev.level);
-  }
-
-  private computeStreakAfterActivity(
-    progress: UserProgressEntity,
-    activityDate: string,
-  ): { current: number } {
-    const last = progress.lastActiveDate;
-    if (!last) return { current: 1 };
-    const lastMs = Date.parse(`${last}T00:00:00.000Z`);
-    const actMs = Date.parse(`${activityDate}T00:00:00.000Z`);
-    const dayMs = 86400000;
-    const diffDays = Math.round((actMs - lastMs) / dayMs);
-    if (diffDays === 0) return { current: progress.currentStreak };
-    if (diffDays === 1) return { current: progress.currentStreak + 1 };
-    return { current: 1 };
   }
 
   private emptyGrantResult(progress: UserProgressEntity): XpGrantResultDto {

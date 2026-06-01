@@ -1,4 +1,5 @@
 import { BackHeader } from "@/components/BackHeader";
+import { ProfileActivitySection } from "@/components/profile/ProfileActivitySection";
 import { ProfileHighlightsCard } from "@/components/profile/ProfileHighlightsCard";
 import { ProfileIdentityHeader } from "@/components/profile/ProfileIdentityHeader";
 import { ProfileMuscleMapSection } from "@/components/profile/ProfileMuscleMapSection";
@@ -55,6 +56,8 @@ export default function ProfilePage() {
 
       <main className="mx-auto max-w-2xl space-y-4 p-4">
         <ProfileIdentityHeader />
+
+        <ProfileActivitySection />
 
         <ProfileHighlightsCard leagueSummary={leagueSummary} />
 

@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { LEAGUE_COLORS } from '@/lib/league-colors'
 import type { CatalogBrowseParams, CatalogBrowseStep } from '@/lib/exercise-catalog-browse'
+import { LEAGUE_COLORS } from '@/lib/league-colors'
 import type { LeagueLevel } from '@/lib/strength-standards'
 import { leagueLevelToFrenchLabel } from '@/lib/strength-standards'
 import {
@@ -18,7 +18,7 @@ import type { ReactNode } from 'react'
 const browseCrumbBase =
     'shrink-0 rounded-lg py-1 px-2 font-one-more text-xs font-semibold uppercase italic tracking-wide capitalize'
 const browseCrumbCurrent =
-    'bg-accent text-accent-foreground shadow-sm ring-1 ring-accent/30'
+    'bg-accent text-accent-foreground ring-1 ring-accent/30'
 const browseCrumbLink =
     'text-muted-foreground hover:bg-muted/40 hover:text-foreground active:bg-muted/60'
 
