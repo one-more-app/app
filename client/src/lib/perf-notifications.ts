@@ -133,7 +133,7 @@ export function notifyPerfMilestones(params: {
   }
 
   if (newRecord && leagueUp) {
-    playMilestoneSound()
+    playMilestoneSound("league")
     void hapticNotificationSuccess()
     toast.success("Nouveau record et nouveau palier", {
       className: leagueToastClass,
@@ -158,7 +158,7 @@ export function notifyPerfMilestones(params: {
   }
 
   if (newRecord) {
-    playMilestoneSound()
+    playMilestoneSound("record")
     void hapticNotificationSuccess()
     toast.success("Nouveau record", {
       description: `${exerciseName} · ${savedWeight} kg × ${savedReps} reps`,

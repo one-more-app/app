@@ -40,8 +40,8 @@ function notifyListeners(): void {
   }
 }
 
-function playCelebrationFeedback(): void {
-  playMilestoneSound();
+function playCelebrationFeedback(item: CelebrationItem): void {
+  playMilestoneSound(item.kind);
   void hapticNotificationSuccess();
 }
 
@@ -101,7 +101,7 @@ export function enqueueCelebration(item: CelebrationItem): void {
   }
 
   if (wasEmpty) {
-    playCelebrationFeedback();
+    playCelebrationFeedback(item);
   }
 
   syncCachedSnapshot();
@@ -114,7 +114,7 @@ export function advanceCelebrationQueue(): void {
   queue.shift();
 
   if (queue.length > 0) {
-    playCelebrationFeedback();
+    playCelebrationFeedback(queue[0]!);
   }
 
   syncCachedSnapshot();

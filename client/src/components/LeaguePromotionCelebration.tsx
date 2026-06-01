@@ -315,8 +315,7 @@ export function LeaguePromotionCelebrationHost() {
     const isDark = resolvedTheme === 'dark'
 
     const handleShare = async () => {
-        if (!open || shareBusy || open.kind === 'levelup' || open.kind === 'streak')
-            return
+        if (!open || shareBusy) return
         setShareBusy(true)
         try {
             const result = await shareCelebrationPng(open, isDark)
@@ -374,12 +373,7 @@ export function LeaguePromotionCelebrationHost() {
                         className="w-full min-w-[12rem] sm:w-auto"
                         size="lg"
                         variant="secondary"
-                        disabled={
-                            !open ||
-                            shareBusy ||
-                            open?.kind === 'levelup' ||
-                            open?.kind === 'streak'
-                        }
+                        disabled={!open || shareBusy}
                         onClick={handleShare}
                     >
                         <Share2 className="mr-2 size-4" aria-hidden />

@@ -1,223 +1,56 @@
 import { Badge } from '@/components/ui/badge'
+import { formatPerfBadge, leagueIconDropShadow } from '@/components/celebration-modal-ui'
 import {
+    levelCelebrationRadialBackground,
     leagueCelebrationRadialBackground,
     recordCelebrationGlow,
     shareCardThemeVars,
+    streakCelebrationRadialBackground,
 } from '@/lib/celebration-visual'
-import { getShareableExerciseImageUrl, resolvePublicAssetUrl } from '@/lib/exercise-share-media'
+import type { CelebrationItem } from '@/lib/celebration-queue'
+import { resolvePublicAssetUrl } from '@/lib/exercise-share-media'
 import { LEAGUE_COLORS, leagueMapFill } from '@/lib/league-colors'
-import type {
-    LeaguePromotionPayload,
-    NewRecordCelebrationPayload,
-} from '@/lib/perf-notifications'
 import { UI } from '@/lib/translations'
-import { ArrowRight, Trophy } from 'lucide-react'
-import type { CSSProperties } from 'react'
+import { cn } from '@/lib/utils'
+import { ArrowRight, Flame, Sparkles, Trophy, type LucideIcon } from 'lucide-react'
+import type { CSSProperties, ReactNode } from 'react'
 
-export type CelebrationShareOpen =
-    | { kind: 'league'; payload: LeaguePromotionPayload }
-    | { kind: 'record'; payload: NewRecordCelebrationPayload }
+export type CelebrationShareOpen = CelebrationItem
 
-type CelebrationShareCardProps = {
-    open: CelebrationShareOpen
-    isDark: boolean
-}
+/** Largeur export — assez pour les stories, plus rapide qu’en 1080px. */
+export const CELEBRATION_SHARE_WIDTH = 720
 
-/**
- * Typo / gaps calés sur `LeaguePromotionCelebration` (text-xl / base / lg / sm / xs, gap-5 / 3 / 2)
- * avec facteur ×2.5 pour le rendu story (~1080px de large utile).
- * Classes en littéraux pour que Tailwind les voie au scan.
- */
-const txl = 'text-[3.125rem]'
-const tbase = 'text-[2.5rem]'
-const tlg = 'text-[2.813rem]'
-const tsm = 'text-[2.188rem]'
-const txs = 'text-[1.875rem]'
-const trophyMain = 'size-[8.75rem]'
-const iconTrophySm = 'size-[1.875rem]'
-const iconArrow = 'size-[3.125rem]'
-const gapMain = 'gap-[3.125rem]'
-const gapHeader = 'gap-[1.875rem]'
-const gapSm = 'gap-[1.25rem]'
-/** Comme la modale : `0_6px_20px` × facteur 2.5. */
-const dropTrophy =
-    '[filter:drop-shadow(0_15px_50px_color-mix(in_srgb,var(--league-celebration)_58%,transparent))]'
-/** Cadre fixe ; l’illustration est en `object-contain` + padding pour ne pas rogner les GIF. */
-const exerciseFrame = 'size-[15rem]'
-const exerciseInnerPad = 'p-[2rem]'
-const sharePadX = 'px-[3.75rem]'
-/** Même rythme que la modale : `pt-14` / `pb-4` × 2.5 */
-const sharePadTop = 'pt-[8.75rem]'
-const sharePadBottom = 'pb-[2.5rem]'
-/** Lockup image (logo + texte), cf. `public/logo-white-text.png` */
-const logoLockupH = 'h-[6.25rem]'
+const dropAccent =
+    'drop-shadow(0 10px 28px color-mix(in srgb, var(--accent) 50%, transparent))'
+const dropOrange =
+    'drop-shadow(0 10px 28px color-mix(in srgb, #f97316 50%, transparent))'
 const logoLockupShadow =
     'drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)] drop-shadow-[0_1px_3px_rgba(0,0,0,0.25)]'
 
-function ShareLeagueBody({
-    payload,
-    leagueGlow,
-}: {
-    payload: LeaguePromotionPayload
-    leagueGlow: string
-}) {
-    const { exerciseName, prevLeague, nextLeague, weight, reps } = payload
-    return (
-        <div className={`flex flex-col items-center ${gapMain} text-center`}>
-            <div className="league-promo-trophy-anim">
-                <Trophy
-                    className={`mx-auto ${trophyMain} text-white ${dropTrophy}`}
-                    strokeWidth={1.75}
-                    aria-hidden
-                />
-            </div>
-            <div className={`flex flex-col items-center ${gapHeader} space-y-0`}>
-                <h2
-                    className={`text-balance ${txl} font-semibold tracking-tight text-card-foreground`}
-                >
-                    {UI.leaguePromotionCelebrationTitle}
-                </h2>
-                <p className={`${tbase} capitalize text-foreground/90`}>{exerciseName}</p>
-            </div>
-            <p className={`font-one-more ${tlg} font-bold italic text-primary`}>
-                {UI.leaguePromotionCelebrationPerf
-                    .replace('{weight}', String(weight))
-                    .replace('{reps}', String(reps))}
-            </p>
-            {!prevLeague ? (
-                <div
-                    className={`flex flex-col items-center ${gapHeader}`}
-                    style={{ ['--league-glow']: leagueGlow } as CSSProperties}
-                >
-                    <p className={`${tsm} font-medium`} style={{ color: 'var(--league-celebration)' }}>
-                        {UI.leaguePromotionCelebrationFirst}
-                    </p>
-                    <div
-                        className="league-promo-ring-anim rounded-xl px-2 py-1"
-                        style={{ ['--league-glow']: leagueGlow } as CSSProperties}
-                    >
-                        <Badge
-                            variant="outline"
-                            className={`px-3 py-1 ${tsm} ${LEAGUE_COLORS[nextLeague.level]}`}
-                        >
-                            <Trophy
-                                className={`mr-1 ${iconTrophySm}`}
-                                aria-hidden
-                                style={{ color: 'var(--league-celebration)' }}
-                            />
-                            {nextLeague.label}
-                        </Badge>
-                    </div>
-                </div>
-            ) : (
-                <div
-                    className={`flex max-w-full flex-wrap items-center justify-center ${gapHeader}`}
-                >
-                    <Badge
-                        variant="outline"
-                        className={`shrink-0 px-2.5 py-1 ${txs} whitespace-normal text-center ${LEAGUE_COLORS[prevLeague.level]}`}
-                    >
-                        {prevLeague.label}
-                    </Badge>
-                    <ArrowRight
-                        className={`league-promo-nudge-anim shrink-0 ${iconArrow}`}
-                        aria-hidden
-                        style={{ color: 'var(--league-celebration)' }}
-                    />
-                    <div
-                        className="league-promo-ring-anim rounded-xl"
-                        style={{ ['--league-glow']: leagueGlow } as CSSProperties}
-                    >
-                        <Badge
-                            variant="outline"
-                            className={`shrink-0 px-2.5 py-1 ${txs} whitespace-normal text-center ${LEAGUE_COLORS[nextLeague.level]}`}
-                        >
-                            <Trophy
-                                className={`mr-1 ${iconTrophySm}`}
-                                aria-hidden
-                                style={{ color: 'var(--league-celebration)' }}
-                            />
-                            {nextLeague.label}
-                        </Badge>
-                    </div>
-                </div>
-            )}
-        </div>
-    )
-}
-
-function ShareRecordBody({
-    payload,
-    leagueGlow,
-}: {
-    payload: NewRecordCelebrationPayload
-    leagueGlow: string
-}) {
-    const { exerciseName, weight, reps, leagueAfter } = payload
-    return (
-        <div className={`flex flex-col items-center ${gapMain} text-center`}>
-            <div className="league-promo-trophy-anim">
-                <Trophy
-                    className={`mx-auto ${trophyMain} text-white ${dropTrophy}`}
-                    strokeWidth={1.75}
-                    aria-hidden
-                />
-            </div>
-            <div className={`flex flex-col items-center ${gapHeader} space-y-0`}>
-                <h2
-                    className={`text-balance ${txl} font-semibold tracking-tight text-card-foreground`}
-                >
-                    {UI.newRecordCelebrationTitle}
-                </h2>
-                <p className={`${tbase} capitalize text-foreground/90`}>{exerciseName}</p>
-            </div>
-            <p className={`font-one-more ${tlg} font-bold italic text-primary`}>
-                {UI.leaguePromotionCelebrationPerf
-                    .replace('{weight}', String(weight))
-                    .replace('{reps}', String(reps))}
-            </p>
-            {leagueAfter ? (
-                <div
-                    className={`flex flex-col items-center ${gapSm}`}
-                    style={{ ['--league-glow']: leagueGlow } as CSSProperties}
-                >
-                    <div className="league-promo-ring-anim rounded-xl">
-                        <Badge
-                            variant="outline"
-                            className={`px-3 py-1 ${tsm} ${LEAGUE_COLORS[leagueAfter.level]}`}
-                        >
-                            <Trophy
-                                className={`mr-1 ${iconTrophySm}`}
-                                aria-hidden
-                                style={{ color: 'var(--league-celebration)' }}
-                            />
-                            {leagueAfter.label}
-                        </Badge>
-                    </div>
-                </div>
-            ) : null}
-        </div>
-    )
-}
-
-/** Largeur fixe export ; hauteur = contenu (moins d’espace vide qu’un 9:16 plein écran). */
-export const CELEBRATION_SHARE_WIDTH = 1080
-
-/**
- * Carte portrait pour export partage (1080px de large, hauteur suivant le contenu).
- */
-export function CelebrationShareCard({ open, isDark }: CelebrationShareCardProps) {
-    const leagueGlow =
-        open.kind === 'league'
-            ? leagueMapFill(open.payload.nextLeague.level, isDark)
-            : recordCelebrationGlow(open.payload.leagueAfter, isDark)
-
-    const exerciseRaw = open.payload.exerciseImageUrl
-    const exerciseSrc =
-        getShareableExerciseImageUrl(exerciseRaw) ??
-        (exerciseRaw?.trim() ? exerciseRaw.trim() : null)
+function ShareCardLogo() {
     const logoSrc = resolvePublicAssetUrl('logo-white-text.png')
+    return (
+        <img
+            src={logoSrc}
+            alt="One More"
+            width={200}
+            height={56}
+            crossOrigin="anonymous"
+            decoding="async"
+            className={cn('h-9 w-auto max-w-[70%] object-contain opacity-95', logoLockupShadow)}
+        />
+    )
+}
 
+function ShareCardShell({
+    background,
+    isDark,
+    children,
+}: {
+    background: string
+    isDark: boolean
+    children: ReactNode
+}) {
     return (
         <div
             data-share-card-root
@@ -229,63 +62,273 @@ export function CelebrationShareCard({ open, isDark }: CelebrationShareCardProps
             }}
         >
             <div
-                className="relative flex flex-col overflow-hidden rounded-xl border-2 border-border bg-card text-card-foreground shadow-lg"
-                style={
-                    {
-                        '--league-celebration': leagueGlow,
-                        width: CELEBRATION_SHARE_WIDTH,
-                    } as CSSProperties
-                }
+                className="relative overflow-hidden rounded-2xl border-2 border-border bg-card text-card-foreground"
+                style={{ width: CELEBRATION_SHARE_WIDTH }}
             >
                 <div
                     aria-hidden
                     className={`pointer-events-none absolute inset-0 ${isDark ? 'opacity-100' : 'opacity-95'}`}
-                    style={{
-                        background: leagueCelebrationRadialBackground(leagueGlow),
-                    }}
+                    style={{ background }}
                 />
-                <div
-                    className={`relative z-[1] flex flex-col ${sharePadX} ${sharePadBottom} ${sharePadTop} ${gapMain}`}
-                >
-                    {exerciseSrc ? (
-                        <div
-                            className={`${exerciseFrame} ${exerciseInnerPad} mx-auto flex shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 shadow-sm bg-muted/25`}
-                            style={{
-                                borderColor: `color-mix(in srgb, ${leagueGlow} 55%, transparent)`,
-                            }}
-                        >
-              <img
-                src={exerciseSrc}
-                alt=""
-                width={220}
-                height={220}
-                crossOrigin="anonymous"
-                decoding="async"
-                className="max-h-full max-w-full object-contain"
-              />
-                        </div>
-                    ) : null}
-
-                    <div className="flex w-full flex-col items-center">
-                        {open.kind === 'league' ? (
-                            <ShareLeagueBody payload={open.payload} leagueGlow={leagueGlow} />
-                        ) : (
-                            <ShareRecordBody payload={open.payload} leagueGlow={leagueGlow} />
-                        )}
-                    </div>
-
-                    <div className="flex shrink-0 items-center justify-center opacity-95">
-                        <img
-                            src={logoSrc}
-                            alt="One More"
-                            width={360}
-                            height={100}
-                            crossOrigin="anonymous"
-                            className={`${logoLockupH} w-auto max-w-[90%] object-contain ${logoLockupShadow}`}
-                        />
-                    </div>
+                <div className="relative z-[1] flex flex-col items-center gap-6 px-10 py-10 text-center">
+                    {children}
+                    <ShareCardLogo />
                 </div>
             </div>
         </div>
     )
+}
+
+function ShareHero({
+    icon: Icon,
+    iconClassName,
+    iconStyle,
+    badge,
+    badgeClassName,
+}: {
+    icon: LucideIcon
+    iconClassName?: string
+    iconStyle?: CSSProperties
+    badge: ReactNode
+    badgeClassName?: string
+}) {
+    return (
+        <div className="relative inline-flex">
+            <Icon
+                className={cn('size-24 shrink-0', iconClassName)}
+                style={iconStyle}
+                strokeWidth={1.5}
+                aria-hidden
+            />
+            <span
+                className={cn(
+                    'absolute -bottom-1 left-1/2 flex max-w-[14rem] -translate-x-1/2 items-center justify-center rounded-full px-4 py-1 font-one-more text-2xl font-bold italic tabular-nums shadow-lg ring-4 ring-card',
+                    badgeClassName,
+                )}
+            >
+                {badge}
+            </span>
+        </div>
+    )
+}
+
+function ShareLeagueCard({
+    open,
+    isDark,
+}: {
+    open: Extract<CelebrationShareOpen, { kind: 'league' }>
+    isDark: boolean
+}) {
+    const { exerciseName, prevLeague, nextLeague, weight, reps } = open.payload
+    const glow = leagueMapFill(nextLeague.level, isDark)
+    const perfLabel = UI.leaguePromotionCelebrationPerf
+        .replace('{weight}', String(weight))
+        .replace('{reps}', String(reps))
+
+    return (
+        <ShareCardShell
+            isDark={isDark}
+            background={leagueCelebrationRadialBackground(glow)}
+        >
+            <ShareHero
+                icon={Trophy}
+                iconStyle={{ color: glow, filter: leagueIconDropShadow(glow) }}
+                badge={<span className="truncate">{nextLeague.label}</span>}
+                badgeClassName={LEAGUE_COLORS[nextLeague.level]}
+            />
+            <div className="space-y-2">
+                <h2 className="text-balance text-3xl font-semibold tracking-tight">
+                    {UI.leaguePromotionCelebrationTitle}
+                </h2>
+                <p className="text-xl capitalize text-foreground/90">{exerciseName}</p>
+            </div>
+            {!prevLeague ? (
+                <p className="text-lg font-medium" style={{ color: glow }}>
+                    {UI.leaguePromotionCelebrationFirst}
+                </p>
+            ) : (
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                    <Badge
+                        variant="outline"
+                        className={`px-3 py-1 text-base ${LEAGUE_COLORS[prevLeague.level]}`}
+                    >
+                        {prevLeague.label}
+                    </Badge>
+                    <ArrowRight
+                        className="size-6 shrink-0"
+                        style={{ color: glow }}
+                        aria-hidden
+                    />
+                    <Badge
+                        variant="outline"
+                        className={`px-3 py-1 text-base font-semibold ${LEAGUE_COLORS[nextLeague.level]}`}
+                    >
+                        {nextLeague.label}
+                    </Badge>
+                </div>
+            )}
+            <p className="text-lg text-muted-foreground">{perfLabel}</p>
+        </ShareCardShell>
+    )
+}
+
+function ShareRecordCard({
+    open,
+    isDark,
+}: {
+    open: Extract<CelebrationShareOpen, { kind: 'record' }>
+    isDark: boolean
+}) {
+    const { exerciseName, weight, reps, leagueAfter } = open.payload
+    const glow = recordCelebrationGlow(leagueAfter, isDark)
+    const perfLabel = UI.leaguePromotionCelebrationPerf
+        .replace('{weight}', String(weight))
+        .replace('{reps}', String(reps))
+
+    return (
+        <ShareCardShell
+            isDark={isDark}
+            background={leagueCelebrationRadialBackground(glow)}
+        >
+            <ShareHero
+                icon={Trophy}
+                iconStyle={{ color: glow, filter: leagueIconDropShadow(glow) }}
+                badge={formatPerfBadge(weight, reps)}
+                badgeClassName={
+                    leagueAfter
+                        ? LEAGUE_COLORS[leagueAfter.level]
+                        : 'bg-primary text-primary-foreground'
+                }
+            />
+            <div className="space-y-2">
+                <h2 className="text-balance text-3xl font-semibold tracking-tight">
+                    {UI.newRecordCelebrationTitle}
+                </h2>
+                <p className="text-xl capitalize text-foreground/90">{exerciseName}</p>
+            </div>
+            <p className="text-lg text-muted-foreground">{perfLabel}</p>
+            {leagueAfter ? (
+                <Badge
+                    variant="outline"
+                    className={`px-3 py-1 text-base font-semibold ${LEAGUE_COLORS[leagueAfter.level]}`}
+                >
+                    {leagueAfter.label}
+                </Badge>
+            ) : null}
+        </ShareCardShell>
+    )
+}
+
+function ShareStreakCard({
+    open,
+    isDark,
+}: {
+    open: Extract<CelebrationShareOpen, { kind: 'streak' }>
+    isDark: boolean
+}) {
+    const { current } = open.payload
+    const title =
+        current === 1
+            ? UI.streakSheetTitleFirstDay
+            : UI.streakSheetTitleStreak.replace('{days}', String(current))
+    const description =
+        current === 1
+            ? UI.streakSheetSubtitleFirstDay
+            : UI.streakSheetSubtitleStreak
+
+    return (
+        <ShareCardShell
+            isDark={isDark}
+            background={streakCelebrationRadialBackground()}
+        >
+            <ShareHero
+                icon={Flame}
+                iconClassName="text-orange-500"
+                iconStyle={{ filter: dropOrange }}
+                badge={current}
+                badgeClassName="bg-orange-500 text-white"
+            />
+            <div className="space-y-2">
+                <h2 className="text-balance text-3xl font-semibold tracking-tight">
+                    {title}
+                </h2>
+                <p className="text-lg text-foreground/90">{description}</p>
+            </div>
+        </ShareCardShell>
+    )
+}
+
+function ShareLevelUpCard({
+    open,
+    isDark,
+}: {
+    open: Extract<CelebrationShareOpen, { kind: 'levelup' }>
+    isDark: boolean
+}) {
+    const { previousLevel, level, totalXp } = open.payload
+    const leveledMultiple = level - previousLevel > 1
+
+    return (
+        <ShareCardShell
+            isDark={isDark}
+            background={levelCelebrationRadialBackground()}
+        >
+            <ShareHero
+                icon={Sparkles}
+                iconClassName="text-accent"
+                iconStyle={{ filter: dropAccent }}
+                badge={level}
+                badgeClassName="bg-accent text-accent-foreground"
+            />
+            <div className="space-y-2">
+                <h2 className="text-balance text-3xl font-semibold tracking-tight">
+                    {UI.levelUpCelebrationTitle}
+                </h2>
+                <p className="text-lg text-foreground/90">
+                    {UI.levelUpCelebrationSubtitle.replace(
+                        '{level}',
+                        String(level),
+                    )}
+                </p>
+            </div>
+            {leveledMultiple ? (
+                <p className="flex items-center gap-2 text-lg text-muted-foreground">
+                    <span>
+                        {UI.xpLevelLabel.replace(
+                            '{level}',
+                            String(previousLevel),
+                        )}
+                    </span>
+                    <ArrowRight className="size-5 shrink-0 text-accent" aria-hidden />
+                    <span className="font-semibold text-foreground">
+                        {UI.xpLevelLabel.replace('{level}', String(level))}
+                    </span>
+                </p>
+            ) : null}
+            <p className="text-lg text-muted-foreground">
+                {UI.xpTotalLabel.replace('{xp}', String(totalXp))}
+            </p>
+        </ShareCardShell>
+    )
+}
+
+export function CelebrationShareCard({
+    open,
+    isDark,
+}: {
+    open: CelebrationShareOpen
+    isDark: boolean
+}) {
+    switch (open.kind) {
+        case 'league':
+            return <ShareLeagueCard open={open} isDark={isDark} />
+        case 'record':
+            return <ShareRecordCard open={open} isDark={isDark} />
+        case 'streak':
+            return <ShareStreakCard open={open} isDark={isDark} />
+        case 'levelup':
+            return <ShareLevelUpCard open={open} isDark={isDark} />
+        default:
+            return null
+    }
 }
