@@ -432,7 +432,6 @@ export const UI = {
   joyrideSkip: "Passer",
   joyrideNextWithProgress: "Suivant ({current} sur {total})",
   continue: "Continuer",
-  celebrationQueueProgress: "{current} / {total}",
   next: "Suivant",
   later: "Plus tard",
 

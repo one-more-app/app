@@ -1,3 +1,9 @@
+import {
+    CelebrationHeroMetric,
+    CelebrationModalShell,
+    formatPerfBadge,
+    leagueIconDropShadow,
+} from '@/components/celebration-modal-ui'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -27,10 +33,11 @@ import type {
 import { useCelebrationQueueSnapshot } from '@/hooks/use-celebration-queue-active'
 import { useAnimatedCounter } from '@/hooks/use-animated-counter'
 import {
+    levelCelebrationRadialBackground,
     streakCelebrationRadialBackground,
 } from '@/lib/celebration-visual'
 import { UI } from '@/lib/translations'
-import { ArrowRight, Flame, Share2, Trophy } from 'lucide-react'
+import { ArrowRight, Flame, Share2, Sparkles, Trophy } from 'lucide-react'
 import { useEffect, useState, type CSSProperties } from 'react'
 import { toast } from 'sonner'
 
@@ -43,68 +50,47 @@ function NewRecordCelebrationContent({
 }) {
     const { exerciseName, weight, reps, leagueAfter } = payload
     const glow = recordCelebrationGlow(leagueAfter, isDark)
+    const perfLabel = UI.leaguePromotionCelebrationPerf
+        .replace('{weight}', String(weight))
+        .replace('{reps}', String(reps))
 
     return (
-        <div
-            className="relative min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto"
+        <CelebrationModalShell
+            background={leagueCelebrationRadialBackground(glow)}
             style={{ ['--league-celebration']: glow } as CSSProperties}
         >
-            <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 opacity-95 dark:opacity-100"
-                style={{
-                    background: leagueCelebrationRadialBackground(glow),
-                }}
+            <CelebrationHeroMetric
+                icon={Trophy}
+                iconColor={glow}
+                iconDropShadow={leagueIconDropShadow(glow)}
+                badge={formatPerfBadge(weight, reps)}
+                badgeClassName={
+                    leagueAfter
+                        ? LEAGUE_COLORS[leagueAfter.level]
+                        : 'bg-primary text-primary-foreground'
+                }
+                ariaLabel={`${UI.newRecordCelebrationTitle} — ${perfLabel}`}
             />
-            <div className="relative z-[1] flex flex-col items-center gap-5 px-6 pb-4 pt-14 text-center">
-                <div className="league-promo-trophy-anim">
-                    <Trophy
-                        className="text-white mx-auto size-14 [filter:drop-shadow(0_6px_20px_color-mix(in_srgb,var(--league-celebration)_58%,transparent))]"
-                        strokeWidth={1.75}
-                        aria-hidden
-                    />
-                </div>
-                <DialogHeader className="flex w-full flex-col items-center gap-3 space-y-0 text-center sm:text-center">
-                    <DialogTitle className="text-balance text-xl font-semibold tracking-tight">
-                        {UI.newRecordCelebrationTitle}
-                    </DialogTitle>
-                    <DialogDescription asChild>
-                        <p className="text-base text-foreground/90 capitalize">
-                            {exerciseName}
-                        </p>
-                    </DialogDescription>
-                </DialogHeader>
-                <p className="font-one-more text-lg font-bold italic text-primary">
-                    {UI.leaguePromotionCelebrationPerf
-                        .replace('{weight}', String(weight))
-                        .replace('{reps}', String(reps))}
-                </p>
-                {leagueAfter ? (
-                    <div
-                        className="flex flex-col items-center gap-2"
-                        style={
-                            {
-                                '--league-glow': glow,
-                            } as CSSProperties
-                        }
-                    >
-                        <div className="league-promo-ring-anim rounded-xl">
-                            <Badge
-                                variant="outline"
-                                className={`px-3 py-1 text-sm ${LEAGUE_COLORS[leagueAfter.level]}`}
-                            >
-                                <Trophy
-                                    className="mr-1 size-3"
-                                    aria-hidden
-                                    style={{ color: 'var(--league-celebration)' }}
-                                />
-                                {leagueAfter.label}
-                            </Badge>
-                        </div>
-                    </div>
-                ) : null}
-            </div>
-        </div>
+            <DialogHeader className="flex w-full flex-col items-center gap-2 space-y-0 text-center sm:text-center">
+                <DialogTitle className="text-balance text-xl font-semibold tracking-tight">
+                    {UI.newRecordCelebrationTitle}
+                </DialogTitle>
+                <DialogDescription asChild>
+                    <p className="text-base text-foreground/90 capitalize">
+                        {exerciseName}
+                    </p>
+                </DialogDescription>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">{perfLabel}</p>
+            {leagueAfter ? (
+                <Badge
+                    variant="outline"
+                    className={`px-2.5 py-0.5 text-xs font-semibold ${LEAGUE_COLORS[leagueAfter.level]}`}
+                >
+                    {leagueAfter.label}
+                </Badge>
+            ) : null}
+        </CelebrationModalShell>
     )
 }
 
@@ -117,113 +103,138 @@ function LeaguePromotionContent({
 }) {
     const { exerciseName, prevLeague, nextLeague, weight, reps } = payload
     const leagueGlow = leagueMapFill(nextLeague.level, isDark)
+    const perfLabel = UI.leaguePromotionCelebrationPerf
+        .replace('{weight}', String(weight))
+        .replace('{reps}', String(reps))
 
     return (
-        <div
-            className="relative min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto"
+        <CelebrationModalShell
+            background={leagueCelebrationRadialBackground(leagueGlow)}
             style={{ ['--league-celebration']: leagueGlow } as CSSProperties}
         >
+            <CelebrationHeroMetric
+                icon={Trophy}
+                iconColor={leagueGlow}
+                iconDropShadow={leagueIconDropShadow(leagueGlow)}
+                badge={
+                    <span className="truncate">{nextLeague.label}</span>
+                }
+                badgeClassName={LEAGUE_COLORS[nextLeague.level]}
+                ariaLabel={`${UI.leaguePromotionCelebrationTitle} — ${nextLeague.label}`}
+            />
+            <DialogHeader className="flex w-full flex-col items-center gap-2 space-y-0 text-center sm:text-center">
+                <DialogTitle className="text-balance text-xl font-semibold tracking-tight">
+                    {UI.leaguePromotionCelebrationTitle}
+                </DialogTitle>
+                <DialogDescription asChild>
+                    <p className="text-base text-foreground/90 capitalize">
+                        {exerciseName}
+                    </p>
+                </DialogDescription>
+            </DialogHeader>
+            {!prevLeague ? (
+                <p
+                    className="text-sm font-medium"
+                    style={{ color: leagueGlow }}
+                >
+                    {UI.leaguePromotionCelebrationFirst}
+                </p>
+            ) : (
+                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                    <Badge
+                        variant="outline"
+                        className={`px-2 py-0.5 text-xs ${LEAGUE_COLORS[prevLeague.level]}`}
+                    >
+                        {prevLeague.label}
+                    </Badge>
+                    <ArrowRight
+                        className="size-4 shrink-0"
+                        style={{ color: leagueGlow }}
+                        aria-hidden
+                    />
+                    <Badge
+                        variant="outline"
+                        className={`px-2 py-0.5 text-xs font-semibold ${LEAGUE_COLORS[nextLeague.level]}`}
+                    >
+                        {nextLeague.label}
+                    </Badge>
+                </div>
+            )}
+            <p className="text-sm text-muted-foreground">{perfLabel}</p>
+        </CelebrationModalShell>
+    )
+}
+
+function LevelUpCelebrationContent({
+    payload,
+}: {
+    payload: LevelUpCelebrationPayload
+}) {
+    const { previousLevel, level, totalXp } = payload
+    const displayLevel = useAnimatedCounter(previousLevel, level, true)
+    const leveledMultiple = level - previousLevel > 1
+
+    return (
+        <div className="relative min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto">
             <div
                 aria-hidden
                 className="pointer-events-none absolute inset-0 opacity-95 dark:opacity-100"
                 style={{
-                    background: leagueCelebrationRadialBackground(leagueGlow),
+                    background: levelCelebrationRadialBackground(),
                 }}
             />
-            <div className="relative z-[1] flex flex-col items-center gap-5 px-6 pb-4 pt-14 text-center">
-                <div className="league-promo-trophy-anim">
-                    <Trophy
-                        className="text-white mx-auto size-14 [filter:drop-shadow(0_6px_20px_color-mix(in_srgb,var(--league-celebration)_58%,transparent))]"
-                        strokeWidth={1.75}
+            <div className="relative z-[1] flex flex-col items-center gap-4 px-6 pb-4 pt-14 text-center">
+                <div
+                    className="celebration-hero-anim relative inline-flex"
+                    aria-label={UI.levelUpCelebrationSubtitle.replace(
+                        '{level}',
+                        String(level),
+                    )}
+                >
+                    <Sparkles
+                        className="size-16 text-accent [filter:drop-shadow(0_8px_24px_color-mix(in_srgb,var(--accent)_55%,transparent))]"
+                        strokeWidth={1.5}
                         aria-hidden
                     />
+                    <span
+                        key={displayLevel}
+                        className="celebration-count-anim absolute -bottom-0.5 left-1/2 flex min-w-9 -translate-x-1/2 items-center justify-center rounded-full bg-accent px-2.5 py-0.5 font-one-more text-base font-bold italic tabular-nums text-accent-foreground shadow-md ring-2 ring-background"
+                        aria-hidden
+                    >
+                        {displayLevel}
+                    </span>
                 </div>
-                <DialogHeader className="flex w-full flex-col items-center gap-3 space-y-0 text-center sm:text-center">
+                <DialogHeader className="flex w-full flex-col items-center gap-2 space-y-0 text-center sm:text-center">
                     <DialogTitle className="text-balance text-xl font-semibold tracking-tight">
-                        {UI.leaguePromotionCelebrationTitle}
+                        {UI.levelUpCelebrationTitle}
                     </DialogTitle>
-                    <DialogDescription asChild>
-                        <p className="text-base text-foreground/90 capitalize">
-                            {exerciseName}
-                        </p>
+                    <DialogDescription className="text-base text-foreground/90">
+                        {UI.levelUpCelebrationSubtitle.replace(
+                            '{level}',
+                            String(level),
+                        )}
                     </DialogDescription>
                 </DialogHeader>
-                <p className="font-one-more text-lg font-bold italic text-primary">
-                    {UI.leaguePromotionCelebrationPerf
-                        .replace('{weight}', String(weight))
-                        .replace('{reps}', String(reps))}
-                </p>
-                {!prevLeague ? (
-                    <div
-                        className="flex flex-col items-center gap-3"
-                        style={
-                            {
-                                '--league-glow': leagueGlow,
-                            } as CSSProperties
-                        }
-                    >
-                        <p
-                            className="text-sm font-medium"
-                            style={{ color: 'var(--league-celebration)' }}
-                        >
-                            {UI.leaguePromotionCelebrationFirst}
-                        </p>
-                        <div
-                            className="league-promo-ring-anim rounded-xl px-2 py-1"
-                            style={
-                                {
-                                    '--league-glow': leagueGlow,
-                                } as CSSProperties
-                            }
-                        >
-                            <Badge
-                                variant="outline"
-                                className={`px-3 py-1 text-sm ${LEAGUE_COLORS[nextLeague.level]}`}
-                            >
-                                <Trophy
-                                    className="mr-1 size-3"
-                                    aria-hidden
-                                    style={{ color: 'var(--league-celebration)' }}
-                                />
-                                {nextLeague.label}
-                            </Badge>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="flex w-full max-w-full flex-wrap items-center justify-center gap-2 sm:gap-3">
-                        <Badge
-                            variant="outline"
-                            className={`shrink-0 px-2.5 py-1 text-xs whitespace-normal text-center ${LEAGUE_COLORS[prevLeague.level]}`}
-                        >
-                            {prevLeague.label}
-                        </Badge>
+                {leveledMultiple ? (
+                    <p className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                        <span>
+                            {UI.xpLevelLabel.replace(
+                                '{level}',
+                                String(previousLevel),
+                            )}
+                        </span>
                         <ArrowRight
-                            className="league-promo-nudge-anim size-5 shrink-0"
+                            className="size-4 shrink-0 text-accent"
                             aria-hidden
-                            style={{ color: 'var(--league-celebration)' }}
                         />
-                        <div
-                            className="league-promo-ring-anim rounded-xl"
-                            style={
-                                {
-                                    '--league-glow': leagueGlow,
-                                } as CSSProperties
-                            }
-                        >
-                            <Badge
-                                variant="outline"
-                                className={`shrink-0 px-2.5 py-1 text-xs whitespace-normal text-center ${LEAGUE_COLORS[nextLeague.level]}`}
-                            >
-                                <Trophy
-                                    className="mr-1 size-3"
-                                    aria-hidden
-                                    style={{ color: 'var(--league-celebration)' }}
-                                />
-                                {nextLeague.label}
-                            </Badge>
-                        </div>
-                    </div>
-                )}
+                        <span className="font-semibold text-foreground">
+                            {UI.xpLevelLabel.replace('{level}', String(level))}
+                        </span>
+                    </p>
+                ) : null}
+                <p className="text-sm text-muted-foreground">
+                    {UI.xpTotalLabel.replace('{xp}', String(totalXp))}
+                </p>
             </div>
         </div>
     )
@@ -254,7 +265,7 @@ function StreakCelebrationContent({ payload }: { payload: StreakCelebrationPaylo
             />
             <div className="relative z-[1] flex flex-col items-center gap-4 px-6 pb-4 pt-14 text-center">
                 <div
-                    className="streak-flame-anim relative inline-flex"
+                    className="celebration-hero-anim relative inline-flex"
                     aria-label={title}
                 >
                     <Flame
@@ -264,7 +275,7 @@ function StreakCelebrationContent({ payload }: { payload: StreakCelebrationPaylo
                     />
                     <span
                         key={displayCount}
-                        className="streak-count-anim absolute -bottom-0.5 left-1/2 flex min-w-8 -translate-x-1/2 items-center justify-center rounded-full bg-orange-500 px-2 py-0.5 text-sm font-bold tabular-nums text-white shadow-md ring-2 ring-background"
+                        className="celebration-count-anim absolute -bottom-0.5 left-1/2 flex min-w-8 -translate-x-1/2 items-center justify-center rounded-full bg-orange-500 px-2 py-0.5 text-sm font-bold tabular-nums text-white shadow-md ring-2 ring-background"
                         aria-hidden
                     >
                         {displayCount}
@@ -292,9 +303,7 @@ function StreakCelebrationContent({ payload }: { payload: StreakCelebrationPaylo
 
 export function LeaguePromotionCelebrationHost() {
     const { resolvedTheme } = useTheme()
-    const { current: open, total, pendingCount } = useCelebrationQueueSnapshot()
-    const queuePosition =
-        open && total > 1 ? total - pendingCount : 0
+    const { current: open } = useCelebrationQueueSnapshot()
     const [shareBusy, setShareBusy] = useState(false)
 
     const dismiss = () => advanceCelebrationQueue()
@@ -353,44 +362,16 @@ export function LeaguePromotionCelebrationHost() {
                         />
                     </div>
                 ) : open?.kind === 'levelup' ? (
-                    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 px-6 py-14 text-center">
-                        <Trophy
-                            className="mx-auto size-14 text-primary"
-                            strokeWidth={1.75}
-                            aria-hidden
+                    <div className="flex min-h-0 flex-1 flex-col">
+                        <LevelUpCelebrationContent
+                            key={`${open.payload.previousLevel}-${open.payload.level}`}
+                            payload={open.payload}
                         />
-                        <DialogHeader className="space-y-2 text-center sm:text-center">
-                            <DialogTitle className="text-xl font-semibold">
-                                {UI.levelUpCelebrationTitle}
-                            </DialogTitle>
-                            <DialogDescription className="text-base text-foreground/90">
-                                {UI.levelUpCelebrationSubtitle.replace(
-                                    '{level}',
-                                    String(open.payload.level),
-                                )}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <p className="text-sm text-muted-foreground">
-                            {UI.xpTotalLabel.replace(
-                                '{xp}',
-                                String(open.payload.totalXp),
-                            )}
-                        </p>
                     </div>
                 ) : null}
-                <DialogFooter className="mt-0 flex w-full shrink-0 flex-col gap-4 border-t border-border bg-card/95 px-4 py-4 backdrop-blur-sm sm:flex-row sm:justify-center">
-                    {queuePosition > 0 ? (
-                        <p
-                            className="w-full text-center text-xs text-muted-foreground sm:order-0 sm:basis-full"
-                            aria-live="polite"
-                        >
-                            {UI.celebrationQueueProgress
-                                .replace('{current}', String(queuePosition))
-                                .replace('{total}', String(total))}
-                        </p>
-                    ) : null}
+                <DialogFooter className="mt-0 flex w-full shrink-0 flex-col gap-3 border-t border-border bg-card/95 px-4 py-4 backdrop-blur-sm sm:flex-row sm:justify-center">
                     <Button
-                        className="w-full min-w-[12rem] sm:w-auto sm:order-2"
+                        className="w-full min-w-[12rem] sm:w-auto"
                         size="lg"
                         variant="secondary"
                         disabled={
@@ -405,7 +386,7 @@ export function LeaguePromotionCelebrationHost() {
                         {shareBusy ? UI.sharePreparing : UI.share}
                     </Button>
                     <Button
-                        className="w-full min-w-[12rem] sm:w-auto sm:order-1"
+                        className="w-full min-w-[12rem] sm:w-auto"
                         size="lg"
                         onClick={dismiss}
                     >

@@ -8,8 +8,13 @@ export function streakCelebrationRadialBackground(): string {
   return `radial-gradient(ellipse 85% 65% at 50% 15%, color-mix(in srgb, #f97316 42%, transparent), transparent 72%)`
 }
 
+/** Halo accent XP / montée de niveau (aligné sur `--accent`). */
+export function levelCelebrationRadialBackground(): string {
+  return `radial-gradient(ellipse 85% 65% at 50% 15%, color-mix(in srgb, var(--accent) 48%, transparent), transparent 72%)`
+}
+
 export function leagueCelebrationRadialBackground(leagueColor: string): string {
-  return `radial-gradient(ellipse 118% 72% at 50% -14%, ${leagueColor} 0%, color-mix(in srgb, ${leagueColor} 50%, transparent) 42%, transparent 71%)`
+  return `radial-gradient(ellipse 85% 65% at 50% 15%, color-mix(in srgb, ${leagueColor} 42%, transparent), transparent 72%)`
 }
 
 export function recordCelebrationGlow(

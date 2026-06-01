@@ -156,7 +156,7 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
     return (
         <div>
             {browse.step === 'zone' && beforeZoneStep ? (
-                <div className="mb-4">{beforeZoneStep}</div>
+                <div className="mb-3">{beforeZoneStep}</div>
             ) : null}
             <CatalogBreadcrumb browse={browse} onGoTo={onGoToStep} />
             <BrowseSectionTitle>{stepTitle}</BrowseSectionTitle>

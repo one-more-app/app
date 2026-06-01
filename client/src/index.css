@@ -331,17 +331,46 @@
   }
 }
 
-.streak-flame-anim {
+.streak-flame-anim,
+.celebration-hero-anim {
   animation: streak-flame-pulse 0.75s ease-out both;
 }
 
-.streak-count-anim {
+.streak-count-anim,
+.celebration-count-anim {
+  animation: streak-count-pop 0.35s ease-out both;
+}
+
+@keyframes level-up-hero-pulse {
+  0% {
+    transform: scale(0.75) translateY(8px);
+    opacity: 0.7;
+  }
+  45% {
+    transform: scale(1.12) translateY(-4px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.level-up-hero-anim {
+  animation: level-up-hero-pulse 0.75s ease-out both;
+}
+
+.level-up-count-anim {
   animation: streak-count-pop 0.35s ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .streak-flame-anim,
-  .streak-count-anim {
+  .streak-count-anim,
+  .celebration-hero-anim,
+  .celebration-count-anim,
+  .level-up-hero-anim,
+  .level-up-count-anim {
     animation: none;
   }
 }

@@ -14,9 +14,9 @@ import { cn } from '@/lib/utils'
 import { ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-/** Puces de parcours — alignées sur HierarchicalFilterControl (h-9, rounded-lg). */
+/** Puces de parcours — compactes pour mobile. */
 const browseCrumbBase =
-    'shrink-0 rounded-lg py-1 px-2 font-one-more text-xs font-semibold uppercase italic tracking-wide capitalize'
+    'shrink-0 rounded-md py-0.5 px-1.5 font-one-more text-[10px] font-semibold uppercase italic leading-tight tracking-normal capitalize'
 const browseCrumbCurrent =
     'bg-accent text-accent-foreground ring-1 ring-accent/30'
 const browseCrumbLink =
@@ -33,7 +33,7 @@ export function BrowseSectionTitle({
     return (
         <h2
             className={cn(
-                'mb-3 font-one-more text-xs font-semibold uppercase italic tracking-wide text-muted-foreground',
+                'mb-2 font-one-more text-[10px] font-semibold uppercase italic leading-tight tracking-normal text-muted-foreground',
                 className,
             )}
         >
@@ -133,10 +133,10 @@ export function CatalogBreadcrumb({
     }
 
     return (
-        <nav aria-label={UI.browseBreadcrumbLabel} className="mb-3 min-w-0">
+        <nav aria-label={UI.browseBreadcrumbLabel} className="mb-2 min-w-0">
             <div
                 className={cn(
-                    'flex items-center gap-1 overflow-x-auto pb-0.5',
+                    'flex items-center gap-0.5 overflow-x-auto',
                     '[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
                 )}
                 style={{ WebkitOverflowScrolling: 'touch' }}
@@ -152,11 +152,11 @@ export function CatalogBreadcrumb({
                     return (
                         <span
                             key={`${c.step}-${i}`}
-                            className="flex shrink-0 items-center gap-1"
+                            className="flex shrink-0 items-center gap-0.5"
                         >
                             {i > 0 ? (
                                 <span
-                                    className="shrink-0 px-0.5 font-one-more text-xs font-semibold italic text-muted-foreground/45 select-none"
+                                    className="shrink-0 px-px font-one-more text-[10px] font-semibold italic text-muted-foreground/45 select-none"
                                     aria-hidden
                                 >
                                     /

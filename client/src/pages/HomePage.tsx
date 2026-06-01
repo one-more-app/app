@@ -198,7 +198,7 @@ function HomePage() {
     const todaySection =
         todayExercises.length > 0 ? (
             <div>
-                <BrowseSectionTitle className="mb-2">{UI.homeDoneToday}</BrowseSectionTitle>
+                <BrowseSectionTitle className="mb-1.5">{UI.homeDoneToday}</BrowseSectionTitle>
                 <ul className="space-y-3">
                     {todayExercises.map((ex) => (
                         <li key={ex.id}>{renderExerciseCard(ex)}</li>

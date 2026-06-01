@@ -35,7 +35,11 @@ export function UserProgressBanner({ className }: { className?: string }) {
                         {UI.xpLevelLabel.replace("{level}", String(progress.level))}
                     </span>
                 </div>
-                <StreakFlameCount count={currentStreak} />
+                <StreakFlameCount
+                    count={currentStreak}
+                    iconClassName="size-4"
+                    textClassName="text-sm font-semibold tabular-nums"
+                />
             </div>
             <div
                 className="h-2 overflow-hidden rounded-full bg-secondary"
