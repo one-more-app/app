@@ -1,29 +1,23 @@
+import { ExerciseBrowseNavigator } from '@/components/ExerciseBrowseNavigator'
+import { BrowseSectionTitle } from '@/components/exercise-browse-ui'
 import { ExerciseCard } from '@/components/ExerciseCard'
 import { UserProgressBanner } from '@/components/UserProgressBanner'
 import { ExerciseCardSkeletonList } from '@/components/skeletons'
-import { ExerciseSearchFilters } from '@/components/ExerciseSearchFilters'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Input } from '@/components/ui/input'
+import { useExerciseCatalogBrowse } from '@/hooks/use-exercise-catalog-browse'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { usePerformanceDataRefresh } from '@/hooks/use-api-data'
-import { useHomeData } from '@/hooks/use-home-data'
+import { useHomeData, type ExerciseWithPerf } from '@/hooks/use-home-data'
 import { useUserProfileData } from '@/hooks/use-api-data'
 import {
-    buildEquipmentByParent,
-    exerciseMatchesEquipmentSelection,
-    isEquipmentSelectionEmpty,
-    sanitizeEquipmentSelection,
-    serializeEquipmentSelection,
-} from '@/lib/equipment-filter'
-import { getExerciseImageUrl } from '@/lib/exercisedb'
-import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
-import { CARDIO_EQUIPMENT } from '@/lib/exercisedb'
-import {
-    exerciseMatchesMuscleSelection,
-    isMuscleSelectionEmpty,
-    sanitizeMuscleSelection,
-    serializeMuscleSelection,
-} from '@/lib/muscle-filter'
+    sortBrowseableByLatestPerf,
+    trackedToBrowseable,
+} from '@/lib/exercise-catalog-browse'
+import { CARDIO_EQUIPMENT, getExerciseImageUrl } from '@/lib/exercisedb'
+import { filterExercisesDoneToday } from '@/lib/home-today-exercises'
+import { computeBrowseLeagueLookups } from '@/lib/muscle-league-stats'
 import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
 import { notifyXpGrants } from '@/lib/xp-notifications'
 import {
@@ -32,138 +26,216 @@ import {
     savePerformanceAndWait,
 } from '@/lib/storage'
 import { getLeagueInfo } from '@/lib/strength-standards'
-import { getGroupedEquipmentList, UI } from '@/lib/translations'
-import { Dumbbell, Plus } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { UI } from '@/lib/translations'
+import { Dumbbell, Plus, Search } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 function HomePage() {
     const { exercises, hasLoaded } = useHomeData()
     const refreshAfterPerfChange = usePerformanceDataRefresh()
     const { data: profile } = useUserProfileData()
     const navigate = useNavigate()
+    const location = useLocation()
 
-    const {
-        searchInput,
-        searchQuery,
-        muscleFilter,
-        equipmentFilter,
-        handleMuscleFilterChange,
-        handleEquipmentChange,
-        handleSearchChange,
-    } = useExerciseFilters()
+    const { searchInput, searchQuery, handleSearchChange } = useExerciseFilters()
+
+    const addExerciseLinkSearch = useMemo(() => {
+        const q = new URLSearchParams(location.search).get('q')
+        return q ? `?q=${encodeURIComponent(q)}` : ''
+    }, [location.search])
 
     const nonCardioExercises = useMemo(
         () =>
             exercises.filter(
                 (ex) =>
                     (ex.bodyPart || ex.target) !== 'cardio' &&
-                    !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
+                    !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment)),
             ),
-        [exercises]
+        [exercises],
     )
 
-    const targets = useMemo(() => {
-        const t = new Set(
-            nonCardioExercises.map((ex) => ex.target).filter((p): p is string => !!p)
-        )
-        return Array.from(t).sort((a, b) => a.localeCompare(b))
-    }, [nonCardioExercises])
+    const browseableExercises = useMemo(
+        () => nonCardioExercises.map(trackedToBrowseable),
+        [nonCardioExercises],
+    )
 
-    const equipmentList = useMemo(() => {
-        const eq = new Set(
-            nonCardioExercises.map((ex) => ex.equipment).filter((p): p is string => !!p)
-        )
-        return getGroupedEquipmentList(Array.from(eq))
-    }, [nonCardioExercises])
-    const availableRawEquipment = useMemo(() => {
-        const eq = new Set(
-            nonCardioExercises.map((ex) => ex.equipment).filter((p): p is string => !!p)
-        )
-        return Array.from(eq)
-    }, [nonCardioExercises])
+    const exerciseById = useMemo(
+        () => new Map(nonCardioExercises.map((ex) => [ex.id, ex])),
+        [nonCardioExercises],
+    )
 
-    const filteredExercises = useMemo(() => {
-        let list = nonCardioExercises
-        list = list.filter((ex) => exerciseMatchesMuscleSelection(ex, muscleFilter))
-        list = list.filter((ex) =>
-            exerciseMatchesEquipmentSelection(ex.equipment, equipmentFilter))
-        const apiQuery = searchQuery.trim()
-            ? translateSearchQueryToEnglish(searchQuery.trim()).toLowerCase()
-            : ''
-        const searchRaw = searchQuery.trim().toLowerCase()
-        if (apiQuery || searchRaw) {
-            list = list.filter((ex) => {
-                const name = ex.name.toLowerCase()
-                const orig = (ex.originalName ?? ex.name).toLowerCase()
-                const matchEn = (apiQuery && name.includes(apiQuery)) || (apiQuery && orig.includes(apiQuery))
-                const matchFr = searchRaw && (name.includes(searchRaw) || orig.includes(searchRaw))
-                return matchEn || matchFr
-            })
-        }
-        list = [...list].sort((a, b) => {
-            const ta = getLatestPerformanceCreatedAt(a.id)
-            const tb = getLatestPerformanceCreatedAt(b.id)
-            if (ta !== null && tb !== null) return tb - ta
-            if (ta !== null) return -1
-            if (tb !== null) return 1
-            return 0
-        })
-        return list
-    }, [nonCardioExercises, muscleFilter, equipmentFilter, searchQuery])
+    const { browse, pickZone, pickTarget, pickEquipment, goToStep } =
+        useExerciseCatalogBrowse()
 
-    // Retire muscles / groupes qui ne correspondent plus aux exercices suivis.
+    const isSearchMode = searchQuery.trim().length > 0
+    const showTodaySection = !isSearchMode && browse.step === 'zone'
+    const prevSearchQueryRef = useRef(searchQuery)
+
     useEffect(() => {
-        if (!hasLoaded) return
-        const next = sanitizeMuscleSelection(muscleFilter, targets)
-        if (serializeMuscleSelection(next) !== serializeMuscleSelection(muscleFilter)) {
-            handleMuscleFilterChange(next)
+        const prev = prevSearchQueryRef.current.trim()
+        const next = searchQuery.trim()
+        if (prev && !next) {
+            goToStep('zone')
         }
-        const tree = buildEquipmentByParent(equipmentList, availableRawEquipment)
-        const nextEq = sanitizeEquipmentSelection(equipmentFilter, tree)
-        if (serializeEquipmentSelection(nextEq) !== serializeEquipmentSelection(equipmentFilter)) {
-            handleEquipmentChange(nextEq)
+        prevSearchQueryRef.current = searchQuery
+    }, [searchQuery, goToStep])
+
+    useEffect(() => {
+        if (isSearchMode) return
+        if (browse.step === 'list' && (!browse.zone || !browse.target || !browse.beq)) {
+            goToStep('zone')
+        } else if (
+            browse.step === 'equipment' &&
+            (!browse.zone || !browse.target)
+        ) {
+            goToStep(browse.zone ? 'muscle' : 'zone')
+        } else if (browse.step === 'muscle' && !browse.zone) {
+            goToStep('zone')
         }
-    }, [
-        hasLoaded,
-        targets,
-        muscleFilter,
-        equipmentList,
-        availableRawEquipment,
-        equipmentFilter,
-        handleMuscleFilterChange,
-        handleEquipmentChange,
-    ])
+    }, [browse.step, browse.zone, browse.target, browse.beq, goToStep, isSearchMode])
+
+    const getLatestPerfAt = useCallback(
+        (id: string) => getLatestPerformanceCreatedAt(id),
+        [],
+    )
+
+    const browseLeagueLookups = useMemo(() => {
+        if (!profile) return undefined
+        return computeBrowseLeagueLookups(nonCardioExercises, profile)
+    }, [nonCardioExercises, profile])
+
+    const todayExercises = useMemo(
+        () =>
+            sortBrowseableByLatestPerf(
+                filterExercisesDoneToday(nonCardioExercises),
+                getLatestPerfAt,
+            ),
+        [nonCardioExercises, getLatestPerfAt, exercises],
+    )
+
+    const renderExerciseCard = useCallback(
+        (ex: ExerciseWithPerf) => {
+            const leagueInfo =
+                !ex.isCustom && ex.personalBest && profile
+                    ? getLeagueInfo({
+                          weight: ex.personalBest.weight,
+                          reps: ex.personalBest.reps,
+                          bodyWeightKg: profile.weightKg,
+                          gender: profile.gender,
+                          exerciseName: ex.originalName ?? ex.name,
+                          exerciseMetadata:
+                              ex.equipment && ex.target
+                                  ? {
+                                        equipment: ex.equipment,
+                                        target: ex.target,
+                                        bodyPart: ex.bodyPart,
+                                    }
+                                  : undefined,
+                      })
+                    : null
+            return (
+                <ExerciseCard
+                    compact
+                    exercise={ex}
+                    lastPerf={ex.lastPerf}
+                    personalBest={ex.personalBest}
+                    leagueInfo={leagueInfo}
+                    onClick={() => navigate(`/exercise/${ex.id}`, { replace: false })}
+                    onSavePerf={(weight, reps) => {
+                        const prevPB = ex.personalBest ?? null
+                        const prevLeague = leagueInfo ?? null
+                        void (async () => {
+                            try {
+                                const { xp } = await savePerformanceAndWait(
+                                    ex.id,
+                                    weight,
+                                    reps,
+                                )
+                                notifyXpGrants(xp)
+                                const nextPB = getPersonalBest(ex.id) ?? null
+                                const nextLeague = profile
+                                    ? computeLeagueFromPB({
+                                          exercise: ex,
+                                          personalBest: nextPB,
+                                          profile,
+                                      })
+                                    : null
+                                notifyPerfMilestones({
+                                    exerciseName: ex.name,
+                                    prevPB,
+                                    nextPB,
+                                    savedWeight: weight,
+                                    savedReps: reps,
+                                    prevLeague,
+                                    nextLeague,
+                                    exerciseImageUrl:
+                                        getExerciseImageUrl(ex.gifUrl) || undefined,
+                                })
+                            } finally {
+                                void refreshAfterPerfChange()
+                            }
+                        })()
+                    }}
+                />
+            )
+        },
+        [navigate, profile, refreshAfterPerfChange],
+    )
+
+    const renderExerciseList = useCallback(
+        (items: { id: string }[]) => (
+            <ul className="space-y-3">
+                {items.map((item) => {
+                    const ex = exerciseById.get(item.id)
+                    if (!ex) return null
+                    return <li key={ex.id}>{renderExerciseCard(ex)}</li>
+                })}
+            </ul>
+        ),
+        [exerciseById, renderExerciseCard],
+    )
+
+    const todaySection =
+        todayExercises.length > 0 ? (
+            <div>
+                <BrowseSectionTitle className="mb-2">{UI.homeDoneToday}</BrowseSectionTitle>
+                <ul className="space-y-3">
+                    {todayExercises.map((ex) => (
+                        <li key={ex.id}>{renderExerciseCard(ex)}</li>
+                    ))}
+                </ul>
+            </div>
+        ) : null
 
     return (
         <div className="min-h-screen-app bg-background">
             <main className="mx-auto max-w-2xl p-4">
                 <UserProgressBanner />
-                {hasLoaded && nonCardioExercises.length > 0 && (
-                    <ExerciseSearchFilters
-                        searchInput={searchInput}
-                        onSearchChange={handleSearchChange}
-                        muscleFilter={muscleFilter}
-                        onMuscleFilterChange={handleMuscleFilterChange}
-                        targets={targets}
-                        equipmentFilter={equipmentFilter}
-                        onEquipmentFilterChange={handleEquipmentChange}
-                        equipmentList={equipmentList}
-                        availableRawEquipment={availableRawEquipment}
-                    />
-                )}
 
-                <div className="mb-4">
-                    <Button size="sm" asChild className="w-full">
-                        <Link to="/exercises">
-                            <Plus className="mr-2 size-4" />
-                            {UI.addExercise}
-                        </Link>
-                    </Button>
-                </div>
+                {hasLoaded && nonCardioExercises.length > 0 ? (
+                    <div className="mb-4 flex flex-col gap-3">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                type="search"
+                                placeholder={UI.searchExercise}
+                                value={searchInput}
+                                onChange={(e) => handleSearchChange(e.target.value)}
+                                className="bg-card pl-9"
+                            />
+                        </div>
+                        <Button asChild className="h-9 w-full">
+                            <Link to={`/exercises${addExerciseLinkSearch}`}>
+                                <Plus className="mr-2 size-4" />
+                                {UI.addExercise}
+                            </Link>
+                        </Button>
+                    </div>
+                ) : null}
 
                 {!hasLoaded ? (
-                    <ExerciseCardSkeletonList count={5} className="mt-2" />
+                    <ExerciseCardSkeletonList count={5} compact className="mt-2" />
                 ) : nonCardioExercises.length === 0 ? (
                     <EmptyState
                         className="mt-4"
@@ -173,88 +245,23 @@ function HomePage() {
                     />
                 ) : (
                     <>
-                        <ul className="space-y-3">
-                            {filteredExercises.map((ex) => {
-                                const leagueInfo =
-                                    !ex.isCustom && ex.personalBest && profile
-                                        ? getLeagueInfo({
-                                            weight: ex.personalBest.weight,
-                                            reps: ex.personalBest.reps,
-                                            bodyWeightKg: profile.weightKg,
-                                            gender: profile.gender,
-                                            exerciseName: ex.originalName ?? ex.name,
-                                            exerciseMetadata:
-                                                ex.equipment && ex.target
-                                                    ? { equipment: ex.equipment, target: ex.target, bodyPart: ex.bodyPart }
-                                                    : undefined,
-                                        })
-                                        : null
-                                return (
-                                    <li key={ex.id}>
-                                        <ExerciseCard
-                                            exercise={ex}
-                                            lastPerf={ex.lastPerf}
-                                            personalBest={ex.personalBest}
-                                            leagueInfo={leagueInfo}
-                                            onClick={() => navigate(`/exercise/${ex.id}`, { replace: false })}
-                                            onSavePerf={(weight, reps) => {
-                                                const prevPB = ex.personalBest ?? null
-                                                const prevLeague = leagueInfo ?? null
-                                                void (async () => {
-                                                    try {
-                                                        const { xp } =
-                                                            await savePerformanceAndWait(
-                                                                ex.id,
-                                                                weight,
-                                                                reps,
-                                                            )
-                                                        notifyXpGrants(xp)
-                                                        const nextPB = getPersonalBest(ex.id) ?? null
-                                                        const nextLeague =
-                                                            profile
-                                                                ? computeLeagueFromPB({
-                                                                    exercise: ex,
-                                                                    personalBest: nextPB,
-                                                                    profile,
-                                                                })
-                                                                : null
-
-                                                        notifyPerfMilestones({
-                                                            exerciseName: ex.name,
-                                                            prevPB,
-                                                            nextPB,
-                                                            savedWeight: weight,
-                                                            savedReps: reps,
-                                                            prevLeague,
-                                                            nextLeague,
-                                                            exerciseImageUrl:
-                                                                getExerciseImageUrl(
-                                                                    ex.gifUrl,
-                                                                ) || undefined,
-                                                        })
-                                                    } finally {
-                                                        void refreshAfterPerfChange()
-                                                    }
-                                                })()
-                                            }}
-                                        />
-                                    </li>
-                                )
-                            })}
-                        </ul>
-
-                        {filteredExercises.length === 0 &&
-                            (!isMuscleSelectionEmpty(muscleFilter) ||
-                                !isEquipmentSelectionEmpty(equipmentFilter) ||
-                                searchQuery.trim()) && (
-                                <EmptyState
-                                    className="mt-6"
-                                    icon={Dumbbell}
-                                    iconClassName="text-accent"
-                                    description={UI.noExerciseFound}
-                                    cardClassName="max-w-md shadow-none"
-                                />
-                            )}
+                        {showTodaySection && todaySection ? (
+                            <div className="mb-4">{todaySection}</div>
+                        ) : null}
+                        <ExerciseBrowseNavigator
+                            exercises={browseableExercises}
+                            browse={browse}
+                            searchQuery={searchQuery}
+                            searchSort="latestPerf"
+                            getLatestPerfAt={getLatestPerfAt}
+                            onPickZone={pickZone}
+                            onPickTarget={pickTarget}
+                            onPickEquipment={pickEquipment}
+                            onGoToStep={goToStep}
+                            leafSort="latestPerf"
+                            browseLeagueLookups={browseLeagueLookups}
+                            renderExerciseList={renderExerciseList}
+                        />
                     </>
                 )}
             </main>

@@ -1,11 +1,9 @@
 import { BackHeader } from '@/components/BackHeader'
 import { ExerciseCatalogSkeletonList } from '@/components/skeletons'
-import { ExerciseSearchFilters } from '@/components/ExerciseSearchFilters'
+import { ExerciseCatalogBrowse } from '@/components/ExerciseCatalogBrowse'
 import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader } from '@/components/ui/card'
-import { EmptyState } from '@/components/ui/empty-state'
 import {
     Dialog,
     DialogContent,
@@ -31,34 +29,25 @@ import {
 import { SWR_KEYS } from '@/hooks/use-api-data'
 import { fetchExercisesCatalog, fetchExercisesMeta } from '@/lib/data-api'
 import { notifyXpGrants } from '@/lib/xp-notifications'
-import {
-    exerciseMatchesEquipmentSelection,
-    isEquipmentSelectionEmpty,
-} from '@/lib/equipment-filter'
+import { useExerciseCatalogBrowse } from '@/hooks/use-exercise-catalog-browse'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
+import { filterCatalogExercises } from '@/lib/exercise-catalog-browse'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
-import { translateSearchQueryToEnglish } from '@/lib/exercise-translations'
-import {
-    CARDIO_EQUIPMENT,
-    getExerciseImageUrl,
-} from '@/lib/exercisedb'
+import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
-import {
-    exerciseMatchesMuscleSelection,
-    isMuscleSelectionEmpty,
-} from '@/lib/muscle-filter'
 import {
     addTrackedExerciseAndWait,
     isOnboardingFirstExercisePending,
     savePerformanceAndWait,
 } from '@/lib/storage'
+import { useBack } from '@/hooks/use-back'
 import { useTheme } from '@/hooks/use-theme'
 import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
-import { getGroupedEquipmentList, translateBodyPart, translateTarget, UI } from '@/lib/translations'
+import { translateBodyPart, translateTarget, UI } from '@/lib/translations'
 import type { ExerciseDBExercise } from '@/types'
-import { ChevronLeft, ChevronRight, Dumbbell, Plus } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { getJoyrideScrollOffset } from '@/lib/joyride-config'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EVENTS, Joyride, type EventData, type Step } from 'react-joyride'
 import useSWR from 'swr'
 import { useSWRConfig } from 'swr'
@@ -71,21 +60,9 @@ export function ExerciseListPage() {
     const { mutate } = useSWRConfig()
     const { exercises: tracked, addExercise } = useTrackedExercises()
     const [targets, setTargets] = useState<string[]>([])
-    const [rawEquipment, setRawEquipment] = useState<string[]>([])
-    const equipmentList = getGroupedEquipmentList(
-        rawEquipment.filter((eq) => !CARDIO_EQUIPMENT.has(eq))
-    )
-    const {
-        searchInput,
-        searchQuery,
-        muscleFilter,
-        equipmentFilter,
-        page = 0,
-        handleMuscleFilterChange,
-        handleEquipmentChange,
-        handleSearchChange,
-        handlePageChange,
-    } = useExerciseFilters({ includePage: true })
+    const { searchInput, searchQuery, handleSearchChange } = useExerciseFilters({
+        includePage: false,
+    })
 
     const [customOpen, setCustomOpen] = useState(false)
     const [customName, setCustomName] = useState('')
@@ -126,25 +103,13 @@ export function ExerciseListPage() {
         tracked.map((e) => (e.isCustom ? e.exerciseId : `api-${e.exerciseId}`))
     )
 
-    // Reset broken images when exercises list changes (new search/filter)
-    useEffect(() => {
-        void Promise.resolve().then(() => setBrokenImageIds(new Set()))
-    }, [muscleFilter, equipmentFilter, searchQuery])
-
     const { data: catalogData, error: catalogError, isLoading: isLoadingCatalog } = useSWR(
-        ['exercise-catalog', searchQuery],
-        async () => {
-            const apiQuery = searchQuery.trim()
-                ? translateSearchQueryToEnglish(searchQuery.trim()).toLowerCase()
-                : ''
-            const searchRaw = searchQuery.trim().toLowerCase()
-            const search = apiQuery || searchRaw
-            return await fetchExercisesCatalog({
-                search,
-                limit: 1000,
+        'exercise-catalog-full',
+        async () =>
+            await fetchExercisesCatalog({
+                limit: 2000,
                 offset: 0,
-            })
-        },
+            }),
     )
 
     const { data: metaData } = useSWR('exercise-meta', fetchExercisesMeta)
@@ -152,28 +117,45 @@ export function ExerciseListPage() {
     useEffect(() => {
         if (!metaData) return
         setTargets(metaData.targets.filter((t) => t !== 'cardio'))
-        setRawEquipment(metaData.equipment)
     }, [metaData])
 
-    const sortedExercises = useMemo(() => {
-        const listBase = catalogData?.items ?? []
-        let list = listBase.filter(
-            (ex) =>
-                ex.bodyPart !== 'cardio' &&
-                !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment)),
-        )
-        list = list.filter((ex) => exerciseMatchesMuscleSelection(ex, muscleFilter))
-        list = list.filter((ex) =>
-            exerciseMatchesEquipmentSelection(ex.equipment, equipmentFilter),
-        )
-        return [...list].sort((a, b) => a.name.localeCompare(b.name))
-    }, [catalogData?.items, equipmentFilter, muscleFilter])
+    const { browse, pickZone, pickTarget, pickEquipment, goToStep, goBackInBrowse } =
+        useExerciseCatalogBrowse()
+    const navigateBack = useBack()
 
-    const totalFilteredCount = sortedExercises.length
-    const apiExercises = useMemo(() => {
-        const offset = page * 25
-        return sortedExercises.slice(offset, offset + 25)
-    }, [page, sortedExercises])
+    const catalogExercises = useMemo(() => {
+        return filterCatalogExercises(catalogData?.items ?? [])
+    }, [catalogData?.items])
+
+    const isSearchMode = searchQuery.trim().length > 0
+    const prevSearchQueryRef = useRef(searchQuery)
+
+    useEffect(() => {
+        const prev = prevSearchQueryRef.current.trim()
+        const next = searchQuery.trim()
+        if (prev && !next) {
+            goToStep('zone')
+        }
+        prevSearchQueryRef.current = searchQuery
+    }, [searchQuery, goToStep])
+
+    useEffect(() => {
+        void Promise.resolve().then(() => setBrokenImageIds(new Set()))
+    }, [searchQuery, browse.zone, browse.target, browse.beq])
+
+    useEffect(() => {
+        if (isSearchMode) return
+        if (browse.step === 'list' && (!browse.zone || !browse.target || !browse.beq)) {
+            goToStep('zone')
+        } else if (
+            browse.step === 'equipment' &&
+            (!browse.zone || !browse.target)
+        ) {
+            goToStep(browse.zone ? 'muscle' : 'zone')
+        } else if (browse.step === 'muscle' && !browse.zone) {
+            goToStep('zone')
+        }
+    }, [browse.step, browse.zone, browse.target, browse.beq, goToStep, isSearchMode])
 
     useEffect(() => {
         if (targets.length > 0 && !targets.includes(customTarget)) {
@@ -181,37 +163,27 @@ export function ExerciseListPage() {
         }
     }, [targets, customTarget])
 
-    const filteredExercises = apiExercises
-        .filter(
-            (ex) =>
-                ex.bodyPart !== 'cardio' &&
-                !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
-        )
-        .filter(
-            (ex) =>
-                ex.gifUrl?.trim() &&
-                !brokenImageIds.has(ex.id)
-        )
-
-    const showExerciseFilters =
-        (isLoadingCatalog && !catalogData) ||
-        sortedExercises.length > 0 ||
-        !isMuscleSelectionEmpty(muscleFilter) ||
-        !isEquipmentSelectionEmpty(equipmentFilter) ||
-        searchQuery.trim().length > 0
+    const handleHeaderBack = useCallback(() => {
+        if (isSearchMode) {
+            handleSearchChange('')
+            return
+        }
+        if (goBackInBrowse()) return
+        navigateBack()
+    }, [isSearchMode, handleSearchChange, goBackInBrowse, navigateBack])
 
     const firstExerciseOnboardingSteps = useMemo<Step[]>(() => {
         const scrollOffset = getJoyrideScrollOffset()
         const steps: Step[] = [
             {
-                target: '[data-tour="first-exercise-filters"]',
+                target: '[data-tour="first-exercise-search"]',
                 title: UI.onboardingFirstExerciseTitle,
                 content: UI.onboardingFirstExerciseDescription,
                 placement: 'bottom',
                 skipScroll: true,
             },
         ]
-        if (filteredExercises.length > 0) {
+        if (isSearchMode && catalogExercises.length > 0) {
             steps.push({
                 target: '[data-tour="first-exercise-add"]',
                 title: UI.onboardingFirstExerciseTourAddTitle,
@@ -221,7 +193,7 @@ export function ExerciseListPage() {
             })
         }
         return steps
-    }, [filteredExercises.length, firstExerciseTourActive])
+    }, [isSearchMode, catalogExercises.length, firstExerciseTourActive])
 
     const firstExerciseJoyrideOptions = useMemo(
         () => ({
@@ -362,6 +334,7 @@ export function ExerciseListPage() {
                 shouldLaunchExerciseTour
                     ? `/exercise/${trackedId}?tour=onboarding&from=first-exercise`
                     : `/exercise/${trackedId}`,
+                { replace: true },
             )
         } catch {
             // Si la création remote échoue, on garde le drawer ouvert et on affiche l'erreur.
@@ -400,8 +373,8 @@ export function ExerciseListPage() {
     const customExerciseDialog = (
         <Dialog open={customOpen} onOpenChange={setCustomOpen}>
             <DialogTrigger asChild>
-                <Button size="sm" className="w-full">
-                    <Plus className="mr-1 size-4" />
+                <Button className="h-9 w-full">
+                    <Plus className="mr-2 size-4" />
                     {UI.custom}
                 </Button>
             </DialogTrigger>
@@ -448,29 +421,27 @@ export function ExerciseListPage() {
 
     return (
         <div className="min-h-screen-app bg-background">
-            <BackHeader compact title={UI.chooseExercises} />
+            <BackHeader compact title={UI.chooseExercises} onBack={handleHeaderBack} />
 
             <main className="mx-auto max-w-2xl px-4 py-4">
-                {showExerciseFilters ? (
-                    <div data-tour="first-exercise-filters">
-                        <ExerciseSearchFilters
-                            searchInput={searchInput}
-                            onSearchChange={handleSearchChange}
-                            muscleFilter={muscleFilter}
-                            onMuscleFilterChange={handleMuscleFilterChange}
-                            targets={targets}
-                            equipmentFilter={equipmentFilter}
-                            onEquipmentFilterChange={handleEquipmentChange}
-                            equipmentList={equipmentList}
-                            availableRawEquipment={rawEquipment.filter((eq) => !CARDIO_EQUIPMENT.has(eq))}
-                            extraSlot={customExerciseDialog}
-                        />
+                {!catalogError ? (
+                    <div
+                        className="mb-4 flex flex-col gap-3"
+                        data-tour="first-exercise-search"
+                    >
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                type="search"
+                                placeholder={UI.searchExercise}
+                                value={searchInput}
+                                onChange={(e) => handleSearchChange(e.target.value)}
+                                className="bg-card pl-9"
+                            />
+                        </div>
+                        {customExerciseDialog}
                     </div>
-                ) : (
-                    !catalogError && (
-                        <div className="mb-4">{customExerciseDialog}</div>
-                    )
-                )}
+                ) : null}
                 {catalogError ? (
                     <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
                         <p className="text-destructive">{UI.apiErrorCustom}</p>
@@ -481,87 +452,20 @@ export function ExerciseListPage() {
                 ) : isLoadingCatalog && !catalogData ? (
                     <ExerciseCatalogSkeletonList count={8} />
                 ) : (
-                    <ul className="space-y-2">
-                        {filteredExercises.map((ex, index) => {
-                            const isTracked = trackedIds.has(`api-${ex.id}`)
-                            return (
-                                <li key={ex.id}>
-                                    <Card
-                                        className="cursor-pointer transition-colors"
-                                        onClick={() => setSelectedExercise(ex)}
-                                    >
-                                        <CardHeader className="flex min-w-0 flex-row items-center gap-3">
-                                            <img
-                                                src={getExerciseImageUrl(ex.gifUrl)}
-                                                alt=""
-                                                className="size-12 rounded-lg object-cover bg-muted"
-                                                onError={() => handleImageError(ex.id)}
-                                            />
-                                            <div className="min-w-0 flex-1">
-                                                <p className="font-medium truncate capitalize">{ex.name}</p>
-                                                <p className="flex gap-1 text-xs text-muted-foreground">
-                                                    <Badge variant="secondary" className="mt-1">
-                                                        {translateBodyPart(ex.bodyPart)}
-                                                    </Badge>
-                                                    <Badge variant="secondary" className="mt-1">
-                                                        {translateTarget(ex.target)}
-                                                    </Badge>
-                                                </p>
-                                            </div>
-                                            <Button
-                                                size="sm"
-                                                className="shrink-0"
-                                                data-tour={
-                                                    index === 0 && !isTracked
-                                                        ? 'first-exercise-add'
-                                                        : undefined
-                                                }
-                                                disabled={isTracked}
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    openAddWithPerf(ex)
-                                                }}
-                                            >
-                                                {isTracked ? UI.added : UI.add}
-                                            </Button>
-                                        </CardHeader>
-                                    </Card>
-                                </li>
-                            )
-                        })}
-                    </ul>
-                )}
-
-                {filteredExercises.length === 0 && !catalogError && !isLoadingCatalog && (
-                    <EmptyState
-                        className="mt-6"
-                        icon={Dumbbell}
-                        iconClassName="text-accent"
-                        description={UI.noExerciseFound}
-                        cardClassName="max-w-md shadow-none"
+                    <ExerciseCatalogBrowse
+                        exercises={catalogExercises}
+                        browse={browse}
+                        searchQuery={searchQuery}
+                        trackedIds={trackedIds}
+                        brokenImageIds={brokenImageIds}
+                        onPickZone={pickZone}
+                        onPickTarget={pickTarget}
+                        onPickEquipment={pickEquipment}
+                        onGoToStep={goToStep}
+                        onSelectExercise={setSelectedExercise}
+                        onAddExercise={openAddWithPerf}
+                        onImageError={handleImageError}
                     />
-                )}
-
-                {filteredExercises.length > 0 && totalFilteredCount > 25 && (
-                    <div className="mt-4 flex items-center justify-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            disabled={page === 0}
-                            onClick={() => handlePageChange(-1)}
-                        >
-                            <ChevronLeft className="size-4" />
-                        </Button>
-                        <span className="text-sm text-muted-foreground">{UI.page} {page + 1}</span>
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            disabled={(page + 1) * 25 >= totalFilteredCount}
-                            onClick={() => handlePageChange(1)}
-                        >
-                            <ChevronRight className="size-4" />
-                        </Button>
-                    </div>
                 )}
 
                 <Drawer open={!!addWithPerfExercise} onOpenChange={(open) => !open && setAddWithPerfExercise(null)}>
@@ -646,6 +550,18 @@ export function ExerciseListPage() {
                                             </Badge>
                                         ))}
                                     </div>
+                                    <Button
+                                        className="w-full"
+                                        disabled={trackedIds.has(`api-${selectedExercise.id}`)}
+                                        onClick={() => {
+                                            openAddWithPerf(selectedExercise)
+                                            setSelectedExercise(null)
+                                        }}
+                                    >
+                                        {trackedIds.has(`api-${selectedExercise.id}`)
+                                            ? UI.added
+                                            : UI.add}
+                                    </Button>
                                 </div>
                             </>
                         )}

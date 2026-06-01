@@ -17,6 +17,8 @@ export interface ExerciseSearchFiltersProps {
     onEquipmentFilterChange: (value: EquipmentSelection) => void
     equipmentList: string[]
     availableRawEquipment: string[]
+    /** Recherche texte (étape liste du parcours imbriqué uniquement) */
+    showSearch?: boolean
     /** Contenu additionnel à afficher sous les filtres (ex: bouton Créer) */
     extraSlot?: React.ReactNode
 }
@@ -31,20 +33,23 @@ export function ExerciseSearchFilters({
     onEquipmentFilterChange,
     equipmentList,
     availableRawEquipment,
+    showSearch = true,
     extraSlot,
 }: ExerciseSearchFiltersProps) {
     return (
         <>
-            <div className="relative mb-2">
-                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                    type="search"
-                    placeholder={UI.searchExercise}
-                    value={searchInput}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                    className="pl-9 bg-card"
-                />
-            </div>
+            {showSearch ? (
+                <div className="relative mb-2">
+                    <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder={UI.searchExercise}
+                        value={searchInput}
+                        onChange={(e) => onSearchChange(e.target.value)}
+                        className="pl-9 bg-card"
+                    />
+                </div>
+            ) : null}
             <div className="mb-4 space-y-2">
                 <MuscleFilterControl
                     selection={muscleFilter}

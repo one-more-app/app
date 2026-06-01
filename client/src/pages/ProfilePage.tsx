@@ -12,10 +12,9 @@ import { useHomeData } from "@/hooks/use-home-data";
 import { computeLeagueStatsForTracked } from "@/lib/muscle-league-stats";
 import { getTopExercisesByLeague } from "@/lib/profile-highlights";
 import { UI } from "@/lib/translations";
-import { Dumbbell, UserPlus } from "lucide-react";
+import { Dumbbell } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { toast } from "sonner";
 
 export default function ProfilePage() {
   const { exercises, hasLoaded } = useHomeData();
@@ -37,10 +36,6 @@ export default function ProfilePage() {
     return getTopExercisesByLeague(exercises, profile);
   }, [exercises, profile]);
 
-  const handleInvite = () => {
-    toast.info(UI.profileInviteComingSoon);
-  };
-
   if (!hasLoaded) {
     return (
       <div className="min-h-screen-app bg-background">
@@ -60,16 +55,6 @@ export default function ProfilePage() {
 
       <main className="mx-auto max-w-2xl space-y-4 p-4">
         <ProfileIdentityHeader />
-
-        <Button
-          type="button"
-          variant="secondary"
-          className="w-full gap-2"
-          onClick={handleInvite}
-        >
-          <UserPlus className="size-4" aria-hidden />
-          {UI.profileInviteButton}
-        </Button>
 
         <ProfileHighlightsCard leagueSummary={leagueSummary} />
 

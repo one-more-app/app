@@ -1,0 +1,239 @@
+import { BodyPartHealthIcon } from '@/components/body-part-health-icon'
+import {
+    BrowseSectionTitle,
+    BrowseTile,
+    CatalogBreadcrumb,
+} from '@/components/exercise-browse-ui'
+import { EmptyState } from '@/components/ui/empty-state'
+import {
+    countByEquipment,
+    countByTarget,
+    countByZone,
+    exercisesForBrowsePath,
+    filterBrowseableBySearch,
+    sortBrowseableByLatestPerf,
+    type BrowseableExercise,
+    type BrowseSearchSort,
+    type CatalogBrowseParams,
+    type CatalogBrowseStep,
+} from '@/lib/exercise-catalog-browse'
+import { sortExercisesByPopularity } from '@/lib/exercisedb'
+import {
+    browseEquipmentLeagueKey,
+    type BrowseLeagueLookups,
+} from '@/lib/muscle-league-stats'
+import {
+    translateBodyPart,
+    translateEquipment,
+    translateTarget,
+    UI,
+} from '@/lib/translations'
+import type { ExerciseDBExercise } from '@/types'
+import { Dumbbell } from 'lucide-react'
+import { useMemo, type ReactNode } from 'react'
+
+export interface ExerciseBrowseNavigatorProps<T extends BrowseableExercise> {
+    exercises: T[]
+    browse: CatalogBrowseParams
+    searchQuery: string
+    searchSort?: BrowseSearchSort
+    getLatestPerfAt?: (id: string) => number | null
+    requireGif?: boolean
+    isGifBroken?: (id: string) => boolean
+    onPickZone: (zone: string) => void
+    onPickTarget: (target: string) => void
+    onPickEquipment: (equipment: string) => void
+    onGoToStep: (step: CatalogBrowseStep) => void
+    renderExerciseList: (exercises: T[]) => ReactNode
+    beforeZoneStep?: ReactNode
+    leafSort?: 'popularity' | 'latestPerf' | 'none'
+    /** Paliers médians par étape du parcours (accueil uniquement). */
+    browseLeagueLookups?: BrowseLeagueLookups
+}
+
+export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
+    exercises,
+    browse,
+    searchQuery,
+    searchSort = 'popularity',
+    getLatestPerfAt,
+    requireGif = false,
+    isGifBroken,
+    onPickZone,
+    onPickTarget,
+    onPickEquipment,
+    onGoToStep,
+    renderExerciseList,
+    beforeZoneStep,
+    leafSort = 'popularity',
+    browseLeagueLookups,
+}: ExerciseBrowseNavigatorProps<T>) {
+    const isSearchMode = searchQuery.trim().length > 0
+
+    const pool = useMemo(() => {
+        if (!requireGif) return exercises
+        return exercises.filter(
+            (ex) => ex.gifUrl?.trim() && !isGifBroken?.(ex.id),
+        )
+    }, [exercises, requireGif, isGifBroken])
+
+    const searchResults = useMemo(() => {
+        if (!isSearchMode) return []
+        return filterBrowseableBySearch(
+            pool,
+            searchQuery,
+            searchSort,
+            getLatestPerfAt,
+        )
+    }, [pool, searchQuery, isSearchMode, searchSort, getLatestPerfAt])
+
+    const zoneEntries = useMemo(() => countByZone(pool), [pool])
+    const targetEntries = useMemo(
+        () => (browse.zone ? countByTarget(pool, browse.zone) : []),
+        [pool, browse.zone],
+    )
+    const equipmentEntries = useMemo(
+        () =>
+            browse.zone && browse.target
+                ? countByEquipment(pool, browse.zone, browse.target)
+                : [],
+        [pool, browse.zone, browse.target],
+    )
+
+    const leafExercises = useMemo(() => {
+        if (browse.step !== 'list' || !browse.zone || !browse.target || !browse.beq) {
+            return [] as T[]
+        }
+        let list = exercisesForBrowsePath(
+            pool,
+            browse.zone,
+            browse.target,
+            browse.beq,
+        )
+        if (leafSort === 'latestPerf' && getLatestPerfAt) {
+            list = sortBrowseableByLatestPerf(list, getLatestPerfAt)
+        } else if (leafSort === 'popularity') {
+            list = sortExercisesByPopularity(
+                list as ExerciseDBExercise[],
+            ) as T[]
+        }
+        return list
+    }, [pool, browse, leafSort, getLatestPerfAt])
+
+    const stepTitle = useMemo(() => {
+        switch (browse.step) {
+            case 'zone':
+                return UI.browseChooseZone
+            case 'muscle':
+                return UI.browseChooseMuscle
+            case 'equipment':
+                return UI.browseChooseEquipment
+            case 'list':
+                return UI.browseChooseExercise
+            default:
+                return UI.browseChooseZone
+        }
+    }, [browse.step])
+
+    if (isSearchMode) {
+        return (
+            <div>
+                <BrowseSectionTitle>{UI.browseSearchResults}</BrowseSectionTitle>
+                {searchResults.length === 0 ? (
+                    <EmptyState
+                        className="mt-4"
+                        icon={Dumbbell}
+                        description={UI.noExerciseFound}
+                        cardClassName="max-w-md shadow-none"
+                    />
+                ) : (
+                    renderExerciseList(searchResults)
+                )}
+            </div>
+        )
+    }
+
+    return (
+        <div>
+            {browse.step === 'zone' && beforeZoneStep ? (
+                <div className="mb-4">{beforeZoneStep}</div>
+            ) : null}
+            <CatalogBreadcrumb browse={browse} onGoTo={onGoToStep} />
+            <BrowseSectionTitle>{stepTitle}</BrowseSectionTitle>
+
+            {browse.step === 'zone' ? (
+                <ul className="space-y-3">
+                    {zoneEntries.map(({ zone, count }) => (
+                        <li key={zone}>
+                            <BrowseTile
+                                label={translateBodyPart(zone)}
+                                count={count}
+                                leagueLevel={browseLeagueLookups?.byZone.get(
+                                    zone.toLowerCase(),
+                                )}
+                                icon={
+                                    <BodyPartHealthIcon
+                                        bodyPart={zone}
+                                        className="size-5"
+                                    />
+                                }
+                                onClick={() => onPickZone(zone)}
+                            />
+                        </li>
+                    ))}
+                </ul>
+            ) : null}
+
+            {browse.step === 'muscle' && browse.zone ? (
+                <ul className="space-y-3">
+                    {targetEntries.map(({ target, count }) => (
+                        <li key={target}>
+                            <BrowseTile
+                                label={translateTarget(target)}
+                                count={count}
+                                leagueLevel={browseLeagueLookups?.targetInZone
+                                    .get(browse.zone.toLowerCase())
+                                    ?.get(target.toLowerCase())}
+                                onClick={() => onPickTarget(target)}
+                            />
+                        </li>
+                    ))}
+                </ul>
+            ) : null}
+
+            {browse.step === 'equipment' && browse.zone && browse.target ? (
+                <ul className="space-y-3">
+                    {equipmentEntries.map(({ equipment, count }) => (
+                        <li key={equipment}>
+                            <BrowseTile
+                                label={translateEquipment(equipment)}
+                                count={count}
+                                leagueLevel={browseLeagueLookups?.equipmentInPath.get(
+                                    browseEquipmentLeagueKey(
+                                        browse.zone,
+                                        browse.target,
+                                        equipment,
+                                    ),
+                                )}
+                                onClick={() => onPickEquipment(equipment)}
+                            />
+                        </li>
+                    ))}
+                </ul>
+            ) : null}
+
+            {browse.step === 'list' ? renderExerciseList(leafExercises) : null}
+
+            {browse.step !== 'list' &&
+                browse.step === 'muscle' &&
+                targetEntries.length === 0 ? (
+                <EmptyState
+                    className="mt-4"
+                    icon={Dumbbell}
+                    description={UI.noExerciseInGroup}
+                    cardClassName="shadow-none"
+                />
+            ) : null}
+        </div>
+    )
+}

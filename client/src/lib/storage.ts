@@ -7,6 +7,7 @@ import {
   upsertRemoteProfile,
   upsertTrackedExercise,
 } from "@/lib/data-api";
+import { getLocalDateKey } from "@/lib/local-date";
 import {
   chronologicalPerfOrder,
   getLatestPerformanceEntry,
@@ -241,7 +242,7 @@ export function savePerformance(
   reps: number,
   opts?: { date?: string },
 ): PerformanceEntry {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalDateKey();
   const day =
     opts?.date && /^\d{4}-\d{2}-\d{2}$/.test(opts.date) ? opts.date : today;
   const entry: PerformanceEntry = {
@@ -270,7 +271,7 @@ export async function savePerformanceAndWait(
   reps: number,
   opts?: { date?: string },
 ): Promise<{ entry: PerformanceEntry; xp?: XpGrantResult }> {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalDateKey();
   const day =
     opts?.date && /^\d{4}-\d{2}-\d{2}$/.test(opts.date) ? opts.date : today;
   const entry: PerformanceEntry = {
