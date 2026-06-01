@@ -1,10 +1,10 @@
 import { AddPerfDrawer } from '@/components/AddPerfDrawer'
 import { BackHeader } from '@/components/BackHeader'
-import { ExerciseDetailPageSkeleton } from '@/components/skeletons'
 import { ExerciseCard } from '@/components/ExerciseCard'
 import { PerfEntryList } from '@/components/history/PerfEntryList'
 import { LeagueBadge } from '@/components/LeagueBadge'
 import { PerformanceChart } from '@/components/PerformanceChart'
+import { ExerciseDetailPageSkeleton } from '@/components/skeletons'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -16,12 +16,13 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Input } from '@/components/ui/input'
 import {
     useTrackedDataRefresh,
     useTrackedExercisesData,
     useUserProfileData,
 } from '@/hooks/use-api-data'
-import { Input } from '@/components/ui/input'
+import { useCelebrationQueueActive } from '@/hooks/use-celebration-queue-active'
 import { usePerformance } from '@/hooks/use-performance'
 import { useTheme } from '@/hooks/use-theme'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
@@ -32,17 +33,17 @@ import {
 } from '@/lib/history-entries'
 import { LEAGUE_COLORS } from '@/lib/league-colors'
 import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
-import { notifyXpGrants } from '@/lib/xp-notifications'
 import {
+    getPersonalBest,
     getTrackedExerciseById,
     isOnboardingFirstExercisePending,
-    getPersonalBest,
     removeTrackedExerciseAndWait,
     setOnboardingFirstExercisePending,
     updateTrackedExerciseAndWait,
 } from '@/lib/storage'
 import { getAllTiers, getLeagueInfo, isDumbbellExercise } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
+import { notifyXpGrants } from '@/lib/xp-notifications'
 import type { PerformanceEntry } from '@/types'
 import {
     ChevronDown,
@@ -53,6 +54,7 @@ import {
     SearchX,
     Trash2,
 } from 'lucide-react'
+import { getJoyrideScrollOffset } from '@/lib/joyride-config'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { EVENTS, Joyride, type EventData, type Step } from 'react-joyride'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -69,8 +71,8 @@ export function ExerciseDetailPage() {
         () =>
             id
                 ? tracked.find((item) => item.id === id && !item.deletedAt) ??
-                  getTrackedExerciseById(id) ??
-                  null
+                getTrackedExerciseById(id) ??
+                null
                 : null,
         [id, tracked],
     )
@@ -117,8 +119,9 @@ export function ExerciseDetailPage() {
     }, [id])
 
     const onboardingFirstExercisePending = isOnboardingFirstExercisePending()
-    const onboardingTourActive =
-        searchParams.get('tour') === 'onboarding' || onboardingFirstExercisePending
+    const onboardingTourActive = searchParams.get('tour') === 'onboarding'
+    const celebrationBlocking = useCelebrationQueueActive()
+    const tourReady = onboardingTourActive && !celebrationBlocking
 
     const finishOnboardingTour = useCallback(() => {
         const next = new URLSearchParams(searchParams)
@@ -181,12 +184,14 @@ export function ExerciseDetailPage() {
     }, [entries, historySessionIndex])
 
     const exerciseOnboardingSteps = useMemo<Step[]>(() => {
+        const scrollOffset = getJoyrideScrollOffset()
         const steps: Step[] = [
             {
                 target: '[data-tour="exercise-overview"]',
                 title: UI.exerciseOnboardingTourOverviewTitle,
                 content: UI.exerciseOnboardingTourOverviewContent,
                 placement: 'bottom',
+                skipScroll: true,
             },
         ]
         if (leagueInfo) {
@@ -195,6 +200,7 @@ export function ExerciseDetailPage() {
                 title: UI.exerciseOnboardingTourLeagueTitle,
                 content: UI.exerciseOnboardingTourLeagueContent,
                 placement: 'bottom',
+                scrollOffset,
             })
         }
         if (entries.length > 0) {
@@ -203,10 +209,11 @@ export function ExerciseDetailPage() {
                 title: UI.exerciseOnboardingTourHistoryTitle,
                 content: UI.exerciseOnboardingTourHistoryContent,
                 placement: 'top',
+                scrollOffset,
             })
         }
         return steps
-    }, [entries.length, leagueInfo])
+    }, [entries.length, leagueInfo, tourReady])
 
     const exerciseJoyrideOptions = useMemo(
         () => ({
@@ -223,9 +230,10 @@ export function ExerciseDetailPage() {
             zIndex: 120,
             showProgress: true,
             skipBeacon: true,
+            scrollOffset: getJoyrideScrollOffset(),
             buttons: ['back', 'close', 'primary', 'skip'] as const,
         }),
-        [resolvedTheme],
+        [resolvedTheme, tourReady],
     )
 
     const exerciseJoyrideStyles = useMemo(
@@ -292,8 +300,9 @@ export function ExerciseDetailPage() {
             },
             buttonClose: {
                 color: 'var(--muted-foreground)',
-                height: '2rem',
-                width: '2rem',
+                height: '0.75rem',
+                width: '0.75rem',
+                padding: '0.75rem',
                 borderRadius: 'var(--radius-md)',
             },
         }),
@@ -641,13 +650,12 @@ export function ExerciseDetailPage() {
                     </DialogContent>
                 </Dialog>
 
-                {onboardingTourActive ? (
+                {tourReady ? (
                     <Joyride
                         key={id}
                         steps={exerciseOnboardingSteps}
-                        run
+                        run={tourReady}
                         continuous
-                        scrollToFirstStep
                         options={exerciseJoyrideOptions}
                         styles={exerciseJoyrideStyles}
                         locale={{

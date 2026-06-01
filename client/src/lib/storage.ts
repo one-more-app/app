@@ -487,7 +487,6 @@ export function needsOnboarding(): boolean {
 
 export function markOnboardingDone(): void {
   localStorage.setItem(ONBOARDING_V1_KEY, "done");
-  localStorage.removeItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY);
   localStorage.removeItem(ONBOARDING_POST_AUTH_REDIRECT_KEY);
 }
 

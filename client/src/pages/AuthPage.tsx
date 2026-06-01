@@ -6,14 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { identifyEmail } from "@/lib/auth";
-import { fetchTrackedExercises } from "@/lib/data-api";
-import { CARDIO_EQUIPMENT } from "@/lib/exercisedb";
 import { signInWithGoogle } from "@/lib/oauth";
-import {
-    setOnboardingFirstExercisePending,
-    setUserProfile,
-} from "@/lib/storage";
+import { resolvePostAuthNavigation } from "@/lib/post-auth-navigation";
+import { setUserProfile } from "@/lib/storage";
 import { UI } from "@/lib/translations";
+import { X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -60,28 +57,22 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         passwordConfirm === password &&
         !isBusy;
 
+    const returnToEmailStep = () => {
+        auth.clearError();
+        setPassword("");
+        setStep("email");
+    };
+
+    const handleEmailChange = (value: string) => {
+        setEmail(value);
+        if (step === "login") {
+            returnToEmailStep();
+        }
+    };
+
     const finishSuccess = async () => {
         try {
-            let nextPath = redirect;
-            if (redirect === "/home") {
-                try {
-                    const tracked = await fetchTrackedExercises();
-                    const hasVisibleTrackedExercise = tracked.some(
-                        (exercise) =>
-                            (exercise.bodyPart ?? exercise.target) !== "cardio" &&
-                            !(exercise.equipment && CARDIO_EQUIPMENT.has(exercise.equipment)),
-                    );
-                    if (!hasVisibleTrackedExercise) {
-                        setOnboardingFirstExercisePending(true);
-                        nextPath = "/exercises?tour=onboarding-first";
-                    } else {
-                        setOnboardingFirstExercisePending(false);
-                    }
-                } catch {
-                    // En cas d'erreur réseau, on garde une navigation standard.
-                }
-            }
-
+            const nextPath = await resolvePostAuthNavigation(redirect);
             navigate(nextPath, { replace: true });
         } catch (e) {
             auth.setError(
@@ -320,7 +311,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                     <Input
                                         label={UI.email}
                                         value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        onChange={(e) => handleEmailChange(e.target.value)}
                                         inputMode="email"
                                         autoCapitalize="none"
                                         autoCorrect="off"
@@ -343,7 +334,28 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 </>
                             ) : (
                                 <>
-                                    <Input label={UI.email} value={email} disabled />
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-sm font-medium">{UI.email}</label>
+                                        <div className="relative">
+                                            <Input
+                                                value={email}
+                                                onChange={(e) => handleEmailChange(e.target.value)}
+                                                inputMode="email"
+                                                autoCapitalize="none"
+                                                autoCorrect="off"
+                                                placeholder="email@exemple.com"
+                                                className="pr-10"
+                                            />
+                                            <button
+                                                type="button"
+                                                className="absolute inset-y-0 right-1 my-auto flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+                                                aria-label="Changer l'email"
+                                                onClick={returnToEmailStep}
+                                            >
+                                                <X className="size-4 shrink-0" aria-hidden />
+                                            </button>
+                                        </div>
+                                    </div>
                                     <div className="space-y-1">
                                         <Input
                                             label={UI.password}

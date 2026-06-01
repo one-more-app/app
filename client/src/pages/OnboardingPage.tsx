@@ -13,6 +13,7 @@ import {
     setOnboardingPostAuthRedirect,
     setUserProfile,
 } from '@/lib/storage'
+import { resolvePostAuthNavigation } from '@/lib/post-auth-navigation'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import { AuthPage } from '@/pages/AuthPage'
@@ -169,7 +170,8 @@ function OnboardingPage() {
         if (auth.status === 'authenticated') {
             setOnboardingPostAuthRedirect(null)
             markOnboardingDone()
-            navigate(nextPath, { replace: true })
+            const resolvedPath = await resolvePostAuthNavigation(nextPath)
+            navigate(resolvedPath, { replace: true })
             return
         }
 

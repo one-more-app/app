@@ -57,6 +57,7 @@ import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength
 import { getGroupedEquipmentList, translateBodyPart, translateTarget, UI } from '@/lib/translations'
 import type { ExerciseDBExercise } from '@/types'
 import { ChevronLeft, ChevronRight, Dumbbell, Plus } from 'lucide-react'
+import { getJoyrideScrollOffset } from '@/lib/joyride-config'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { EVENTS, Joyride, type EventData, type Step } from 'react-joyride'
 import useSWR from 'swr'
@@ -112,6 +113,14 @@ export function ExerciseListPage() {
         },
         [stopFirstExerciseTour],
     )
+
+    useEffect(() => {
+        if (!firstExerciseTourActive) return
+        const viewport = document.querySelector('.app-scroll-viewport')
+        if (viewport instanceof HTMLElement) {
+            viewport.scrollTop = 0
+        }
+    }, [firstExerciseTourActive])
 
     const trackedIds = new Set(
         tracked.map((e) => (e.isCustom ? e.exerciseId : `api-${e.exerciseId}`))
@@ -192,12 +201,14 @@ export function ExerciseListPage() {
         searchQuery.trim().length > 0
 
     const firstExerciseOnboardingSteps = useMemo<Step[]>(() => {
+        const scrollOffset = getJoyrideScrollOffset()
         const steps: Step[] = [
             {
                 target: '[data-tour="first-exercise-filters"]',
                 title: UI.onboardingFirstExerciseTitle,
                 content: UI.onboardingFirstExerciseDescription,
                 placement: 'bottom',
+                skipScroll: true,
             },
         ]
         if (filteredExercises.length > 0) {
@@ -206,10 +217,11 @@ export function ExerciseListPage() {
                 title: UI.onboardingFirstExerciseTourAddTitle,
                 content: UI.onboardingFirstExerciseTourAddContent,
                 placement: 'left',
+                scrollOffset,
             })
         }
         return steps
-    }, [filteredExercises.length])
+    }, [filteredExercises.length, firstExerciseTourActive])
 
     const firstExerciseJoyrideOptions = useMemo(
         () => ({
@@ -226,9 +238,10 @@ export function ExerciseListPage() {
             zIndex: 120,
             showProgress: true,
             skipBeacon: true,
+            scrollOffset: getJoyrideScrollOffset(),
             buttons: ['back', 'close', 'primary', 'skip'] as const,
         }),
-        [resolvedTheme],
+        [resolvedTheme, firstExerciseTourActive],
     )
 
     const firstExerciseJoyrideStyles = useMemo(
@@ -295,8 +308,9 @@ export function ExerciseListPage() {
             },
             buttonClose: {
                 color: 'var(--muted-foreground)',
-                height: '2rem',
-                width: '2rem',
+                height: '0.75rem',
+                width: '0.75rem',
+                padding: '0.375rem',
                 borderRadius: 'var(--radius-md)',
             },
         }),
@@ -343,8 +357,7 @@ export function ExerciseListPage() {
                 mutate(SWR_KEYS.progress),
             ])
             setAddWithPerfExercise(null)
-            const shouldLaunchExerciseTour =
-                firstExerciseTourActive && isOnboardingFirstExercisePending()
+            const shouldLaunchExerciseTour = isOnboardingFirstExercisePending()
             navigate(
                 shouldLaunchExerciseTour
                     ? `/exercise/${trackedId}?tour=onboarding&from=first-exercise`
@@ -641,10 +654,10 @@ export function ExerciseListPage() {
 
                 {firstExerciseTourActive ? (
                     <Joyride
+                        key="first-exercise-tour"
                         steps={firstExerciseOnboardingSteps}
                         run
                         continuous
-                        scrollToFirstStep
                         options={firstExerciseJoyrideOptions}
                         styles={firstExerciseJoyrideStyles}
                         locale={{

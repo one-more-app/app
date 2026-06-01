@@ -1,6 +1,7 @@
 import { toast } from "sonner"
 
 import { maybeRequestAppReview } from "@/lib/app-review"
+import { enqueueCelebration } from "@/lib/celebration-queue"
 import { hapticNotificationSuccess } from "@/lib/haptics"
 import {
   LEAGUE_TOAST_DESCRIPTION_CLASS,
@@ -32,27 +33,6 @@ export type NewRecordCelebrationPayload = {
   /** Ligue au record (dégradé) ; null si exo perso / non classé */
   leagueAfter: LeagueInfo | null
   exerciseImageUrl?: string
-}
-
-let leaguePromotionHandler: ((p: LeaguePromotionPayload) => void) | null =
-  null
-
-let newRecordCelebrationHandler:
-  | ((p: NewRecordCelebrationPayload) => void)
-  | null = null
-
-/** Enregistré par `LeaguePromotionCelebrationHost` ; remplace le toast combo record+palier. */
-export function setLeaguePromotionHandler(
-  handler: ((p: LeaguePromotionPayload) => void) | null,
-): void {
-  leaguePromotionHandler = handler
-}
-
-/** Enregistré par le même hôte ; remplace le toast « Nouveau record » seul. */
-export function setNewRecordCelebrationHandler(
-  handler: ((p: NewRecordCelebrationPayload) => void) | null,
-): void {
-  newRecordCelebrationHandler = handler
 }
 
 export function isNewPersonalBest(prevPB: PB, nextPB: PB): boolean {
@@ -133,26 +113,28 @@ export function notifyPerfMilestones(params: {
 
   void maybeRequestAppReview("milestone")
 
-  playMilestoneSound()
-  void hapticNotificationSuccess()
-
   const leagueToastClass = nextLeague
     ? toastClassForLeague(nextLeague.level)
     : undefined
 
-  if (newRecord && leagueUp && nextLeague && nextPB && leaguePromotionHandler) {
-    leaguePromotionHandler({
-      exerciseName,
-      prevLeague,
-      nextLeague,
-      weight: savedWeight,
-      reps: savedReps,
-      exerciseImageUrl,
+  if (newRecord && leagueUp && nextLeague && nextPB) {
+    enqueueCelebration({
+      kind: "league",
+      payload: {
+        exerciseName,
+        prevLeague,
+        nextLeague,
+        weight: savedWeight,
+        reps: savedReps,
+        exerciseImageUrl,
+      },
     })
     return
   }
 
   if (newRecord && leagueUp) {
+    playMilestoneSound()
+    void hapticNotificationSuccess()
     toast.success("Nouveau record et nouveau palier", {
       className: leagueToastClass,
       classNames: { description: LEAGUE_TOAST_DESCRIPTION_CLASS },
@@ -161,18 +143,23 @@ export function notifyPerfMilestones(params: {
     return
   }
 
-  if (newRecord && nextPB && newRecordCelebrationHandler) {
-    newRecordCelebrationHandler({
-      exerciseName,
-      weight: savedWeight,
-      reps: savedReps,
-      leagueAfter: nextLeague,
-      exerciseImageUrl,
+  if (newRecord && nextPB) {
+    enqueueCelebration({
+      kind: "record",
+      payload: {
+        exerciseName,
+        weight: savedWeight,
+        reps: savedReps,
+        leagueAfter: nextLeague,
+        exerciseImageUrl,
+      },
     })
     return
   }
 
   if (newRecord) {
+    playMilestoneSound()
+    void hapticNotificationSuccess()
     toast.success("Nouveau record", {
       description: `${exerciseName} · ${savedWeight} kg × ${savedReps} reps`,
     })

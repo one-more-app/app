@@ -15,16 +15,13 @@ import {
     recordCelebrationGlow,
 } from '@/lib/celebration-visual'
 import { LEAGUE_COLORS, leagueMapFill } from '@/lib/league-colors'
-import {
-    setLeaguePromotionHandler,
-    setNewRecordCelebrationHandler,
-    type LeaguePromotionPayload,
-    type NewRecordCelebrationPayload,
+import { advanceCelebrationQueue } from '@/lib/celebration-queue'
+import type {
+    LeaguePromotionPayload,
+    NewRecordCelebrationPayload,
 } from '@/lib/perf-notifications'
-import {
-    setLevelUpCelebrationHandler,
-    type LevelUpCelebrationPayload,
-} from '@/lib/xp-notifications'
+import type { LevelUpCelebrationPayload } from '@/lib/xp-notifications'
+import { useCelebrationQueueSnapshot } from '@/hooks/use-celebration-queue-active'
 import { UI } from '@/lib/translations'
 import { ArrowRight, Share2, Trophy } from 'lucide-react'
 import { useEffect, useState, type CSSProperties } from 'react'
@@ -225,30 +222,14 @@ function LeaguePromotionContent({
     )
 }
 
-type CelebrationOpen =
-    | { kind: 'league'; payload: LeaguePromotionPayload }
-    | { kind: 'record'; payload: NewRecordCelebrationPayload }
-    | { kind: 'levelup'; payload: LevelUpCelebrationPayload }
-
 export function LeaguePromotionCelebrationHost() {
     const { resolvedTheme } = useTheme()
-    const [open, setOpen] = useState<CelebrationOpen | null>(null)
+    const { current: open, total, pendingCount } = useCelebrationQueueSnapshot()
+    const queuePosition =
+        open && total > 1 ? total - pendingCount : 0
     const [shareBusy, setShareBusy] = useState(false)
 
-    useEffect(() => {
-        setLeaguePromotionHandler((p) => setOpen({ kind: 'league', payload: p }))
-        setNewRecordCelebrationHandler((p) =>
-            setOpen({ kind: 'record', payload: p }),
-        )
-        setLevelUpCelebrationHandler((p) =>
-            setOpen({ kind: 'levelup', payload: p }),
-        )
-        return () => {
-            setLeaguePromotionHandler(null)
-            setNewRecordCelebrationHandler(null)
-            setLevelUpCelebrationHandler(null)
-        }
-    }, [])
+    const dismiss = () => advanceCelebrationQueue()
 
     useEffect(() => {
         if (!open) setShareBusy(false)
@@ -274,7 +255,7 @@ export function LeaguePromotionCelebrationHost() {
         <Dialog
             open={!!open}
             onOpenChange={(o) => {
-                if (!o) setOpen(null)
+                if (!o) dismiss()
             }}
         >
             <DialogContent
@@ -322,6 +303,16 @@ export function LeaguePromotionCelebrationHost() {
                     </div>
                 ) : null}
                 <DialogFooter className="mt-0 flex w-full shrink-0 flex-col gap-4 border-t border-border bg-card/95 px-4 py-4 backdrop-blur-sm sm:flex-row sm:justify-center">
+                    {queuePosition > 0 ? (
+                        <p
+                            className="w-full text-center text-xs text-muted-foreground sm:order-0 sm:basis-full"
+                            aria-live="polite"
+                        >
+                            {UI.celebrationQueueProgress
+                                .replace('{current}', String(queuePosition))
+                                .replace('{total}', String(total))}
+                        </p>
+                    ) : null}
                     <Button
                         className="w-full min-w-[12rem] sm:w-auto sm:order-2"
                         size="lg"
@@ -335,7 +326,7 @@ export function LeaguePromotionCelebrationHost() {
                     <Button
                         className="w-full min-w-[12rem] sm:w-auto sm:order-1"
                         size="lg"
-                        onClick={() => setOpen(null)}
+                        onClick={dismiss}
                     >
                         {UI.continue}
                     </Button>
