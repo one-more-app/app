@@ -13,6 +13,6 @@ import { PerformanceEntriesService } from './performance-entries.service.js';
   ],
   controllers: [PerformanceEntriesController],
   providers: [PerformanceEntriesService],
-  exports: [TypeOrmModule],
+  exports: [PerformanceEntriesService, TypeOrmModule],
 })
 export class PerformanceEntriesModule {}

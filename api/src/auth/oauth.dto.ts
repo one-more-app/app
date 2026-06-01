@@ -32,6 +32,10 @@ export class OAuthCallbackDto {
   @IsOptional()
   @IsString()
   deviceId?: string;
+
+  @IsOptional()
+  @IsString()
+  inviteCode?: string;
 }
 
 export class GoogleIdTokenDto {
@@ -44,4 +48,8 @@ export class GoogleIdTokenDto {
   @IsOptional()
   @IsString()
   deviceId?: string;
+
+  @IsOptional()
+  @IsString()
+  inviteCode?: string;
 }

@@ -20,22 +20,24 @@ export class ProfileService {
       gender: profile.gender,
       firstName: profile.firstName,
       lastName: profile.lastName,
+      avatarUrl: profile.avatarUrl,
       updatedAt: profile.updatedAt.toISOString(),
     };
   }
 
   async upsertProfile(userId: string, body: UpsertProfileDto) {
-    await this.profilesRepo.upsert(
-      {
-        userId,
-        weightKg: body.weightKg,
-        heightCm: body.heightCm,
-        gender: body.gender,
-        firstName: body.firstName ?? null,
-        lastName: body.lastName ?? null,
-      },
-      ['userId'],
-    );
+    const payload: Partial<UserProfileEntity> & { userId: string } = {
+      userId,
+      weightKg: body.weightKg,
+      heightCm: body.heightCm,
+      gender: body.gender,
+      firstName: body.firstName ?? null,
+      lastName: body.lastName ?? null,
+    };
+    if (body.avatarUrl !== undefined) {
+      payload.avatarUrl = body.avatarUrl;
+    }
+    await this.profilesRepo.upsert(payload, ['userId']);
     const profile = await this.profilesRepo.findOneOrFail({ where: { userId } });
     return {
       weightKg: profile.weightKg,
@@ -43,6 +45,7 @@ export class ProfileService {
       gender: profile.gender,
       firstName: profile.firstName,
       lastName: profile.lastName,
+      avatarUrl: profile.avatarUrl,
       updatedAt: profile.updatedAt.toISOString(),
     };
   }

@@ -9,6 +9,7 @@ import { PerformanceEntriesModule } from './performance/performance-entries.modu
 import { ProfileModule } from './profile/profile.module.js';
 import { TrackedExercisesModule } from './tracked-exercises/tracked-exercises.module.js';
 import { ProgressModule } from './progress/progress.module.js';
+import { SocialModule } from './social/social.module.js';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ProgressModule } from './progress/progress.module.js';
     PerformanceEntriesModule,
     ExercisesModule,
     ProgressModule,
+    SocialModule,
   ],
   controllers: [AppController],
   providers: [AppService],

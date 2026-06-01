@@ -116,11 +116,15 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         setIsBusy(true);
         auth.clearError();
         try {
-            await auth.register({ email: normalizedEmail, password });
-            // On persiste prénom/nom dans le profil (si utilisé).
+            await auth.register({
+                email: normalizedEmail,
+                password,
+                firstName: firstName.trim(),
+                lastName: lastName.trim(),
+            });
             setUserProfile(
                 { firstName: firstName.trim(), lastName: lastName.trim() },
-                { silent: false },
+                { silent: true },
             );
             await finishSuccess();
         } finally {

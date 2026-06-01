@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api";
 import type { AuthSession } from "@/lib/auth";
+import { consumePendingInviteCode } from "@/lib/invite-code";
 import { loginWithGoogleNative } from "@/lib/google-native";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
@@ -46,9 +47,10 @@ export async function signInWithGoogle(): Promise<AuthSession> {
 
   const platform = oauthPlatform();
   const idToken = await loginWithGoogleNative();
+  const inviteCode = consumePendingInviteCode() ?? undefined;
   return apiFetch<AuthSession>("/oauth/google/id-token", {
     method: "POST",
-    body: JSON.stringify({ idToken, platform }),
+    body: JSON.stringify({ idToken, platform, inviteCode }),
   });
 }
 
@@ -136,6 +138,7 @@ export async function signInWithOAuth(provider: Provider): Promise<AuthSession> 
       redirectUri: start.redirectUri ?? redirectUri,
       codeVerifier,
       state,
+      inviteCode: consumePendingInviteCode() ?? undefined,
     }),
   });
   return session;

@@ -8,7 +8,9 @@ import {
   registerWithEmail,
   writeStoredSession,
 } from "@/lib/auth";
+import { consumePendingInviteCode } from "@/lib/invite-code";
 import { ApiError } from "@/lib/api";
+import { ACCESS_SWR_KEY } from "@/lib/social-api";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 
@@ -20,7 +22,12 @@ type AuthState = {
 };
 
 type AuthContextValue = AuthState & {
-  register: (params: { email: string; password: string }) => Promise<void>;
+  register: (params: {
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+  }) => Promise<void>;
   login: (params: { email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<boolean>;
@@ -73,16 +80,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return "Une erreur est survenue";
   };
 
-  const register = useCallback(async ({ email, password }: { email: string; password: string }) => {
-    clearError();
-    try {
-      const session = await registerWithEmail({ email, password });
-      applySession(session);
-    } catch (e) {
-      setLastError(normalizeError(e));
-      throw e;
-    }
-  }, [applySession, clearError]);
+  const register = useCallback(
+    async ({
+      email,
+      password,
+      firstName,
+      lastName,
+    }: {
+      email: string;
+      password: string;
+      firstName?: string;
+      lastName?: string;
+    }) => {
+      clearError();
+      try {
+        const inviteCode = consumePendingInviteCode() ?? undefined;
+        const session = await registerWithEmail({
+          email,
+          password,
+          inviteCode,
+          firstName: firstName?.trim() || undefined,
+          lastName: lastName?.trim() || undefined,
+        });
+        applySession(session);
+      } catch (e) {
+        setLastError(normalizeError(e));
+        throw e;
+      }
+    },
+    [applySession, clearError],
+  );
 
   const login = useCallback(async ({ email, password }: { email: string; password: string }) => {
     clearError();
@@ -134,6 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mutate("performance-entries"),
       mutate("profile"),
       mutate("home-exercises"),
+      mutate(ACCESS_SWR_KEY),
     ]).catch((e) => setLastError(normalizeError(e)));
   }, [state.status, state.accessToken]);
 

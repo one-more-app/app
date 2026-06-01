@@ -50,6 +50,7 @@ export interface UserProfile {
   gender: "male" | "female";
   firstName?: string;
   lastName?: string;
+  avatarUrl?: string | null;
 }
 
 export type XpGrantItem = {

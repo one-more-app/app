@@ -11,6 +11,7 @@ type PerfEntryListProps = {
     entries: PerformanceEntry[]
     entryInsights: Map<string, HistoryEntryInsight>
     canEdit: boolean
+    readOnly?: boolean
     onEditEntry: (entry: PerformanceEntry) => void
     onDeleteEntry: (entry: PerformanceEntry) => void
     onAddSet?: () => void
@@ -22,6 +23,7 @@ export function PerfEntryList({
     entries,
     entryInsights,
     canEdit,
+    readOnly = false,
     onEditEntry,
     onDeleteEntry,
     onAddSet,
@@ -40,6 +42,7 @@ export function PerfEntryList({
                         entry={entry}
                         insight={entryInsights.get(entry.id)}
                         canEdit={canEdit}
+                        readOnly={readOnly}
                         onEdit={() => onEditEntry(entry)}
                         onDelete={() => onDeleteEntry(entry)}
                     />

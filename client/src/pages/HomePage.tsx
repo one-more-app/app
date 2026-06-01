@@ -1,5 +1,6 @@
 import { ExerciseBrowseNavigator } from '@/components/ExerciseBrowseNavigator'
 import { ExerciseCard } from '@/components/ExerciseCard'
+import { ExerciseLimitDialog } from '@/components/ExerciseLimitDialog'
 import { UserProgressBanner } from '@/components/UserProgressBanner'
 import { BrowseSectionTitle } from '@/components/exercise-browse-ui'
 import { ExerciseCardSkeletonList } from '@/components/skeletons'
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { usePerformanceDataRefresh, useUserProfileData } from '@/hooks/use-api-data'
+import { useAccess } from '@/hooks/use-access'
 import { useExerciseCatalogBrowse } from '@/hooks/use-exercise-catalog-browse'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useHomeData, type ExerciseWithPerf } from '@/hooks/use-home-data'
@@ -27,22 +29,32 @@ import { getLeagueInfo } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
 import { notifyXpGrants } from '@/lib/xp-notifications'
 import { Dumbbell, Plus, Search } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 function HomePage() {
     const { exercises, hasLoaded } = useHomeData()
     const refreshAfterPerfChange = usePerformanceDataRefresh()
     const { data: profile } = useUserProfileData()
+    const { access, canAddExercise } = useAccess()
     const navigate = useNavigate()
+    const [limitDialogOpen, setLimitDialogOpen] = useState(false)
     const location = useLocation()
-
-    const { searchInput, searchQuery, handleSearchChange } = useExerciseFilters()
 
     const addExerciseLinkSearch = useMemo(() => {
         const q = new URLSearchParams(location.search).get('q')
         return q ? `?q=${encodeURIComponent(q)}` : ''
     }, [location.search])
+
+    const goToAddExercise = useCallback(() => {
+        if (!canAddExercise) {
+            setLimitDialogOpen(true)
+            return
+        }
+        navigate(`/exercises${addExerciseLinkSearch}`)
+    }, [canAddExercise, navigate, addExerciseLinkSearch])
+
+    const { searchInput, searchQuery, handleSearchChange } = useExerciseFilters()
 
     const nonCardioExercises = useMemo(
         () =>
@@ -227,11 +239,9 @@ function HomePage() {
 
                     </div>
                 ) : null}
-                <Button asChild className="h-9 w-full mb-4">
-                    <Link to={`/exercises${addExerciseLinkSearch}`}>
-                        <Plus className="mr-2 size-4" />
-                        {UI.addExercise}
-                    </Link>
+                <Button className="h-9 w-full mb-4" onClick={goToAddExercise}>
+                    <Plus className="mr-2 size-4" />
+                    {UI.addExercise}
                 </Button>
                 {!hasLoaded ? (
                     <ExerciseCardSkeletonList count={5} compact className="mt-2" />
@@ -242,11 +252,9 @@ function HomePage() {
                         title={UI.noTrackedExercises}
                         description={UI.noTrackedDescription}
                     >
-                        <Button asChild className="mt-2">
-                            <Link to={`/exercises${addExerciseLinkSearch}`}>
-                                <Plus className="mr-2 size-4" />
-                                {UI.addExercise}
-                            </Link>
+                        <Button className="mt-2" onClick={goToAddExercise}>
+                            <Plus className="mr-2 size-4" />
+                            {UI.addExercise}
                         </Button>
                     </EmptyState>
                 ) : (
@@ -271,6 +279,12 @@ function HomePage() {
                     </>
                 )}
             </main>
+
+            <ExerciseLimitDialog
+                open={limitDialogOpen}
+                onOpenChange={setLimitDialogOpen}
+                activeCount={access?.activeExerciseCount}
+            />
         </div>
     )
 }

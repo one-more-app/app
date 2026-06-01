@@ -1,3 +1,4 @@
+import { ExerciseLimitDialog } from '@/components/ExerciseLimitDialog'
 import { BackHeader } from '@/components/BackHeader'
 import { ExerciseCatalogSkeletonList } from '@/components/skeletons'
 import { ExerciseCatalogBrowse } from '@/components/ExerciseCatalogBrowse'
@@ -27,6 +28,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { SWR_KEYS } from '@/hooks/use-api-data'
+import { useAccess } from '@/hooks/use-access'
 import { fetchExercisesCatalog, fetchExercisesMeta } from '@/lib/data-api'
 import { notifyXpGrants } from '@/lib/xp-notifications'
 import { useExerciseCatalogBrowse } from '@/hooks/use-exercise-catalog-browse'
@@ -72,6 +74,19 @@ export function ExerciseListPage() {
     const [selectedExercise, setSelectedExercise] = useState<ExerciseDBExercise | null>(null)
     const [perfWeight, setPerfWeight] = useState(0)
     const [perfReps, setPerfReps] = useState(1)
+    const [limitDialogOpen, setLimitDialogOpen] = useState(false)
+    const { canAddExercise, access } = useAccess()
+
+    const guardAddExercise = useCallback(
+        (action: () => void) => {
+            if (!canAddExercise) {
+                setLimitDialogOpen(true)
+                return
+            }
+            action()
+        },
+        [canAddExercise],
+    )
     const firstExerciseTourActive =
         searchParams.get('tour') === 'onboarding-first' &&
         isOnboardingFirstExercisePending()
@@ -295,9 +310,11 @@ export function ExerciseListPage() {
 
     const openAddWithPerf = (ex: ExerciseDBExercise) => {
         if (trackedIds.has(`api-${ex.id}`)) return
-        setAddWithPerfExercise(ex)
-        setPerfWeight(0)
-        setPerfReps(1)
+        guardAddExercise(() => {
+            setAddWithPerfExercise(ex)
+            setPerfWeight(0)
+            setPerfReps(1)
+        })
     }
 
     const handleAddWithPerfSubmit = async () => {
@@ -354,20 +371,22 @@ export function ExerciseListPage() {
 
     const handleAddCustom = () => {
         if (!customName.trim()) return
-        const id = `custom-${crypto.randomUUID()}`
-        const bodyPart = inferBodyPartFromTarget(customTarget)
-        void (async () => {
-            await addExercise({
-                exerciseId: id,
-                name: customName.trim(),
-                originalName: customName.trim(),
-                bodyPart,
-                target: customTarget,
-                isCustom: true,
-            })
-            setCustomName('')
-            setCustomOpen(false)
-        })()
+        guardAddExercise(() => {
+            const id = `custom-${crypto.randomUUID()}`
+            const bodyPart = inferBodyPartFromTarget(customTarget)
+            void (async () => {
+                await addExercise({
+                    exerciseId: id,
+                    name: customName.trim(),
+                    originalName: customName.trim(),
+                    bodyPart,
+                    target: customTarget,
+                    isCustom: true,
+                })
+                setCustomName('')
+                setCustomOpen(false)
+            })()
+        })
     }
 
     const customExerciseDialog = (
@@ -587,6 +606,12 @@ export function ExerciseListPage() {
                         onEvent={handleFirstExerciseJoyrideEvent}
                     />
                 ) : null}
+
+                <ExerciseLimitDialog
+                    open={limitDialogOpen}
+                    onOpenChange={setLimitDialogOpen}
+                    activeCount={access?.activeExerciseCount}
+                />
             </main>
         </div>
     )

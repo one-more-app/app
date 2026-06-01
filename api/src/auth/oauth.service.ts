@@ -15,6 +15,7 @@ import {
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { UserEntity } from './entities/user.entity.js';
 import { AuthService } from './auth.service.js';
+import { InvitesService } from '../social/invites.service.js';
 import { consumeOAuthState, saveOAuthState } from './oauth-state.store.js';
 
 type Provider = 'google' | 'apple';
@@ -60,6 +61,7 @@ export class OAuthService {
     @InjectRepository(UserProfileEntity)
     private readonly profilesRepo: Repository<UserProfileEntity>,
     private auth: AuthService,
+    private invites: InvitesService,
   ) {}
 
   start(
@@ -136,6 +138,7 @@ export class OAuthService {
       codeVerifier: string;
       state: string;
       deviceId?: string;
+      inviteCode?: string;
     },
   ) {
     const pending = consumeOAuthState(params.state);
@@ -159,6 +162,7 @@ export class OAuthService {
       providerUserId,
       email,
       deviceId: params.deviceId,
+      inviteCode: params.inviteCode,
     });
   }
 
@@ -166,6 +170,7 @@ export class OAuthService {
     idToken: string;
     platform: Platform;
     deviceId?: string;
+    inviteCode?: string;
   }) {
     const audience = this.googleIdTokenAudience(params.platform);
     const { sub, email } = await verifyGoogleIdToken(params.idToken, audience);
@@ -174,6 +179,7 @@ export class OAuthService {
       providerUserId: sub,
       email,
       deviceId: params.deviceId,
+      inviteCode: params.inviteCode,
     });
   }
 
@@ -182,6 +188,7 @@ export class OAuthService {
     providerUserId: string;
     email: string | null;
     deviceId?: string;
+    inviteCode?: string;
   }) {
     const oauthProvider = toOAuthProvider(params.provider);
     const linked = await this.oauthAccountsRepo.findOne({
@@ -212,11 +219,10 @@ export class OAuthService {
           email: normalizedEmail,
           password: null,
         });
-        await this.profilesRepo.save({
-          userId: created.id,
-          weightKg: 75,
-          heightCm: 175,
-          gender: 'male',
+        await this.invites.createDefaultProfile(created.id);
+        await this.invites.processInviteOnSignup({
+          newUserId: created.id,
+          inviteCode: params.inviteCode,
         });
         userId = created.id;
         userEmail = created.email;

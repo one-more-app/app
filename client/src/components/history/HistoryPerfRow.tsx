@@ -11,6 +11,7 @@ type HistoryPerfRowProps = {
     entry: PerformanceEntry
     insight: HistoryEntryInsight | undefined
     canEdit: boolean
+    readOnly?: boolean
     onEdit: () => void
     onDelete: () => void
 }
@@ -19,6 +20,7 @@ export function HistoryPerfRow({
     entry,
     insight,
     canEdit,
+    readOnly = false,
     onEdit,
     onDelete,
 }: HistoryPerfRowProps) {
@@ -45,6 +47,7 @@ export function HistoryPerfRow({
                         </div>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
+                        {!readOnly ? (
                         <div className="flex gap-1">
                             <Button
                                 variant="secondary"
@@ -65,7 +68,7 @@ export function HistoryPerfRow({
                                 <Trash2 className="size-4" />
                             </Button>
                         </div>
-
+                        ) : null}
                     </div>
                 </CardContent>
             </Card>

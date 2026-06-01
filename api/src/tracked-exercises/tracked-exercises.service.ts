@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
 import { PerformanceEntryEntity } from '../performance/performance-entry.entity.js';
+import { AccessService } from '../social/access.service.js';
 import { TrackedExerciseEntity } from './tracked-exercise.entity.js';
 import type {
   CreateTrackedExerciseDto,
@@ -15,6 +16,7 @@ export class TrackedExercisesService {
     private readonly trackedRepo: Repository<TrackedExerciseEntity>,
     @InjectRepository(PerformanceEntryEntity)
     private readonly perfRepo: Repository<PerformanceEntryEntity>,
+    private readonly accessService: AccessService,
   ) {}
 
   private mapTrackedExercise(entity: TrackedExerciseEntity) {
@@ -120,6 +122,11 @@ export class TrackedExercisesService {
   }
 
   async create(userId: string, body: CreateTrackedExerciseDto) {
+    const isNew = await this.accessService.isNewActiveExercise(userId, body.id);
+    if (isNew) {
+      await this.accessService.assertCanAddExercise(userId);
+    }
+
     await this.trackedRepo.upsert(
       {
         userId,

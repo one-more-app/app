@@ -8,6 +8,7 @@ import { IsNull, Repository } from 'typeorm';
 import { SessionEntity } from './entities/session.entity.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { UserEntity } from './entities/user.entity.js';
+import { InvitesService } from '../social/invites.service.js';
 
 type AuthUser = { id: string; email: string | null };
 type AuthSession = { accessToken: string; refreshToken: string; user: AuthUser };
@@ -23,6 +24,7 @@ export class AuthService {
     private readonly sessionsRepo: Repository<SessionEntity>,
     private jwt: JwtService,
     private config: ConfigService,
+    private invites: InvitesService,
   ) {}
 
   private async signAccessToken(user: AuthUser): Promise<string> {
@@ -64,6 +66,9 @@ export class AuthService {
     email: string;
     password: string;
     deviceId?: string;
+    inviteCode?: string;
+    firstName?: string;
+    lastName?: string;
   }): Promise<AuthSession> {
     const email = params.email.trim().toLowerCase();
     const existing = await this.usersRepo.findOne({ where: { email } });
@@ -74,11 +79,13 @@ export class AuthService {
       email,
       password: passwordHash,
     });
-    await this.profilesRepo.save({
-      userId: user.id,
-      weightKg: 75,
-      heightCm: 175,
-      gender: 'male',
+    await this.invites.createDefaultProfile(user.id, {
+      firstName: params.firstName?.trim() || null,
+      lastName: params.lastName?.trim() || null,
+    });
+    await this.invites.processInviteOnSignup({
+      newUserId: user.id,
+      inviteCode: params.inviteCode,
     });
     return await this.issueSession({
       user: { id: user.id, email: user.email },

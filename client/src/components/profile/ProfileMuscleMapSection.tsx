@@ -20,9 +20,11 @@ import { Link } from "react-router-dom";
 export function ProfileMuscleMapSection({
   leagueSummary,
   profile,
+  readOnly = false,
 }: {
   leagueSummary: GlobalLeagueSummary;
   profile: UserProfile;
+  readOnly?: boolean;
 }) {
   const { resolvedTheme } = useTheme();
   const [openMuscles, setOpenMuscles] = useState<Set<string>>(() => new Set());
@@ -87,6 +89,18 @@ export function ProfileMuscleMapSection({
                   <ul className="space-y-0.5 bg-background/50 px-2 py-2">
                     {m.exercises.map((row) => (
                       <li key={row.trackedExerciseId}>
+                        {readOnly ? (
+                          <div className="flex items-center justify-between gap-2 rounded-md bg-background px-2 py-2 text-sm">
+                            <span className="min-w-0 truncate capitalize">
+                              {row.name}
+                            </span>
+                            <Badge
+                              className={`shrink-0 text-xs ${LEAGUE_COLORS[row.league.level]}`}
+                            >
+                              {row.league.label}
+                            </Badge>
+                          </div>
+                        ) : (
                         <Link
                           to={`/exercise/${row.trackedExerciseId}`}
                           className="flex items-center justify-between gap-2 rounded-md bg-background px-2 py-2 text-sm outline-none transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring"
@@ -100,6 +114,7 @@ export function ProfileMuscleMapSection({
                             {row.league.label}
                           </Badge>
                         </Link>
+                        )}
                       </li>
                     ))}
                   </ul>

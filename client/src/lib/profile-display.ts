@@ -2,8 +2,13 @@ import type { AuthUser } from "@/lib/auth";
 import type { UserProfile } from "@/types";
 import { UI } from "@/lib/translations";
 
+type ProfileNameSource =
+  | Pick<UserProfile, "firstName" | "lastName">
+  | UserProfile
+  | undefined;
+
 export function getProfileDisplayName(
-  profile: UserProfile | undefined,
+  profile: ProfileNameSource,
   authUser: AuthUser | null,
 ): string {
   const first = profile?.firstName?.trim();
@@ -20,7 +25,7 @@ export function getProfileDisplayName(
 }
 
 export function getProfileInitials(
-  profile: UserProfile | undefined,
+  profile: ProfileNameSource,
   authUser: AuthUser | null,
 ): string {
   const first = profile?.firstName?.trim();

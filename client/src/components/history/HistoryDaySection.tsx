@@ -15,6 +15,7 @@ type HistoryDaySectionProps = {
     onEditEntry: (entry: PerformanceEntry) => void
     onDeleteEntry: (entry: PerformanceEntry) => void
     onAddEntry?: (trackedExerciseId: string, dayKey: string) => void
+    readOnly?: boolean
     surface?: 'card' | 'profile'
 }
 
@@ -27,6 +28,7 @@ export function HistoryDaySection({
     onEditEntry,
     onDeleteEntry,
     onAddEntry,
+    readOnly = false,
     surface = 'card',
 }: HistoryDaySectionProps) {
     return (
@@ -57,6 +59,7 @@ export function HistoryDaySection({
                                     ? () => onAddEntry(trackedExerciseId, dayKey)
                                     : undefined
                             }
+                            readOnly={readOnly}
                             surface={surface}
                         />
                     )

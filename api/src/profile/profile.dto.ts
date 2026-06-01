@@ -17,4 +17,8 @@ export class UpsertProfileDto {
   @IsOptional()
   @IsString()
   lastName?: string;
+
+  @IsOptional()
+  @IsString()
+  avatarUrl?: string | null;
 }

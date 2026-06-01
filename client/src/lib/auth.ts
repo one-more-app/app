@@ -64,6 +64,9 @@ export async function registerWithEmail(params: {
   email: string;
   password: string;
   deviceId?: string;
+  inviteCode?: string;
+  firstName?: string;
+  lastName?: string;
 }): Promise<AuthSession> {
   return await apiFetch<AuthSession>("/auth/register", {
     method: "POST",

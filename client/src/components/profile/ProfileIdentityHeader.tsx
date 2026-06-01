@@ -1,16 +1,21 @@
 import { useUserProfileData } from "@/hooks/use-api-data";
 import { useAuth } from "@/hooks/use-auth";
+import { upsertRemoteProfile } from "@/lib/data-api";
 import {
   fileToAvatarDataUrl,
   getProfileAvatarUrl,
   setProfileAvatarUrl,
 } from "@/lib/profile-avatar";
-import { getProfileInitials } from "@/lib/profile-display";
+import {
+  getProfileDisplayName,
+  getProfileInitials,
+} from "@/lib/profile-display";
 import { profileNestedClass, profileSectionClass } from "@/lib/profile-section";
 import { UI } from "@/lib/translations";
+import type { UserProfile } from "@/types";
 import { cn } from "@/lib/utils";
 import { Camera } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function getProfileNameParts(firstName?: string, lastName?: string) {
   return {
@@ -19,22 +24,46 @@ function getProfileNameParts(firstName?: string, lastName?: string) {
   };
 }
 
-export function ProfileIdentityHeader() {
-  const auth = useAuth();
-  const { data: profile } = useUserProfileData();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [avatarUrl, setAvatarUrl] = useState(() => getProfileAvatarUrl());
+type ProfileIdentityHeaderProps = {
+  profile?: UserProfile;
+  avatarUrl?: string | null;
+  readOnly?: boolean;
+};
 
-  const initials = getProfileInitials(profile, auth.user);
+export function ProfileIdentityHeader({
+  profile: profileProp,
+  avatarUrl: avatarUrlProp,
+  readOnly = false,
+}: ProfileIdentityHeaderProps = {}) {
+  const auth = useAuth();
+  const { data: profileFromHook } = useUserProfileData();
+  const profile = profileProp ?? profileFromHook;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUrl, setAvatarUrl] = useState(
+    () => avatarUrlProp ?? getProfileAvatarUrl(),
+  );
+
+  useEffect(() => {
+    const next = avatarUrlProp ?? profile?.avatarUrl ?? getProfileAvatarUrl();
+    if (next) {
+      setAvatarUrl(next);
+      if (!readOnly) setProfileAvatarUrl(next);
+    }
+  }, [avatarUrlProp, profile?.avatarUrl, readOnly]);
+
+  const initials = getProfileInitials(profile, readOnly ? null : auth.user);
   const { first, last } = getProfileNameParts(
     profile?.firstName,
     profile?.lastName,
   );
   const hasSplitName = Boolean(first && last);
-  const displayName =
-    [first, last].filter(Boolean).join(" ") || UI.profileDefaultName;
+  const displayName = getProfileDisplayName(
+    profile,
+    readOnly ? null : auth.user,
+  );
 
   const handleAvatarClick = () => {
+    if (readOnly) return;
     fileInputRef.current?.click();
   };
 
@@ -48,54 +77,67 @@ export function ProfileIdentityHeader() {
         const dataUrl = await fileToAvatarDataUrl(file);
         setProfileAvatarUrl(dataUrl);
         setAvatarUrl(dataUrl);
+        if (profile?.weightKg && profile.heightCm && profile.gender) {
+          await upsertRemoteProfile({
+            ...profile,
+            avatarUrl: dataUrl,
+          });
+        }
       } catch {
         // ignore — fichier illisible ou canvas indisponible
       }
     })();
   };
 
+  const avatarClassName = cn(
+    profileNestedClass,
+    "relative size-11 shrink-0 overflow-hidden p-0",
+    !readOnly &&
+      "outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring",
+  );
+
+  const avatarInner = avatarUrl ? (
+    <img src={avatarUrl} alt="" className="size-full object-cover" />
+  ) : (
+    <span
+      className="flex size-full items-center justify-center text-sm font-semibold text-primary"
+      aria-hidden
+    >
+      {initials}
+    </span>
+  );
+
   return (
     <section className={cn(profileSectionClass, "py-3")}>
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={handleAvatarClick}
-          className={cn(
-            profileNestedClass,
-            "relative size-11 shrink-0 overflow-hidden p-0",
-            "outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring",
-          )}
-          aria-label={UI.profileChangePhoto}
-        >
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt=""
-              className="size-full object-cover"
-            />
-          ) : (
+        {readOnly ? (
+          <div className={avatarClassName}>{avatarInner}</div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleAvatarClick}
+            className={avatarClassName}
+            aria-label={UI.profileChangePhoto}
+          >
+            {avatarInner}
             <span
-              className="flex size-full items-center justify-center text-sm font-semibold text-primary"
+              className="absolute inset-x-0 bottom-0 flex h-4 items-center justify-center bg-background/80 backdrop-blur-[2px]"
               aria-hidden
             >
-              {initials}
+              <Camera className="size-2.5 text-muted-foreground" />
             </span>
-          )}
-          <span
-            className="absolute inset-x-0 bottom-0 flex h-4 items-center justify-center bg-background/80 backdrop-blur-[2px]"
-            aria-hidden
-          >
-            <Camera className="size-2.5 text-muted-foreground" />
-          </span>
-        </button>
+          </button>
+        )}
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="sr-only"
-          onChange={handleFileChange}
-        />
+        {!readOnly ? (
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={handleFileChange}
+          />
+        ) : null}
 
         <div className="min-w-0 flex-1">
           <h1 className="min-w-0 leading-tight">

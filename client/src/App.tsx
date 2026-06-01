@@ -5,6 +5,9 @@ import { AuthPage } from '@/pages/AuthPage'
 import OnboardingPage from '@/pages/OnboardingPage'
 import { HistoryPage } from '@/pages/HistoryPage'
 import ProfilePage from '@/pages/ProfilePage'
+import InviteLandingPage from '@/pages/InviteLandingPage'
+import FriendsPage from '@/pages/FriendsPage'
+import FriendProfilePage from '@/pages/FriendProfilePage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCelebration'
 import { Toaster } from '@/components/ui/sonner'
@@ -12,6 +15,7 @@ import { BottomNav } from '@/components/BottomNav'
 import { cn } from '@/lib/utils'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
+import { setPendingInviteCode } from '@/lib/invite-code'
 import { initGoogleNativeSignIn } from '@/lib/google-native'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { useEffect } from 'react'
@@ -29,17 +33,15 @@ function AccessGate({ children }: { children: React.ReactNode }) {
     const auth = useAuth()
     const isAuthRoute = location.pathname === '/auth'
     const isOnboardingRoute = location.pathname === '/onboarding'
+    const isInviteRoute = location.pathname.startsWith('/invite/')
     const onboardingNeeded = needsOnboarding()
 
     if (auth.status !== 'authenticated') {
         if (onboardingNeeded) {
-            // Pendant l'onboarding, l'écran d'auth doit rester accessible
-            // pour finaliser la connexion/inscription avant de marquer onboarding done.
-            if (isOnboardingRoute || isAuthRoute) return <>{children}</>
+            if (isOnboardingRoute || isAuthRoute || isInviteRoute) return <>{children}</>
             return <Navigate to="/onboarding" replace />
         }
-        // Onboarding déjà fait => compte obligatoire: seules les routes d'auth sont accessibles.
-        if (isAuthRoute) return <>{children}</>
+        if (isAuthRoute || isInviteRoute) return <>{children}</>
         const redirect = encodeURIComponent(
             `${location.pathname}${location.search}${location.hash}`,
         )
@@ -117,6 +119,34 @@ function App() {
     }, [resolvedTheme])
 
     useEffect(() => {
+        if (!Capacitor.isNativePlatform()) return
+
+        const handlerPromise = CapacitorApp.addListener('appUrlOpen', (event) => {
+            try {
+                const url = new URL(event.url)
+                const hash = url.hash.replace(/^#\/?/, '')
+                const inviteMatch = hash.match(/^invite\/([^/?#]+)/)
+                if (inviteMatch?.[1]) {
+                    setPendingInviteCode(inviteMatch[1])
+                    window.location.hash = `#/invite/${inviteMatch[1]}`
+                    return
+                }
+                const pathInvite = url.pathname.match(/\/invite\/([^/]+)/)
+                if (pathInvite?.[1]) {
+                    setPendingInviteCode(pathInvite[1])
+                    window.location.hash = `#/invite/${pathInvite[1]}`
+                }
+            } catch {
+                // ignore malformed URLs
+            }
+        })
+
+        return () => {
+            handlerPromise.then((handle) => handle.remove())
+        }
+    }, [])
+
+    useEffect(() => {
         if (Capacitor.getPlatform() !== 'android') return
         const handlerPromise = CapacitorApp.addListener(
             'backButton',
@@ -157,6 +187,9 @@ function App() {
                                 <Route path="/exercises" element={<ExerciseListPage />} />
                                 <Route path="/exercise/:id" element={<ExerciseDetailPage />} />
                                 <Route path="/settings" element={<SettingsPage />} />
+                                <Route path="/invite/:code" element={<InviteLandingPage />} />
+                                <Route path="/friends" element={<FriendsPage />} />
+                                <Route path="/friends/:userId" element={<FriendProfilePage />} />
                             </Routes>
                         </BottomNavHost>
                     </AccessGate>

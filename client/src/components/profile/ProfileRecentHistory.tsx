@@ -14,9 +14,7 @@ import {
 } from "@/lib/history-entries";
 import { computeLeagueFromPB, notifyPerfMilestones } from "@/lib/perf-notifications";
 import { notifyXpGrants } from "@/lib/xp-notifications";
-import {
-  profileSectionClass,
-} from "@/lib/profile-section";
+import { profileSectionClass } from "@/lib/profile-section";
 import {
   deletePerformanceAndWait,
   getPersonalBest,
@@ -24,15 +22,41 @@ import {
   updatePerformanceAndWait,
 } from "@/lib/storage";
 import { UI } from "@/lib/translations";
-import type { PerformanceEntry } from "@/types";
+import type { PerformanceEntry, TrackedExercise, UserProfile } from "@/types";
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-export function ProfileRecentHistory() {
-  const { data: allEntries = [] } = usePerformanceEntriesData();
-  const { data: tracked = [] } = useTrackedExercisesData();
-  const { data: profile } = useUserProfileData();
+type ProfileRecentHistoryProps = {
+  entries?: PerformanceEntry[];
+  tracked?: TrackedExercise[];
+  profile?: UserProfile;
+  readOnly?: boolean;
+};
+
+export function ProfileRecentHistory({
+  entries: entriesProp,
+  tracked: trackedProp,
+  profile: profileProp,
+  readOnly = false,
+}: ProfileRecentHistoryProps = {}) {
+  const { data: allEntriesFromHook = [] } = usePerformanceEntriesData();
+  const { data: trackedFromHook = [] } = useTrackedExercisesData();
+  const { data: profileFromHook } = useUserProfileData();
   const refreshAfterPerfChange = usePerformanceDataRefresh();
+
+  const allEntries = entriesProp ?? allEntriesFromHook;
+  const tracked = trackedProp ?? trackedFromHook;
+  const profile = profileProp ?? profileFromHook;
+
+  const resolveExercise = useCallback(
+    (trackedId: string) => {
+      if (trackedProp) {
+        return trackedProp.find((exercise) => exercise.id === trackedId);
+      }
+      return resolveTrackedExercise(trackedId);
+    },
+    [trackedProp],
+  );
 
   const entries = useMemo(
     () =>
@@ -73,11 +97,11 @@ export function ProfileRecentHistory() {
   } | null>(null);
 
   const editExercise = editEntry
-    ? resolveTrackedExercise(editEntry.trackedExerciseId)
+    ? resolveExercise(editEntry.trackedExerciseId)
     : undefined;
 
   const addExercise = addPerf
-    ? resolveTrackedExercise(addPerf.trackedExerciseId)
+    ? resolveExercise(addPerf.trackedExerciseId)
     : undefined;
 
   const addInitialWeightReps = useMemo(() => {
@@ -125,12 +149,14 @@ export function ProfileRecentHistory() {
           <h2 className="text-sm font-medium text-foreground">
             {UI.profileRecentHistory}
           </h2>
-          <Link
-            to="/history"
-            className="text-xs font-medium text-primary underline-offset-2 hover:underline"
-          >
-            {UI.profileHistorySeeAll}
-          </Link>
+          {!readOnly ? (
+            <Link
+              to="/history"
+              className="text-xs font-medium text-primary underline-offset-2 hover:underline"
+            >
+              {UI.profileHistorySeeAll}
+            </Link>
+          ) : null}
         </div>
 
         <ul className="space-y-8">
@@ -140,22 +166,28 @@ export function ProfileRecentHistory() {
               dayKey={dayKey}
               surface="profile"
               exercises={exercises}
-              resolveExercise={resolveTrackedExercise}
+              resolveExercise={resolveExercise}
               isTrackedActive={(id) =>
-                tracked.some((exercise) => exercise.id === id && !exercise.deletedAt)
+                tracked.some(
+                  (exercise) => exercise.id === id && !exercise.deletedAt,
+                )
               }
               entryInsights={entryInsights}
-              onEditEntry={setEditEntry}
-              onDeleteEntry={handleDeleteEntry}
-              onAddEntry={(trackedExerciseId, dayKey) =>
-                setAddPerf({ trackedExerciseId, date: dayKey })
+              readOnly={readOnly}
+              onEditEntry={readOnly ? () => {} : setEditEntry}
+              onDeleteEntry={readOnly ? () => {} : handleDeleteEntry}
+              onAddEntry={
+                readOnly
+                  ? undefined
+                  : (trackedExerciseId, day) =>
+                      setAddPerf({ trackedExerciseId, date: day })
               }
             />
           ))}
         </ul>
       </section>
 
-      {editEntry && editExercise ? (
+      {!readOnly && editEntry && editExercise ? (
         <AddPerfDrawer
           open
           onOpenChange={(open) => !open && setEditEntry(null)}
@@ -179,7 +211,7 @@ export function ProfileRecentHistory() {
         />
       ) : null}
 
-      {addPerf && addExercise && profile ? (
+      {!readOnly && addPerf && addExercise && profile ? (
         <AddPerfDrawer
           open
           onOpenChange={(open) => !open && setAddPerf(null)}

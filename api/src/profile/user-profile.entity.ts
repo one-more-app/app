@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import type { Relation } from 'typeorm';
 import { UserEntity } from '../auth/entities/user.entity.js';
+import { AccessTier } from '../social/entities/access-tier.enum.js';
 
 @Entity({ name: 'user_profiles' })
 export class UserProfileEntity {
@@ -35,6 +36,19 @@ export class UserProfileEntity {
 
   @Column({ type: 'text', nullable: true })
   lastName!: string | null;
+
+  @Column({ type: 'text', nullable: true, unique: true })
+  inviteCode!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  avatarUrl!: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: AccessTier,
+    default: AccessTier.LIMITED,
+  })
+  accessTier!: AccessTier;
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;

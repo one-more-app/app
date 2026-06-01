@@ -25,6 +25,7 @@ type HistoryExerciseCollapsibleProps = {
     onDeleteEntry: (entry: PerformanceEntry) => void
     /** Ouvre l’ajout d’une perf pour ce jour et cet exercice (ex. depuis l’historique global). */
     onAddEntry?: () => void
+    readOnly?: boolean
     /** Sur le profil : fond secondary au lieu d’une Card imbriquée. */
     surface?: 'card' | 'profile'
 }
@@ -39,6 +40,7 @@ export function HistoryExerciseCollapsible({
     onEditEntry,
     onDeleteEntry,
     onAddEntry,
+    readOnly = false,
     surface = 'card',
 }: HistoryExerciseCollapsibleProps) {
     const title = exercise?.name ?? UI.exerciseNotFound
@@ -126,11 +128,14 @@ export function HistoryExerciseCollapsible({
                             className="px-3 pb-3 pt-2"
                             entries={items}
                             entryInsights={entryInsights}
-                            canEdit={canEdit}
+                            canEdit={canEdit && !readOnly}
+                            readOnly={readOnly}
                             onEditEntry={onEditEntry}
                             onDeleteEntry={onDeleteEntry}
                             onAddSet={
-                                canEdit && onAddEntry ? onAddEntry : undefined
+                                canEdit && !readOnly && onAddEntry
+                                    ? onAddEntry
+                                    : undefined
                             }
                         />
                     </Collapsible.Content>

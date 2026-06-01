@@ -12,9 +12,11 @@ import { OAuthAccountEntity } from './entities/oauth-account.entity.js';
 import { SessionEntity } from './entities/session.entity.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { UserEntity } from './entities/user.entity.js';
+import { SocialModule } from '../social/social.module.js';
 
 @Module({
   imports: [
+    SocialModule,
     TypeOrmModule.forFeature([
       UserEntity,
       UserProfileEntity,

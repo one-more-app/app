@@ -3,3 +3,4 @@ export * from './xp-levels.js';
 export * from './personal-best.js';
 export * from './xp-config.js';
 export * from './streak-dates.js';
+export * from './access-config.js';

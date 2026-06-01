@@ -18,8 +18,10 @@ const TOP_VISIBLE = 5;
 
 export function ProfileTopExercisesList({
   ranked,
+  readOnly = false,
 }: {
   ranked: TopExerciseByLeague[];
+  readOnly?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -36,12 +38,8 @@ export function ProfileTopExercisesList({
           const showGif =
             !row.exercise.isCustom && Boolean(row.exercise.gifUrl?.trim());
 
-          return (
-          <li key={row.exercise.id}>
-            <Link
-              to={`/exercise/${row.exercise.id}`}
-              className={`flex items-center gap-2.5 px-3 py-2.5 ${profileNestedInteractiveClass}`}
-            >
+          const inner = (
+            <>
               <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background text-xs font-bold tabular-nums text-muted-foreground">
                 {index + 1}
               </span>
@@ -76,8 +74,26 @@ export function ProfileTopExercisesList({
               >
                 {row.league.label}
               </Badge>
-            </Link>
-          </li>
+            </>
+          );
+
+          return (
+            <li key={row.exercise.id}>
+              {readOnly ? (
+                <div
+                  className={`flex items-center gap-2.5 px-3 py-2.5 ${profileNestedInteractiveClass}`}
+                >
+                  {inner}
+                </div>
+              ) : (
+                <Link
+                  to={`/exercise/${row.exercise.id}`}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 ${profileNestedInteractiveClass}`}
+                >
+                  {inner}
+                </Link>
+              )}
+            </li>
           );
         })}
       </ol>

@@ -6,12 +6,14 @@ import {
   fetchTrackedExercisesWithPerformance,
   fetchUserActivityMonth,
   fetchUserProgress,
+  upsertRemoteProfile,
   type TrackedExerciseWithPerformance,
 } from "@/lib/data-api";
 import { mergePerformanceEntriesById } from "@/lib/activity-from-performances";
 import { getUserProgress, setUserProgress } from "@/lib/progress-cache";
 import {
   getAllPerformanceEntries,
+  getUserProfile,
   setPerformanceEntries,
   setTrackedExercises,
   setUserProfile,
@@ -96,11 +98,6 @@ export function useProfileDataRefresh() {
   }, [mutate]);
 }
 
-const DEFAULT_PROFILE: UserProfile = {
-  weightKg: 75,
-  heightCm: 175,
-  gender: "male",
-};
 
 export function useTrackedExercisesData() {
   const auth = useAuth();
@@ -168,26 +165,41 @@ export function useUserProgressData() {
   );
 }
 
+function mergeRemoteProfile(
+  remote: UserProfile | null,
+  local: UserProfile,
+): UserProfile {
+  if (!remote) return local;
+  return {
+    weightKg: remote.weightKg,
+    heightCm: remote.heightCm,
+    gender: remote.gender,
+    firstName: remote.firstName ?? local.firstName,
+    lastName: remote.lastName ?? local.lastName,
+    avatarUrl: remote.avatarUrl ?? local.avatarUrl,
+  };
+}
+
 export function useUserProfileData() {
   const auth = useAuth();
   return useSWR<UserProfile>(
     auth.status === "authenticated" ? SWR_KEYS.profile : null,
     async () => {
       const remote = await fetchRemoteProfile();
-      const profile: UserProfile = remote
-        ? {
-            weightKg: remote.weightKg,
-            heightCm: remote.heightCm,
-            gender: remote.gender,
-            firstName: remote.firstName ?? undefined,
-            lastName: remote.lastName ?? undefined,
-          }
-        : DEFAULT_PROFILE;
+      const local = getUserProfile();
+      const profile = mergeRemoteProfile(remote, local);
+      const needsNameSync =
+        remote &&
+        (profile.firstName || profile.lastName) &&
+        (!remote.firstName || !remote.lastName);
       setUserProfile(profile, { silent: true });
+      if (needsNameSync) {
+        void upsertRemoteProfile(profile).catch(() => {});
+      }
       return profile;
     },
     {
-      fallbackData: DEFAULT_PROFILE,
+      fallbackData: getUserProfile(),
     },
   );
 }

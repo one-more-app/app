@@ -16,16 +16,24 @@ import {
 } from "@/lib/profile-section";
 import { leagueLevelToFrenchLabel } from "@/lib/strength-standards";
 import { UI } from "@/lib/translations";
+import type { PerformanceEntry, UserProgressState } from "@/types";
 import { Flame, Medal, Trophy } from "lucide-react";
 import { useMemo } from "react";
 
 export function ProfileHighlightsCard({
   leagueSummary,
+  progress: progressProp,
+  performanceEntries: performanceEntriesProp,
 }: {
   leagueSummary: GlobalLeagueSummary | null;
+  progress?: UserProgressState;
+  performanceEntries?: PerformanceEntry[];
 }) {
-  const { data: progress } = useUserProgressData();
-  const { data: performanceEntries } = usePerformanceEntriesData();
+  const { data: progressFromHook } = useUserProgressData();
+  const { data: performanceEntriesFromHook } = usePerformanceEntriesData();
+  const progress = progressProp ?? progressFromHook;
+  const performanceEntries =
+    performanceEntriesProp ?? performanceEntriesFromHook ?? [];
   const monthKey = getCurrentMonthKey();
 
   const pct =
@@ -37,10 +45,12 @@ export function ProfileHighlightsCard({
       : 0;
 
   const { recordsThisMonth, activeDaysThisMonth } = useMemo(() => {
-    const entries = performanceEntries ?? [];
     return {
-      recordsThisMonth: countPersonalRecordsInMonth(entries, monthKey),
-      activeDaysThisMonth: countActiveDaysInMonth(entries, monthKey),
+      recordsThisMonth: countPersonalRecordsInMonth(
+        performanceEntries,
+        monthKey,
+      ),
+      activeDaysThisMonth: countActiveDaysInMonth(performanceEntries, monthKey),
     };
   }, [performanceEntries, monthKey]);
 
