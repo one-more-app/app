@@ -13,7 +13,11 @@ export function isPerformanceOnLocalDay(
   entry: PerformanceEntry,
   dayKey = getLocalDateKey(),
 ): boolean {
-  if (entry.date === dayKey) return true;
+  // Si `date` est canonique (YYYY-MM-DD), on ne doit PAS retomber sur `createdAt`.
+  // Sinon des perfs anciennes peuvent apparaître "aujourd'hui" après remap/sync.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) {
+    return entry.date === dayKey;
+  }
   const createdKey = getLocalDateKey(new Date(entry.createdAt));
   return createdKey === dayKey;
 }

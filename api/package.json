@@ -22,6 +22,7 @@
     "seed:exercises": "node --loader ts-node/esm src/database/seed-exercises.ts",
     "seed:exercises:prod": "node dist/database/seed-exercises.js",
     "import:user-local-data": "node --loader ts-node/esm src/database/import-user-local-data.ts",
+    "import:user-local-data:prod": "node dist/database/import-user-local-data.js",
     "sync:exercises-catalog": "mkdir -p data && cp ../client/src/data/popular-exercises.json data/popular-exercises.json",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:watch": "jest --watch",
