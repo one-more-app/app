@@ -237,7 +237,7 @@
 
   .sticky-top-safe {
     position: sticky;
-    top: var(--safe-top);
+    top: 0;
   }
 }
 
