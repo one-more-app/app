@@ -81,7 +81,7 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
         location.pathname === '/profile' ||
         location.pathname === '/stats' ||
         location.pathname === '/history' ||
-        location.pathname === '/settings'
+        location.pathname === '/friends'
 
     return (
         <div className="flex min-h-0 flex-1 flex-col">
@@ -104,7 +104,6 @@ function SafeAreaTopScrim() {
         pathname === '/settings' ||
         pathname === '/exercises' ||
         pathname.startsWith('/exercise/') ||
-        pathname === '/friends' ||
         pathname.startsWith('/friends/') ||
         pathname.startsWith('/invite/')
     return (

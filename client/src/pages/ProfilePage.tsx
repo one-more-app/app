@@ -1,6 +1,5 @@
 import { ProfileView } from "@/components/profile/ProfileView";
 import { ProfileSocialActions } from "@/components/profile/ProfileSocialActions";
-import { Button } from "@/components/ui/button";
 import {
   usePerformanceEntriesData,
   useUserProfileData,
@@ -17,9 +16,7 @@ import {
 } from "@/lib/profile-highlights";
 import { getProfileDisplayName } from "@/lib/profile-display";
 import { UI } from "@/lib/translations";
-import { Users } from "lucide-react";
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
 
 export default function ProfilePage() {
   const auth = useAuth();
@@ -73,12 +70,6 @@ export default function ProfilePage() {
             showUnlockHint={isLimited}
             validatedInvitesCount={access?.validatedInvitesCount ?? 0}
           />
-          <Button asChild variant="outline" size="sm" className="w-full">
-            <Link to="/friends">
-              <Users className="mr-2 size-4" />
-              {UI.friendsTitle}
-            </Link>
-          </Button>
         </>
       }
     />

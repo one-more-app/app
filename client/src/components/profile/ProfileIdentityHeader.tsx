@@ -14,8 +14,10 @@ import { profileNestedClass, profileSectionClass } from "@/lib/profile-section";
 import { UI } from "@/lib/translations";
 import type { UserProfile } from "@/types";
 import { cn } from "@/lib/utils";
-import { Camera } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Camera, Settings } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 function getProfileNameParts(firstName?: string, lastName?: string) {
   return {
@@ -139,8 +141,8 @@ export function ProfileIdentityHeader({
           />
         ) : null}
 
-        <div className="min-w-0 flex-1">
-          <h1 className="min-w-0 leading-tight">
+        <div className="flex min-w-0 flex-1 items-start justify-between gap-2">
+          <h1 className="min-w-0 flex-1 leading-tight">
             {hasSplitName ? (
               <>
                 <span className="block truncate text-base font-semibold tracking-tight">
@@ -156,6 +158,18 @@ export function ProfileIdentityHeader({
               </span>
             )}
           </h1>
+          {!readOnly ? (
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="size-9 shrink-0 text-muted-foreground"
+            >
+              <Link to="/settings" aria-label={UI.settings}>
+                <Settings className="size-5" />
+              </Link>
+            </Button>
+          ) : null}
         </div>
       </div>
     </section>

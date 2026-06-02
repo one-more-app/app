@@ -1,4 +1,4 @@
-import { History, Home, Settings, User } from 'lucide-react'
+import { History, Home, User, Users } from 'lucide-react'
 import type { JSX } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
@@ -13,7 +13,7 @@ const NAV_ITEMS: Array<{
         { to: '/home', label: 'Accueil', Icon: Home },
         { to: '/profile', label: UI.profile, Icon: User },
         { to: '/history', label: UI.history, Icon: History },
-        { to: '/settings', label: UI.settings, Icon: Settings },
+        { to: '/friends', label: UI.friendsTitle, Icon: Users },
     ]
 
 function BottomNav() {

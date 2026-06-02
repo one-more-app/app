@@ -1,4 +1,3 @@
-import { BackHeader } from "@/components/BackHeader";
 import { Button } from "@/components/ui/button";
 import { ACCESS_SWR_KEY, useAccess } from "@/hooks/use-access";
 import {
@@ -133,7 +132,11 @@ export default function FriendsPage() {
 
   return (
     <div className="min-h-screen-app bg-background">
-      <BackHeader title={UI.friendsTitle} />
+      <header className="sticky-top-safe z-100 border-b border-border bg-card px-4 py-3">
+        <div className="mx-auto max-w-2xl">
+          <h1 className="text-lg font-semibold">{UI.friendsTitle}</h1>
+        </div>
+      </header>
       <main className="mx-auto max-w-2xl space-y-6 p-4">
         {access?.accessTier === "limited" ? (
           <p className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
