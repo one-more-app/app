@@ -3,6 +3,7 @@ import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCele
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import { useTheme } from '@/hooks/use-theme'
+import { extractInviteCodeFromAttribution, setupAppsFlyer } from '@/lib/appsflyer'
 import { initNativeSocialSignIn } from '@/lib/oauth-native'
 import { setPendingInviteCode } from '@/lib/invite-code'
 import { needsOnboarding } from '@/lib/storage'
@@ -156,6 +157,8 @@ function App() {
 
         scheduleSafeAreaCssSync()
 
+        void setupAppsFlyer()
+
         void initNativeSocialSignIn().catch(() => {
             /* Config Google manquante ou plugin indisponible — login au tap. */
         })
@@ -174,6 +177,14 @@ function App() {
                 if (pathInvite?.[1]) {
                     setPendingInviteCode(pathInvite[1])
                     window.location.hash = `#/invite/${pathInvite[1]}`
+                    return
+                }
+                const fromQuery = extractInviteCodeFromAttribution(
+                    Object.fromEntries(url.searchParams.entries()),
+                )
+                if (fromQuery) {
+                    setPendingInviteCode(fromQuery)
+                    window.location.hash = `#/invite/${fromQuery}`
                 }
             } catch {
                 // ignore malformed URLs

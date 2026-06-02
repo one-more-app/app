@@ -107,18 +107,18 @@ export async function fetchFriendProfile(userId: string): Promise<FriendProfile>
   return await apiFetch<FriendProfile>(`/social/friends/${userId}/profile`);
 }
 
-export async function shareInviteLink(link: InviteLink): Promise<"shared" | "copied"> {
-  const text = `Rejoins-moi sur One More pour suivre ta muscu ! ${link.url}`;
+export async function shareInviteUrl(url: string): Promise<"shared" | "copied"> {
+  const text = `Rejoins-moi sur One More pour suivre ta muscu ! ${url}`;
   if (typeof navigator !== "undefined" && navigator.share) {
     try {
-      await navigator.share({ title: "One More", text, url: link.url });
+      await navigator.share({ title: "One More", text, url });
       return "shared";
     } catch {
       // fallback copy
     }
   }
   if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(link.url);
+    await navigator.clipboard.writeText(url);
     return "copied";
   }
   throw new Error("Partage non disponible");

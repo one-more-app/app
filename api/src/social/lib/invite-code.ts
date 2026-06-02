@@ -12,7 +12,27 @@ export function generateInviteCode(): string {
   return code.toLowerCase();
 }
 
+/** URL OneLink AppsFlyer (deferred + direct deep link). */
+export function buildAppsFlyerInviteUrl(code: string): string | null {
+  const domain = process.env.APPSFLYER_ONELINK_DOMAIN?.replace(
+    /^https?:\/\//,
+    '',
+  ).replace(/\/+$/, '');
+  const templateId = process.env.APPSFLYER_ONELINK_ID?.replace(/^\//, '');
+  if (!domain || !templateId) return null;
+
+  const normalized = code.trim().toLowerCase();
+  const params = new URLSearchParams({
+    deep_link_value: normalized,
+    pid: 'friend_invite',
+  });
+  return `https://${domain}/${templateId}?${params.toString()}`;
+}
+
 export function buildInviteUrl(code: string, baseUrl?: string): string {
+  const oneLink = buildAppsFlyerInviteUrl(code);
+  if (oneLink) return oneLink;
+
   const origin =
     baseUrl?.replace(/\/+$/, '') ??
     process.env.PUBLIC_APP_URL?.replace(/\/+$/, '') ??

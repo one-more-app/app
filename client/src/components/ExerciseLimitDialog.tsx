@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useAuth } from "@/hooks/use-auth";
 import { inviteFriend } from "@/lib/invite-friend";
 import { UI } from "@/lib/translations";
 import { EXERCISE_LIMIT_LIMITED } from "@one-more/shared/access-config";
@@ -24,13 +25,14 @@ export function ExerciseLimitDialog({
   onOpenChange,
   activeCount = EXERCISE_LIMIT_LIMITED,
 }: ExerciseLimitDialogProps) {
+  const auth = useAuth();
   const [busy, setBusy] = useState(false);
 
   const handleInvite = () => {
     void (async () => {
       setBusy(true);
       try {
-        const ok = await inviteFriend();
+        const ok = await inviteFriend(auth.user?.id);
         if (ok) onOpenChange(false);
       } finally {
         setBusy(false);

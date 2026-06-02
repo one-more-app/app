@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { fetchInviteLink, shareInviteLink } from "@/lib/social-api";
+import { useAuth } from "@/hooks/use-auth";
+import { resolveInviteShareUrl } from "@/lib/invite-link";
+import { fetchInviteLink, shareInviteUrl } from "@/lib/social-api";
 import { shareProfilePng } from "@/lib/share-profile";
 import type { ProfileSharePayload } from "@/lib/share-profile";
 import { UI } from "@/lib/translations";
@@ -20,6 +22,7 @@ export function ProfileSocialActions({
   showUnlockHint = false,
   validatedInvitesCount = 0,
 }: ProfileSocialActionsProps) {
+  const auth = useAuth();
   const [busy, setBusy] = useState<"share" | "invite" | null>(null);
 
   const handleShareProfile = () => {
@@ -48,7 +51,11 @@ export function ProfileSocialActions({
       setBusy("invite");
       try {
         const link = await fetchInviteLink();
-        const result = await shareInviteLink(link);
+        const shareUrl = await resolveInviteShareUrl(
+          link,
+          auth.user?.id,
+        );
+        const result = await shareInviteUrl(shareUrl);
         toast.success(
           result === "copied" ? UI.inviteLinkCopied : UI.inviteLinkShared,
         );

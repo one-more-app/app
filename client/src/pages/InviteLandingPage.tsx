@@ -5,6 +5,7 @@ import {
   fetchInvitePreview,
   requestFriendFromInvite,
 } from "@/lib/social-api";
+import { extractInviteCodeFromAttribution } from "@/lib/appsflyer";
 import {
   consumePendingInviteCode,
   setPendingInviteCode,
@@ -24,6 +25,16 @@ export default function InviteLandingPage() {
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (code) return;
+    const fromQuery = extractInviteCodeFromAttribution(
+      Object.fromEntries(new URLSearchParams(window.location.search).entries()),
+    );
+    if (fromQuery) {
+      navigate(`/invite/${fromQuery}`, { replace: true });
+    }
+  }, [code, navigate]);
 
   useEffect(() => {
     if (!code) return;

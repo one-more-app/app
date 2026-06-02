@@ -8,6 +8,7 @@ import {
   registerWithEmail,
   writeStoredSession,
 } from "@/lib/auth";
+import { syncAppsFlyerCustomerUserId } from "@/lib/appsflyer";
 import { consumePendingInviteCode } from "@/lib/invite-code";
 import { ApiError } from "@/lib/api";
 import { ACCESS_SWR_KEY } from "@/lib/social-api";
@@ -64,11 +65,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     writeStoredSession(stored);
     setState(sessionToState(stored));
+    void syncAppsFlyerCustomerUserId(session.user.id);
   }, []);
 
   const clearSession = useCallback(() => {
     clearStoredSession();
     setState({ status: "anonymous", user: null, accessToken: null, refreshToken: null });
+    void syncAppsFlyerCustomerUserId(null);
   }, []);
 
   const clearError = useCallback(() => setLastError(null), []);

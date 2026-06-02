@@ -38,6 +38,8 @@ Variables **obligatoires** dans chaque `.env.*.capacitor` :
 
 Ne pas confondre : `api.onemore.app` (sans tiret) ≠ `api.one-more.app` (prod).
 
+Optionnel — invitations amis (AppsFlyer OneLink) : `VITE_APPSFLYER_DEV_KEY`, `VITE_APPSFLYER_APP_ID`, `VITE_APPSFLYER_ONELINK_ID`, `VITE_APPSFLYER_ONELINK_DOMAIN`. Config dashboard + App Links / Universal Links : [`docs/appsflyer-setup.md`](../../docs/appsflyer-setup.md).
+
 ## Commandes (depuis `client/`)
 
 ```bash
