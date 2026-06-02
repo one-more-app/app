@@ -43,6 +43,15 @@ export class UserProfileEntity {
   @Column({ type: 'text', nullable: true })
   avatarUrl!: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  username!: string | null;
+
+  @Column({ type: 'boolean', default: true })
+  searchableByName!: boolean;
+
+  @Column({ type: 'boolean', default: true })
+  discoverableByUsername!: boolean;
+
   @Column({
     type: 'enum',
     enum: AccessTier,

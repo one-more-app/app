@@ -2,6 +2,7 @@ import { BottomNav } from '@/components/BottomNav'
 import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCelebration'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
+import { RealtimeProvider } from '@/hooks/use-realtime'
 import { useTheme } from '@/hooks/use-theme'
 import { extractInviteCodeFromAttribution, setupAppsFlyer } from '@/lib/appsflyer'
 import { initNativeSocialSignIn } from '@/lib/oauth-native'
@@ -13,8 +14,10 @@ import { cn } from '@/lib/utils'
 import { AuthPage } from '@/pages/AuthPage'
 import { ExerciseDetailPage } from '@/pages/ExerciseDetailPage'
 import { ExerciseListPage } from '@/pages/ExerciseListPage'
+import ChatPage from '@/pages/ChatPage'
 import FriendProfilePage from '@/pages/FriendProfilePage'
 import FriendsPage from '@/pages/FriendsPage'
+import UserPreviewPage from '@/pages/UserPreviewPage'
 import { HistoryPage } from '@/pages/HistoryPage'
 import HomePage from '@/pages/HomePage'
 import InviteLandingPage from '@/pages/InviteLandingPage'
@@ -82,7 +85,8 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
         location.pathname === '/profile' ||
         location.pathname === '/stats' ||
         location.pathname === '/history' ||
-        location.pathname === '/friends'
+        location.pathname === '/friends' ||
+        location.pathname.startsWith('/friends/preview')
 
     return (
         <div className="flex min-h-0 flex-1 flex-col">
@@ -105,7 +109,9 @@ function SafeAreaTopScrim() {
         pathname === '/settings' ||
         pathname === '/exercises' ||
         pathname.startsWith('/exercise/') ||
-        pathname.startsWith('/friends/') ||
+        pathname.startsWith('/friends/chat/') ||
+        pathname.startsWith('/friends/preview/') ||
+        (pathname.startsWith('/friends/') && pathname !== '/friends') ||
         pathname.startsWith('/invite/')
     return (
         <div
@@ -222,6 +228,7 @@ function App() {
                 <Toaster />
                 <LeaguePromotionCelebrationHost />
                 <AuthProvider>
+                    <RealtimeProvider>
                     <AccessGate>
                         <BottomNavHost>
                             <Routes>
@@ -242,11 +249,14 @@ function App() {
                                 <Route path="/settings" element={<SettingsPage />} />
                                 <Route path="/invite/:code" element={<InviteLandingPage />} />
                                 <Route path="/friends" element={<FriendsPage />} />
+                                <Route path="/friends/chat/:conversationId" element={<ChatPage />} />
+                                <Route path="/friends/preview/:userId" element={<UserPreviewPage />} />
                                 <Route path="/friends/:userId" element={<FriendProfilePage />} />
 
                             </Routes>
                         </BottomNavHost>
                     </AccessGate>
+                    </RealtimeProvider>
                 </AuthProvider>
             </div>
         </HashRouter>

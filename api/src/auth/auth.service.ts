@@ -69,6 +69,7 @@ export class AuthService {
     inviteCode?: string;
     firstName?: string;
     lastName?: string;
+    username: string;
   }): Promise<AuthSession> {
     const email = params.email.trim().toLowerCase();
     const existing = await this.usersRepo.findOne({ where: { email } });
@@ -82,6 +83,8 @@ export class AuthService {
     await this.invites.createDefaultProfile(user.id, {
       firstName: params.firstName?.trim() || null,
       lastName: params.lastName?.trim() || null,
+      username: params.username,
+      email: user.email,
     });
     await this.invites.processInviteOnSignup({
       newUserId: user.id,
@@ -106,6 +109,8 @@ export class AuthService {
     if (!user || !user.password) throw new UnauthorizedException('Identifiants invalides');
     const ok = await argon2.verify(user.password, params.password);
     if (!ok) throw new UnauthorizedException('Identifiants invalides');
+
+    await this.invites.ensureUsername(user.id);
 
     return await this.issueSession({
       user: { id: user.id, email: user.email },

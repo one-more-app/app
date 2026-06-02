@@ -157,6 +157,11 @@ export function ProfileIdentityHeader({
                 {displayName}
               </span>
             )}
+            {profile?.username ? (
+              <span className="mt-0.5 block truncate text-sm text-muted-foreground">
+                @{profile.username}
+              </span>
+            ) : null}
           </h1>
           {!readOnly ? (
             <Button

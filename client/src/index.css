@@ -395,3 +395,19 @@
     animation: none;
   }
 }
+
+/* Toasts Sonner — alignés sur la safe area et la largeur mobile */
+[data-sonner-toaster] {
+  font-family: inherit;
+  --width: min(100%, 17rem);
+}
+
+[data-sonner-toast][data-styled="true"] {
+  padding: 0.5rem 0.75rem !important;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+}
+
+[data-sonner-toaster][data-x-position="center"] {
+  left: calc(50% + (var(--safe-left) - var(--safe-right)) / 2);
+}

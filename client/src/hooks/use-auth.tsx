@@ -26,6 +26,7 @@ type AuthContextValue = AuthState & {
   register: (params: {
     email: string;
     password: string;
+    username: string;
     firstName?: string;
     lastName?: string;
   }) => Promise<void>;
@@ -87,11 +88,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async ({
       email,
       password,
+      username,
       firstName,
       lastName,
     }: {
       email: string;
       password: string;
+      username: string;
       firstName?: string;
       lastName?: string;
     }) => {
@@ -101,6 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const session = await registerWithEmail({
           email,
           password,
+          username,
           inviteCode,
           firstName: firstName?.trim() || undefined,
           lastName: lastName?.trim() || undefined,

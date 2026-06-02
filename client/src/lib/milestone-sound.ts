@@ -276,6 +276,9 @@ function playStreakVariant(bus: SoundBus): void {
   })
 }
 
+/** Multiplicateur global appliqué aux modales de célébration. */
+const MASTER_VOLUME = 1.5
+
 const MASTER_BY_KIND: Record<CelebrationSoundKind, number> = {
   record: 0.42,
   league: 0.48,
@@ -305,7 +308,7 @@ async function playSyntheticCelebrationSound(
   }
 
   const master = ctx.createGain()
-  master.gain.value = MASTER_BY_KIND[kind]
+  master.gain.value = MASTER_BY_KIND[kind] * MASTER_VOLUME
   master.connect(ctx.destination)
 
   const bus: SoundBus = { ctx, master, t: ctx.currentTime }

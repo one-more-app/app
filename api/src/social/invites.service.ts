@@ -13,6 +13,14 @@ import {
   buildInviteUrl,
   generateInviteCode,
 } from './lib/invite-code.js';
+import { UsernameService } from './username.service.js';
+
+export type CreateProfileParams = {
+  firstName?: string | null;
+  lastName?: string | null;
+  username?: string | null;
+  email?: string | null;
+};
 
 @Injectable()
 export class InvitesService {
@@ -21,6 +29,7 @@ export class InvitesService {
     private readonly profilesRepo: Repository<UserProfileEntity>,
     @InjectRepository(FriendshipEntity)
     private readonly friendshipsRepo: Repository<FriendshipEntity>,
+    private readonly usernameService: UsernameService,
   ) {}
 
   async ensureInviteCode(userId: string): Promise<string> {
@@ -66,8 +75,15 @@ export class InvitesService {
     });
   }
 
-  async createDefaultProfile(userId: string, overrides?: Partial<UserProfileEntity>) {
+  async createDefaultProfile(userId: string, params?: CreateProfileParams) {
     const inviteCode = await this.generateUniqueInviteCode();
+    const username = await this.usernameService.resolveUsernameForSignup({
+      requestedUsername: params?.username,
+      firstName: params?.firstName ?? null,
+      lastName: params?.lastName ?? null,
+      email: params?.email ?? null,
+    });
+
     return await this.profilesRepo.save({
       userId,
       weightKg: 75,
@@ -75,8 +91,16 @@ export class InvitesService {
       gender: 'male',
       accessTier: AccessTier.LIMITED,
       inviteCode,
-      ...overrides,
+      username,
+      searchableByName: true,
+      discoverableByUsername: true,
+      firstName: params?.firstName ?? null,
+      lastName: params?.lastName ?? null,
     });
+  }
+
+  async ensureUsername(userId: string): Promise<string> {
+    return await this.usernameService.ensureUsername(userId);
   }
 
   async processInviteOnSignup(params: {

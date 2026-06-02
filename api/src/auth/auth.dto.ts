@@ -1,4 +1,11 @@
-import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class IdentifyDto {
   @IsEmail()
@@ -28,6 +35,15 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   lastName?: string;
+
+  @IsString()
+  @MinLength(3)
+  @MaxLength(20)
+  @Matches(/^[a-z0-9_]+$/, {
+    message:
+      'Le pseudo doit contenir 3 à 20 caractères (lettres minuscules, chiffres, underscore).',
+  })
+  username!: string;
 }
 
 export class LoginDto {

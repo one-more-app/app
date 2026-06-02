@@ -14,6 +14,9 @@ import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.ent
 import { UserProgressEntity } from '../progress/entities/user-progress.entity.js';
 import { XpEventEntity } from '../progress/entities/xp-event.entity.js';
 import { FriendshipEntity } from '../social/entities/friendship.entity.js';
+import { ConversationEntity } from '../messaging/entities/conversation.entity.js';
+import { MessageEntity } from '../messaging/entities/message.entity.js';
+import { UserPresenceEntity } from '../presence/entities/user-presence.entity.js';
 
 export const TYPEORM_ENTITIES = [
   UserEntity,
@@ -26,6 +29,9 @@ export const TYPEORM_ENTITIES = [
   UserProgressEntity,
   XpEventEntity,
   FriendshipEntity,
+  ConversationEntity,
+  MessageEntity,
+  UserPresenceEntity,
 ] as const;
 
 const getDatabaseUrl = (config: ConfigService): string => {

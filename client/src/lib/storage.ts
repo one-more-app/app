@@ -27,7 +27,11 @@ const ONBOARDING_POST_AUTH_REDIRECT_KEY =
   "one-more-onboarding-post-auth-redirect-v1";
 const THEME_PREFERENCE_KEY = "one-more-theme-preference-v1";
 
-type LocalChangeKind = "trackedExercise" | "performance" | "profile" | "progress";
+type LocalChangeKind =
+  | "trackedExercise"
+  | "performance"
+  | "profile"
+  | "progress";
 export type ThemePreference = "system" | "light" | "dark";
 
 const DEFAULT_PROFILE: UserProfile = {
@@ -122,7 +126,8 @@ export async function addTrackedExerciseAndWait(
   const existing = list.find(
     (e) =>
       !e.deletedAt &&
-      (e.id === exercise.id || (e.exerciseId === exercise.exerciseId && !e.isCustom)),
+      (e.id === exercise.id ||
+        (e.exerciseId === exercise.exerciseId && !e.isCustom)),
   );
   if (existing) return existing;
 
@@ -214,7 +219,9 @@ export async function updateTrackedExerciseAndWait(
   }
 }
 
-export function getTrackedExerciseById(id: string): TrackedExercise | undefined {
+export function getTrackedExerciseById(
+  id: string,
+): TrackedExercise | undefined {
   return trackedCache.find((e) => e.id === id && !e.deletedAt);
 }
 
@@ -241,8 +248,7 @@ export function getEntriesByTrackedId(
 
 export function getAllPerformanceEntriesRecentFirst(): PerformanceEntry[] {
   return [...getPerformanceEntries()].sort(
-    (a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 }
 
@@ -316,7 +322,9 @@ export function deletePerformance(entryId: string): void {
   );
   updatePerformanceCache(next);
   notifyLocalDataChanged("performance");
-  void deletePerformanceEntryRemote(entryId).catch(() => notifyRemoteWriteError());
+  void deletePerformanceEntryRemote(entryId).catch(() =>
+    notifyRemoteWriteError(),
+  );
 }
 
 export async function deletePerformanceAndWait(entryId: string): Promise<void> {
@@ -424,13 +432,17 @@ export function setUserProfile(
     weightKg: profile.weightKg ?? profileCache.weightKg,
     heightCm: profile.heightCm ?? profileCache.heightCm,
     gender: profile.gender ?? profileCache.gender,
-    ...(profile.firstName !== undefined ? { firstName: profile.firstName } : {}),
+    ...(profile.firstName !== undefined
+      ? { firstName: profile.firstName }
+      : {}),
     ...(profile.lastName !== undefined ? { lastName: profile.lastName } : {}),
   };
   hasProfilePersistedCache = true;
   if (!opts?.silent) {
     notifyLocalDataChanged("profile");
-    void upsertRemoteProfile(profileCache).catch(() => notifyRemoteWriteError());
+    void upsertRemoteProfile(profileCache).catch(() =>
+      notifyRemoteWriteError(),
+    );
   }
 }
 
@@ -441,7 +453,9 @@ export async function setUserProfileAndWait(
     weightKg: profile.weightKg ?? profileCache.weightKg,
     heightCm: profile.heightCm ?? profileCache.heightCm,
     gender: profile.gender ?? profileCache.gender,
-    ...(profile.firstName !== undefined ? { firstName: profile.firstName } : {}),
+    ...(profile.firstName !== undefined
+      ? { firstName: profile.firstName }
+      : {}),
     ...(profile.lastName !== undefined ? { lastName: profile.lastName } : {}),
   };
   hasProfilePersistedCache = true;
@@ -452,7 +466,9 @@ export async function setUserProfileAndWait(
       weightKg: remote.weightKg,
       heightCm: remote.heightCm,
       gender: remote.gender,
-      ...(remote.firstName !== undefined ? { firstName: remote.firstName } : {}),
+      ...(remote.firstName !== undefined
+        ? { firstName: remote.firstName }
+        : {}),
       ...(remote.lastName !== undefined ? { lastName: remote.lastName } : {}),
     };
     return profileCache;

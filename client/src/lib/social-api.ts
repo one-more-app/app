@@ -107,6 +107,57 @@ export async function fetchFriendProfile(userId: string): Promise<FriendProfile>
   return await apiFetch<FriendProfile>(`/social/friends/${userId}/profile`);
 }
 
+export type UserSearchResult = {
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+  friendshipStatus: FriendListItem["status"] | null;
+  friendshipId: string | null;
+  friendshipDirection: "incoming" | "outgoing" | null;
+};
+
+export type UserPreview = {
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+  level: number;
+  streakCurrent: number;
+  friendshipStatus: FriendListItem["status"] | null;
+  friendshipId: string | null;
+  friendshipDirection: "incoming" | "outgoing" | null;
+};
+
+export async function searchUsers(q: string): Promise<{ results: UserSearchResult[] }> {
+  const params = new URLSearchParams({ q });
+  return await apiFetch(`/social/users/search?${params.toString()}`);
+}
+
+export async function fetchUserPreview(userId: string): Promise<UserPreview> {
+  return await apiFetch<UserPreview>(`/social/users/${userId}/preview`);
+}
+
+export async function requestFriend(userId: string): Promise<{
+  friendshipId: string;
+  status: string;
+}> {
+  return await apiFetch("/social/friends/request", {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  });
+}
+
+export async function cancelFriendRequest(
+  friendshipId: string,
+): Promise<{ ok: boolean }> {
+  return await apiFetch(`/social/friends/requests/${friendshipId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function shareInviteUrl(url: string): Promise<"shared" | "copied"> {
   const text = `Rejoins-moi sur One More pour suivre ta muscu ! ${url}`;
   if (typeof navigator !== "undefined" && navigator.share) {

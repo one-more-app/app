@@ -12,6 +12,10 @@ import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
 import { UserProgressEntity } from '../progress/entities/user-progress.entity.js';
 import { XpEventEntity } from '../progress/entities/xp-event.entity.js';
+import { FriendshipEntity } from '../social/entities/friendship.entity.js';
+import { ConversationEntity } from '../messaging/entities/conversation.entity.js';
+import { MessageEntity } from '../messaging/entities/message.entity.js';
+import { UserPresenceEntity } from '../presence/entities/user-presence.entity.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -51,6 +55,10 @@ export default new DataSource({
     ExerciseCatalogEntity,
     UserProgressEntity,
     XpEventEntity,
+    FriendshipEntity,
+    ConversationEntity,
+    MessageEntity,
+    UserPresenceEntity,
   ],
   migrations: [join(__dirname, 'migrations', '*.{js,ts}')],
   synchronize: false,

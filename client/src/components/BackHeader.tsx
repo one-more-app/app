@@ -23,7 +23,7 @@ export function BackHeader({
     const handleBack = onBack ?? goBack
 
     return (
-        <header className="sticky-top-safe z-100 border-b border-border bg-card px-4 py-3">
+        <header className="sticky-top-safe z-100 bg-card px-4 py-3">
             <div
                 className={cn(
                     'mx-auto flex max-w-2xl items-center',

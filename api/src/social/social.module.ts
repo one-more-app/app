@@ -7,19 +7,22 @@ import { TrackedExercisesModule } from '../tracked-exercises/tracked-exercises.m
 import { AccessModule } from './access.module.js';
 import { FriendsService } from './friends.service.js';
 import { InvitesService } from './invites.service.js';
+import { UserSearchService } from './user-search.service.js';
+import { UserEntity } from '../auth/entities/user.entity.js';
 import { FriendshipEntity } from './entities/friendship.entity.js';
 import { SocialController } from './social.controller.js';
+import { UsernameService } from './username.service.js';
 
 @Module({
   imports: [
     AccessModule,
-    TypeOrmModule.forFeature([FriendshipEntity, UserProfileEntity]),
+    TypeOrmModule.forFeature([FriendshipEntity, UserProfileEntity, UserEntity]),
     ProgressModule,
     TrackedExercisesModule,
     PerformanceEntriesModule,
   ],
   controllers: [SocialController],
-  providers: [InvitesService, FriendsService],
-  exports: [AccessModule, InvitesService],
+  providers: [InvitesService, FriendsService, UserSearchService, UsernameService],
+  exports: [AccessModule, InvitesService, FriendsService, UsernameService],
 })
 export class SocialModule {}

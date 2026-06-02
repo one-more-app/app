@@ -23,6 +23,8 @@
     "seed:exercises:prod": "node dist/database/seed-exercises.js",
     "import:user-local-data": "node --loader ts-node/esm src/database/import-user-local-data.ts",
     "import:user-local-data:prod": "node dist/database/import-user-local-data.js",
+    "backfill:usernames": "node --loader ts-node/esm src/database/backfill-usernames.ts",
+    "backfill:usernames:prod": "node dist/database/backfill-usernames.js",
     "sync:exercises-catalog": "mkdir -p data && cp ../client/src/data/popular-exercises.json data/popular-exercises.json",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:watch": "jest --watch",
@@ -37,7 +39,9 @@
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-socket.io": "^11.1.24",
     "@nestjs/typeorm": "^11.0.0",
+    "@nestjs/websockets": "^11.1.24",
     "argon2": "^0.44.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
@@ -47,6 +51,7 @@
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "socket.io": "^4.8.3",
     "typeorm": "^0.3.27",
     "zod": "^4.3.6"
   },
@@ -83,7 +88,9 @@
     ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
-    "extensionsToTreatAsEsm": [".ts"],
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"
     },

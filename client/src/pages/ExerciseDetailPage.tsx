@@ -23,6 +23,7 @@ import {
     useUserProfileData,
 } from '@/hooks/use-api-data'
 import { useCelebrationQueueActive } from '@/hooks/use-celebration-queue-active'
+import { useExercisePresence } from '@/hooks/use-exercise-presence'
 import { usePerformance } from '@/hooks/use-performance'
 import { useTheme } from '@/hooks/use-theme'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
@@ -147,6 +148,12 @@ export function ExerciseDetailPage() {
         | { mode: 'edit'; entry: PerformanceEntry }
         | { mode: 'add'; date: string }
     >({ mode: 'closed' })
+
+    useExercisePresence(
+        sessionDrawer.mode !== 'closed',
+        exercise?.name,
+        id ?? undefined,
+    )
 
     useEffect(() => {
         setSessionDrawer({ mode: 'closed' })

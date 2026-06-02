@@ -60,9 +60,37 @@ export function clearStoredSession(): void {
   localStorage.removeItem(AUTH_STORAGE_KEY);
 }
 
+export type UsernameCheckResult = {
+  available: boolean;
+  username: string;
+  reason: "empty" | "invalid" | "taken" | null;
+};
+
+export async function checkUsernameAvailability(
+  username: string,
+): Promise<UsernameCheckResult> {
+  const params = new URLSearchParams({ username });
+  return await apiFetch<UsernameCheckResult>(
+    `/auth/username/check?${params.toString()}`,
+  );
+}
+
+export async function suggestUsername(params: {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}): Promise<{ suggested: string; available: string }> {
+  const q = new URLSearchParams();
+  if (params.firstName) q.set("firstName", params.firstName);
+  if (params.lastName) q.set("lastName", params.lastName);
+  if (params.email) q.set("email", params.email);
+  return await apiFetch(`/auth/username/suggest?${q.toString()}`);
+}
+
 export async function registerWithEmail(params: {
   email: string;
   password: string;
+  username: string;
   deviceId?: string;
   inviteCode?: string;
   firstName?: string;

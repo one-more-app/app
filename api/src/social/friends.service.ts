@@ -91,6 +91,120 @@ export class FriendsService {
     };
   }
 
+  async getFriendshipBetween(userId: string, otherUserId: string) {
+    return await this.friendshipsRepo.findOne({
+      where: [
+        { requesterId: userId, addresseeId: otherUserId },
+        { requesterId: otherUserId, addresseeId: userId },
+      ],
+    });
+  }
+
+  async assertAcceptedFriends(userId: string, otherUserId: string) {
+    const friendship = await this.friendshipsRepo.findOne({
+      where: [
+        {
+          requesterId: userId,
+          addresseeId: otherUserId,
+          status: FriendshipStatus.ACCEPTED,
+        },
+        {
+          requesterId: otherUserId,
+          addresseeId: userId,
+          status: FriendshipStatus.ACCEPTED,
+        },
+      ],
+    });
+    if (!friendship) {
+      throw new ForbiddenException('Vous devez être amis pour cette action');
+    }
+    return friendship;
+  }
+
+  async getAcceptedFriendIds(userId: string): Promise<string[]> {
+    const friendships = await this.friendshipsRepo.find({
+      where: [
+        { requesterId: userId, status: FriendshipStatus.ACCEPTED },
+        { addresseeId: userId, status: FriendshipStatus.ACCEPTED },
+      ],
+    });
+    return friendships.map((f) =>
+      f.requesterId === userId ? f.addresseeId : f.requesterId,
+    );
+  }
+
+  async requestFriend(requesterId: string, targetUserId: string) {
+    if (requesterId === targetUserId) {
+      throw new BadRequestException('Tu ne peux pas t’ajouter toi-même');
+    }
+
+    const targetProfile = await this.profilesRepo.findOne({
+      where: { userId: targetUserId },
+    });
+    if (!targetProfile) {
+      throw new NotFoundException('Utilisateur introuvable');
+    }
+
+    const existing = await this.getFriendshipBetween(requesterId, targetUserId);
+    if (existing) {
+      return { friendshipId: existing.id, status: existing.status };
+    }
+
+    const created = await this.friendshipsRepo.save({
+      requesterId,
+      addresseeId: targetUserId,
+      status: FriendshipStatus.PENDING,
+    });
+    return { friendshipId: created.id, status: created.status };
+  }
+
+  async cancelOutgoingRequest(userId: string, friendshipId: string) {
+    const friendship = await this.friendshipsRepo.findOne({
+      where: { id: friendshipId },
+    });
+    if (!friendship) throw new NotFoundException('Demande introuvable');
+    if (friendship.requesterId !== userId) {
+      throw new ForbiddenException('Tu ne peux pas annuler cette demande');
+    }
+    if (friendship.status !== FriendshipStatus.PENDING) {
+      throw new BadRequestException('Demande déjà traitée');
+    }
+    await this.friendshipsRepo.remove(friendship);
+    return { ok: true };
+  }
+
+  async getUserPreview(viewerId: string, targetUserId: string) {
+    if (viewerId === targetUserId) {
+      throw new BadRequestException('Profil personnel');
+    }
+
+    const profile = await this.profilesRepo.findOne({
+      where: { userId: targetUserId },
+    });
+    if (!profile) throw new NotFoundException('Profil introuvable');
+
+    const friendship = await this.getFriendshipBetween(viewerId, targetUserId);
+    const progress = await this.progressService.getProgress(targetUserId);
+
+    return {
+      userId: targetUserId,
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      username: profile.username,
+      avatarUrl: profile.avatarUrl,
+      level: progress.level,
+      streakCurrent: progress.streak.current,
+      friendshipStatus: friendship?.status ?? null,
+      friendshipId: friendship?.id ?? null,
+      friendshipDirection:
+        friendship == null
+          ? null
+          : friendship.requesterId === viewerId
+            ? 'outgoing'
+            : 'incoming',
+    };
+  }
+
   async requestFromInvite(userId: string, inviteCode: string) {
     const inviterProfile =
       await this.invitesService.findInviterProfileByCode(inviteCode);

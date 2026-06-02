@@ -237,7 +237,9 @@ export class OAuthService {
           email: normalizedEmail,
           password: null,
         });
-        await this.invites.createDefaultProfile(created.id);
+        await this.invites.createDefaultProfile(created.id, {
+          email: normalizedEmail,
+        });
         await this.invites.processInviteOnSignup({
           newUserId: created.id,
           inviteCode: params.inviteCode,
@@ -253,6 +255,8 @@ export class OAuthService {
         email: params.email ? params.email.trim().toLowerCase() : null,
       });
     }
+
+    await this.invites.ensureUsername(userId);
 
     return await this.auth.createSessionForUser({
       userId,

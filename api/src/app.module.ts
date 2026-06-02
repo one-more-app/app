@@ -10,6 +10,9 @@ import { ProfileModule } from './profile/profile.module.js';
 import { TrackedExercisesModule } from './tracked-exercises/tracked-exercises.module.js';
 import { ProgressModule } from './progress/progress.module.js';
 import { SocialModule } from './social/social.module.js';
+import { MessagingModule } from './messaging/messaging.module.js';
+import { PresenceModule } from './presence/presence.module.js';
+import { RealtimeModule } from './realtime/realtime.module.js';
 
 @Module({
   imports: [
@@ -25,6 +28,9 @@ import { SocialModule } from './social/social.module.js';
     ExercisesModule,
     ProgressModule,
     SocialModule,
+    MessagingModule,
+    PresenceModule,
+    RealtimeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

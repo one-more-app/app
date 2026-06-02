@@ -1,0 +1,13 @@
+# Exemple de labels Traefik (Dokploy, Coolify, compose manuel).
+# Les WebSockets sont en général supportés sans option dédiée si le service
+# pointe vers le port HTTP de l'API (3000).
+#
+# services:
+#   api:
+#     labels:
+#       - traefik.enable=true
+#       - traefik.http.routers.onemore-api.rule=Host(`api.one-more.app`)
+#       - traefik.http.routers.onemore-api.entrypoints=websecure
+#       - traefik.http.routers.onemore-api.tls=true
+#       - traefik.http.routers.onemore-api.tls.certresolver=letsencrypt
+#       - traefik.http.services.onemore-api.loadbalancer.server.port=3000

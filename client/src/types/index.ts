@@ -51,7 +51,18 @@ export interface UserProfile {
   firstName?: string;
   lastName?: string;
   avatarUrl?: string | null;
+  username?: string | null;
 }
+
+export type PresenceStatus = "offline" | "online" | "training";
+
+export type FriendPresence = {
+  userId: string;
+  status: PresenceStatus;
+  exerciseName: string | null;
+  trackedExerciseId: string | null;
+  lastHeartbeatAt: string;
+};
 
 export type XpGrantItem = {
   sourceType: string;

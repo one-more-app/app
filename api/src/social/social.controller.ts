@@ -1,18 +1,22 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
   Param,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard.js';
 import { AccessService } from './access.service.js';
+import { RequestFriendDto } from './dto/request-friend.dto.js';
+import { SearchUsersQueryDto } from './dto/search-users-query.dto.js';
 import { FriendsService } from './friends.service.js';
 import { InvitesService } from './invites.service.js';
 import { InviteCodeDto } from './dto/invite-code.dto.js';
-import { Body } from '@nestjs/common';
+import { UserSearchService } from './user-search.service.js';
 
 @Controller()
 export class SocialController {
@@ -20,6 +24,7 @@ export class SocialController {
     private readonly accessService: AccessService,
     private readonly invitesService: InvitesService,
     private readonly friendsService: FriendsService,
+    private readonly userSearchService: UserSearchService,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -37,6 +42,52 @@ export class SocialController {
   @Get('/social/invite/:code/preview')
   async getInvitePreview(@Param('code') code: string) {
     return await this.invitesService.getInvitePreview(code);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/social/users/search')
+  async searchUsers(
+    @Req() req: { user: { sub: string } },
+    @Query() query: SearchUsersQueryDto,
+  ) {
+    const results = await this.userSearchService.search(
+      req.user.sub,
+      query.q,
+    );
+    return { results };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/social/users/:userId/preview')
+  async getUserPreview(
+    @Req() req: { user: { sub: string } },
+    @Param('userId') userId: string,
+  ) {
+    return await this.friendsService.getUserPreview(req.user.sub, userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/social/friends/request')
+  async requestFriend(
+    @Req() req: { user: { sub: string } },
+    @Body() body: RequestFriendDto,
+  ) {
+    return await this.friendsService.requestFriend(
+      req.user.sub,
+      body.userId,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('/social/friends/requests/:friendshipId')
+  async cancelOutgoingRequest(
+    @Req() req: { user: { sub: string } },
+    @Param('friendshipId') friendshipId: string,
+  ) {
+    return await this.friendsService.cancelOutgoingRequest(
+      req.user.sub,
+      friendshipId,
+    );
   }
 
   @UseGuards(JwtAuthGuard)

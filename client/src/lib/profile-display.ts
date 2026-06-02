@@ -3,7 +3,7 @@ import type { UserProfile } from "@/types";
 import { UI } from "@/lib/translations";
 
 type ProfileNameSource =
-  | Pick<UserProfile, "firstName" | "lastName">
+  | Pick<UserProfile, "firstName" | "lastName" | "username">
   | UserProfile
   | undefined;
 
@@ -16,6 +16,8 @@ export function getProfileDisplayName(
   if (first && last) return `${first} ${last}`;
   if (first) return first;
   if (last) return last;
+  const username = profile?.username?.trim();
+  if (username) return `@${username}`;
   const email = authUser?.email?.trim();
   if (email) {
     const local = email.split("@")[0];
@@ -35,6 +37,8 @@ export function getProfileInitials(
   }
   if (first) return first.slice(0, 2).toUpperCase();
   if (last) return last.slice(0, 2).toUpperCase();
+  const username = profile?.username?.trim();
+  if (username) return username.slice(0, 2).toUpperCase();
   const email = authUser?.email?.trim();
   if (email) {
     const local = email.split("@")[0] ?? "";

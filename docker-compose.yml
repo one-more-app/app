@@ -1,5 +1,10 @@
 name: onemore
 
+# Stack complète (API + proxy WebSocket) :
+#   docker compose --profile stack up -d --build
+# Test Socket.IO :
+#   curl -i "http://localhost:3080/socket.io/?EIO=4&transport=polling"
+
 services:
   postgres:
     image: postgres:16
@@ -18,6 +23,38 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    profiles: [stack]
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: onemore-api
+    restart: unless-stopped
+    # Optionnel : crée api/.env depuis api/.env.example (JWT_SECRET, etc.)
+    env_file:
+      - api/.env
+    environment:
+      DATABASE_URL: postgresql://onemore:onemore@postgres:5432/onemore?schema=public
+      PORT: "3000"
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "3000"
+
+  api-proxy:
+    profiles: [stack]
+    build:
+      context: .
+      dockerfile: deploy/nginx/Dockerfile
+    container_name: onemore-api-proxy
+    restart: unless-stopped
+    ports:
+      - "3080:80"
+    depends_on:
+      - api
 
 volumes:
   onemore_pg:

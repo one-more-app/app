@@ -5,14 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
-import { identifyEmail } from "@/lib/auth";
+import {
+  checkUsernameAvailability,
+  identifyEmail,
+  suggestUsername,
+} from "@/lib/auth";
+import { isValidUsername, normalizeUsername } from "@/lib/username";
 import { signInWithApple, signInWithGoogle } from "@/lib/oauth";
 import { resolvePostAuthNavigation } from "@/lib/post-auth-navigation";
 import { setUserProfile } from "@/lib/storage";
 import { UI } from "@/lib/translations";
 import { Capacitor } from "@capacitor/core";
 import { X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 type AuthStep =
@@ -20,6 +25,7 @@ type AuthStep =
     | "login"
     | "register_firstName"
     | "register_lastName"
+    | "register_username"
     | "register_password";
 
 type AuthPageProps = {
@@ -47,6 +53,10 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
     const [step, setStep] = useState<AuthStep>("email");
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
+    const [username, setUsername] = useState("");
+    const [usernameStatus, setUsernameStatus] = useState<
+        "idle" | "checking" | "available" | "taken" | "invalid"
+    >("idle");
     const [password, setPassword] = useState("");
     const [passwordConfirm, setPasswordConfirm] = useState("");
     const [isBusy, setIsBusy] = useState(false);
@@ -55,6 +65,12 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
     const canLogin = normalizedEmail.includes("@") && password.length >= 8 && !isBusy;
     const canRegisterFirstName = normalizedEmail.includes("@") && firstName.trim().length >= 1 && !isBusy;
     const canRegisterLastName = normalizedEmail.includes("@") && lastName.trim().length >= 1 && !isBusy;
+    const normalizedUsername = normalizeUsername(username);
+    const canRegisterUsername =
+        normalizedEmail.includes("@") &&
+        isValidUsername(normalizedUsername) &&
+        usernameStatus === "available" &&
+        !isBusy;
     const canRegisterPassword =
         normalizedEmail.includes("@") &&
         password.length >= 8 &&
@@ -123,11 +139,16 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
             await auth.register({
                 email: normalizedEmail,
                 password,
+                username: normalizedUsername,
                 firstName: firstName.trim(),
                 lastName: lastName.trim(),
             });
             setUserProfile(
-                { firstName: firstName.trim(), lastName: lastName.trim() },
+                {
+                    firstName: firstName.trim(),
+                    lastName: lastName.trim(),
+                    username: normalizedUsername,
+                },
                 { silent: true },
             );
             await finishSuccess();
@@ -136,7 +157,36 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         }
     };
 
-    const registerTotal = 3;
+    useEffect(() => {
+        if (step !== "register_username") return;
+        const normalized = normalizeUsername(username);
+        if (!normalized || !isValidUsername(normalized)) {
+            setUsernameStatus(normalized.length > 0 ? "invalid" : "idle");
+            return;
+        }
+
+        setUsernameStatus("checking");
+        const timer = window.setTimeout(() => {
+            void (async () => {
+                try {
+                    const result = await checkUsernameAvailability(normalized);
+                    if (!result.available) {
+                        setUsernameStatus(
+                            result.reason === "invalid" ? "invalid" : "taken",
+                        );
+                        return;
+                    }
+                    setUsernameStatus("available");
+                } catch {
+                    setUsernameStatus("idle");
+                }
+            })();
+        }, 350);
+
+        return () => window.clearTimeout(timer);
+    }, [step, username]);
+
+    const registerTotal = 4;
     const registerStepLabel = (current: number) =>
         UI.onboardingStepIndicator
             .replace("{current}", String(current))
@@ -156,6 +206,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                 </div>
                 {step === "register_firstName" ||
                     step === "register_lastName" ||
+                    step === "register_username" ||
                     step === "register_password" ? (
                     <StepCard
                         key={`register-${step}`}
@@ -166,6 +217,10 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                             if (step === "register_password") {
                                 setPassword("");
                                 setPasswordConfirm("");
+                                setStep("register_username");
+                                return;
+                            }
+                            if (step === "register_username") {
                                 setStep("register_lastName");
                                 return;
                             }
@@ -181,16 +236,28 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 ? registerStepLabel(1)
                                 : step === "register_lastName"
                                     ? registerStepLabel(2)
-                                    : registerStepLabel(3)
+                                    : step === "register_username"
+                                        ? registerStepLabel(3)
+                                        : registerStepLabel(4)
                         }
                         progressPercent={
                             step === "register_firstName"
                                 ? registerProgress(1)
                                 : step === "register_lastName"
                                     ? registerProgress(2)
-                                    : registerProgress(3)
+                                    : step === "register_username"
+                                        ? registerProgress(3)
+                                        : registerProgress(4)
                         }
-                        title={step === "register_firstName" ? UI.firstNameTitle : step === "register_lastName" ? UI.lastNameTitle : UI.passwordTitle}
+                        title={
+                            step === "register_firstName"
+                                ? UI.firstNameTitle
+                                : step === "register_lastName"
+                                    ? UI.lastNameTitle
+                                    : step === "register_username"
+                                        ? UI.usernameTitle
+                                        : UI.passwordTitle
+                        }
                         contentClassName="space-y-3"
                     >
                         {step === "register_firstName" ? (
@@ -243,9 +310,84 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                         onClick={() => {
                                             if (!canRegisterLastName) return;
                                             auth.clearError();
-                                            setStep("register_password");
+                                            void (async () => {
+                                                try {
+                                                    const { available } =
+                                                        await suggestUsername({
+                                                            firstName: firstName.trim(),
+                                                            lastName: lastName.trim(),
+                                                            email: normalizedEmail,
+                                                        });
+                                                    setUsername(available);
+                                                    setUsernameStatus("idle");
+                                                } catch {
+                                                    setUsername("");
+                                                    setUsernameStatus("idle");
+                                                }
+                                                setStep("register_username");
+                                            })();
                                         }}
                                         disabled={!canRegisterLastName}
+                                    >
+                                        {UI.continue}
+                                    </Button>
+                                </div>
+                            </>
+                        ) : step === "register_username" ? (
+                            <>
+                                <div className="space-y-1">
+                                    <Input
+                                        label={UI.usernameLabel}
+                                        value={username}
+                                        onChange={(e) =>
+                                            setUsername(
+                                                normalizeUsername(e.target.value),
+                                            )
+                                        }
+                                        placeholder={UI.usernamePlaceholder}
+                                        autoCapitalize="none"
+                                        autoCorrect="off"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        {UI.usernameHint}
+                                    </p>
+                                    {usernameStatus === "checking" ? (
+                                        <p className="text-xs text-muted-foreground">
+                                            {UI.loading}
+                                        </p>
+                                    ) : null}
+                                    {usernameStatus === "invalid" ? (
+                                        <p className="text-xs text-destructive">
+                                            {UI.usernameInvalid}
+                                        </p>
+                                    ) : null}
+                                    {usernameStatus === "taken" ? (
+                                        <p className="text-xs text-destructive">
+                                            {UI.usernameTaken}
+                                        </p>
+                                    ) : null}
+                                    {usernameStatus === "available" ? (
+                                        <p className="text-xs text-emerald-600">
+                                            @{normalizedUsername} — {UI.usernameAvailable}
+                                        </p>
+                                    ) : null}
+                                </div>
+
+                                {auth.lastError && (
+                                    <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                                        {auth.lastError}
+                                    </div>
+                                )}
+
+                                <div className="space-y-2">
+                                    <Button
+                                        className="w-full"
+                                        onClick={() => {
+                                            if (!canRegisterUsername) return;
+                                            auth.clearError();
+                                            setStep("register_password");
+                                        }}
+                                        disabled={!canRegisterUsername}
                                     >
                                         {UI.continue}
                                     </Button>

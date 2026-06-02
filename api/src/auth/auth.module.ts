@@ -13,10 +13,12 @@ import { SessionEntity } from './entities/session.entity.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { UserEntity } from './entities/user.entity.js';
 import { SocialModule } from '../social/social.module.js';
+import { ProfileModule } from '../profile/profile.module.js';
 
 @Module({
   imports: [
     SocialModule,
+    ProfileModule,
     TypeOrmModule.forFeature([
       UserEntity,
       UserProfileEntity,

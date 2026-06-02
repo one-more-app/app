@@ -85,8 +85,9 @@ const LEAGUE_TOAST_CLASSES: Record<LeagueLevel, string> = {
 };
 
 /** Classe pour la description du toast palier (contraste lisible sur tous les fonds). */
-export const LEAGUE_TOAST_DESCRIPTION_CLASS = "!text-white/95";
+export const LEAGUE_TOAST_DESCRIPTION_CLASS =
+  "!text-[11px] !leading-snug !text-white/90";
 
 export function toastClassForLeague(level: LeagueLevel): string {
-  return `!border ${LEAGUE_TOAST_CLASSES[level]}`;
+  return `!rounded-xl !border !px-3 !py-2 !text-xs !shadow-sm ${LEAGUE_TOAST_CLASSES[level]}`;
 }
