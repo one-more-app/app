@@ -25,7 +25,7 @@ function BottomNav() {
             className="fixed bottom-0 left-0 right-0 z-20 border-t border-border bg-background pl-[var(--safe-left)] pr-[var(--safe-right)] pb-[var(--safe-bottom)]"
             aria-label="Navigation"
         >
-            <div className="mx-auto flex h-16 max-w-2xl items-center justify-around px-4">
+            <div className="mx-auto flex pt-2 max-w-2xl items-center justify-around px-4">
                 {NAV_ITEMS.map((item) => {
                     const active = activeTo === item.to
                     return (
