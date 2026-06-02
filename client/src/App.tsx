@@ -137,6 +137,10 @@ function App() {
 
         scheduleSafeAreaCssSync()
 
+        void initGoogleNativeSignIn().catch(() => {
+            /* Config Google manquante ou plugin indisponible — login au tap. */
+        })
+
         const handlerPromise = CapacitorApp.addListener('appUrlOpen', (event) => {
             try {
                 const url = new URL(event.url)
