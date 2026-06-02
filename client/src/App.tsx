@@ -128,6 +128,10 @@ function NativeSystemBarsSync() {
         })()
     }, [pathname, resolvedTheme])
 
+    return null
+}
+
+function App() {
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) return
 
@@ -195,7 +199,7 @@ function NativeSystemBarsSync() {
                             />
                             <Route path="/onboarding" element={<OnboardingPage />} />
                             <Route path="/home" element={<HomePage />} />
-                            <Route path="/stats" element={<StatsPage />} />
+                            <Route path="/stats" element={<StatsRedirect />} />
                             <Route path="/profile" element={<ProfilePage />} />
                             <Route path="/history" element={<HistoryPage />} />
                             <Route path="/auth" element={<AuthPage />} />
