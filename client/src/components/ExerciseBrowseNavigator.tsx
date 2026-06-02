@@ -137,7 +137,7 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
 
     if (isSearchMode) {
         return (
-            <div>
+            <div data-tour="first-exercise-browse">
                 <BrowseSectionTitle>{UI.browseSearchResults}</BrowseSectionTitle>
                 {searchResults.length === 0 ? (
                     <EmptyState
@@ -154,7 +154,7 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
     }
 
     return (
-        <div>
+        <div data-tour="first-exercise-browse">
             {browse.step === 'zone' && beforeZoneStep ? (
                 <div className="mb-3">{beforeZoneStep}</div>
             ) : null}

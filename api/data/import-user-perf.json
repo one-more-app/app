@@ -1,0 +1,3932 @@
+[
+    {
+        "id": "a5366bc8-ffd5-45fc-be0e-63a18f047b7f",
+        "trackedExerciseId": "api-UFGF6gk",
+        "date": "2026-02-18",
+        "weight": 70.5,
+        "reps": 9,
+        "createdAt": "2026-02-18T11:22:32.072Z",
+        "updatedAt": "2026-02-18T11:22:32.072Z",
+        "deletedAt": null
+    },
+    {
+        "id": "18f9f240-7313-4c99-8771-9ecd7cb0bd38",
+        "trackedExerciseId": "custom-ae764072-80e8-44e7-a879-57f95dbdd2c7",
+        "date": "2026-02-18",
+        "weight": 18,
+        "reps": 8,
+        "createdAt": "2026-02-18T11:24:24.553Z",
+        "updatedAt": "2026-02-18T11:24:24.553Z",
+        "deletedAt": null
+    },
+    {
+        "id": "2a3214f3-09da-46e9-a51a-0c2a79b75b2f",
+        "trackedExerciseId": "api-ns0SIbU",
+        "date": "2026-02-18",
+        "weight": 24,
+        "reps": 8,
+        "createdAt": "2026-02-18T16:54:58.095Z",
+        "updatedAt": "2026-02-18T16:54:58.095Z",
+        "deletedAt": null
+    },
+    {
+        "id": "122e666a-c6ef-4432-9726-422c543ac78c",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-02-18",
+        "weight": 32,
+        "reps": 8,
+        "createdAt": "2026-02-18T13:47:06.971Z",
+        "updatedAt": "2026-02-18T13:47:06.971Z",
+        "deletedAt": null
+    },
+    {
+        "id": "b1ed94bf-f3a6-46ca-be1f-a1b4d9e762c2",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-02-18",
+        "weight": 0,
+        "reps": 10,
+        "createdAt": "2026-02-18T13:47:19.559Z",
+        "updatedAt": "2026-02-18T13:47:19.559Z",
+        "deletedAt": null
+    },
+    {
+        "id": "30978e5c-b739-4367-9f27-b3c3648295d5",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-02-18",
+        "weight": 18,
+        "reps": 8,
+        "createdAt": "2026-02-18T13:50:19.736Z",
+        "updatedAt": "2026-02-18T13:50:19.736Z",
+        "deletedAt": null
+    },
+    {
+        "id": "fcef925b-7754-4b4a-8a1f-c5d874d0c4f9",
+        "trackedExerciseId": "api-vrhHa6D",
+        "date": "2026-02-18",
+        "weight": 11.5,
+        "reps": 1,
+        "createdAt": "2026-02-18T14:02:13.945Z",
+        "updatedAt": "2026-02-18T14:02:13.945Z",
+        "deletedAt": null
+    },
+    {
+        "id": "0351f89b-62d0-4b82-b916-b31b2b34c613",
+        "trackedExerciseId": "api-lBDjFxJ",
+        "date": "2026-02-18",
+        "weight": 0,
+        "reps": 10,
+        "createdAt": "2026-02-18T14:08:23.693Z",
+        "updatedAt": "2026-02-18T14:08:23.693Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d903a601-1ef0-49c0-ba63-5cf3eea63782",
+        "trackedExerciseId": "api-IENzBdA",
+        "date": "2026-02-18",
+        "weight": 25,
+        "reps": 8,
+        "createdAt": "2026-02-18T14:14:47.213Z",
+        "updatedAt": "2026-02-18T14:14:47.213Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ec54e3e8-2b3f-45b4-bdcf-0bd634645a4b",
+        "trackedExerciseId": "api-xLYSdtg",
+        "date": "2026-02-18",
+        "weight": 8,
+        "reps": 10,
+        "createdAt": "2026-02-18T14:16:21.605Z",
+        "updatedAt": "2026-02-18T14:16:21.605Z",
+        "deletedAt": null
+    },
+    {
+        "id": "549ea973-fc51-478d-9543-8d51389ff3a8",
+        "trackedExerciseId": "api-EIeI8Vf",
+        "date": "2026-02-18",
+        "weight": 60,
+        "reps": 8,
+        "createdAt": "2026-02-18T14:16:58.892Z",
+        "updatedAt": "2026-02-18T14:16:58.892Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ad5c94cc-461b-4c28-b8da-2b347310f765",
+        "trackedExerciseId": "api-slDvUAU",
+        "date": "2026-02-18",
+        "weight": 15,
+        "reps": 10,
+        "createdAt": "2026-02-18T18:13:32.264Z",
+        "updatedAt": "2026-02-18T18:13:32.264Z",
+        "deletedAt": null
+    },
+    {
+        "id": "8ecbb7dd-b69a-4005-8d0b-6784485c9d8a",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-02-18",
+        "weight": 60,
+        "reps": 8,
+        "createdAt": "2026-02-18T17:02:27.189Z",
+        "updatedAt": "2026-02-18T17:02:27.189Z",
+        "deletedAt": null
+    },
+    {
+        "id": "276dd7d2-8036-4214-aa0b-fb0dede8f478",
+        "trackedExerciseId": "api-CggQhII",
+        "date": "2026-02-18",
+        "weight": 45,
+        "reps": 10,
+        "createdAt": "2026-02-18T18:37:46.177Z",
+        "updatedAt": "2026-02-18T18:37:46.177Z",
+        "deletedAt": null
+    },
+    {
+        "id": "109a5cc3-4053-49a3-aa4f-3c6938ed536c",
+        "trackedExerciseId": "api-fUBheHs",
+        "date": "2026-02-19",
+        "weight": 35,
+        "reps": 8,
+        "createdAt": "2026-02-19T08:05:37.774Z",
+        "updatedAt": "2026-02-19T08:05:37.774Z",
+        "deletedAt": null
+    },
+    {
+        "id": "3d3f297e-4f21-425e-8e95-34771da1696b",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-02-19",
+        "weight": 28,
+        "reps": 8,
+        "createdAt": "2026-02-19T08:08:43.507Z",
+        "updatedAt": "2026-02-19T08:08:43.507Z",
+        "deletedAt": null
+    },
+    {
+        "id": "06e8f14d-6482-4355-9161-b29d00842484",
+        "trackedExerciseId": "api-EIeI8Vf",
+        "date": "2026-02-19",
+        "weight": 60,
+        "reps": 9,
+        "createdAt": "2026-02-19T10:33:52.001Z",
+        "updatedAt": "2026-02-19T10:33:52.001Z",
+        "deletedAt": null
+    },
+    {
+        "id": "0ff5ee0d-063e-45f8-bb08-d741777d4a8d",
+        "trackedExerciseId": "api-3TZduzM",
+        "date": "2026-02-19",
+        "weight": 40,
+        "reps": 11,
+        "createdAt": "2026-02-19T10:49:00.267Z",
+        "updatedAt": "2026-02-19T10:49:00.267Z",
+        "deletedAt": null
+    },
+    {
+        "id": "59aa6819-34f5-4c04-97a8-f9a19d0544b1",
+        "trackedExerciseId": "api-xLYSdtg",
+        "date": "2026-02-19",
+        "weight": 8,
+        "reps": 10,
+        "createdAt": "2026-02-19T10:53:03.668Z",
+        "updatedAt": "2026-02-19T10:53:03.668Z",
+        "deletedAt": null
+    },
+    {
+        "id": "98e67c2b-2efd-4305-b9b3-741e8916d2d0",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-02-19",
+        "weight": 20,
+        "reps": 4,
+        "createdAt": "2026-02-19T11:15:06.505Z",
+        "updatedAt": "2026-02-19T11:15:06.505Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f09df343-c480-4e3b-b363-193c8cdbdd74",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-02-19",
+        "weight": 18,
+        "reps": 10,
+        "createdAt": "2026-02-19T11:35:38.425Z",
+        "updatedAt": "2026-02-19T11:35:38.425Z",
+        "deletedAt": null
+    },
+    {
+        "id": "dd277e4b-5433-4d8b-935c-257eb0511e49",
+        "trackedExerciseId": "api-ns0SIbU",
+        "date": "2026-02-19",
+        "weight": 24,
+        "reps": 8,
+        "createdAt": "2026-02-19T14:57:33.720Z",
+        "updatedAt": "2026-02-19T14:57:33.720Z",
+        "deletedAt": null
+    },
+    {
+        "id": "6acad204-cce8-4217-80fa-25e434874acc",
+        "trackedExerciseId": "api-ila4NZS",
+        "date": "2026-02-20",
+        "weight": 60,
+        "reps": 5,
+        "createdAt": "2026-02-20T11:48:16.430Z",
+        "updatedAt": "2026-02-20T11:48:16.430Z",
+        "deletedAt": null
+    },
+    {
+        "id": "847bb95e-7e11-4098-becf-6863891f1cdd",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-02-20",
+        "weight": 15,
+        "reps": 8,
+        "createdAt": "2026-02-20T12:10:37.166Z",
+        "updatedAt": "2026-02-20T12:10:37.166Z",
+        "deletedAt": null
+    },
+    {
+        "id": "4606092c-780e-41cc-a043-6e30506785c4",
+        "trackedExerciseId": "api-lBDjFxJ",
+        "date": "2026-02-20",
+        "weight": 20,
+        "reps": 5,
+        "createdAt": "2026-02-20T12:23:36.773Z",
+        "updatedAt": "2026-02-20T12:23:36.773Z",
+        "deletedAt": null
+    },
+    {
+        "id": "782612d2-506c-4d06-b6e2-8ede416e0f04",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-02-21",
+        "weight": 18,
+        "reps": 12,
+        "createdAt": "2026-02-21T21:50:57.439Z",
+        "updatedAt": "2026-02-21T21:50:57.439Z",
+        "deletedAt": null
+    },
+    {
+        "id": "3ff2eda5-abf9-4964-849e-b674b9118461",
+        "trackedExerciseId": "api-zG0zs85",
+        "date": "2026-02-21",
+        "weight": 60,
+        "reps": 10,
+        "createdAt": "2026-02-21T22:15:27.155Z",
+        "updatedAt": "2026-02-21T22:15:27.155Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ba5aff28-011c-4a9c-a5fe-630aeb1fdac0",
+        "trackedExerciseId": "api-ns0SIbU",
+        "date": "2026-02-22",
+        "weight": 24,
+        "reps": 8,
+        "createdAt": "2026-02-22T00:14:15.754Z",
+        "updatedAt": "2026-02-22T00:14:15.754Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d921a5c4-34c2-4f89-af77-12cf6329b763",
+        "trackedExerciseId": "api-RVwzP10",
+        "date": "2026-02-22",
+        "weight": 45,
+        "reps": 10,
+        "createdAt": "2026-02-22T15:28:28.131Z",
+        "updatedAt": "2026-02-22T15:28:28.131Z",
+        "deletedAt": null
+    },
+    {
+        "id": "eac417ad-cbb3-47b9-8c75-ddc65dbff110",
+        "trackedExerciseId": "api-myfUsKf",
+        "date": "2026-02-22",
+        "weight": 15,
+        "reps": 8,
+        "createdAt": "2026-02-22T15:33:57.291Z",
+        "updatedAt": "2026-02-22T15:33:57.291Z",
+        "deletedAt": null
+    },
+    {
+        "id": "12ebaf86-e92e-4c21-8842-e8afb470c3cb",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-02-22",
+        "weight": 45,
+        "reps": 10,
+        "createdAt": "2026-02-22T15:46:17.608Z",
+        "updatedAt": "2026-02-22T15:46:17.608Z",
+        "deletedAt": null
+    },
+    {
+        "id": "54493270-a65c-41e1-951e-25339a5bdec3",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-02-22",
+        "weight": 25,
+        "reps": 12,
+        "createdAt": "2026-02-22T15:55:26.020Z",
+        "updatedAt": "2026-02-22T15:55:26.020Z",
+        "deletedAt": null
+    },
+    {
+        "id": "02f0d3be-cc03-4cfb-8c05-9933364e1b35",
+        "trackedExerciseId": "api-slDvUAU",
+        "date": "2026-02-22",
+        "weight": 14,
+        "reps": 8,
+        "createdAt": "2026-02-22T16:05:14.901Z",
+        "updatedAt": "2026-02-22T16:05:14.901Z",
+        "deletedAt": null
+    },
+    {
+        "id": "a3e6f97d-a100-4cf5-b957-08f697b4af9f",
+        "trackedExerciseId": "api-xLYSdtg",
+        "date": "2026-02-22",
+        "weight": 14,
+        "reps": 10,
+        "createdAt": "2026-02-22T23:56:09.953Z",
+        "updatedAt": "2026-02-22T23:56:09.953Z",
+        "deletedAt": null
+    },
+    {
+        "id": "8565d772-62d0-4c44-998a-26487e2b157a",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-02-23",
+        "weight": 60,
+        "reps": 8,
+        "createdAt": "2026-02-23T20:06:59.089Z",
+        "updatedAt": "2026-02-23T20:06:59.089Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c99ab169-5b96-4b7c-b26d-bd2816fb6a77",
+        "trackedExerciseId": "api-Xy4jlWA",
+        "date": "2026-02-23",
+        "weight": 12,
+        "reps": 10,
+        "createdAt": "2026-02-23T20:18:24.505Z",
+        "updatedAt": "2026-02-23T20:18:24.505Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e35cebe2-477c-4f95-97a2-5b014b42a7ec",
+        "trackedExerciseId": "api-Xy4jlWA",
+        "date": "2026-02-23",
+        "weight": 12,
+        "reps": 13,
+        "createdAt": "2026-02-23T20:20:27.069Z",
+        "updatedAt": "2026-02-23T20:20:27.069Z",
+        "deletedAt": null
+    },
+    {
+        "id": "200f20c7-9814-46c1-971e-b5027f68aca8",
+        "trackedExerciseId": "api-yz9nUhF",
+        "date": "2026-02-23",
+        "weight": 12,
+        "reps": 8,
+        "createdAt": "2026-02-23T20:25:38.686Z",
+        "updatedAt": "2026-02-23T20:25:38.686Z",
+        "deletedAt": null
+    },
+    {
+        "id": "613ef126-17bc-4507-9e83-54618e1bd6a2",
+        "trackedExerciseId": "api-DsgkuIt",
+        "date": "2026-02-23",
+        "weight": 6,
+        "reps": 12,
+        "createdAt": "2026-02-23T20:32:01.288Z",
+        "updatedAt": "2026-02-23T20:32:01.288Z",
+        "deletedAt": null
+    },
+    {
+        "id": "fd5f44f2-4204-4352-a453-3df63f0afe36",
+        "trackedExerciseId": "api-wqNPGCg",
+        "date": "2026-02-23",
+        "weight": 10,
+        "reps": 12,
+        "createdAt": "2026-02-23T20:39:15.367Z",
+        "updatedAt": "2026-02-23T20:39:15.367Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d66f4918-379b-4416-8b5b-b1f002e8047d",
+        "trackedExerciseId": "api-wqNPGCg",
+        "date": "2026-02-23",
+        "weight": 15,
+        "reps": 10,
+        "createdAt": "2026-02-23T20:40:11.983Z",
+        "updatedAt": "2026-02-23T20:40:11.983Z",
+        "deletedAt": null
+    },
+    {
+        "id": "de44716a-6be6-4440-9e1e-b33ba59762c2",
+        "trackedExerciseId": "api-EIeI8Vf",
+        "date": "2026-02-24",
+        "weight": 80,
+        "reps": 1,
+        "createdAt": "2026-02-24T14:31:41.859Z",
+        "updatedAt": "2026-02-24T14:31:41.859Z",
+        "deletedAt": null
+    },
+    {
+        "id": "facf92ba-e56a-451c-a62d-54f064a44a89",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-02-25",
+        "weight": 22,
+        "reps": 12,
+        "createdAt": "2026-02-25T00:22:15.228Z",
+        "updatedAt": "2026-02-25T00:22:15.228Z",
+        "deletedAt": null
+    },
+    {
+        "id": "6d271f89-cfd1-45ca-a891-fa6033692986",
+        "trackedExerciseId": "api-EIeI8Vf",
+        "date": "2026-02-26",
+        "weight": 85,
+        "reps": 1,
+        "createdAt": "2026-02-26T10:12:38.851Z",
+        "updatedAt": "2026-02-26T10:12:38.851Z",
+        "deletedAt": null
+    },
+    {
+        "id": "19ae2e4e-a486-4042-a6da-57f7bb5ed4e1",
+        "trackedExerciseId": "api-Pr9Rhf4",
+        "date": "2026-02-26",
+        "weight": 23,
+        "reps": 9,
+        "createdAt": "2026-02-26T10:25:26.031Z",
+        "updatedAt": "2026-02-26T10:25:26.031Z",
+        "deletedAt": null
+    },
+    {
+        "id": "15668aca-104a-4c79-a2ad-ef2e3ca56b4e",
+        "trackedExerciseId": "api-FVmZVhk",
+        "date": "2026-02-26",
+        "weight": 14,
+        "reps": 8,
+        "createdAt": "2026-02-26T10:40:56.095Z",
+        "updatedAt": "2026-02-26T10:40:56.095Z",
+        "deletedAt": null
+    },
+    {
+        "id": "6b96ac1c-fff2-48e5-854c-6562613a8c2c",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-02-26",
+        "weight": 20.5,
+        "reps": 12,
+        "createdAt": "2026-02-26T10:51:57.075Z",
+        "updatedAt": "2026-02-26T10:51:57.075Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ec99f8a8-dd68-4adc-a527-a3a9ba2643ae",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-02-26",
+        "weight": 22.5,
+        "reps": 11,
+        "createdAt": "2026-02-26T10:55:42.445Z",
+        "updatedAt": "2026-02-26T10:55:42.445Z",
+        "deletedAt": null
+    },
+    {
+        "id": "844b94db-3529-4dd0-8031-707fe2b49b4f",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-02-26",
+        "weight": 20.3,
+        "reps": 8,
+        "createdAt": "2026-02-26T11:04:21.024Z",
+        "updatedAt": "2026-02-26T11:04:21.024Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d5626dc4-c964-4fd6-aa1c-a25050a701ba",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-02-28",
+        "weight": 15,
+        "reps": 8,
+        "createdAt": "2026-02-28T13:29:48.496Z",
+        "updatedAt": "2026-02-28T13:29:48.496Z",
+        "deletedAt": null
+    },
+    {
+        "id": "96af89d9-ebaf-4364-b5fb-a23c87654608",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-02-28",
+        "weight": 30,
+        "reps": 12,
+        "createdAt": "2026-02-28T13:31:16.940Z",
+        "updatedAt": "2026-02-28T13:31:16.940Z",
+        "deletedAt": null
+    },
+    {
+        "id": "6570f3fe-171c-4765-b517-99096704f870",
+        "trackedExerciseId": "api-17lJ1kr",
+        "date": "2026-02-28",
+        "weight": 15,
+        "reps": 14,
+        "createdAt": "2026-02-28T13:37:31.424Z",
+        "updatedAt": "2026-02-28T13:37:31.424Z",
+        "deletedAt": null
+    },
+    {
+        "id": "da5e45ee-dabc-4178-889c-0ed802c7a5ad",
+        "trackedExerciseId": "api-17lJ1kr",
+        "date": "2026-02-28",
+        "weight": 25,
+        "reps": 12,
+        "createdAt": "2026-02-28T13:38:43.972Z",
+        "updatedAt": "2026-02-28T13:38:43.972Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e2c2615b-5865-4fb7-9050-c56208145d16",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-02-28",
+        "weight": 30,
+        "reps": 8,
+        "createdAt": "2026-02-28T13:59:52.559Z",
+        "updatedAt": "2026-02-28T13:59:52.559Z",
+        "deletedAt": null
+    },
+    {
+        "id": "cafbe125-75ba-4518-b580-3841cf402110",
+        "trackedExerciseId": "api-HPlPoQA",
+        "date": "2026-02-28",
+        "weight": 15,
+        "reps": 12,
+        "createdAt": "2026-02-28T14:08:31.423Z",
+        "updatedAt": "2026-02-28T14:08:31.423Z",
+        "deletedAt": null
+    },
+    {
+        "id": "0f924df8-9eb6-463a-b900-c926166c7bd2",
+        "trackedExerciseId": "api-HPlPoQA",
+        "date": "2026-02-28",
+        "weight": 17.5,
+        "reps": 12,
+        "createdAt": "2026-02-28T14:09:51.404Z",
+        "updatedAt": "2026-02-28T14:09:51.404Z",
+        "deletedAt": null
+    },
+    {
+        "id": "a3628424-decd-40ce-bd2d-836c7682b07d",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-02-28",
+        "weight": 20.3,
+        "reps": 17,
+        "createdAt": "2026-02-28T14:10:57.591Z",
+        "updatedAt": "2026-02-28T14:10:57.591Z",
+        "deletedAt": null
+    },
+    {
+        "id": "6daa7d49-1609-449d-8970-3e6bbcdec6f1",
+        "trackedExerciseId": "api-HPlPoQA",
+        "date": "2026-02-28",
+        "weight": 20,
+        "reps": 10,
+        "createdAt": "2026-02-28T14:12:01.876Z",
+        "updatedAt": "2026-02-28T14:12:01.876Z",
+        "deletedAt": null
+    },
+    {
+        "id": "11246282-94b6-4655-a232-a7b89ad4f124",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-02-28",
+        "weight": 22.5,
+        "reps": 10,
+        "createdAt": "2026-02-28T14:13:23.667Z",
+        "updatedAt": "2026-02-28T14:13:23.667Z",
+        "deletedAt": null
+    },
+    {
+        "id": "58a229f4-bdd7-42df-aaf2-bb8a6c66865a",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-02-28",
+        "weight": 0,
+        "reps": 20,
+        "createdAt": "2026-02-28T14:20:05.274Z",
+        "updatedAt": "2026-02-28T14:20:05.274Z",
+        "deletedAt": null
+    },
+    {
+        "id": "7c348945-69de-48e9-8fcb-494e18dac43b",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-03-02",
+        "weight": 22,
+        "reps": 12,
+        "createdAt": "2026-03-02T11:31:48.939Z",
+        "updatedAt": "2026-03-02T11:31:48.939Z",
+        "deletedAt": null
+    },
+    {
+        "id": "0570fd21-529d-4631-b6f7-a23c4519fe06",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-03-02",
+        "weight": 24,
+        "reps": 12,
+        "createdAt": "2026-03-02T11:33:18.743Z",
+        "updatedAt": "2026-03-02T11:33:18.743Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c527288d-7ba1-48f1-b0ed-edc7f0dbb5a0",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-03-02",
+        "weight": 22.5,
+        "reps": 6,
+        "createdAt": "2026-03-02T11:57:51.971Z",
+        "updatedAt": "2026-03-02T11:57:51.971Z",
+        "deletedAt": null
+    },
+    {
+        "id": "2b57fbae-57a8-4a50-94eb-8370aaae9af0",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-03-02",
+        "weight": 22.5,
+        "reps": 7,
+        "createdAt": "2026-03-02T11:59:49.281Z",
+        "updatedAt": "2026-03-02T11:59:49.281Z",
+        "deletedAt": null
+    },
+    {
+        "id": "68c9fda2-f611-4dc4-9a94-b09a63d21c16",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-03-02",
+        "weight": 20,
+        "reps": 6,
+        "createdAt": "2026-03-02T12:03:16.852Z",
+        "updatedAt": "2026-03-02T12:03:16.852Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c5e10ae2-b6aa-4d7b-8c6f-c5fe1aed8690",
+        "trackedExerciseId": "api-RVwzP10",
+        "date": "2026-03-03",
+        "weight": 50,
+        "reps": 12,
+        "createdAt": "2026-03-03T11:38:29.965Z",
+        "updatedAt": "2026-03-03T11:38:29.965Z",
+        "deletedAt": null
+    },
+    {
+        "id": "959510fd-1d7b-434f-8047-d178d8e0ce0a",
+        "trackedExerciseId": "api-RVwzP10",
+        "date": "2026-03-03",
+        "weight": 55,
+        "reps": 8,
+        "createdAt": "2026-03-03T11:44:06.803Z",
+        "updatedAt": "2026-03-03T11:44:06.803Z",
+        "deletedAt": null
+    },
+    {
+        "id": "143a887c-f534-494d-a611-0fdb2b98cf44",
+        "trackedExerciseId": "api-fUBheHs",
+        "date": "2026-03-03",
+        "weight": 45,
+        "reps": 10,
+        "createdAt": "2026-03-03T12:14:14.143Z",
+        "updatedAt": "2026-03-03T12:14:14.143Z",
+        "deletedAt": null
+    },
+    {
+        "id": "401e890a-b3c6-4623-a3e2-d7292e9ad98c",
+        "trackedExerciseId": "api-F3xgbjF",
+        "date": "2026-03-03",
+        "weight": 6,
+        "reps": 12,
+        "createdAt": "2026-03-03T12:17:36.622Z",
+        "updatedAt": "2026-03-03T12:17:36.622Z",
+        "deletedAt": null
+    },
+    {
+        "id": "18db40f1-d4cd-443e-9b73-6614a3af7be6",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-03-04",
+        "weight": 26,
+        "reps": 12,
+        "createdAt": "2026-03-04T11:37:13.561Z",
+        "updatedAt": "2026-03-04T11:37:13.561Z",
+        "deletedAt": null
+    },
+    {
+        "id": "6e22e1de-0315-4f88-ba99-278e4ae3e550",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-03-04",
+        "weight": 28,
+        "reps": 10,
+        "createdAt": "2026-03-04T11:41:03.249Z",
+        "updatedAt": "2026-03-04T11:41:03.249Z",
+        "deletedAt": null
+    },
+    {
+        "id": "4c50ea85-fe9a-4833-aaa9-10c14774b4e4",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-03-04",
+        "weight": 60,
+        "reps": 8,
+        "createdAt": "2026-03-04T11:52:46.298Z",
+        "updatedAt": "2026-03-04T11:52:46.298Z",
+        "deletedAt": null
+    },
+    {
+        "id": "bd8077dd-16b5-4c3e-ae9b-46cad8458259",
+        "trackedExerciseId": "api-xLYSdtg",
+        "date": "2026-03-04",
+        "weight": 14,
+        "reps": 11,
+        "createdAt": "2026-03-04T11:57:38.366Z",
+        "updatedAt": "2026-03-04T11:57:38.366Z",
+        "deletedAt": null
+    },
+    {
+        "id": "db4d5a09-f1d4-47ab-b7d4-25a911971368",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-03-04",
+        "weight": 22.5,
+        "reps": 9,
+        "createdAt": "2026-03-04T12:02:51.765Z",
+        "updatedAt": "2026-03-04T12:02:51.765Z",
+        "deletedAt": null
+    },
+    {
+        "id": "6cfffd32-d5c7-4301-b2d1-f90697b8b8c7",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-03-04",
+        "weight": 20,
+        "reps": 8,
+        "createdAt": "2026-03-04T12:07:33.713Z",
+        "updatedAt": "2026-03-04T12:07:33.713Z",
+        "deletedAt": null
+    },
+    {
+        "id": "b632b912-8199-401c-a539-eee5dce664aa",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-03-05",
+        "weight": 35,
+        "reps": 12,
+        "createdAt": "2026-03-05T11:06:44.948Z",
+        "updatedAt": "2026-03-05T11:06:44.948Z",
+        "deletedAt": null
+    },
+    {
+        "id": "2e03ac35-45a5-48cb-a903-6df4f2b9a827",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-03-05",
+        "weight": 40,
+        "reps": 10,
+        "createdAt": "2026-03-05T11:09:27.693Z",
+        "updatedAt": "2026-03-05T11:09:27.693Z",
+        "deletedAt": null
+    },
+    {
+        "id": "68013edd-6ee9-4e56-8b31-fc4ceb5cc5a3",
+        "trackedExerciseId": "api-17lJ1kr",
+        "date": "2026-03-05",
+        "weight": 30,
+        "reps": 10,
+        "createdAt": "2026-03-05T11:15:16.860Z",
+        "updatedAt": "2026-03-05T11:15:16.860Z",
+        "deletedAt": null
+    },
+    {
+        "id": "a41cde7f-1cb3-4da5-a47b-36db6739ede0",
+        "trackedExerciseId": "api-17lJ1kr",
+        "date": "2026-03-05",
+        "weight": 30,
+        "reps": 12,
+        "createdAt": "2026-03-05T11:17:19.475Z",
+        "updatedAt": "2026-03-05T11:17:19.475Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e3de6325-23e3-47f8-9ee6-99b2ac972290",
+        "trackedExerciseId": "api-fUBheHs",
+        "date": "2026-03-06",
+        "weight": 45,
+        "reps": 12,
+        "createdAt": "2026-03-06T12:08:40.129Z",
+        "updatedAt": "2026-03-06T12:08:40.129Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f6eb7c07-72dc-4e72-92a4-7856f9398582",
+        "trackedExerciseId": "api-fUBheHs",
+        "date": "2026-03-06",
+        "weight": 50,
+        "reps": 9,
+        "createdAt": "2026-03-06T12:09:30.488Z",
+        "updatedAt": "2026-03-06T12:09:30.488Z",
+        "deletedAt": null
+    },
+    {
+        "id": "a1c9baea-6e21-44cf-8b72-795f6317cbfe",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-03-06",
+        "weight": 25,
+        "reps": 12,
+        "createdAt": "2026-03-06T12:27:37.717Z",
+        "updatedAt": "2026-03-06T12:27:37.717Z",
+        "deletedAt": null
+    },
+    {
+        "id": "07f11702-1302-4bb2-b4dc-175a005ac643",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-03-09",
+        "weight": 28,
+        "reps": 11,
+        "createdAt": "2026-03-09T11:45:14.938Z",
+        "updatedAt": "2026-03-09T11:45:14.938Z",
+        "deletedAt": null
+    },
+    {
+        "id": "aa5b3554-e648-4a2e-958e-0857eb631a07",
+        "trackedExerciseId": "api-FVmZVhk",
+        "date": "2026-03-09",
+        "weight": 14,
+        "reps": 9,
+        "createdAt": "2026-03-09T11:55:20.883Z",
+        "updatedAt": "2026-03-09T11:55:20.883Z",
+        "deletedAt": null
+    },
+    {
+        "id": "fe308fa8-0aea-420e-85a4-5729822f2573",
+        "trackedExerciseId": "api-xLYSdtg",
+        "date": "2026-03-09",
+        "weight": 14,
+        "reps": 12,
+        "createdAt": "2026-03-09T12:00:26.806Z",
+        "updatedAt": "2026-03-09T12:00:26.806Z",
+        "deletedAt": null
+    },
+    {
+        "id": "27bfd952-98f2-4304-8209-9ebc08ac8f61",
+        "trackedExerciseId": "api-xLYSdtg",
+        "date": "2026-03-09",
+        "weight": 20,
+        "reps": 10,
+        "createdAt": "2026-03-09T12:04:40.357Z",
+        "updatedAt": "2026-03-09T12:04:40.357Z",
+        "deletedAt": null
+    },
+    {
+        "id": "a09ea15b-f7a1-40e1-96fd-4bdc6fc55f02",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-03-09",
+        "weight": 20,
+        "reps": 12,
+        "createdAt": "2026-03-09T12:15:03.990Z",
+        "updatedAt": "2026-03-09T12:15:03.990Z",
+        "deletedAt": null
+    },
+    {
+        "id": "db005ca5-83fd-4e03-9f27-932361f326dd",
+        "trackedExerciseId": "api-fUBheHs",
+        "date": "2026-03-10",
+        "weight": 50,
+        "reps": 12,
+        "createdAt": "2026-03-10T10:46:39.102Z",
+        "updatedAt": "2026-03-10T10:46:39.102Z",
+        "deletedAt": null
+    },
+    {
+        "id": "eb696b2b-d0ed-4b7a-9591-c5d80603c613",
+        "trackedExerciseId": "api-fUBheHs",
+        "date": "2026-03-10",
+        "weight": 55,
+        "reps": 9,
+        "createdAt": "2026-03-10T10:49:30.540Z",
+        "updatedAt": "2026-03-10T10:49:30.540Z",
+        "deletedAt": null
+    },
+    {
+        "id": "665bb8ea-1a97-490e-88b6-c57c2b272ebb",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-03-10",
+        "weight": 27.5,
+        "reps": 10,
+        "createdAt": "2026-03-10T10:59:21.585Z",
+        "updatedAt": "2026-03-10T10:59:21.585Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e2ffcfb3-9219-494e-a728-bf7163fb762f",
+        "trackedExerciseId": "api-RVwzP10",
+        "date": "2026-03-10",
+        "weight": 55,
+        "reps": 8,
+        "createdAt": "2026-03-10T11:15:10.783Z",
+        "updatedAt": "2026-03-10T11:15:10.783Z",
+        "deletedAt": null
+    },
+    {
+        "id": "da5ac868-d519-437d-8e95-56fe276cbc74",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-03-12",
+        "weight": 15,
+        "reps": 10,
+        "createdAt": "2026-03-12T09:44:31.986Z",
+        "updatedAt": "2026-03-12T09:44:31.986Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e0b8d5e7-ad66-4bee-a5ee-7f5ac76f80db",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-03-12",
+        "weight": 22.5,
+        "reps": 12,
+        "createdAt": "2026-03-12T09:56:01.639Z",
+        "updatedAt": "2026-03-12T09:56:01.639Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d6aab7f3-3363-47fa-b796-51b78a0056b0",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-03-12",
+        "weight": 20,
+        "reps": 8,
+        "createdAt": "2026-03-12T10:00:34.271Z",
+        "updatedAt": "2026-03-12T10:00:34.271Z",
+        "deletedAt": null
+    },
+    {
+        "id": "b50f93e5-5b7c-4593-ac29-b876b4f0f1a3",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-03-12",
+        "weight": 22.5,
+        "reps": 8,
+        "createdAt": "2026-03-12T10:00:38.808Z",
+        "updatedAt": "2026-03-12T10:00:38.808Z",
+        "deletedAt": null
+    },
+    {
+        "id": "5f914143-934a-4877-88c4-b3a5a0afe14d",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-03-12",
+        "weight": 22.5,
+        "reps": 8,
+        "createdAt": "2026-03-12T10:04:24.776Z",
+        "updatedAt": "2026-03-12T10:04:24.776Z",
+        "deletedAt": null
+    },
+    {
+        "id": "b29bd510-2bc0-48bc-b358-1dc49c49a225",
+        "trackedExerciseId": "api-znQUdHY",
+        "date": "2026-03-13",
+        "weight": 24,
+        "reps": 8,
+        "createdAt": "2026-03-13T11:23:32.741Z",
+        "updatedAt": "2026-03-13T11:23:32.741Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d2c2f216-dd0b-4e7a-bfb5-1be6533a371f",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-03-13",
+        "weight": 30,
+        "reps": 8,
+        "createdAt": "2026-03-13T11:49:06.102Z",
+        "updatedAt": "2026-03-13T11:49:06.102Z",
+        "deletedAt": null
+    },
+    {
+        "id": "3ab583cc-0e13-4a75-944f-959aafe380af",
+        "trackedExerciseId": "api-F3xgbjF",
+        "date": "2026-03-13",
+        "weight": 8,
+        "reps": 13,
+        "createdAt": "2026-03-13T12:04:19.162Z",
+        "updatedAt": "2026-03-13T12:04:19.162Z",
+        "deletedAt": null
+    },
+    {
+        "id": "7c465909-fcc9-4a16-a3c9-d49ca8b2f9de",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-03-16",
+        "weight": 28,
+        "reps": 12,
+        "createdAt": "2026-03-16T10:52:59.819Z",
+        "updatedAt": "2026-03-16T10:52:59.819Z",
+        "deletedAt": null
+    },
+    {
+        "id": "63f8c789-c437-4cb4-a450-e30bd613c6dc",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-03-16",
+        "weight": 30,
+        "reps": 9,
+        "createdAt": "2026-03-16T10:58:05.377Z",
+        "updatedAt": "2026-03-16T10:58:05.377Z",
+        "deletedAt": null
+    },
+    {
+        "id": "b9482d41-f79f-4847-860e-8d256da204bc",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-03-16",
+        "weight": 25,
+        "reps": 8,
+        "createdAt": "2026-03-16T11:13:59.756Z",
+        "updatedAt": "2026-03-16T11:13:59.756Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f9306258-8b9c-471d-a7b0-9793adc9805f",
+        "trackedExerciseId": "api-mpKZGWz",
+        "date": "2026-03-16",
+        "weight": 6,
+        "reps": 12,
+        "createdAt": "2026-03-16T11:22:57.533Z",
+        "updatedAt": "2026-03-16T11:22:57.533Z",
+        "deletedAt": null
+    },
+    {
+        "id": "49adead9-e1f2-47a6-a88b-d144d5380829",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-03-17",
+        "weight": 30,
+        "reps": 9,
+        "createdAt": "2026-03-17T11:54:22.631Z",
+        "updatedAt": "2026-03-17T11:54:22.631Z",
+        "deletedAt": null
+    },
+    {
+        "id": "9030bac2-f106-448c-a8f1-15020b493f03",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-03-17",
+        "weight": 30,
+        "reps": 9,
+        "createdAt": "2026-03-17T11:58:18.302Z",
+        "updatedAt": "2026-03-17T11:58:18.302Z",
+        "deletedAt": null
+    },
+    {
+        "id": "cfc9052b-93ce-4e1b-bd75-b032096436c6",
+        "trackedExerciseId": "api-IGjKj1v",
+        "date": "2026-03-17",
+        "weight": 45,
+        "reps": 12,
+        "createdAt": "2026-03-17T12:20:59.483Z",
+        "updatedAt": "2026-03-17T12:20:59.483Z",
+        "deletedAt": null
+    },
+    {
+        "id": "a519b496-a9eb-4a82-ab5d-8abbe8e4daf0",
+        "trackedExerciseId": "api-Zg3XY7P",
+        "date": "2026-03-18",
+        "weight": 15,
+        "reps": 20,
+        "createdAt": "2026-03-18T12:22:47.791Z",
+        "updatedAt": "2026-03-18T12:22:47.791Z",
+        "deletedAt": null
+    },
+    {
+        "id": "39c29694-847a-4d4f-b238-ceb74f80ee18",
+        "trackedExerciseId": "api-Zg3XY7P",
+        "date": "2026-03-18",
+        "weight": 30,
+        "reps": 12,
+        "createdAt": "2026-03-18T12:23:49.408Z",
+        "updatedAt": "2026-03-18T12:23:49.408Z",
+        "deletedAt": null
+    },
+    {
+        "id": "af1ad509-f951-49a5-8df0-827088aa926e",
+        "trackedExerciseId": "api-Zg3XY7P",
+        "date": "2026-03-18",
+        "weight": 35,
+        "reps": 12,
+        "createdAt": "2026-03-18T12:26:19.847Z",
+        "updatedAt": "2026-03-18T12:26:19.847Z",
+        "deletedAt": null
+    },
+    {
+        "id": "3b5080b3-da7f-4c15-a07e-0afb8272eafb",
+        "trackedExerciseId": "api-Zg3XY7P",
+        "date": "2026-03-18",
+        "weight": 40,
+        "reps": 12,
+        "createdAt": "2026-03-18T12:28:54.904Z",
+        "updatedAt": "2026-03-18T12:28:54.904Z",
+        "deletedAt": null
+    },
+    {
+        "id": "cbede435-98a7-4e0a-b1c5-d55a72bac2b2",
+        "trackedExerciseId": "custom-fd5b5e07-d87f-46c7-b27d-a672b9dbf446",
+        "date": "2026-03-18",
+        "weight": 80,
+        "reps": 12,
+        "createdAt": "2026-03-18T12:32:23.367Z",
+        "updatedAt": "2026-03-18T12:32:23.367Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d6a08c4b-a560-446c-aef9-4a1523f15d0b",
+        "trackedExerciseId": "custom-fd5b5e07-d87f-46c7-b27d-a672b9dbf446",
+        "date": "2026-03-18",
+        "weight": 100,
+        "reps": 12,
+        "createdAt": "2026-03-18T12:42:25.146Z",
+        "updatedAt": "2026-03-18T12:42:25.146Z",
+        "deletedAt": null
+    },
+    {
+        "id": "cb49051a-775c-45f8-b248-fe15fc02be38",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-03-18",
+        "weight": 45,
+        "reps": 10,
+        "createdAt": "2026-03-18T12:46:29.030Z",
+        "updatedAt": "2026-03-18T12:46:29.030Z",
+        "deletedAt": null
+    },
+    {
+        "id": "8a915a8e-0fa9-4bec-9b23-ede6d2ef13ac",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-03-18",
+        "weight": 47,
+        "reps": 10,
+        "createdAt": "2026-03-18T15:33:34.177Z",
+        "updatedAt": "2026-03-18T15:33:34.177Z",
+        "deletedAt": null
+    },
+    {
+        "id": "369bb5b0-9b77-403d-aef4-8ceb6b50aa7a",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-03-18",
+        "weight": 45,
+        "reps": 10,
+        "createdAt": "2026-03-18T15:33:38.716Z",
+        "updatedAt": "2026-03-18T15:33:38.716Z",
+        "deletedAt": null
+    },
+    {
+        "id": "52865832-facd-4cff-93dd-5cd808b01f76",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-03-18",
+        "weight": 33.5,
+        "reps": 9,
+        "createdAt": "2026-03-18T15:34:37.527Z",
+        "updatedAt": "2026-03-18T15:35:06.673Z",
+        "deletedAt": "2026-03-18T15:35:06.673Z"
+    },
+    {
+        "id": "5be40730-aa19-4fe4-85b8-9cfdfb9fcfbc",
+        "trackedExerciseId": "api-ns0SIbU",
+        "date": "2026-03-18",
+        "weight": 24.5,
+        "reps": 8,
+        "createdAt": "2026-03-18T15:39:18.501Z",
+        "updatedAt": "2026-03-18T15:39:28.719Z",
+        "deletedAt": "2026-03-18T15:39:28.719Z"
+    },
+    {
+        "id": "5a0eed3e-73d3-42f9-9ea9-52968f59d9e7",
+        "trackedExerciseId": "api-ns0SIbU",
+        "date": "2026-03-18",
+        "weight": 23.5,
+        "reps": 8,
+        "createdAt": "2026-03-18T15:39:32.248Z",
+        "updatedAt": "2026-03-18T15:39:32.248Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d371c50b-0628-4f3f-8530-80bac4525afa",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-03-19",
+        "weight": 33,
+        "reps": 9,
+        "createdAt": "2026-03-19T00:52:57.651Z",
+        "updatedAt": "2026-03-19T00:53:09.470Z",
+        "deletedAt": "2026-03-19T00:53:09.470Z"
+    },
+    {
+        "id": "ade4b718-de61-4372-b0d6-f3585a36274b",
+        "trackedExerciseId": "api-ns0SIbU",
+        "date": "2026-03-19",
+        "weight": 25.5,
+        "reps": 8,
+        "createdAt": "2026-03-19T09:25:40.478Z",
+        "updatedAt": "2026-03-19T09:25:40.478Z",
+        "deletedAt": null
+    },
+    {
+        "id": "fc20d30b-a674-4c2c-8045-ad2edc70ffb3",
+        "trackedExerciseId": "api-ns0SIbU",
+        "date": "2026-03-19",
+        "weight": 28,
+        "reps": 8,
+        "createdAt": "2026-03-19T09:25:46.299Z",
+        "updatedAt": "2026-03-19T09:25:46.299Z",
+        "deletedAt": null
+    },
+    {
+        "id": "16b84e9a-d717-4bd8-9824-b7dfabbd814a",
+        "trackedExerciseId": "api-EIeI8Vf",
+        "date": "2026-03-19",
+        "weight": 90,
+        "reps": 1,
+        "createdAt": "2026-03-19T11:07:33.528Z",
+        "updatedAt": "2026-03-19T11:07:33.528Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e457cb3a-a783-4c37-93e7-edb19cf763bc",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-03-19",
+        "weight": 20,
+        "reps": 9,
+        "createdAt": "2026-03-19T11:12:34.732Z",
+        "updatedAt": "2026-03-19T11:12:34.733Z",
+        "deletedAt": null
+    },
+    {
+        "id": "8e30795f-c6d4-4dea-8a5f-8a32fa3fefc0",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-03-19",
+        "weight": 20,
+        "reps": 6,
+        "createdAt": "2026-03-19T11:16:05.655Z",
+        "updatedAt": "2026-03-19T11:16:05.655Z",
+        "deletedAt": null
+    },
+    {
+        "id": "aa672a23-533f-49d8-b7e3-f2769aa94269",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-03-19",
+        "weight": 22.5,
+        "reps": 11,
+        "createdAt": "2026-03-19T11:28:05.390Z",
+        "updatedAt": "2026-03-19T11:28:05.390Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c9d4ac05-ae2f-40ab-a54d-7f519da31c77",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-03-19",
+        "weight": 20,
+        "reps": 8,
+        "createdAt": "2026-03-19T11:37:12.455Z",
+        "updatedAt": "2026-03-19T11:37:12.455Z",
+        "deletedAt": null
+    },
+    {
+        "id": "68eb0fcd-2bd4-4f7f-8fc1-6995587fabdb",
+        "trackedExerciseId": "api-fUBheHs",
+        "date": "2026-03-20",
+        "weight": 50,
+        "reps": 11,
+        "createdAt": "2026-03-20T13:08:35.525Z",
+        "updatedAt": "2026-03-20T13:08:53.780Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ae710e93-1ab2-45b5-86b0-666a1fb80b7d",
+        "trackedExerciseId": "api-fUBheHs",
+        "date": "2026-03-20",
+        "weight": 55,
+        "reps": 10,
+        "createdAt": "2026-03-20T13:13:20.134Z",
+        "updatedAt": "2026-03-20T13:13:20.134Z",
+        "deletedAt": null
+    },
+    {
+        "id": "3cd82d27-2218-481c-880d-2ac07796bdfc",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-03-20",
+        "weight": 50,
+        "reps": 12,
+        "createdAt": "2026-03-20T13:25:48.536Z",
+        "updatedAt": "2026-03-20T13:25:48.536Z",
+        "deletedAt": null
+    },
+    {
+        "id": "27d29a76-53f9-4928-a784-82dd405ea058",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-03-20",
+        "weight": 55,
+        "reps": 10,
+        "createdAt": "2026-03-20T13:26:54.540Z",
+        "updatedAt": "2026-03-20T13:26:54.540Z",
+        "deletedAt": null
+    },
+    {
+        "id": "2c841442-33ad-4e15-b0ac-4a09c34e094d",
+        "trackedExerciseId": "api-slDvUAU",
+        "date": "2026-03-20",
+        "weight": 14,
+        "reps": 12,
+        "createdAt": "2026-03-20T13:29:14.997Z",
+        "updatedAt": "2026-03-20T13:29:14.997Z",
+        "deletedAt": null
+    },
+    {
+        "id": "a6925182-59f1-48a8-b60c-d5a229926abc",
+        "trackedExerciseId": "api-slDvUAU",
+        "date": "2026-03-20",
+        "weight": 16,
+        "reps": 10,
+        "createdAt": "2026-03-20T13:31:49.086Z",
+        "updatedAt": "2026-03-20T13:31:49.086Z",
+        "deletedAt": null
+    },
+    {
+        "id": "78a9677c-bccd-4e70-be3d-7320175c54e6",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-03-20",
+        "weight": 30,
+        "reps": 7,
+        "createdAt": "2026-03-20T13:39:15.032Z",
+        "updatedAt": "2026-03-20T13:39:15.032Z",
+        "deletedAt": null
+    },
+    {
+        "id": "3ce687d2-2411-4916-8bb9-fe40b48ba737",
+        "trackedExerciseId": "api-rGwhJ5o",
+        "date": "2026-03-22",
+        "weight": 25,
+        "reps": 18,
+        "createdAt": "2026-03-22T16:09:16.258Z",
+        "updatedAt": "2026-03-22T16:09:16.258Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f053074a-bf9f-4366-9251-052b032070c5",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-03-23",
+        "weight": 30,
+        "reps": 9,
+        "createdAt": "2026-03-23T20:09:45.564Z",
+        "updatedAt": "2026-03-23T20:09:45.564Z",
+        "deletedAt": null
+    },
+    {
+        "id": "90ab72ed-5daa-4faf-8d93-e1ba75f0f473",
+        "trackedExerciseId": "api-xLYSdtg",
+        "date": "2026-03-23",
+        "weight": 20,
+        "reps": 8,
+        "createdAt": "2026-03-23T20:18:13.877Z",
+        "updatedAt": "2026-03-23T20:18:13.877Z",
+        "deletedAt": null
+    },
+    {
+        "id": "94fbad6d-ef9e-4c80-8003-eca3c5fb3158",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-03-23",
+        "weight": 60,
+        "reps": 7,
+        "createdAt": "2026-03-23T20:23:26.490Z",
+        "updatedAt": "2026-03-23T20:23:26.490Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d365b9ad-f5b3-4c73-ac60-e02b30a310d7",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-03-23",
+        "weight": 60,
+        "reps": 8,
+        "createdAt": "2026-03-23T20:26:03.710Z",
+        "updatedAt": "2026-03-23T20:26:03.710Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ef861514-eb9e-4a44-b1fb-76e8d21445c4",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-03-23",
+        "weight": 60,
+        "reps": 9,
+        "createdAt": "2026-03-23T20:29:58.251Z",
+        "updatedAt": "2026-03-23T20:29:58.251Z",
+        "deletedAt": null
+    },
+    {
+        "id": "a88aefb9-1a2d-4360-901c-69fac847081e",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-03-23",
+        "weight": 20,
+        "reps": 12,
+        "createdAt": "2026-03-23T20:42:58.983Z",
+        "updatedAt": "2026-03-23T20:42:58.983Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ca8adc85-071d-403e-ac38-1d7f886dc7a9",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-03-23",
+        "weight": 25,
+        "reps": 10,
+        "createdAt": "2026-03-23T20:46:05.742Z",
+        "updatedAt": "2026-03-23T20:46:05.742Z",
+        "deletedAt": null
+    },
+    {
+        "id": "74b53eb4-ee88-4ba3-b6f0-954764642de4",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-03-24",
+        "weight": 55,
+        "reps": 12,
+        "createdAt": "2026-03-24T20:37:10.600Z",
+        "updatedAt": "2026-03-24T20:37:10.600Z",
+        "deletedAt": null
+    },
+    {
+        "id": "70cf3241-1f0d-4b56-b997-3dc3a08829fc",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-03-24",
+        "weight": 60,
+        "reps": 8,
+        "createdAt": "2026-03-24T20:41:12.591Z",
+        "updatedAt": "2026-03-24T20:41:12.591Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f1cc0037-4d57-4f6c-ab19-d77fb2b32ef4",
+        "trackedExerciseId": "api-slDvUAU",
+        "date": "2026-03-24",
+        "weight": 14,
+        "reps": 11,
+        "createdAt": "2026-03-24T20:51:38.132Z",
+        "updatedAt": "2026-03-24T20:51:38.132Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ee27051b-d725-40de-9ff3-7d655d4dfe58",
+        "trackedExerciseId": "api-F3xgbjF",
+        "date": "2026-03-24",
+        "weight": 8,
+        "reps": 10,
+        "createdAt": "2026-03-24T21:02:11.198Z",
+        "updatedAt": "2026-03-24T21:02:11.198Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f8d3f885-f806-4f26-a20d-220876e74381",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-03-26",
+        "weight": 0,
+        "reps": 15,
+        "createdAt": "2026-03-26T17:16:30.357Z",
+        "updatedAt": "2026-03-26T17:16:30.357Z",
+        "deletedAt": null
+    },
+    {
+        "id": "6e736fc9-37b4-45a0-bb17-a48c86ebb71f",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-03-26",
+        "weight": 28,
+        "reps": 10,
+        "createdAt": "2026-03-26T17:22:11.599Z",
+        "updatedAt": "2026-03-26T17:22:11.599Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d2824488-1815-4164-9a7e-5634d887f09c",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-03-26",
+        "weight": 28,
+        "reps": 11,
+        "createdAt": "2026-03-26T17:31:04.802Z",
+        "updatedAt": "2026-03-26T17:31:04.802Z",
+        "deletedAt": null
+    },
+    {
+        "id": "8eaccbaa-63eb-4e11-9803-10e7e11e6340",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-03-26",
+        "weight": 22.5,
+        "reps": 12,
+        "createdAt": "2026-03-26T17:42:09.198Z",
+        "updatedAt": "2026-03-26T17:42:09.198Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c0e9228b-ed84-4224-9f3b-2430b433e994",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-03-26",
+        "weight": 40,
+        "reps": 9,
+        "createdAt": "2026-03-26T18:02:07.737Z",
+        "updatedAt": "2026-03-26T18:02:07.737Z",
+        "deletedAt": null
+    },
+    {
+        "id": "6ecef32e-e5ba-441a-8290-d7b6196b9a5e",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-03-30",
+        "weight": 32,
+        "reps": 9,
+        "createdAt": "2026-03-30T10:01:44.267Z",
+        "updatedAt": "2026-03-30T10:01:44.267Z",
+        "deletedAt": null
+    },
+    {
+        "id": "b7e0ea9e-b749-41c1-a72a-355d97abbcce",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-03-30",
+        "weight": 60,
+        "reps": 13,
+        "createdAt": "2026-03-30T10:14:18.368Z",
+        "updatedAt": "2026-03-30T10:14:18.368Z",
+        "deletedAt": null
+    },
+    {
+        "id": "9868949a-190c-4209-a78e-2a0910d9a844",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-03-30",
+        "weight": 70,
+        "reps": 7,
+        "createdAt": "2026-03-30T10:17:37.053Z",
+        "updatedAt": "2026-03-30T10:17:37.053Z",
+        "deletedAt": null
+    },
+    {
+        "id": "0f052e29-1f9a-4541-b4cf-1afd2bd34ce1",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-03-30",
+        "weight": 25,
+        "reps": 11,
+        "createdAt": "2026-03-30T10:23:44.734Z",
+        "updatedAt": "2026-03-30T10:23:44.735Z",
+        "deletedAt": null
+    },
+    {
+        "id": "34bebbeb-fd90-4bb9-8c12-23db4ffe6530",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-03-30",
+        "weight": 25,
+        "reps": 11,
+        "createdAt": "2026-03-30T10:27:57.661Z",
+        "updatedAt": "2026-03-30T10:27:57.661Z",
+        "deletedAt": null
+    },
+    {
+        "id": "babef94a-629e-4205-bbe0-dc21368bb51c",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-03-30",
+        "weight": 25,
+        "reps": 12,
+        "createdAt": "2026-03-30T10:30:03.224Z",
+        "updatedAt": "2026-03-30T10:30:03.224Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c9baeaa5-ea0a-4ed3-a70c-4cf191b87115",
+        "trackedExerciseId": "api-mpKZGWz",
+        "date": "2026-03-30",
+        "weight": 8,
+        "reps": 9,
+        "createdAt": "2026-03-30T10:35:25.563Z",
+        "updatedAt": "2026-03-30T10:35:25.563Z",
+        "deletedAt": null
+    },
+    {
+        "id": "73719425-4dac-49fc-b0a4-a64c95319f2b",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-03-31",
+        "weight": 30,
+        "reps": 13,
+        "createdAt": "2026-03-31T10:22:35.201Z",
+        "updatedAt": "2026-03-31T10:22:35.201Z",
+        "deletedAt": null
+    },
+    {
+        "id": "054d1794-df36-4226-90a3-4229090f3d39",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-03-31",
+        "weight": 35,
+        "reps": 6,
+        "createdAt": "2026-03-31T10:26:29.960Z",
+        "updatedAt": "2026-03-31T10:26:29.960Z",
+        "deletedAt": null
+    },
+    {
+        "id": "1b9a29fd-2795-440f-b357-4b146b5af9e4",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-03-31",
+        "weight": 60,
+        "reps": 8,
+        "createdAt": "2026-03-31T10:30:43.328Z",
+        "updatedAt": "2026-03-31T10:30:43.328Z",
+        "deletedAt": null
+    },
+    {
+        "id": "edc25c1a-6963-4b17-8bfa-9f2cfed461c2",
+        "trackedExerciseId": "api-fUBheHs",
+        "date": "2026-03-31",
+        "weight": 55,
+        "reps": 8,
+        "createdAt": "2026-03-31T10:42:29.244Z",
+        "updatedAt": "2026-03-31T10:42:29.244Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ec4977e4-8ff0-4e41-9a72-9a0d54eb5466",
+        "trackedExerciseId": "api-I4hDWkc",
+        "date": "2026-04-02",
+        "weight": 0,
+        "reps": 25,
+        "createdAt": "2026-04-02T16:24:09.164Z",
+        "updatedAt": "2026-04-02T16:24:09.164Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ab31b496-4529-4e93-aab4-81c6788f0b81",
+        "trackedExerciseId": "api-lBDjFxJ",
+        "date": "2026-04-05",
+        "weight": 0,
+        "reps": 15,
+        "createdAt": "2026-04-05T12:45:48.008Z",
+        "updatedAt": "2026-04-05T12:45:48.008Z",
+        "deletedAt": null
+    },
+    {
+        "id": "773834c0-ac8b-4113-80ef-341f26362a07",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-04-05",
+        "weight": 30,
+        "reps": 12,
+        "createdAt": "2026-04-05T12:53:33.243Z",
+        "updatedAt": "2026-04-05T12:53:33.243Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ca4ebbbb-eabd-4dbd-8898-6891c2002cb3",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-04-05",
+        "weight": 32.5,
+        "reps": 7,
+        "createdAt": "2026-04-05T12:57:23.146Z",
+        "updatedAt": "2026-04-05T12:57:28.784Z",
+        "deletedAt": null
+    },
+    {
+        "id": "523ce88f-0f8d-4b0e-81a0-40ad6ca28013",
+        "trackedExerciseId": "api-slDvUAU",
+        "date": "2026-04-05",
+        "weight": 14,
+        "reps": 8,
+        "createdAt": "2026-04-05T13:04:22.913Z",
+        "updatedAt": "2026-04-05T13:04:22.913Z",
+        "deletedAt": null
+    },
+    {
+        "id": "0aa75cea-9d81-45b1-aeda-f2ec60c03452",
+        "trackedExerciseId": "api-slDvUAU",
+        "date": "2026-04-05",
+        "weight": 14,
+        "reps": 10,
+        "createdAt": "2026-04-05T13:07:59.590Z",
+        "updatedAt": "2026-04-05T13:07:59.590Z",
+        "deletedAt": null
+    },
+    {
+        "id": "3f36a63f-cdd8-4310-9d3c-8d6cc8074baa",
+        "trackedExerciseId": "api-slDvUAU",
+        "date": "2026-04-05",
+        "weight": 14,
+        "reps": 10,
+        "createdAt": "2026-04-05T13:12:54.435Z",
+        "updatedAt": "2026-04-05T13:12:54.435Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e2f509dc-7624-4f03-b86b-78e5f63e0e78",
+        "trackedExerciseId": "api-F3xgbjF",
+        "date": "2026-04-05",
+        "weight": 8,
+        "reps": 15,
+        "createdAt": "2026-04-05T13:16:17.062Z",
+        "updatedAt": "2026-04-05T13:16:24.673Z",
+        "deletedAt": null
+    },
+    {
+        "id": "70f91c03-6290-4b23-95ed-56e1f44f1c5a",
+        "trackedExerciseId": "api-JOZhu2h",
+        "date": "2026-04-05",
+        "weight": 15,
+        "reps": 12,
+        "createdAt": "2026-04-05T13:25:02.698Z",
+        "updatedAt": "2026-04-05T13:25:49.265Z",
+        "deletedAt": "2026-04-05T13:25:49.265Z"
+    },
+    {
+        "id": "95ce14f6-b1e8-41d7-8ae6-21a48921fa97",
+        "trackedExerciseId": "api-U5INZY6",
+        "date": "2026-04-05",
+        "weight": 15,
+        "reps": 14,
+        "createdAt": "2026-04-05T13:27:10.402Z",
+        "updatedAt": "2026-04-05T13:27:10.402Z",
+        "deletedAt": null
+    },
+    {
+        "id": "fb84d8c1-251d-4b8d-acc1-cc8b6d2d857a",
+        "trackedExerciseId": "api-U5INZY6",
+        "date": "2026-04-05",
+        "weight": 20,
+        "reps": 12,
+        "createdAt": "2026-04-05T13:28:54.537Z",
+        "updatedAt": "2026-04-05T13:28:54.537Z",
+        "deletedAt": null
+    },
+    {
+        "id": "9f26fd32-c891-4fa8-9882-0fa35397303c",
+        "trackedExerciseId": "api-fUBheHs",
+        "date": "2026-04-05",
+        "weight": 50,
+        "reps": 12,
+        "createdAt": "2026-04-05T13:40:05.891Z",
+        "updatedAt": "2026-04-05T13:40:15.782Z",
+        "deletedAt": null
+    },
+    {
+        "id": "8c5a305b-81a1-43bb-b6e6-af5b402d6529",
+        "trackedExerciseId": "api-fUBheHs",
+        "date": "2026-04-05",
+        "weight": 55,
+        "reps": 8,
+        "createdAt": "2026-04-05T13:41:47.522Z",
+        "updatedAt": "2026-04-05T13:41:47.522Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c302fff7-6206-4d7a-a407-f125645b53ad",
+        "trackedExerciseId": "api-fUBheHs",
+        "date": "2026-04-05",
+        "weight": 55,
+        "reps": 9,
+        "createdAt": "2026-04-05T19:33:38.745Z",
+        "updatedAt": "2026-04-05T19:33:45.347Z",
+        "deletedAt": "2026-04-05T19:33:45.347Z"
+    },
+    {
+        "id": "8e9f2141-cfdf-443a-85ee-45111acd6ef9",
+        "trackedExerciseId": "api-fUBheHs",
+        "date": "2026-04-05",
+        "weight": 56.5,
+        "reps": 8,
+        "createdAt": "2026-04-05T19:33:47.962Z",
+        "updatedAt": "2026-04-05T19:34:27.425Z",
+        "deletedAt": "2026-04-05T19:34:27.425Z"
+    },
+    {
+        "id": "e37e7d58-46d2-4ed1-baca-eac2ffcf066a",
+        "trackedExerciseId": "api-I4hDWkc",
+        "date": "2026-04-05",
+        "weight": 0,
+        "reps": 26,
+        "createdAt": "2026-04-05T19:34:58.879Z",
+        "updatedAt": "2026-04-05T19:35:26.341Z",
+        "deletedAt": "2026-04-05T19:35:26.341Z"
+    },
+    {
+        "id": "3b0323bb-a32e-45e2-bc44-02db100f7f91",
+        "trackedExerciseId": "api-U5INZY6",
+        "date": "2026-04-05",
+        "weight": 20.5,
+        "reps": 12,
+        "createdAt": "2026-04-05T19:36:53.425Z",
+        "updatedAt": "2026-04-05T19:37:53.372Z",
+        "deletedAt": "2026-04-05T19:37:53.372Z"
+    },
+    {
+        "id": "bd217abd-887e-45b5-aec3-7902e09698df",
+        "trackedExerciseId": "api-fUBheHs",
+        "date": "2026-04-06",
+        "weight": 55.5,
+        "reps": 8,
+        "createdAt": "2026-04-06T14:37:13.612Z",
+        "updatedAt": "2026-04-06T14:37:38.295Z",
+        "deletedAt": "2026-04-06T14:37:38.295Z"
+    },
+    {
+        "id": "1a6d1832-1f8e-4c47-a0c5-99cef1ff4b5f",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-04-07",
+        "weight": 0,
+        "reps": 25,
+        "createdAt": "2026-04-07T10:00:33.000Z",
+        "updatedAt": "2026-04-07T10:00:33.001Z",
+        "deletedAt": null
+    },
+    {
+        "id": "469a995b-b937-45a7-ae0f-7e43b9aa089b",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-04-07",
+        "weight": 32,
+        "reps": 8,
+        "createdAt": "2026-04-07T10:13:14.591Z",
+        "updatedAt": "2026-04-07T10:13:14.591Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f87d97b8-4590-4309-8ea8-fa02dd032122",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-04-07",
+        "weight": 30,
+        "reps": 9,
+        "createdAt": "2026-04-07T10:17:50.752Z",
+        "updatedAt": "2026-04-07T10:17:58.080Z",
+        "deletedAt": null
+    },
+    {
+        "id": "dd405eb6-fcb6-405b-9be6-6e15f2f18fb7",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-04-07",
+        "weight": 60,
+        "reps": 12,
+        "createdAt": "2026-04-07T10:26:35.781Z",
+        "updatedAt": "2026-04-07T10:26:35.781Z",
+        "deletedAt": null
+    },
+    {
+        "id": "b184dd2b-9bf7-4c4e-bce1-aea17f1a072c",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-04-07",
+        "weight": 70,
+        "reps": 8,
+        "createdAt": "2026-04-07T10:30:27.672Z",
+        "updatedAt": "2026-04-07T10:30:27.672Z",
+        "deletedAt": null
+    },
+    {
+        "id": "4d96e48b-29e3-44d4-aa45-5b6109e09fba",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-04-07",
+        "weight": 70,
+        "reps": 8,
+        "createdAt": "2026-04-07T10:36:22.736Z",
+        "updatedAt": "2026-04-07T10:36:22.736Z",
+        "deletedAt": null
+    },
+    {
+        "id": "27d0b180-86fa-41b0-ba32-4c96b42e25ea",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-04-07",
+        "weight": 22.5,
+        "reps": 12,
+        "createdAt": "2026-04-07T10:39:39.663Z",
+        "updatedAt": "2026-04-07T10:39:39.663Z",
+        "deletedAt": null
+    },
+    {
+        "id": "fe4a6e92-d838-4072-8fe4-480d3714f8f0",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-04-07",
+        "weight": 20,
+        "reps": 10,
+        "createdAt": "2026-04-07T10:51:39.182Z",
+        "updatedAt": "2026-04-07T10:51:39.182Z",
+        "deletedAt": null
+    },
+    {
+        "id": "107aa3b0-21ca-41bd-8ddc-454048b71e57",
+        "trackedExerciseId": "api-lBDjFxJ",
+        "date": "2026-04-09",
+        "weight": 0,
+        "reps": 12,
+        "createdAt": "2026-04-09T11:32:29.664Z",
+        "updatedAt": "2026-04-09T11:32:29.664Z",
+        "deletedAt": null
+    },
+    {
+        "id": "224a8d19-cd9a-41a7-b8e6-dbec2c7ec5a7",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-04-09",
+        "weight": 30,
+        "reps": 10,
+        "createdAt": "2026-04-09T11:42:41.424Z",
+        "updatedAt": "2026-04-09T11:42:41.424Z",
+        "deletedAt": null
+    },
+    {
+        "id": "47cb6472-2328-4f53-aa81-65b1f4e458a2",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-04-09",
+        "weight": 30,
+        "reps": 9,
+        "createdAt": "2026-04-09T11:42:46.063Z",
+        "updatedAt": "2026-04-09T11:42:46.063Z",
+        "deletedAt": null
+    },
+    {
+        "id": "fe96f346-1a9d-4b36-b115-f54064bf3a15",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-04-09",
+        "weight": 30,
+        "reps": 7,
+        "createdAt": "2026-04-09T11:45:59.978Z",
+        "updatedAt": "2026-04-09T11:45:59.978Z",
+        "deletedAt": null
+    },
+    {
+        "id": "fe901b9e-8dbb-43ed-8ffa-88ad17982774",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-04-09",
+        "weight": 60,
+        "reps": 10,
+        "createdAt": "2026-04-09T11:51:09.230Z",
+        "updatedAt": "2026-04-09T11:51:09.230Z",
+        "deletedAt": null
+    },
+    {
+        "id": "66368db3-bfb5-4f32-8046-a45f9ae6f47e",
+        "trackedExerciseId": "api-F3xgbjF",
+        "date": "2026-04-09",
+        "weight": 10,
+        "reps": 11,
+        "createdAt": "2026-04-09T12:03:53.119Z",
+        "updatedAt": "2026-04-09T12:03:53.119Z",
+        "deletedAt": null
+    },
+    {
+        "id": "aca322c8-36da-4f39-a161-4451170b25a6",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-04-10",
+        "weight": 20,
+        "reps": 11,
+        "createdAt": "2026-04-10T07:20:24.774Z",
+        "updatedAt": "2026-04-10T07:20:24.774Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f94aa0db-a0a4-4f53-9b1e-2e71a579e0b7",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-04-10",
+        "weight": 60,
+        "reps": 12,
+        "createdAt": "2026-04-10T07:28:02.839Z",
+        "updatedAt": "2026-04-10T07:28:02.839Z",
+        "deletedAt": null
+    },
+    {
+        "id": "28491e5b-d484-422e-9e9c-a0cb30ab8a7d",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-04-10",
+        "weight": 70,
+        "reps": 6,
+        "createdAt": "2026-04-10T07:31:12.724Z",
+        "updatedAt": "2026-04-10T07:31:12.724Z",
+        "deletedAt": null
+    },
+    {
+        "id": "67dbac1e-6713-4b25-9d0e-5594a52883ab",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-04-10",
+        "weight": 22.5,
+        "reps": 12,
+        "createdAt": "2026-04-10T07:36:49.108Z",
+        "updatedAt": "2026-04-10T07:36:49.108Z",
+        "deletedAt": null
+    },
+    {
+        "id": "4d5eeb97-efda-4601-ac07-8d3cec01ad4d",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-04-10",
+        "weight": 25,
+        "reps": 8,
+        "createdAt": "2026-04-10T07:39:51.128Z",
+        "updatedAt": "2026-04-10T07:39:51.128Z",
+        "deletedAt": null
+    },
+    {
+        "id": "7fc5b1fb-6196-413d-a93c-7d25a6764bf9",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-04-10",
+        "weight": 25,
+        "reps": 9,
+        "createdAt": "2026-04-10T07:41:07.667Z",
+        "updatedAt": "2026-04-10T07:41:07.667Z",
+        "deletedAt": null
+    },
+    {
+        "id": "b0a08e0d-3e52-49be-9c86-79d23a0e2055",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-04-10",
+        "weight": 25,
+        "reps": 10,
+        "createdAt": "2026-04-10T07:44:58.985Z",
+        "updatedAt": "2026-04-10T07:44:58.985Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e23f4005-681d-4f94-9174-efccfca8bcb7",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-04-13",
+        "weight": 30,
+        "reps": 12,
+        "createdAt": "2026-04-13T10:08:04.147Z",
+        "updatedAt": "2026-04-13T10:08:04.147Z",
+        "deletedAt": null
+    },
+    {
+        "id": "7ef8463c-8f23-474e-8fb2-69a6fc1f8fbf",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-04-13",
+        "weight": 32,
+        "reps": 7,
+        "createdAt": "2026-04-13T10:12:47.819Z",
+        "updatedAt": "2026-04-13T10:12:47.819Z",
+        "deletedAt": null
+    },
+    {
+        "id": "5aef9a91-1551-4813-8932-063393a0c79c",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-04-13",
+        "weight": 31.5,
+        "reps": 7,
+        "createdAt": "2026-04-13T10:13:00.734Z",
+        "updatedAt": "2026-04-13T10:13:07.173Z",
+        "deletedAt": "2026-04-13T10:13:07.173Z"
+    },
+    {
+        "id": "5ccae094-c260-4280-a88c-43cf3fce17c4",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-04-13",
+        "weight": 25,
+        "reps": 10,
+        "createdAt": "2026-04-13T10:20:04.790Z",
+        "updatedAt": "2026-04-13T10:20:04.790Z",
+        "deletedAt": null
+    },
+    {
+        "id": "397423a8-8bb5-4482-af9d-86861a70fe79",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-04-13",
+        "weight": 25,
+        "reps": 9,
+        "createdAt": "2026-04-13T10:22:10.123Z",
+        "updatedAt": "2026-04-13T10:22:10.123Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ca28e771-508b-453f-98f0-fbb1517bd49f",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-04-13",
+        "weight": 60,
+        "reps": 12,
+        "createdAt": "2026-04-13T10:26:50.784Z",
+        "updatedAt": "2026-04-13T10:26:50.784Z",
+        "deletedAt": null
+    },
+    {
+        "id": "878e0665-7df4-46ff-8a3f-0f0735f7f46a",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-04-13",
+        "weight": 70,
+        "reps": 7,
+        "createdAt": "2026-04-13T10:29:56.817Z",
+        "updatedAt": "2026-04-13T10:30:11.674Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e5b1b057-7733-445d-8271-f97541dace14",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-04-14",
+        "weight": 30,
+        "reps": 12,
+        "createdAt": "2026-04-14T10:25:52.205Z",
+        "updatedAt": "2026-04-14T10:25:52.206Z",
+        "deletedAt": null
+    },
+    {
+        "id": "fa2a4ef5-61e4-421a-88a2-062a04c230a4",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-04-14",
+        "weight": 35,
+        "reps": 6,
+        "createdAt": "2026-04-14T10:29:03.528Z",
+        "updatedAt": "2026-04-14T10:29:10.778Z",
+        "deletedAt": null
+    },
+    {
+        "id": "8c62b1c2-9104-4385-88de-b6d60c1fdfed",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-04-14",
+        "weight": 60,
+        "reps": 6,
+        "createdAt": "2026-04-14T10:37:27.867Z",
+        "updatedAt": "2026-04-14T10:37:27.867Z",
+        "deletedAt": null
+    },
+    {
+        "id": "09d074bd-031b-4d08-8a46-603c0c5d28a8",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-04-14",
+        "weight": 60,
+        "reps": 9,
+        "createdAt": "2026-04-14T10:40:58.511Z",
+        "updatedAt": "2026-04-14T10:40:58.511Z",
+        "deletedAt": null
+    },
+    {
+        "id": "3cb73694-749e-4a19-a5b9-7a1213d6294d",
+        "trackedExerciseId": "api-slDvUAU",
+        "date": "2026-04-14",
+        "weight": 14,
+        "reps": 11,
+        "createdAt": "2026-04-14T10:46:31.726Z",
+        "updatedAt": "2026-04-14T10:46:31.726Z",
+        "deletedAt": null
+    },
+    {
+        "id": "edd4d8aa-1dfc-4d52-a750-116d2b679350",
+        "trackedExerciseId": "api-slDvUAU",
+        "date": "2026-04-14",
+        "weight": 14,
+        "reps": 10,
+        "createdAt": "2026-04-14T10:49:48.584Z",
+        "updatedAt": "2026-04-14T10:49:48.584Z",
+        "deletedAt": null
+    },
+    {
+        "id": "1f328093-152a-44bb-ac5a-5899ccea45fe",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-04-16",
+        "weight": 0,
+        "reps": 15,
+        "createdAt": "2026-04-16T10:28:27.851Z",
+        "updatedAt": "2026-04-16T10:28:27.851Z",
+        "deletedAt": null
+    },
+    {
+        "id": "cb268deb-2356-4dca-a9c1-3560cff19056",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-04-16",
+        "weight": 70,
+        "reps": 12,
+        "createdAt": "2026-04-16T10:35:17.879Z",
+        "updatedAt": "2026-04-16T10:35:17.879Z",
+        "deletedAt": null
+    },
+    {
+        "id": "401520a3-fb70-4698-ba1f-c6e0ad2d0a0f",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-04-16",
+        "weight": 75,
+        "reps": 12,
+        "createdAt": "2026-04-16T10:38:04.720Z",
+        "updatedAt": "2026-04-16T10:38:04.720Z",
+        "deletedAt": null
+    },
+    {
+        "id": "dc466dea-d8f1-4555-83bd-b813704e9a61",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-04-16",
+        "weight": 80,
+        "reps": 8,
+        "createdAt": "2026-04-16T10:43:10.180Z",
+        "updatedAt": "2026-04-16T10:43:10.180Z",
+        "deletedAt": null
+    },
+    {
+        "id": "7dd650c0-accd-4300-91ac-366a0bddf7de",
+        "trackedExerciseId": "api-xLYSdtg",
+        "date": "2026-04-16",
+        "weight": 20,
+        "reps": 8,
+        "createdAt": "2026-04-16T10:48:59.633Z",
+        "updatedAt": "2026-04-16T10:48:59.633Z",
+        "deletedAt": null
+    },
+    {
+        "id": "471bfc9c-72df-4165-ab33-a017dbf472c9",
+        "trackedExerciseId": "api-xLYSdtg",
+        "date": "2026-04-16",
+        "weight": 20,
+        "reps": 8,
+        "createdAt": "2026-04-16T10:52:05.170Z",
+        "updatedAt": "2026-04-16T10:52:05.170Z",
+        "deletedAt": null
+    },
+    {
+        "id": "036f7dc0-9751-452b-b35c-0f9da85b1441",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-04-16",
+        "weight": 25,
+        "reps": 12,
+        "createdAt": "2026-04-16T10:54:00.853Z",
+        "updatedAt": "2026-04-16T10:54:00.853Z",
+        "deletedAt": null
+    },
+    {
+        "id": "3db881ac-e6d1-45cc-9eec-7ee71f3083ce",
+        "trackedExerciseId": "api-mpKZGWz",
+        "date": "2026-04-16",
+        "weight": 8,
+        "reps": 9,
+        "createdAt": "2026-04-16T11:04:21.597Z",
+        "updatedAt": "2026-04-16T11:04:21.597Z",
+        "deletedAt": null
+    },
+    {
+        "id": "a5439120-dca1-45f3-8e1a-0a2435b2a56f",
+        "trackedExerciseId": "api-EIeI8Vf",
+        "date": "2026-04-17",
+        "weight": 80,
+        "reps": 3,
+        "createdAt": "2026-04-17T07:50:09.788Z",
+        "updatedAt": "2026-04-17T07:50:09.788Z",
+        "deletedAt": null
+    },
+    {
+        "id": "9869ec03-797c-48d9-944b-f55b0eec6eb0",
+        "trackedExerciseId": "api-FVmZVhk",
+        "date": "2026-04-17",
+        "weight": 13,
+        "reps": 20,
+        "createdAt": "2026-04-17T08:05:50.861Z",
+        "updatedAt": "2026-04-17T08:05:50.861Z",
+        "deletedAt": null
+    },
+    {
+        "id": "65eaa465-767d-4672-bb95-018fc7971206",
+        "trackedExerciseId": "api-FVmZVhk",
+        "date": "2026-04-17",
+        "weight": 22.6,
+        "reps": 20,
+        "createdAt": "2026-04-17T08:08:28.697Z",
+        "updatedAt": "2026-04-17T08:08:40.148Z",
+        "deletedAt": "2026-04-17T08:08:40.148Z"
+    },
+    {
+        "id": "aa8708a9-daf5-4026-92c9-7eb202527b15",
+        "trackedExerciseId": "api-FVmZVhk",
+        "date": "2026-04-17",
+        "weight": 22.6,
+        "reps": 9,
+        "createdAt": "2026-04-17T08:08:36.676Z",
+        "updatedAt": "2026-04-17T08:08:36.676Z",
+        "deletedAt": null
+    },
+    {
+        "id": "770055f4-d1f2-4eba-a0e6-8585fe89df84",
+        "trackedExerciseId": "api-FVmZVhk",
+        "date": "2026-04-17",
+        "weight": 22.6,
+        "reps": 9,
+        "createdAt": "2026-04-17T08:11:39.140Z",
+        "updatedAt": "2026-04-17T08:11:39.140Z",
+        "deletedAt": null
+    },
+    {
+        "id": "829eb848-32f6-46b0-bc50-f65e76d8ddd4",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-04-17",
+        "weight": 18,
+        "reps": 12,
+        "createdAt": "2026-04-17T08:15:13.523Z",
+        "updatedAt": "2026-04-17T08:15:13.523Z",
+        "deletedAt": null
+    },
+    {
+        "id": "91c0dfc2-6f6d-4c82-ab94-2d3346e06cfc",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-04-17",
+        "weight": 22.5,
+        "reps": 12,
+        "createdAt": "2026-04-17T08:18:59.968Z",
+        "updatedAt": "2026-04-17T08:18:59.968Z",
+        "deletedAt": null
+    },
+    {
+        "id": "87b345ee-24f6-4ff1-bc46-ae9b964cbf8b",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-04-17",
+        "weight": 22.5,
+        "reps": 12,
+        "createdAt": "2026-04-17T08:19:02.178Z",
+        "updatedAt": "2026-04-17T08:19:02.178Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d5128cde-7823-4586-9fb6-631cca700767",
+        "trackedExerciseId": "api-1cTf2Ux",
+        "date": "2026-04-17",
+        "weight": 15,
+        "reps": 8,
+        "createdAt": "2026-04-17T08:21:53.354Z",
+        "updatedAt": "2026-04-17T08:21:53.354Z",
+        "deletedAt": null
+    },
+    {
+        "id": "570ca338-0039-47a6-9bdd-1f4bc2778a9d",
+        "trackedExerciseId": "api-1cTf2Ux",
+        "date": "2026-04-17",
+        "weight": 15,
+        "reps": 12,
+        "createdAt": "2026-04-17T08:23:46.829Z",
+        "updatedAt": "2026-04-17T08:23:46.829Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f4af4b74-0181-4e0c-bf0b-e625015e8e8d",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-04-20",
+        "weight": 60,
+        "reps": 12,
+        "createdAt": "2026-04-20T10:03:07.705Z",
+        "updatedAt": "2026-04-20T10:03:07.705Z",
+        "deletedAt": null
+    },
+    {
+        "id": "74d62924-7c11-48ba-8a3d-257046974218",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-04-20",
+        "weight": 60,
+        "reps": 8,
+        "createdAt": "2026-04-20T10:07:09.175Z",
+        "updatedAt": "2026-04-20T10:07:09.175Z",
+        "deletedAt": null
+    },
+    {
+        "id": "545016ab-b19d-4ca9-8fb4-c5535ab77a87",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-04-21",
+        "weight": 30,
+        "reps": 12,
+        "createdAt": "2026-04-21T10:13:31.909Z",
+        "updatedAt": "2026-04-21T10:13:31.909Z",
+        "deletedAt": null
+    },
+    {
+        "id": "2e067ce7-f5f7-4034-b647-28ab6de1ee3b",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-04-21",
+        "weight": 30,
+        "reps": 10,
+        "createdAt": "2026-04-21T10:21:35.595Z",
+        "updatedAt": "2026-04-21T10:21:40.057Z",
+        "deletedAt": null
+    },
+    {
+        "id": "3a21f191-4561-4c82-91f9-0ebf79335d7e",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-04-21",
+        "weight": 30,
+        "reps": 10,
+        "createdAt": "2026-04-21T10:21:42.206Z",
+        "updatedAt": "2026-04-21T10:21:42.206Z",
+        "deletedAt": null
+    },
+    {
+        "id": "af130c40-9897-4a4e-8b6d-ea4f9f1c27b9",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-04-21",
+        "weight": 0,
+        "reps": 10,
+        "createdAt": "2026-04-21T10:23:57.767Z",
+        "updatedAt": "2026-04-21T10:23:57.768Z",
+        "deletedAt": null
+    },
+    {
+        "id": "7c92bb4b-b75f-4bb3-978c-fce0e86d6859",
+        "trackedExerciseId": "api-I4hDWkc",
+        "date": "2026-04-21",
+        "weight": 0,
+        "reps": 10,
+        "createdAt": "2026-04-21T10:24:06.071Z",
+        "updatedAt": "2026-04-21T10:24:06.071Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c35a52ec-4ac1-4623-a6fc-54beb7fe73c3",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-04-21",
+        "weight": 0,
+        "reps": 14,
+        "createdAt": "2026-04-21T10:25:55.522Z",
+        "updatedAt": "2026-04-21T10:25:55.522Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c5606cc8-856e-4b80-974f-ef41c09cc9e0",
+        "trackedExerciseId": "api-I4hDWkc",
+        "date": "2026-04-21",
+        "weight": 0,
+        "reps": 8,
+        "createdAt": "2026-04-21T10:26:28.815Z",
+        "updatedAt": "2026-04-21T10:26:28.815Z",
+        "deletedAt": null
+    },
+    {
+        "id": "cdc33b04-e57c-48b8-8615-7a4088b57a50",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-04-21",
+        "weight": 20,
+        "reps": 12,
+        "createdAt": "2026-04-21T10:38:14.330Z",
+        "updatedAt": "2026-04-21T10:38:14.330Z",
+        "deletedAt": null
+    },
+    {
+        "id": "2fd7afd0-5e70-40df-a8b4-d2df0851b373",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-04-21",
+        "weight": 25,
+        "reps": 7,
+        "createdAt": "2026-04-21T10:39:06.890Z",
+        "updatedAt": "2026-04-21T10:39:06.890Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d0fe6269-41d4-40c1-a791-2ad735ad2534",
+        "trackedExerciseId": "api-xLYSdtg",
+        "date": "2026-04-21",
+        "weight": 20,
+        "reps": 12,
+        "createdAt": "2026-04-21T10:43:00.674Z",
+        "updatedAt": "2026-04-21T10:43:00.674Z",
+        "deletedAt": null
+    },
+    {
+        "id": "58ce478a-305f-47ca-a644-f3a7c137c0b5",
+        "trackedExerciseId": "api-xLYSdtg",
+        "date": "2026-04-21",
+        "weight": 20,
+        "reps": 10,
+        "createdAt": "2026-04-21T10:46:05.529Z",
+        "updatedAt": "2026-04-21T10:46:05.529Z",
+        "deletedAt": null
+    },
+    {
+        "id": "774a3d2e-17ba-43c0-a606-73f7df766765",
+        "trackedExerciseId": "api-xLYSdtg",
+        "date": "2026-04-21",
+        "weight": 20,
+        "reps": 10,
+        "createdAt": "2026-04-21T10:52:43.172Z",
+        "updatedAt": "2026-04-21T10:52:43.172Z",
+        "deletedAt": null
+    },
+    {
+        "id": "945e6d04-bfb6-4082-8ffd-ea51e2867622",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-04-22",
+        "weight": 60,
+        "reps": 11,
+        "createdAt": "2026-04-22T10:03:34.332Z",
+        "updatedAt": "2026-04-22T10:03:34.332Z",
+        "deletedAt": null
+    },
+    {
+        "id": "1ad4bb84-3a46-483c-b1cf-3267350225f6",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-04-22",
+        "weight": 60,
+        "reps": 10,
+        "createdAt": "2026-04-22T10:06:44.512Z",
+        "updatedAt": "2026-04-22T10:06:44.512Z",
+        "deletedAt": null
+    },
+    {
+        "id": "bb916095-9cef-413b-a052-01053ce94a75",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-04-22",
+        "weight": 60,
+        "reps": 9,
+        "createdAt": "2026-04-22T10:09:53.786Z",
+        "updatedAt": "2026-04-22T10:09:53.786Z",
+        "deletedAt": null
+    },
+    {
+        "id": "1ff50780-0b5c-4202-a4fa-5b35339ba9d9",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-04-22",
+        "weight": 30,
+        "reps": 10,
+        "createdAt": "2026-04-22T10:12:36.553Z",
+        "updatedAt": "2026-04-22T10:12:36.553Z",
+        "deletedAt": null
+    },
+    {
+        "id": "190542f1-441f-45ea-a561-a510b2367d2f",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-04-22",
+        "weight": 30,
+        "reps": 10,
+        "createdAt": "2026-04-22T10:16:11.182Z",
+        "updatedAt": "2026-04-22T10:16:11.182Z",
+        "deletedAt": null
+    },
+    {
+        "id": "be6ee6d6-f519-4db3-82bb-5a35d8204ddd",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-04-22",
+        "weight": 30,
+        "reps": 8,
+        "createdAt": "2026-04-22T10:20:16.161Z",
+        "updatedAt": "2026-04-22T10:20:16.161Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c55bbe19-10c0-4b73-9bb1-262c6d6f5811",
+        "trackedExerciseId": "api-IGjKj1v",
+        "date": "2026-04-22",
+        "weight": 45,
+        "reps": 12,
+        "createdAt": "2026-04-22T10:25:39.037Z",
+        "updatedAt": "2026-04-22T10:25:39.037Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e481cfa8-bb46-41dc-802b-ffff7efe4fce",
+        "trackedExerciseId": "api-IGjKj1v",
+        "date": "2026-04-22",
+        "weight": 55,
+        "reps": 12,
+        "createdAt": "2026-04-22T10:27:26.990Z",
+        "updatedAt": "2026-04-22T10:27:26.990Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d7ed109c-8231-409a-8e9e-0c1949dfca3e",
+        "trackedExerciseId": "api-IGjKj1v",
+        "date": "2026-04-22",
+        "weight": 60,
+        "reps": 12,
+        "createdAt": "2026-04-22T10:33:43.093Z",
+        "updatedAt": "2026-04-22T10:33:43.093Z",
+        "deletedAt": null
+    },
+    {
+        "id": "1fb5f076-83c9-4951-b43a-0c1acccda036",
+        "trackedExerciseId": "api-slDvUAU",
+        "date": "2026-04-22",
+        "weight": 14,
+        "reps": 10,
+        "createdAt": "2026-04-22T10:34:54.119Z",
+        "updatedAt": "2026-04-22T10:34:54.119Z",
+        "deletedAt": null
+    },
+    {
+        "id": "0c8dfd55-7d37-42dc-b6d0-a8cfc5533b57",
+        "trackedExerciseId": "api-slDvUAU",
+        "date": "2026-04-22",
+        "weight": 14,
+        "reps": 10,
+        "createdAt": "2026-04-22T10:37:07.171Z",
+        "updatedAt": "2026-04-22T10:37:07.171Z",
+        "deletedAt": null
+    },
+    {
+        "id": "def5dcd2-679e-4678-959e-943b3d80911a",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-04-29",
+        "weight": 50,
+        "reps": 12,
+        "createdAt": "2026-04-29T10:26:46.283Z",
+        "updatedAt": "2026-04-29T10:26:46.283Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ebf0325d-5a47-4a03-8477-aaaac16b941a",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-04-29",
+        "weight": 60,
+        "reps": 8,
+        "createdAt": "2026-04-29T10:26:50.589Z",
+        "updatedAt": "2026-04-29T10:26:54.992Z",
+        "deletedAt": null
+    },
+    {
+        "id": "4aebdede-5f08-44a4-bf56-5efd475367f3",
+        "trackedExerciseId": "api-IENzBdA",
+        "date": "2026-04-29",
+        "weight": 20,
+        "reps": 12,
+        "createdAt": "2026-04-29T10:33:32.815Z",
+        "updatedAt": "2026-04-29T10:33:32.815Z",
+        "deletedAt": null
+    },
+    {
+        "id": "fea41784-b485-4aa8-8af9-cb29888feb00",
+        "trackedExerciseId": "api-F3xgbjF",
+        "date": "2026-04-29",
+        "weight": 8,
+        "reps": 9,
+        "createdAt": "2026-04-29T10:39:15.194Z",
+        "updatedAt": "2026-04-29T10:39:15.194Z",
+        "deletedAt": null
+    },
+    {
+        "id": "781f4645-b804-48a3-bdde-dc0769d14edb",
+        "trackedExerciseId": "api-F3xgbjF",
+        "date": "2026-04-29",
+        "weight": 8,
+        "reps": 12,
+        "createdAt": "2026-04-29T10:41:52.688Z",
+        "updatedAt": "2026-04-29T10:41:52.688Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f9404a7a-de8f-4861-928d-f08305d530f3",
+        "trackedExerciseId": "api-F3xgbjF",
+        "date": "2026-04-29",
+        "weight": 8,
+        "reps": 12,
+        "createdAt": "2026-04-29T10:44:22.747Z",
+        "updatedAt": "2026-04-29T10:44:22.747Z",
+        "deletedAt": null
+    },
+    {
+        "id": "0911d5a0-a337-4ce1-b5a0-df4fae28a7ef",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-05-04",
+        "weight": 0,
+        "reps": 18,
+        "createdAt": "2026-05-04T10:31:49.080Z",
+        "updatedAt": "2026-05-04T10:31:49.080Z",
+        "deletedAt": null
+    },
+    {
+        "id": "573fc686-4da3-4495-9c71-8404c23fd487",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-05-04",
+        "weight": 26,
+        "reps": 12,
+        "createdAt": "2026-05-04T10:34:40.369Z",
+        "updatedAt": "2026-05-04T10:34:45.617Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d33b527a-9572-486e-98f4-b08b98145c79",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-05-04",
+        "weight": 28,
+        "reps": 8,
+        "createdAt": "2026-05-04T10:38:30.617Z",
+        "updatedAt": "2026-05-04T10:38:30.617Z",
+        "deletedAt": null
+    },
+    {
+        "id": "01842a12-c9a0-4111-9da4-66991721949b",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-05-04",
+        "weight": 28,
+        "reps": 8,
+        "createdAt": "2026-05-04T10:43:19.384Z",
+        "updatedAt": "2026-05-04T10:43:19.384Z",
+        "deletedAt": null
+    },
+    {
+        "id": "24a78cfc-12f4-4f9c-8d0d-ee6d7be14dde",
+        "trackedExerciseId": "api-xLYSdtg",
+        "date": "2026-05-04",
+        "weight": 18,
+        "reps": 10,
+        "createdAt": "2026-05-04T10:47:32.427Z",
+        "updatedAt": "2026-05-04T10:47:32.427Z",
+        "deletedAt": null
+    },
+    {
+        "id": "1f55ab0b-6c15-4bd3-87a4-ef7cd7e3a94d",
+        "trackedExerciseId": "api-xLYSdtg",
+        "date": "2026-05-04",
+        "weight": 18,
+        "reps": 9,
+        "createdAt": "2026-05-04T10:56:30.080Z",
+        "updatedAt": "2026-05-04T10:56:30.080Z",
+        "deletedAt": null
+    },
+    {
+        "id": "42e36623-e306-4045-b7e0-5184ea3fa66b",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-05-04",
+        "weight": 25,
+        "reps": 10,
+        "createdAt": "2026-05-04T11:00:17.287Z",
+        "updatedAt": "2026-05-04T11:00:17.287Z",
+        "deletedAt": null
+    },
+    {
+        "id": "4123e8b4-899e-4934-9d95-60aca7af1849",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-05-04",
+        "weight": 18,
+        "reps": 10,
+        "createdAt": "2026-05-04T11:15:49.420Z",
+        "updatedAt": "2026-05-04T11:15:49.420Z",
+        "deletedAt": null
+    },
+    {
+        "id": "cca246f0-d302-4751-8362-ee6f888c1c55",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-05-04",
+        "weight": 18,
+        "reps": 11,
+        "createdAt": "2026-05-04T11:18:56.816Z",
+        "updatedAt": "2026-05-04T11:18:56.816Z",
+        "deletedAt": null
+    },
+    {
+        "id": "4000cfcb-063f-409a-b26d-15f8dac1b036",
+        "trackedExerciseId": "api-lBDjFxJ",
+        "date": "2026-05-05",
+        "weight": 0,
+        "reps": 12,
+        "createdAt": "2026-05-05T10:06:51.186Z",
+        "updatedAt": "2026-05-05T10:06:51.186Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f9a03830-17e1-461b-a168-af048eabad51",
+        "trackedExerciseId": "api-lBDjFxJ",
+        "date": "2026-05-05",
+        "weight": 0,
+        "reps": 10,
+        "createdAt": "2026-05-05T10:09:35.180Z",
+        "updatedAt": "2026-05-05T10:09:35.180Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e997b202-3b14-46f7-aedb-bd5eafb40156",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-05-05",
+        "weight": 59,
+        "reps": 8,
+        "createdAt": "2026-05-05T10:17:32.510Z",
+        "updatedAt": "2026-05-05T10:17:32.510Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d1bfa43c-d1eb-4c6e-998e-b3de5fc356ff",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-05-05",
+        "weight": 59,
+        "reps": 9,
+        "createdAt": "2026-05-05T10:20:56.285Z",
+        "updatedAt": "2026-05-05T10:20:56.285Z",
+        "deletedAt": null
+    },
+    {
+        "id": "b17c0944-9771-4e5c-bc07-f960907b467a",
+        "trackedExerciseId": "api-b6hQYMb",
+        "date": "2026-05-05",
+        "weight": 32,
+        "reps": 15,
+        "createdAt": "2026-05-05T10:22:43.418Z",
+        "updatedAt": "2026-05-05T10:22:43.418Z",
+        "deletedAt": null
+    },
+    {
+        "id": "da7e05d5-9f4f-4dc8-83cd-b598cf2d5393",
+        "trackedExerciseId": "api-b6hQYMb",
+        "date": "2026-05-05",
+        "weight": 41,
+        "reps": 12,
+        "createdAt": "2026-05-05T10:25:44.253Z",
+        "updatedAt": "2026-05-05T10:25:44.253Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e7e2d579-075e-49c6-ab91-36002dbd292a",
+        "trackedExerciseId": "api-b6hQYMb",
+        "date": "2026-05-05",
+        "weight": 41,
+        "reps": 10,
+        "createdAt": "2026-05-05T10:29:17.094Z",
+        "updatedAt": "2026-05-05T10:29:17.094Z",
+        "deletedAt": null
+    },
+    {
+        "id": "eb15464b-4d52-45e0-86ac-7eafc5f389e6",
+        "trackedExerciseId": "api-F3xgbjF",
+        "date": "2026-05-05",
+        "weight": 6,
+        "reps": 10,
+        "createdAt": "2026-05-05T10:30:54.271Z",
+        "updatedAt": "2026-05-05T10:30:54.271Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ff676cf2-7b47-4589-add2-7b1e784daec4",
+        "trackedExerciseId": "api-F3xgbjF",
+        "date": "2026-05-05",
+        "weight": 6,
+        "reps": 15,
+        "createdAt": "2026-05-05T10:34:18.750Z",
+        "updatedAt": "2026-05-05T10:34:18.750Z",
+        "deletedAt": null
+    },
+    {
+        "id": "868d9239-4466-4615-9fc3-0e7796d88e55",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-05-06",
+        "weight": 25,
+        "reps": 15,
+        "createdAt": "2026-05-06T10:14:12.230Z",
+        "updatedAt": "2026-05-06T10:14:12.230Z",
+        "deletedAt": null
+    },
+    {
+        "id": "bd64fb37-63c8-4424-8712-22a54fb45098",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-05-06",
+        "weight": 32,
+        "reps": 12,
+        "createdAt": "2026-05-06T10:16:58.140Z",
+        "updatedAt": "2026-05-06T10:16:58.140Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d366bd88-57f6-4ad0-8248-63db30743dbc",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-05-06",
+        "weight": 32,
+        "reps": 14,
+        "createdAt": "2026-05-06T10:19:40.803Z",
+        "updatedAt": "2026-05-06T10:19:40.803Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e809cc12-94f9-4d26-84e6-337224b45209",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-05-06",
+        "weight": 32,
+        "reps": 13,
+        "createdAt": "2026-05-06T10:22:36.151Z",
+        "updatedAt": "2026-05-06T10:22:36.151Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ccdd3bed-9c6c-4239-9dbc-1016cef49590",
+        "trackedExerciseId": "api-17lJ1kr",
+        "date": "2026-05-06",
+        "weight": 23,
+        "reps": 14,
+        "createdAt": "2026-05-06T10:24:34.364Z",
+        "updatedAt": "2026-05-06T10:24:34.364Z",
+        "deletedAt": null
+    },
+    {
+        "id": "1b9ed368-df8c-48c1-ab4e-bf5ae5f6e0aa",
+        "trackedExerciseId": "api-17lJ1kr",
+        "date": "2026-05-06",
+        "weight": 32,
+        "reps": 11,
+        "createdAt": "2026-05-06T10:27:05.912Z",
+        "updatedAt": "2026-05-06T10:27:05.912Z",
+        "deletedAt": null
+    },
+    {
+        "id": "abf9b240-7ace-4efd-9f71-87874b974a70",
+        "trackedExerciseId": "api-17lJ1kr",
+        "date": "2026-05-06",
+        "weight": 32,
+        "reps": 11,
+        "createdAt": "2026-05-06T10:29:46.368Z",
+        "updatedAt": "2026-05-06T10:29:46.368Z",
+        "deletedAt": null
+    },
+    {
+        "id": "12a24f97-09a3-4b16-98c7-49769db5e989",
+        "trackedExerciseId": "api-bOOdeyc",
+        "date": "2026-05-06",
+        "weight": 20,
+        "reps": 20,
+        "createdAt": "2026-05-06T10:31:49.106Z",
+        "updatedAt": "2026-05-06T10:31:49.106Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d6db5aec-d5f9-4aab-9c98-e66c3d3e6f53",
+        "trackedExerciseId": "api-bOOdeyc",
+        "date": "2026-05-06",
+        "weight": 40,
+        "reps": 14,
+        "createdAt": "2026-05-06T10:34:13.208Z",
+        "updatedAt": "2026-05-06T10:34:23.173Z",
+        "deletedAt": null
+    },
+    {
+        "id": "040eb84f-2147-4841-86fb-101b6c4a8590",
+        "trackedExerciseId": "api-bOOdeyc",
+        "date": "2026-05-06",
+        "weight": 40,
+        "reps": 15,
+        "createdAt": "2026-05-06T10:36:50.259Z",
+        "updatedAt": "2026-05-06T10:36:50.259Z",
+        "deletedAt": null
+    },
+    {
+        "id": "01c99e55-f073-4fb3-aade-4927d80c4f0f",
+        "trackedExerciseId": "api-lBDjFxJ",
+        "date": "2026-05-08",
+        "weight": 0,
+        "reps": 11,
+        "createdAt": "2026-05-08T11:29:23.514Z",
+        "updatedAt": "2026-05-08T11:29:23.514Z",
+        "deletedAt": null
+    },
+    {
+        "id": "b5b73bb4-5b42-4715-b283-80e1509c4d5a",
+        "trackedExerciseId": "api-lBDjFxJ",
+        "date": "2026-05-08",
+        "weight": 0,
+        "reps": 9,
+        "createdAt": "2026-05-08T11:33:13.456Z",
+        "updatedAt": "2026-05-08T11:33:13.456Z",
+        "deletedAt": null
+    },
+    {
+        "id": "b85d80c9-22d8-45f4-b64a-4fc6c6e31159",
+        "trackedExerciseId": "api-lBDjFxJ",
+        "date": "2026-05-08",
+        "weight": 0,
+        "reps": 9,
+        "createdAt": "2026-05-08T11:33:16.731Z",
+        "updatedAt": "2026-05-08T11:33:16.731Z",
+        "deletedAt": null
+    },
+    {
+        "id": "bfafdad0-1c56-49a0-ab28-d1f8f180206d",
+        "trackedExerciseId": "api-IGjKj1v",
+        "date": "2026-05-08",
+        "weight": 52,
+        "reps": 10,
+        "createdAt": "2026-05-08T11:39:53.893Z",
+        "updatedAt": "2026-05-08T11:39:53.893Z",
+        "deletedAt": null
+    },
+    {
+        "id": "803624c5-140f-49e5-9d32-dfb03c0b9e4c",
+        "trackedExerciseId": "api-IGjKj1v",
+        "date": "2026-05-08",
+        "weight": 52,
+        "reps": 11,
+        "createdAt": "2026-05-08T11:41:59.087Z",
+        "updatedAt": "2026-05-08T11:41:59.087Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f623fe7a-e51d-4e52-bc2d-18b4b27fe062",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-05-08",
+        "weight": 59,
+        "reps": 10,
+        "createdAt": "2026-05-08T11:45:43.484Z",
+        "updatedAt": "2026-05-08T11:45:43.484Z",
+        "deletedAt": null
+    },
+    {
+        "id": "1ee07368-6728-4df2-a9b3-d9f74a0e5d4b",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-05-08",
+        "weight": 59,
+        "reps": 8,
+        "createdAt": "2026-05-08T11:48:03.457Z",
+        "updatedAt": "2026-05-08T11:48:03.457Z",
+        "deletedAt": null
+    },
+    {
+        "id": "31fdf5a1-a4a2-4f2b-a37a-bde3985baf82",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-05-08",
+        "weight": 59,
+        "reps": 12,
+        "createdAt": "2026-05-08T11:53:45.526Z",
+        "updatedAt": "2026-05-08T11:53:45.526Z",
+        "deletedAt": null
+    },
+    {
+        "id": "b3b9379f-5865-4d4c-b024-81e9e5987fed",
+        "trackedExerciseId": "api-F3xgbjF",
+        "date": "2026-05-08",
+        "weight": 10,
+        "reps": 12,
+        "createdAt": "2026-05-08T11:57:49.892Z",
+        "updatedAt": "2026-05-08T11:57:49.892Z",
+        "deletedAt": null
+    },
+    {
+        "id": "b9ab5148-942d-47f6-ad21-45cc41d34f66",
+        "trackedExerciseId": "api-F3xgbjF",
+        "date": "2026-05-08",
+        "weight": 10,
+        "reps": 13,
+        "createdAt": "2026-05-08T12:00:45.239Z",
+        "updatedAt": "2026-05-08T12:00:45.239Z",
+        "deletedAt": null
+    },
+    {
+        "id": "7594cba7-93ee-4ea6-a807-24c9a9dac1b3",
+        "trackedExerciseId": "api-F3xgbjF",
+        "date": "2026-05-08",
+        "weight": 12,
+        "reps": 9,
+        "createdAt": "2026-05-08T12:03:06.370Z",
+        "updatedAt": "2026-05-08T12:03:06.370Z",
+        "deletedAt": null
+    },
+    {
+        "id": "0a0f74ca-4102-4093-b529-6fe0db793da9",
+        "trackedExerciseId": "api-IENzBdA",
+        "date": "2026-05-08",
+        "weight": 25,
+        "reps": 12,
+        "createdAt": "2026-05-08T12:09:23.988Z",
+        "updatedAt": "2026-05-08T12:09:23.988Z",
+        "deletedAt": null
+    },
+    {
+        "id": "5aa0c7d9-5f48-413e-a459-dd445ae2bfc4",
+        "trackedExerciseId": "api-IENzBdA",
+        "date": "2026-05-08",
+        "weight": 25,
+        "reps": 11,
+        "createdAt": "2026-05-08T12:13:23.490Z",
+        "updatedAt": "2026-05-08T12:13:23.490Z",
+        "deletedAt": null
+    },
+    {
+        "id": "30d1d396-a135-4149-9056-ef29464592cf",
+        "trackedExerciseId": "api-IENzBdA",
+        "date": "2026-05-08",
+        "weight": 25,
+        "reps": 12,
+        "createdAt": "2026-05-08T12:20:26.793Z",
+        "updatedAt": "2026-05-08T12:20:26.793Z",
+        "deletedAt": null
+    },
+    {
+        "id": "8c533667-3999-442b-b919-86157f882424",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-05-09",
+        "weight": 66,
+        "reps": 12,
+        "createdAt": "2026-05-09T10:41:58.007Z",
+        "updatedAt": "2026-05-09T10:41:58.007Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f405aecf-64c8-4457-9754-6d477af79adf",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-05-09",
+        "weight": 73,
+        "reps": 8,
+        "createdAt": "2026-05-09T10:44:40.408Z",
+        "updatedAt": "2026-05-09T10:44:40.408Z",
+        "deletedAt": null
+    },
+    {
+        "id": "dbe500c8-1cf6-4849-a588-89394837adef",
+        "trackedExerciseId": "api-IENzBdA",
+        "date": "2026-05-09",
+        "weight": 25,
+        "reps": 12,
+        "createdAt": "2026-05-09T11:21:13.514Z",
+        "updatedAt": "2026-05-09T11:21:13.514Z",
+        "deletedAt": null
+    },
+    {
+        "id": "39f8e49c-5795-4508-b200-74f46b285839",
+        "trackedExerciseId": "api-IENzBdA",
+        "date": "2026-05-09",
+        "weight": 30,
+        "reps": 7,
+        "createdAt": "2026-05-09T11:26:46.013Z",
+        "updatedAt": "2026-05-09T11:26:46.013Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ca49ffb1-6f19-4f40-82fa-553214b76a22",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-05-10",
+        "weight": 0,
+        "reps": 20,
+        "createdAt": "2026-05-10T11:04:17.844Z",
+        "updatedAt": "2026-05-10T11:04:17.845Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e996911a-3cf3-4104-affa-2ea42cc2d3b5",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-05-10",
+        "weight": 30,
+        "reps": 11,
+        "createdAt": "2026-05-10T11:15:27.467Z",
+        "updatedAt": "2026-05-10T11:15:27.467Z",
+        "deletedAt": null
+    },
+    {
+        "id": "41af2e15-c2d0-4d8c-8b67-b105b6771e29",
+        "trackedExerciseId": "api-SpYC0Kp",
+        "date": "2026-05-10",
+        "weight": 30,
+        "reps": 7,
+        "createdAt": "2026-05-10T11:19:20.696Z",
+        "updatedAt": "2026-05-10T11:19:20.696Z",
+        "deletedAt": null
+    },
+    {
+        "id": "46be671a-7936-4914-8e41-2bddab534377",
+        "trackedExerciseId": "api-T0yTjgW",
+        "date": "2026-05-10",
+        "weight": 45,
+        "reps": 12,
+        "createdAt": "2026-05-10T11:25:11.043Z",
+        "updatedAt": "2026-05-10T11:25:11.043Z",
+        "deletedAt": null
+    },
+    {
+        "id": "257f0183-18b6-42ed-a111-0b368163f9c3",
+        "trackedExerciseId": "api-T0yTjgW",
+        "date": "2026-05-10",
+        "weight": 59,
+        "reps": 8,
+        "createdAt": "2026-05-10T11:28:20.253Z",
+        "updatedAt": "2026-05-10T11:28:20.253Z",
+        "deletedAt": null
+    },
+    {
+        "id": "7725f2e6-afca-4795-b11b-2f4bb0cfa435",
+        "trackedExerciseId": "api-mpKZGWz",
+        "date": "2026-05-10",
+        "weight": 7,
+        "reps": 12,
+        "createdAt": "2026-05-10T11:39:34.912Z",
+        "updatedAt": "2026-05-10T11:39:34.912Z",
+        "deletedAt": null
+    },
+    {
+        "id": "a154a9d9-18ed-420b-ab16-b62d8630739e",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-05-10",
+        "weight": 24.8,
+        "reps": 12,
+        "createdAt": "2026-05-10T11:55:06.941Z",
+        "updatedAt": "2026-05-10T11:55:16.572Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e9c5b85a-df0e-41d1-a123-48c8c4d22d99",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-05-11",
+        "weight": 39,
+        "reps": 12,
+        "createdAt": "2026-05-11T10:12:56.224Z",
+        "updatedAt": "2026-05-11T10:12:56.224Z",
+        "deletedAt": null
+    },
+    {
+        "id": "aee5517b-9016-4e7d-9310-2b2d5d77a795",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-05-11",
+        "weight": 45,
+        "reps": 12,
+        "createdAt": "2026-05-11T10:14:13.975Z",
+        "updatedAt": "2026-05-11T10:14:13.975Z",
+        "deletedAt": null
+    },
+    {
+        "id": "588d450b-e2b7-49c9-9d89-4c7e4e634e05",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-05-11",
+        "weight": 59,
+        "reps": 12,
+        "createdAt": "2026-05-11T10:18:18.878Z",
+        "updatedAt": "2026-05-11T10:18:18.878Z",
+        "deletedAt": null
+    },
+    {
+        "id": "64e32d87-87db-488a-832c-bcc091394632",
+        "trackedExerciseId": "api-17lJ1kr",
+        "date": "2026-05-11",
+        "weight": 36,
+        "reps": 10,
+        "createdAt": "2026-05-11T10:25:19.227Z",
+        "updatedAt": "2026-05-11T10:25:19.227Z",
+        "deletedAt": null
+    },
+    {
+        "id": "abf66705-8145-4ab3-8210-ea31d8d07e7f",
+        "trackedExerciseId": "api-17lJ1kr",
+        "date": "2026-05-11",
+        "weight": 41,
+        "reps": 7,
+        "createdAt": "2026-05-11T10:28:39.993Z",
+        "updatedAt": "2026-05-11T10:28:39.993Z",
+        "deletedAt": null
+    },
+    {
+        "id": "a3b01e2e-c5d9-4e7e-8e3b-1298851e6393",
+        "trackedExerciseId": "api-bOOdeyc",
+        "date": "2026-05-11",
+        "weight": 40,
+        "reps": 15,
+        "createdAt": "2026-05-11T10:42:34.934Z",
+        "updatedAt": "2026-05-11T10:42:34.934Z",
+        "deletedAt": null
+    },
+    {
+        "id": "2079d2dd-6587-4e40-85c6-620aebadd0a9",
+        "trackedExerciseId": "api-bOOdeyc",
+        "date": "2026-05-11",
+        "weight": 50,
+        "reps": 12,
+        "createdAt": "2026-05-11T10:43:46.440Z",
+        "updatedAt": "2026-05-11T10:43:46.440Z",
+        "deletedAt": null
+    },
+    {
+        "id": "fc1f892e-4344-4190-8ca9-abb4f0ad9dd8",
+        "trackedExerciseId": "api-bOOdeyc",
+        "date": "2026-05-11",
+        "weight": 60,
+        "reps": 12,
+        "createdAt": "2026-05-11T10:47:39.518Z",
+        "updatedAt": "2026-05-11T10:47:39.518Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e0a10e2c-ba90-462c-b405-aba5c6c73e77",
+        "trackedExerciseId": "api-znQUdHY",
+        "date": "2026-05-12",
+        "weight": 22,
+        "reps": 12,
+        "createdAt": "2026-05-12T10:40:45.008Z",
+        "updatedAt": "2026-05-12T10:40:45.008Z",
+        "deletedAt": null
+    },
+    {
+        "id": "9a1c6921-785d-44b8-8019-7c789d468514",
+        "trackedExerciseId": "api-znQUdHY",
+        "date": "2026-05-12",
+        "weight": 24,
+        "reps": 9,
+        "createdAt": "2026-05-12T10:44:48.416Z",
+        "updatedAt": "2026-05-12T10:44:48.416Z",
+        "deletedAt": null
+    },
+    {
+        "id": "39ea9223-05e4-4a42-8543-d4666e1bec35",
+        "trackedExerciseId": "api-znQUdHY",
+        "date": "2026-05-12",
+        "weight": 24,
+        "reps": 11,
+        "createdAt": "2026-05-12T10:50:01.869Z",
+        "updatedAt": "2026-05-12T10:50:01.869Z",
+        "deletedAt": null
+    },
+    {
+        "id": "6592e6f2-68e3-4cfa-bf7d-e99008873bbf",
+        "trackedExerciseId": "api-DsgkuIt",
+        "date": "2026-05-12",
+        "weight": 8,
+        "reps": 12,
+        "createdAt": "2026-05-12T10:54:10.329Z",
+        "updatedAt": "2026-05-12T10:54:10.329Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c60aec3a-2832-4338-9f46-07cf8fd11609",
+        "trackedExerciseId": "api-DsgkuIt",
+        "date": "2026-05-12",
+        "weight": 12,
+        "reps": 7,
+        "createdAt": "2026-05-12T10:57:05.283Z",
+        "updatedAt": "2026-05-12T10:57:05.283Z",
+        "deletedAt": null
+    },
+    {
+        "id": "a31bb02e-262d-48c2-9133-9e6372196408",
+        "trackedExerciseId": "api-DsgkuIt",
+        "date": "2026-05-12",
+        "weight": 10,
+        "reps": 10,
+        "createdAt": "2026-05-12T11:01:00.018Z",
+        "updatedAt": "2026-05-12T11:01:00.018Z",
+        "deletedAt": null
+    },
+    {
+        "id": "649ef7e4-bae8-4782-94b9-d0f423019db2",
+        "trackedExerciseId": "api-qOgPVf6",
+        "date": "2026-05-12",
+        "weight": 30,
+        "reps": 12,
+        "createdAt": "2026-05-12T11:05:12.109Z",
+        "updatedAt": "2026-05-12T11:05:12.109Z",
+        "deletedAt": null
+    },
+    {
+        "id": "9b7c118a-13f5-4fcb-ab89-3fe966f57413",
+        "trackedExerciseId": "api-HPlPoQA",
+        "date": "2026-05-12",
+        "weight": 18,
+        "reps": 12,
+        "createdAt": "2026-05-12T11:19:14.724Z",
+        "updatedAt": "2026-05-12T11:19:14.724Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d248bf78-ab6a-4f66-88ae-419e43a426f4",
+        "trackedExerciseId": "api-HPlPoQA",
+        "date": "2026-05-12",
+        "weight": 20.3,
+        "reps": 12,
+        "createdAt": "2026-05-12T11:21:59.882Z",
+        "updatedAt": "2026-05-12T11:21:59.882Z",
+        "deletedAt": null
+    },
+    {
+        "id": "1d151c87-14e0-4607-9685-2ebb7a365447",
+        "trackedExerciseId": "api-HPlPoQA",
+        "date": "2026-05-12",
+        "weight": 22.5,
+        "reps": 8,
+        "createdAt": "2026-05-12T11:24:24.478Z",
+        "updatedAt": "2026-05-12T11:24:24.478Z",
+        "deletedAt": null
+    },
+    {
+        "id": "053dedcf-18e0-4ea4-a991-79d06f86bf5a",
+        "trackedExerciseId": "api-U5INZY6",
+        "date": "2026-05-14",
+        "weight": 22.5,
+        "reps": 12,
+        "createdAt": "2026-05-14T11:34:55.808Z",
+        "updatedAt": "2026-05-14T11:34:55.808Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ff437ff1-4aa0-42e6-b93e-290f8caf145f",
+        "trackedExerciseId": "api-U5INZY6",
+        "date": "2026-05-14",
+        "weight": 24,
+        "reps": 9,
+        "createdAt": "2026-05-14T11:37:31.048Z",
+        "updatedAt": "2026-05-14T11:37:31.048Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ce24e885-afd1-441e-90a0-fe2d37b8e6b2",
+        "trackedExerciseId": "api-IGjKj1v",
+        "date": "2026-05-14",
+        "weight": 59,
+        "reps": 10,
+        "createdAt": "2026-05-14T11:41:43.779Z",
+        "updatedAt": "2026-05-14T11:41:43.779Z",
+        "deletedAt": null
+    },
+    {
+        "id": "6979bae5-e877-44a4-8f2b-810f6cda2497",
+        "trackedExerciseId": "api-IGjKj1v",
+        "date": "2026-05-14",
+        "weight": 59,
+        "reps": 10,
+        "createdAt": "2026-05-14T11:45:09.656Z",
+        "updatedAt": "2026-05-14T11:45:09.656Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f402ba87-6032-40ac-bcf6-ad86c85df298",
+        "trackedExerciseId": "api-EIeI8Vf",
+        "date": "2026-05-16",
+        "weight": 95,
+        "reps": 1,
+        "createdAt": "2026-05-16T10:05:11.310Z",
+        "updatedAt": "2026-05-16T10:05:11.310Z",
+        "deletedAt": null
+    },
+    {
+        "id": "88313612-e95a-4355-ad49-eb3708d7ad7b",
+        "trackedExerciseId": "api-trqKQv2",
+        "date": "2026-05-16",
+        "weight": 80,
+        "reps": 12,
+        "createdAt": "2026-05-16T10:15:38.714Z",
+        "updatedAt": "2026-05-16T10:15:38.714Z",
+        "deletedAt": null
+    },
+    {
+        "id": "5b39b664-9ebf-405e-beb6-664eb561bdeb",
+        "trackedExerciseId": "api-trqKQv2",
+        "date": "2026-05-16",
+        "weight": 100,
+        "reps": 10,
+        "createdAt": "2026-05-16T10:19:13.686Z",
+        "updatedAt": "2026-05-16T10:19:13.686Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c8f88cdd-a073-44bc-8c58-81dd0fdecd14",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-05-16",
+        "weight": 24.8,
+        "reps": 10,
+        "createdAt": "2026-05-16T10:30:19.654Z",
+        "updatedAt": "2026-05-16T10:30:19.654Z",
+        "deletedAt": null
+    },
+    {
+        "id": "1e01c9d2-e2b3-47e2-a4e6-dcc20c8d23ae",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-05-16",
+        "weight": 27,
+        "reps": 7,
+        "createdAt": "2026-05-16T10:35:16.048Z",
+        "updatedAt": "2026-05-16T10:35:16.048Z",
+        "deletedAt": null
+    },
+    {
+        "id": "93f362e4-5942-4d97-b2b6-8b0de1b8f8f4",
+        "trackedExerciseId": "api-xLYSdtg",
+        "date": "2026-05-16",
+        "weight": 22.6,
+        "reps": 10,
+        "createdAt": "2026-05-16T10:41:09.486Z",
+        "updatedAt": "2026-05-16T10:41:09.486Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c26debcb-b991-452b-ba8b-625866a60929",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-05-16",
+        "weight": 20.3,
+        "reps": 11,
+        "createdAt": "2026-05-16T10:54:10.204Z",
+        "updatedAt": "2026-05-16T10:54:27.085Z",
+        "deletedAt": null
+    },
+    {
+        "id": "cce40a34-13f9-4fca-8e9d-dc115037bc1b",
+        "trackedExerciseId": "api-17lJ1kr",
+        "date": "2026-05-19",
+        "weight": 41,
+        "reps": 12,
+        "createdAt": "2026-05-19T10:29:03.292Z",
+        "updatedAt": "2026-05-19T10:29:03.292Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ddce3c0e-aa52-4af8-9779-9ff30f92fe77",
+        "trackedExerciseId": "api-17lJ1kr",
+        "date": "2026-05-19",
+        "weight": 45,
+        "reps": 8,
+        "createdAt": "2026-05-19T10:31:11.470Z",
+        "updatedAt": "2026-05-19T10:31:11.470Z",
+        "deletedAt": null
+    },
+    {
+        "id": "536ba13f-9df2-46bb-aebb-6abef2a51d93",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-05-19",
+        "weight": 66,
+        "reps": 8,
+        "createdAt": "2026-05-19T10:37:32.245Z",
+        "updatedAt": "2026-05-19T10:37:32.245Z",
+        "deletedAt": null
+    },
+    {
+        "id": "9d969946-8b71-43e5-99ba-0a08b8615f01",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-05-19",
+        "weight": 66,
+        "reps": 11,
+        "createdAt": "2026-05-19T10:39:34.710Z",
+        "updatedAt": "2026-05-19T10:39:34.710Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c0e0123a-92ff-4f0a-96bb-9d8938a84800",
+        "trackedExerciseId": "api-RRWFUcw",
+        "date": "2026-05-19",
+        "weight": 10,
+        "reps": 10,
+        "createdAt": "2026-05-19T10:53:59.930Z",
+        "updatedAt": "2026-05-19T10:53:59.930Z",
+        "deletedAt": null
+    },
+    {
+        "id": "23a55806-f076-4cce-9aa7-709b4919dff3",
+        "trackedExerciseId": "api-bOOdeyc",
+        "date": "2026-05-19",
+        "weight": 70,
+        "reps": 11,
+        "createdAt": "2026-05-19T11:08:58.393Z",
+        "updatedAt": "2026-05-19T11:08:58.393Z",
+        "deletedAt": null
+    },
+    {
+        "id": "73a5d69e-0cac-43ec-8aed-c515d9076ecf",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-05-20",
+        "weight": 0,
+        "reps": 20,
+        "createdAt": "2026-05-20T10:20:48.139Z",
+        "updatedAt": "2026-05-20T10:20:48.140Z",
+        "deletedAt": null
+    },
+    {
+        "id": "a18f00a7-5d74-4a7b-8e23-7b97b332f903",
+        "trackedExerciseId": "api-trqKQv2",
+        "date": "2026-05-20",
+        "weight": 100,
+        "reps": 7,
+        "createdAt": "2026-05-20T10:27:53.713Z",
+        "updatedAt": "2026-05-20T10:27:53.713Z",
+        "deletedAt": null
+    },
+    {
+        "id": "8d5f8cbd-6acb-4a58-a769-6fef7771bc9a",
+        "trackedExerciseId": "api-trqKQv2",
+        "date": "2026-05-20",
+        "weight": 100,
+        "reps": 8,
+        "createdAt": "2026-05-20T10:30:03.052Z",
+        "updatedAt": "2026-05-20T10:30:03.052Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d07fd27a-c438-445f-8858-336c7a30706b",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-05-20",
+        "weight": 27,
+        "reps": 10,
+        "createdAt": "2026-05-20T10:37:47.163Z",
+        "updatedAt": "2026-05-20T10:37:47.163Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e215edca-444e-4055-87ae-4cfcea9bfd70",
+        "trackedExerciseId": "api-T0yTjgW",
+        "date": "2026-05-20",
+        "weight": 59,
+        "reps": 10,
+        "createdAt": "2026-05-20T10:45:08.808Z",
+        "updatedAt": "2026-05-20T10:45:08.808Z",
+        "deletedAt": null
+    },
+    {
+        "id": "302fe470-750e-4c6e-a738-45e78d7b8617",
+        "trackedExerciseId": "api-T0yTjgW",
+        "date": "2026-05-20",
+        "weight": 59,
+        "reps": 12,
+        "createdAt": "2026-05-20T10:47:52.140Z",
+        "updatedAt": "2026-05-20T10:47:52.140Z",
+        "deletedAt": null
+    },
+    {
+        "id": "d278f81f-3474-4a80-b090-5ec43d6590db",
+        "trackedExerciseId": "api-T0yTjgW",
+        "date": "2026-05-20",
+        "weight": 66,
+        "reps": 9,
+        "createdAt": "2026-05-20T10:50:17.532Z",
+        "updatedAt": "2026-05-20T10:50:17.532Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f7e945de-5d50-43ee-835b-f54403d29d00",
+        "trackedExerciseId": "api-BRImeP8",
+        "date": "2026-05-20",
+        "weight": 23,
+        "reps": 12,
+        "createdAt": "2026-05-20T10:52:10.812Z",
+        "updatedAt": "2026-05-20T10:52:10.812Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e5ea1fb9-7d41-4355-a95d-957b6eeb8fae",
+        "trackedExerciseId": "api-BRImeP8",
+        "date": "2026-05-20",
+        "weight": 41,
+        "reps": 12,
+        "createdAt": "2026-05-20T10:53:32.203Z",
+        "updatedAt": "2026-05-20T10:53:32.203Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f41119df-0891-40e7-9cd2-f975f0cffffe",
+        "trackedExerciseId": "api-BRImeP8",
+        "date": "2026-05-20",
+        "weight": 50,
+        "reps": 12,
+        "createdAt": "2026-05-20T10:56:10.030Z",
+        "updatedAt": "2026-05-20T10:56:10.030Z",
+        "deletedAt": null
+    },
+    {
+        "id": "9f902da6-8b4b-4e16-8362-261029879213",
+        "trackedExerciseId": "api-pwt0pnM",
+        "date": "2026-05-22",
+        "weight": 45,
+        "reps": 10,
+        "createdAt": "2026-05-22T11:04:24.830Z",
+        "updatedAt": "2026-05-22T11:04:24.830Z",
+        "deletedAt": null
+    },
+    {
+        "id": "517021ac-4f43-4cf9-a44d-4a3d8c62fb29",
+        "trackedExerciseId": "api-b6hQYMb",
+        "date": "2026-05-22",
+        "weight": 41,
+        "reps": 10,
+        "createdAt": "2026-05-22T11:10:58.752Z",
+        "updatedAt": "2026-05-22T11:10:58.752Z",
+        "deletedAt": null
+    },
+    {
+        "id": "1c3e861e-314a-40e2-9633-1880fed2c3a4",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-05-25",
+        "weight": 0,
+        "reps": 15,
+        "createdAt": "2026-05-25T10:19:16.746Z",
+        "updatedAt": "2026-05-25T10:19:16.746Z",
+        "deletedAt": null
+    },
+    {
+        "id": "3a1205ae-28bb-440f-97dc-a20dbe32c4d9",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-05-25",
+        "weight": 0,
+        "reps": 15,
+        "createdAt": "2026-05-25T10:19:19.379Z",
+        "updatedAt": "2026-05-25T10:19:19.379Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ff4420ec-7897-4069-ae32-1925de517529",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-05-25",
+        "weight": 60,
+        "reps": 12,
+        "createdAt": "2026-05-25T10:24:35.971Z",
+        "updatedAt": "2026-05-25T10:24:35.971Z",
+        "deletedAt": null
+    },
+    {
+        "id": "9c9c3d6b-b45d-44ec-8efc-27284760b2c3",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-05-25",
+        "weight": 80,
+        "reps": 7,
+        "createdAt": "2026-05-25T10:27:09.503Z",
+        "updatedAt": "2026-05-25T10:27:09.503Z",
+        "deletedAt": null
+    },
+    {
+        "id": "9d6f6fa4-0247-45c9-9818-ce49dc1965d2",
+        "trackedExerciseId": "api-trqKQv2",
+        "date": "2026-05-25",
+        "weight": 100,
+        "reps": 8,
+        "createdAt": "2026-05-25T10:44:38.378Z",
+        "updatedAt": "2026-05-25T10:44:38.378Z",
+        "deletedAt": null
+    },
+    {
+        "id": "9bdf8b44-e46a-4db2-bc0e-1c86bbb33c29",
+        "trackedExerciseId": "api-trqKQv2",
+        "date": "2026-05-25",
+        "weight": 100,
+        "reps": 9,
+        "createdAt": "2026-05-25T10:44:41.971Z",
+        "updatedAt": "2026-05-25T10:44:41.971Z",
+        "deletedAt": null
+    },
+    {
+        "id": "29de1331-6fac-48ad-88a8-638aafdc3b0f",
+        "trackedExerciseId": "api-trqKQv2",
+        "date": "2026-05-25",
+        "weight": 100,
+        "reps": 9,
+        "createdAt": "2026-05-25T10:44:43.852Z",
+        "updatedAt": "2026-05-25T10:44:43.852Z",
+        "deletedAt": null
+    },
+    {
+        "id": "10884dc9-bd5d-457a-8179-539a4d99a62e",
+        "trackedExerciseId": "api-DOoWcnA",
+        "date": "2026-05-25",
+        "weight": 85,
+        "reps": 7,
+        "createdAt": "2026-05-25T10:51:47.941Z",
+        "updatedAt": "2026-05-25T10:52:07.902Z",
+        "deletedAt": "2026-05-25T10:52:07.902Z"
+    },
+    {
+        "id": "c2ea840e-7cd3-44f1-84d3-f625888e8884",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-05-25",
+        "weight": 24.8,
+        "reps": 10,
+        "createdAt": "2026-05-25T10:55:49.213Z",
+        "updatedAt": "2026-05-25T10:55:49.213Z",
+        "deletedAt": null
+    },
+    {
+        "id": "1950cfa5-0a5f-41a4-b931-1b3e22bf0c6d",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-05-25",
+        "weight": 20.3,
+        "reps": 10,
+        "createdAt": "2026-05-25T11:01:10.643Z",
+        "updatedAt": "2026-05-25T11:01:10.643Z",
+        "deletedAt": null
+    },
+    {
+        "id": "b648e5d1-1b08-45a0-9ca6-680c34daee19",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-05-25",
+        "weight": 20.3,
+        "reps": 8,
+        "createdAt": "2026-05-25T11:03:45.061Z",
+        "updatedAt": "2026-05-25T11:03:45.061Z",
+        "deletedAt": null
+    },
+    {
+        "id": "85350da0-bd06-4cb6-9a3c-247060bdc356",
+        "trackedExerciseId": "api-2IxROQ1",
+        "date": "2026-05-25",
+        "weight": 20.3,
+        "reps": 7,
+        "createdAt": "2026-05-25T11:05:59.031Z",
+        "updatedAt": "2026-05-25T11:05:59.031Z",
+        "deletedAt": null
+    },
+    {
+        "id": "f9315f56-281e-4ce1-a725-e9c35c6d0681",
+        "trackedExerciseId": "api-T0yTjgW",
+        "date": "2026-05-26",
+        "weight": 59,
+        "reps": 12,
+        "createdAt": "2026-05-26T10:11:25.869Z",
+        "updatedAt": "2026-05-26T10:11:25.869Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e0b73b56-fc1f-4830-a983-c0c25ed8ae47",
+        "trackedExerciseId": "api-T0yTjgW",
+        "date": "2026-05-26",
+        "weight": 66,
+        "reps": 8,
+        "createdAt": "2026-05-26T10:14:33.230Z",
+        "updatedAt": "2026-05-26T10:14:33.230Z",
+        "deletedAt": null
+    },
+    {
+        "id": "635f8ebb-774f-431d-b43c-6b559a13491d",
+        "trackedExerciseId": "api-T0yTjgW",
+        "date": "2026-05-26",
+        "weight": 66,
+        "reps": 11,
+        "createdAt": "2026-05-26T10:19:41.495Z",
+        "updatedAt": "2026-05-26T10:19:41.495Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c7c0e0d9-9cb5-40a8-ad62-654f0975a15b",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-05-26",
+        "weight": 27,
+        "reps": 6,
+        "createdAt": "2026-05-26T10:28:51.649Z",
+        "updatedAt": "2026-05-26T10:28:51.649Z",
+        "deletedAt": null
+    },
+    {
+        "id": "c62dfaa0-4f97-412b-bdc1-815bbac3cc8b",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-05-26",
+        "weight": 27,
+        "reps": 8,
+        "createdAt": "2026-05-26T10:33:58.274Z",
+        "updatedAt": "2026-05-26T10:33:58.274Z",
+        "deletedAt": null
+    },
+    {
+        "id": "91f040b4-0eb2-4dbc-97b2-c31368cf74d1",
+        "trackedExerciseId": "api-BRImeP8",
+        "date": "2026-05-26",
+        "weight": 54,
+        "reps": 8,
+        "createdAt": "2026-05-26T10:39:18.923Z",
+        "updatedAt": "2026-05-26T10:39:18.923Z",
+        "deletedAt": null
+    },
+    {
+        "id": "1d05b47f-71bd-48cb-b7e8-77f21d13fdd7",
+        "trackedExerciseId": "api-BRImeP8",
+        "date": "2026-05-26",
+        "weight": 54,
+        "reps": 12,
+        "createdAt": "2026-05-26T10:42:33.259Z",
+        "updatedAt": "2026-05-26T10:42:33.259Z",
+        "deletedAt": null
+    },
+    {
+        "id": "34b4a4d6-a9cb-4be9-b784-9a50f54b5b4a",
+        "trackedExerciseId": "api-IZVHb27",
+        "date": "2026-05-28",
+        "weight": 16,
+        "reps": 12,
+        "createdAt": "2026-05-28T17:21:01.738Z",
+        "updatedAt": "2026-05-28T17:21:01.738Z",
+        "deletedAt": null
+    },
+    {
+        "id": "5bca511c-9235-474e-8e3a-16d551e9fd24",
+        "trackedExerciseId": "api-my33uHU",
+        "date": "2026-05-28",
+        "weight": 66,
+        "reps": 8,
+        "createdAt": "2026-05-28T17:31:11.527Z",
+        "updatedAt": "2026-05-28T17:31:11.527Z",
+        "deletedAt": null
+    },
+    {
+        "id": "6fcf8f0b-bfb3-4400-992b-24817d5d304c",
+        "trackedExerciseId": "api-I4hDWkc",
+        "date": "2026-05-29",
+        "weight": 0,
+        "reps": 32,
+        "createdAt": "2026-05-29T13:38:06.442Z",
+        "updatedAt": "2026-05-29T13:38:06.442Z",
+        "deletedAt": null
+    },
+    {
+        "id": "034f2f84-ad45-41a0-bac6-ae5d45a361b4",
+        "trackedExerciseId": "api-b6hQYMb",
+        "date": "2026-05-31",
+        "weight": 45,
+        "reps": 10,
+        "createdAt": "2026-05-31T11:14:11.543Z",
+        "updatedAt": "2026-05-31T11:14:11.543Z",
+        "deletedAt": null
+    },
+    {
+        "id": "ae80c730-e316-4d02-ac49-3cc73582acda",
+        "trackedExerciseId": "api-slDvUAU",
+        "date": "2026-05-31",
+        "weight": 16,
+        "reps": 10,
+        "createdAt": "2026-05-31T11:24:06.569Z",
+        "updatedAt": "2026-05-31T11:24:06.569Z",
+        "deletedAt": null
+    },
+    {
+        "id": "a115a795-d9ae-406a-97b3-3e1ce53596e8",
+        "trackedExerciseId": "api-slDvUAU",
+        "date": "2026-05-31",
+        "weight": 16,
+        "reps": 11,
+        "createdAt": "2026-05-31T11:26:45.502Z",
+        "updatedAt": "2026-05-31T11:26:45.502Z",
+        "deletedAt": null
+    },
+    {
+        "id": "901f8fb6-ea24-4f12-9096-8e4a418197e4",
+        "trackedExerciseId": "api-F3xgbjF",
+        "date": "2026-05-31",
+        "weight": 12,
+        "reps": 10,
+        "createdAt": "2026-05-31T11:29:50.198Z",
+        "updatedAt": "2026-05-31T11:29:50.198Z",
+        "deletedAt": null
+    },
+    {
+        "id": "3f938620-4d78-48d3-aabe-7c0489acbac0",
+        "trackedExerciseId": "api-F3xgbjF",
+        "date": "2026-05-31",
+        "weight": 14,
+        "reps": 8,
+        "createdAt": "2026-05-31T11:34:18.921Z",
+        "updatedAt": "2026-05-31T11:34:18.921Z",
+        "deletedAt": null
+    },
+    {
+        "id": "a8cf5055-ed35-4e76-adeb-0c117701e209",
+        "trackedExerciseId": "api-LsZkfU6",
+        "date": "2026-05-31",
+        "weight": 15,
+        "reps": 12,
+        "createdAt": "2026-05-31T11:45:45.221Z",
+        "updatedAt": "2026-05-31T11:45:45.221Z",
+        "deletedAt": null
+    },
+    {
+        "id": "e68da5d5-a1e4-4ed9-bb79-07f29fcb86c2",
+        "trackedExerciseId": "api-X6C6i5Y",
+        "date": "2026-06-01",
+        "weight": 0,
+        "reps": 15,
+        "createdAt": "2026-06-01T10:16:28.274Z",
+        "updatedAt": "2026-06-01T10:16:28.274Z",
+        "deletedAt": null
+    },
+    {
+        "id": "3a179d1e-ae09-42f7-99d5-6a1658d08913",
+        "trackedExerciseId": "api-I4hDWkc",
+        "date": "2026-06-01",
+        "weight": 0,
+        "reps": 20,
+        "createdAt": "2026-06-01T10:23:31.667Z",
+        "updatedAt": "2026-06-01T10:23:31.667Z",
+        "deletedAt": null
+    },
+    {
+        "id": "9033023c-f791-401c-a855-2f3cb1c153e7",
+        "trackedExerciseId": "api-dU605di",
+        "date": "2026-06-01",
+        "weight": 24.8,
+        "reps": 9,
+        "createdAt": "2026-06-01T10:43:26.052Z",
+        "updatedAt": "2026-06-01T10:43:26.052Z",
+        "deletedAt": null
+    }
+]

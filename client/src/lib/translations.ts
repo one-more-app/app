@@ -437,10 +437,10 @@ export const UI = {
   onboardingQuestionHeightHint: "Ta taille complète le calcul de profil.",
   onboardingFirstExerciseTitle: "Ton premier exercice",
   onboardingFirstExerciseDescription:
-    "Choisis un exercice, enregistre une première performance, puis découvre les repères de l’app.",
+    "Ajoute un exercice via le parcours guidé : commence par une zone, puis un muscle, puis le matériel, et termine par le choix de l’exercice.",
   onboardingFirstExerciseTourAddTitle: "Ajoute ce premier exercice",
   onboardingFirstExerciseTourAddContent:
-    "Appuie sur Ajouter pour ouvrir la feuille, enregistrer ta première perf, puis accéder à la fiche détaillée.",
+    "Dans la liste finale, appuie sur Ajouter sur l’exercice voulu. Tu ouvres ensuite la saisie de ta première performance avant d’arriver sur sa fiche détaillée.",
   popularExercise: "Populaire",
   onboardingFirstExerciseSearch: "Rechercher…",
   onboardingSkipFirstExercise: "Passer pour l’instant",
@@ -449,13 +449,13 @@ export const UI = {
   /** Tour guidé (react-joyride) sur la fiche après la première perf */
   exerciseOnboardingTourOverviewTitle: "Ta fiche exercice",
   exerciseOnboardingTourOverviewContent:
-    "Résumé du mouvement : dernier set, record, et bouton pour enregistrer une perf rapidement.",
+    "Ici tu vois le résumé du mouvement (dernier set, record, niveau estimé). Pour ajouter une performance depuis cette fiche, utilise le bouton Nouvelle performance.",
   exerciseOnboardingTourLeagueTitle: "Ligue",
   exerciseOnboardingTourLeagueContent:
     "Ton palier actuel et la cible pour passer au suivant (selon ton profil et l’exercice du catalogue).",
   exerciseOnboardingTourHistoryTitle: "Progression",
   exerciseOnboardingTourHistoryContent:
-    "La courbe suit ton poids dans le temps ; en dessous, les séries du jour avec ajout ou modification.",
+    "La courbe suit ton évolution dans le temps. Plus bas, tu retrouves les séries de la séance : tu peux en ajouter une nouvelle ou modifier/supprimer une entrée existante.",
   joyrideClose: "Fermer",
   joyrideLast: "Terminer",
   joyrideSkip: "Passer",

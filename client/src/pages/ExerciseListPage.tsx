@@ -191,14 +191,14 @@ export function ExerciseListPage() {
         const scrollOffset = getJoyrideScrollOffset()
         const steps: Step[] = [
             {
-                target: '[data-tour="first-exercise-search"]',
+                target: '[data-tour="first-exercise-browse"]',
                 title: UI.onboardingFirstExerciseTitle,
                 content: UI.onboardingFirstExerciseDescription,
                 placement: 'bottom',
                 skipScroll: true,
             },
         ]
-        if (isSearchMode && catalogExercises.length > 0) {
+        if (!isSearchMode && browse.step === 'list' && catalogExercises.length > 0) {
             steps.push({
                 target: '[data-tour="first-exercise-add"]',
                 title: UI.onboardingFirstExerciseTourAddTitle,
@@ -208,7 +208,7 @@ export function ExerciseListPage() {
             })
         }
         return steps
-    }, [isSearchMode, catalogExercises.length, firstExerciseTourActive])
+    }, [isSearchMode, browse.step, catalogExercises.length, firstExerciseTourActive])
 
     const firstExerciseJoyrideOptions = useMemo(
         () => ({
