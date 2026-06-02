@@ -345,7 +345,8 @@ export const UI = {
   friendsTitle: "Amis",
   friendsListTitle: "Mes potes",
   friendRequestsTitle: "Demandes reçues",
-  friendsEmpty: "Aucun pote pour l'instant. Invite quelqu'un depuis ton profil.",
+  friendsEmpty:
+    "Aucun pote pour l'instant. Invite quelqu'un depuis ton profil.",
   friendRequestPending: "Demande en attente",
   friendAccept: "Accepter",
   friendDecline: "Refuser",

@@ -1,3 +1,4 @@
+import type { Relation } from 'typeorm';
 import {
   Column,
   CreateDateColumn,
@@ -7,7 +8,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import type { Relation } from 'typeorm';
 import { UserEntity } from '../../auth/entities/user.entity.js';
 import { FriendshipStatus } from './friendship-status.enum.js';
 

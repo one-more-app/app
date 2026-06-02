@@ -9,9 +9,10 @@ import {
 } from "@/components/ui/dialog";
 import { inviteFriend } from "@/lib/invite-friend";
 import { UI } from "@/lib/translations";
-import { EXERCISE_LIMIT_LIMITED } from "@one-more/shared/access-config";
 import { Users } from "lucide-react";
 import { useState } from "react";
+
+const EXERCISE_LIMIT_LIMITED = 6;
 
 type ExerciseLimitDialogProps = {
   open: boolean;
