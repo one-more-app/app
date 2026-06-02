@@ -1,30 +1,30 @@
-import { ExerciseDetailPage } from '@/pages/ExerciseDetailPage'
-import { ExerciseListPage } from '@/pages/ExerciseListPage'
-import HomePage from '@/pages/HomePage'
-import { AuthPage } from '@/pages/AuthPage'
-import OnboardingPage from '@/pages/OnboardingPage'
-import { HistoryPage } from '@/pages/HistoryPage'
-import ProfilePage from '@/pages/ProfilePage'
-import InviteLandingPage from '@/pages/InviteLandingPage'
-import FriendsPage from '@/pages/FriendsPage'
-import FriendProfilePage from '@/pages/FriendProfilePage'
-import { SettingsPage } from '@/pages/SettingsPage'
+import { BottomNav } from '@/components/BottomNav'
 import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCelebration'
 import { Toaster } from '@/components/ui/sonner'
-import { BottomNav } from '@/components/BottomNav'
+import { AuthProvider, useAuth } from '@/hooks/use-auth'
+import { useTheme } from '@/hooks/use-theme'
+import { initGoogleNativeSignIn } from '@/lib/google-native'
+import { setPendingInviteCode } from '@/lib/invite-code'
+import { needsOnboarding } from '@/lib/storage'
+import { scheduleSafeAreaCssSync } from '@/lib/sync-safe-area-css'
+import { getSystemBarsStyle, IMMERSIVE_FULL_BLEED_ROUTES } from '@/lib/system-bars-style'
 import { cn } from '@/lib/utils'
+import { AuthPage } from '@/pages/AuthPage'
+import { ExerciseDetailPage } from '@/pages/ExerciseDetailPage'
+import { ExerciseListPage } from '@/pages/ExerciseListPage'
+import FriendProfilePage from '@/pages/FriendProfilePage'
+import FriendsPage from '@/pages/FriendsPage'
+import { HistoryPage } from '@/pages/HistoryPage'
+import HomePage from '@/pages/HomePage'
+import InviteLandingPage from '@/pages/InviteLandingPage'
+import OnboardingPage from '@/pages/OnboardingPage'
+import ProfilePage from '@/pages/ProfilePage'
+import { SettingsPage } from '@/pages/SettingsPage'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core'
-import { initGoogleNativeSignIn } from '@/lib/google-native'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { getSystemBarsStyle, IMMERSIVE_FULL_BLEED_ROUTES } from '@/lib/system-bars-style'
-import { scheduleSafeAreaCssSync } from '@/lib/sync-safe-area-css'
-import { needsOnboarding } from '@/lib/storage'
-import { AuthProvider, useAuth } from '@/hooks/use-auth'
-import { useTheme } from '@/hooks/use-theme'
-import { setPendingInviteCode } from '@/lib/invite-code'
 
 
 function StatsRedirect() {
@@ -133,6 +133,13 @@ function NativeSystemBarsSync() {
 
 function App() {
     useEffect(() => {
+        if (typeof document === 'undefined') return
+        document.documentElement.dataset.platform = Capacitor.isNativePlatform()
+            ? 'native'
+            : 'web'
+    }, [])
+
+    useEffect(() => {
         if (!Capacitor.isNativePlatform()) return
 
         scheduleSafeAreaCssSync()
@@ -185,39 +192,39 @@ function App() {
 
     return (
         <HashRouter>
-             <div className="app-shell">
-                
-            <NativeSystemBarsSync />
-            <SafeAreaTopScrim />
-            <Toaster />
-            <LeaguePromotionCelebrationHost />
-            <AuthProvider>
-                <AccessGate>
-                    <BottomNavHost>
-                        <Routes>
-                            <Route
-                                path="/"
-                                element={
-                                    <IndexRedirect />
-                                }
-                            />
-                            <Route path="/onboarding" element={<OnboardingPage />} />
-                            <Route path="/home" element={<HomePage />} />
-                            <Route path="/stats" element={<StatsRedirect />} />
-                            <Route path="/profile" element={<ProfilePage />} />
-                            <Route path="/history" element={<HistoryPage />} />
-                            <Route path="/auth" element={<AuthPage />} />
-                            <Route path="/exercises" element={<ExerciseListPage />} />
-                            <Route path="/exercise/:id" element={<ExerciseDetailPage />} />
-                            <Route path="/settings" element={<SettingsPage />} />
-                            <Route path="/invite/:code" element={<InviteLandingPage />} />
+            <div className="app-shell">
+
+                <NativeSystemBarsSync />
+                <SafeAreaTopScrim />
+                <Toaster />
+                <LeaguePromotionCelebrationHost />
+                <AuthProvider>
+                    <AccessGate>
+                        <BottomNavHost>
+                            <Routes>
+                                <Route
+                                    path="/"
+                                    element={
+                                        <IndexRedirect />
+                                    }
+                                />
+                                <Route path="/onboarding" element={<OnboardingPage />} />
+                                <Route path="/home" element={<HomePage />} />
+                                <Route path="/stats" element={<StatsRedirect />} />
+                                <Route path="/profile" element={<ProfilePage />} />
+                                <Route path="/history" element={<HistoryPage />} />
+                                <Route path="/auth" element={<AuthPage />} />
+                                <Route path="/exercises" element={<ExerciseListPage />} />
+                                <Route path="/exercise/:id" element={<ExerciseDetailPage />} />
+                                <Route path="/settings" element={<SettingsPage />} />
+                                <Route path="/invite/:code" element={<InviteLandingPage />} />
                                 <Route path="/friends" element={<FriendsPage />} />
                                 <Route path="/friends/:userId" element={<FriendProfilePage />} />
-                        
-                        </Routes>
-                    </BottomNavHost>
-                </AccessGate>
-            </AuthProvider>
+
+                            </Routes>
+                        </BottomNavHost>
+                    </AccessGate>
+                </AuthProvider>
             </div>
         </HashRouter>
     )

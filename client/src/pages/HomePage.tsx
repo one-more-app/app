@@ -87,7 +87,7 @@ function HomePage() {
         const prev = prevSearchQueryRef.current.trim()
         const next = searchQuery.trim()
         if (prev && !next) {
-            goToStep('zone')
+            goToStep('zone', { replace: true })
         }
         prevSearchQueryRef.current = searchQuery
     }, [searchQuery, goToStep])
@@ -95,14 +95,14 @@ function HomePage() {
     useEffect(() => {
         if (isSearchMode) return
         if (browse.step === 'list' && (!browse.zone || !browse.target || !browse.beq)) {
-            goToStep('zone')
+            goToStep('zone', { replace: true })
         } else if (
             browse.step === 'equipment' &&
             (!browse.zone || !browse.target)
         ) {
-            goToStep(browse.zone ? 'muscle' : 'zone')
+            goToStep(browse.zone ? 'muscle' : 'zone', { replace: true })
         } else if (browse.step === 'muscle' && !browse.zone) {
-            goToStep('zone')
+            goToStep('zone', { replace: true })
         }
     }, [browse.step, browse.zone, browse.target, browse.beq, goToStep, isSearchMode])
 
@@ -221,7 +221,7 @@ function HomePage() {
 
     return (
         <div className="min-h-screen-app bg-background">
-            <main className="mx-auto max-w-2xl p-4">
+            <main className="mx-auto max-w-2xl p-4 pt-safe-top">
                 <UserProgressBanner />
 
                 {hasLoaded && nonCardioExercises.length > 0 ? (

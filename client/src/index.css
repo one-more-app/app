@@ -163,20 +163,35 @@
   html {
     height: 100%;
     /* iOS: env() ; Android: --safe-area-inset-* injectées par MainActivity / SystemBars */
-    --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
-    --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+    --safe-top-native: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+    --safe-bottom-native: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
     --safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
     --safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+    --safe-top-web: 1rem;
+    --safe-bottom-web: 0.5rem;
+    --safe-top: var(--safe-top-native);
+    --safe-bottom: var(--safe-bottom-native);
     --bottom-nav-height: 4rem;
     --back-header-height: 3.75rem;
+  }
+
+  html[data-platform="web"] {
+    --safe-top: var(--safe-top-web);
+    --safe-bottom: var(--safe-bottom-web);
   }
   body {
     @apply bg-background text-foreground;
     margin: 0;
+    height: 100%;
     min-height: 100%;
     min-height: 100dvh;
+    overflow: hidden;
   }
   #root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
     min-height: 100%;
     min-height: 100dvh;
   }
@@ -205,7 +220,7 @@
   }
 
   .pb-bottom-nav-host {
-    padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom));
+    padding-bottom: var(--bottom-nav-height);
   }
 
   /* Coquille app mobile : le document ne scroll pas, chaque écran a son viewport. */
@@ -214,6 +229,7 @@
     flex-direction: column;
     flex: 1;
     min-height: 0;
+    min-height: 100%;
     height: 100%;
   }
 

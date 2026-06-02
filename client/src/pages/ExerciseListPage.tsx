@@ -149,7 +149,7 @@ export function ExerciseListPage() {
         const prev = prevSearchQueryRef.current.trim()
         const next = searchQuery.trim()
         if (prev && !next) {
-            goToStep('zone')
+            goToStep('zone', { replace: true })
         }
         prevSearchQueryRef.current = searchQuery
     }, [searchQuery, goToStep])
@@ -161,14 +161,14 @@ export function ExerciseListPage() {
     useEffect(() => {
         if (isSearchMode) return
         if (browse.step === 'list' && (!browse.zone || !browse.target || !browse.beq)) {
-            goToStep('zone')
+            goToStep('zone', { replace: true })
         } else if (
             browse.step === 'equipment' &&
             (!browse.zone || !browse.target)
         ) {
-            goToStep(browse.zone ? 'muscle' : 'zone')
+            goToStep(browse.zone ? 'muscle' : 'zone', { replace: true })
         } else if (browse.step === 'muscle' && !browse.zone) {
-            goToStep('zone')
+            goToStep('zone', { replace: true })
         }
     }, [browse.step, browse.zone, browse.target, browse.beq, goToStep, isSearchMode])
 
