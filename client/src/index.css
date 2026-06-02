@@ -259,7 +259,6 @@
     right: 0;
     z-index: 99;
     height: var(--safe-top);
-    background: var(--background);
   }
 }
 

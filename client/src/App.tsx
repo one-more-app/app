@@ -99,7 +99,20 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
 function SafeAreaTopScrim() {
     const { pathname } = useLocation()
     if (IMMERSIVE_FULL_BLEED_ROUTES.has(pathname)) return null
-    return <div className="safe-area-top-scrim" aria-hidden />
+    const usesBackHeader =
+        pathname === '/history' ||
+        pathname === '/settings' ||
+        pathname === '/exercises' ||
+        pathname.startsWith('/exercise/') ||
+        pathname === '/friends' ||
+        pathname.startsWith('/friends/') ||
+        pathname.startsWith('/invite/')
+    return (
+        <div
+            className={cn('safe-area-top-scrim', usesBackHeader ? 'bg-card' : 'bg-background')}
+            aria-hidden
+        />
+    )
 }
 
 function NativeSystemBarsSync() {

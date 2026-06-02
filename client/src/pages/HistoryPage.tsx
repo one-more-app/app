@@ -56,8 +56,6 @@ export function HistoryPage() {
         () => groupByDayThenExercise(shown),
         [shown],
     )
-    const truncated = entries.length > MAX_SHOWN
-
     const entryInsights = useMemo(
         () =>
             buildEntryInsights(
@@ -117,14 +115,6 @@ export function HistoryPage() {
             <BackHeader title={UI.history} />
 
             <main className="mx-auto max-w-2xl space-y-4 p-4 pb-2">
-                {truncated && (
-                    <p className="text-xs text-muted-foreground">
-                        {UI.historyTruncated
-                            .replace('{shown}', String(MAX_SHOWN))
-                            .replace('{total}', String(entries.length))}
-                    </p>
-                )}
-
                 {isLoadingEntries ? (
                     <HistoryPageSkeleton />
                 ) : entries.length === 0 ? (
