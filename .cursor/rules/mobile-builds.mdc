@@ -34,6 +34,7 @@ Variables **obligatoires** dans chaque `.env.*.capacitor` :
 - `VITE_API_URL` — sans slash final
 - `VITE_GOOGLE_WEB_CLIENT_ID` — client OAuth **Web** (Android + vérif côté API)
 - `VITE_GOOGLE_CLIENT_ID_IOS` — client OAuth **iOS**
+- `VITE_APPLE_CLIENT_ID` — **Bundle ID iOS** (`com.one-more.app`) pour Sign in with Apple natif
 
 Ne pas confondre : `api.onemore.app` (sans tiret) ≠ `api.one-more.app` (prod).
 
@@ -59,19 +60,24 @@ npm run cap:open:ios
 # Xcode : scheme App, Product → Archive
 ```
 
-## API backend (obligatoire pour Google natif)
+## API backend (Google + Apple natifs iOS)
 
-Flux client : `SocialLogin.login()` → `id_token` → `POST /oauth/google/id-token`.
+Flux client : `SocialLogin.login()` → `id_token` → `POST /oauth/{google|apple}/id-token`.
 
-L'API déployée doit exposer cette route (branche `api/`, pas l'ancien `backend/`). Au démarrage Nest, vérifier :
+L'API déployée doit exposer ces routes (dossier `api/`, pas l'ancien `backend/`). Au démarrage Nest, vérifier :
 
-`Mapped {/oauth/google/id-token, POST}`
+- `Mapped {/oauth/google/id-token, POST}`
+- `Mapped {/oauth/apple/id-token, POST}`
 
 Variables serveur (`api/.env`) :
 
 - `GOOGLE_CLIENT_ID_IOS` = même valeur que `VITE_GOOGLE_CLIENT_ID_IOS`
 - `GOOGLE_CLIENT_ID_WEB` = même valeur que `VITE_GOOGLE_WEB_CLIENT_ID`
+- `APPLE_CLIENT_ID_IOS` = même valeur que `VITE_APPLE_CLIENT_ID` (`com.one-more.app`)
+- UI : bouton Apple **uniquement sur iOS** (pas Android). Pas besoin du flux PKCE Android / Services ID tant que tu ne l’actives pas.
 - `CORS_ORIGINS` si défini : les origines Capacitor (`one-more://localhost`, etc.) sont toujours ajoutées automatiquement.
+
+iOS : `App/App.entitlements` avec `com.apple.developer.applesignin` + capability activée sur l’App ID Apple Developer.
 
 Test rapide après deploy :
 
@@ -80,6 +86,11 @@ curl -X POST "$VITE_API_URL/oauth/google/id-token" \
   -H "Content-Type: application/json" \
   -d '{"idToken":"test","platform":"ios"}'
 # Attendu : 400 (token invalide), pas 404
+
+curl -X POST "$VITE_API_URL/oauth/apple/id-token" \
+  -H "Content-Type: application/json" \
+  -d '{"idToken":"test","platform":"ios"}'
+# Attendu : 400, pas 404
 ```
 
 ## Identifiants app (ne pas mélanger)
@@ -99,7 +110,7 @@ Le client iOS Google Console doit correspondre au bundle iOS réel.
 - Ne pas réintroduire Swift Package Manager / `CapApp-SPM` dans le projet Xcode (CocoaPods uniquement).
 - Ne pas ajouter de scripts `patch-ios-spm` ou hacks workspace.
 - Après ajout d'un plugin Capacitor natif : `npx cap sync ios` puis `cd ios/App && pod install`.
-- Ne pas committer de secrets dans `.env.*.capacitor` au-delà des client IDs Google (publics).
+- Ne pas committer de secrets dans `.env.*.capacitor` (IDs Google/Apple bundle = publics ; jamais de `.p8` côté client).
 
 ## Voir aussi
 

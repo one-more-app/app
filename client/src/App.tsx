@@ -3,7 +3,7 @@ import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCele
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import { useTheme } from '@/hooks/use-theme'
-import { initGoogleNativeSignIn } from '@/lib/google-native'
+import { initNativeSocialSignIn } from '@/lib/oauth-native'
 import { setPendingInviteCode } from '@/lib/invite-code'
 import { needsOnboarding } from '@/lib/storage'
 import { scheduleSafeAreaCssSync } from '@/lib/sync-safe-area-css'
@@ -157,7 +157,7 @@ function App() {
 
         scheduleSafeAreaCssSync()
 
-        void initGoogleNativeSignIn().catch(() => {
+        void initNativeSocialSignIn().catch(() => {
             /* Config Google manquante ou plugin indisponible — login au tap. */
         })
 

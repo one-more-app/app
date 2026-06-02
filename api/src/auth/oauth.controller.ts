@@ -1,5 +1,10 @@
 import { Body, Controller, Param, Post } from '@nestjs/common';
-import { GoogleIdTokenDto, OAuthCallbackDto, OAuthStartDto } from './oauth.dto.js';
+import {
+  AppleIdTokenDto,
+  GoogleIdTokenDto,
+  OAuthCallbackDto,
+  OAuthStartDto,
+} from './oauth.dto.js';
 import { OAuthService } from './oauth.service.js';
 
 @Controller('/oauth')
@@ -9,6 +14,11 @@ export class OAuthController {
   @Post('/google/id-token')
   async googleIdToken(@Body() body: GoogleIdTokenDto) {
     return await this.oauth.signInWithGoogleIdToken(body);
+  }
+
+  @Post('/apple/id-token')
+  async appleIdToken(@Body() body: AppleIdTokenDto) {
+    return await this.oauth.signInWithAppleIdToken(body);
   }
 
   @Post('/:provider/start')

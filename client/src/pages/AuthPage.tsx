@@ -6,10 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { identifyEmail } from "@/lib/auth";
-import { signInWithGoogle } from "@/lib/oauth";
+import { signInWithApple, signInWithGoogle } from "@/lib/oauth";
 import { resolvePostAuthNavigation } from "@/lib/post-auth-navigation";
 import { setUserProfile } from "@/lib/storage";
 import { UI } from "@/lib/translations";
+import { Capacitor } from "@capacitor/core";
 import { X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -24,6 +25,9 @@ type AuthStep =
 type AuthPageProps = {
     embedded?: boolean;
 };
+
+const showAppleSignIn =
+    Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
 
 export function AuthPage({ embedded = false }: AuthPageProps) {
     const navigate = useNavigate();
@@ -459,6 +463,43 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 <span>{UI.continueWithGoogle}</span>
                             </span>
                         </Button>
+                        {showAppleSignIn && (
+                            <Button
+                                className="w-full"
+                                variant="secondary"
+                                disabled={isBusy}
+                                onClick={() => {
+                                    void (async () => {
+                                        setIsBusy(true);
+                                        auth.clearError();
+                                        try {
+                                            const session = await signInWithApple();
+                                            auth.acceptSession(session);
+                                            await finishSuccess();
+                                        } catch (e) {
+                                            auth.setError(
+                                                e instanceof Error
+                                                    ? e.message
+                                                    : "Connexion Apple impossible",
+                                            );
+                                        } finally {
+                                            setIsBusy(false);
+                                        }
+                                    })();
+                                }}
+                            >
+                                <span className="inline-flex items-center justify-center gap-2">
+                                    <svg
+                                        aria-hidden
+                                        viewBox="0 0 24 24"
+                                        className="size-5 fill-current"
+                                    >
+                                        <path d="M17.05 20.28c-.98.95-2.05 1.88-3.3 1.88-1.22 0-1.55-.79-2.9-.79-1.34 0-1.72.82-2.9.82-1.18 0-2.07-1.05-3.05-2.1C4.79 17.25 3.4 14.2 5.03 10.7c.82-1.6 2.28-2.61 3.87-2.61 1.21 0 2.35.82 3.17.82.78 0 2.01-.99 3.4-.84.58.02 2.22.24 3.27 1.82-.08.05-1.96 1.14-1.94 3.4.03 2.7 2.35 3.6 2.38 3.61-.03.07-.37 1.26-1.14 2.38zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+                                    </svg>
+                                    <span>{UI.continueWithApple}</span>
+                                </span>
+                            </Button>
+                        )}
                     </CardContent>
                 </Card>
         </main>

@@ -1,7 +1,10 @@
 import { apiFetch } from "@/lib/api";
 import type { AuthSession } from "@/lib/auth";
 import { consumePendingInviteCode } from "@/lib/invite-code";
-import { loginWithGoogleNative } from "@/lib/google-native";
+import {
+  loginWithAppleNative,
+  loginWithGoogleNative,
+} from "@/lib/oauth-native";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { Capacitor } from "@capacitor/core";
@@ -49,6 +52,20 @@ export async function signInWithGoogle(): Promise<AuthSession> {
   const idToken = await loginWithGoogleNative();
   const inviteCode = consumePendingInviteCode() ?? undefined;
   return apiFetch<AuthSession>("/oauth/google/id-token", {
+    method: "POST",
+    body: JSON.stringify({ idToken, platform, inviteCode }),
+  });
+}
+
+export async function signInWithApple(): Promise<AuthSession> {
+  if (Capacitor.getPlatform() !== "ios") {
+    throw new Error("Connexion Apple disponible uniquement sur iOS");
+  }
+
+  const platform = oauthPlatform();
+  const idToken = await loginWithAppleNative();
+  const inviteCode = consumePendingInviteCode() ?? undefined;
+  return apiFetch<AuthSession>("/oauth/apple/id-token", {
     method: "POST",
     body: JSON.stringify({ idToken, platform, inviteCode }),
   });

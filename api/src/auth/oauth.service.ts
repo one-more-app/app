@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { decodeJwt, importPKCS8, SignJWT } from 'jose';
 import { Repository } from 'typeorm';
+import { verifyAppleIdToken } from './apple-id-token.js';
 import { verifyGoogleIdToken } from './google-id-token.js';
 import {
   listAllowedRedirectUris,
@@ -183,6 +184,23 @@ export class OAuthService {
     });
   }
 
+  async signInWithAppleIdToken(params: {
+    idToken: string;
+    platform: Platform;
+    deviceId?: string;
+    inviteCode?: string;
+  }) {
+    const audience = this.appleIdTokenAudience(params.platform);
+    const { sub, email } = await verifyAppleIdToken(params.idToken, audience);
+    return await this.linkOAuthUser({
+      provider: 'apple',
+      providerUserId: sub,
+      email,
+      deviceId: params.deviceId,
+      inviteCode: params.inviteCode,
+    });
+  }
+
   private async linkOAuthUser(params: {
     provider: Provider;
     providerUserId: string;
@@ -314,6 +332,21 @@ export class OAuthService {
     if (webClientId) return webClientId;
 
     throw new BadRequestException('Variable manquante: GOOGLE_CLIENT_ID_WEB');
+  }
+
+  /** Audience JWT pour Sign in with Apple natif (Bundle ID iOS). */
+  private appleIdTokenAudience(platform: Platform): string {
+    if (platform === 'ios') {
+      const iosBundle = this.config.get<string>('APPLE_CLIENT_ID_IOS')?.trim();
+      if (iosBundle) return iosBundle;
+      throw new BadRequestException('Variable manquante: APPLE_CLIENT_ID_IOS');
+    }
+
+    const androidClientId =
+      this.config.get<string>('APPLE_CLIENT_ID_ANDROID')?.trim();
+    if (androidClientId) return androidClientId;
+
+    return this.mustGet('APPLE_CLIENT_ID');
   }
 
   private assertAllowedRedirectUri(redirectUri: string): void {

@@ -198,8 +198,10 @@ export async function apiFetch<T>(
     const p = payload as ApiErrorPayload | null;
     const msg =
       (p && typeof p === "object" && (p.message || p.error)) ||
-      (res.status === 404 && path.includes("/oauth/google/id-token")
-        ? "Route /oauth/google/id-token absente sur l'API déployée. Redéploie la branche feat/build-mobile (dossier api/)."
+      (res.status === 404 &&
+      (path.includes("/oauth/google/id-token") ||
+        path.includes("/oauth/apple/id-token"))
+        ? `Route ${path} absente sur l'API déployée. Redéploie le service api/ avec les routes id-token.`
         : `Requête API échouée (${res.status})`);
     throw new ApiError(String(msg), res.status, payload);
   }

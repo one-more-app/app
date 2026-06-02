@@ -10,6 +10,12 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
   },
   plugins: {
+    SocialLogin: {
+      providers: {
+        google: true,
+        apple: true,
+      },
+    },
     SystemBars: {
       insetsHandling: 'css',
     },

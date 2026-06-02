@@ -53,3 +53,19 @@ export class GoogleIdTokenDto {
   @IsString()
   inviteCode?: string;
 }
+
+export class AppleIdTokenDto {
+  @IsString()
+  idToken!: string;
+
+  @IsIn(['android', 'ios'])
+  platform!: 'android' | 'ios';
+
+  @IsOptional()
+  @IsString()
+  deviceId?: string;
+
+  @IsOptional()
+  @IsString()
+  inviteCode?: string;
+}
