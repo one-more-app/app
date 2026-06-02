@@ -8,7 +8,11 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { useAccess } from '@/hooks/use-access'
-import { usePerformanceDataRefresh, useUserProfileData } from '@/hooks/use-api-data'
+import {
+    usePerformanceDataRefresh,
+    usePerformanceEntriesData,
+    useUserProfileData,
+} from '@/hooks/use-api-data'
 import { useExerciseCatalogBrowse } from '@/hooks/use-exercise-catalog-browse'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useHomeData, type ExerciseWithPerf } from '@/hooks/use-home-data'
@@ -34,6 +38,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 function HomePage() {
     const { exercises, hasLoaded } = useHomeData()
+    const { data: performanceEntries = [] } = usePerformanceEntriesData()
     const refreshAfterPerfChange = usePerformanceDataRefresh()
     const { data: profile } = useUserProfileData()
     const { access, canAddExercise } = useAccess()
@@ -122,7 +127,7 @@ function HomePage() {
                 filterExercisesDoneToday(nonCardioExercises),
                 getLatestPerfAt,
             ),
-        [nonCardioExercises, getLatestPerfAt, exercises],
+        [nonCardioExercises, getLatestPerfAt, performanceEntries],
     )
 
     const renderExerciseCard = useCallback(
