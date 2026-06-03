@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUserProgressData } from "@/hooks/use-api-data";
 import { StreakFlameCount } from "@/components/StreakFlameCount";
 import { resolveProgressStreak } from "@/lib/streak-display";
+import { resolveStreakXpBonus } from "@/lib/streak-xp-display";
 import { UI } from "@/lib/translations";
 import { Sparkles } from "lucide-react";
 
@@ -10,6 +11,7 @@ export function UserProgressCard() {
   if (!progress) return null;
 
   const { current: currentStreak } = resolveProgressStreak(progress);
+  const streakXpBonus = resolveStreakXpBonus(progress);
 
   const pct =
     progress.xpForNextLevel > 0
@@ -34,6 +36,7 @@ export function UserProgressCard() {
           </p>
           <StreakFlameCount
             count={currentStreak}
+            bonusPercent={streakXpBonus.bonusPercent}
             iconClassName="size-4"
             textClassName="text-sm font-semibold tabular-nums"
           />

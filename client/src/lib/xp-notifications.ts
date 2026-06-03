@@ -1,8 +1,38 @@
+import { XP_AMOUNTS } from "@one-more/shared/xp-config";
 import { toast } from "sonner";
 
 import { enqueueCelebration } from "@/lib/celebration-queue";
 import { UI } from "@/lib/translations";
 import type { XpGrantResult } from "@/types";
+
+function actionGrantBaseAmount(sourceType: string): number {
+  switch (sourceType) {
+    case "perf":
+      return XP_AMOUNTS.perf;
+    case "personal_record":
+      return XP_AMOUNTS.personalRecord;
+    default:
+      return 0;
+  }
+}
+
+function streakBonusXpFromGrants(xp: XpGrantResult): number {
+  return xp.grants.reduce((sum, grant) => {
+    const base = actionGrantBaseAmount(grant.sourceType);
+    if (base <= 0) return sum;
+    return sum + Math.max(0, grant.amount - base);
+  }, 0);
+}
+
+function xpToastDescription(xp: XpGrantResult): string {
+  const levelLine = UI.xpLevelLabel.replace("{level}", String(xp.level));
+  const bonusXp = streakBonusXpFromGrants(xp);
+  const bonusPercent = xp.streakXpBonus?.bonusPercent ?? 0;
+  if (bonusXp <= 0 || bonusPercent <= 0) return levelLine;
+  return `${UI.xpGainedBonusDescription
+    .replace("{bonus}", String(bonusXp))
+    .replace("{percent}", String(bonusPercent))} · ${levelLine}`;
+}
 
 export type LevelUpCelebrationPayload = {
   previousLevel: number;
@@ -71,6 +101,6 @@ export function notifyXpGrants(xp: XpGrantResult | undefined): void {
   }
 
   toast.success(UI.xpGainedToast.replace("{amount}", String(totalGained)), {
-    description: UI.xpLevelLabel.replace("{level}", String(xp.level)),
+    description: xpToastDescription(xp),
   });
 }

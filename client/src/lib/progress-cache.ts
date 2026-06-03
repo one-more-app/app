@@ -36,6 +36,7 @@ export function applyXpGrantResult(xp: XpGrantResult): void {
     xpIntoLevel: xp.xpIntoLevel,
     xpForNextLevel: xp.xpForNextLevel,
     streak: xp.streak,
+    streakXpBonus: xp.streakXpBonus,
     recentGrants: xp.grants,
   };
   notifyProgressChanged();

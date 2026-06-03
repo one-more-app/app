@@ -10,6 +10,7 @@ import type { GlobalLeagueSummary } from "@/lib/muscle-league-stats";
 import { rankIdLabel, rankIdTier } from "@/lib/rank-display";
 import { StreakFlameCount } from "@/components/StreakFlameCount";
 import { resolveStreak } from "@/lib/streak-display";
+import { resolveStreakXpBonus } from "@/lib/streak-xp-display";
 import { UI } from "@/lib/translations";
 import type { UserProgressState } from "@/types";
 import { Sparkles } from "lucide-react";
@@ -48,6 +49,7 @@ export function ProfileShareCard({
     progress.streak,
     progress.lastActiveDate,
   );
+  const streakXpBonus = resolveStreakXpBonus(progress);
 
   return (
     <div
@@ -82,6 +84,8 @@ export function ProfileShareCard({
             </span>
             <StreakFlameCount
               count={currentStreak}
+              bonusPercent={streakXpBonus.bonusPercent}
+              size="lg"
               iconClassName="size-10"
               textClassName={`${tbase} font-semibold tabular-nums`}
             />

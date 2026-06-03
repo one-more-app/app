@@ -13,6 +13,10 @@ import {
   applyStreakExpiry,
   computeStreakAfterActivity as computeStreak,
 } from './lib/streak-dates.js';
+import {
+  applyStreakXpMultiplier,
+  streakXpProgress,
+} from './lib/streak-xp-multiplier.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { PerformanceEntryEntity } from '../performance/performance-entry.entity.js';
 import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
@@ -22,6 +26,7 @@ import { XpSourceType } from './entities/xp-source-type.enum.js';
 import type { ActivityMonthDto } from './dto/activity-response.dto.js';
 import type {
   ProgressStateDto,
+  StreakXpBonusDto,
   XpGrantResultDto,
 } from './dto/progress-response.dto.js';
 import {
@@ -126,6 +131,7 @@ export class ProgressService {
       xpIntoLevel,
       xpForNextLevel,
       streak: this.effectiveStreak(progress),
+      streakXpBonus: this.streakXpBonusFromProgress(progress),
       lastActiveDate: progress.lastActiveDate,
       recentGrants: recent.map((e) => ({
         sourceType: e.sourceType,
@@ -181,6 +187,34 @@ export class ProgressService {
       const levelBefore = levelProgressFromTotalXp(progress.totalXp).level;
       const grants: { sourceType: string; amount: number }[] = [];
 
+      const hadPerfToday = await perfRepo
+        .createQueryBuilder('p')
+        .where('p.userId = :userId', { userId: params.userId })
+        .andWhere('p.date = :activityDate', {
+          activityDate: params.activityDate,
+        })
+        .andWhere('p.deletedAt IS NULL')
+        .andWhere('p.clientId != :perfClientId', {
+          perfClientId: params.perfClientId,
+        })
+        .getCount();
+
+      if (hadPerfToday === 0) {
+        const streakAfter = computeStreak(
+          progress.lastActiveDate,
+          progress.currentStreak,
+          params.activityDate,
+        );
+        progress.currentStreak = streakAfter.current;
+        progress.longestStreak = Math.max(
+          progress.longestStreak,
+          streakAfter.current,
+        );
+        progress.lastActiveDate = params.activityDate;
+      }
+
+      const streakForMultiplier = progress.currentStreak;
+
       const tryGrant = async (
         sourceType: XpSourceType,
         sourceId: string,
@@ -205,7 +239,7 @@ export class ProgressService {
       await tryGrant(
         XpSourceType.Perf,
         `perf:${params.perfClientId}`,
-        XP_AMOUNTS.perf,
+        applyStreakXpMultiplier(XP_AMOUNTS.perf, streakForMultiplier),
         async () => {
           const count = await xpRepo.count({
             where: {
@@ -222,7 +256,10 @@ export class ProgressService {
         await tryGrant(
           XpSourceType.PersonalRecord,
           `pr:${params.trackedExerciseClientId}:${params.activityDate}`,
-          XP_AMOUNTS.personalRecord,
+          applyStreakXpMultiplier(
+            XP_AMOUNTS.personalRecord,
+            streakForMultiplier,
+          ),
           async () => {
             const count = await xpRepo.count({
               where: {
@@ -267,35 +304,11 @@ export class ProgressService {
         );
       }
 
-      const hadPerfToday = await perfRepo
-        .createQueryBuilder('p')
-        .where('p.userId = :userId', { userId: params.userId })
-        .andWhere('p.date = :activityDate', {
-          activityDate: params.activityDate,
-        })
-        .andWhere('p.deletedAt IS NULL')
-        .andWhere('p.clientId != :perfClientId', {
-          perfClientId: params.perfClientId,
-        })
-        .getCount();
-
       if (hadPerfToday === 0) {
-        const streakAfter = computeStreak(
-          progress.lastActiveDate,
-          progress.currentStreak,
-          params.activityDate,
-        );
-        progress.currentStreak = streakAfter.current;
-        progress.longestStreak = Math.max(
-          progress.longestStreak,
-          streakAfter.current,
-        );
-        progress.lastActiveDate = params.activityDate;
-
         const streakBonus =
-          streakAfter.current >= 2
+          progress.currentStreak >= 2
             ? XP_AMOUNTS.dailyStreakPerDay *
-              Math.min(streakAfter.current, XP_AMOUNTS.dailyStreakCap)
+              Math.min(progress.currentStreak, XP_AMOUNTS.dailyStreakCap)
             : 0;
         const streakAmount = XP_AMOUNTS.dailyStreakBase + streakBonus;
 
@@ -331,9 +344,17 @@ export class ProgressService {
         previousLevel: level > levelBefore ? levelBefore : undefined,
         grants,
         streak: this.effectiveStreak(progress),
+        streakXpBonus: this.streakXpBonusFromProgress(progress),
         league: leagueChange,
       };
     });
+  }
+
+  private streakXpBonusFromProgress(
+    progress: UserProgressEntity,
+  ): StreakXpBonusDto {
+    const { current } = this.effectiveStreak(progress);
+    return streakXpProgress(current);
   }
 
   private effectiveStreak(progress: UserProgressEntity): {
@@ -409,6 +430,7 @@ export class ProgressService {
       leveledUp: false,
       grants: [],
       streak: this.effectiveStreak(progress),
+      streakXpBonus: this.streakXpBonusFromProgress(progress),
     };
   }
 }

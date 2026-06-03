@@ -264,6 +264,8 @@ export const UI = {
   streakSheetSubtitleStreak:
     "Entraîne-toi au moins une fois tous les 2 jours pour garder tes flammes.",
   streakSheetLongest: "Record : {days} jours",
+  streakXpBonusLabel: "+{percent}% XP",
+  xpGainedBonusDescription: "+{bonus} bonus série · +{percent} %",
   profileActivityTitle: "Activité",
   profileActivityStreakCurrent: "Série en cours",
   profileActivityStreakLongest: "Meilleure série",

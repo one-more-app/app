@@ -71,6 +71,14 @@ export type XpGrantItem = {
 
 import type { LeagueChangeDto } from "@/lib/league-types";
 
+export type StreakXpBonus = {
+  bonusPercent: number;
+  multiplier: number;
+  daysToMax: number;
+  isMax: boolean;
+  progressToMax: number;
+};
+
 export type XpGrantResult = {
   totalXp: number;
   level: number;
@@ -80,6 +88,7 @@ export type XpGrantResult = {
   previousLevel?: number;
   grants: XpGrantItem[];
   streak: { current: number; longest: number };
+  streakXpBonus?: StreakXpBonus;
   league?: LeagueChangeDto;
 };
 
@@ -89,6 +98,7 @@ export type UserProgressState = {
   xpIntoLevel: number;
   xpForNextLevel: number;
   streak: { current: number; longest: number };
+  streakXpBonus?: StreakXpBonus;
   lastActiveDate?: string | null;
   recentGrants: XpGrantItem[];
 };

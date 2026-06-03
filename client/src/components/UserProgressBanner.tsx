@@ -1,6 +1,7 @@
 import { useUserProgressData } from "@/hooks/use-api-data";
 import { StreakFlameCount } from "@/components/StreakFlameCount";
 import { resolveProgressStreak } from "@/lib/streak-display";
+import { resolveStreakXpBonus } from "@/lib/streak-xp-display";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -10,6 +11,7 @@ export function UserProgressBanner({ className }: { className?: string }) {
     if (!progress) return null;
 
     const { current: currentStreak } = resolveProgressStreak(progress);
+    const streakXpBonus = resolveStreakXpBonus(progress);
 
     const pct =
         progress.xpForNextLevel > 0
@@ -37,6 +39,8 @@ export function UserProgressBanner({ className }: { className?: string }) {
                 </div>
                 <StreakFlameCount
                     count={currentStreak}
+                    bonusPercent={streakXpBonus.bonusPercent}
+                    size="sm"
                     iconClassName="size-4"
                     textClassName="text-sm font-semibold tabular-nums"
                 />
