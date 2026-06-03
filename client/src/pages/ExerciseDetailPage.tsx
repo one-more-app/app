@@ -1,5 +1,6 @@
 import { AddPerfDrawer } from '@/components/AddPerfDrawer'
 import { BackHeader } from '@/components/BackHeader'
+import { CustomExerciseMetadataFields } from '@/components/CustomExerciseMetadataFields'
 import { ExerciseCard } from '@/components/ExerciseCard'
 import { PerfEntryList } from '@/components/history/PerfEntryList'
 import { LeagueBadge } from '@/components/LeagueBadge'
@@ -26,7 +27,9 @@ import { useCelebrationQueueActive } from '@/hooks/use-celebration-queue-active'
 import { useExercisePresence } from '@/hooks/use-exercise-presence'
 import { usePerformance } from '@/hooks/use-performance'
 import { useTheme } from '@/hooks/use-theme'
+import { fetchExercisesMeta } from '@/lib/data-api'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
+import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
 import {
     buildEntryInsights,
     comparePerfEntriesRecentFirst,
@@ -43,7 +46,7 @@ import {
     updateTrackedExerciseAndWait,
 } from '@/lib/storage'
 import { getAllTiers, getLeagueInfo, isDumbbellExercise } from '@/lib/strength-standards'
-import { UI } from '@/lib/translations'
+import { translateEquipment, translateTarget, UI } from '@/lib/translations'
 import { notifyXpGrants } from '@/lib/xp-notifications'
 import type { PerformanceEntry } from '@/types'
 import {
@@ -57,6 +60,7 @@ import {
 } from 'lucide-react'
 import { getJoyrideScrollOffset } from '@/lib/joyride-config'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import useSWR from 'swr'
 import { EVENTS, Joyride, type EventData, type Step } from 'react-joyride'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
@@ -79,6 +83,15 @@ export function ExerciseDetailPage() {
     )
     const [renameOpen, setRenameOpen] = useState(false)
     const [renameValue, setRenameValue] = useState('')
+    const [classificationOpen, setClassificationOpen] = useState(false)
+    const [classificationTarget, setClassificationTarget] = useState('')
+    const [classificationEquipment, setClassificationEquipment] = useState('')
+    const { data: exerciseMeta } = useSWR('exercise-meta', fetchExercisesMeta)
+    const classificationTargets = useMemo(
+        () => exerciseMeta?.targets.filter((t) => t !== 'cardio') ?? [],
+        [exerciseMeta],
+    )
+    const classificationEquipmentOptions = exerciseMeta?.equipment ?? []
     const {
         entries,
         lastPerf,
@@ -118,6 +131,24 @@ export function ExerciseDetailPage() {
     useEffect(() => {
         setHistorySessionIndex(0)
     }, [id])
+
+    useEffect(() => {
+        if (!exercise?.isCustom) return
+        setClassificationTarget(exercise.target ?? classificationTargets[0] ?? '')
+        setClassificationEquipment(
+            exercise.equipment ??
+                (classificationEquipmentOptions.includes('body weight')
+                    ? 'body weight'
+                    : classificationEquipmentOptions[0] ?? ''),
+        )
+    }, [
+        exercise?.id,
+        exercise?.isCustom,
+        exercise?.target,
+        exercise?.equipment,
+        classificationTargets,
+        classificationEquipmentOptions,
+    ])
 
     const onboardingFirstExercisePending = isOnboardingFirstExercisePending()
     const onboardingTourActive = searchParams.get('tour') === 'onboarding'
@@ -584,6 +615,43 @@ export function ExerciseDetailPage() {
                         </CardContent>
                     </Card>
                 )}
+                {exercise.isCustom ? (
+                    <Card>
+                        <CardHeader className="gap-2">
+                            <h2 className="font-semibold">{UI.muscleGroup}</h2>
+                            <p className="text-sm text-muted-foreground">
+                                {UI.customClassificationHint}
+                            </p>
+                        </CardHeader>
+                        <CardContent className="space-y-3 pt-0">
+                            <div className="flex flex-wrap gap-2">
+                                {exercise.target ? (
+                                    <Badge variant="secondary">
+                                        {translateTarget(exercise.target)}
+                                    </Badge>
+                                ) : null}
+                                {exercise.equipment ? (
+                                    <Badge variant="secondary">
+                                        {translateEquipment(exercise.equipment)}
+                                    </Badge>
+                                ) : null}
+                                {!exercise.target && !exercise.equipment ? (
+                                    <span className="text-sm text-muted-foreground">
+                                        {UI.browseUnspecifiedEquipment}
+                                    </span>
+                                ) : null}
+                            </div>
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => setClassificationOpen(true)}
+                            >
+                                {UI.editCustomClassification}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ) : null}
+
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <h2 className="font-semibold">{UI.options}</h2>
@@ -605,6 +673,65 @@ export function ExerciseDetailPage() {
                         </Button>
                     </CardHeader>
                 </Card>
+
+                <Dialog
+                    open={classificationOpen}
+                    onOpenChange={setClassificationOpen}
+                >
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>{UI.editCustomClassification}</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 py-2">
+                            {classificationTargets.length > 0 &&
+                            classificationEquipmentOptions.length > 0 ? (
+                                <CustomExerciseMetadataFields
+                                    targets={classificationTargets}
+                                    equipmentOptions={classificationEquipmentOptions}
+                                    target={classificationTarget}
+                                    equipment={classificationEquipment}
+                                    onTargetChange={setClassificationTarget}
+                                    onEquipmentChange={setClassificationEquipment}
+                                />
+                            ) : null}
+                        </div>
+                        <DialogFooter className="gap-2 sm:gap-0">
+                            <Button
+                                variant="outline"
+                                onClick={() => setClassificationOpen(false)}
+                            >
+                                {UI.cancel}
+                            </Button>
+                            <Button
+                                disabled={
+                                    !classificationTarget || !classificationEquipment
+                                }
+                                onClick={() => {
+                                    if (
+                                        !id ||
+                                        !classificationTarget ||
+                                        !classificationEquipment
+                                    ) {
+                                        return
+                                    }
+                                    const bodyPart =
+                                        inferBodyPartFromTarget(classificationTarget)
+                                    void (async () => {
+                                        await updateTrackedExerciseAndWait(id, {
+                                            bodyPart,
+                                            target: classificationTarget,
+                                            equipment: classificationEquipment,
+                                        })
+                                        await refreshAfterTrackedChange()
+                                        setClassificationOpen(false)
+                                    })()
+                                }}
+                            >
+                                {UI.save}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
 
                 <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
                     <DialogContent>

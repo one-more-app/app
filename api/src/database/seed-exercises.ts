@@ -19,16 +19,16 @@ type SeedExercise = {
 function resolveSeedJsonPath(): string {
   const fromEnv = process.env.EXERCISES_CATALOG_SEED_PATH;
   if (fromEnv) return fromEnv;
-  const candidates = [
-    join(process.cwd(), 'data', 'popular-exercises.json'),
-    join(process.cwd(), '..', 'client', 'src', 'data', 'popular-exercises.json'),
-  ];
-  for (const p of candidates) {
-    if (existsSync(p)) return p;
-  }
+  const activePath = join(process.cwd(), 'data', 'popular-exercises.json');
+  if (existsSync(activePath)) return activePath;
   throw new Error(
-    'Fichier popular-exercises.json introuvable. Définir EXERCISES_CATALOG_SEED_PATH ou exécuter npm run sync:exercises-catalog depuis api/.',
+    'api/data/popular-exercises.json introuvable. Exécuter npm run catalog:use-all ou catalog:use-filtered depuis api/.',
   );
+}
+
+function shouldReplaceCatalog(): boolean {
+  const raw = process.env.EXERCISES_CATALOG_REPLACE;
+  return raw === '1' || raw === 'true';
 }
 
 async function run() {
@@ -38,6 +38,19 @@ async function run() {
 
   await dataSource.initialize();
   const repo = dataSource.getRepository(ExerciseCatalogEntity);
+
+  if (shouldReplaceCatalog()) {
+    const ids = exercises.map((ex) => ex.id);
+    if (ids.length > 0) {
+      await repo
+        .createQueryBuilder()
+        .delete()
+        .where('exerciseId NOT IN (:...ids)', { ids })
+        .execute();
+    } else {
+      await repo.clear();
+    }
+  }
 
   for (const ex of exercises) {
     await repo.upsert(

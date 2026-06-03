@@ -176,18 +176,32 @@ export async function removeTrackedExerciseAndWait(id: string): Promise<void> {
   }
 }
 
+function applyTrackedExerciseUpdates(
+  exercise: TrackedExercise,
+  updates: Partial<
+    Pick<TrackedExercise, "name" | "bodyPart" | "target" | "equipment">
+  >,
+): TrackedExercise {
+  return {
+    ...exercise,
+    ...(updates.name !== undefined ? { name: updates.name } : {}),
+    ...(updates.bodyPart !== undefined ? { bodyPart: updates.bodyPart } : {}),
+    ...(updates.target !== undefined ? { target: updates.target } : {}),
+    ...(updates.equipment !== undefined ? { equipment: updates.equipment } : {}),
+    updatedAt: nowIso(),
+  };
+}
+
 export function updateTrackedExercise(
   id: string,
-  updates: Partial<Pick<TrackedExercise, "name">>,
+  updates: Partial<
+    Pick<TrackedExercise, "name" | "bodyPart" | "target" | "equipment">
+  >,
 ): void {
   const list = getAllTrackedExercises();
   const idx = list.findIndex((e) => e.id === id);
   if (idx === -1) return;
-  list[idx] = {
-    ...list[idx],
-    ...(updates.name !== undefined ? { name: updates.name } : {}),
-    updatedAt: nowIso(),
-  };
+  list[idx] = applyTrackedExerciseUpdates(list[idx]!, updates);
   updateTrackedCache([...list]);
   notifyLocalDataChanged("trackedExercise");
   void patchTrackedExercise(id, updates).catch(() => notifyRemoteWriteError());
@@ -195,16 +209,14 @@ export function updateTrackedExercise(
 
 export async function updateTrackedExerciseAndWait(
   id: string,
-  updates: Partial<Pick<TrackedExercise, "name">>,
+  updates: Partial<
+    Pick<TrackedExercise, "name" | "bodyPart" | "target" | "equipment">
+  >,
 ): Promise<TrackedExercise | null> {
   const list = getAllTrackedExercises();
   const idx = list.findIndex((e) => e.id === id);
   if (idx === -1) return null;
-  list[idx] = {
-    ...list[idx],
-    ...(updates.name !== undefined ? { name: updates.name } : {}),
-    updatedAt: nowIso(),
-  };
+  list[idx] = applyTrackedExerciseUpdates(list[idx]!, updates);
   updateTrackedCache([...list]);
   notifyLocalDataChanged("trackedExercise");
   try {

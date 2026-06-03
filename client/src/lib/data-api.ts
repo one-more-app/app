@@ -104,9 +104,13 @@ export async function upsertTrackedExercise(
   return mapTracked(item);
 }
 
+export type TrackedExercisePatch = Partial<
+  Pick<TrackedExercise, "name" | "bodyPart" | "target" | "equipment">
+>;
+
 export async function patchTrackedExercise(
   id: string,
-  updates: Partial<Pick<TrackedExercise, "name">>,
+  updates: TrackedExercisePatch,
 ): Promise<TrackedExercise> {
   const item = await apiFetch<RemoteTrackedExercise>(`/tracked-exercises/${id}`, {
     method: "PATCH",

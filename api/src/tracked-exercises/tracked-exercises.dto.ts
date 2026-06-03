@@ -56,4 +56,16 @@ export class UpdateTrackedExerciseDto {
   @IsOptional()
   @IsString()
   name?: string;
+
+  @IsOptional()
+  @IsString()
+  bodyPart?: string;
+
+  @IsOptional()
+  @IsString()
+  target?: string;
+
+  @IsOptional()
+  @IsString()
+  equipment?: string;
 }

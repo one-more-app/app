@@ -1,3 +1,4 @@
+import { CustomExerciseMetadataFields } from '@/components/CustomExerciseMetadataFields'
 import { ExerciseLimitDialog } from '@/components/ExerciseLimitDialog'
 import { BackHeader } from '@/components/BackHeader'
 import { ExerciseCatalogSkeletonList } from '@/components/skeletons'
@@ -20,13 +21,6 @@ import {
 } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
 import { SWR_KEYS } from '@/hooks/use-api-data'
 import { useAccess } from '@/hooks/use-access'
 import { fetchExercisesCatalog, fetchExercisesMeta } from '@/lib/data-api'
@@ -45,7 +39,7 @@ import {
 import { useBack } from '@/hooks/use-back'
 import { useTheme } from '@/hooks/use-theme'
 import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
-import { translateBodyPart, translateTarget, UI } from '@/lib/translations'
+import { translateBodyPart, UI } from '@/lib/translations'
 import type { ExerciseDBExercise } from '@/types'
 import { Plus, Search } from 'lucide-react'
 import { getJoyrideScrollOffset } from '@/lib/joyride-config'
@@ -62,6 +56,7 @@ export function ExerciseListPage() {
     const { mutate } = useSWRConfig()
     const { exercises: tracked, addExercise } = useTrackedExercises()
     const [targets, setTargets] = useState<string[]>([])
+    const [equipmentOptions, setEquipmentOptions] = useState<string[]>([])
     const { searchInput, searchQuery, handleSearchChange } = useExerciseFilters({
         includePage: false,
     })
@@ -69,6 +64,7 @@ export function ExerciseListPage() {
     const [customOpen, setCustomOpen] = useState(false)
     const [customName, setCustomName] = useState('')
     const [customTarget, setCustomTarget] = useState('chest' as string)
+    const [customEquipment, setCustomEquipment] = useState('body weight')
     const [brokenImageIds, setBrokenImageIds] = useState<Set<string>>(new Set())
     const [addWithPerfExercise, setAddWithPerfExercise] = useState<ExerciseDBExercise | null>(null)
     const [selectedExercise, setSelectedExercise] = useState<ExerciseDBExercise | null>(null)
@@ -122,7 +118,7 @@ export function ExerciseListPage() {
         'exercise-catalog-full',
         async () =>
             await fetchExercisesCatalog({
-                limit: 2000,
+                limit: 10000,
                 offset: 0,
             }),
     )
@@ -132,6 +128,7 @@ export function ExerciseListPage() {
     useEffect(() => {
         if (!metaData) return
         setTargets(metaData.targets.filter((t) => t !== 'cardio'))
+        setEquipmentOptions(metaData.equipment)
     }, [metaData])
 
     const { browse, pickZone, pickTarget, pickEquipment, goToStep, goBackInBrowse } =
@@ -177,6 +174,15 @@ export function ExerciseListPage() {
             setCustomTarget(targets[0]!)
         }
     }, [targets, customTarget])
+
+    useEffect(() => {
+        if (equipmentOptions.length > 0 && !equipmentOptions.includes(customEquipment)) {
+            const preferred = equipmentOptions.includes('body weight')
+                ? 'body weight'
+                : equipmentOptions[0]!
+            setCustomEquipment(preferred)
+        }
+    }, [equipmentOptions, customEquipment])
 
     const handleHeaderBack = useCallback(() => {
         if (isSearchMode) {
@@ -370,7 +376,7 @@ export function ExerciseListPage() {
     }
 
     const handleAddCustom = () => {
-        if (!customName.trim()) return
+        if (!customName.trim() || !customTarget || !customEquipment) return
         guardAddExercise(() => {
             const id = `custom-${crypto.randomUUID()}`
             const bodyPart = inferBodyPartFromTarget(customTarget)
@@ -381,6 +387,7 @@ export function ExerciseListPage() {
                     originalName: customName.trim(),
                     bodyPart,
                     target: customTarget,
+                    equipment: customEquipment,
                     isCustom: true,
                 })
                 setCustomName('')
@@ -411,24 +418,25 @@ export function ExerciseListPage() {
                             placeholder={UI.placeholderExerciseName}
                         />
                     </div>
-                    <div className="flex flex-col gap-2">
-                        <Label>{UI.muscleGroup}</Label>
-                        <Select value={customTarget} onValueChange={setCustomTarget}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {targets.map((t) => (
-                                    <SelectItem key={t} value={t}>
-                                        {translateTarget(t)}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    {targets.length > 0 && equipmentOptions.length > 0 ? (
+                        <CustomExerciseMetadataFields
+                            targets={targets}
+                            equipmentOptions={equipmentOptions}
+                            target={customTarget}
+                            equipment={customEquipment}
+                            onTargetChange={setCustomTarget}
+                            onEquipmentChange={setCustomEquipment}
+                        />
+                    ) : null}
                     <Button
                         onClick={handleAddCustom}
-                        disabled={!customName.trim()}
+                        disabled={
+                            !customName.trim() ||
+                            !customTarget ||
+                            !customEquipment ||
+                            targets.length === 0 ||
+                            equipmentOptions.length === 0
+                        }
                         className="w-full"
                     >
                         {UI.add}

@@ -177,7 +177,9 @@ export function translateTarget(en: string): string {
 }
 
 export function translateEquipment(en: string): string {
-  return EQUIPMENT[en.toLowerCase()] ?? en;
+  const key = en.toLowerCase();
+  if (key === "__unspecified__") return UI.browseUnspecifiedEquipment;
+  return EQUIPMENT[key] ?? en;
 }
 
 // Libellés UI
@@ -188,7 +190,12 @@ export const UI = {
   noTrackedDescription:
     "Ajoutez des exercices pour commencer à suivre vos performances",
   muscleGroup: "Groupe musculaire",
+  equipmentLabel: "Matériel",
   bodyPartLabel: "Partie du corps",
+  editCustomClassification: "Modifier le classement",
+  customClassificationHint:
+    "Le muscle et le matériel permettent de retrouver l'exercice dans le parcours par zone.",
+  browseUnspecifiedEquipment: "Matériel non renseigné",
   all: "Tous",
   custom: "Personnalisé",
   newCustomExercise: "Nouvel exercice personnalisé",

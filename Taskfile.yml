@@ -116,10 +116,36 @@ tasks:
       - "{{.NPM}} run typeorm:migration:generate"
 
   seed:exercises:
-    desc: Seed du catalogue exercices depuis client
+    desc: Seed du catalogue exercices (api/data/popular-exercises.json)
     dir: api
     cmds:
       - "{{.NPM}} run seed:exercises"
+
+  seed:exercises:replace:
+    desc: Seed catalogue + supprime les exos absents du JSON actif (rollback propre)
+    dir: api
+    cmds:
+      - "{{.NPM}} run seed:exercises:replace"
+
+  catalog:fetch-all:
+    desc: Télécharge tous les exercices ExerciseDB vers api/data/popular-exercises.all.json
+    dir: api
+    cmds:
+      - "{{.NPM}} run fetch:all-exercises"
+
+  catalog:use-all:
+    desc: Active le catalogue complet (1500 exos) + seed base
+    dir: api
+    cmds:
+      - "{{.NPM}} run catalog:use-all"
+      - "{{.NPM}} run seed:exercises:replace"
+
+  catalog:use-filtered:
+    desc: Rollback vers le catalogue filtré (569 exos) + seed base
+    dir: api
+    cmds:
+      - "{{.NPM}} run catalog:use-filtered"
+      - "{{.NPM}} run seed:exercises:replace"
 
   test:api:
     desc: Tests unitaires API

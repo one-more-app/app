@@ -157,6 +157,13 @@ export class TrackedExercisesService {
     if (!existing) throw new NotFoundException('Exercice introuvable');
 
     existing.name = body.name ?? existing.name;
+
+    if (existing.isCustom) {
+      if (body.bodyPart !== undefined) existing.bodyPart = body.bodyPart;
+      if (body.target !== undefined) existing.target = body.target;
+      if (body.equipment !== undefined) existing.equipment = body.equipment;
+    }
+
     const entity = await this.trackedRepo.save(existing);
     return this.mapTrackedExercise(entity);
   }

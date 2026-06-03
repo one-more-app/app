@@ -16,12 +16,14 @@
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
+import {
+  EXERCISEDB_BASE,
+  fetchAllExercisePages,
+  mapExercise,
+} from './exercisedb-fetch.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const BASE = 'https://www.exercisedb.dev/api/v1'
-const DELAY_MS = 3500
-const LIMIT = 100
-const OUT_PATH = join(__dirname, '../src/data/popular-exercises.json')
+const OUT_PATH = join(__dirname, '../data/popular-exercises.filtered.json')
 
 // Équipements acceptés (barre, haltères, poulies, machines, poids du corps classique)
 const EQUIPMENT_OK = new Set([
@@ -118,19 +120,6 @@ const INCLUDE_PATTERNS = [
 // Nom trop long = souvent variante très spécifique (ex: "barbell reverse grip incline bench row")
 const MAX_NAME_WORDS = 6
 
-function mapExercise(raw) {
-  return {
-    id: raw.exerciseId,
-    name: raw.name,
-    bodyPart: raw.bodyParts?.[0] ?? '',
-    target: raw.targetMuscles?.[0] ?? '',
-    equipment: raw.equipments?.[0] ?? '',
-    secondaryMuscles: raw.secondaryMuscles ?? [],
-    instructions: raw.instructions ?? [],
-    gifUrl: raw.gifUrl ?? '',
-  }
-}
-
 function isRelevant(raw) {
   const name = (raw.name || '').trim()
 
@@ -152,25 +141,6 @@ function isRelevant(raw) {
   if (!INCLUDE_PATTERNS.some((p) => p.test(name))) return false
 
   return true
-}
-
-async function fetchWithRetry(url, maxRetries = 5) {
-  for (let i = 0; i < maxRetries; i++) {
-    const res = await fetch(url)
-    if (res.status === 429) {
-      const wait = Math.pow(2, i) * 8000
-      console.log(`  Rate limit → attente ${wait / 1000}s`)
-      await new Promise((r) => setTimeout(r, wait))
-      continue
-    }
-    const text = await res.text()
-    try {
-      return JSON.parse(text)
-    } catch {
-      throw new Error(text.slice(0, 80))
-    }
-  }
-  throw new Error('Rate limit: trop de tentatives')
 }
 
 function filterExisting() {
@@ -266,49 +236,36 @@ async function main() {
     } catch {}
   }
 
-  let offset = 0
-  let page = 1
   let totalScanned = 0
   let totalAdded = 0
 
-  console.log('Parcours du catalogue ExerciseDB (filtrage: muscu classique)\n')
+  console.log(`Parcours du catalogue ExerciseDB (filtrage: muscu classique)`)
+  console.log(`API: ${EXERCISEDB_BASE}\n`)
 
-  while (true) {
-    const url = `${BASE}/exercises?limit=${LIMIT}&offset=${offset}`
-    process.stdout.write(`Page ${page} (offset ${offset})... `)
-
-    const json = await fetchWithRetry(url)
-
-    if (!json.success || !Array.isArray(json.data)) {
-      console.error('Erreur API:', json)
-      break
-    }
-
-    let added = 0
-    for (const raw of json.data) {
-      totalScanned++
-      if (!byId.has(raw.exerciseId) && isRelevant(raw)) {
-        byId.set(raw.exerciseId, mapExercise(raw))
-        added++
-        totalAdded++
-        console.log(`  + ${raw.name}`)
+  totalScanned = await fetchAllExercisePages({
+    delayMs: 1500,
+    onPage: async ({ page, json }) => {
+      let added = 0
+      for (const raw of json.data) {
+        if (!byId.has(raw.exerciseId) && isRelevant(raw)) {
+          byId.set(raw.exerciseId, mapExercise(raw))
+          added++
+          totalAdded++
+          console.log(`  + ${raw.name}`)
+        }
       }
-    }
 
-    if (added === 0) console.log(`${byId.size} exos`)
-    else {
-      mkdirSync(dirname(OUT_PATH), { recursive: true })
-      const sorted = [...byId.values()].sort((a, b) =>
-        a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })
-      )
-      writeFileSync(OUT_PATH, JSON.stringify(sorted, null, 2), 'utf-8')
-    }
-
-    if (json.data.length < LIMIT) break
-    offset += LIMIT
-    page++
-    await new Promise((r) => setTimeout(r, DELAY_MS))
-  }
+      if (added === 0) {
+        process.stdout.write(`Page ${page}... ${byId.size} exos\n`)
+      } else {
+        mkdirSync(dirname(OUT_PATH), { recursive: true })
+        const sorted = [...byId.values()].sort((a, b) =>
+          a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })
+        )
+        writeFileSync(OUT_PATH, JSON.stringify(sorted, null, 2), 'utf-8')
+      }
+    },
+  })
 
   const final = [...byId.values()].sort((a, b) =>
     a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })
@@ -317,6 +274,7 @@ async function main() {
 
   console.log(`\n→ ${final.length} exercices classiques dans ${OUT_PATH}`)
   console.log(`   (${totalScanned} scannés, ${totalAdded} ajoutés ce run)`)
+  console.log('\nPour activer: npm run catalog:use-filtered')
 }
 
 main().catch((err) => {

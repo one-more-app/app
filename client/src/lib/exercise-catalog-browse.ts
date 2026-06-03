@@ -10,6 +10,9 @@ import type { ExerciseDBExercise, TrackedExercise } from "@/types";
 
 export type CatalogBrowseStep = "zone" | "muscle" | "equipment" | "list";
 
+/** Clé interne pour les exercices sans matériel renseigné (ex. personnalisés anciens). */
+export const UNSPECIFIED_EQUIPMENT = "__unspecified__";
+
 export type CatalogBrowseParams = {
   step: CatalogBrowseStep;
   zone: string | null;
@@ -141,7 +144,9 @@ export function exercisesForBrowsePath<T extends BrowseableExercise>(
   return exercises.filter((ex) => {
     if (exerciseZone(ex) !== z) return false;
     if ((ex.target ?? "").toLowerCase() !== t) return false;
-    return (ex.equipment ?? "").toLowerCase() === eq;
+    const exEq = (ex.equipment ?? "").trim().toLowerCase();
+    if (eq === UNSPECIFIED_EQUIPMENT) return !exEq;
+    return exEq === eq;
   });
 }
 
@@ -187,15 +192,26 @@ export function countByEquipment(
   const z = zone.toLowerCase();
   const t = target.toLowerCase();
   const counts = new Map<string, number>();
+  let unspecified = 0;
   for (const ex of exercises) {
     if (exerciseZone(ex) !== z) continue;
     if ((ex.target ?? "").toLowerCase() !== t) continue;
-    const eq = ex.equipment?.toLowerCase();
-    if (!eq) continue;
+    const eq = ex.equipment?.trim().toLowerCase();
+    if (!eq) {
+      unspecified += 1;
+      continue;
+    }
     counts.set(eq, (counts.get(eq) ?? 0) + 1);
   }
+  if (unspecified > 0) {
+    counts.set(UNSPECIFIED_EQUIPMENT, unspecified);
+  }
   return [...counts.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([a], [b]) => {
+      if (a === UNSPECIFIED_EQUIPMENT) return 1;
+      if (b === UNSPECIFIED_EQUIPMENT) return -1;
+      return a.localeCompare(b);
+    })
     .map(([equipment, count]) => ({ equipment, count }));
 }
 
