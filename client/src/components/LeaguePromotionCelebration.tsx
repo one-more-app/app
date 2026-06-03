@@ -31,6 +31,7 @@ import type {
     StreakCelebrationPayload,
 } from '@/lib/xp-notifications'
 import { useCelebrationQueueSnapshot } from '@/hooks/use-celebration-queue-active'
+import { streakXpBonusPercent } from "@one-more/shared/streak-xp-multiplier";
 import { useAnimatedCounter } from '@/hooks/use-animated-counter'
 import {
     levelCelebrationRadialBackground,
@@ -243,6 +244,7 @@ function LevelUpCelebrationContent({
 function StreakCelebrationContent({ payload }: { payload: StreakCelebrationPayload }) {
     const { current, previousStreak, xpGained, level } = payload
     const displayCount = useAnimatedCounter(previousStreak, current, true)
+    const displayBonusPercent = streakXpBonusPercent(displayCount)
 
     const title =
         current === 1
@@ -281,6 +283,21 @@ function StreakCelebrationContent({ payload }: { payload: StreakCelebrationPaylo
                         {displayCount}
                     </span>
                 </div>
+                {displayBonusPercent > 0 ? (
+                    <span
+                        key={displayBonusPercent}
+                        className="celebration-count-anim inline-flex items-center rounded-full border border-orange-400/70 bg-orange-500/20 px-3 py-1 text-sm font-extrabold tabular-nums tracking-tight text-orange-300 dark:border-orange-400/60 dark:bg-orange-500/25 dark:text-orange-200"
+                        aria-label={UI.streakXpBonusLabel.replace(
+                            '{percent}',
+                            String(displayBonusPercent),
+                        )}
+                    >
+                        {UI.streakXpBonusLabel.replace(
+                            '{percent}',
+                            String(displayBonusPercent),
+                        )}
+                    </span>
+                ) : null}
                 <DialogHeader className="flex w-full flex-col items-center gap-2 space-y-0 text-center sm:text-center">
                     <DialogTitle className="text-balance text-xl font-semibold tracking-tight">
                         {title}

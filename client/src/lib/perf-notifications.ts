@@ -1,13 +1,7 @@
-import { toast } from "sonner"
-
 import { maybeRequestAppReview } from "@/lib/app-review"
 import { enqueueCelebration } from "@/lib/celebration-queue"
 import { hapticNotificationSuccess } from "@/lib/haptics"
 import type { LeagueChangeDto } from "@/lib/league-types"
-import {
-  LEAGUE_TOAST_DESCRIPTION_CLASS,
-  toastClassForLeague,
-} from "@/lib/league-colors"
 import { playMilestoneSound } from "@/lib/milestone-sound"
 import type { LeagueInfo } from "@/lib/strength-standards"
 import { getRankIndex } from "@/lib/strength-standards"
@@ -110,13 +104,6 @@ export function notifyPerfMilestones(params: {
         exerciseImageUrl,
       },
     })
-    if (nextLeague) {
-      toast.success(exerciseName, {
-        description: `${nextLeague.label} · ${savedWeight} kg × ${savedReps}`,
-        className: toastClassForLeague(nextLeague),
-        descriptionClassName: LEAGUE_TOAST_DESCRIPTION_CLASS,
-      })
-    }
-    void maybeRequestAppReview()
+    void maybeRequestAppReview("milestone")
   }
 }

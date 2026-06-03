@@ -1,3 +1,4 @@
+import { streakXpBonusPercent } from '@one-more/shared/streak-xp-multiplier'
 import { Badge } from '@/components/ui/badge'
 import { formatPerfBadge, leagueIconDropShadow } from '@/components/celebration-modal-ui'
 import {
@@ -227,6 +228,7 @@ function ShareStreakCard({
     isDark: boolean
 }) {
     const { current } = open.payload
+    const bonusPercent = streakXpBonusPercent(current)
     const title =
         current === 1
             ? UI.streakSheetTitleFirstDay
@@ -253,6 +255,14 @@ function ShareStreakCard({
                     {title}
                 </h2>
                 <p className="text-lg text-foreground/90">{description}</p>
+                {bonusPercent > 0 ? (
+                    <p className="text-xl font-extrabold tabular-nums text-orange-400">
+                        {UI.streakXpBonusLabel.replace(
+                            '{percent}',
+                            String(bonusPercent),
+                        )}
+                    </p>
+                ) : null}
             </div>
         </ShareCardShell>
     )
