@@ -72,7 +72,8 @@ async function main() {
   console.log(`   (${totalScanned} scannés ce run)`)
   console.log('\nProchaines étapes:')
   console.log('  npm run catalog:use-all')
-  console.log('  npm run seed:exercises:replace')
+  console.log('  npm run seed:exercises:replace        # dev')
+  console.log('  npm run catalog:use-all:prod            # prod (dist compilé)')
 }
 
 main().catch((err) => {

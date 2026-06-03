@@ -29,6 +29,8 @@
     "fetch:all-exercises": "node scripts/fetch-all-exercises.js",
     "catalog:use-all": "node scripts/switch-exercises-catalog.js all",
     "catalog:use-filtered": "node scripts/switch-exercises-catalog.js filtered",
+    "catalog:use-all:prod": "npm run catalog:use-all && npm run seed:exercises:replace:prod",
+    "catalog:use-filtered:prod": "npm run catalog:use-filtered && npm run seed:exercises:replace:prod",
     "import:user-local-data": "node --loader ts-node/esm src/database/import-user-local-data.ts",
     "import:user-local-data:prod": "node dist/database/import-user-local-data.js",
     "backfill:usernames": "node --loader ts-node/esm src/database/backfill-usernames.ts",

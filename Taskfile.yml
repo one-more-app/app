@@ -127,6 +127,18 @@ tasks:
     cmds:
       - "{{.NPM}} run seed:exercises:replace"
 
+  seed:exercises:prod:
+    desc: Seed catalogue en prod (dist compilé, sans ts-node)
+    dir: api
+    cmds:
+      - "{{.NPM}} run seed:exercises:prod"
+
+  seed:exercises:replace:prod:
+    desc: Seed catalogue en prod + purge des exos absents du JSON actif
+    dir: api
+    cmds:
+      - "{{.NPM}} run seed:exercises:replace:prod"
+
   catalog:fetch-all:
     desc: Télécharge tous les exercices ExerciseDB vers api/data/popular-exercises.all.json
     dir: api
@@ -146,6 +158,18 @@ tasks:
     cmds:
       - "{{.NPM}} run catalog:use-filtered"
       - "{{.NPM}} run seed:exercises:replace"
+
+  catalog:use-all:prod:
+    desc: Active le catalogue complet + seed prod (dist compilé)
+    dir: api
+    cmds:
+      - "{{.NPM}} run catalog:use-all:prod"
+
+  catalog:use-filtered:prod:
+    desc: Rollback catalogue filtré + seed prod (dist compilé)
+    dir: api
+    cmds:
+      - "{{.NPM}} run catalog:use-filtered:prod"
 
   test:api:
     desc: Tests unitaires API
