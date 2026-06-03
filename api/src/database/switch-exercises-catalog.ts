@@ -1,19 +1,10 @@
 import { copyFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-
-type CatalogVariant = 'filtered' | 'all';
-
-function resolveDataDir(): string {
-  return join(process.cwd(), 'data');
-}
-
-function resolveVariantPath(variant: CatalogVariant): string {
-  const file =
-    variant === 'filtered'
-      ? 'popular-exercises.filtered.json'
-      : 'popular-exercises.all.json';
-  return join(resolveDataDir(), file);
-}
+import {
+  type CatalogVariant,
+  resolveDataDir,
+  resolveVariantCatalogPath,
+} from './exercise-catalog-path.js';
 
 function run(): void {
   const variant = process.argv[2] as CatalogVariant | undefined;
@@ -22,7 +13,7 @@ function run(): void {
     process.exit(1);
   }
 
-  const source = resolveVariantPath(variant);
+  const source = resolveVariantCatalogPath(variant);
   const activePath = join(resolveDataDir(), 'popular-exercises.json');
 
   if (!existsSync(source)) {

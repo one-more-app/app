@@ -26,7 +26,8 @@ COPY --from=build /app/api/dist ./dist
 COPY --from=build /app/api/data ./data
 
 COPY api/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+  && chown -R node:node /app/api
 
 USER node
 EXPOSE 3000

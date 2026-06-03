@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import dataSource from './data-source.js';
+import { resolveSeedJsonPath } from './exercise-catalog-path.js';
 import { ExerciseCatalogEntity } from '../exercises/exercise-catalog.entity.js';
 
 type SeedExercise = {
@@ -15,16 +15,6 @@ type SeedExercise = {
   instructions?: string[];
   gifUrl?: string;
 };
-
-function resolveSeedJsonPath(): string {
-  const fromEnv = process.env.EXERCISES_CATALOG_SEED_PATH;
-  if (fromEnv) return fromEnv;
-  const activePath = join(process.cwd(), 'data', 'popular-exercises.json');
-  if (existsSync(activePath)) return activePath;
-  throw new Error(
-    'api/data/popular-exercises.json introuvable. Exécuter npm run catalog:use-all ou catalog:use-filtered depuis api/.',
-  );
-}
 
 function shouldReplaceCatalog(): boolean {
   const raw = process.env.EXERCISES_CATALOG_REPLACE;
@@ -71,7 +61,7 @@ async function run() {
 
   await dataSource.destroy();
   // eslint-disable-next-line no-console
-  console.log(`Seeded exercise catalog (${exercises.length} rows)`);
+  console.log(`Seeded exercise catalog (${exercises.length} rows from ${filePath})`);
 }
 
 void run();
