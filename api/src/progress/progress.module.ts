@@ -5,11 +5,13 @@ import { PerformanceEntryEntity } from '../performance/performance-entry.entity.
 import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
 import { XpEventEntity } from './entities/xp-event.entity.js';
 import { UserProgressEntity } from './entities/user-progress.entity.js';
+import { LeagueModule } from '../league/league.module.js';
 import { ProgressController } from './progress.controller.js';
 import { ProgressService } from './progress.service.js';
 
 @Module({
   imports: [
+    LeagueModule,
     TypeOrmModule.forFeature([
       UserProgressEntity,
       XpEventEntity,

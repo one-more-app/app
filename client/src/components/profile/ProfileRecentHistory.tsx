@@ -8,11 +8,11 @@ import {
 } from "@/hooks/use-api-data";
 import { getExerciseImageUrl } from "@/lib/exercisedb";
 import {
-  buildEntryInsights,
+  entryInsightsFromPerformances,
   groupByDayThenExercise,
   resolveTrackedExercise,
 } from "@/lib/history-entries";
-import { computeLeagueFromPB, notifyPerfMilestones } from "@/lib/perf-notifications";
+import { notifyPerfMilestones } from "@/lib/perf-notifications";
 import { notifyXpGrants } from "@/lib/xp-notifications";
 import { profileSectionClass } from "@/lib/profile-section";
 import {
@@ -39,7 +39,9 @@ export function ProfileRecentHistory({
   profile: profileProp,
   readOnly = false,
 }: ProfileRecentHistoryProps = {}) {
-  const { data: allEntriesFromHook = [] } = usePerformanceEntriesData();
+  const { data: allEntriesFromHook = [] } = usePerformanceEntriesData({
+    withLeagueInsights: true,
+  });
   const { data: trackedFromHook = [] } = useTrackedExercisesData();
   const { data: profileFromHook } = useUserProfileData();
   const refreshAfterPerfChange = usePerformanceDataRefresh();
@@ -82,12 +84,8 @@ export function ProfileRecentHistory({
   );
 
   const entryInsights = useMemo(
-    () =>
-      buildEntryInsights(
-        entries,
-        profile ?? { weightKg: 75, heightCm: 175, gender: "male" },
-      ),
-    [entries, profile],
+    () => entryInsightsFromPerformances(allEntries),
+    [allEntries],
   );
 
   const [editEntry, setEditEntry] = useState<PerformanceEntry | null>(null);
@@ -226,11 +224,6 @@ export function ProfileRecentHistory({
           initialReps={addInitialWeightReps.reps}
           onSave={(weight, reps) => {
             const prevPB = getPersonalBest(addPerf.trackedExerciseId) ?? null;
-            const prevLeague = computeLeagueFromPB({
-              exercise: addExercise,
-              personalBest: prevPB,
-              profile,
-            });
             void (async () => {
               try {
                 const { xp } = await savePerformanceAndWait(
@@ -242,19 +235,13 @@ export function ProfileRecentHistory({
                 notifyXpGrants(xp);
                 const nextPB =
                   getPersonalBest(addPerf.trackedExerciseId) ?? null;
-                const nextLeague = computeLeagueFromPB({
-                  exercise: addExercise,
-                  personalBest: nextPB,
-                  profile,
-                });
                 notifyPerfMilestones({
                   exerciseName: addExercise.name,
                   prevPB,
                   nextPB,
                   savedWeight: weight,
                   savedReps: reps,
-                  prevLeague,
-                  nextLeague,
+                  league: xp?.league,
                   exerciseImageUrl:
                     getExerciseImageUrl(addExercise.gifUrl) || undefined,
                 });

@@ -19,24 +19,25 @@ import {
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import {
+    useHomeExercisesData,
+    usePerformanceDataRefresh,
     useTrackedDataRefresh,
-    useTrackedExercisesData,
     useUserProfileData,
 } from '@/hooks/use-api-data'
 import { useCelebrationQueueActive } from '@/hooks/use-celebration-queue-active'
 import { useExercisePresence } from '@/hooks/use-exercise-presence'
 import { usePerformance } from '@/hooks/use-performance'
 import { useTheme } from '@/hooks/use-theme'
-import { fetchExercisesMeta } from '@/lib/data-api'
+import { fetchExerciseTierLadder, fetchExercisesMeta, fetchPerformanceEntries } from '@/lib/data-api'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
 import {
-    buildEntryInsights,
+    entryInsightsFromPerformances,
     comparePerfEntriesRecentFirst,
     formatDayHeading,
 } from '@/lib/history-entries'
 import { LEAGUE_COLORS } from '@/lib/league-colors'
-import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
+import { notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
     getPersonalBest,
     getTrackedExerciseById,
@@ -45,7 +46,7 @@ import {
     setOnboardingFirstExercisePending,
     updateTrackedExerciseAndWait,
 } from '@/lib/storage'
-import { getAllTiers, getLeagueInfo, isDumbbellExercise } from '@/lib/strength-standards'
+import { isDumbbellExercise } from '@/lib/strength-standards'
 import { translateEquipment, translateTarget, UI } from '@/lib/translations'
 import { notifyXpGrants } from '@/lib/xp-notifications'
 import type { PerformanceEntry } from '@/types'
@@ -68,18 +69,19 @@ export function ExerciseDetailPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const { resolvedTheme } = useTheme()
-    const { data: tracked = [], isLoading: isLoadingTracked } = useTrackedExercisesData()
+    const { data: homeExercises = [], isLoading: isLoadingTracked } = useHomeExercisesData()
     const refreshAfterTrackedChange = useTrackedDataRefresh()
+    const refreshAfterPerfChange = usePerformanceDataRefresh()
     const { data: profile } = useUserProfileData()
     const [searchParams, setSearchParams] = useSearchParams()
     const exercise = useMemo(
         () =>
             id
-                ? tracked.find((item) => item.id === id && !item.deletedAt) ??
+                ? homeExercises.find((item) => item.id === id && !item.deletedAt) ??
                 getTrackedExerciseById(id) ??
                 null
                 : null,
-        [id, tracked],
+        [id, homeExercises],
     )
     const [renameOpen, setRenameOpen] = useState(false)
     const [renameValue, setRenameValue] = useState('')
@@ -102,29 +104,19 @@ export function ExerciseDetailPage() {
         refresh,
     } = usePerformance(id ?? null)
     const leagueInfo =
-        exercise && !exercise.isCustom && personalBest && profile
-            ? getLeagueInfo({
-                weight: personalBest.weight,
-                reps: personalBest.reps,
-                bodyWeightKg: profile.weightKg,
-                gender: profile.gender,
-                exerciseName: exercise.originalName ?? exercise.name,
-                exerciseMetadata: exercise.equipment && exercise.target
-                    ? { equipment: exercise.equipment, target: exercise.target, bodyPart: exercise.bodyPart }
-                    : undefined,
-            })
-            : null
-    const allTiers =
-        leagueInfo && exercise && !exercise.isCustom && profile
-            ? getAllTiers(
-                profile.weightKg,
-                profile.gender,
-                exercise.originalName ?? exercise.name,
-                exercise.equipment && exercise.target
-                    ? { equipment: exercise.equipment, target: exercise.target, bodyPart: exercise.bodyPart }
-                    : undefined
-            )
-            : null
+        exercise && 'league' in exercise ? exercise.league ?? null : null
+    const { data: allTiers } = useSWR(
+        id && exercise && !exercise.isCustom ? ['exercise-tiers', id] : null,
+        () => fetchExerciseTierLadder(id!),
+    )
+    const { data: insightEntries } = useSWR(
+        id ? ['perf-insights', id] : null,
+        () =>
+            fetchPerformanceEntries({
+                trackedExerciseId: id!,
+                withLeagueInsights: true,
+            }),
+    )
     const [showAllTiers, setShowAllTiers] = useState(false)
     const [historySessionIndex, setHistorySessionIndex] = useState(0)
 
@@ -191,8 +183,11 @@ export function ExerciseDetailPage() {
     }, [id])
 
     const entryInsights = useMemo(
-        () => buildEntryInsights(entries, profile),
-        [entries, profile.weightKg, profile.heightCm, profile.gender],
+        () =>
+            insightEntries
+                ? entryInsightsFromPerformances(insightEntries)
+                : new Map(),
+        [insightEntries],
     )
 
     const viewedSession = useMemo(() => {
@@ -404,7 +399,6 @@ export function ExerciseDetailPage() {
                         imageSize="sm"
                         onSavePerf={(weight, reps) => {
                             const prevPB = personalBest ?? null
-                            const prevLeague = leagueInfo ?? null
                             void (async () => {
                                 try {
                                     const result = await savePerformance(
@@ -413,29 +407,20 @@ export function ExerciseDetailPage() {
                                     )
                                     notifyXpGrants(result?.xp)
                                     const nextPB = id ? getPersonalBest(id) ?? null : null
-                                    const nextLeague =
-                                        exercise && profile
-                                            ? computeLeagueFromPB({
-                                                exercise,
-                                                personalBest: nextPB,
-                                                profile,
-                                            })
-                                            : null
-
                                     notifyPerfMilestones({
                                         exerciseName: exercise.name,
                                         prevPB,
                                         nextPB,
                                         savedWeight: weight,
                                         savedReps: reps,
-                                        prevLeague,
-                                        nextLeague,
+                                        league: result?.xp?.league,
                                         exerciseImageUrl:
                                             getExerciseImageUrl(exercise.gifUrl) ||
                                             undefined,
                                     })
                                 } finally {
                                     refresh()
+                                    void refreshAfterPerfChange()
                                 }
                             })()
                         }}
@@ -507,13 +492,13 @@ export function ExerciseDetailPage() {
                                                         : ' kg'
                                                 return (
                                                     <li
-                                                        key={tier.level}
+                                                        key={tier.rankId}
                                                         className="flex items-center justify-between gap-2 text-sm"
                                                     >
                                                         <Badge
                                                             variant="outline"
                                                             className={
-                                                                LEAGUE_COLORS[tier.level] ?? 'bg-muted'
+                                                                LEAGUE_COLORS[tier.tier] ?? 'bg-muted'
                                                             }
                                                         >
                                                             {tier.label}
@@ -855,7 +840,6 @@ export function ExerciseDetailPage() {
                         sessionDrawer.mode === 'add'
                             ? (weight, reps) => {
                                 const prevPB = personalBest ?? null
-                                const prevLeague = leagueInfo ?? null
                                 void (async () => {
                                     try {
                                         const result = await savePerformance(
@@ -865,22 +849,13 @@ export function ExerciseDetailPage() {
                                         )
                                         notifyXpGrants(result?.xp)
                                         const nextPB = id ? getPersonalBest(id) ?? null : null
-                                        const nextLeague =
-                                            profile
-                                                ? computeLeagueFromPB({
-                                                    exercise,
-                                                    personalBest: nextPB,
-                                                    profile,
-                                                })
-                                                : null
                                         notifyPerfMilestones({
                                             exerciseName: exercise.name,
                                             prevPB,
                                             nextPB,
                                             savedWeight: weight,
                                             savedReps: reps,
-                                            prevLeague,
-                                            nextLeague,
+                                            league: result?.xp?.league,
                                             exerciseImageUrl:
                                                 getExerciseImageUrl(
                                                     exercise.gifUrl,
@@ -888,6 +863,7 @@ export function ExerciseDetailPage() {
                                         })
                                     } finally {
                                         refresh()
+                                        void refreshAfterPerfChange()
                                     }
                                 })()
                             }

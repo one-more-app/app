@@ -16,6 +16,11 @@ export class ListPerformanceEntriesQueryDto {
   @IsOptional()
   @IsString()
   trackedExerciseId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === true || value === 'true')
+  withLeagueInsights?: boolean;
 }
 
 export class CreatePerformanceEntryDto {

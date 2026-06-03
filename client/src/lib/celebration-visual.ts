@@ -21,7 +21,7 @@ export function recordCelebrationGlow(
   leagueAfter: NewRecordCelebrationPayload['leagueAfter'],
   isDark: boolean,
 ): string {
-  if (leagueAfter) return leagueMapFill(leagueAfter.level, isDark)
+  if (leagueAfter) return leagueMapFill(leagueAfter.tier, isDark)
   return isDark ? 'hsl(68 90% 52%)' : 'hsl(68 72% 42%)'
 }
 

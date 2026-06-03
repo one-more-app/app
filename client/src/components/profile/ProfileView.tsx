@@ -8,8 +8,9 @@ import { ProfileTopExercisesList } from "@/components/profile/ProfileTopExercise
 import { ProfilePageSkeleton } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { computeLeagueStatsForTracked } from "@/lib/muscle-league-stats";
-import { getTopExercisesByLeague } from "@/lib/profile-highlights";
+import type { GlobalLeagueSummary } from "@/lib/muscle-league-stats";
+import type { TopExerciseByLeague } from "@/lib/league-types";
+import { topExerciseToHighlight } from "@/lib/profile-highlights";
 import { UI } from "@/lib/translations";
 import type { PerformanceEntry, UserProfile, UserProgressState } from "@/types";
 import { Dumbbell } from "lucide-react";
@@ -21,6 +22,8 @@ export type ProfileViewData = {
   progress: UserProgressState | undefined;
   exercises: ExerciseWithPerf[];
   performanceEntries: PerformanceEntry[];
+  leagueSummary?: GlobalLeagueSummary | null;
+  topByLeague?: TopExerciseByLeague[];
   isLoading: boolean;
   error?: boolean;
 };
@@ -38,24 +41,25 @@ export function ProfileView({
   readOnly = false,
   headerActions,
 }: ProfileViewProps) {
-  const { profile, progress, exercises, performanceEntries, isLoading, error } =
-    data;
-
-  const leagueSummary = useMemo(() => {
-    if (!profile) return null;
-    return computeLeagueStatsForTracked(
-      exercises.map((e) => ({
-        ...e,
-        personalBest: e.personalBest ?? undefined,
-      })),
-      profile,
-    );
-  }, [exercises, profile]);
+  const {
+    profile,
+    progress,
+    exercises,
+    performanceEntries,
+    leagueSummary = null,
+    topByLeague,
+    isLoading,
+    error,
+  } = data;
 
   const topRanked = useMemo(() => {
-    if (!profile) return [];
-    return getTopExercisesByLeague(exercises, profile);
-  }, [exercises, profile]);
+    if (topByLeague) {
+      return topByLeague
+        .map((row) => topExerciseToHighlight(row, exercises))
+        .filter((r): r is NonNullable<typeof r> => r != null);
+    }
+    return [];
+  }, [topByLeague, exercises]);
 
   if (isLoading) {
     return (

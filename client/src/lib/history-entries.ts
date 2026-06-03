@@ -1,22 +1,14 @@
-import {
-    computeLeagueFromPB,
-    isNewPersonalBest,
-} from '@/lib/perf-notifications'
 import { chronologicalPerfOrder } from '@/lib/performance-order'
+import type { HistoryEntryLeagueInsight } from '@/lib/league-types'
+import { getRankIndex, type LeagueInfo } from '@/lib/strength-standards'
+import { UI } from '@/lib/translations'
+import type { PerformanceEntry, PerformanceEntryWithLeagueInsight, TrackedExercise } from '@/types'
 import {
     getTrackedExerciseById,
     getAllTrackedExercises,
 } from '@/lib/storage'
-import { getLeagueLevelIndex, type LeagueInfo } from '@/lib/strength-standards'
-import { UI } from '@/lib/translations'
-import type { PerformanceEntry, TrackedExercise, UserProfile } from '@/types'
 
-export type HistoryEntryInsight = {
-    isRecord: boolean
-    leagueUp: boolean
-    prevLeague: LeagueInfo | null
-    nextLeague: LeagueInfo | null
-}
+export type HistoryEntryInsight = HistoryEntryLeagueInsight
 
 export type ExerciseGroupInsightSummary = {
     hasNewRecord: boolean
@@ -26,7 +18,18 @@ export type ExerciseGroupInsightSummary = {
     } | null
 }
 
-/** Agrège record / palier pour l’en-tête replié d’un exercice dans l’historique. */
+export function entryInsightsFromPerformances(
+    entries: PerformanceEntryWithLeagueInsight[],
+): Map<string, HistoryEntryInsight> {
+    const out = new Map<string, HistoryEntryInsight>()
+    for (const e of entries) {
+        if ('leagueInsight' in e) {
+            out.set(e.id, e.leagueInsight)
+        }
+    }
+    return out
+}
+
 export function summarizeExerciseGroupInsights(
     items: PerformanceEntry[],
     entryInsights: Map<string, HistoryEntryInsight>,
@@ -40,7 +43,7 @@ export function summarizeExerciseGroupInsights(
         if (!insight) continue
         if (insight.isRecord) hasNewRecord = true
         if (insight.leagueUp && insight.nextLeague) {
-            const nextIndex = getLeagueLevelIndex(insight.nextLeague.level)
+            const nextIndex = getRankIndex(insight.nextLeague.rankId)
             if (nextIndex > bestNextIndex) {
                 bestNextIndex = nextIndex
                 leaguePromotion = {
@@ -90,7 +93,6 @@ function recentFirstOrder(a: PerformanceEntry, b: PerformanceEntry): number {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
 }
 
-/** Plus récent d’abord (même ordre que le détail historique par exercice). */
 export function comparePerfEntriesRecentFirst(
     a: PerformanceEntry,
     b: PerformanceEntry,
@@ -98,7 +100,6 @@ export function comparePerfEntriesRecentFirst(
     return recentFirstOrder(a, b)
 }
 
-/** Regroupe par exercice suivi ; ordre des groupes = dernière perf la plus récente ; entrées récentes d’abord dans chaque groupe. */
 function groupEntriesByExerciseRecentFirst(
     list: PerformanceEntry[],
 ): { trackedExerciseId: string; items: PerformanceEntry[] }[] {
@@ -117,7 +118,6 @@ function groupEntriesByExerciseRecentFirst(
     return groups.map(({ trackedExerciseId, items }) => ({ trackedExerciseId, items }))
 }
 
-/** Jours du plus récent au plus ancien ; dans chaque jour, groupes exercice (ordre = perf la plus récente ce jour-là). */
 export function groupByDayThenExercise(
     list: PerformanceEntry[],
 ): { date: string; exercises: { trackedExerciseId: string; items: PerformanceEntry[] }[] }[] {
@@ -134,93 +134,4 @@ export function groupByDayThenExercise(
     }))
 }
 
-type Pb = { weight: number; reps: number } | null
-
-function bestPbFromList(list: PerformanceEntry[]): Pb {
-    if (list.length === 0) return null
-    return list.reduce<Pb>(
-        (best, e) =>
-            !best ||
-                e.weight > best.weight ||
-                (e.weight === best.weight && e.reps > best.reps)
-                ? { weight: e.weight, reps: e.reps }
-                : best,
-        null,
-    )
-}
-
-function resolveTrackedForInsights(trackedId: string): TrackedExercise | undefined {
-    const active = getTrackedExerciseById(trackedId)
-    if (active) return active
-    return getAllTrackedExercises().find((e) => e.id === trackedId)
-}
-
-/** Même logique que la liste « dernière session » sur la fiche exercice : record et palier vs perfs antérieures. */
-export function buildEntryInsights(
-    allEntries: PerformanceEntry[],
-    profile: UserProfile,
-): Map<string, HistoryEntryInsight> {
-    const byTracked = new Map<string, PerformanceEntry[]>()
-    for (const e of allEntries) {
-        const arr = byTracked.get(e.trackedExerciseId) ?? []
-        arr.push(e)
-        byTracked.set(e.trackedExerciseId, arr)
-    }
-    for (const arr of byTracked.values()) {
-        arr.sort(chronologicalPerfOrder)
-    }
-
-    const out = new Map<string, HistoryEntryInsight>()
-
-    for (const list of byTracked.values()) {
-        for (let i = 0; i < list.length; i++) {
-            const entry = list[i]
-            const before = list.slice(0, i)
-            const prevPB = bestPbFromList(before)
-            const isRecord = isNewPersonalBest(prevPB, {
-                weight: entry.weight,
-                reps: entry.reps,
-            })
-            const newPB: Pb = !prevPB
-                ? { weight: entry.weight, reps: entry.reps }
-                : isRecord
-                    ? { weight: entry.weight, reps: entry.reps }
-                    : prevPB
-
-            const exercise = resolveTrackedForInsights(entry.trackedExerciseId)
-            if (!exercise) {
-                out.set(entry.id, {
-                    isRecord,
-                    leagueUp: false,
-                    prevLeague: null,
-                    nextLeague: null,
-                })
-                continue
-            }
-
-            const prevLeague = computeLeagueFromPB({
-                exercise,
-                personalBest: prevPB,
-                profile,
-            })
-            const nextLeague = computeLeagueFromPB({
-                exercise,
-                personalBest: newPB,
-                profile,
-            })
-            const leagueUp =
-                !!nextLeague &&
-                (!prevLeague ||
-                    getLeagueLevelIndex(nextLeague.level) >
-                    getLeagueLevelIndex(prevLeague.level))
-
-            out.set(entry.id, {
-                isRecord,
-                leagueUp,
-                prevLeague,
-                nextLeague,
-            })
-        }
-    }
-    return out
-}
+export { chronologicalPerfOrder }

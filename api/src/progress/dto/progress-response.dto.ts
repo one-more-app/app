@@ -3,6 +3,8 @@ export type XpGrantItemDto = {
   amount: number;
 };
 
+import type { LeagueChangeDto } from '../../league/dto/league-response.dto.js';
+
 export type XpGrantResultDto = {
   totalXp: number;
   level: number;
@@ -12,6 +14,7 @@ export type XpGrantResultDto = {
   previousLevel?: number;
   grants: XpGrantItemDto[];
   streak: { current: number; longest: number };
+  league?: LeagueChangeDto;
 };
 
 export type ProgressStateDto = {

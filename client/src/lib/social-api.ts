@@ -40,20 +40,17 @@ export type FriendsListResponse = {
   pendingOutgoing: FriendListItem[];
 };
 
-import type {
-  PerformanceEntry,
-  TrackedExercise,
-  UserProfile,
-  UserProgressState,
-} from "@/types";
-import type { ExerciseWithPerf } from "@/hooks/use-home-data";
+import type { LeagueSummaryDto } from "@/lib/league-types";
+import type { PerformanceEntry, UserProfile } from "@/types";
+import type { TrackedExerciseWithPerformance } from "@/lib/data-api";
 
 export type FriendProfile = {
   userId: string;
   profile: UserProfile;
   progress: UserProgressState;
-  exercises: ExerciseWithPerf[];
+  exercises: TrackedExerciseWithPerformance[];
   performanceEntries: PerformanceEntry[];
+  leagueSummary: LeagueSummaryDto | null;
 };
 
 export async function fetchUserAccess(): Promise<UserAccess> {

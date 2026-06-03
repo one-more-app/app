@@ -1,5 +1,12 @@
 import { apiFetch } from "@/lib/api";
 import type {
+  HistoryEntryLeagueInsight,
+  LeagueInfo,
+  LeagueSummaryDto,
+} from "@/lib/league-types";
+import type { BrowseLeagueLookups } from "@one-more/shared/league-aggregate";
+import type { TierInfo } from "@one-more/shared/strength-standards";
+import type {
   ExerciseDBExercise,
   PerformanceEntry,
   TrackedExercise,
@@ -28,11 +35,17 @@ type RemotePerformanceEntry = Omit<
 export type TrackedExerciseWithPerformance = TrackedExercise & {
   lastPerf: PerformanceEntry | null;
   personalBest: PerformanceEntry | null;
+  league: LeagueInfo | null;
+};
+
+export type PerformanceEntryWithLeagueInsight = PerformanceEntry & {
+  leagueInsight: HistoryEntryLeagueInsight;
 };
 
 type RemoteTrackedExerciseWithPerformance = RemoteTrackedExercise & {
   lastPerf: RemotePerformanceEntry | null;
   personalBest: RemotePerformanceEntry | null;
+  league: LeagueInfo | null;
 };
 
 function mapTracked(e: RemoteTrackedExercise): TrackedExercise {
@@ -126,18 +139,51 @@ export async function deleteTrackedExerciseRemote(id: string): Promise<void> {
 export async function fetchPerformanceEntries(opts?: {
   trackedExerciseId?: string;
   includeDeleted?: boolean;
-}): Promise<PerformanceEntry[]> {
+  withLeagueInsights?: boolean;
+}): Promise<PerformanceEntry[] | PerformanceEntryWithLeagueInsight[]> {
   const params = new URLSearchParams();
   if (opts?.trackedExerciseId) {
     params.set("trackedExerciseId", opts.trackedExerciseId);
   }
   if (opts?.includeDeleted) params.set("includeDeleted", "true");
+  if (opts?.withLeagueInsights) params.set("withLeagueInsights", "true");
   const query = params.size > 0 ? `?${params.toString()}` : "";
+  if (opts?.withLeagueInsights) {
+    const items = await apiFetch<
+      (RemotePerformanceEntry & { leagueInsight: HistoryEntryLeagueInsight })[]
+    >(`/performance-entries${query}`, { method: "GET" });
+    return items.map((e) => ({
+      ...mapPerformance(e),
+      leagueInsight: e.leagueInsight,
+    }));
+  }
   const items = await apiFetch<RemotePerformanceEntry[]>(
     `/performance-entries${query}`,
     { method: "GET" },
   );
   return items.map(mapPerformance);
+}
+
+export async function fetchLeagueSummary(): Promise<LeagueSummaryDto | null> {
+  return await apiFetch<LeagueSummaryDto | null>("/league/summary", {
+    method: "GET",
+  });
+}
+
+export async function fetchLeagueBrowseLookups(): Promise<BrowseLeagueLookups> {
+  return await apiFetch<BrowseLeagueLookups>("/league/browse-lookups", {
+    method: "GET",
+  });
+}
+
+export async function fetchExerciseTierLadder(
+  trackedClientId: string,
+): Promise<TierInfo[] | null> {
+  const res = await apiFetch<{ tiers: TierInfo[] } | null>(
+    `/league/exercises/${encodeURIComponent(trackedClientId)}/tiers`,
+    { method: "GET" },
+  );
+  return res?.tiers ?? null;
 }
 
 type RemotePerformanceCreateResponse = RemotePerformanceEntry & {

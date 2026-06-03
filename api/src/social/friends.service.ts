@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { LeagueService } from '../league/league.service.js';
 import { PerformanceEntriesService } from '../performance/performance-entries.service.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { ProgressService } from '../progress/progress.service.js';
@@ -37,6 +38,7 @@ export class FriendsService {
     private readonly progressService: ProgressService,
     private readonly trackedExercisesService: TrackedExercisesService,
     private readonly performanceEntriesService: PerformanceEntriesService,
+    private readonly leagueService: LeagueService,
   ) {}
 
   async listFriends(userId: string) {
@@ -303,11 +305,13 @@ export class FriendsService {
     });
     if (!profile) throw new NotFoundException('Profil introuvable');
 
-    const [progress, exercises, performanceEntries] = await Promise.all([
-      this.progressService.getProgress(friendUserId),
-      this.trackedExercisesService.listWithPerformance(friendUserId),
-      this.performanceEntriesService.list(friendUserId),
-    ]);
+    const [progress, exercises, performanceEntries, leagueSummary] =
+      await Promise.all([
+        this.progressService.getProgress(friendUserId),
+        this.trackedExercisesService.listWithPerformance(friendUserId),
+        this.performanceEntriesService.list(friendUserId),
+        this.leagueService.buildSummary(friendUserId),
+      ]);
 
     return {
       userId: friendUserId,
@@ -322,6 +326,7 @@ export class FriendsService {
       progress,
       exercises,
       performanceEntries,
+      leagueSummary,
     };
   }
 }

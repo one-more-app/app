@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { LeagueService } from '../league/league.service.js';
 import { ProgressService } from '../progress/progress.service.js';
 import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
 import { PerformanceEntryEntity } from './performance-entry.entity.js';
@@ -22,11 +23,16 @@ export class PerformanceEntriesService {
     @InjectRepository(TrackedExerciseEntity)
     private readonly trackedRepo: Repository<TrackedExerciseEntity>,
     private readonly progressService: ProgressService,
+    private readonly leagueService: LeagueService,
   ) {}
 
   async list(
     userId: string,
-    opts?: { trackedExerciseId?: string; includeDeleted?: boolean },
+    opts?: {
+      trackedExerciseId?: string;
+      includeDeleted?: boolean;
+      withLeagueInsights?: boolean;
+    },
   ) {
     const qb = this.perfRepo
       .createQueryBuilder('entry')
@@ -44,7 +50,7 @@ export class PerformanceEntriesService {
     qb.orderBy('entry.date', 'DESC').addOrderBy('entry.updatedAt', 'DESC');
     const list = await qb.getMany();
 
-    return list.map((e) => ({
+    const mapped = list.map((e) => ({
       id: e.clientId,
       trackedExerciseId: e.trackedExercise.clientId,
       date: e.date,
@@ -53,6 +59,30 @@ export class PerformanceEntriesService {
       createdAt: e.updatedAt.toISOString(),
       updatedAt: e.updatedAt.toISOString(),
       deletedAt: e.deletedAt ? e.deletedAt.toISOString() : null,
+    }));
+
+    if (!opts?.withLeagueInsights) return mapped;
+
+    const insights = await this.leagueService.buildHistoryInsights(
+      userId,
+      mapped.map((e) => ({
+        id: e.id,
+        trackedExerciseId: e.trackedExerciseId,
+        date: e.date,
+        weight: e.weight,
+        reps: e.reps,
+        createdAt: e.createdAt,
+      })),
+    );
+
+    return mapped.map((e) => ({
+      ...e,
+      leagueInsight: insights[e.id] ?? {
+        isRecord: false,
+        leagueUp: false,
+        prevLeague: null,
+        nextLeague: null,
+      },
     }));
   }
 

@@ -66,7 +66,7 @@ function NewRecordCelebrationContent({
                 badge={formatPerfBadge(weight, reps)}
                 badgeClassName={
                     leagueAfter
-                        ? LEAGUE_COLORS[leagueAfter.level]
+                        ? LEAGUE_COLORS[leagueAfter.tier]
                         : 'bg-primary text-primary-foreground'
                 }
                 ariaLabel={`${UI.newRecordCelebrationTitle} — ${perfLabel}`}
@@ -85,7 +85,7 @@ function NewRecordCelebrationContent({
             {leagueAfter ? (
                 <Badge
                     variant="outline"
-                    className={`px-2.5 py-0.5 text-xs font-semibold ${LEAGUE_COLORS[leagueAfter.level]}`}
+                    className={`px-2.5 py-0.5 text-xs font-semibold ${LEAGUE_COLORS[leagueAfter.tier]}`}
                 >
                     {leagueAfter.label}
                 </Badge>
@@ -102,7 +102,7 @@ function LeaguePromotionContent({
     isDark: boolean
 }) {
     const { exerciseName, prevLeague, nextLeague, weight, reps } = payload
-    const leagueGlow = leagueMapFill(nextLeague.level, isDark)
+    const leagueGlow = leagueMapFill(nextLeague.tier, isDark)
     const perfLabel = UI.leaguePromotionCelebrationPerf
         .replace('{weight}', String(weight))
         .replace('{reps}', String(reps))
@@ -119,7 +119,7 @@ function LeaguePromotionContent({
                 badge={
                     <span className="truncate">{nextLeague.label}</span>
                 }
-                badgeClassName={LEAGUE_COLORS[nextLeague.level]}
+                badgeClassName={LEAGUE_COLORS[nextLeague.tier]}
                 ariaLabel={`${UI.leaguePromotionCelebrationTitle} — ${nextLeague.label}`}
             />
             <DialogHeader className="flex w-full flex-col items-center gap-2 space-y-0 text-center sm:text-center">
@@ -143,7 +143,7 @@ function LeaguePromotionContent({
                 <div className="flex flex-wrap items-center justify-center gap-1.5">
                     <Badge
                         variant="outline"
-                        className={`px-2 py-0.5 text-xs ${LEAGUE_COLORS[prevLeague.level]}`}
+                        className={`px-2 py-0.5 text-xs ${LEAGUE_COLORS[prevLeague.tier]}`}
                     >
                         {prevLeague.label}
                     </Badge>
@@ -154,7 +154,7 @@ function LeaguePromotionContent({
                     />
                     <Badge
                         variant="outline"
-                        className={`px-2 py-0.5 text-xs font-semibold ${LEAGUE_COLORS[nextLeague.level]}`}
+                        className={`px-2 py-0.5 text-xs font-semibold ${LEAGUE_COLORS[nextLeague.tier]}`}
                     >
                         {nextLeague.label}
                     </Badge>

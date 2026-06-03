@@ -1,5 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import {
+  fetchLeagueBrowseLookups,
+  fetchLeagueSummary,
   fetchPerformanceEntries,
   fetchRemoteProfile,
   fetchTrackedExercises,
@@ -9,6 +11,8 @@ import {
   upsertRemoteProfile,
   type TrackedExerciseWithPerformance,
 } from "@/lib/data-api";
+import type { LeagueSummaryDto } from "@/lib/league-types";
+import type { BrowseLeagueLookups } from "@one-more/shared/league-aggregate";
 import { mergePerformanceEntriesById } from "@/lib/activity-from-performances";
 import { getUserProgress, setUserProgress } from "@/lib/progress-cache";
 import {
@@ -35,6 +39,8 @@ export const SWR_KEYS = {
   profile: "profile",
   homeExercises: "home-exercises",
   progress: "progress",
+  leagueSummary: "league-summary",
+  leagueBrowse: "league-browse-lookups",
   activityMonthPrefix: "progress-activity",
   activityMonth: (month: string) => ["progress-activity", month] as const,
 } as const;
@@ -52,6 +58,8 @@ export function usePerformanceDataRefresh() {
       mutate(SWR_KEYS.homeExercises),
       mutate(SWR_KEYS.trackedExercises),
       mutate(SWR_KEYS.progress),
+      mutate(SWR_KEYS.leagueSummary),
+      mutate(SWR_KEYS.leagueBrowse),
       mutate(isActivityMonthKey),
     ]);
   }, [mutate]);
@@ -86,15 +94,38 @@ export function useTrackedDataRefresh() {
       mutate(SWR_KEYS.trackedExercises),
       mutate(SWR_KEYS.homeExercises),
       mutate(SWR_KEYS.performanceEntries),
+      mutate(SWR_KEYS.leagueSummary),
+      mutate(SWR_KEYS.leagueBrowse),
     ]);
   }, [mutate]);
+}
+
+export function useLeagueSummaryData() {
+  const auth = useAuth();
+  return useSWR<LeagueSummaryDto | null>(
+    auth.status === "authenticated" ? SWR_KEYS.leagueSummary : null,
+    () => fetchLeagueSummary(),
+  );
+}
+
+export function useLeagueBrowseLookupsData() {
+  const auth = useAuth();
+  return useSWR<BrowseLeagueLookups>(
+    auth.status === "authenticated" ? SWR_KEYS.leagueBrowse : null,
+    () => fetchLeagueBrowseLookups(),
+  );
 }
 
 export function useProfileDataRefresh() {
   const { mutate } = useSWRConfig();
 
   return useCallback(async () => {
-    await mutate(SWR_KEYS.profile);
+    await Promise.all([
+      mutate(SWR_KEYS.profile),
+      mutate(SWR_KEYS.leagueSummary),
+      mutate(SWR_KEYS.leagueBrowse),
+      mutate(SWR_KEYS.homeExercises),
+    ]);
   }, [mutate]);
 }
 
@@ -111,12 +142,22 @@ export function useTrackedExercisesData() {
   );
 }
 
-export function usePerformanceEntriesData() {
+export function usePerformanceEntriesData(opts?: {
+  withLeagueInsights?: boolean;
+}) {
   const auth = useAuth();
+  const withInsights = opts?.withLeagueInsights === true;
   return useSWR<PerformanceEntry[]>(
-    auth.status === "authenticated" ? SWR_KEYS.performanceEntries : null,
+    auth.status === "authenticated"
+      ? withInsights
+        ? [...SWR_KEYS.performanceEntries, "insights"]
+        : SWR_KEYS.performanceEntries
+      : null,
     async () => {
-      const remote = await fetchPerformanceEntries({ includeDeleted: true });
+      const remote = await fetchPerformanceEntries({
+        includeDeleted: true,
+        withLeagueInsights: withInsights,
+      });
       const list = mergePerformanceEntriesById(
         remote,
         getAllPerformanceEntries(),

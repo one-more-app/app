@@ -70,7 +70,7 @@ export function ProfileTopExercisesList({
                 </p>
               </div>
               <Badge
-                className={`shrink-0 text-xs ${LEAGUE_COLORS[row.league.level]}`}
+                className={`shrink-0 text-xs ${LEAGUE_COLORS[row.league.tier]}`}
               >
                 {row.league.label}
               </Badge>

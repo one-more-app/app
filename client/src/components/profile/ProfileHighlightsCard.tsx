@@ -14,7 +14,7 @@ import {
   profileNestedClass,
   profileSectionClass,
 } from "@/lib/profile-section";
-import { leagueLevelToFrenchLabel } from "@/lib/strength-standards";
+import { rankIdLabel, rankIdTier } from "@/lib/rank-display";
 import { UI } from "@/lib/translations";
 import type { PerformanceEntry, UserProgressState } from "@/types";
 import { Flame, Medal, Trophy } from "lucide-react";
@@ -90,9 +90,9 @@ export function ProfileHighlightsCard({
           </p>
           {leagueSummary ? (
             <Badge
-              className={`mt-1.5 px-2 py-0.5 text-xs font-semibold ${LEAGUE_COLORS[leagueSummary.globalLevel]}`}
+              className={`mt-1.5 px-2 py-0.5 text-xs font-semibold ${LEAGUE_COLORS[rankIdTier(leagueSummary.globalRank)]}`}
             >
-              {leagueLevelToFrenchLabel(leagueSummary.globalLevel)}
+              {rankIdLabel(leagueSummary.globalRank)}
             </Badge>
           ) : (
             <p className="mt-1 text-sm text-muted-foreground">—</p>

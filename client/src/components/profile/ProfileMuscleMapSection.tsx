@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/hooks/use-theme";
 import { LEAGUE_COLORS } from "@/lib/league-colors";
 import type { GlobalLeagueSummary } from "@/lib/muscle-league-stats";
-import { leagueLevelToFrenchLabel } from "@/lib/strength-standards";
+import { rankIdLabel, rankIdTier } from "@/lib/rank-display";
 import {
   profileNestedInteractiveClass,
   profileNestedListClass,
@@ -76,9 +76,9 @@ export function ProfileMuscleMapSection({
                   </span>
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
                     <Badge
-                      className={`text-xs ${LEAGUE_COLORS[m.representativeLevel]}`}
+                      className={`text-xs ${LEAGUE_COLORS[rankIdTier(m.representativeRank)]}`}
                     >
-                      {leagueLevelToFrenchLabel(m.representativeLevel)}
+                      {rankIdLabel(m.representativeRank)}
                     </Badge>
                     <span className="text-xs text-muted-foreground tabular-nums">
                       {m.exerciseCount} ex.
@@ -95,7 +95,7 @@ export function ProfileMuscleMapSection({
                               {row.name}
                             </span>
                             <Badge
-                              className={`shrink-0 text-xs ${LEAGUE_COLORS[row.league.level]}`}
+                              className={`shrink-0 text-xs ${LEAGUE_COLORS[row.league.tier]}`}
                             >
                               {row.league.label}
                             </Badge>
@@ -109,7 +109,7 @@ export function ProfileMuscleMapSection({
                             {row.name}
                           </span>
                           <Badge
-                            className={`shrink-0 text-xs ${LEAGUE_COLORS[row.league.level]}`}
+                            className={`shrink-0 text-xs ${LEAGUE_COLORS[row.league.tier]}`}
                           >
                             {row.league.label}
                           </Badge>

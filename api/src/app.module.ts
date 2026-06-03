@@ -13,6 +13,7 @@ import { SocialModule } from './social/social.module.js';
 import { MessagingModule } from './messaging/messaging.module.js';
 import { PresenceModule } from './presence/presence.module.js';
 import { RealtimeModule } from './realtime/realtime.module.js';
+import { LeagueModule } from './league/league.module.js';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { RealtimeModule } from './realtime/realtime.module.js';
     MessagingModule,
     PresenceModule,
     RealtimeModule,
+    LeagueModule,
   ],
   controllers: [AppController],
   providers: [AppService],

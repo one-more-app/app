@@ -11,13 +11,23 @@ import {
 import { LEAGUE_COLORS, leagueMapFill } from "@/lib/league-colors";
 import type { MuscleLeagueAgg } from "@/lib/muscle-league-stats";
 import { muscleTargetToSlug } from "@/lib/muscle-target-to-slug";
+import { rankIdLabel, rankIdTier } from "@/lib/rank-display";
 import {
-    getLeagueLevelIndex,
-    leagueScoreToRepresentativeLevel,
-    LEAGUE_ORDER,
-    leagueLevelToFrenchLabel,
-    medianLeagueScore,
+    leagueTierToFrenchLabel,
+    rankScore,
+    rankScoreToRepresentativeRank,
+    medianRankScore,
+    type LeagueTier,
 } from "@/lib/strength-standards";
+
+const LEGEND_TIERS: LeagueTier[] = [
+    "bronze",
+    "silver",
+    "gold",
+    "platinum",
+    "diamond",
+    "legend",
+];
 import { translateTarget, UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { useMemo, useState } from "react";
@@ -38,16 +48,14 @@ function aggregateBySlug(byMuscle: MuscleLeagueAgg[]): Map<Slug, SlugBucket> {
         if (!slug) continue;
         const cur = map.get(slug) ?? { scores: [], muscles: [] };
         for (const row of m.exercises) {
-            cur.scores.push(
-                getLeagueLevelIndex(row.league.level) + row.league.progressToNext,
-            );
+            cur.scores.push(rankScore(row.league));
         }
         cur.muscles.push(m);
         map.set(slug, cur);
     }
     const out = new Map<Slug, SlugBucket>();
     for (const [slug, { scores, muscles }] of map) {
-        out.set(slug, { avgScore: medianLeagueScore(scores), muscles });
+        out.set(slug, { avgScore: medianRankScore(scores), muscles });
     }
     return out;
 }
@@ -67,9 +75,9 @@ function SingleMuscleDialog({
                 <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm text-muted-foreground">{UI.bodyMapMuscleAverageTier}</p>
                     <Badge
-                        className={`w-fit shrink-0 font-semibold ${LEAGUE_COLORS[muscle.representativeLevel]}`}
+                        className={`w-fit shrink-0 font-semibold ${LEAGUE_COLORS[rankIdTier(muscle.representativeRank)]}`}
                     >
-                        {leagueLevelToFrenchLabel(muscle.representativeLevel)}
+                        {rankIdLabel(muscle.representativeRank)}
                     </Badge>
                 </div>
             </DialogHeader>
@@ -86,7 +94,7 @@ function SingleMuscleDialog({
                             )}
                         >
                             <span className="min-w-0 truncate font-medium capitalize">{row.name}</span>
-                            <Badge className={`shrink-0 text-xs ${LEAGUE_COLORS[row.league.level]}`}>
+                            <Badge className={`shrink-0 text-xs ${LEAGUE_COLORS[row.league.tier]}`}>
                                 {row.league.label}
                             </Badge>
                         </Link>
@@ -131,11 +139,11 @@ export function BodyMuscleLeagueMap({
     const bodyData: ExtendedBodyPart[] = useMemo(() => {
         const list: ExtendedBodyPart[] = [];
         for (const [slug, { avgScore }] of bySlug) {
-            const level = leagueScoreToRepresentativeLevel(avgScore);
+            const rank = rankScoreToRepresentativeRank(avgScore);
             list.push({
                 slug,
                 styles: {
-                    fill: leagueMapFill(level, isDark),
+                    fill: leagueMapFill(rankIdTier(rank), isDark),
                 },
             });
         }
@@ -167,25 +175,25 @@ export function BodyMuscleLeagueMap({
                     role="img"
                     aria-label={UI.bodyMapLeagueColorsCaption}
                 >
-                    {LEAGUE_ORDER.map((level) => (
+                    {LEGEND_TIERS.map((tier) => (
                         <span
-                            key={level}
+                            key={tier}
                             className="min-w-0 flex-1 border-r border-border/20 last:border-r-0"
-                            style={{ backgroundColor: leagueMapFill(level, isDark) }}
-                            title={leagueLevelToFrenchLabel(level)}
+                            style={{ backgroundColor: leagueMapFill(tier, isDark) }}
+                            title={leagueTierToFrenchLabel(tier)}
                         />
                     ))}
                 </div>
                 <div className="mb-1 flex items-center justify-between gap-2">
                     <Badge
-                        className={`shrink-0 px-2 py-0 text-[10px] font-semibold ${LEAGUE_COLORS.iron}`}
+                        className={`shrink-0 px-2 py-0 text-[10px] font-semibold ${LEAGUE_COLORS.bronze}`}
                     >
-                        {leagueLevelToFrenchLabel("iron")}
+                        {leagueTierToFrenchLabel("bronze")}
                     </Badge>
                     <Badge
                         className={`shrink-0 px-2 py-0 text-[10px] font-semibold ${LEAGUE_COLORS.legend}`}
                     >
-                        {leagueLevelToFrenchLabel("legend")}
+                        {leagueTierToFrenchLabel("legend")}
                     </Badge>
                 </div>
                 <p className="mb-3 text-center text-[10px] text-muted-foreground">
@@ -249,10 +257,10 @@ export function BodyMuscleLeagueMap({
                                             {UI.bodyMapZoneAverageTier}
                                         </p>
                                         <Badge
-                                            className={`w-fit shrink-0 font-semibold ${LEAGUE_COLORS[leagueScoreToRepresentativeLevel(picked.avgScore)]}`}
+                                            className={`w-fit shrink-0 font-semibold ${LEAGUE_COLORS[rankIdTier(rankScoreToRepresentativeRank(picked.avgScore))]}`}
                                         >
-                                            {leagueLevelToFrenchLabel(
-                                                leagueScoreToRepresentativeLevel(picked.avgScore),
+                                            {rankIdLabel(
+                                                rankScoreToRepresentativeRank(picked.avgScore),
                                             )}
                                         </Badge>
                                     </div>
@@ -271,13 +279,13 @@ export function BodyMuscleLeagueMap({
                                                     className="size-2.5 shrink-0 rounded-sm border border-border/60"
                                                     style={{
                                                         backgroundColor: leagueMapFill(
-                                                            m.representativeLevel,
+                                                            rankIdTier(m.representativeRank),
                                                             isDark,
                                                         ),
                                                     }}
                                                     aria-hidden
                                                 />
-                                                {leagueLevelToFrenchLabel(m.representativeLevel)}
+                                                {rankIdLabel(m.representativeRank)}
                                             </span>
                                         </li>
                                     ))}

@@ -1,29 +1,21 @@
 import { Badge } from '@/components/ui/badge'
-import type { LeagueInfo, LeagueLevel } from '@/lib/strength-standards'
+import type { LeagueInfo } from '@/lib/strength-standards'
+import { getNextRankId, parseRankId, formatRankLabel } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
 import { LEAGUE_1RM_STYLES, LEAGUE_COLORS } from '@/lib/league-colors'
 import { Trophy } from 'lucide-react'
 
-const NEXT_TIER: Record<LeagueLevel, { label: string; level: LeagueLevel } | null> = {
-    iron: { label: 'Bronze', level: 'bronze' },
-    bronze: { label: 'Argent', level: 'silver' },
-    silver: { label: 'Or', level: 'gold' },
-    gold: { label: 'Platine', level: 'platinum' },
-    platinum: { label: 'Émeraude', level: 'emerald' },
-    emerald: { label: 'Diamant', level: 'diamond' },
-    diamond: { label: 'Maître', level: 'master' },
-    master: { label: 'Elite', level: 'elite' },
-    elite: { label: 'Légende', level: 'legend' },
-    legend: null,
+function nextRankLabel(league: LeagueInfo): string | null {
+  const nextId = league.nextRankId ?? getNextRankId(league.rankId)
+  if (!nextId) return null
+  const { tier, subRank } = parseRankId(nextId)
+  return formatRankLabel(tier, subRank)
 }
 
 interface LeagueBadgeProps {
     league: LeagueInfo
-    /** Afficher le palier suivant (poids à atteindre) */
     showNextTarget?: boolean
-    /** Version compacte (badge seul) ou détaillée */
     compact?: boolean
-    /** Suffixe pour les poids (ex: " kg" ou " kg (par haltère)") */
     weightSuffix?: string
 }
 
@@ -35,8 +27,13 @@ export function LeagueBadge({
     compact = false,
     weightSuffix = DEFAULT_WEIGHT_SUFFIX,
 }: LeagueBadgeProps) {
-    const colorClass = LEAGUE_COLORS[league.level] ?? 'bg-muted text-muted-foreground'
-    const oneRMStyle = LEAGUE_1RM_STYLES[league.level] ?? 'border border-muted bg-muted/20'
+    const colorClass = LEAGUE_COLORS[league.tier] ?? 'bg-muted text-muted-foreground'
+    const oneRMStyle = LEAGUE_1RM_STYLES[league.tier] ?? 'border border-muted bg-muted/20'
+    const nextLabel = nextRankLabel(league)
+    const nextTier =
+        league.nextRankId != null
+            ? parseRankId(league.nextRankId).tier
+            : null
 
     if (compact) {
         return (
@@ -76,15 +73,14 @@ export function LeagueBadge({
 
             {showNextTarget && league.progressToNext < 1 && (
                 <div className="space-y-3">
-                    {remainingKg && Number(remainingKg) > 0 && NEXT_TIER[league.level] && (
+                    {remainingKg && Number(remainingKg) > 0 && nextLabel && nextTier && (
                         <p className="flex items-center gap-1.5 text-xs font-medium text-primary flex-wrap">
                             {UI.remainingForNext.replace('{kg}', remainingKg)}
                             <Badge
                                 variant="outline"
-                                className={`shrink-0 text-[10px] py-0 ${LEAGUE_COLORS[NEXT_TIER[league.level]!.level] ?? 'bg-muted'
-                                    }`}
+                                className={`shrink-0 text-[10px] py-0 ${LEAGUE_COLORS[nextTier] ?? 'bg-muted'}`}
                             >
-                                {NEXT_TIER[league.level]!.label}
+                                {nextLabel}
                             </Badge>
                         </p>
                     )}
@@ -99,13 +95,12 @@ export function LeagueBadge({
                             {league.weightTierEnd != null ? (
                                 <>
                                     {league.weightTierEnd.toFixed(1)}{weightSuffix}
-                                    {NEXT_TIER[league.level] && (
+                                    {nextLabel && nextTier && (
                                         <Badge
                                             variant="outline"
-                                            className={`shrink-0 text-[10px] py-0 ${LEAGUE_COLORS[NEXT_TIER[league.level]!.level] ?? 'bg-muted'
-                                                }`}
+                                            className={`shrink-0 text-[10px] py-0 ${LEAGUE_COLORS[nextTier] ?? 'bg-muted'}`}
                                         >
-                                            {NEXT_TIER[league.level]!.label}
+                                            {nextLabel}
                                         </Badge>
                                     )}
                                 </>

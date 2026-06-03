@@ -7,7 +7,7 @@ import type {
   TopExerciseByLeague,
 } from "@/lib/profile-highlights";
 import type { GlobalLeagueSummary } from "@/lib/muscle-league-stats";
-import { leagueLevelToFrenchLabel } from "@/lib/strength-standards";
+import { rankIdLabel, rankIdTier } from "@/lib/rank-display";
 import { StreakFlameCount } from "@/components/StreakFlameCount";
 import { resolveStreak } from "@/lib/streak-display";
 import { UI } from "@/lib/translations";
@@ -90,9 +90,9 @@ export function ProfileShareCard({
           {leagueSummary ? (
             <div className="flex flex-col items-center gap-3">
               <Badge
-                className={`${tsm} px-4 py-2 font-semibold ${LEAGUE_COLORS[leagueSummary.globalLevel]}`}
+                className={`${tsm} px-4 py-2 font-semibold ${LEAGUE_COLORS[rankIdTier(leagueSummary.globalRank)]}`}
               >
-                {leagueLevelToFrenchLabel(leagueSummary.globalLevel)}
+                {rankIdLabel(leagueSummary.globalRank)}
               </Badge>
               <p className={`${txs} text-muted-foreground`}>
                 {UI.profileShareRanked.replace(
@@ -113,7 +113,7 @@ export function ProfileShareCard({
                   {topByLeague.exercise.name}
                 </p>
                 <Badge
-                  className={`mt-2 ${LEAGUE_COLORS[topByLeague.league.level]}`}
+                  className={`mt-2 ${LEAGUE_COLORS[topByLeague.league.tier]}`}
                 >
                   {topByLeague.league.label}
                 </Badge>

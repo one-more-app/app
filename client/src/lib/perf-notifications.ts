@@ -3,34 +3,31 @@ import { toast } from "sonner"
 import { maybeRequestAppReview } from "@/lib/app-review"
 import { enqueueCelebration } from "@/lib/celebration-queue"
 import { hapticNotificationSuccess } from "@/lib/haptics"
+import type { LeagueChangeDto } from "@/lib/league-types"
 import {
   LEAGUE_TOAST_DESCRIPTION_CLASS,
   toastClassForLeague,
 } from "@/lib/league-colors"
 import { playMilestoneSound } from "@/lib/milestone-sound"
 import type { LeagueInfo } from "@/lib/strength-standards"
-import { getLeagueInfo } from "@/lib/strength-standards"
-import type { PerformanceEntry, TrackedExercise, UserProfile } from "@/types"
+import { getRankIndex } from "@/lib/strength-standards"
+import type { PerformanceEntry } from "@/types"
 
 type PB = Pick<PerformanceEntry, "weight" | "reps"> | null
 
-/** Données affichées par l’overlay de célébration (passage de palier). */
 export type LeaguePromotionPayload = {
   exerciseName: string
   prevLeague: LeagueInfo | null
   nextLeague: LeagueInfo
   weight: number
   reps: number
-  /** URL absolue de l’illo (GIF) pour partage ; optionnel */
   exerciseImageUrl?: string
 }
 
-/** Données affichées par l’overlay « nouveau record » (sans changement de palier). */
 export type NewRecordCelebrationPayload = {
   exerciseName: string
   weight: number
   reps: number
-  /** Ligue au record (dégradé) ; null si exo perso / non classé */
   leagueAfter: LeagueInfo | null
   exerciseImageUrl?: string
 }
@@ -50,45 +47,16 @@ export function didLeagueChange(
 ): boolean {
   if (!nextLeague) return false
   if (!prevLeague) return true
-  return prevLeague.level !== nextLeague.level
-}
-
-export function computeLeagueFromPB(params: {
-  exercise: TrackedExercise
-  personalBest: PB
-  profile: UserProfile
-}): LeagueInfo | null {
-  const { exercise, personalBest, profile } = params
-  if (exercise.isCustom || !personalBest) return null
-
-  return (
-    getLeagueInfo({
-      weight: personalBest.weight,
-      reps: personalBest.reps,
-      bodyWeightKg: profile.weightKg,
-      gender: profile.gender,
-      exerciseName: exercise.originalName ?? exercise.name,
-      exerciseMetadata:
-        exercise.equipment && exercise.target
-          ? {
-              equipment: exercise.equipment,
-              target: exercise.target,
-              bodyPart: exercise.bodyPart,
-            }
-          : undefined,
-    }) ?? null
-  )
+  return prevLeague.rankId !== nextLeague.rankId
 }
 
 export function notifyPerfMilestones(params: {
   exerciseName: string
   prevPB: PB
   nextPB: PB
-  /** Poids et reps de la perf venant d’être enregistrée (affichage). */
   savedWeight: number
   savedReps: number
-  prevLeague: LeagueInfo | null
-  nextLeague: LeagueInfo | null
+  league?: LeagueChangeDto | null
   exerciseImageUrl?: string
 }): void {
   const {
@@ -97,27 +65,24 @@ export function notifyPerfMilestones(params: {
     nextPB,
     savedWeight,
     savedReps,
-    prevLeague,
-    nextLeague,
+    league,
     exerciseImageUrl,
   } = params
 
-  const newRecord = isNewPersonalBest(prevPB, nextPB)
-  const leagueUp = didLeagueChange(prevLeague, nextLeague)
-  if (!newRecord && !leagueUp) {
-    toast.success("Performance enregistrée", {
-      description: `${exerciseName} · ${savedWeight} kg × ${savedReps} reps`,
-    })
-    return
-  }
+  const prevLeague = league?.before ?? null
+  const nextLeague = league?.after ?? null
+  const isRecord = isNewPersonalBest(prevPB, nextPB)
+  const leagueChanged =
+    league?.promoted ??
+    (nextLeague &&
+      prevLeague &&
+      getRankIndex(nextLeague.rankId) > getRankIndex(prevLeague.rankId))
 
-  void maybeRequestAppReview("milestone")
+  if (!isRecord && !leagueChanged) return
 
-  const leagueToastClass = nextLeague
-    ? toastClassForLeague(nextLeague.level)
-    : undefined
-
-  if (newRecord && leagueUp && nextLeague && nextPB) {
+  if (leagueChanged && nextLeague) {
+    hapticNotificationSuccess()
+    playMilestoneSound("league")
     enqueueCelebration({
       kind: "league",
       payload: {
@@ -132,18 +97,9 @@ export function notifyPerfMilestones(params: {
     return
   }
 
-  if (newRecord && leagueUp) {
-    playMilestoneSound("league")
-    void hapticNotificationSuccess()
-    toast.success("Nouveau record et nouveau palier", {
-      className: leagueToastClass,
-      classNames: { description: LEAGUE_TOAST_DESCRIPTION_CLASS },
-      description: `${exerciseName} · ${savedWeight} kg × ${savedReps} reps · ${nextLeague!.label}`,
-    })
-    return
-  }
-
-  if (newRecord && nextPB) {
+  if (isRecord) {
+    hapticNotificationSuccess()
+    if (nextLeague) playMilestoneSound("league")
     enqueueCelebration({
       kind: "record",
       payload: {
@@ -154,14 +110,13 @@ export function notifyPerfMilestones(params: {
         exerciseImageUrl,
       },
     })
-    return
-  }
-
-  if (newRecord) {
-    playMilestoneSound("record")
-    void hapticNotificationSuccess()
-    toast.success("Nouveau record", {
-      description: `${exerciseName} · ${savedWeight} kg × ${savedReps} reps`,
-    })
+    if (nextLeague) {
+      toast.success(exerciseName, {
+        description: `${nextLeague.label} · ${savedWeight} kg × ${savedReps}`,
+        className: toastClassForLeague(nextLeague),
+        descriptionClassName: LEAGUE_TOAST_DESCRIPTION_CLASS,
+      })
+    }
+    void maybeRequestAppReview()
   }
 }

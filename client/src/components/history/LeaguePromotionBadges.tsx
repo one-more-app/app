@@ -41,7 +41,7 @@ export function LeaguePromotionBadges({
                             'shrink-0 overflow-visible whitespace-nowrap',
                             sizeClass,
                             'opacity-80',
-                            LEAGUE_COLORS[prevLeague.level],
+                            LEAGUE_COLORS[prevLeague.tier],
                         )}
                     >
                         {prevLeague.label}
@@ -62,7 +62,7 @@ export function LeaguePromotionBadges({
                 className={cn(
                     'shrink-0 overflow-visible whitespace-nowrap',
                     sizeClass,
-                    LEAGUE_COLORS[nextLeague.level],
+                    LEAGUE_COLORS[nextLeague.tier],
                 )}
             >
                 {nextLeague.label}

@@ -120,7 +120,7 @@ function ShareLeagueCard({
     isDark: boolean
 }) {
     const { exerciseName, prevLeague, nextLeague, weight, reps } = open.payload
-    const glow = leagueMapFill(nextLeague.level, isDark)
+    const glow = leagueMapFill(nextLeague.tier, isDark)
     const perfLabel = UI.leaguePromotionCelebrationPerf
         .replace('{weight}', String(weight))
         .replace('{reps}', String(reps))
@@ -134,7 +134,7 @@ function ShareLeagueCard({
                 icon={Trophy}
                 iconStyle={{ color: glow, filter: leagueIconDropShadow(glow) }}
                 badge={<span className="truncate">{nextLeague.label}</span>}
-                badgeClassName={LEAGUE_COLORS[nextLeague.level]}
+                badgeClassName={LEAGUE_COLORS[nextLeague.tier]}
             />
             <div className="space-y-2">
                 <h2 className="text-balance text-3xl font-semibold tracking-tight">
@@ -150,7 +150,7 @@ function ShareLeagueCard({
                 <div className="flex flex-wrap items-center justify-center gap-2">
                     <Badge
                         variant="outline"
-                        className={`px-3 py-1 text-base ${LEAGUE_COLORS[prevLeague.level]}`}
+                        className={`px-3 py-1 text-base ${LEAGUE_COLORS[prevLeague.tier]}`}
                     >
                         {prevLeague.label}
                     </Badge>
@@ -161,7 +161,7 @@ function ShareLeagueCard({
                     />
                     <Badge
                         variant="outline"
-                        className={`px-3 py-1 text-base font-semibold ${LEAGUE_COLORS[nextLeague.level]}`}
+                        className={`px-3 py-1 text-base font-semibold ${LEAGUE_COLORS[nextLeague.tier]}`}
                     >
                         {nextLeague.label}
                     </Badge>
@@ -196,7 +196,7 @@ function ShareRecordCard({
                 badge={formatPerfBadge(weight, reps)}
                 badgeClassName={
                     leagueAfter
-                        ? LEAGUE_COLORS[leagueAfter.level]
+                        ? LEAGUE_COLORS[leagueAfter.tier]
                         : 'bg-primary text-primary-foreground'
                 }
             />
@@ -210,7 +210,7 @@ function ShareRecordCard({
             {leagueAfter ? (
                 <Badge
                     variant="outline"
-                    className={`px-3 py-1 text-base font-semibold ${LEAGUE_COLORS[leagueAfter.level]}`}
+                    className={`px-3 py-1 text-base font-semibold ${LEAGUE_COLORS[leagueAfter.tier]}`}
                 >
                     {leagueAfter.label}
                 </Badge>

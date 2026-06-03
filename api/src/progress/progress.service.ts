@@ -1,11 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, IsNull, Repository } from 'typeorm';
-import {
-  getLeagueInfo,
-  getLeagueLevelIndex,
-  type LeagueInfo,
-} from '../shared/strength-standards.js';
+import { LeagueService } from '../league/league.service.js';
+import type { LeagueProfileInput } from '../shared/league-aggregate.js';
 import {
   getPersonalBestFromEntries,
   isNewPersonalBest,
@@ -56,6 +53,7 @@ export class ProgressService {
     private readonly perfRepo: Repository<PerformanceEntryEntity>,
     @InjectRepository(TrackedExerciseEntity)
     private readonly trackedRepo: Repository<TrackedExerciseEntity>,
+    private readonly leagueService: LeagueService,
   ) {}
 
   async getActivity(
@@ -239,12 +237,22 @@ export class ProgressService {
         );
       }
 
-      const prevLeague = this.leagueFromPb(tracked, prevPB, profile);
-      const nextLeague = this.leagueFromPb(tracked, nextPB, profile);
-      if (this.didLeaguePromote(prevLeague, nextLeague) && nextLeague) {
+      const profileInput: LeagueProfileInput | null = profile?.weightKg
+        ? {
+            weightKg: profile.weightKg,
+            gender: profile.gender === 'female' ? 'female' : 'male',
+          }
+        : null;
+      const leagueChange = this.leagueService.computeLeagueChange(
+        tracked,
+        prevPB,
+        nextPB,
+        profileInput,
+      );
+      if (leagueChange.promoted && leagueChange.after) {
         await tryGrant(
           XpSourceType.LeaguePromotion,
-          `league:${params.trackedExerciseClientId}:${nextLeague.level}`,
+          `league:${params.trackedExerciseClientId}:${leagueChange.after.rankId}`,
           XP_AMOUNTS.leaguePromotion,
           async () => {
             const count = await xpRepo.count({
@@ -323,6 +331,7 @@ export class ProgressService {
         previousLevel: level > levelBefore ? levelBefore : undefined,
         grants,
         streak: this.effectiveStreak(progress),
+        league: leagueChange,
       };
     });
   }
@@ -386,38 +395,6 @@ export class ProgressService {
     } catch {
       return false;
     }
-  }
-
-  private leagueFromPb(
-    tracked: TrackedExerciseEntity,
-    pb: { weight: number; reps: number } | null,
-    profile: UserProfileEntity | null,
-  ): LeagueInfo | null {
-    if (!pb || tracked.isCustom || !profile?.weightKg || !profile.gender) {
-      return null;
-    }
-    const gender =
-      profile.gender === 'female' ? ('female' as const) : ('male' as const);
-    return getLeagueInfo({
-      weight: pb.weight,
-      reps: pb.reps,
-      bodyWeightKg: profile.weightKg,
-      gender,
-      exerciseName: tracked.name,
-      exerciseMetadata: {
-        equipment: tracked.equipment ?? undefined,
-        target: tracked.target ?? undefined,
-      },
-    });
-  }
-
-  private didLeaguePromote(
-    prev: LeagueInfo | null,
-    next: LeagueInfo | null,
-  ): boolean {
-    if (!next) return false;
-    if (!prev) return true;
-    return getLeagueLevelIndex(next.level) > getLeagueLevelIndex(prev.level);
   }
 
   private emptyGrantResult(progress: UserProgressEntity): XpGrantResultDto {

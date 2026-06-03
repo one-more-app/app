@@ -5,13 +5,11 @@ import {
   useHomeExercisesData,
   useTrackedDataRefresh,
 } from "@/hooks/use-api-data";
-import type { PerformanceEntry, TrackedExercise } from "@/types";
+import type { TrackedExerciseWithPerformance } from "@/lib/data-api";
+import type { PerformanceEntry } from "@/types";
 import { useCallback } from "react";
 
-export interface ExerciseWithPerf extends TrackedExercise {
-  lastPerf: PerformanceEntry | null;
-  personalBest: PerformanceEntry | null;
-}
+export type ExerciseWithPerf = TrackedExerciseWithPerformance;
 
 export function useHomeData() {
   const {

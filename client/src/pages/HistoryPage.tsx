@@ -10,12 +10,12 @@ import {
     useUserProfileData,
 } from '@/hooks/use-api-data'
 import {
-    buildEntryInsights,
+    entryInsightsFromPerformances,
     groupByDayThenExercise,
     resolveTrackedExercise,
 } from '@/lib/history-entries'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
-import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
+import { notifyPerfMilestones } from '@/lib/perf-notifications'
 import { notifyXpGrants } from '@/lib/xp-notifications'
 import {
     deletePerformanceAndWait,
@@ -31,7 +31,8 @@ import { useCallback, useMemo, useState } from 'react'
 const MAX_SHOWN = 150
 
 export function HistoryPage() {
-    const { data: allEntries = [], isLoading: isLoadingEntries } = usePerformanceEntriesData()
+    const { data: allEntries = [], isLoading: isLoadingEntries } =
+        usePerformanceEntriesData({ withLeagueInsights: true })
     const refreshAfterPerfChange = usePerformanceDataRefresh()
     const { data: tracked = [] } = useTrackedExercisesData()
     const { data: profile } = useUserProfileData()
@@ -57,12 +58,8 @@ export function HistoryPage() {
         [shown],
     )
     const entryInsights = useMemo(
-        () =>
-            buildEntryInsights(
-                entries,
-                profile ?? { weightKg: 75, heightCm: 175, gender: 'male' },
-            ),
-        [entries, profile],
+        () => entryInsightsFromPerformances(allEntries),
+        [allEntries],
     )
 
     const editExercise = editEntry
@@ -185,11 +182,6 @@ export function HistoryPage() {
                     onSave={(weight, reps) => {
                         const prevPB =
                             getPersonalBest(addPerf.trackedExerciseId) ?? null
-                        const prevLeague = computeLeagueFromPB({
-                            exercise: addExercise,
-                            personalBest: prevPB,
-                            profile,
-                        })
                         void (async () => {
                             try {
                                 const { xp } = await savePerformanceAndWait(
@@ -201,19 +193,13 @@ export function HistoryPage() {
                                 notifyXpGrants(xp)
                                 const nextPB =
                                     getPersonalBest(addPerf.trackedExerciseId) ?? null
-                                const nextLeague = computeLeagueFromPB({
-                                    exercise: addExercise,
-                                    personalBest: nextPB,
-                                    profile,
-                                })
                                 notifyPerfMilestones({
                                     exerciseName: addExercise.name,
                                     prevPB,
                                     nextPB,
                                     savedWeight: weight,
                                     savedReps: reps,
-                                    prevLeague,
-                                    nextLeague,
+                                    league: xp?.league,
                                     exerciseImageUrl:
                                         getExerciseImageUrl(addExercise.gifUrl) ||
                                         undefined,

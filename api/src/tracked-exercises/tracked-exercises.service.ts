@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
 import { PerformanceEntryEntity } from '../performance/performance-entry.entity.js';
+import { LeagueService } from '../league/league.service.js';
 import { AccessService } from '../social/access.service.js';
 import { TrackedExerciseEntity } from './tracked-exercise.entity.js';
 import type {
@@ -17,6 +18,7 @@ export class TrackedExercisesService {
     @InjectRepository(PerformanceEntryEntity)
     private readonly perfRepo: Repository<PerformanceEntryEntity>,
     private readonly accessService: AccessService,
+    private readonly leagueService: LeagueService,
   ) {}
 
   private mapTrackedExercise(entity: TrackedExerciseEntity) {
@@ -96,7 +98,9 @@ export class TrackedExercisesService {
       }
     }
 
-    return tracked.map((item) => {
+    const profile = await this.leagueService.getProfileInput(userId);
+
+    const rows = tracked.map((item) => {
       const itemEntries = entriesByTrackedId.get(item.id) ?? [];
       const lastPerfEntity = itemEntries[itemEntries.length - 1];
       const personalBestEntity = itemEntries.reduce<PerformanceEntryEntity | undefined>(
@@ -119,6 +123,8 @@ export class TrackedExercisesService {
           : null,
       };
     });
+
+    return this.leagueService.attachLeagueToExercises(rows, profile);
   }
 
   async create(userId: string, body: CreateTrackedExerciseDto) {

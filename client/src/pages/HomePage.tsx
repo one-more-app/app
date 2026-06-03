@@ -9,9 +9,9 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { useAccess } from '@/hooks/use-access'
 import {
+    useLeagueBrowseLookupsData,
     usePerformanceDataRefresh,
     usePerformanceEntriesData,
-    useUserProfileData,
 } from '@/hooks/use-api-data'
 import { useExerciseCatalogBrowse } from '@/hooks/use-exercise-catalog-browse'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
@@ -22,14 +22,13 @@ import {
 } from '@/lib/exercise-catalog-browse'
 import { CARDIO_EQUIPMENT, getExerciseImageUrl } from '@/lib/exercisedb'
 import { filterExercisesDoneToday } from '@/lib/home-today-exercises'
-import { computeBrowseLeagueLookups } from '@/lib/muscle-league-stats'
-import { computeLeagueFromPB, notifyPerfMilestones } from '@/lib/perf-notifications'
+import { browseLookupsToMaps } from '@/lib/muscle-league-stats'
+import { notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
     getLatestPerformanceCreatedAt,
     getPersonalBest,
     savePerformanceAndWait,
 } from '@/lib/storage'
-import { getLeagueInfo } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
 import { notifyXpGrants } from '@/lib/xp-notifications'
 import { Dumbbell, Plus, Search } from 'lucide-react'
@@ -40,7 +39,7 @@ function HomePage() {
     const { exercises, hasLoaded } = useHomeData()
     const { data: performanceEntries = [] } = usePerformanceEntriesData()
     const refreshAfterPerfChange = usePerformanceDataRefresh()
-    const { data: profile } = useUserProfileData()
+    const { data: browseLookupsRaw } = useLeagueBrowseLookupsData()
     const { access, canAddExercise } = useAccess()
     const navigate = useNavigate()
     const [limitDialogOpen, setLimitDialogOpen] = useState(false)
@@ -117,9 +116,9 @@ function HomePage() {
     )
 
     const browseLeagueLookups = useMemo(() => {
-        if (!profile) return undefined
-        return computeBrowseLeagueLookups(nonCardioExercises, profile)
-    }, [nonCardioExercises, profile])
+        if (!browseLookupsRaw) return undefined
+        return browseLookupsToMaps(browseLookupsRaw)
+    }, [browseLookupsRaw])
 
     const todayExercises = useMemo(
         () =>
@@ -132,24 +131,7 @@ function HomePage() {
 
     const renderExerciseCard = useCallback(
         (ex: ExerciseWithPerf) => {
-            const leagueInfo =
-                !ex.isCustom && ex.personalBest && profile
-                    ? getLeagueInfo({
-                        weight: ex.personalBest.weight,
-                        reps: ex.personalBest.reps,
-                        bodyWeightKg: profile.weightKg,
-                        gender: profile.gender,
-                        exerciseName: ex.originalName ?? ex.name,
-                        exerciseMetadata:
-                            ex.equipment && ex.target
-                                ? {
-                                    equipment: ex.equipment,
-                                    target: ex.target,
-                                    bodyPart: ex.bodyPart,
-                                }
-                                : undefined,
-                    })
-                    : null
+            const leagueInfo = ex.league ?? null
             return (
                 <ExerciseCard
                     compact
@@ -160,7 +142,6 @@ function HomePage() {
                     onClick={() => navigate(`/exercise/${ex.id}`, { replace: false })}
                     onSavePerf={(weight, reps) => {
                         const prevPB = ex.personalBest ?? null
-                        const prevLeague = leagueInfo ?? null
                         void (async () => {
                             try {
                                 const { xp } = await savePerformanceAndWait(
@@ -170,21 +151,13 @@ function HomePage() {
                                 )
                                 notifyXpGrants(xp)
                                 const nextPB = getPersonalBest(ex.id) ?? null
-                                const nextLeague = profile
-                                    ? computeLeagueFromPB({
-                                        exercise: ex,
-                                        personalBest: nextPB,
-                                        profile,
-                                    })
-                                    : null
                                 notifyPerfMilestones({
                                     exerciseName: ex.name,
                                     prevPB,
                                     nextPB,
                                     savedWeight: weight,
                                     savedReps: reps,
-                                    prevLeague,
-                                    nextLeague,
+                                    league: xp?.league,
                                     exerciseImageUrl:
                                         getExerciseImageUrl(ex.gifUrl) || undefined,
                                 })
@@ -196,7 +169,7 @@ function HomePage() {
                 />
             )
         },
-        [navigate, profile, refreshAfterPerfChange],
+        [navigate, refreshAfterPerfChange],
     )
 
     const renderExerciseList = useCallback(

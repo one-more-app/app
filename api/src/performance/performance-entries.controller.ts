@@ -30,6 +30,7 @@ export class PerformanceEntriesController {
     return await this.performanceEntriesService.list(req.user.sub, {
       trackedExerciseId: query.trackedExerciseId,
       includeDeleted: query.includeDeleted === true,
+      withLeagueInsights: query.withLeagueInsights === true,
     });
   }
 

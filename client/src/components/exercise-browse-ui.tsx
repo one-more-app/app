@@ -2,8 +2,8 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import type { CatalogBrowseParams, CatalogBrowseStep } from '@/lib/exercise-catalog-browse'
 import { LEAGUE_COLORS } from '@/lib/league-colors'
-import type { LeagueLevel } from '@/lib/strength-standards'
-import { leagueLevelToFrenchLabel } from '@/lib/strength-standards'
+import type { RankId } from '@/lib/strength-standards'
+import { rankIdLabel, rankIdTier } from '@/lib/rank-display'
 import {
     translateBodyPart,
     translateEquipment,
@@ -53,7 +53,7 @@ export function BrowseTile({
     count: number
     icon?: ReactNode
     /** Palier médian du groupe (accueil, zones du corps). */
-    leagueLevel?: LeagueLevel | null
+    leagueLevel?: RankId | null
     onClick: () => void
 }) {
     return (
@@ -82,10 +82,10 @@ export function BrowseTile({
                             <Badge
                                 className={cn(
                                     'font-normal text-xs',
-                                    LEAGUE_COLORS[leagueLevel],
+                                    LEAGUE_COLORS[rankIdTier(leagueLevel)],
                                 )}
                             >
-                                {leagueLevelToFrenchLabel(leagueLevel)}
+                                {rankIdLabel(leagueLevel)}
                             </Badge>
                         ) : null}
                     </div>

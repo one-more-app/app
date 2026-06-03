@@ -5,21 +5,72 @@
  * ExRx.net, Symmetric Strength.
  */
 
-export type LeagueLevel =
-  | "iron"
+export type LeagueTier =
   | "bronze"
   | "silver"
   | "gold"
   | "platinum"
-  | "emerald"
   | "diamond"
-  | "master"
-  | "elite"
   | "legend";
 
+export type RankId =
+  | "bronze_1"
+  | "bronze_2"
+  | "bronze_3"
+  | "silver_1"
+  | "silver_2"
+  | "silver_3"
+  | "gold_1"
+  | "gold_2"
+  | "gold_3"
+  | "platinum_1"
+  | "platinum_2"
+  | "platinum_3"
+  | "diamond_1"
+  | "diamond_2"
+  | "diamond_3"
+  | "legend";
+
+/** @deprecated Utiliser `LeagueTier` ou `RankId`. */
+export type LeagueLevel = LeagueTier;
+
+export const RANK_ORDER: readonly RankId[] = [
+  "bronze_1",
+  "bronze_2",
+  "bronze_3",
+  "silver_1",
+  "silver_2",
+  "silver_3",
+  "gold_1",
+  "gold_2",
+  "gold_3",
+  "platinum_1",
+  "platinum_2",
+  "platinum_3",
+  "diamond_1",
+  "diamond_2",
+  "diamond_3",
+  "legend",
+] as const;
+
+/** @deprecated Utiliser `RANK_ORDER`. */
+export const LEAGUE_ORDER: readonly RankId[] = RANK_ORDER;
+
+const TIER_FR_LABELS: Record<LeagueTier, string> = {
+  bronze: "Bronze",
+  silver: "Argent",
+  gold: "Or",
+  platinum: "Platine",
+  diamond: "Diamant",
+  legend: "Légende",
+};
+
 export interface LeagueInfo {
-  level: LeagueLevel;
+  rankId: RankId;
+  tier: LeagueTier;
+  subRank: 1 | 2 | 3 | null;
   label: string;
+  tierLabel: string;
   oneRM: number;
   weightTierStart: number;
   weightTierEnd: number | null;
@@ -28,11 +79,13 @@ export interface LeagueInfo {
   weightToReach: number;
   progressToNext: number;
   percentileEstimate: number;
+  /** Prochain rang (null si déjà Légende). */
+  nextRankId: RankId | null;
 }
 
-type RatioTier = { ratio: number; label: string };
+type RatioTier = { ratio: number; label: string; rankId: RankId };
 
-const TIER_LABELS = [
+const LEGACY_TIER_LABELS = [
   "Fer",
   "Bronze",
   "Argent",
@@ -45,120 +98,208 @@ const TIER_LABELS = [
   "Légende",
 ] as const;
 
-/** Ordre d’affichage des paliers (Fer → Légende). */
-export const LEAGUE_ORDER: readonly LeagueLevel[] = [
-  "iron",
+/** Indices des 10 paliers historiques pour les bornes des 6 paliers principaux. */
+const LEGACY_ANCHOR_INDICES = [0, 2, 3, 4, 6, 9] as const;
+
+const MAIN_TIERS: readonly LeagueTier[] = [
   "bronze",
   "silver",
   "gold",
   "platinum",
-  "emerald",
   "diamond",
-  "master",
-  "elite",
   "legend",
-] as const satisfies readonly LeagueLevel[]
+] as const;
 
-/** Index du niveau de ligue (0 = fer, 9 = légende). Pour comparer deux ligues. */
-export function getLeagueLevelIndex(level: LeagueLevel): number {
-  const i = LEAGUE_ORDER.indexOf(level)
-  return i === -1 ? 0 : i
+export function parseRankId(rankId: RankId): {
+  tier: LeagueTier;
+  subRank: 1 | 2 | 3 | null;
+} {
+  if (rankId === "legend") return { tier: "legend", subRank: null };
+  const [tier, sub] = rankId.split("_") as [LeagueTier, string];
+  return { tier, subRank: Number(sub) as 1 | 2 | 3 };
 }
 
-/** Libellé français du palier (Fer, Bronze, Argent, …). */
-export function leagueLevelToFrenchLabel(level: LeagueLevel): string {
-  const i = getLeagueLevelIndex(level)
-  return TIER_LABELS[i] ?? level
+export function formatRankLabel(tier: LeagueTier, subRank: 1 | 2 | 3 | null): string {
+  if (tier === "legend") return TIER_FR_LABELS.legend;
+  return `${TIER_FR_LABELS[tier]} ${subRank}`;
 }
 
-/** Médiane d’une liste de scores ligue (0–10). */
-export function medianLeagueScore(scores: readonly number[]): number {
-  if (scores.length === 0) return 0
-  const sorted = [...scores].sort((a, b) => a - b)
-  const mid = Math.floor(sorted.length / 2)
+export function getRankIndex(rankId: RankId): number {
+  const i = RANK_ORDER.indexOf(rankId);
+  return i === -1 ? 0 : i;
+}
+
+/** @deprecated Utiliser `getRankIndex`. */
+export function getLeagueLevelIndex(rankId: RankId): number {
+  return getRankIndex(rankId);
+}
+
+export function getNextRankId(rankId: RankId): RankId | null {
+  const i = getRankIndex(rankId);
+  if (i >= RANK_ORDER.length - 1) return null;
+  return RANK_ORDER[i + 1]!;
+}
+
+/** Libellé français du palier principal (Bronze, Argent, …). */
+export function leagueTierToFrenchLabel(tier: LeagueTier): string {
+  return TIER_FR_LABELS[tier] ?? tier;
+}
+
+/** @deprecated Utiliser `leagueTierToFrenchLabel(parseRankId(rankId).tier)`. */
+export function leagueLevelToFrenchLabel(tier: LeagueTier): string {
+  return leagueTierToFrenchLabel(tier);
+}
+
+export function rankScore(league: LeagueInfo): number {
+  return getRankIndex(league.rankId) + league.progressToNext;
+}
+
+/** Médiane d’une liste de scores rang (indice 0–15 + progression). */
+export function medianRankScore(scores: readonly number[]): number {
+  if (scores.length === 0) return 0;
+  const sorted = [...scores].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
   if (sorted.length % 2 === 0) {
-    return (sorted[mid - 1]! + sorted[mid]!) / 2
+    return (sorted[mid - 1]! + sorted[mid]!) / 2;
   }
-  return sorted[mid]!
+  return sorted[mid]!;
 }
 
-/**
- * Score ligue continu (indice 0–9 + progression) → palier affiché.
- * Utilise la partie entière (floor) pour ne pas surestimer par rapport aux perfs réelles.
- */
-export function leagueScoreToRepresentativeLevel(score: number): LeagueLevel {
+/** @deprecated Utiliser `medianRankScore`. */
+export function medianLeagueScore(scores: readonly number[]): number {
+  return medianRankScore(scores);
+}
+
+export function rankScoreToRepresentativeRank(score: number): RankId {
   const idx = Math.min(
-    LEAGUE_ORDER.length - 1,
+    RANK_ORDER.length - 1,
     Math.max(0, Math.floor(score)),
-  )
-  return LEAGUE_ORDER[idx]!
+  );
+  return RANK_ORDER[idx]!;
 }
 
-/** @deprecated Préférer `leagueScoreToRepresentativeLevel` (même sémantique depuis la correction floor). */
-export function averageLeagueScoreToLevel(score: number): LeagueLevel {
-  return leagueScoreToRepresentativeLevel(score)
+/** @deprecated Utiliser `rankScoreToRepresentativeRank`. */
+export function leagueScoreToRepresentativeLevel(score: number): RankId {
+  return rankScoreToRepresentativeRank(score);
 }
 
-/**
- * Jauge « global » : le score moyen est un indice 0–9 + décimale (comme par exo).
- * La partie entière = palier de base, la décimale = avancement jusqu’au palier suivant.
- */
+/** @deprecated Utiliser `rankScoreToRepresentativeRank`. */
+export function averageLeagueScoreToLevel(score: number): RankId {
+  return rankScoreToRepresentativeRank(score);
+}
+
 export function getGlobalLeagueGauge(score: number): {
-  fromLevel: LeagueLevel;
-  toLevel: LeagueLevel | null;
-  /** 0–1, vers le palier `toLevel` ; 1 si déjà au dernier palier (Légende). */
+  fromRank: RankId;
+  toRank: RankId | null;
   progress: number;
-  /** Borne basse du segment sur l’échelle score moyenne (entier = début du palier `fromLevel`). */
   segmentStartScore: number;
-  /** Borne haute pour atteindre `toLevel` ; null si déjà Légende. */
   segmentEndScore: number | null;
 } {
-  const s = Math.max(0, Math.min(9.999, score))
-  const i = Math.min(LEAGUE_ORDER.length - 1, Math.floor(s))
-  const fromLevel = LEAGUE_ORDER[i]!
-  if (i >= LEAGUE_ORDER.length - 1) {
+  const maxScore = RANK_ORDER.length - 0.001;
+  const s = Math.max(0, Math.min(maxScore, score));
+  const i = Math.min(RANK_ORDER.length - 1, Math.floor(s));
+  const fromRank = RANK_ORDER[i]!;
+  if (i >= RANK_ORDER.length - 1) {
     return {
-      fromLevel,
-      toLevel: null,
+      fromRank,
+      toRank: null,
       progress: 1,
       segmentStartScore: i,
       segmentEndScore: null,
-    }
+    };
   }
-  const toLevel = LEAGUE_ORDER[i + 1]!
-  const progress = Math.min(1, Math.max(0, s - i))
+  const toRank = RANK_ORDER[i + 1]!;
+  const progress = Math.min(1, Math.max(0, s - i));
   return {
-    fromLevel,
-    toLevel,
+    fromRank,
+    toRank,
     progress,
     segmentStartScore: i,
     segmentEndScore: i + 1,
-  }
+  };
 }
 
-const RATIO_TO_PERCENTILE: Record<LeagueLevel, { min: number; max: number }> = {
-  iron: { min: 0, max: 10 },
-  bronze: { min: 10, max: 20 },
-  silver: { min: 20, max: 30 },
-  gold: { min: 30, max: 40 },
-  platinum: { min: 40, max: 50 },
-  emerald: { min: 50, max: 60 },
-  diamond: { min: 60, max: 70 },
-  master: { min: 70, max: 80 },
-  elite: { min: 80, max: 90 },
-  legend: { min: 90, max: 99 },
-};
+/** Percentile estimé selon l’index de rang (0–15). */
+function percentileForRankIndex(rankIndex: number, progressToNext: number): number {
+  const maxIdx = RANK_ORDER.length - 1;
+  const segment = 99 / maxIdx;
+  const base = rankIndex * segment;
+  return Math.round(base + progressToNext * segment);
+}
 
-/** Crée les paliers à partir des ratios (Fer=0 ou 1.0 pour PDC) */
-function tiers(ratios: number[], labels = TIER_LABELS): RatioTier[] {
-  return ratios.map((r, i) => ({ ratio: r, label: labels[i] ?? String(i) }));
+/** Transforme 10 paliers historiques en 16 rangs (5×3 sous-rangs + Légende). */
+export function expandLegacyTiersToRankTiers(
+  legacyTiers: readonly { ratio: number; label: string }[],
+): RatioTier[] {
+  if (legacyTiers.length < 10) {
+    return legacyTiers.map((t, i) => ({
+      ...t,
+      rankId: RANK_ORDER[Math.min(i, RANK_ORDER.length - 1)]!,
+    }));
+  }
+
+  const anchorRatios = LEGACY_ANCHOR_INDICES.map(
+    (i) => legacyTiers[i]!.ratio,
+  );
+  const out: RatioTier[] = [];
+
+  for (let main = 0; main < MAIN_TIERS.length - 1; main++) {
+    const tier = MAIN_TIERS[main]!;
+    const start = anchorRatios[main]!;
+    const end = anchorRatios[main + 1]!;
+    const span = end - start;
+    for (let sub = 1; sub <= 3; sub++) {
+      const rankId = `${tier}_${sub}` as RankId;
+      const ratio =
+        sub === 1 ? start : start + (span * (sub - 1)) / 3;
+      out.push({
+        ratio: Math.round(ratio * 10000) / 10000,
+        label: formatRankLabel(tier, sub as 1 | 2 | 3),
+        rankId,
+      });
+    }
+  }
+
+  out.push({
+    ratio: anchorRatios[5]!,
+    label: formatRankLabel("legend", null),
+    rankId: "legend",
+  });
+
+  return out;
+}
+
+/** Crée les paliers historiques (10 ratios) en base de données. */
+function tiers(ratios: number[], labels = LEGACY_TIER_LABELS): Omit<RatioTier, "rankId">[] {
+  return ratios.map((r, i) => ({
+    ratio: r,
+    label: labels[i] ?? String(i),
+  }));
+}
+
+function expandStandardsEntry(entry: {
+  male: Omit<RatioTier, "rankId">[];
+  female: Omit<RatioTier, "rankId">[];
+}): StandardsEntry {
+  const toRankTiers = (legacy: Omit<RatioTier, "rankId">[]) =>
+    expandLegacyTiersToRankTiers(
+      legacy.map((t) => ({ ...t, rankId: "bronze_1" as RankId })),
+    );
+  return {
+    male: toRankTiers(entry.male),
+    female: toRankTiers(entry.female),
+  };
 }
 
 // Standards par (equipment, target) – ratios précis pour chaque combinaison
 // Clé: "equipment_target" ou "equipment_target_variant"
+type LegacyStandardsEntry = Record<
+  "male" | "female",
+  Omit<RatioTier, "rankId">[]
+>;
 type StandardsEntry = Record<"male" | "female", RatioTier[]>;
 
-const STANDARDS_BY_EQUIPMENT_TARGET: Record<string, StandardsEntry> = {
+const STANDARDS_BY_EQUIPMENT_TARGET: Record<string, LegacyStandardsEntry> = {
   // --- PECTORAUX (van den Hoek 2024: Legend M 1.95×, F 1.35×, ratio F/H 69%) ---
   barbell_pectorals: {
     male: tiers([0, 0.22, 0.43, 0.65, 0.87, 1.08, 1.3, 1.52, 1.73, 1.95]),
@@ -796,7 +937,8 @@ function getStandards(
   exerciseName: string,
 ): StandardsEntry | null {
   const key = getStandardsKey(equipment, target, exerciseName);
-  return key ? (STANDARDS_BY_EQUIPMENT_TARGET[key] ?? null) : null;
+  const raw = key ? STANDARDS_BY_EQUIPMENT_TARGET[key] : null;
+  return raw ? expandStandardsEntry(raw) : null;
 }
 
 /** Clés dumbbell/kettlebell : ratio = poids d'un seul haltère / poids du corps */
@@ -846,8 +988,11 @@ export function estimate1RM(weight: number, reps: number): number {
 }
 
 export interface TierInfo {
-  level: LeagueLevel;
+  rankId: RankId;
+  tier: LeagueTier;
+  subRank: 1 | 2 | 3 | null;
   label: string;
+  tierLabel: string;
   weightMin: number;
   weightMax: number | null;
 }
@@ -876,16 +1021,22 @@ export function getAllTiers(
   }
   if (!standards || bodyWeightKg <= 0) return null;
 
-  const tiers = standards[gender];
-  return tiers.map((s, i) => ({
-    level: LEAGUE_ORDER[i] as LeagueLevel,
-    label: s.label,
-    weightMin: Math.round(bodyWeightKg * s.ratio * 10) / 10,
-    weightMax:
-      i < tiers.length - 1
-        ? Math.round(bodyWeightKg * tiers[i + 1].ratio * 10) / 10
-        : null,
-  }));
+  const rankTiers = standards[gender];
+  return rankTiers.map((s, i) => {
+    const { tier, subRank } = parseRankId(s.rankId);
+    return {
+      rankId: s.rankId,
+      tier,
+      subRank,
+      label: s.label,
+      tierLabel: leagueTierToFrenchLabel(tier),
+      weightMin: Math.round(bodyWeightKg * s.ratio * 10) / 10,
+      weightMax:
+        i < rankTiers.length - 1
+          ? Math.round(bodyWeightKg * rankTiers[i + 1]!.ratio * 10) / 10
+          : null,
+    };
+  });
 }
 
 export function isBodyweightAdditiveExercise(
@@ -967,26 +1118,27 @@ export function getLeagueInfo(input: LeagueInput): LeagueInfo | null {
   }
   const ratio = input.bodyWeightKg > 0 ? oneRM / input.bodyWeightKg : 0;
 
-  let levelIndex = 0;
+  let rankIndex = 0;
   for (let i = tiers.length - 1; i >= 0; i--) {
-    if (ratio >= tiers[i].ratio) {
-      levelIndex = i;
+    if (ratio >= tiers[i]!.ratio) {
+      rankIndex = i;
       break;
     }
   }
 
-  const level = LEAGUE_ORDER[levelIndex] as LeagueLevel;
-  const nextIndex = Math.min(levelIndex + 1, tiers.length - 1);
-  const ratioMin = tiers[levelIndex].ratio;
+  const rankId = tiers[rankIndex]!.rankId;
+  const { tier, subRank } = parseRankId(rankId);
+  const nextIndex = Math.min(rankIndex + 1, tiers.length - 1);
+  const ratioMin = tiers[rankIndex]!.ratio;
   const ratioNext =
-    levelIndex >= tiers.length - 1 ? Infinity : tiers[nextIndex].ratio;
+    rankIndex >= tiers.length - 1 ? Infinity : tiers[nextIndex]!.ratio;
   const weightToReach =
-    levelIndex >= tiers.length - 1
+    rankIndex >= tiers.length - 1
       ? oneRM
       : Math.ceil(input.bodyWeightKg * ratioNext * 10) / 10;
   const weightTierStart = input.bodyWeightKg * ratioMin;
   const weightTierEnd =
-    levelIndex >= tiers.length - 1
+    rankIndex >= tiers.length - 1
       ? null
       : Math.round(input.bodyWeightKg * ratioNext * 10) / 10;
   const span = ratioNext - ratioMin;
@@ -995,15 +1147,14 @@ export function getLeagueInfo(input: LeagueInput): LeagueInfo | null {
       ? Math.min(1, Math.max(0, (ratio - ratioMin) / span))
       : 1;
 
-  const percentileRange = RATIO_TO_PERCENTILE[level];
-  const percentileEstimate = Math.round(
-    percentileRange.min +
-      progressToNext * (percentileRange.max - percentileRange.min),
-  );
+  const percentileEstimate = percentileForRankIndex(rankIndex, progressToNext);
 
   return {
-    level,
-    label: tiers[levelIndex].label,
+    rankId,
+    tier,
+    subRank,
+    label: tiers[rankIndex]!.label,
+    tierLabel: leagueTierToFrenchLabel(tier),
     oneRM,
     weightTierStart,
     weightTierEnd,
@@ -1011,6 +1162,7 @@ export function getLeagueInfo(input: LeagueInput): LeagueInfo | null {
     ratioNext,
     weightToReach,
     progressToNext,
+    nextRankId: getNextRankId(rankId),
     percentileEstimate: Math.min(99, Math.max(1, percentileEstimate)),
   };
 }

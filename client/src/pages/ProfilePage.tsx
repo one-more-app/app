@@ -1,6 +1,7 @@
 import { ProfileView } from "@/components/profile/ProfileView";
 import { ProfileSocialActions } from "@/components/profile/ProfileSocialActions";
 import {
+  useLeagueSummaryData,
   usePerformanceEntriesData,
   useUserProfileData,
   useUserProgressData,
@@ -9,10 +10,9 @@ import { useAccess } from "@/hooks/use-access";
 import { useAuth } from "@/hooks/use-auth";
 import { useHomeData } from "@/hooks/use-home-data";
 import { useTheme } from "@/hooks/use-theme";
-import { computeLeagueStatsForTracked } from "@/lib/muscle-league-stats";
 import {
   getMostTrainedExercise,
-  getTopExerciseByLeague,
+  topExerciseToHighlight,
 } from "@/lib/profile-highlights";
 import { getProfileDisplayName } from "@/lib/profile-display";
 import { UI } from "@/lib/translations";
@@ -24,33 +24,33 @@ export default function ProfilePage() {
   const { data: profile } = useUserProfileData();
   const { data: progress } = useUserProgressData();
   const { data: performanceEntries } = usePerformanceEntriesData();
+  const { data: leagueSummary } = useLeagueSummaryData();
   const { access, isLimited } = useAccess();
   const { resolvedTheme } = useTheme();
 
-  const leagueSummary = useMemo(() => {
-    if (!profile) return null;
-    return computeLeagueStatsForTracked(
-      exercises.map((e) => ({
-        ...e,
-        personalBest: e.personalBest ?? undefined,
-      })),
-      profile,
-    );
-  }, [exercises, profile]);
-
   const sharePayload = useMemo(() => {
     if (!profile || !progress) return null;
+    const topRow = leagueSummary?.topByLeague[0];
     return {
       displayName: getProfileDisplayName(profile, auth.user),
       progress,
-      leagueSummary,
-      topByLeague: getTopExerciseByLeague(exercises, profile),
+      leagueSummary: leagueSummary ?? null,
+      topByLeague: topRow
+        ? topExerciseToHighlight(topRow, exercises)
+        : null,
       mostTrained: getMostTrainedExercise(
         exercises,
         performanceEntries ?? [],
       ),
     };
-  }, [profile, progress, leagueSummary, exercises, performanceEntries, auth.user]);
+  }, [
+    profile,
+    progress,
+    leagueSummary,
+    exercises,
+    performanceEntries,
+    auth.user,
+  ]);
 
   return (
     <ProfileView
@@ -60,6 +60,7 @@ export default function ProfilePage() {
         progress,
         exercises,
         performanceEntries: performanceEntries ?? [],
+        leagueSummary: leagueSummary ?? null,
         isLoading: !hasLoaded,
       }}
       headerActions={

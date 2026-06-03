@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PerformanceEntriesModule } from '../performance/performance-entries.module.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
+import { LeagueModule } from '../league/league.module.js';
 import { ProgressModule } from '../progress/progress.module.js';
 import { TrackedExercisesModule } from '../tracked-exercises/tracked-exercises.module.js';
 import { AccessModule } from './access.module.js';
@@ -18,6 +19,7 @@ import { UsernameService } from './username.service.js';
     AccessModule,
     TypeOrmModule.forFeature([FriendshipEntity, UserProfileEntity, UserEntity]),
     ProgressModule,
+    LeagueModule,
     TrackedExercisesModule,
     PerformanceEntriesModule,
   ],

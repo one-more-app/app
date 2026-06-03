@@ -60,7 +60,7 @@ export function ExerciseCard({
     const [drawerOpen, setDrawerOpen] = useState(false)
     const isLeagueRecord = !!leagueInfo
     const recordContainerClassName = isLeagueRecord
-        ? `flex flex-1 flex-col items-start gap-1 rounded-lg p-3 ${LEAGUE_1RM_STYLES[leagueInfo!.level]}`
+        ? `flex flex-1 flex-col items-start gap-1 rounded-lg p-3 ${LEAGUE_1RM_STYLES[leagueInfo!.tier]}`
         : 'flex flex-1 flex-col items-start gap-1 rounded-lg border border-accent/70 bg-accent/10 p-3 text-primary'
 
     return (

@@ -86,6 +86,8 @@ export default function FriendProfilePage() {
         progress: data?.progress,
         exercises: data?.exercises ?? [],
         performanceEntries: data?.performanceEntries ?? [],
+        leagueSummary: data?.leagueSummary ?? null,
+        topByLeague: data?.leagueSummary?.topByLeague,
         isLoading,
         error: Boolean(error),
       }}
