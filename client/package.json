@@ -34,7 +34,7 @@
     "wsl:android:build:clean": "cd android && ./gradlew clean assembleDebug --no-build-cache --rerun-tasks",
     "wsl:android:run": "adb install -r android/app/build/outputs/apk/debug/app-debug.apk && adb shell monkey -p com.one_more.app 1",
     "wsl:android:run:clean": "adb uninstall com.one_more.app || true && adb install android/app/build/outputs/apk/debug/app-debug.apk && adb shell monkey -p com.one_more.app 1",
-    "wsl:android:dev": "npm run build:prod && npm run wsl:android:build && npm run wsl:android:run",
+    "wsl:android:dev": "npm run build:preprod && npm run wsl:android:build && npm run wsl:android:run",
     "wsl:android:dev:clean": "npm run wsl:android:clean && npm run build:preprod && npm run wsl:android:build:clean && npm run wsl:android:run:clean",
     "assets:generate": "npx @capacitor/assets generate --iconBackgroundColor '#000000' --iconBackgroundColorDark '#000000' --splashBackgroundColor '#000000' --splashBackgroundColorDark '#000000' && rm -rf public/icons && mv icons public/icons && rm -f public/manifest.webmanifest && /bin/cp -f assets/logo.png public/logo.png"
   },
