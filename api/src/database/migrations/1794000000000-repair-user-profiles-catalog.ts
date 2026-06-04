@@ -1,30 +1,50 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
- * Rattrapage : répare une corruption pg_attribute sur user_profiles.
- * Colonnes de base : attnum 1–11. Colonnes sociales : username, searchableByName,
- * discoverableByUsername (attnum >= 12).
+ * Rattrapage : corruption pg_attribute / heap sur user_profiles.
+ * Stratégie : réparer le catalogue, extraire les données, recréer la table.
  *
- * Nécessite un rôle superuser. Idempotente si la table est déjà lisible.
- * Après exécution en prod : npm run backfill:usernames:prod
+ * transaction = false : chaque étape commit séparément (réparation progressive).
+ * Nécessite un rôle superuser. Après prod : npm run backfill:usernames:prod
  */
 export class RepairUserProfilesCatalog1794000000000
   implements MigrationInterface
 {
   name = 'RepairUserProfilesCatalog1794000000000';
 
+  transaction = false;
+
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const readable = await this.isReadable(queryRunner);
+    if (readable) {
+      return;
+    }
+
+    await this.tryQuery(
+      queryRunner,
+      `REINDEX INDEX pg_catalog.pg_attribute_relid_attnum_index`,
+    );
+    await this.tryQuery(
+      queryRunner,
+      `REINDEX INDEX pg_catalog.pg_attribute_relid_attnam_index`,
+    );
+    await this.tryQuery(
+      queryRunner,
+      `REINDEX INDEX pg_catalog.pg_constraint_conrelid_contypid_conname_index`,
+    );
+    await this.tryQuery(
+      queryRunner,
+      `REINDEX INDEX pg_catalog.pg_constraint_oid_index`,
+    );
+
     await queryRunner.query(`
       DO $$
       DECLARE
         rel_oid oid;
-        relnatts int;
-        valid_relnatts int;
         duplicate_slots int;
-        can_read boolean := false;
       BEGIN
-        SELECT c.oid, c.relnatts
-        INTO rel_oid, relnatts
+        SELECT c.oid
+        INTO rel_oid
         FROM pg_class c
         JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE c.relname = 'user_profiles'
@@ -33,23 +53,6 @@ export class RepairUserProfilesCatalog1794000000000
         IF rel_oid IS NULL THEN
           RETURN;
         END IF;
-
-        BEGIN
-          PERFORM "username", "searchableByName", "discoverableByUsername"
-          FROM "user_profiles"
-          LIMIT 1;
-          can_read := true;
-        EXCEPTION
-          WHEN OTHERS THEN
-            can_read := false;
-        END;
-
-        IF can_read THEN
-          RAISE NOTICE 'user_profiles : catalogue OK, aucune réparation.';
-          RETURN;
-        END IF;
-
-        RAISE NOTICE 'user_profiles : table illisible (relnatts=%), réparation catalogue…', relnatts;
 
         SELECT count(*)
         INTO duplicate_slots
@@ -74,95 +77,165 @@ export class RepairUserProfilesCatalog1794000000000
           WHERE a.attrelid = rel_oid
             AND a.attnum = dups.attnum
             AND a.ctid <> dups.keep_ctid;
-
-          RAISE NOTICE 'user_profiles : % attnum dupliqué(s) supprimé(s).', duplicate_slots;
         END IF;
-
-        BEGIN
-          ALTER TABLE "user_profiles" DROP COLUMN IF EXISTS "username";
-          ALTER TABLE "user_profiles" DROP COLUMN IF EXISTS "searchableByName";
-          ALTER TABLE "user_profiles" DROP COLUMN IF EXISTS "discoverableByUsername";
-        EXCEPTION
-          WHEN OTHERS THEN
-            RAISE NOTICE 'user_profiles : DROP COLUMN ignoré (%).', SQLERRM;
-        END;
 
         DELETE FROM pg_catalog.pg_attribute
         WHERE attrelid = rel_oid
           AND attnum > 11;
 
-        SELECT coalesce(
-          (
-            SELECT min(s.n) - 1
-            FROM generate_series(
-              1,
-              coalesce(
-                (SELECT max(a.attnum) FROM pg_attribute a WHERE a.attrelid = rel_oid AND a.attnum > 0),
-                0
-              )
-            ) AS s(n)
-            WHERE NOT EXISTS (
-              SELECT 1
-              FROM pg_attribute a
-              WHERE a.attrelid = rel_oid
-                AND a.attnum = s.n
-            )
-          ),
-          (
-            SELECT max(a.attnum)
-            FROM pg_attribute a
-            WHERE a.attrelid = rel_oid AND a.attnum > 0
-          ),
-          0
-        )
-        INTO valid_relnatts;
-
         UPDATE pg_catalog.pg_class
-        SET relnatts = valid_relnatts::int2
-        WHERE oid = rel_oid;
-
-        RAISE NOTICE 'user_profiles : relnatts → %.', valid_relnatts;
-
-        BEGIN
-          REINDEX INDEX pg_catalog.pg_attribute_relid_attnum_index;
-          REINDEX INDEX pg_catalog.pg_attribute_relid_attnam_index;
-        EXCEPTION
-          WHEN OTHERS THEN
-            RAISE NOTICE 'user_profiles : REINDEX pg_attribute ignoré (%).', SQLERRM;
-        END;
-
-        BEGIN
-          DROP TABLE IF EXISTS "_user_profiles_repair_backup";
-          CREATE TABLE "_user_profiles_repair_backup" AS
-          SELECT "id", "userId", "weightKg", "heightCm", "gender", "updatedAt",
-                 "firstName", "lastName", "inviteCode", "avatarUrl", "accessTier"
-          FROM "user_profiles";
-          RAISE NOTICE 'user_profiles : sauvegarde partielle OK.';
-        EXCEPTION
-          WHEN OTHERS THEN
-            RAISE NOTICE 'user_profiles : sauvegarde partielle ignorée (%).', SQLERRM;
-        END;
-
-        ALTER TABLE "user_profiles" ADD COLUMN "username" text;
-        ALTER TABLE "user_profiles"
-          ADD COLUMN "searchableByName" boolean NOT NULL DEFAULT true;
-        ALTER TABLE "user_profiles"
-          ADD COLUMN "discoverableByUsername" boolean NOT NULL DEFAULT true;
-
-        CREATE UNIQUE INDEX IF NOT EXISTS "IDX_user_profiles_username"
-          ON "user_profiles" (lower("username"))
-          WHERE "username" IS NOT NULL;
-
-        PERFORM "username", "searchableByName", "discoverableByUsername"
-        FROM "user_profiles"
-        LIMIT 1;
-
-        RAISE NOTICE 'user_profiles : réparation terminée. Lancez backfill:usernames.';
+        SET relnatts = 11::int2
+        WHERE oid = rel_oid
+          AND relnatts <> 11;
       END $$
     `);
+
+    if (await this.isReadable(queryRunner)) {
+      await this.ensureIndexes(queryRunner);
+      return;
+    }
+
+    await queryRunner.query(`
+      DROP TABLE IF EXISTS "_user_profiles_repair_backup"
+    `);
+
+    await this.tryQuery(
+      queryRunner,
+      `
+      CREATE TABLE "_user_profiles_repair_backup" AS
+      SELECT "id",
+             "userId",
+             "weightKg",
+             "heightCm",
+             "gender",
+             "updatedAt",
+             "firstName",
+             "lastName",
+             "inviteCode",
+             "avatarUrl",
+             "accessTier"
+      FROM "user_profiles"
+    `,
+    );
+
+    await queryRunner.query(`DROP TABLE IF EXISTS "user_profiles_new"`);
+
+    await queryRunner.query(`
+      CREATE TABLE "user_profiles_new" (
+        "id" uuid NOT NULL,
+        "userId" uuid NOT NULL,
+        "weightKg" real,
+        "heightCm" real,
+        "gender" text,
+        "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+        "firstName" text,
+        "lastName" text,
+        "inviteCode" text,
+        "avatarUrl" text,
+        "accessTier" "access_tier_enum" NOT NULL DEFAULT 'limited',
+        "username" text,
+        "searchableByName" boolean NOT NULL DEFAULT true,
+        "discoverableByUsername" boolean NOT NULL DEFAULT true,
+        CONSTRAINT "PK_user_profiles_new" PRIMARY KEY ("id"),
+        CONSTRAINT "UQ_user_profiles_new_userId" UNIQUE ("userId")
+      )
+    `);
+
+    const backupExists = await queryRunner.query(`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+          AND table_name = '_user_profiles_repair_backup'
+      ) AS exists
+    `);
+
+    if (backupExists[0]?.exists) {
+      await queryRunner.query(`
+        INSERT INTO "user_profiles_new" (
+          "id", "userId", "weightKg", "heightCm", "gender", "updatedAt",
+          "firstName", "lastName", "inviteCode", "avatarUrl", "accessTier"
+        )
+        SELECT "id", "userId", "weightKg", "heightCm", "gender", "updatedAt",
+               "firstName", "lastName", "inviteCode", "avatarUrl", "accessTier"
+        FROM "_user_profiles_repair_backup"
+      `);
+    } else {
+      await queryRunner.query(`
+        INSERT INTO "user_profiles_new" (
+          "id", "userId", "weightKg", "heightCm", "gender", "updatedAt",
+          "firstName", "lastName", "inviteCode", "avatarUrl", "accessTier"
+        )
+        SELECT "id", "userId", "weightKg", "heightCm", "gender", "updatedAt",
+               "firstName", "lastName", "inviteCode", "avatarUrl", "accessTier"
+        FROM "user_profiles"
+      `);
+    }
+
+    await queryRunner.query(`DROP TABLE IF EXISTS "user_profiles" CASCADE`);
+    await queryRunner.query(`
+      ALTER TABLE "user_profiles_new" RENAME TO "user_profiles"
+    `);
+    await queryRunner.query(`
+      ALTER TABLE "user_profiles" RENAME CONSTRAINT "PK_user_profiles_new" TO "PK_1ec6662219f4605723f1e41b6cb"
+    `);
+    await queryRunner.query(`
+      ALTER TABLE "user_profiles" RENAME CONSTRAINT "UQ_user_profiles_new_userId" TO "UQ_8481388d6325e752cd4d7e26c6d"
+    `);
+
+    await queryRunner.query(`
+      ALTER TABLE "user_profiles"
+      ADD CONSTRAINT "FK_8481388d6325e752cd4d7e26c6d"
+      FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE
+    `);
+
+    await this.ensureIndexes(queryRunner);
+
+    if (!(await this.isReadable(queryRunner))) {
+      throw new Error(
+        'user_profiles illisible après reconstruction — restaurez un backup/PITR.',
+      );
+    }
   }
 
   public async down(_queryRunner: QueryRunner): Promise<void> {
     // Réparation de catalogue : opération non réversible.
+  }
+
+  private async isReadable(queryRunner: QueryRunner): Promise<boolean> {
+    try {
+      await queryRunner.query(`
+        SELECT "id", "userId", "username", "searchableByName", "discoverableByUsername"
+        FROM "user_profiles"
+        LIMIT 1
+      `);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private async ensureIndexes(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS "IDX_user_profiles_inviteCode"
+      ON "user_profiles" ("inviteCode")
+      WHERE "inviteCode" IS NOT NULL
+    `);
+    await queryRunner.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS "IDX_user_profiles_username"
+      ON "user_profiles" (lower("username"))
+      WHERE "username" IS NOT NULL
+    `);
+  }
+
+  private async tryQuery(
+    queryRunner: QueryRunner,
+    sql: string,
+  ): Promise<void> {
+    try {
+      await queryRunner.query(sql);
+    } catch {
+      // Étape best-effort : la reconstruction de table est le filet de sécurité.
+    }
   }
 }
