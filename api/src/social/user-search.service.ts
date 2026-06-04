@@ -4,7 +4,10 @@ import { Brackets, Repository } from 'typeorm';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { FriendshipEntity } from './entities/friendship.entity.js';
 import { FriendshipStatus } from './entities/friendship-status.enum.js';
-import { isValidUsername, normalizeUsername } from './lib/username.js';
+import {
+  parseSearchInput,
+  toIlikeContainsPattern,
+} from './lib/user-search-query.js';
 
 export type UserSearchResult = {
   userId: string;
@@ -27,49 +30,88 @@ export class UserSearchService {
   ) {}
 
   async search(viewerId: string, rawQuery: string): Promise<UserSearchResult[]> {
-    const q = rawQuery.trim();
-    if (q.length < 1) {
-      throw new BadRequestException('Requête de recherche vide');
+    const parsed = parseSearchInput(rawQuery);
+    if ('error' in parsed) {
+      throw new BadRequestException(parsed.error);
     }
 
-    const handleQuery = q.startsWith('@') ? normalizeUsername(q) : null;
-    const asHandle =
-      handleQuery && isValidUsername(handleQuery)
-        ? handleQuery
-        : isValidUsername(normalizeUsername(q))
-          ? normalizeUsername(q)
-          : null;
+    const qb = this.profilesRepo
+      .createQueryBuilder('p')
+      .where('p.userId != :viewerId', { viewerId });
 
-    let profiles: UserProfileEntity[];
+    const params: Record<string, string> = { viewerId };
 
-    if (asHandle) {
-      profiles = await this.profilesRepo
-        .createQueryBuilder('p')
-        .where('p.userId != :viewerId', { viewerId })
-        .andWhere('LOWER(p.username) = :username', { username: asHandle })
-        .limit(20)
-        .getMany();
-    } else {
-      if (q.length < 2) {
-        throw new BadRequestException(
-          'Saisis au moins 2 caractères pour une recherche par nom',
-        );
-      }
-      const pattern = `%${q.replace(/[%_]/g, '')}%`;
-      profiles = await this.profilesRepo
-        .createQueryBuilder('p')
-        .where('p.userId != :viewerId', { viewerId })
+    if (parsed.mode === 'handle') {
+      params.handlePattern = toIlikeContainsPattern(parsed.handle!);
+      qb.andWhere('p.discoverableByUsername = true')
+        .andWhere('p.username IS NOT NULL')
         .andWhere(
-          new Brackets((qb) => {
-            qb.where('p.firstName ILIKE :pattern', { pattern }).orWhere(
-              'p.lastName ILIKE :pattern',
-              { pattern },
-            );
+          "unaccent(COALESCE(LOWER(p.username), '')) ILIKE unaccent(:handlePattern)",
+        );
+    } else {
+      parsed.tokens.forEach((token, index) => {
+        const paramKey = `token${index}`;
+        params[paramKey] = toIlikeContainsPattern(token);
+        qb.andWhere(
+          new Brackets((tokenMatch) => {
+            tokenMatch
+              .where(
+                new Brackets((nameMatch) => {
+                  nameMatch
+                    .where('p.searchableByName = true')
+                    .andWhere(
+                      new Brackets((nameFields) => {
+                        nameFields
+                          .where(
+                            `unaccent(COALESCE(p."firstName", '')) ILIKE unaccent(:${paramKey})`,
+                          )
+                          .orWhere(
+                            `unaccent(COALESCE(p."lastName", '')) ILIKE unaccent(:${paramKey})`,
+                          )
+                          .orWhere(
+                            `unaccent(COALESCE(p."firstName", '') || ' ' || COALESCE(p."lastName", '')) ILIKE unaccent(:${paramKey})`,
+                          );
+                      }),
+                    );
+                }),
+              )
+              .orWhere(
+                new Brackets((usernameMatch) => {
+                  usernameMatch
+                    .where('p.discoverableByUsername = true')
+                    .andWhere('p.username IS NOT NULL')
+                    .andWhere(
+                      `unaccent(COALESCE(LOWER(p.username), '')) ILIKE unaccent(:${paramKey})`,
+                    );
+                }),
+              );
           }),
-        )
-        .limit(20)
-        .getMany();
+        );
+      });
     }
+
+    const rankTerm = (parsed.handle ?? parsed.tokens[0] ?? '').toLowerCase();
+    params.rankExact = rankTerm;
+    params.rankPrefix = rankTerm;
+
+    qb.setParameters(params)
+      .orderBy(
+        `(CASE
+          WHEN p.discoverableByUsername = true AND LOWER(p.username) = :rankExact THEN 0
+          WHEN p.discoverableByUsername = true AND unaccent(COALESCE(LOWER(p.username), '')) ILIKE unaccent(:rankPrefix) || '%' THEN 1
+          WHEN p.searchableByName = true AND (
+            unaccent(COALESCE(p."firstName", '')) ILIKE unaccent(:rankPrefix) || '%'
+            OR unaccent(COALESCE(p."lastName", '')) ILIKE unaccent(:rankPrefix) || '%'
+          ) THEN 2
+          ELSE 3
+        END)`,
+        'ASC',
+      )
+      .addOrderBy('p.firstName', 'ASC', 'NULLS LAST')
+      .addOrderBy('p.lastName', 'ASC', 'NULLS LAST')
+      .limit(20);
+
+    const profiles = await qb.getMany();
 
     if (profiles.length === 0) return [];
 

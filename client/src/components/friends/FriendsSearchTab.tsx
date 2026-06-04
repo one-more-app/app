@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  isFriendSearchReady,
   requestFriend,
   searchUsers,
   type UserSearchResult,
@@ -100,9 +101,12 @@ export function FriendsSearchTab({ onRefreshFriends }: { onRefreshFriends: () =>
     return () => window.clearTimeout(t);
   }, [query]);
 
+  const searchReady = isFriendSearchReady(debounced);
+
   useEffect(() => {
-    if (debounced.length < 1) {
+    if (!searchReady) {
       setResults([]);
+      setLoading(false);
       return;
     }
     void (async () => {
@@ -116,7 +120,7 @@ export function FriendsSearchTab({ onRefreshFriends }: { onRefreshFriends: () =>
         setLoading(false);
       }
     })();
-  }, [debounced]);
+  }, [debounced, searchReady]);
 
   const handleRequest = (userId: string) => {
     void (async () => {
@@ -151,6 +155,8 @@ export function FriendsSearchTab({ onRefreshFriends }: { onRefreshFriends: () =>
         <p className="text-sm text-muted-foreground">{UI.loading}</p>
       ) : debounced.length === 0 ? (
         <p className="text-sm text-muted-foreground">{UI.friendsSearchEmpty}</p>
+      ) : !searchReady ? (
+        <p className="text-sm text-muted-foreground">{UI.friendsSearchMinChars}</p>
       ) : results.length === 0 ? (
         <p className="text-sm text-muted-foreground">{UI.friendsSearchNoResults}</p>
       ) : (

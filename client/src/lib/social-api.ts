@@ -128,6 +128,15 @@ export type UserPreview = {
   friendshipDirection: "incoming" | "outgoing" | null;
 };
 
+export function isFriendSearchReady(q: string): boolean {
+  const trimmed = q.trim();
+  if (trimmed.length === 0) return false;
+  if (trimmed.startsWith("@")) {
+    return trimmed.replace(/^@+/, "").length >= 1;
+  }
+  return trimmed.length >= 2;
+}
+
 export async function searchUsers(q: string): Promise<{ results: UserSearchResult[] }> {
   const params = new URLSearchParams({ q });
   return await apiFetch(`/social/users/search?${params.toString()}`);
