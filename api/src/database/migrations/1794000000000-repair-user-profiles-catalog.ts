@@ -1,10 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
- * Rattrapage : répare une corruption pg_attribute sur user_profiles
- * (relnatts pointe vers des attnum absents de pg_attribute).
+ * Rattrapage : répare une corruption pg_attribute sur user_profiles.
+ * Gère doublons (attrelid, attnum), slots manquants et relnatts incohérent.
  *
- * Idempotente : no-op si la table est déjà lisible avec les 3 colonnes sociales.
+ * Nécessite un rôle superuser (ou propriétaire de la base).
+ * Idempotente : no-op si la table est déjà lisible.
  * Après exécution en prod : npm run backfill:usernames:prod
  */
 export class RepairUserProfilesCatalog1794000000000
@@ -14,18 +15,12 @@ export class RepairUserProfilesCatalog1794000000000
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      REINDEX INDEX pg_catalog.pg_attribute_relid_attnum_index
-    `);
-    await queryRunner.query(`
-      REINDEX INDEX pg_catalog.pg_attribute_relid_attnam_index
-    `);
-
-    await queryRunner.query(`
       DO $$
       DECLARE
         rel_oid oid;
         relnatts int;
         missing_slots int;
+        duplicate_slots int;
         has_username boolean;
         has_searchable boolean;
         has_discoverable boolean;
@@ -71,6 +66,41 @@ export class RepairUserProfilesCatalog1794000000000
           RAISE NOTICE 'user_profiles : catalogue OK, aucune réparation.';
           RETURN;
         END IF;
+
+        SELECT count(*)
+        INTO duplicate_slots
+        FROM (
+          SELECT attnum
+          FROM pg_attribute
+          WHERE attrelid = rel_oid AND attnum > 0
+          GROUP BY attnum
+          HAVING count(*) > 1
+        ) d;
+
+        IF duplicate_slots > 0 THEN
+          DELETE FROM pg_catalog.pg_attribute a
+          USING (
+            SELECT attnum,
+                   (array_agg(ctid ORDER BY attisdropped ASC, attname ASC))[1] AS keep_ctid
+            FROM pg_catalog.pg_attribute
+            WHERE attrelid = rel_oid AND attnum > 0
+            GROUP BY attnum
+            HAVING count(*) > 1
+          ) dups
+          WHERE a.attrelid = rel_oid
+            AND a.attnum = dups.attnum
+            AND a.ctid <> dups.keep_ctid;
+
+          RAISE NOTICE 'user_profiles : % attnum dupliqué(s) supprimé(s) dans pg_attribute.', duplicate_slots;
+        END IF;
+
+        BEGIN
+          REINDEX INDEX pg_catalog.pg_attribute_relid_attnum_index;
+          REINDEX INDEX pg_catalog.pg_attribute_relid_attnam_index;
+        EXCEPTION
+          WHEN OTHERS THEN
+            RAISE NOTICE 'user_profiles : REINDEX pg_attribute ignoré (%).', SQLERRM;
+        END;
 
         SELECT count(*)
         INTO missing_slots
