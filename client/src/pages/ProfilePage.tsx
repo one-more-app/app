@@ -30,7 +30,7 @@ export default function ProfilePage() {
 
   const sharePayload = useMemo(() => {
     if (!profile || !progress) return null;
-    const topRow = leagueSummary?.topByLeague[0];
+    const topRow = leagueSummary?.topByLeague?.[0];
     return {
       displayName: getProfileDisplayName(profile, auth.user),
       progress,
