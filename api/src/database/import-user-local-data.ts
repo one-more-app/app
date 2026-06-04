@@ -66,12 +66,40 @@ function resolveDataPath(envKey: string, defaultFileName: string): string {
   );
 }
 
+type Dataset = '1' | '2';
+
+function parseDataset(): Dataset {
+  const datasetArg = getArgValue('--dataset');
+  if (!datasetArg || datasetArg === '1') return '1';
+  if (datasetArg === '2') return '2';
+  throw new Error('--dataset doit être 1 ou 2.');
+}
+
+function getDefaultFileNames(dataset: Dataset): {
+  track: string;
+  perf: string;
+} {
+  if (dataset === '2') {
+    return {
+      track: 'import-user-track2.json',
+      perf: 'import-user-perf2.json',
+    };
+  }
+  return {
+    track: 'import-user-track.json',
+    perf: 'import-user-perf.json',
+  };
+}
+
 async function run() {
   const userIdArg = getArgValue('--user-id');
   const emailArg = getArgValue('--email');
   if (!userIdArg && !emailArg) {
     throw new Error('Fournir --user-id <uuid> ou --email <email>.');
   }
+
+  const dataset = parseDataset();
+  const defaultFiles = getDefaultFileNames(dataset);
 
   const trackJsonArg = getArgValue('--track-json');
   const perfJsonArg = getArgValue('--perf-json');
@@ -83,7 +111,7 @@ async function run() {
     : trackJsonBase64Arg
       ? decodeBase64Utf8(trackJsonBase64Arg)
       : await readFile(
-          resolveDataPath('IMPORT_USER_TRACK_PATH', 'import-user-track.json'),
+          resolveDataPath('IMPORT_USER_TRACK_PATH', defaultFiles.track),
           'utf8',
         );
   const perfRaw = perfJsonArg
@@ -91,7 +119,7 @@ async function run() {
     : perfJsonBase64Arg
       ? decodeBase64Utf8(perfJsonBase64Arg)
       : await readFile(
-          resolveDataPath('IMPORT_USER_PERF_PATH', 'import-user-perf.json'),
+          resolveDataPath('IMPORT_USER_PERF_PATH', defaultFiles.perf),
           'utf8',
         );
 
@@ -173,7 +201,7 @@ async function run() {
 
   // eslint-disable-next-line no-console
   console.log(
-    `Import terminé pour user=${user.id} (${user.email ?? 'email-null'}) | tracked=${importedTracked} | perf=${importedPerf} | perf_skipped=${skippedPerf}`,
+    `Import terminé (dataset=${dataset}) pour user=${user.id} (${user.email ?? 'email-null'}) | tracked=${importedTracked} | perf=${importedPerf} | perf_skipped=${skippedPerf}`,
   );
 }
 
