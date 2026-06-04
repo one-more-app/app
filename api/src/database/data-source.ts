@@ -61,6 +61,7 @@ export default new DataSource({
     UserPresenceEntity,
   ],
   migrations: [join(__dirname, 'migrations', '*.{js,ts}')],
+  migrationsTransactionMode: 'each',
   synchronize: false,
   ssl:
     process.env.DATABASE_SSL === 'true'
