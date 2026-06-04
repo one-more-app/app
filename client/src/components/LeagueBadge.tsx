@@ -1,16 +1,8 @@
-import { Badge } from '@/components/ui/badge'
+import { RankBadge } from '@/components/RankBadge'
 import type { LeagueInfo } from '@/lib/strength-standards'
-import { getNextRankId, parseRankId, formatRankLabel } from '@/lib/strength-standards'
+import { getNextRankId, parseRankId } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
-import { LEAGUE_1RM_STYLES, LEAGUE_COLORS } from '@/lib/league-colors'
-import { Trophy } from 'lucide-react'
-
-function nextRankLabel(league: LeagueInfo): string | null {
-  const nextId = league.nextRankId ?? getNextRankId(league.rankId)
-  if (!nextId) return null
-  const { tier, subRank } = parseRankId(nextId)
-  return formatRankLabel(tier, subRank)
-}
+import { LEAGUE_1RM_STYLES } from '@/lib/league-colors'
 
 interface LeagueBadgeProps {
     league: LeagueInfo
@@ -27,21 +19,12 @@ export function LeagueBadge({
     compact = false,
     weightSuffix = DEFAULT_WEIGHT_SUFFIX,
 }: LeagueBadgeProps) {
-    const colorClass = LEAGUE_COLORS[league.tier] ?? 'bg-muted text-muted-foreground'
     const oneRMStyle = LEAGUE_1RM_STYLES[league.tier] ?? 'border border-muted bg-muted/20'
-    const nextLabel = nextRankLabel(league)
-    const nextTier =
-        league.nextRankId != null
-            ? parseRankId(league.nextRankId).tier
-            : null
+    const nextRankId = league.nextRankId ?? getNextRankId(league.rankId)
+    const nextTier = nextRankId != null ? parseRankId(nextRankId).tier : null
 
     if (compact) {
-        return (
-            <Badge variant="outline" className={`shrink-0 ${colorClass}`}>
-                <Trophy className="mr-1 size-3" />
-                {league.label}
-            </Badge>
-        )
+        return <RankBadge league={league} size="sm" />
     }
 
     const remainingKg =
@@ -52,10 +35,7 @@ export function LeagueBadge({
     return (
         <div className="rounded-lg space-y-4">
             <div className="flex items-center justify-between gap-2">
-                <Badge variant="outline" className={colorClass}>
-                    <Trophy className="mr-1 size-3" />
-                    {league.label}
-                </Badge>
+                <RankBadge league={league} size="md" />
                 <span className="text-sm text-muted-foreground">
                     {UI.percentileDescription.replace('{p}', String(league.percentileEstimate))}
                 </span>
@@ -73,35 +53,23 @@ export function LeagueBadge({
 
             {showNextTarget && league.progressToNext < 1 && (
                 <div className="space-y-3">
-                    {remainingKg && Number(remainingKg) > 0 && nextLabel && nextTier && (
+                    {remainingKg && Number(remainingKg) > 0 && nextRankId && nextTier && (
                         <p className="flex items-center gap-1.5 text-xs font-medium text-primary flex-wrap">
                             {UI.remainingForNext.replace('{kg}', remainingKg)}
-                            <Badge
-                                variant="outline"
-                                className={`shrink-0 text-[10px] py-0 ${LEAGUE_COLORS[nextTier] ?? 'bg-muted'}`}
-                            >
-                                {nextLabel}
-                            </Badge>
+                            <RankBadge rankId={nextRankId} size="xs" />
                         </p>
                     )}
                     <div className="flex justify-between items-center gap-2 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1.5">
                             {league.weightTierStart.toFixed(1)}{weightSuffix}
-                            <Badge variant="outline" className={`shrink-0 text-[10px] py-0 ${colorClass}`}>
-                                {league.label}
-                            </Badge>
+                            <RankBadge league={league} size="xs" />
                         </span>
                         <span className="flex items-center gap-1.5">
                             {league.weightTierEnd != null ? (
                                 <>
                                     {league.weightTierEnd.toFixed(1)}{weightSuffix}
-                                    {nextLabel && nextTier && (
-                                        <Badge
-                                            variant="outline"
-                                            className={`shrink-0 text-[10px] py-0 ${LEAGUE_COLORS[nextTier] ?? 'bg-muted'}`}
-                                        >
-                                            {nextLabel}
-                                        </Badge>
+                                    {nextRankId && nextTier && (
+                                        <RankBadge rankId={nextRankId} size="xs" />
                                     )}
                                 </>
                             ) : (

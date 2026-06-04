@@ -1,8 +1,7 @@
-import { Badge } from "@/components/ui/badge";
+import { RankBadge } from "@/components/RankBadge";
 import { Button } from "@/components/ui/button";
 import { getExerciseImageUrl } from "@/lib/exercisedb";
 import { formatPerfLabel } from "@/lib/history-entries";
-import { LEAGUE_COLORS } from "@/lib/league-colors";
 import type { TopExerciseByLeague } from "@/lib/profile-highlights";
 import {
   profileNestedInteractiveClass,
@@ -69,11 +68,7 @@ export function ProfileTopExercisesList({
                   )}
                 </p>
               </div>
-              <Badge
-                className={`shrink-0 text-xs ${LEAGUE_COLORS[row.league.tier]}`}
-              >
-                {row.league.label}
-              </Badge>
+              <RankBadge league={row.league} size="sm" />
             </>
           );
 

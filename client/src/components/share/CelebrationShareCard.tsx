@@ -1,5 +1,5 @@
 import { streakXpBonusPercent } from '@one-more/shared/streak-xp-multiplier'
-import { Badge } from '@/components/ui/badge'
+import { RankBadge } from '@/components/RankBadge'
 import { formatPerfBadge, leagueIconDropShadow } from '@/components/celebration-modal-ui'
 import {
     levelCelebrationRadialBackground,
@@ -134,8 +134,14 @@ function ShareLeagueCard({
             <ShareHero
                 icon={Trophy}
                 iconStyle={{ color: glow, filter: leagueIconDropShadow(glow) }}
-                badge={<span className="truncate">{nextLeague.label}</span>}
-                badgeClassName={LEAGUE_COLORS[nextLeague.tier]}
+                badge={
+                    <RankBadge
+                        league={nextLeague}
+                        size="md"
+                        variant={isDark ? 'dark' : 'light'}
+                    />
+                }
+                badgeClassName="!bg-transparent !p-0 !shadow-none !ring-0 !font-sans !not-italic"
             />
             <div className="space-y-2">
                 <h2 className="text-balance text-3xl font-semibold tracking-tight">
@@ -149,23 +155,22 @@ function ShareLeagueCard({
                 </p>
             ) : (
                 <div className="flex flex-wrap items-center justify-center gap-2">
-                    <Badge
-                        variant="outline"
-                        className={`px-3 py-1 text-base ${LEAGUE_COLORS[prevLeague.tier]}`}
-                    >
-                        {prevLeague.label}
-                    </Badge>
+                    <RankBadge
+                        league={prevLeague}
+                        size="md"
+                        variant={isDark ? 'dark' : 'light'}
+                        className="opacity-80"
+                    />
                     <ArrowRight
                         className="size-6 shrink-0"
                         style={{ color: glow }}
                         aria-hidden
                     />
-                    <Badge
-                        variant="outline"
-                        className={`px-3 py-1 text-base font-semibold ${LEAGUE_COLORS[nextLeague.tier]}`}
-                    >
-                        {nextLeague.label}
-                    </Badge>
+                    <RankBadge
+                        league={nextLeague}
+                        size="md"
+                        variant={isDark ? 'dark' : 'light'}
+                    />
                 </div>
             )}
             <p className="text-lg text-muted-foreground">{perfLabel}</p>
@@ -209,12 +214,11 @@ function ShareRecordCard({
             </div>
             <p className="text-lg text-muted-foreground">{perfLabel}</p>
             {leagueAfter ? (
-                <Badge
-                    variant="outline"
-                    className={`px-3 py-1 text-base font-semibold ${LEAGUE_COLORS[leagueAfter.tier]}`}
-                >
-                    {leagueAfter.label}
-                </Badge>
+                <RankBadge
+                    league={leagueAfter}
+                    size="md"
+                    variant={isDark ? 'dark' : 'light'}
+                />
             ) : null}
         </ShareCardShell>
     )

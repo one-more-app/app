@@ -37,7 +37,7 @@ import {
 } from '@/lib/history-entries'
 import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
 import { getJoyrideScrollOffset } from '@/lib/joyride-config'
-import { LEAGUE_COLORS } from '@/lib/league-colors'
+import { RankBadge } from '@/components/RankBadge'
 import { notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
     getPersonalBest,
@@ -544,14 +544,10 @@ export function ExerciseDetailPage() {
                                                         key={tier.rankId}
                                                         className="flex items-center justify-between gap-2 text-sm"
                                                     >
-                                                        <Badge
-                                                            variant="outline"
-                                                            className={
-                                                                LEAGUE_COLORS[tier.tier] ?? 'bg-muted'
-                                                            }
-                                                        >
-                                                            {tier.label}
-                                                        </Badge>
+                                                        <RankBadge
+                                                            rankId={tier.rankId}
+                                                            size="sm"
+                                                        />
                                                         <span className="text-muted-foreground">
                                                             {tier.weightMax != null
                                                                 ? `${tier.weightMin.toFixed(1)} → ${tier.weightMax.toFixed(1)}${weightSuffix}`

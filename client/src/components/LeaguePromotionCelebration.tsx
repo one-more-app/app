@@ -4,7 +4,7 @@ import {
     formatPerfBadge,
     leagueIconDropShadow,
 } from '@/components/celebration-modal-ui'
-import { Badge } from '@/components/ui/badge'
+import { RankBadge } from '@/components/RankBadge'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -82,12 +82,7 @@ function NewRecordCelebrationContent({
             </DialogHeader>
             <p className="text-sm text-muted-foreground">{perfLabel}</p>
             {leagueAfter ? (
-                <Badge
-                    variant="outline"
-                    className={`px-2.5 py-0.5 text-xs font-semibold ${LEAGUE_COLORS[leagueAfter.tier]}`}
-                >
-                    {leagueAfter.label}
-                </Badge>
+                <RankBadge league={leagueAfter} size="sm" />
             ) : null}
         </CelebrationModalShell>
     )
@@ -115,10 +110,8 @@ function LeaguePromotionContent({
                 icon={Trophy}
                 iconColor={leagueGlow}
                 iconDropShadow={leagueIconDropShadow(leagueGlow)}
-                badge={
-                    <span className="truncate">{nextLeague.label}</span>
-                }
-                badgeClassName={LEAGUE_COLORS[nextLeague.tier]}
+                badge={<RankBadge league={nextLeague} size="sm" />}
+                badgeClassName="!bg-transparent !p-0 !shadow-none !ring-0 !font-sans !not-italic"
                 ariaLabel={`${UI.leaguePromotionCelebrationTitle} — ${nextLeague.label}`}
             />
             <DialogHeader className="flex w-full flex-col items-center gap-2 space-y-0 text-center sm:text-center">
@@ -140,23 +133,13 @@ function LeaguePromotionContent({
                 </p>
             ) : (
                 <div className="flex flex-wrap items-center justify-center gap-1.5">
-                    <Badge
-                        variant="outline"
-                        className={`px-2 py-0.5 text-xs ${LEAGUE_COLORS[prevLeague.tier]}`}
-                    >
-                        {prevLeague.label}
-                    </Badge>
+                    <RankBadge league={prevLeague} size="sm" className="opacity-80" />
                     <ArrowRight
                         className="size-4 shrink-0"
                         style={{ color: leagueGlow }}
                         aria-hidden
                     />
-                    <Badge
-                        variant="outline"
-                        className={`px-2 py-0.5 text-xs font-semibold ${LEAGUE_COLORS[nextLeague.tier]}`}
-                    >
-                        {nextLeague.label}
-                    </Badge>
+                    <RankBadge league={nextLeague} size="sm" />
                 </div>
             )}
             <p className="text-sm text-muted-foreground">{perfLabel}</p>

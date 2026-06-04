@@ -1,13 +1,11 @@
-import { Badge } from "@/components/ui/badge";
+import { RankBadge } from "@/components/RankBadge";
 import { shareCardThemeVars } from "@/lib/celebration-visual";
 import { resolvePublicAssetUrl } from "@/lib/exercise-share-media";
-import { LEAGUE_COLORS } from "@/lib/league-colors";
 import type {
   MostTrainedExercise,
   TopExerciseByLeague,
 } from "@/lib/profile-highlights";
 import type { GlobalLeagueSummary } from "@/lib/muscle-league-stats";
-import { rankIdLabel, rankIdTier } from "@/lib/rank-display";
 import { StreakFlameCount } from "@/components/StreakFlameCount";
 import { resolveStreak } from "@/lib/streak-display";
 import { resolveStreakXpBonus } from "@/lib/streak-xp-display";
@@ -93,11 +91,11 @@ export function ProfileShareCard({
 
           {leagueSummary ? (
             <div className="flex flex-col items-center gap-3">
-              <Badge
-                className={`${tsm} px-4 py-2 font-semibold ${LEAGUE_COLORS[rankIdTier(leagueSummary.globalRank)]}`}
-              >
-                {rankIdLabel(leagueSummary.globalRank)}
-              </Badge>
+              <RankBadge
+                rankId={leagueSummary.globalRank}
+                size="lg"
+                variant={isDark ? "dark" : "light"}
+              />
               <p className={`${txs} text-muted-foreground`}>
                 {UI.profileShareRanked.replace(
                   "{count}",
@@ -116,11 +114,12 @@ export function ProfileShareCard({
                 <p className="mt-2 font-semibold capitalize">
                   {topByLeague.exercise.name}
                 </p>
-                <Badge
-                  className={`mt-2 ${LEAGUE_COLORS[topByLeague.league.tier]}`}
-                >
-                  {topByLeague.league.label}
-                </Badge>
+                <RankBadge
+                  league={topByLeague.league}
+                  size="md"
+                  variant={isDark ? "dark" : "light"}
+                  className="mt-2"
+                />
               </div>
             ) : null}
             {mostTrained ? (

@@ -20,6 +20,16 @@ export function leagueMapFill(tier: LeagueTier, isDark: boolean): string {
   return isDark ? LEAGUE_MAP_FILL[tier].dark : LEAGUE_MAP_FILL[tier].light;
 }
 
+/** Couleur d’accent (icône + sous-rang) pour les pastilles de rang noires. */
+export const LEAGUE_ACCENT_CLASS: Record<LeagueTier, string> = {
+  bronze: "text-[#C47A2A]",
+  silver: "text-[#A8AAB4]",
+  gold: "text-[#F5C518]",
+  platinum: "text-cyan-400",
+  diamond: "text-violet-400",
+  legend: "text-amber-400",
+};
+
 export const LEAGUE_COLORS: Record<LeagueTier, string> = {
   bronze:
     "border-amber-600 bg-amber-100 text-amber-950 dark:bg-amber-900/50 dark:text-amber-200 dark:border-amber-700",

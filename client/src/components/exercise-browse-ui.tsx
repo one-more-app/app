@@ -1,9 +1,8 @@
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import type { CatalogBrowseParams, CatalogBrowseStep } from '@/lib/exercise-catalog-browse'
-import { LEAGUE_COLORS } from '@/lib/league-colors'
+import { RankBadge } from '@/components/RankBadge'
 import type { RankId } from '@/lib/strength-standards'
-import { rankIdLabel, rankIdTier } from '@/lib/rank-display'
 import {
     translateBodyPart,
     translateEquipment,
@@ -14,13 +13,13 @@ import { cn } from '@/lib/utils'
 import { ChevronRight } from 'lucide-react'
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 
-/** Puces de parcours — compactes pour mobile. */
+/** Fil d'Ariane catalogue — pills brandées, compactes sur mobile. */
 const browseCrumbBase =
-    'shrink-0 rounded-md py-0.5 px-1.5 font-one-more text-[10px] font-semibold uppercase italic leading-tight tracking-normal capitalize'
+    'inline-flex max-w-[9.5rem] shrink-0 items-center truncate rounded-full px-2.5 py-1 font-one-more text-[10px] font-semibold uppercase italic leading-none tracking-wide capitalize transition-[color,background-color,transform] active:scale-[0.97]'
 const browseCrumbCurrent =
-    'bg-accent text-accent-foreground ring-1 ring-accent/30'
+    'bg-accent text-accent-foreground'
 const browseCrumbLink =
-    'text-muted-foreground hover:bg-muted/40 hover:text-foreground active:bg-muted/60'
+    'bg-card text-muted-foreground hover:bg-muted/50 hover:text-foreground'
 
 /** Titre de section aligné sur la DA (titres onboarding / filtres). */
 export function BrowseSectionTitle({
@@ -81,14 +80,7 @@ export function BrowseTile({
                             {UI.browseExercisesCount.replace('{count}', String(count))}
                         </Badge>
                         {leagueLevel ? (
-                            <Badge
-                                className={cn(
-                                    'font-normal text-xs',
-                                    LEAGUE_COLORS[rankIdTier(leagueLevel)],
-                                )}
-                            >
-                                {rankIdLabel(leagueLevel)}
-                            </Badge>
+                            <RankBadge rankId={leagueLevel} size="xs" />
                         ) : null}
                     </div>
                 </span>
@@ -135,10 +127,10 @@ export function CatalogBreadcrumb({
     }
 
     return (
-        <nav aria-label={UI.browseBreadcrumbLabel} className="mb-2 min-w-0">
+        <nav aria-label={UI.browseBreadcrumbLabel} className="mb-3 min-w-0">
             <div
                 className={cn(
-                    'flex items-center gap-0.5 overflow-x-auto',
+                    'flex items-center gap-1 overflow-x-auto rounded-xl bg-muted/35 p-1',
                     '[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
                 )}
                 style={{ WebkitOverflowScrolling: 'touch' }}
@@ -154,35 +146,25 @@ export function CatalogBreadcrumb({
                     return (
                         <span
                             key={`${c.step}-${i}`}
-                            className="flex shrink-0 items-center gap-0.5"
+                            className="flex min-w-0 shrink-0 items-center gap-1"
                         >
                             {i > 0 ? (
-                                <span
-                                    className="shrink-0 px-px font-one-more text-[10px] font-semibold italic text-muted-foreground/45 select-none"
+                                <ChevronRight
+                                    className="size-3 shrink-0 text-muted-foreground/35"
                                     aria-hidden
-                                >
-                                    /
-                                </span>
+                                />
                             ) : null}
                             {canNavigate ? (
                                 <button
                                     type="button"
                                     onClick={() => onGoTo(c.step)}
-                                    className={cn(
-                                        browseCrumbBase,
-                                        browseCrumbLink,
-                                        'inline-flex items-center transition-colors',
-                                    )}
+                                    className={cn(browseCrumbBase, browseCrumbLink)}
                                 >
                                     {c.label}
                                 </button>
                             ) : (
                                 <span
-                                    className={cn(
-                                        'inline-flex items-center',
-                                        browseCrumbBase,
-                                        browseCrumbCurrent,
-                                    )}
+                                    className={cn(browseCrumbBase, browseCrumbCurrent)}
                                     aria-current="step"
                                 >
                                     {c.label}

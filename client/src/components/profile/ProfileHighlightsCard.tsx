@@ -1,10 +1,9 @@
-import { Badge } from "@/components/ui/badge";
+import { RankBadge } from "@/components/RankBadge";
 import {
   usePerformanceEntriesData,
   useUserProgressData,
 } from "@/hooks/use-api-data";
 import { getCurrentMonthKey } from "@/lib/activity-calendar";
-import { LEAGUE_COLORS } from "@/lib/league-colors";
 import type { GlobalLeagueSummary } from "@/lib/muscle-league-stats";
 import {
   countActiveDaysInMonth,
@@ -14,7 +13,6 @@ import {
   profileNestedClass,
   profileSectionClass,
 } from "@/lib/profile-section";
-import { rankIdLabel, rankIdTier } from "@/lib/rank-display";
 import { UI } from "@/lib/translations";
 import type { PerformanceEntry, UserProgressState } from "@/types";
 import { Flame, Medal, Trophy } from "lucide-react";
@@ -89,11 +87,11 @@ export function ProfileHighlightsCard({
             {UI.profileGlobalLeague}
           </p>
           {leagueSummary ? (
-            <Badge
-              className={`mt-1.5 px-2 py-0.5 text-xs font-semibold ${LEAGUE_COLORS[rankIdTier(leagueSummary.globalRank)]}`}
-            >
-              {rankIdLabel(leagueSummary.globalRank)}
-            </Badge>
+            <RankBadge
+              rankId={leagueSummary.globalRank}
+              size="sm"
+              className="mt-1.5"
+            />
           ) : (
             <p className="mt-1 text-sm text-muted-foreground">—</p>
           )}

@@ -1,5 +1,4 @@
-import { Badge } from '@/components/ui/badge'
-import { LEAGUE_COLORS } from '@/lib/league-colors'
+import { RankBadge } from '@/components/RankBadge'
 import type { LeagueInfo } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
@@ -21,9 +20,7 @@ export function LeaguePromotionBadges({
     compact = false,
     className,
 }: LeaguePromotionBadgesProps) {
-    const sizeClass = compact
-        ? 'inline-flex h-5 shrink-0 items-center rounded-md px-1.5 py-0 text-[10px] leading-none'
-        : 'text-xs'
+    const size = compact ? 'xs' : 'sm'
 
     return (
         <span
@@ -35,17 +32,11 @@ export function LeaguePromotionBadges({
         >
             {prevLeague ? (
                 <>
-                    <Badge
-                        variant="outline"
-                        className={cn(
-                            'shrink-0 overflow-visible whitespace-nowrap',
-                            sizeClass,
-                            'opacity-80',
-                            LEAGUE_COLORS[prevLeague.tier],
-                        )}
-                    >
-                        {prevLeague.label}
-                    </Badge>
+                    <RankBadge
+                        league={prevLeague}
+                        size={size}
+                        className="opacity-80"
+                    />
                     <span
                         className={cn(
                             'inline-flex shrink-0 items-center text-muted-foreground',
@@ -57,16 +48,7 @@ export function LeaguePromotionBadges({
                     </span>
                 </>
             ) : null}
-            <Badge
-                variant="outline"
-                className={cn(
-                    'shrink-0 overflow-visible whitespace-nowrap',
-                    sizeClass,
-                    LEAGUE_COLORS[nextLeague.tier],
-                )}
-            >
-                {nextLeague.label}
-            </Badge>
+            <RankBadge league={nextLeague} size={size} />
         </span>
     )
 }

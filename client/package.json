@@ -49,6 +49,7 @@
     "@capacitor/status-bar": "^8.0.1",
     "@capawesome/capacitor-app-review": "^8.0.1",
     "@capgo/capacitor-social-login": "^8.3.22",
+    "@fontsource-variable/hanken-grotesk": "^5.2.8",
     "@ncdai/react-wheel-picker": "^1.2.0",
     "@radix-ui/react-progress": "^1.1.8",
     "appsflyer-capacitor-plugin": "^6.18.0",

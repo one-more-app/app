@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { RankBadge } from "@/components/RankBadge";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -8,10 +8,10 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { LEAGUE_COLORS, leagueMapFill } from "@/lib/league-colors";
+import { leagueMapFill } from "@/lib/league-colors";
 import type { MuscleLeagueAgg } from "@/lib/muscle-league-stats";
 import { muscleTargetToSlug } from "@/lib/muscle-target-to-slug";
-import { rankIdLabel, rankIdTier } from "@/lib/rank-display";
+import { rankIdTier } from "@/lib/rank-display";
 import {
     leagueTierToFrenchLabel,
     rankScore,
@@ -74,11 +74,7 @@ function SingleMuscleDialog({
                 <DialogDescription className="sr-only">{UI.bodyMapHint}</DialogDescription>
                 <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm text-muted-foreground">{UI.bodyMapMuscleAverageTier}</p>
-                    <Badge
-                        className={`w-fit shrink-0 font-semibold ${LEAGUE_COLORS[rankIdTier(muscle.representativeRank)]}`}
-                    >
-                        {rankIdLabel(muscle.representativeRank)}
-                    </Badge>
+                    <RankBadge rankId={muscle.representativeRank} size="sm" />
                 </div>
             </DialogHeader>
             <p className="text-xs font-medium text-muted-foreground">{UI.bodyMapMuscleExercisesHeading}</p>
@@ -94,9 +90,7 @@ function SingleMuscleDialog({
                             )}
                         >
                             <span className="min-w-0 truncate font-medium capitalize">{row.name}</span>
-                            <Badge className={`shrink-0 text-xs ${LEAGUE_COLORS[row.league.tier]}`}>
-                                {row.league.label}
-                            </Badge>
+                            <RankBadge league={row.league} size="xs" />
                         </Link>
                     </li>
                 ))}
@@ -185,16 +179,8 @@ export function BodyMuscleLeagueMap({
                     ))}
                 </div>
                 <div className="mb-1 flex items-center justify-between gap-2">
-                    <Badge
-                        className={`shrink-0 px-2 py-0 text-[10px] font-semibold ${LEAGUE_COLORS.bronze}`}
-                    >
-                        {leagueTierToFrenchLabel("bronze")}
-                    </Badge>
-                    <Badge
-                        className={`shrink-0 px-2 py-0 text-[10px] font-semibold ${LEAGUE_COLORS.legend}`}
-                    >
-                        {leagueTierToFrenchLabel("legend")}
-                    </Badge>
+                    <RankBadge tier="bronze" size="xs" />
+                    <RankBadge tier="legend" size="xs" />
                 </div>
                 <p className="mb-3 text-center text-[10px] text-muted-foreground">
                     {UI.bodyMapLeagueColorsCaption}
@@ -256,13 +242,10 @@ export function BodyMuscleLeagueMap({
                                         <p className="text-sm text-muted-foreground">
                                             {UI.bodyMapZoneAverageTier}
                                         </p>
-                                        <Badge
-                                            className={`w-fit shrink-0 font-semibold ${LEAGUE_COLORS[rankIdTier(rankScoreToRepresentativeRank(picked.avgScore))]}`}
-                                        >
-                                            {rankIdLabel(
-                                                rankScoreToRepresentativeRank(picked.avgScore),
-                                            )}
-                                        </Badge>
+                                        <RankBadge
+                                            rankId={rankScoreToRepresentativeRank(picked.avgScore)}
+                                            size="sm"
+                                        />
                                     </div>
                                 </DialogHeader>
                                 <ul className="space-y-2 text-sm">
@@ -285,7 +268,7 @@ export function BodyMuscleLeagueMap({
                                                     }}
                                                     aria-hidden
                                                 />
-                                                {rankIdLabel(m.representativeRank)}
+                                                <RankBadge rankId={m.representativeRank} size="xs" />
                                             </span>
                                         </li>
                                     ))}

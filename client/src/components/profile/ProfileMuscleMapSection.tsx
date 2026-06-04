@@ -1,9 +1,7 @@
 import { BodyMuscleLeagueMap } from "@/components/BodyMuscleLeagueMap";
-import { Badge } from "@/components/ui/badge";
+import { RankBadge } from "@/components/RankBadge";
 import { useTheme } from "@/hooks/use-theme";
-import { LEAGUE_COLORS } from "@/lib/league-colors";
 import type { GlobalLeagueSummary } from "@/lib/muscle-league-stats";
-import { rankIdLabel, rankIdTier } from "@/lib/rank-display";
 import {
   profileNestedInteractiveClass,
   profileNestedListClass,
@@ -75,11 +73,7 @@ export function ProfileMuscleMapSection({
                     </span>
                   </span>
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    <Badge
-                      className={`text-xs ${LEAGUE_COLORS[rankIdTier(m.representativeRank)]}`}
-                    >
-                      {rankIdLabel(m.representativeRank)}
-                    </Badge>
+                    <RankBadge rankId={m.representativeRank} size="xs" />
                     <span className="text-xs text-muted-foreground tabular-nums">
                       {m.exerciseCount} ex.
                     </span>
@@ -94,11 +88,7 @@ export function ProfileMuscleMapSection({
                             <span className="min-w-0 truncate capitalize">
                               {row.name}
                             </span>
-                            <Badge
-                              className={`shrink-0 text-xs ${LEAGUE_COLORS[row.league.tier]}`}
-                            >
-                              {row.league.label}
-                            </Badge>
+                            <RankBadge league={row.league} size="xs" />
                           </div>
                         ) : (
                         <Link
@@ -108,11 +98,7 @@ export function ProfileMuscleMapSection({
                           <span className="min-w-0 truncate capitalize">
                             {row.name}
                           </span>
-                          <Badge
-                            className={`shrink-0 text-xs ${LEAGUE_COLORS[row.league.tier]}`}
-                          >
-                            {row.league.label}
-                          </Badge>
+                          <RankBadge league={row.league} size="xs" />
                         </Link>
                         )}
                       </li>
