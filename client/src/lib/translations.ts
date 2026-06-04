@@ -476,6 +476,12 @@ export const UI = {
   notConnected: "Non connecté",
   signIn: "Se connecter",
   signOut: "Se déconnecter",
+  deleteAccountLink: "Supprimer mon compte",
+  deleteAccountConfirm:
+    "Pour supprimer ton compte, tu vas ouvrir un email pré-rempli à notre équipe. Continuer ?",
+  deleteAccountEmailSubject: "Demande de suppression de compte One More",
+  deleteAccountEmailBody:
+    "Bonjour,\n\nJe souhaite supprimer définitivement mon compte One More.\n\nEmail du compte : {email}\n\nMerci.",
 
   // Onboarding (premier lancement)
   onboardingTitle: "Prêt à progresser ?",

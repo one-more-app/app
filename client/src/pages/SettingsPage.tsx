@@ -52,6 +52,17 @@ export function SettingsPage() {
         }
     }
 
+    const handleDeleteAccount = () => {
+        if (!window.confirm(UI.deleteAccountConfirm)) return
+
+        const accountEmail = auth.user?.email ?? auth.user?.id ?? '—'
+        const subject = encodeURIComponent(UI.deleteAccountEmailSubject)
+        const body = encodeURIComponent(
+            UI.deleteAccountEmailBody.replace('{email}', accountEmail),
+        )
+        window.location.href = `mailto:admin@one-more.app?subject=${subject}&body=${body}`
+    }
+
     return (
         <div className="min-h-screen-app bg-background">
             <BackHeader title={UI.settings} />
@@ -202,6 +213,18 @@ export function SettingsPage() {
                         </Button>
                     </CardContent>
                 </Card>
+
+                {auth.status === 'authenticated' && (
+                    <div className="pt-6 pb-10 text-center">
+                        <button
+                            type="button"
+                            className="text-xs text-muted-foreground/50 underline-offset-2 transition-colors hover:text-muted-foreground hover:underline"
+                            onClick={handleDeleteAccount}
+                        >
+                            {UI.deleteAccountLink}
+                        </button>
+                    </div>
+                )}
             </main>
         </div>
     )
