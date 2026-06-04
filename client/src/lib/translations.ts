@@ -193,6 +193,7 @@ export const UI = {
   equipmentLabel: "Matériel",
   bodyPartLabel: "Partie du corps",
   editCustomClassification: "Modifier le classement",
+  editCustomExercise: "Modifier l'exercice",
   customClassificationHint:
     "Le muscle et le matériel permettent de retrouver l'exercice dans le parcours par zone.",
   browseUnspecifiedEquipment: "Matériel non renseigné",

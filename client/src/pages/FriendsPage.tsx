@@ -1,3 +1,4 @@
+import { BackHeader } from "@/components/BackHeader";
 import { FriendsListTab } from "@/components/friends/FriendsListTab";
 import { FriendsMessagesTab } from "@/components/friends/FriendsMessagesTab";
 import { FriendsSearchTab } from "@/components/friends/FriendsSearchTab";
@@ -38,11 +39,7 @@ export default function FriendsPage() {
 
     return (
         <div className="min-h-screen-app bg-background">
-            <header className="sticky-top-safe z-100 bg-card px-4 py-3">
-                <div className="mx-auto max-w-2xl">
-                    <h1 className="text-lg font-semibold">{UI.friendsTitle}</h1>
-                </div>
-            </header>
+            <BackHeader title={UI.friendsTitle} />
             <main className="mx-auto max-w-2xl space-y-4 p-4">
                 <FriendsTabToggle
                     value={tab}

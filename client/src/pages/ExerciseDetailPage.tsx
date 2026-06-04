@@ -48,7 +48,7 @@ import {
     updateTrackedExerciseAndWait,
 } from '@/lib/storage'
 import { isDumbbellExercise } from '@/lib/strength-standards'
-import { translateEquipment, translateTarget, UI } from '@/lib/translations'
+import { UI } from '@/lib/translations'
 import { notifyXpGrants } from '@/lib/xp-notifications'
 import type { PerformanceEntry } from '@/types'
 import {
@@ -85,7 +85,6 @@ export function ExerciseDetailPage() {
     )
     const [renameOpen, setRenameOpen] = useState(false)
     const [renameValue, setRenameValue] = useState('')
-    const [classificationOpen, setClassificationOpen] = useState(false)
     const [classificationTarget, setClassificationTarget] = useState('')
     const [classificationEquipment, setClassificationEquipment] = useState('')
     const { data: exerciseMeta } = useSWR('exercise-meta', fetchExercisesMeta)
@@ -140,6 +139,43 @@ export function ExerciseDetailPage() {
         exercise?.equipment,
         classificationTargets,
         classificationEquipmentOptions,
+    ])
+
+    const canSaveRenameEdits =
+        renameValue.trim().length > 0 &&
+        (!exercise?.isCustom ||
+            (!!classificationTarget && !!classificationEquipment))
+
+    const saveRenameEdits = useCallback(async () => {
+        if (!id || !renameValue.trim()) return
+        if (
+            exercise?.isCustom &&
+            (!classificationTarget || !classificationEquipment)
+        ) {
+            return
+        }
+        const payload: Parameters<typeof updateTrackedExerciseAndWait>[1] = {
+            name: renameValue.trim(),
+        }
+        if (
+            exercise?.isCustom &&
+            classificationTarget &&
+            classificationEquipment
+        ) {
+            payload.bodyPart = inferBodyPartFromTarget(classificationTarget)
+            payload.target = classificationTarget
+            payload.equipment = classificationEquipment
+        }
+        await updateTrackedExerciseAndWait(id, payload)
+        await refreshAfterTrackedChange()
+        setRenameOpen(false)
+    }, [
+        id,
+        renameValue,
+        exercise?.isCustom,
+        classificationTarget,
+        classificationEquipment,
+        refreshAfterTrackedChange,
     ])
 
     const onboardingFirstExercisePending = isOnboardingFirstExercisePending()
@@ -380,6 +416,19 @@ export function ExerciseDetailPage() {
                         size="icon"
                         onClick={() => {
                             setRenameValue(exercise.name)
+                            if (exercise.isCustom) {
+                                setClassificationTarget(
+                                    exercise.target ?? classificationTargets[0] ?? '',
+                                )
+                                setClassificationEquipment(
+                                    exercise.equipment ??
+                                        (classificationEquipmentOptions.includes(
+                                            'body weight',
+                                        )
+                                            ? 'body weight'
+                                            : classificationEquipmentOptions[0] ?? ''),
+                                )
+                            }
                             setRenameOpen(true)
                         }}
                         aria-label={UI.rename}
@@ -600,43 +649,6 @@ export function ExerciseDetailPage() {
                         </CardContent>
                     </Card>
                 )}
-                {exercise.isCustom ? (
-                    <Card>
-                        <CardHeader className="gap-2">
-                            <h2 className="font-semibold">{UI.muscleGroup}</h2>
-                            <p className="text-sm text-muted-foreground">
-                                {UI.customClassificationHint}
-                            </p>
-                        </CardHeader>
-                        <CardContent className="space-y-3 pt-0">
-                            <div className="flex flex-wrap gap-2">
-                                {exercise.target ? (
-                                    <Badge variant="secondary">
-                                        {translateTarget(exercise.target)}
-                                    </Badge>
-                                ) : null}
-                                {exercise.equipment ? (
-                                    <Badge variant="secondary">
-                                        {translateEquipment(exercise.equipment)}
-                                    </Badge>
-                                ) : null}
-                                {!exercise.target && !exercise.equipment ? (
-                                    <span className="text-sm text-muted-foreground">
-                                        {UI.browseUnspecifiedEquipment}
-                                    </span>
-                                ) : null}
-                            </div>
-                            <Button
-                                variant="outline"
-                                className="w-full"
-                                onClick={() => setClassificationOpen(true)}
-                            >
-                                {UI.editCustomClassification}
-                            </Button>
-                        </CardContent>
-                    </Card>
-                ) : null}
-
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <h2 className="font-semibold">{UI.options}</h2>
@@ -659,17 +671,32 @@ export function ExerciseDetailPage() {
                     </CardHeader>
                 </Card>
 
-                <Dialog
-                    open={classificationOpen}
-                    onOpenChange={setClassificationOpen}
-                >
+                <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>{UI.editCustomClassification}</DialogTitle>
+                            <DialogTitle>
+                                {exercise.isCustom
+                                    ? UI.editCustomExercise
+                                    : UI.renameExercise}
+                            </DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4 py-2">
-                            {classificationTargets.length > 0 &&
-                                classificationEquipmentOptions.length > 0 ? (
+                            <Input
+                                value={renameValue}
+                                onChange={(e) => setRenameValue(e.target.value)}
+                                placeholder={UI.placeholderExerciseName}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault()
+                                        if (canSaveRenameEdits) {
+                                            void saveRenameEdits()
+                                        }
+                                    }
+                                }}
+                            />
+                            {exercise.isCustom &&
+                            classificationTargets.length > 0 &&
+                            classificationEquipmentOptions.length > 0 ? (
                                 <CustomExerciseMetadataFields
                                     targets={classificationTargets}
                                     equipmentOptions={classificationEquipmentOptions}
@@ -683,85 +710,13 @@ export function ExerciseDetailPage() {
                         <DialogFooter className="gap-2 sm:gap-0">
                             <Button
                                 variant="outline"
-                                onClick={() => setClassificationOpen(false)}
-                            >
-                                {UI.cancel}
-                            </Button>
-                            <Button
-                                disabled={
-                                    !classificationTarget || !classificationEquipment
-                                }
-                                onClick={() => {
-                                    if (
-                                        !id ||
-                                        !classificationTarget ||
-                                        !classificationEquipment
-                                    ) {
-                                        return
-                                    }
-                                    const bodyPart =
-                                        inferBodyPartFromTarget(classificationTarget)
-                                    void (async () => {
-                                        await updateTrackedExerciseAndWait(id, {
-                                            bodyPart,
-                                            target: classificationTarget,
-                                            equipment: classificationEquipment,
-                                        })
-                                        await refreshAfterTrackedChange()
-                                        setClassificationOpen(false)
-                                    })()
-                                }}
-                            >
-                                {UI.save}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-
-                <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>{UI.renameExercise}</DialogTitle>
-                        </DialogHeader>
-                        <Input
-                            value={renameValue}
-                            onChange={(e) => setRenameValue(e.target.value)}
-                            placeholder={UI.placeholderExerciseName}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    e.preventDefault()
-                                    if (id && renameValue.trim()) {
-                                        void (async () => {
-                                            await updateTrackedExerciseAndWait(id, {
-                                                name: renameValue.trim(),
-                                            })
-                                            await refreshAfterTrackedChange()
-                                            setRenameOpen(false)
-                                        })()
-                                    }
-                                }
-                            }}
-                        />
-                        <DialogFooter className="gap-2 sm:gap-0">
-                            <Button
-                                variant="outline"
                                 onClick={() => setRenameOpen(false)}
                             >
                                 {UI.cancel}
                             </Button>
                             <Button
-                                onClick={() => {
-                                    if (id && renameValue.trim()) {
-                                        void (async () => {
-                                            await updateTrackedExerciseAndWait(id, {
-                                                name: renameValue.trim(),
-                                            })
-                                            await refreshAfterTrackedChange()
-                                            setRenameOpen(false)
-                                        })()
-                                    }
-                                }}
-                                disabled={!renameValue.trim()}
+                                onClick={() => void saveRenameEdits()}
+                                disabled={!canSaveRenameEdits}
                             >
                                 {UI.save}
                             </Button>

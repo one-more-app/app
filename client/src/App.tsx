@@ -105,6 +105,7 @@ function SafeAreaTopScrim() {
     const { pathname } = useLocation()
     if (IMMERSIVE_FULL_BLEED_ROUTES.has(pathname)) return null
     const usesBackHeader =
+        pathname === '/friends' ||
         pathname === '/history' ||
         pathname === '/settings' ||
         pathname === '/exercises' ||

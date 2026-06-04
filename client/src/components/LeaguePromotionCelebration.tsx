@@ -284,7 +284,7 @@ function StreakCelebrationContent({ payload }: { payload: StreakCelebrationPaylo
                 {displayBonusPercent > 0 ? (
                     <span
                         key={displayBonusPercent}
-                        className="celebration-count-anim inline-flex items-center rounded-full border border-orange-500 bg-orange-500/20 px-3 py-1 text-sm font-extrabold tabular-nums tracking-tight text-orange-500 dark:border-orange-500  dark:text-orange-500"
+                        className="celebration-count-anim inline-flex items-center rounded-full border border-orange-500 bg-orange-500/10 text-orange-500 dark:border-orange-500 dark:bg-orange-500/10 dark:text-orange-500 px-3 py-1 text-sm font-extrabold tabular-nums tracking-tight"
                         aria-label={UI.streakXpBonusLabel.replace(
                             '{percent}',
                             String(displayBonusPercent),
