@@ -25,3 +25,18 @@ export function getJoyrideScrollOffset(): number {
 
   return Math.ceil(safeTop + headerHeight + 12);
 }
+
+/** Marge shift Floating UI pour garder le tooltip sous le header / safe area. */
+export function getJoyrideShiftPadding(): {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+} {
+  return {
+    top: getJoyrideScrollOffset(),
+    right: 16,
+    bottom: 16,
+    left: 16,
+  };
+}

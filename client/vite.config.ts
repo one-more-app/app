@@ -19,6 +19,7 @@ export default defineConfig({
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
+        orientation: 'portrait',
         icons: [
             { src: '/icons/icon-48.webp', sizes: '48x48', type: 'image/webp', purpose: 'any' },
           { src: '/icons/icon-72.webp', sizes: '72x72', type: 'image/webp', purpose: 'any' },

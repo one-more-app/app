@@ -12,7 +12,7 @@ import {
 } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import { ChevronRight } from 'lucide-react'
-import type { ReactNode } from 'react'
+import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 
 /** Puces de parcours — compactes pour mobile. */
 const browseCrumbBase =
@@ -26,16 +26,18 @@ const browseCrumbLink =
 export function BrowseSectionTitle({
     children,
     className,
+    ...props
 }: {
     children: ReactNode
     className?: string
-}) {
+} & ComponentPropsWithoutRef<'h2'>) {
     return (
         <h2
             className={cn(
                 'mb-2 font-one-more text-[10px] font-semibold uppercase italic leading-tight tracking-normal text-muted-foreground',
                 className,
             )}
+            {...props}
         >
             {children}
         </h2>

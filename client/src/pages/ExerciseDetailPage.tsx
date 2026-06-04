@@ -28,14 +28,15 @@ import { useCelebrationQueueActive } from '@/hooks/use-celebration-queue-active'
 import { useExercisePresence } from '@/hooks/use-exercise-presence'
 import { usePerformance } from '@/hooks/use-performance'
 import { useTheme } from '@/hooks/use-theme'
-import { fetchExerciseTierLadder, fetchExercisesMeta, fetchPerformanceEntries } from '@/lib/data-api'
+import { fetchExercisesMeta, fetchExerciseTierLadder, fetchPerformanceEntries } from '@/lib/data-api'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
-import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
 import {
-    entryInsightsFromPerformances,
     comparePerfEntriesRecentFirst,
+    entryInsightsFromPerformances,
     formatDayHeading,
 } from '@/lib/history-entries'
+import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
+import { getJoyrideScrollOffset } from '@/lib/joyride-config'
 import { LEAGUE_COLORS } from '@/lib/league-colors'
 import { notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
@@ -59,11 +60,10 @@ import {
     SearchX,
     Trash2,
 } from 'lucide-react'
-import { getJoyrideScrollOffset } from '@/lib/joyride-config'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import useSWR from 'swr'
 import { EVENTS, Joyride, type EventData, type Step } from 'react-joyride'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import useSWR from 'swr'
 
 export function ExerciseDetailPage() {
     const { id } = useParams<{ id: string }>()
@@ -129,9 +129,9 @@ export function ExerciseDetailPage() {
         setClassificationTarget(exercise.target ?? classificationTargets[0] ?? '')
         setClassificationEquipment(
             exercise.equipment ??
-                (classificationEquipmentOptions.includes('body weight')
-                    ? 'body weight'
-                    : classificationEquipmentOptions[0] ?? ''),
+            (classificationEquipmentOptions.includes('body weight')
+                ? 'body weight'
+                : classificationEquipmentOptions[0] ?? ''),
         )
     }, [
         exercise?.id,
@@ -669,7 +669,7 @@ export function ExerciseDetailPage() {
                         </DialogHeader>
                         <div className="space-y-4 py-2">
                             {classificationTargets.length > 0 &&
-                            classificationEquipmentOptions.length > 0 ? (
+                                classificationEquipmentOptions.length > 0 ? (
                                 <CustomExerciseMetadataFields
                                     targets={classificationTargets}
                                     equipmentOptions={classificationEquipmentOptions}

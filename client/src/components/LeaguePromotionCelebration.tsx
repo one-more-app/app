@@ -14,30 +14,28 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog'
+import { useAnimatedCounter } from '@/hooks/use-animated-counter'
+import { useCelebrationQueueSnapshot } from '@/hooks/use-celebration-queue-active'
 import { useTheme } from '@/hooks/use-theme'
+import { advanceCelebrationQueue } from '@/lib/celebration-queue'
 import { shareCelebrationPng } from '@/lib/celebration-share'
 import {
     leagueCelebrationRadialBackground,
+    levelCelebrationRadialBackground,
     recordCelebrationGlow,
+    streakCelebrationRadialBackground,
 } from '@/lib/celebration-visual'
 import { LEAGUE_COLORS, leagueMapFill } from '@/lib/league-colors'
-import { advanceCelebrationQueue } from '@/lib/celebration-queue'
 import type {
     LeaguePromotionPayload,
     NewRecordCelebrationPayload,
 } from '@/lib/perf-notifications'
+import { UI } from '@/lib/translations'
 import type {
     LevelUpCelebrationPayload,
     StreakCelebrationPayload,
 } from '@/lib/xp-notifications'
-import { useCelebrationQueueSnapshot } from '@/hooks/use-celebration-queue-active'
-import { streakXpBonusPercent } from "@one-more/shared/streak-xp-multiplier";
-import { useAnimatedCounter } from '@/hooks/use-animated-counter'
-import {
-    levelCelebrationRadialBackground,
-    streakCelebrationRadialBackground,
-} from '@/lib/celebration-visual'
-import { UI } from '@/lib/translations'
+import { streakXpBonusPercent } from "@one-more/shared/streak-xp-multiplier"
 import { ArrowRight, Flame, Share2, Sparkles, Trophy } from 'lucide-react'
 import { useEffect, useState, type CSSProperties } from 'react'
 import { toast } from 'sonner'
@@ -286,7 +284,7 @@ function StreakCelebrationContent({ payload }: { payload: StreakCelebrationPaylo
                 {displayBonusPercent > 0 ? (
                     <span
                         key={displayBonusPercent}
-                        className="celebration-count-anim inline-flex items-center rounded-full border border-orange-400/70 bg-orange-500/20 px-3 py-1 text-sm font-extrabold tabular-nums tracking-tight text-orange-300 dark:border-orange-400/60 dark:bg-orange-500/25 dark:text-orange-200"
+                        className="celebration-count-anim inline-flex items-center rounded-full border border-orange-500 bg-orange-500/20 px-3 py-1 text-sm font-extrabold tabular-nums tracking-tight text-orange-500 dark:border-orange-500  dark:text-orange-500"
                         aria-label={UI.streakXpBonusLabel.replace(
                             '{percent}',
                             String(displayBonusPercent),

@@ -1,9 +1,9 @@
-import { CustomExerciseMetadataFields } from '@/components/CustomExerciseMetadataFields'
-import { ExerciseLimitDialog } from '@/components/ExerciseLimitDialog'
 import { BackHeader } from '@/components/BackHeader'
-import { ExerciseCatalogSkeletonList } from '@/components/skeletons'
+import { CustomExerciseMetadataFields } from '@/components/CustomExerciseMetadataFields'
 import { ExerciseCatalogBrowse } from '@/components/ExerciseCatalogBrowse'
+import { ExerciseLimitDialog } from '@/components/ExerciseLimitDialog'
 import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
+import { ExerciseCatalogSkeletonList } from '@/components/skeletons'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,33 +21,32 @@ import {
 } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { SWR_KEYS } from '@/hooks/use-api-data'
 import { useAccess } from '@/hooks/use-access'
-import { fetchExercisesCatalog, fetchExercisesMeta } from '@/lib/data-api'
-import { notifyXpGrants } from '@/lib/xp-notifications'
+import { SWR_KEYS } from '@/hooks/use-api-data'
+import { useBack } from '@/hooks/use-back'
 import { useExerciseCatalogBrowse } from '@/hooks/use-exercise-catalog-browse'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
-import { filterCatalogExercises } from '@/lib/exercise-catalog-browse'
+import { useTheme } from '@/hooks/use-theme'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
+import { fetchExercisesCatalog, fetchExercisesMeta } from '@/lib/data-api'
+import { filterCatalogExercises } from '@/lib/exercise-catalog-browse'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
+import { getJoyrideScrollOffset, getJoyrideShiftPadding } from '@/lib/joyride-config'
 import {
     addTrackedExerciseAndWait,
     isOnboardingFirstExercisePending,
     savePerformanceAndWait,
 } from '@/lib/storage'
-import { useBack } from '@/hooks/use-back'
-import { useTheme } from '@/hooks/use-theme'
 import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import { translateBodyPart, UI } from '@/lib/translations'
+import { notifyXpGrants } from '@/lib/xp-notifications'
 import type { ExerciseDBExercise } from '@/types'
 import { Plus, Search } from 'lucide-react'
-import { getJoyrideScrollOffset } from '@/lib/joyride-config'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EVENTS, Joyride, type EventData, type Step } from 'react-joyride'
-import useSWR from 'swr'
-import { useSWRConfig } from 'swr'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import useSWR, { useSWRConfig } from 'swr'
 
 export function ExerciseListPage() {
     const navigate = useNavigate()
@@ -197,11 +196,14 @@ export function ExerciseListPage() {
         const scrollOffset = getJoyrideScrollOffset()
         const steps: Step[] = [
             {
-                target: '[data-tour="first-exercise-browse"]',
+                target: '[data-tour="first-exercise-browse-anchor"]',
                 title: UI.onboardingFirstExerciseTitle,
                 content: UI.onboardingFirstExerciseDescription,
                 placement: 'bottom',
                 skipScroll: true,
+                floatingOptions: {
+                    shiftOptions: { padding: getJoyrideShiftPadding() },
+                },
             },
         ]
         if (!isSearchMode && browse.step === 'list' && catalogExercises.length > 0) {
@@ -554,7 +556,7 @@ export function ExerciseListPage() {
                                         alt=""
                                         className="mx-auto max-h-[min(44vh,340px)] w-full object-contain"
                                         onError={(e) => {
-                                            ;(e.target as HTMLImageElement).style.display = 'none'
+                                            ; (e.target as HTMLImageElement).style.display = 'none'
                                         }}
                                     />
                                 </div>

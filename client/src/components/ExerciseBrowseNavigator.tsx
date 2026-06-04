@@ -138,7 +138,9 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
     if (isSearchMode) {
         return (
             <div data-tour="first-exercise-browse">
-                <BrowseSectionTitle>{UI.browseSearchResults}</BrowseSectionTitle>
+                <BrowseSectionTitle data-tour="first-exercise-browse-anchor">
+                    {UI.browseSearchResults}
+                </BrowseSectionTitle>
                 {searchResults.length === 0 ? (
                     <EmptyState
                         className="mt-4"
@@ -159,7 +161,9 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
                 <div className="mb-3">{beforeZoneStep}</div>
             ) : null}
             <CatalogBreadcrumb browse={browse} onGoTo={onGoToStep} />
-            <BrowseSectionTitle>{stepTitle}</BrowseSectionTitle>
+            <BrowseSectionTitle data-tour="first-exercise-browse-anchor">
+                {stepTitle}
+            </BrowseSectionTitle>
 
             {browse.step === 'zone' ? (
                 <ul className="space-y-3">
