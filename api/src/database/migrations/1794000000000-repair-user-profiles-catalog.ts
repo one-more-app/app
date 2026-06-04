@@ -2,10 +2,10 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
  * Rattrapage : répare une corruption pg_attribute sur user_profiles.
- * Gère doublons (attrelid, attnum), slots manquants et relnatts incohérent.
+ * Colonnes de base : attnum 1–11. Colonnes sociales : username, searchableByName,
+ * discoverableByUsername (attnum >= 12).
  *
- * Nécessite un rôle superuser (ou propriétaire de la base).
- * Idempotente : no-op si la table est déjà lisible.
+ * Nécessite un rôle superuser. Idempotente si la table est déjà lisible.
  * Après exécution en prod : npm run backfill:usernames:prod
  */
 export class RepairUserProfilesCatalog1794000000000
@@ -19,11 +19,8 @@ export class RepairUserProfilesCatalog1794000000000
       DECLARE
         rel_oid oid;
         relnatts int;
-        missing_slots int;
+        valid_relnatts int;
         duplicate_slots int;
-        has_username boolean;
-        has_searchable boolean;
-        has_discoverable boolean;
         can_read boolean := false;
       BEGIN
         SELECT c.oid, c.relnatts
@@ -37,21 +34,6 @@ export class RepairUserProfilesCatalog1794000000000
           RETURN;
         END IF;
 
-        SELECT EXISTS (
-          SELECT 1 FROM pg_attribute a
-          WHERE a.attrelid = rel_oid AND a.attname = 'username' AND NOT a.attisdropped
-        ) INTO has_username;
-
-        SELECT EXISTS (
-          SELECT 1 FROM pg_attribute a
-          WHERE a.attrelid = rel_oid AND a.attname = 'searchableByName' AND NOT a.attisdropped
-        ) INTO has_searchable;
-
-        SELECT EXISTS (
-          SELECT 1 FROM pg_attribute a
-          WHERE a.attrelid = rel_oid AND a.attname = 'discoverableByUsername' AND NOT a.attisdropped
-        ) INTO has_discoverable;
-
         BEGIN
           PERFORM "username", "searchableByName", "discoverableByUsername"
           FROM "user_profiles"
@@ -62,10 +44,12 @@ export class RepairUserProfilesCatalog1794000000000
             can_read := false;
         END;
 
-        IF can_read AND has_username AND has_searchable AND has_discoverable THEN
+        IF can_read THEN
           RAISE NOTICE 'user_profiles : catalogue OK, aucune réparation.';
           RETURN;
         END IF;
+
+        RAISE NOTICE 'user_profiles : table illisible (relnatts=%), réparation catalogue…', relnatts;
 
         SELECT count(*)
         INTO duplicate_slots
@@ -91,8 +75,53 @@ export class RepairUserProfilesCatalog1794000000000
             AND a.attnum = dups.attnum
             AND a.ctid <> dups.keep_ctid;
 
-          RAISE NOTICE 'user_profiles : % attnum dupliqué(s) supprimé(s) dans pg_attribute.', duplicate_slots;
+          RAISE NOTICE 'user_profiles : % attnum dupliqué(s) supprimé(s).', duplicate_slots;
         END IF;
+
+        BEGIN
+          ALTER TABLE "user_profiles" DROP COLUMN IF EXISTS "username";
+          ALTER TABLE "user_profiles" DROP COLUMN IF EXISTS "searchableByName";
+          ALTER TABLE "user_profiles" DROP COLUMN IF EXISTS "discoverableByUsername";
+        EXCEPTION
+          WHEN OTHERS THEN
+            RAISE NOTICE 'user_profiles : DROP COLUMN ignoré (%).', SQLERRM;
+        END;
+
+        DELETE FROM pg_catalog.pg_attribute
+        WHERE attrelid = rel_oid
+          AND attnum > 11;
+
+        SELECT coalesce(
+          (
+            SELECT min(s.n) - 1
+            FROM generate_series(
+              1,
+              coalesce(
+                (SELECT max(a.attnum) FROM pg_attribute a WHERE a.attrelid = rel_oid AND a.attnum > 0),
+                0
+              )
+            ) AS s(n)
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM pg_attribute a
+              WHERE a.attrelid = rel_oid
+                AND a.attnum = s.n
+            )
+          ),
+          (
+            SELECT max(a.attnum)
+            FROM pg_attribute a
+            WHERE a.attrelid = rel_oid AND a.attnum > 0
+          ),
+          0
+        )
+        INTO valid_relnatts;
+
+        UPDATE pg_catalog.pg_class
+        SET relnatts = valid_relnatts::int2
+        WHERE oid = rel_oid;
+
+        RAISE NOTICE 'user_profiles : relnatts → %.', valid_relnatts;
 
         BEGIN
           REINDEX INDEX pg_catalog.pg_attribute_relid_attnum_index;
@@ -102,68 +131,33 @@ export class RepairUserProfilesCatalog1794000000000
             RAISE NOTICE 'user_profiles : REINDEX pg_attribute ignoré (%).', SQLERRM;
         END;
 
-        SELECT count(*)
-        INTO missing_slots
-        FROM generate_series(1, relnatts) AS s(n)
-        WHERE NOT EXISTS (
-          SELECT 1
-          FROM pg_attribute a
-          WHERE a.attrelid = rel_oid
-            AND a.attnum = s.n
-        );
-
-        IF missing_slots > 0 THEN
-          UPDATE pg_catalog.pg_class
-          SET relnatts = (
-            SELECT coalesce(max(a.attnum), 0)::int2
-            FROM pg_attribute a
-            WHERE a.attrelid = rel_oid
-              AND a.attnum > 0
-          )
-          WHERE oid = rel_oid;
-
-          RAISE NOTICE 'user_profiles : relnatts corrigé (% slot(s) pg_attribute manquant(s)).', missing_slots;
-        END IF;
-
         BEGIN
           DROP TABLE IF EXISTS "_user_profiles_repair_backup";
           CREATE TABLE "_user_profiles_repair_backup" AS
           SELECT "id", "userId", "weightKg", "heightCm", "gender", "updatedAt",
                  "firstName", "lastName", "inviteCode", "avatarUrl", "accessTier"
           FROM "user_profiles";
+          RAISE NOTICE 'user_profiles : sauvegarde partielle OK.';
         EXCEPTION
           WHEN OTHERS THEN
             RAISE NOTICE 'user_profiles : sauvegarde partielle ignorée (%).', SQLERRM;
         END;
 
-        IF NOT has_username THEN
-          ALTER TABLE "user_profiles" ADD COLUMN "username" text;
-        END IF;
-
-        IF NOT has_searchable THEN
-          ALTER TABLE "user_profiles"
-            ADD COLUMN "searchableByName" boolean NOT NULL DEFAULT true;
-        END IF;
-
-        IF NOT has_discoverable THEN
-          ALTER TABLE "user_profiles"
-            ADD COLUMN "discoverableByUsername" boolean NOT NULL DEFAULT true;
-        END IF;
-
-        BEGIN
-          PERFORM "username", "searchableByName", "discoverableByUsername"
-          FROM "user_profiles"
-          LIMIT 1;
-        EXCEPTION
-          WHEN OTHERS THEN
-            RAISE EXCEPTION 'user_profiles illisible après réparation : %', SQLERRM;
-        END;
+        ALTER TABLE "user_profiles" ADD COLUMN "username" text;
+        ALTER TABLE "user_profiles"
+          ADD COLUMN "searchableByName" boolean NOT NULL DEFAULT true;
+        ALTER TABLE "user_profiles"
+          ADD COLUMN "discoverableByUsername" boolean NOT NULL DEFAULT true;
 
         CREATE UNIQUE INDEX IF NOT EXISTS "IDX_user_profiles_username"
           ON "user_profiles" (lower("username"))
           WHERE "username" IS NOT NULL;
 
-        RAISE NOTICE 'user_profiles : réparation terminée. Lancez backfill:usernames si besoin.';
+        PERFORM "username", "searchableByName", "discoverableByUsername"
+        FROM "user_profiles"
+        LIMIT 1;
+
+        RAISE NOTICE 'user_profiles : réparation terminée. Lancez backfill:usernames.';
       END $$
     `);
   }
