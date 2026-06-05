@@ -14,11 +14,16 @@ import { muscleTargetToSlug } from "@/lib/muscle-target-to-slug";
 import { rankIdTier } from "@/lib/rank-display";
 import {
     leagueTierToFrenchLabel,
+    medianRankScore,
     rankScore,
     rankScoreToRepresentativeRank,
-    medianRankScore,
     type LeagueTier,
 } from "@/lib/strength-standards";
+import { translateTarget, UI } from "@/lib/translations";
+import { cn } from "@/lib/utils";
+import { useMemo, useState } from "react";
+import Body, { type ExtendedBodyPart, type Slug } from "react-muscle-highlighter";
+import { Link } from "react-router-dom";
 
 const LEGEND_TIERS: LeagueTier[] = [
     "bronze",
@@ -28,11 +33,6 @@ const LEGEND_TIERS: LeagueTier[] = [
     "diamond",
     "legend",
 ];
-import { translateTarget, UI } from "@/lib/translations";
-import { cn } from "@/lib/utils";
-import { useMemo, useState } from "react";
-import Body, { type ExtendedBodyPart, type Slug } from "react-muscle-highlighter";
-import { Link } from "react-router-dom";
 
 type BodyGender = "male" | "female";
 
