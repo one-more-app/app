@@ -61,6 +61,7 @@ export default function ProfilePage() {
         exercises,
         performanceEntries: performanceEntries ?? [],
         leagueSummary: leagueSummary ?? null,
+        topByLeague: leagueSummary?.topByLeague,
         isLoading: !hasLoaded,
       }}
       headerActions={

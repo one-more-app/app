@@ -2,6 +2,7 @@ import { History, Home, User, Users } from 'lucide-react'
 import type { JSX } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
+import { useUnreadMessagesCount } from '@/hooks/use-mark-conversation-read'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 
@@ -19,6 +20,7 @@ const NAV_ITEMS: Array<{
 function BottomNav() {
     const location = useLocation()
     const activeTo = location.pathname
+    const unreadMessages = useUnreadMessagesCount()
 
     return (
         <nav
@@ -28,24 +30,35 @@ function BottomNav() {
             <div className="mx-auto flex pt-2 max-w-2xl items-center justify-around px-4">
                 {NAV_ITEMS.map((item) => {
                     const active = activeTo === item.to
+                    const showUnreadBadge =
+                        item.to === '/friends' && unreadMessages > 0
                     return (
                         <Link
                             key={item.to}
                             to={item.to}
                             aria-current={active ? 'page' : undefined}
+                            aria-label={
+                                showUnreadBadge
+                                    ? `${item.label}, ${unreadMessages} message${unreadMessages > 1 ? 's' : ''} non lu${unreadMessages > 1 ? 's' : ''}`
+                                    : item.label
+                            }
                             className={cn(
                                 'flex flex-1 flex-col items-center justify-center gap-1 text-center rounded-lg outline-none transition-transform active:scale-[0.97]',
                                 'transition-colors'
                             )}
                         >
-                            <div className={cn('flex flex-col items-center justify-center gap-1 w-12 h-12', active ? 'bg-accent p-1 rounded-lg w-' : 'text-muted-foreground')}>
+                            <div className={cn('relative flex flex-col items-center justify-center gap-1 w-12 h-12', active ? 'bg-accent p-1 rounded-lg w-' : 'text-muted-foreground')}>
                                 <item.Icon
                                     className={cn(
                                         'size-5',
                                         active ? 'text-accent-foreground' : 'text-muted-foreground'
                                     )}
                                 />
-
+                                {showUnreadBadge ? (
+                                    <span className="absolute right-1 top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground">
+                                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                                    </span>
+                                ) : null}
                             </div>
                         </Link>
                     )

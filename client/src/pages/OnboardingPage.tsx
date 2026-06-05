@@ -4,6 +4,7 @@ import { StepCard } from '@/components/StepCard'
 import { Button } from '@/components/ui/button'
 import { useUserProfileData } from '@/hooks/use-api-data'
 import { useAuth } from '@/hooks/use-auth'
+import { resolvePostAuthNavigation } from '@/lib/post-auth-navigation'
 import {
     getOnboardingPostAuthRedirect,
     getUserProfile,
@@ -13,7 +14,6 @@ import {
     setOnboardingPostAuthRedirect,
     setUserProfile,
 } from '@/lib/storage'
-import { resolvePostAuthNavigation } from '@/lib/post-auth-navigation'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import { AuthPage } from '@/pages/AuthPage'
@@ -233,7 +233,7 @@ function OnboardingPage() {
 
                     <div className="px-4 pb-4 mt-auto">
                         <div className="mx-auto max-w-2xl space-y-3 animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
-                            <Button className="w-full" onClick={() => goBody(0)}>
+                            <Button variant="accent" className="w-full" onClick={() => goBody(0)}>
                                 {UI.continue}
                             </Button>
                         </div>

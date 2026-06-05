@@ -32,16 +32,19 @@ export function ProfileIdentityHeader({
   const { data: profileFromHook } = useUserProfileData();
   const profile = profileProp ?? profileFromHook;
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [avatarUrl, setAvatarUrl] = useState(
-    () => avatarUrlProp ?? getProfileAvatarUrl(),
-  );
+
+  const resolveAvatarUrl = () => {
+    const fromProfile = avatarUrlProp ?? profile?.avatarUrl ?? null;
+    if (readOnly) return fromProfile;
+    return fromProfile ?? getProfileAvatarUrl();
+  };
+
+  const [avatarUrl, setAvatarUrl] = useState(resolveAvatarUrl);
 
   useEffect(() => {
-    const next = avatarUrlProp ?? profile?.avatarUrl ?? getProfileAvatarUrl();
-    if (next) {
-      setAvatarUrl(next);
-      if (!readOnly) setProfileAvatarUrl(next);
-    }
+    const next = resolveAvatarUrl();
+    setAvatarUrl(next);
+    if (!readOnly && next) setProfileAvatarUrl(next);
   }, [avatarUrlProp, profile?.avatarUrl, readOnly]);
 
   const initials = getProfileInitials(profile, readOnly ? null : auth.user);
@@ -123,7 +126,7 @@ export function ProfileIdentityHeader({
           />
         ) : null}
 
-        <div className="flex min-w-0 flex-1 items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
           <h1 className="min-w-0 flex-1 leading-tight">
             <ProfileNameDisplay
               profile={profile}

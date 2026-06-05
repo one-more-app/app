@@ -27,6 +27,15 @@ export function useConversationsList() {
   return useSWR<ConversationsCache>(CONVERSATIONS_SWR_KEY, fetchConversations);
 }
 
+export function useUnreadMessagesCount(): number {
+  const { data } = useConversationsList();
+  return (
+    data?.conversations.reduce((total, conversation) => {
+      return total + conversation.unreadCount;
+    }, 0) ?? 0
+  );
+}
+
 /** Marque toute la conversation comme lue et synchronise le cache SWR partagé. */
 export function useConversationUnreadActions() {
   const { mutate } = useConversationsList();

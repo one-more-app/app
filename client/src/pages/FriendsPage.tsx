@@ -7,7 +7,7 @@ import {
     type FriendsTab,
 } from "@/components/friends/FriendsTabToggle";
 import { ACCESS_SWR_KEY, useAccess } from "@/hooks/use-access";
-import { useConversationsList } from "@/hooks/use-mark-conversation-read";
+import { useUnreadMessagesCount } from "@/hooks/use-mark-conversation-read";
 import { CONVERSATIONS_SWR_KEY } from "@/hooks/use-realtime";
 import { fetchFriendsList } from "@/lib/social-api";
 import { UI } from "@/lib/translations";
@@ -22,11 +22,7 @@ export default function FriendsPage() {
         "friends-list",
         fetchFriendsList,
     );
-    const { data: conversationsData } = useConversationsList();
-
-    const unreadTotal =
-        conversationsData?.conversations.reduce((n, c) => n + c.unreadCount, 0) ??
-        0;
+    const unreadTotal = useUnreadMessagesCount();
 
     const refreshAll = async () => {
         await Promise.all([

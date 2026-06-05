@@ -9,6 +9,7 @@ import { initNativeSocialSignIn } from '@/lib/oauth-native'
 import { setPendingInviteCode } from '@/lib/invite-code'
 import { needsOnboarding } from '@/lib/storage'
 import { scheduleSafeAreaCssSync } from '@/lib/sync-safe-area-css'
+import { routeUsesBackHeader } from '@/lib/back-header-routes'
 import { getSystemBarsStyle, IMMERSIVE_FULL_BLEED_ROUTES } from '@/lib/system-bars-style'
 import { cn } from '@/lib/utils'
 import { AuthPage } from '@/pages/AuthPage'
@@ -104,16 +105,7 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
 function SafeAreaTopScrim() {
     const { pathname } = useLocation()
     if (IMMERSIVE_FULL_BLEED_ROUTES.has(pathname)) return null
-    const usesBackHeader =
-        pathname === '/friends' ||
-        pathname === '/history' ||
-        pathname === '/settings' ||
-        pathname === '/exercises' ||
-        pathname.startsWith('/exercise/') ||
-        pathname.startsWith('/friends/chat/') ||
-        pathname.startsWith('/friends/preview/') ||
-        (pathname.startsWith('/friends/') && pathname !== '/friends') ||
-        pathname.startsWith('/invite/')
+    const usesBackHeader = routeUsesBackHeader(pathname)
     return (
         <div
             className={cn('safe-area-top-scrim', usesBackHeader ? 'bg-card' : 'bg-background')}

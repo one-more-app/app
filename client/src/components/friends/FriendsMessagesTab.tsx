@@ -46,15 +46,7 @@ function ConversationRow({
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <p className="truncate font-medium">{name}</p>
-            {item.otherUser.username &&
-            (item.otherUser.firstName || item.otherUser.lastName) ? (
-              <p className="truncate text-xs text-muted-foreground">
-                @{item.otherUser.username}
-              </p>
-            ) : null}
-          </div>
+          <p className="min-w-0 truncate font-medium">{name}</p>
           {item.unreadCount > 0 ? (
             <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
               {item.unreadCount > 9 ? "9+" : item.unreadCount}
