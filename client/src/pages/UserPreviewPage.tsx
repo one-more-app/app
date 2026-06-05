@@ -7,6 +7,7 @@ import {
   requestFriend,
 } from "@/lib/social-api";
 import { getOrCreateConversation } from "@/lib/messaging-api";
+import { ProfileNameDisplay } from "@/components/profile/ProfileNameDisplay";
 import {
   getProfileDisplayName,
   getProfileInitials,
@@ -30,8 +31,9 @@ export default function UserPreviewPage() {
         {
           firstName: data.firstName ?? undefined,
           lastName: data.lastName ?? undefined,
+          username: data.username ?? undefined,
         },
-        data.username,
+        null,
       )
     : UI.profile;
 
@@ -86,8 +88,9 @@ export default function UserPreviewPage() {
     {
       firstName: data.firstName ?? undefined,
       lastName: data.lastName ?? undefined,
+      username: data.username ?? undefined,
     },
-    data.username,
+    null,
   );
 
   return (
@@ -106,12 +109,15 @@ export default function UserPreviewPage() {
               {initials}
             </div>
           )}
-          <div>
-            <h1 className="text-xl font-semibold">{name}</h1>
-            {data.username ? (
-              <p className="text-sm text-muted-foreground">@{data.username}</p>
-            ) : null}
-          </div>
+          <ProfileNameDisplay
+            profile={{
+              firstName: data.firstName ?? undefined,
+              lastName: data.lastName ?? undefined,
+              username: data.username ?? undefined,
+            }}
+            size="lg"
+            align="center"
+          />
           <div className="flex gap-4 text-sm text-muted-foreground">
             <span>
               {UI.profileLevelLabel} {data.level}

@@ -49,8 +49,9 @@ export default function ChatPage() {
         {
           firstName: conversation.otherUser.firstName ?? undefined,
           lastName: conversation.otherUser.lastName ?? undefined,
+          username: conversation.otherUser.username ?? undefined,
         },
-        conversation.otherUser.username,
+        null,
       )
     : UI.messagesTitle;
 

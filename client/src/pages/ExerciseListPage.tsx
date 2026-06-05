@@ -131,7 +131,7 @@ export function ExerciseListPage() {
     }, [metaData])
 
     const { browse, pickZone, pickTarget, pickEquipment, goToStep, goBackInBrowse } =
-        useExerciseCatalogBrowse()
+        useExerciseCatalogBrowse({ replaceOnNavigate: true })
     const navigateBack = useBack()
 
     const catalogExercises = useMemo(() => {
@@ -359,7 +359,7 @@ export function ExerciseListPage() {
                 shouldLaunchExerciseTour
                     ? `/exercise/${trackedId}?tour=onboarding&from=first-exercise`
                     : `/exercise/${trackedId}`,
-                { replace: true },
+                { replace: true, state: { fromAddExercise: true } },
             )
         } catch {
             // Si la création remote échoue, on garde le drawer ouvert et on affiche l'erreur.

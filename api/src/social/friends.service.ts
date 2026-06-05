@@ -21,6 +21,7 @@ type FriendListItem = {
   userId: string;
   firstName: string | null;
   lastName: string | null;
+  username: string | null;
   avatarUrl: string | null;
   status: FriendshipStatus;
   direction: 'incoming' | 'outgoing' | 'friend';
@@ -74,6 +75,7 @@ export class FriendsService {
         userId: otherUserId,
         firstName: profile?.firstName ?? null,
         lastName: profile?.lastName ?? null,
+        username: profile?.username ?? null,
         avatarUrl: profile?.avatarUrl ?? null,
         status: f.status,
         direction,
@@ -321,6 +323,7 @@ export class FriendsService {
         gender: profile.gender === 'female' ? 'female' : 'male',
         firstName: profile.firstName ?? undefined,
         lastName: profile.lastName ?? undefined,
+        username: profile.username,
         avatarUrl: profile.avatarUrl,
       },
       progress,

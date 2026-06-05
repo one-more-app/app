@@ -79,9 +79,13 @@ export class ProfileService {
       weightKg: body.weightKg,
       heightCm: body.heightCm,
       gender: body.gender,
-      firstName: body.firstName ?? null,
-      lastName: body.lastName ?? null,
     };
+    if (body.firstName !== undefined) {
+      payload.firstName = body.firstName ?? null;
+    }
+    if (body.lastName !== undefined) {
+      payload.lastName = body.lastName ?? null;
+    }
     if (body.avatarUrl !== undefined) {
       payload.avatarUrl = body.avatarUrl;
     }

@@ -6,10 +6,8 @@ import {
   getProfileAvatarUrl,
   setProfileAvatarUrl,
 } from "@/lib/profile-avatar";
-import {
-  getProfileDisplayName,
-  getProfileInitials,
-} from "@/lib/profile-display";
+import { ProfileNameDisplay } from "@/components/profile/ProfileNameDisplay";
+import { getProfileInitials } from "@/lib/profile-display";
 import { profileNestedClass, profileSectionClass } from "@/lib/profile-section";
 import { UI } from "@/lib/translations";
 import type { UserProfile } from "@/types";
@@ -18,13 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Camera, Settings } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-
-function getProfileNameParts(firstName?: string, lastName?: string) {
-  return {
-    first: firstName?.trim() ?? "",
-    last: lastName?.trim() ?? "",
-  };
-}
 
 type ProfileIdentityHeaderProps = {
   profile?: UserProfile;
@@ -54,15 +45,6 @@ export function ProfileIdentityHeader({
   }, [avatarUrlProp, profile?.avatarUrl, readOnly]);
 
   const initials = getProfileInitials(profile, readOnly ? null : auth.user);
-  const { first, last } = getProfileNameParts(
-    profile?.firstName,
-    profile?.lastName,
-  );
-  const hasSplitName = Boolean(first && last);
-  const displayName = getProfileDisplayName(
-    profile,
-    readOnly ? null : auth.user,
-  );
 
   const handleAvatarClick = () => {
     if (readOnly) return;
@@ -143,25 +125,10 @@ export function ProfileIdentityHeader({
 
         <div className="flex min-w-0 flex-1 items-start justify-between gap-2">
           <h1 className="min-w-0 flex-1 leading-tight">
-            {hasSplitName ? (
-              <>
-                <span className="block truncate text-base font-semibold tracking-tight">
-                  {first}
-                </span>
-                <span className="block truncate text-sm font-normal text-muted-foreground">
-                  {last}
-                </span>
-              </>
-            ) : (
-              <span className="block truncate text-base font-semibold tracking-tight">
-                {displayName}
-              </span>
-            )}
-            {profile?.username ? (
-              <span className="mt-0.5 block truncate text-sm text-muted-foreground">
-                @{profile.username}
-              </span>
-            ) : null}
+            <ProfileNameDisplay
+              profile={profile}
+              authUser={readOnly ? null : auth.user}
+            />
           </h1>
           {!readOnly ? (
             <Button

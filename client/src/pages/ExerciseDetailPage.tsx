@@ -5,8 +5,8 @@ import { ExerciseCard } from '@/components/ExerciseCard'
 import { PerfEntryList } from '@/components/history/PerfEntryList'
 import { LeagueBadge } from '@/components/LeagueBadge'
 import { PerformanceChart } from '@/components/PerformanceChart'
+import { RankBadge } from '@/components/RankBadge'
 import { ExerciseDetailPageSkeleton } from '@/components/skeletons'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
@@ -37,7 +37,6 @@ import {
 } from '@/lib/history-entries'
 import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
 import { getJoyrideScrollOffset } from '@/lib/joyride-config'
-import { RankBadge } from '@/components/RankBadge'
 import { notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
     getPersonalBest,
@@ -62,12 +61,20 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { EVENTS, Joyride, type EventData, type Step } from 'react-joyride'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import useSWR from 'swr'
+
+type ExerciseDetailLocationState = {
+    fromAddExercise?: boolean
+}
 
 export function ExerciseDetailPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
+    const location = useLocation()
+    const fromAddExercise =
+        (location.state as ExerciseDetailLocationState | null)?.fromAddExercise ===
+        true
     const { resolvedTheme } = useTheme()
     const { data: homeExercises = [], isLoading: isLoadingTracked } = useHomeExercisesData()
     const refreshAfterTrackedChange = useTrackedDataRefresh()
@@ -378,6 +385,14 @@ export function ExerciseDetailPage() {
         [resolvedTheme],
     )
 
+    const handleBack = useCallback(() => {
+        if (fromAddExercise) {
+            navigate('/home', { replace: true })
+            return
+        }
+        navigate(-1)
+    }, [fromAddExercise, navigate])
+
     if (id && isLoadingTracked && !exercise) {
         return (
             <div className="min-h-screen-app bg-background">
@@ -398,7 +413,7 @@ export function ExerciseDetailPage() {
                     iconClassName="text-muted-foreground"
                     description={UI.exerciseNotFound}
                 >
-                    <Button onClick={() => navigate(-1)}>{UI.back}</Button>
+                    <Button onClick={handleBack}>{UI.back}</Button>
                 </EmptyState>
             </div>
         )
@@ -410,6 +425,7 @@ export function ExerciseDetailPage() {
                 compact
                 title={exercise.name}
                 titleClassName="capitalize"
+                onBack={handleBack}
                 right={
                     <Button
                         variant="ghost"
@@ -422,11 +438,11 @@ export function ExerciseDetailPage() {
                                 )
                                 setClassificationEquipment(
                                     exercise.equipment ??
-                                        (classificationEquipmentOptions.includes(
-                                            'body weight',
-                                        )
-                                            ? 'body weight'
-                                            : classificationEquipmentOptions[0] ?? ''),
+                                    (classificationEquipmentOptions.includes(
+                                        'body weight',
+                                    )
+                                        ? 'body weight'
+                                        : classificationEquipmentOptions[0] ?? ''),
                                 )
                             }
                             setRenameOpen(true)
@@ -649,7 +665,7 @@ export function ExerciseDetailPage() {
                     <CardHeader className="flex flex-row items-center justify-between">
                         <h2 className="font-semibold">{UI.options}</h2>
                         <Button
-                            variant="destructive"
+                            variant="outline-destructive"
                             size="sm"
                             onClick={() => {
                                 if (id && confirm(UI.confirmDelete)) {
@@ -691,8 +707,8 @@ export function ExerciseDetailPage() {
                                 }}
                             />
                             {exercise.isCustom &&
-                            classificationTargets.length > 0 &&
-                            classificationEquipmentOptions.length > 0 ? (
+                                classificationTargets.length > 0 &&
+                                classificationEquipmentOptions.length > 0 ? (
                                 <CustomExerciseMetadataFields
                                     targets={classificationTargets}
                                     equipmentOptions={classificationEquipmentOptions}

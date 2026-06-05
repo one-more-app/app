@@ -13,7 +13,7 @@ export const LEAGUE_MAP_FILL: Record<
   gold: { light: "hsl(38 88% 44%)", dark: "hsl(38 82% 36%)" },
   platinum: { light: "hsl(192 72% 40%)", dark: "hsl(192 65% 33%)" },
   diamond: { light: "hsl(263 58% 52%)", dark: "hsl(263 52% 44%)" },
-  legend: { light: "hsl(43 92% 46%)", dark: "hsl(43 88% 40%)" },
+  legend: { light: "#dfff5e", dark: "hsl(69 90% 58%)" },
 };
 
 export function leagueMapFill(tier: LeagueTier, isDark: boolean): string {
@@ -27,7 +27,7 @@ export const LEAGUE_ACCENT_CLASS: Record<LeagueTier, string> = {
   gold: "text-[#F5C518]",
   platinum: "text-cyan-400",
   diamond: "text-violet-400",
-  legend: "text-amber-400",
+  legend: "text-accent",
 };
 
 export const LEAGUE_COLORS: Record<LeagueTier, string> = {
@@ -42,7 +42,7 @@ export const LEAGUE_COLORS: Record<LeagueTier, string> = {
   diamond:
     "border-violet-600 bg-violet-200 text-violet-950 dark:bg-violet-600/50 dark:text-violet-100 dark:border-violet-500",
   legend:
-    "border-amber-500 bg-amber-200 text-amber-950 dark:bg-amber-500/60 dark:text-amber-50 dark:border-amber-400",
+    "border-accent bg-accent/35 text-accent-foreground dark:bg-accent/25 dark:text-accent-foreground dark:border-accent",
 };
 
 export const LEAGUE_1RM_STYLES: Record<LeagueTier, string> = {
@@ -57,7 +57,7 @@ export const LEAGUE_1RM_STYLES: Record<LeagueTier, string> = {
   diamond:
     "border border-violet-500/80 bg-violet-50/90 dark:border-violet-500/80 dark:bg-violet-600/20",
   legend:
-    "border border-amber-500/80 bg-amber-50/90 dark:border-amber-400/80 dark:bg-amber-500/20",
+    "border border-accent/80 bg-accent/15 dark:border-accent/70 dark:bg-accent/15",
 };
 
 const LEAGUE_TOAST_CLASSES: Record<LeagueTier, string> = {
@@ -66,7 +66,7 @@ const LEAGUE_TOAST_CLASSES: Record<LeagueTier, string> = {
   gold: "!bg-amber-800 !text-amber-50 !border-amber-500",
   platinum: "!bg-cyan-900 !text-cyan-100 !border-cyan-600",
   diamond: "!bg-violet-800 !text-violet-100 !border-violet-500",
-  legend: "!bg-amber-700 !text-amber-50 !border-amber-400",
+  legend: "!bg-accent !text-accent-foreground !border-accent",
 };
 
 export const LEAGUE_TOAST_DESCRIPTION_CLASS =

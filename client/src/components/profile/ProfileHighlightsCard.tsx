@@ -89,7 +89,7 @@ export function ProfileHighlightsCard({
                     {leagueSummary ? (
                         <RankBadge
                             rankId={leagueSummary.globalRank}
-                            size="sm"
+                            size="md"
                             className="mt-1.5"
                         />
                     ) : (

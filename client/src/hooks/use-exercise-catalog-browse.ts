@@ -35,7 +35,11 @@ function writeBrowseParams(
   else base.delete("beq");
 }
 
-export function useExerciseCatalogBrowse() {
+export function useExerciseCatalogBrowse(options?: {
+  /** Remplace l’historique à chaque étape (ex. parcours d’ajout sur /exercises). */
+  replaceOnNavigate?: boolean;
+}) {
+  const replaceOnNavigate = options?.replaceOnNavigate ?? false;
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,7 +48,7 @@ export function useExerciseCatalogBrowse() {
   const navigateBrowse = useCallback(
     (
       nextBrowse: CatalogBrowseParams,
-      options?: {
+      navigateOptions?: {
         replace?: boolean;
       },
     ) => {
@@ -57,10 +61,10 @@ export function useExerciseCatalogBrowse() {
       const search = params.toString();
       navigate(
         { pathname: location.pathname, search: search ? `?${search}` : "" },
-        { replace: options?.replace ?? false },
+        { replace: navigateOptions?.replace ?? replaceOnNavigate },
       );
     },
-    [searchParams, navigate, location.pathname],
+    [searchParams, navigate, location.pathname, replaceOnNavigate],
   );
 
   const pickZone = useCallback(

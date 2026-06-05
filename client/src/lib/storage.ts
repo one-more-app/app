@@ -441,6 +441,7 @@ export function setUserProfile(
   opts?: { silent?: boolean },
 ): void {
   profileCache = {
+    ...profileCache,
     weightKg: profile.weightKg ?? profileCache.weightKg,
     heightCm: profile.heightCm ?? profileCache.heightCm,
     gender: profile.gender ?? profileCache.gender,
@@ -448,6 +449,8 @@ export function setUserProfile(
       ? { firstName: profile.firstName }
       : {}),
     ...(profile.lastName !== undefined ? { lastName: profile.lastName } : {}),
+    ...(profile.username !== undefined ? { username: profile.username } : {}),
+    ...(profile.avatarUrl !== undefined ? { avatarUrl: profile.avatarUrl } : {}),
   };
   hasProfilePersistedCache = true;
   if (!opts?.silent) {
@@ -462,6 +465,7 @@ export async function setUserProfileAndWait(
   profile: Partial<UserProfile>,
 ): Promise<UserProfile> {
   profileCache = {
+    ...profileCache,
     weightKg: profile.weightKg ?? profileCache.weightKg,
     heightCm: profile.heightCm ?? profileCache.heightCm,
     gender: profile.gender ?? profileCache.gender,
@@ -469,6 +473,8 @@ export async function setUserProfileAndWait(
       ? { firstName: profile.firstName }
       : {}),
     ...(profile.lastName !== undefined ? { lastName: profile.lastName } : {}),
+    ...(profile.username !== undefined ? { username: profile.username } : {}),
+    ...(profile.avatarUrl !== undefined ? { avatarUrl: profile.avatarUrl } : {}),
   };
   hasProfilePersistedCache = true;
   notifyLocalDataChanged("profile");
@@ -482,6 +488,8 @@ export async function setUserProfileAndWait(
         ? { firstName: remote.firstName }
         : {}),
       ...(remote.lastName !== undefined ? { lastName: remote.lastName } : {}),
+      ...(remote.username !== undefined ? { username: remote.username } : {}),
+      ...(remote.avatarUrl !== undefined ? { avatarUrl: remote.avatarUrl } : {}),
     };
     return profileCache;
   } catch (error) {

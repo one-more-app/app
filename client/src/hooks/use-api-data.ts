@@ -218,6 +218,7 @@ function mergeRemoteProfile(
     firstName: remote.firstName ?? local.firstName,
     lastName: remote.lastName ?? local.lastName,
     avatarUrl: remote.avatarUrl ?? local.avatarUrl,
+    username: remote.username ?? local.username,
   };
 }
 

@@ -29,6 +29,7 @@ export type FriendListItem = {
   userId: string;
   firstName: string | null;
   lastName: string | null;
+  username: string | null;
   avatarUrl: string | null;
   status: "pending" | "accepted" | "declined" | "blocked";
   direction: "incoming" | "outgoing" | "friend";

@@ -36,20 +36,15 @@ function FriendRow({
     ? V
     : never;
 }) {
-  const name = getProfileDisplayName(
-    {
-      firstName: item.firstName ?? undefined,
-      lastName: item.lastName ?? undefined,
-    },
-    null,
-  );
-  const initials = getProfileInitials(
-    {
-      firstName: item.firstName ?? undefined,
-      lastName: item.lastName ?? undefined,
-    },
-    null,
-  );
+  const profile = {
+    firstName: item.firstName ?? undefined,
+    lastName: item.lastName ?? undefined,
+    username: item.username ?? undefined,
+  };
+  const name = getProfileDisplayName(profile, null);
+  const initials = getProfileInitials(profile, null);
+  const showUsername =
+    item.username && (item.firstName || item.lastName);
   const isPendingIncoming =
     item.status === "pending" && item.direction === "incoming";
   const isPendingOutgoing =
@@ -77,7 +72,12 @@ function FriendRow({
         ) : isPendingOutgoing ? (
           <p className="text-xs text-muted-foreground">{UI.friendRequestOutgoing}</p>
         ) : (
-          <PresenceBadge presence={presence} />
+          <>
+            {showUsername ? (
+              <p className="truncate text-xs text-muted-foreground">@{item.username}</p>
+            ) : null}
+            <PresenceBadge presence={presence} />
+          </>
         )}
       </div>
       {!isPendingIncoming && !isPendingOutgoing ? (
@@ -195,6 +195,7 @@ export function FriendsListTab({
                         {
                           firstName: friend.firstName ?? undefined,
                           lastName: friend.lastName ?? undefined,
+                          username: friend.username ?? undefined,
                         },
                         null,
                       )}

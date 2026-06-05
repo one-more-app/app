@@ -43,6 +43,8 @@
   --color-background: oklch(0.15 0.02 260);
   --color-foreground: oklch(0.95 0.01 260);
   --font-sans: "One More Figures", "Hanken Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Saisie utilisateur : chiffres en police classique (sans One More Figures) */
+  --font-sans-input: "Hanken Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
   /* Chiffres « record » : gros, italiques, police dédiée */
   --font-one-more: "One More", ui-sans-serif, system-ui, sans-serif;
 }
@@ -187,6 +189,16 @@
     min-height: 100%;
     min-height: 100dvh;
     overflow: hidden;
+  }
+  input,
+  textarea,
+  select,
+  [contenteditable="true"] {
+    font-family: var(--font-sans-input);
+  }
+  /* HorizontalWheelPicker : saisie numérique alignée sur le roue One More */
+  .font-one-more input {
+    font-family: inherit;
   }
   #root {
     display: flex;

@@ -1,4 +1,5 @@
 import { BackHeader } from '@/components/BackHeader'
+import { ProfileNameDialog } from '@/components/profile/ProfileNameDialog'
 import { SettingsProfileSkeleton } from '@/components/skeletons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,6 +32,7 @@ export function SettingsPage() {
     const [heightCm, setHeightCm] = useState<string>('')
     const [gender, setGender] = useState<'male' | 'female'>('male')
     const [profileHydrated, setProfileHydrated] = useState(false)
+    const [nameDialogOpen, setNameDialogOpen] = useState(false)
 
     useEffect(() => {
         if (!profile) return
@@ -138,6 +140,35 @@ export function SettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex flex-col gap-2">
+                                <Label>{UI.profile}</Label>
+                                <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2">
+                                    <div className="min-w-0">
+                                        <p className="truncate text-sm font-medium">
+                                            {[profile?.firstName, profile?.lastName]
+                                                .filter(Boolean)
+                                                .join(' ') ||
+                                                (profile?.username
+                                                    ? `@${profile.username}`
+                                                    : UI.profileDefaultName)}
+                                        </p>
+                                        {profile?.username &&
+                                        (profile.firstName || profile.lastName) ? (
+                                            <p className="truncate text-xs text-muted-foreground">
+                                                @{profile.username}
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => setNameDialogOpen(true)}
+                                    >
+                                        {UI.profileEditName}
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-2">
                                 <Input
                                     id="settings-weight"
                                     label={UI.bodyWeight}
@@ -226,6 +257,11 @@ export function SettingsPage() {
                     </div>
                 )}
             </main>
+
+            <ProfileNameDialog
+                open={nameDialogOpen}
+                onOpenChange={setNameDialogOpen}
+            />
         </div>
     )
 }
