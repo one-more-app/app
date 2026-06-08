@@ -6,6 +6,7 @@ import {
     DrawerHeader,
     DrawerTitle,
 } from '@/components/ui/drawer'
+import { hapticImpact, hapticImpactMedium } from '@/lib/haptics'
 import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
 import { useEffect, useState } from 'react'
@@ -48,6 +49,7 @@ export function AddPerfDrawer({
         if (open) {
             setWeight(initialWeight)
             setReps(initialReps)
+            void hapticImpactMedium()
         }
     }, [open, initialWeight, initialReps])
 
@@ -80,6 +82,7 @@ export function AddPerfDrawer({
         } else if (onSave) {
             onSave(weight, reps)
         }
+        void hapticImpact()
         handleOpenChange(false)
     }
 
@@ -121,8 +124,8 @@ export function AddPerfDrawer({
                         <Button
                             type="submit"
                             className="w-full"
-                            size="lg"
                             disabled={reps <= 0}
+                            haptic={false}
                         >
                             {UI.save}
                         </Button>

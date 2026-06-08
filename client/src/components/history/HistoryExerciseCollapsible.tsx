@@ -7,6 +7,7 @@ import {
     summarizeExerciseGroupInsights,
     type HistoryEntryInsight,
 } from '@/lib/history-entries'
+import { hapticSelectionChanged } from '@/lib/haptics'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import type { PerformanceEntry, TrackedExercise } from '@/types'
@@ -74,6 +75,9 @@ export function HistoryExerciseCollapsible({
                         <Collapsible.Trigger asChild>
                             <button
                                 type="button"
+                                onPointerDown={() => {
+                                    void hapticSelectionChanged()
+                                }}
                                 className={cn(
                                     'flex min-w-0 flex-1 items-center gap-3 p-3 text-left transition-colors',
                                     triggerHover,

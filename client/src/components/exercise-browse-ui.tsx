@@ -9,6 +9,7 @@ import {
     translateTarget,
     UI,
 } from '@/lib/translations'
+import { hapticImpact, hapticTab } from '@/lib/haptics'
 import { cn } from '@/lib/utils'
 import { ChevronRight } from 'lucide-react'
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
@@ -61,7 +62,10 @@ export function BrowseTile({
         <Card className="gap-0 overflow-hidden py-0 shadow-none transition-colors hover:bg-muted/25">
             <button
                 type="button"
-                onClick={onClick}
+                onClick={() => {
+                    void hapticImpact()
+                    onClick()
+                }}
                 className="flex w-full min-w-0 items-center gap-3 p-3 text-left active:bg-muted/40"
             >
                 {icon ? (
@@ -157,7 +161,10 @@ export function CatalogBreadcrumb({
                             {canNavigate ? (
                                 <button
                                     type="button"
-                                    onClick={() => onGoTo(c.step)}
+                                    onClick={() => {
+                                        hapticTab()
+                                        onGoTo(c.step)
+                                    }}
                                     className={cn(browseCrumbBase, browseCrumbLink)}
                                 >
                                     {c.label}

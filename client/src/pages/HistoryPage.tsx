@@ -1,6 +1,7 @@
 import { AddPerfDrawer } from '@/components/AddPerfDrawer'
 import { BackHeader } from '@/components/BackHeader'
 import { HistoryDaySection } from '@/components/history/HistoryDaySection'
+import { HistoryWeekStreak } from '@/components/history/HistoryWeekStreak'
 import { HistoryPageSkeleton } from '@/components/skeletons'
 import { EmptyState } from '@/components/ui/empty-state'
 import {
@@ -114,33 +115,38 @@ export function HistoryPage() {
             <main className="mx-auto max-w-2xl space-y-4 p-4 pb-2">
                 {isLoadingEntries ? (
                     <HistoryPageSkeleton />
-                ) : entries.length === 0 ? (
-                    <EmptyState
-                        icon={HistoryIcon}
-                        title={UI.noHistoryEntriesTitle}
-                        description={UI.noHistoryEntriesDescription}
-                        contentClassName="py-8 text-sm"
-                    />
                 ) : (
-                    <ul className="space-y-8">
-                        {shownByDayThenExercise.map(({ date: dayKey, exercises }) => (
-                            <HistoryDaySection
-                                key={dayKey}
-                                dayKey={dayKey}
-                                exercises={exercises}
-                                resolveExercise={resolveTrackedExercise}
-                                isTrackedActive={(id) =>
-                                    tracked.some((exercise) => exercise.id === id && !exercise.deletedAt)
-                                }
-                                entryInsights={entryInsights}
-                                onEditEntry={setEditEntry}
-                                onDeleteEntry={handleDeleteEntry}
-                                onAddEntry={(trackedExerciseId, dayKey) =>
-                                    setAddPerf({ trackedExerciseId, date: dayKey })
-                                }
+                    <>
+                        <HistoryWeekStreak entries={entries} />
+                        {entries.length === 0 ? (
+                            <EmptyState
+                                icon={HistoryIcon}
+                                title={UI.noHistoryEntriesTitle}
+                                description={UI.noHistoryEntriesDescription}
+                                contentClassName="py-8 text-sm"
                             />
-                        ))}
-                    </ul>
+                        ) : (
+                            <ul className="space-y-8">
+                                {shownByDayThenExercise.map(({ date: dayKey, exercises }) => (
+                                    <HistoryDaySection
+                                        key={dayKey}
+                                        dayKey={dayKey}
+                                        exercises={exercises}
+                                        resolveExercise={resolveTrackedExercise}
+                                        isTrackedActive={(id) =>
+                                            tracked.some((exercise) => exercise.id === id && !exercise.deletedAt)
+                                        }
+                                        entryInsights={entryInsights}
+                                        onEditEntry={setEditEntry}
+                                        onDeleteEntry={handleDeleteEntry}
+                                        onAddEntry={(trackedExerciseId, dayKey) =>
+                                            setAddPerf({ trackedExerciseId, date: dayKey })
+                                        }
+                                    />
+                                ))}
+                            </ul>
+                        )}
+                    </>
                 )}
             </main>
 

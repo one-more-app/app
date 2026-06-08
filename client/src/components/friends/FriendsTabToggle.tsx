@@ -1,3 +1,4 @@
+import { hapticTab } from "@/lib/haptics";
 import { profileNestedClass } from "@/lib/profile-section";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
@@ -44,7 +45,10 @@ export function FriendsTabToggle({
                         aria-selected={active}
                         aria-controls={`friends-panel-${id}`}
                         id={`friends-tab-${id}`}
-                        onClick={() => onChange(id)}
+                        onClick={() => {
+                            if (!active) hapticTab();
+                            onChange(id);
+                        }}
                         className={cn(
                             "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-1.5 py-2 sm:gap-2 cursor-pointer",
                             "text-sm font-medium transition-[color,transform,background-color]",

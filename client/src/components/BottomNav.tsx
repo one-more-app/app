@@ -3,6 +3,7 @@ import type { JSX } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import { useUnreadMessagesCount } from '@/hooks/use-mark-conversation-read'
+import { hapticTab } from '@/lib/haptics'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 
@@ -36,6 +37,9 @@ function BottomNav() {
                         <Link
                             key={item.to}
                             to={item.to}
+                            onClick={() => {
+                                if (!active) hapticTab()
+                            }}
                             aria-current={active ? 'page' : undefined}
                             aria-label={
                                 showUnreadBadge

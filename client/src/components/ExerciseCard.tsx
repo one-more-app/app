@@ -5,10 +5,11 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
+import { hapticImpact, hapticImpactMedium } from '@/lib/haptics'
 import { LEAGUE_1RM_STYLES } from '@/lib/league-colors'
 import type { LeagueInfo } from '@/lib/strength-standards'
-import { cn } from '@/lib/utils'
 import { UI, translateBodyPart, translateTarget } from '@/lib/translations'
+import { cn } from '@/lib/utils'
 import { Dumbbell, Plus, Trophy } from 'lucide-react'
 import { useState } from 'react'
 
@@ -61,7 +62,7 @@ export function ExerciseCard({
     const isLeagueRecord = !!leagueInfo
     const recordContainerClassName = isLeagueRecord
         ? `flex flex-1 flex-col items-start gap-1 rounded-lg p-3 ${LEAGUE_1RM_STYLES[leagueInfo!.tier]}`
-        : 'flex flex-1 flex-col items-start gap-1 rounded-lg border border-accent/70 bg-accent/10 p-3 text-primary'
+        : 'flex flex-1 flex-col items-start gap-1 rounded-lg border border-accent/70 bg-accent/10 p-3 text-foreground'
 
     return (
         <>
@@ -71,7 +72,14 @@ export function ExerciseCard({
                         ? 'relative cursor-pointer'
                         : undefined
                 }
-                onClick={onClick}
+                onClick={
+                    onClick
+                        ? () => {
+                              void hapticImpact()
+                              onClick()
+                          }
+                        : undefined
+                }
             >
                 <CardHeader
                     className={cn(
@@ -118,8 +126,10 @@ export function ExerciseCard({
                         onClick={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
+                            void hapticImpactMedium()
                             setDrawerOpen(true)
                         }}
+                        haptic={false}
                         aria-label={UI.newPerf}
                     >
                         <Plus className="size-5" />
@@ -132,12 +142,12 @@ export function ExerciseCard({
                                 <span className="text-muted-foreground">{UI.last}</span>
                                 {lastPerf ? (
                                     <span className="flex items-center gap-1">
-                                        <span className="text-2xl font-bold text-primary">
+                                        <span className="text-2xl font-bold text-foreground">
                                             {lastPerf.weight === 0 ? (
-                                                <BodyWeightLabel className="text-2xl font-one-more font-bold italic text-primary" />
+                                                <BodyWeightLabel className="text-2xl font-one-more font-bold italic text-foreground" />
                                             ) : (
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-one-more text-2xl font-bold italic text-primary">
+                                                    <span className="font-one-more text-2xl font-bold italic text-foreground">
                                                         {lastPerf.weight}
                                                     </span>
                                                     <span className="text-sm font-normal text-muted-foreground">kg</span>
@@ -155,7 +165,7 @@ export function ExerciseCard({
                                     className={
                                         isLeagueRecord
                                             ? 'flex items-center gap-1.5 font-medium text-muted-foreground'
-                                            : 'flex items-center gap-1.5 font-medium text-primary'
+                                            : 'flex items-center gap-1.5 font-medium text-foreground'
                                     }
                                 >
                                     <Trophy className="size-4" />
@@ -163,21 +173,15 @@ export function ExerciseCard({
                                 </span>
                                 {personalBest ? (
                                     <span className="flex items-center gap-1">
-                                        <span className="text-2xl font-bold text-primary">
+                                        <span className="text-2xl font-bold text-foreground">
                                             {personalBest.weight === 0 ? (
-                                                <BodyWeightLabel className="font-one-more text-2xl font-bold italic text-primary" />
+                                                <BodyWeightLabel className="font-one-more text-2xl font-bold italic text-foreground" />
                                             ) : (
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-one-more text-2xl font-bold italic text-primary">
+                                                    <span className="font-one-more text-2xl font-bold italic text-foreground">
                                                         {personalBest.weight}
                                                     </span>
-                                                    <span
-                                                        className={
-                                                            isLeagueRecord
-                                                                ? 'text-sm font-normal text-muted-foreground'
-                                                                : 'text-sm font-normal'
-                                                        }
-                                                    >
+                                                    <span className="text-sm font-normal text-muted-foreground">
                                                         kg
                                                     </span>
                                                 </div>

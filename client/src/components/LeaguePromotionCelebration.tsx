@@ -369,7 +369,6 @@ export function LeaguePromotionCelebrationHost() {
                 <DialogFooter className="mt-0 flex w-full shrink-0 flex-col gap-3 border-t border-border bg-card/95 px-4 py-4 backdrop-blur-sm sm:flex-row sm:justify-center">
                     <Button
                         className="w-full min-w-[12rem] sm:w-auto"
-                        size="lg"
                         variant="secondary"
                         disabled={!open || shareBusy}
                         onClick={handleShare}
@@ -379,7 +378,6 @@ export function LeaguePromotionCelebrationHost() {
                     </Button>
                     <Button
                         className="w-full min-w-[12rem] sm:w-auto"
-                        size="lg"
                         onClick={dismiss}
                     >
                         {UI.continue}

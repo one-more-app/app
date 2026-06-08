@@ -21,6 +21,7 @@ export function ProfileSocialActions() {
                     auth.user?.id,
                 );
                 const result = await shareInviteUrl(shareUrl);
+                if (result === "dismissed") return;
                 toast.success(
                     result === "copied" ? UI.inviteLinkCopied : UI.inviteLinkShared,
                 );

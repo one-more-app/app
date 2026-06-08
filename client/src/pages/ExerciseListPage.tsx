@@ -401,7 +401,7 @@ export function ExerciseListPage() {
     const customExerciseDialog = (
         <Dialog open={customOpen} onOpenChange={setCustomOpen}>
             <DialogTrigger asChild>
-                <Button className="h-9 w-full">
+                <Button size="sm" className="w-full">
                     <Plus className="mr-2 size-4" />
                     {UI.custom}
                 </Button>
@@ -535,7 +535,6 @@ export function ExerciseListPage() {
                                     <Button
                                         type="submit"
                                         className="w-full"
-                                        size="lg"
                                         disabled={perfReps <= 0}
                                     >
                                         {UI.save}

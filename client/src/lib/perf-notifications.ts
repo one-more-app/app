@@ -1,8 +1,6 @@
 import { maybeRequestAppReview } from "@/lib/app-review"
 import { enqueueCelebration } from "@/lib/celebration-queue"
-import { hapticNotificationSuccess } from "@/lib/haptics"
 import type { LeagueChangeDto } from "@/lib/league-types"
-import { playMilestoneSound } from "@/lib/milestone-sound"
 import type { LeagueInfo } from "@/lib/strength-standards"
 import { getRankIndex } from "@/lib/strength-standards"
 import type { PerformanceEntry } from "@/types"
@@ -75,8 +73,6 @@ export function notifyPerfMilestones(params: {
   if (!isRecord && !leagueChanged) return
 
   if (leagueChanged && nextLeague) {
-    hapticNotificationSuccess()
-    playMilestoneSound("league")
     enqueueCelebration({
       kind: "league",
       payload: {
@@ -92,8 +88,6 @@ export function notifyPerfMilestones(params: {
   }
 
   if (isRecord) {
-    hapticNotificationSuccess()
-    if (nextLeague) playMilestoneSound("league")
     enqueueCelebration({
       kind: "record",
       payload: {

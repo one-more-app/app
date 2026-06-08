@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Slider as SliderPrimitive } from "radix-ui"
 
+import { hapticSelectionChanged } from "@/lib/haptics"
 import { cn } from "@/lib/utils"
 
 function Slider({
@@ -10,6 +11,7 @@ function Slider({
   min = 0,
   max = 100,
   stepped,
+  onValueChange,
   ...props
 }: React.ComponentProps<typeof SliderPrimitive.Root> & {
   stepped?: boolean
@@ -30,6 +32,14 @@ function Slider({
       }
     : undefined
 
+  const handleValueChange = React.useCallback(
+    (next: number[]) => {
+      void hapticSelectionChanged()
+      onValueChange?.(next)
+    },
+    [onValueChange],
+  )
+
   return (
     <SliderPrimitive.Root
       data-slot="slider"
@@ -37,6 +47,7 @@ function Slider({
       value={value}
       min={min}
       max={max}
+      onValueChange={handleValueChange}
       className={cn(
         "relative flex w-full touch-none items-center select-none data-[disabled]:opacity-50 data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-44 data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col",
         className

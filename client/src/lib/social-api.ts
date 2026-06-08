@@ -1,4 +1,6 @@
 import { apiFetch } from "@/lib/api";
+import { UI } from "@/lib/translations";
+import { Capacitor } from "@capacitor/core";
 import type { UserProgressState } from "@/types";
 
 export const ACCESS_SWR_KEY = "user-access";
@@ -165,18 +167,58 @@ export async function cancelFriendRequest(
   });
 }
 
-export async function shareInviteUrl(url: string): Promise<"shared" | "copied"> {
-  const text = `Rejoins-moi sur One More pour suivre ta muscu ! ${url}`;
+export type InviteShareResult = "shared" | "copied" | "dismissed";
+
+function isShareCancelled(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /cancel/i.test(message);
+}
+
+function buildInviteShareContent(url: string) {
+  const { inviteShareTitle, inviteShareMessage, inviteShareDialogTitle } = UI;
+  return {
+    title: inviteShareTitle,
+    text: inviteShareMessage,
+    url,
+    dialogTitle: inviteShareDialogTitle,
+    clipboardText: `${inviteShareMessage}\n\n${url}`,
+  };
+}
+
+export async function shareInviteUrl(url: string): Promise<InviteShareResult> {
+  const share = buildInviteShareContent(url);
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const { Share } = await import("@capacitor/share");
+      await Share.share({
+        title: share.title,
+        text: share.text,
+        url: share.url,
+        dialogTitle: share.dialogTitle,
+      });
+      return "shared";
+    } catch (error) {
+      if (isShareCancelled(error)) return "dismissed";
+      throw error;
+    }
+  }
+
   if (typeof navigator !== "undefined" && navigator.share) {
     try {
-      await navigator.share({ title: "One More", text, url });
+      await navigator.share({
+        title: share.title,
+        text: share.clipboardText,
+        url: share.url,
+      });
       return "shared";
-    } catch {
+    } catch (error) {
+      if (isShareCancelled(error)) return "dismissed";
       // fallback copy
     }
   }
   if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(url);
+    await navigator.clipboard.writeText(share.clipboardText);
     return "copied";
   }
   throw new Error("Partage non disponible");

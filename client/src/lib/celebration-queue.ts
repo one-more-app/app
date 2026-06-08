@@ -1,4 +1,9 @@
-import { hapticNotificationSuccess } from "@/lib/haptics";
+import {
+  hapticImpact,
+  hapticImpactHeavy,
+  hapticImpactMedium,
+  hapticNotificationSuccess,
+} from "@/lib/haptics";
 import { playMilestoneSound } from "@/lib/milestone-sound";
 import type {
   LeaguePromotionPayload,
@@ -42,7 +47,20 @@ function notifyListeners(): void {
 
 function playCelebrationFeedback(item: CelebrationItem): void {
   playMilestoneSound(item.kind);
-  void hapticNotificationSuccess();
+  switch (item.kind) {
+    case "league":
+      void hapticImpactHeavy();
+      break;
+    case "record":
+      void hapticNotificationSuccess();
+      break;
+    case "levelup":
+      void hapticImpactMedium();
+      break;
+    case "streak":
+      void hapticImpact();
+      break;
+  }
 }
 
 const emptySnapshot: CelebrationQueueSnapshot = {

@@ -44,7 +44,7 @@ export function LeagueBadge({
             <div className={`rounded-lg p-3 ${oneRMStyle}`}>
                 <span className="text-sm text-muted-foreground">{UI.your1RM}</span>
                 <div className="flex items-center gap-2">
-                    <span className="font-one-more block text-2xl font-bold italic text-primary">
+                    <span className="font-one-more block text-2xl font-bold italic text-foreground">
                         {league.oneRM.toFixed(1)}
                     </span>
                     <span className="text-sm text-muted-foreground">{weightSuffix}</span>
@@ -54,7 +54,7 @@ export function LeagueBadge({
             {showNextTarget && league.progressToNext < 1 && (
                 <div className="space-y-3">
                     {remainingKg && Number(remainingKg) > 0 && nextRankId && nextTier && (
-                        <p className="flex items-center gap-1.5 text-xs font-medium text-primary flex-wrap">
+                        <p className="flex items-center gap-1.5 text-xs font-medium text-foreground flex-wrap">
                             {UI.remainingForNext.replace('{kg}', remainingKg)}
                             <RankBadge rankId={nextRankId} size="xs" />
                         </p>

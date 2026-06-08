@@ -89,7 +89,73 @@ export function formatMonthLabel(monthKey: string): string {
 }
 
 const WEEKDAY_LABELS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
+const WEEKDAY_SHORT = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"] as const;
 
 export function getWeekdayLabels(): readonly string[] {
   return WEEKDAY_LABELS;
+}
+
+export function getWeekdayShortLabels(): readonly string[] {
+  return WEEKDAY_SHORT;
+}
+
+export type WeekDayCell = {
+  date: string;
+  active: boolean;
+  isToday: boolean;
+  isFuture: boolean;
+};
+
+function parseDateKey(key: string): Date {
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/** Lundi de la semaine calendaire contenant `dateKey`. */
+export function getWeekStartDateKey(dateKey = getLocalDateKey()): string {
+  const date = parseDateKey(dateKey);
+  date.setDate(date.getDate() - dayOfWeekMon0(date));
+  return getLocalDateKey(date);
+}
+
+export function shiftWeekStartDateKey(
+  weekStartDateKey: string,
+  deltaWeeks: number,
+): string {
+  const date = parseDateKey(weekStartDateKey);
+  date.setDate(date.getDate() + deltaWeeks * 7);
+  return getLocalDateKey(date);
+}
+
+/** Les 7 jours (lun. → dim.) d'une semaine à partir de son lundi. */
+export function buildWeekCells(
+  activeDays: string[],
+  weekStartDateKey: string,
+  todayKey = getLocalDateKey(),
+): WeekDayCell[] {
+  const active = new Set(activeDays);
+  const start = parseDateKey(weekStartDateKey);
+  const cells: WeekDayCell[] = [];
+
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(start);
+    date.setDate(start.getDate() + i);
+    const dateKey = getLocalDateKey(date);
+    cells.push({
+      date: dateKey,
+      active: active.has(dateKey),
+      isToday: dateKey === todayKey,
+      isFuture: dateKey > todayKey,
+    });
+  }
+
+  return cells;
+}
+
+/** @deprecated Préférer `buildWeekCells` avec un lundi explicite. */
+export function buildCurrentWeekCells(
+  activeDays: string[],
+  todayKey = getLocalDateKey(),
+): WeekDayCell[] {
+  return buildWeekCells(activeDays, getWeekStartDateKey(todayKey), todayKey);
 }

@@ -7,6 +7,7 @@ import {
   getProfileDisplayName,
   getProfileInitials,
 } from "@/lib/profile-display";
+import { hapticImpact } from "@/lib/haptics";
 import { UI } from "@/lib/translations";
 import { MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -31,7 +32,10 @@ function ConversationRow({
     <Link
       to={`/friends/chat/${item.id}`}
       className="flex items-center gap-3 rounded-xl bg-card p-3"
-      onClick={() => onOpen(item.id)}
+      onClick={() => {
+        void hapticImpact();
+        onOpen(item.id);
+      }}
     >
       {item.otherUser.avatarUrl ? (
         <img

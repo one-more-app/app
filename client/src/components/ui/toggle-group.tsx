@@ -5,6 +5,7 @@ import { ToggleGroup as ToggleGroupPrimitive } from "radix-ui"
 import * as React from "react"
 
 import { toggleVariants } from "@/components/ui/toggle"
+import { hapticSelectionChanged } from "@/lib/haptics"
 import { cn } from "@/lib/utils"
 
 const ToggleGroupContext = React.createContext<
@@ -23,6 +24,7 @@ function ToggleGroup({
     size,
     spacing = 0,
     children,
+    onValueChange,
     ...props
 }: React.ComponentProps<typeof ToggleGroupPrimitive.Root> &
     VariantProps<typeof toggleVariants> & {
@@ -39,6 +41,10 @@ function ToggleGroup({
                 "group/toggle-group flex w-fit items-center gap-[--spacing(var(--gap))] rounded-md data-[spacing=default]:data-[variant=outline]:shadow-xs",
                 className
             )}
+            onValueChange={(value) => {
+                void hapticSelectionChanged()
+                onValueChange?.(value)
+            }}
             {...props}
         >
             <ToggleGroupContext.Provider value={{ variant, size, spacing }}>

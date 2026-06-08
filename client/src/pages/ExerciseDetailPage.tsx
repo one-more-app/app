@@ -6,6 +6,7 @@ import { PerfEntryList } from '@/components/history/PerfEntryList'
 import { LeagueBadge } from '@/components/LeagueBadge'
 import { PerformanceChart } from '@/components/PerformanceChart'
 import { RankBadge } from '@/components/RankBadge'
+import { RestSinceLastSetBar } from '@/components/RestSinceLastSetBar'
 import { ExerciseDetailPageSkeleton } from '@/components/skeletons'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -421,38 +422,48 @@ export function ExerciseDetailPage() {
 
     return (
         <div className="min-h-screen-app bg-background">
-            <BackHeader
-                compact
-                title={exercise.name}
-                titleClassName="capitalize"
-                onBack={handleBack}
-                right={
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                            setRenameValue(exercise.name)
-                            if (exercise.isCustom) {
-                                setClassificationTarget(
-                                    exercise.target ?? classificationTargets[0] ?? '',
-                                )
-                                setClassificationEquipment(
-                                    exercise.equipment ??
-                                    (classificationEquipmentOptions.includes(
-                                        'body weight',
+            <div
+                data-sticky-app-header
+                className="sticky-top-safe z-100 bg-card border-b border-border"
+            >
+                <BackHeader
+                    embedded
+                    compact
+                    title={exercise.name}
+                    titleClassName="capitalize"
+                    onBack={handleBack}
+                    right={
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                                setRenameValue(exercise.name)
+                                if (exercise.isCustom) {
+                                    setClassificationTarget(
+                                        exercise.target ?? classificationTargets[0] ?? '',
                                     )
-                                        ? 'body weight'
-                                        : classificationEquipmentOptions[0] ?? ''),
-                                )
-                            }
-                            setRenameOpen(true)
-                        }}
-                        aria-label={UI.rename}
-                    >
-                        <Pencil className="size-4" />
-                    </Button>
-                }
-            />
+                                    setClassificationEquipment(
+                                        exercise.equipment ??
+                                        (classificationEquipmentOptions.includes(
+                                            'body weight',
+                                        )
+                                            ? 'body weight'
+                                            : classificationEquipmentOptions[0] ?? ''),
+                                    )
+                                }
+                                setRenameOpen(true)
+                            }}
+                            aria-label={UI.rename}
+                        >
+                            <Pencil className="size-4" />
+                        </Button>
+                    }
+                />
+                <RestSinceLastSetBar
+                    key={lastPerf?.createdAt ?? 'none'}
+                    createdAt={lastPerf?.createdAt ?? null}
+                />
+            </div>
 
             <main className="mx-auto max-w-2xl px-4 py-4 space-y-4">
                 <div data-tour="exercise-overview">

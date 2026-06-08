@@ -12,6 +12,7 @@ import {
   getProfileDisplayName,
   getProfileInitials,
 } from "@/lib/profile-display";
+import { hapticImpact } from "@/lib/haptics";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Dumbbell, UserPlus } from "lucide-react";
@@ -115,7 +116,13 @@ function FriendRow({
 
   if (item.status === "accepted") {
     return (
-      <Link to={`/friends/${item.userId}`} className="block">
+      <Link
+        to={`/friends/${item.userId}`}
+        className="block"
+        onClick={() => {
+          void hapticImpact();
+        }}
+      >
         {content}
       </Link>
     );
@@ -187,6 +194,9 @@ export function FriendsListTab({
                   key={p.userId}
                   to={`/friends/${p.userId}`}
                   className="flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3"
+                  onClick={() => {
+                    void hapticImpact();
+                  }}
                 >
                   <Dumbbell className="size-5 shrink-0 text-amber-600" />
                   <div className="min-w-0 flex-1">

@@ -8,6 +8,7 @@ export async function inviteFriend(referrerUserId?: string): Promise<boolean> {
     const link = await fetchInviteLink();
     const shareUrl = await resolveInviteShareUrl(link, referrerUserId);
     const result = await shareInviteUrl(shareUrl);
+    if (result === "dismissed") return false;
     toast.success(
       result === "copied" ? UI.inviteLinkCopied : UI.inviteLinkShared,
     );

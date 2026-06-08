@@ -83,7 +83,6 @@ export function ProfileShareCard({
                         <StreakFlameCount
                             count={currentStreak}
                             bonusPercent={streakXpBonus.bonusPercent}
-                            size="lg"
                             iconClassName="size-10"
                             textClassName={`${tbase} font-semibold tabular-nums`}
                         />
@@ -93,7 +92,6 @@ export function ProfileShareCard({
                         <div className="flex flex-col items-center gap-3">
                             <RankBadge
                                 rankId={leagueSummary.globalRank}
-                                size="lg"
                                 variant={isDark ? "dark" : "light"}
                             />
                             <p className={`${txs} text-muted-foreground`}>

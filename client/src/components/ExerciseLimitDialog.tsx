@@ -12,7 +12,8 @@ import { inviteFriend } from "@/lib/invite-friend";
 import { UI } from "@/lib/translations";
 import { EXERCISE_LIMIT_LIMITED } from "@one-more/shared/access-config";
 import { Link2, Search } from "lucide-react";
-import { useState } from "react";
+import { hapticNotificationWarning } from "@/lib/haptics";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 type ExerciseLimitDialogProps = {
@@ -29,6 +30,10 @@ export function ExerciseLimitDialog({
   const auth = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (open) void hapticNotificationWarning();
+  }, [open]);
 
   const handleInviteLink = () => {
     void (async () => {

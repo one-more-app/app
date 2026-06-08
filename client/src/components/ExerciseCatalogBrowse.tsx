@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import type { CatalogBrowseParams, CatalogBrowseStep } from '@/lib/exercise-catalog-browse'
 import { catalogToBrowseable } from '@/lib/exercise-catalog-browse'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
+import { hapticImpact } from '@/lib/haptics'
 import { translateBodyPart, translateTarget, UI } from '@/lib/translations'
 import type { ExerciseDBExercise } from '@/types'
 import { Dumbbell, Plus } from 'lucide-react'
@@ -70,7 +71,10 @@ function ExerciseCatalogGrid({
                             <button
                                 type="button"
                                 className="flex min-h-0 flex-1 flex-col text-left active:bg-muted/30"
-                                onClick={() => onSelectExercise(ex)}
+                                onClick={() => {
+                                    void hapticImpact()
+                                    onSelectExercise(ex)
+                                }}
                             >
                                 <div className="relative aspect-square w-full shrink-0 bg-muted">
                                     <img

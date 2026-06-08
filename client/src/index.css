@@ -409,9 +409,9 @@
   }
 }
 
-/* Toasts Sonner — alignés sur la safe area et la largeur mobile */
+/* Toasts Sonner — alignés sur la safe area, la largeur mobile et la typo app */
 [data-sonner-toaster] {
-  font-family: inherit;
+  font-family: var(--font-sans) !important;
   --width: min(100%, 17rem);
 }
 
@@ -423,4 +423,21 @@
 
 [data-sonner-toaster][data-x-position="center"] {
   left: calc(50% + (var(--safe-left) - var(--safe-right)) / 2);
+}
+
+/* Toast gain XP — une seule carte, sans double encadrement Sonner */
+[data-sonner-toast].xp-gain-toast {
+  width: min(calc(100vw - 2rem), 42rem) !important;
+  padding: 0.75rem !important;
+  background: hsl(var(--card)) !important;
+  border: none !important;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.1) !important;
+  font-family: var(--font-sans) !important;
+}
+
+[data-sonner-toast].xp-gain-toast [data-content],
+[data-sonner-toast].xp-gain-toast [data-title] {
+  margin: 0;
+  padding: 0;
+  width: 100%;
 }
