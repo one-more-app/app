@@ -1,4 +1,5 @@
 import { BackHeader } from '@/components/BackHeader'
+import { NotificationSettingsCard } from '@/components/settings/NotificationSettingsCard'
 import { ProfileNameDialog } from '@/components/profile/ProfileNameDialog'
 import { SettingsProfileSkeleton } from '@/components/skeletons'
 import { Button } from '@/components/ui/button'
@@ -106,6 +107,8 @@ export function SettingsPage() {
                         )}
                     </CardContent>
                 </Card>
+
+                {auth.status === 'authenticated' ? <NotificationSettingsCard /> : null}
 
                 <Card>
                     <CardHeader>

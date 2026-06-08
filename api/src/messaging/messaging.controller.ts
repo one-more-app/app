@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt.guard.js';
+import { NotificationDispatchService } from '../notifications/notification-dispatch.service.js';
 import { RealtimeBroadcaster } from '../realtime/realtime-broadcaster.service.js';
 import { SendMessageDto } from './dto/send-message.dto.js';
 import { MessagingService } from './messaging.service.js';
@@ -22,6 +23,7 @@ export class MessagingController {
   constructor(
     private readonly messagingService: MessagingService,
     private readonly realtime: RealtimeBroadcaster,
+    private readonly notifications: NotificationDispatchService,
   ) {}
 
   @Get('conversations')
@@ -65,6 +67,12 @@ export class MessagingController {
       body.body,
     );
     this.realtime.emitMessageNew(result.recipientId, result.message);
+    void this.notifications.notifyMessageNew({
+      recipientId: result.recipientId,
+      senderId: req.user.sub,
+      conversationId,
+      body: body.body,
+    });
     return { message: result.message };
   }
 

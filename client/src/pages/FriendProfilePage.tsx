@@ -1,3 +1,4 @@
+import { FriendTrainingBell } from "@/components/friends/FriendTrainingBell";
 import { PresenceBadge } from "@/components/friends/PresenceBadge";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,7 @@ export default function FriendProfilePage() {
         </div>
       ) : null}
       <div className="flex gap-2">
+        <FriendTrainingBell friendId={userId} />
         <Button variant="secondary" className="flex-1" onClick={handleMessage}>
           <MessageCircle className="size-4" />
           {UI.messageOpenChat}

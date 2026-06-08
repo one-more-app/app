@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
+import { NotificationsModule } from '../notifications/notifications.module.js';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -19,8 +20,9 @@ import { WsJwtGuard } from './ws-jwt.guard.js';
       }),
     }),
     TypeOrmModule.forFeature([ConversationEntity]),
-    SocialModule,
+    forwardRef(() => SocialModule),
     PresenceModule,
+    forwardRef(() => NotificationsModule),
   ],
   providers: [RealtimeGateway, RealtimeBroadcaster, WsJwtGuard],
   exports: [RealtimeBroadcaster],

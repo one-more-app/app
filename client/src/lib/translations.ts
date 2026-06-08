@@ -592,4 +592,29 @@ export const UI = {
   statsProfileSaved: "Profil enregistré",
   /** Lien sous la modal profil ligues vers la page paramètres complète */
   statsFullSettingsLink: "Tous les paramètres",
+
+  // Notifications
+  notifications: "Notifications",
+  notificationsDescription:
+    "Chaque type peut être activé ou désactivé indépendamment.",
+  notificationsEnablePush: "Autoriser les notifications push",
+  notificationsNativeOnly:
+    "Les notifications push sont disponibles sur l'app mobile.",
+  notificationDefaultTitle: "One More",
+  notifPrefStreak: "Rappels de série",
+  notifPrefFriendRequests: "Demandes d'ami",
+  notifPrefFriendAccepted: "Demandes acceptées",
+  notifPrefMessages: "Messages",
+  notifPrefFriendTraining: "Séances d'amis (cloche par profil)",
+  notifPrefFriendRecords: "Records d'amis",
+  notifPrefWeeklyRecap: "Récap hebdomadaire",
+  notifPrefSaveError: "Impossible de sauvegarder les préférences",
+  notifFriendTrainingBellOn: "Être notifié quand cet ami s'entraîne",
+  notifFriendTrainingBellOff: "Ne plus être notifié pour les séances",
+  notifFriendTrainingOn: "Tu seras notifié quand cet ami s'entraîne",
+  notifFriendTrainingOff: "Notifications de séance désactivées",
+  notifFriendTrainingMasterOff:
+    "Active « Séances d'amis » dans Paramètres pour utiliser la cloche",
+  streakGraceDayHint: "Dernier jour pour garder ta série",
+  streakGraceDayAria: "Série de {days} jours — dernier jour de grâce",
 };

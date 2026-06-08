@@ -55,6 +55,26 @@ export function computeStreakAfterActivity(
   return { current: 1 };
 }
 
+export function isStreakOnGraceDay(
+  lastActiveDate: string | null,
+  currentStreak: number,
+  today: string = todayDateKey(),
+): boolean {
+  return (
+    currentStreak > 0 &&
+    !!lastActiveDate &&
+    daysWithoutActivitySince(lastActiveDate, today) === 1
+  );
+}
+
+export function isStreakAtRisk(
+  lastActiveDate: string | null,
+  currentStreak: number,
+  today: string = todayDateKey(),
+): boolean {
+  return isStreakOnGraceDay(lastActiveDate, currentStreak, today);
+}
+
 export function computeStreakFromActivityDates(
   dates: string[],
   today: string = todayDateKey(),

@@ -1,10 +1,40 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
+  classifyExerciseRankCoverage,
   expandLegacyTiersToRankTiers,
+  getAllTiers,
   getLeagueInfo,
   getRankIndex,
+  isIntentionallyExcluded,
   RANK_ORDER,
 } from '../../dist/shared/strength-standards.js';
 import { computeLeagueStatsForTracked } from '../../dist/shared/league-aggregate.js';
+
+const DATA_DIR = join(process.cwd(), 'data');
+
+function loadCatalog(file: string) {
+  return JSON.parse(readFileSync(join(DATA_DIR, file), 'utf8')) as Array<{
+    id: string;
+    name: string;
+    equipment: string;
+    target: string;
+    bodyPart: string;
+  }>;
+}
+
+function summarizeCoverage(exercises: ReturnType<typeof loadCatalog>) {
+  const stats = { ok: 0, intentional: 0, gap: 0 };
+  for (const ex of exercises) {
+    const status = classifyExerciseRankCoverage(ex.name, {
+      equipment: ex.equipment,
+      target: ex.target,
+      bodyPart: ex.bodyPart,
+    });
+    stats[status]++;
+  }
+  return stats;
+}
 
 describe('expandLegacyTiersToRankTiers', () => {
   const legacy = [
@@ -78,5 +108,105 @@ describe('computeLeagueStatsForTracked', () => {
     expect(summary).not.toBeNull();
     expect(summary!.exerciseCount).toBe(1);
     expect(getRankIndex(summary!.globalRank)).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('new strength standard profiles', () => {
+  const smokeCases: Array<{
+    name: string;
+    equipment: string;
+    target: string;
+  }> = [
+    { name: 'cable standing crunch', equipment: 'cable', target: 'abs' },
+    { name: 'lever preacher curl', equipment: 'leverage machine', target: 'biceps' },
+    { name: 'lever seated calf press', equipment: 'leverage machine', target: 'calves' },
+    { name: 'lever shrug', equipment: 'leverage machine', target: 'traps' },
+    { name: 'lever back extension', equipment: 'leverage machine', target: 'spine' },
+    { name: 'weighted crunch', equipment: 'weighted', target: 'abs' },
+    { name: 'weighted pull-up', equipment: 'weighted', target: 'lats' },
+    { name: 'lever seated hip abduction', equipment: 'leverage machine', target: 'abductors' },
+    { name: 'smith leg press', equipment: 'smith machine', target: 'glutes' },
+    { name: 'kettlebell hang clean', equipment: 'kettlebell', target: 'hamstrings' },
+  ];
+
+  it.each(smokeCases)('returns tiers for $name', ({ name, equipment, target }) => {
+    expect(getAllTiers(80, 'male', name, { equipment, target })).not.toBeNull();
+    expect(
+      getLeagueInfo({
+        weight: 40,
+        reps: 5,
+        bodyWeightKg: 80,
+        gender: 'male',
+        exerciseName: name,
+        exerciseMetadata: { equipment, target },
+      }),
+    ).not.toBeNull();
+  });
+});
+
+describe('isIntentionallyExcluded', () => {
+  it('excludes pure bodyweight abs', () => {
+    expect(
+      isIntentionallyExcluded('body weight', 'abs', 'crunch floor'),
+    ).toBe(true);
+  });
+
+  it('allows loaded cable crunch', () => {
+    expect(
+      isIntentionallyExcluded('cable', 'abs', 'cable standing crunch'),
+    ).toBe(false);
+  });
+
+  it('excludes cardio', () => {
+    expect(
+      isIntentionallyExcluded('elliptical machine', 'cardiovascular system', 'run'),
+    ).toBe(true);
+  });
+});
+
+describe('catalog rank coverage', () => {
+  it('has zero fixable gaps in full catalog', () => {
+    const stats = summarizeCoverage(loadCatalog('popular-exercises.json'));
+    expect(stats.gap).toBe(0);
+    expect(stats.ok).toBeGreaterThan(1100);
+    expect(stats.intentional).toBeGreaterThan(200);
+  });
+
+  it('has zero fixable gaps in filtered catalog', () => {
+    const stats = summarizeCoverage(loadCatalog('popular-exercises.filtered.json'));
+    expect(stats.gap).toBe(0);
+    expect(stats.ok).toBeGreaterThan(500);
+  });
+
+  it('keeps ranks for popular gym exercises', () => {
+    const popular = [
+      'barbell bench press',
+      'barbell high bar squat',
+      'barbell deadlift',
+      'twin handle parallel grip lat pulldown',
+      'barbell seated overhead press',
+      'barbell bent over row',
+      'dumbbell lateral raise',
+      'lever leg extension',
+      'smith leg press',
+      'barbell curl',
+      'cable one arm tricep pushdown',
+      'dumbbell incline bench press',
+      'dumbbell biceps curl',
+      'pull-up',
+      'cable seated row',
+    ];
+    const catalog = loadCatalog('popular-exercises.json');
+    for (const name of popular) {
+      const ex = catalog.find((e) => e.name === name);
+      expect(ex).toBeDefined();
+      expect(
+        classifyExerciseRankCoverage(ex!.name, {
+          equipment: ex!.equipment,
+          target: ex!.target,
+          bodyPart: ex!.bodyPart,
+        }),
+      ).toBe('ok');
+    }
   });
 });

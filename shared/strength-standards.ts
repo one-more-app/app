@@ -614,29 +614,193 @@ const STANDARDS_BY_EQUIPMENT_TARGET: Record<string, LegacyStandardsEntry> = {
     male: tiers([0, 0.04, 0.09, 0.13, 0.18, 0.22, 0.27, 0.31, 0.36, 0.4]),
     female: tiers([0, 0.03, 0.07, 0.1, 0.14, 0.17, 0.21, 0.24, 0.28, 0.31]),
   },
+  lever_abs: {
+    male: tiers([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45]),
+    female: tiers([0, 0.04, 0.08, 0.12, 0.16, 0.2, 0.24, 0.28, 0.32, 0.36]),
+  },
+  weighted_abs: {
+    male: tiers([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45]),
+    female: tiers([0, 0.04, 0.08, 0.12, 0.16, 0.2, 0.24, 0.28, 0.32, 0.36]),
+  },
+  kettlebell_abs: {
+    male: tiers([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45]),
+    female: tiers([0, 0.04, 0.08, 0.12, 0.16, 0.2, 0.24, 0.28, 0.32, 0.36]),
+  },
+  lever_biceps: {
+    male: tiers([0, 0.09, 0.18, 0.27, 0.36, 0.45, 0.54, 0.63, 0.72, 0.81]),
+    female: tiers([0, 0.07, 0.14, 0.21, 0.28, 0.35, 0.42, 0.49, 0.56, 0.63]),
+  },
+  lever_calves: {
+    male: tiers([0, 0.14, 0.29, 0.43, 0.58, 0.72, 0.87, 1.01, 1.16, 1.3]),
+    female: tiers([0, 0.12, 0.23, 0.35, 0.46, 0.58, 0.69, 0.81, 0.92, 1.04]),
+  },
+  barbell_traps: {
+    male: tiers([0, 0.11, 0.23, 0.34, 0.45, 0.57, 0.68, 0.79, 0.91, 1.02]),
+    female: tiers([0, 0.09, 0.18, 0.27, 0.36, 0.45, 0.54, 0.63, 0.72, 0.81]),
+  },
+  dumbbell_traps: {
+    male: tiers([0, 0.04, 0.08, 0.12, 0.16, 0.2, 0.24, 0.28, 0.32, 0.36]),
+    female: tiers([0, 0.03, 0.06, 0.09, 0.12, 0.15, 0.18, 0.21, 0.24, 0.27]),
+  },
+  machine_traps: {
+    male: tiers([0, 0.11, 0.23, 0.34, 0.45, 0.57, 0.68, 0.79, 0.91, 1.02]),
+    female: tiers([0, 0.09, 0.18, 0.27, 0.36, 0.45, 0.54, 0.63, 0.72, 0.81]),
+  },
+  lever_spine: {
+    male: tiers([0, 0.03, 0.06, 0.09, 0.12, 0.15, 0.18, 0.21, 0.24, 0.27]),
+    female: tiers([0, 0.02, 0.05, 0.07, 0.1, 0.12, 0.15, 0.17, 0.2, 0.22]),
+  },
+  machine_spine: {
+    male: tiers([0, 0.03, 0.06, 0.09, 0.12, 0.15, 0.18, 0.21, 0.24, 0.27]),
+    female: tiers([0, 0.02, 0.05, 0.07, 0.1, 0.12, 0.15, 0.17, 0.2, 0.22]),
+  },
+  machine_abductors: {
+    male: tiers([0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8]),
+    female: tiers([0, 0.16, 0.32, 0.48, 0.64, 0.8, 0.96, 1.12, 1.28, 1.44]),
+  },
+  machine_adductors: {
+    male: tiers([0, 0.18, 0.36, 0.54, 0.72, 0.9, 1.08, 1.26, 1.44, 1.62]),
+    female: tiers([0, 0.14, 0.28, 0.42, 0.56, 0.7, 0.84, 0.98, 1.12, 1.26]),
+  },
+  dumbbell_serratus: {
+    male: tiers([0, 0.03, 0.06, 0.09, 0.12, 0.15, 0.18, 0.21, 0.24, 0.27]),
+    female: tiers([0, 0.02, 0.05, 0.07, 0.1, 0.12, 0.15, 0.17, 0.2, 0.23]),
+  },
+  weighted_lats: {
+    male: tiers([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.95]),
+    female: tiers([0, 0.06, 0.12, 0.18, 0.24, 0.3, 0.36, 0.42, 0.47, 0.55]),
+  },
+  "body weight_quads": {
+    male: tiers([0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1.05, 1.2, 1.35]),
+    female: tiers([0, 0.12, 0.24, 0.36, 0.48, 0.6, 0.72, 0.84, 0.96, 1.08]),
+  },
+  "body weight_glutes": {
+    male: tiers([0, 0.18, 0.36, 0.53, 0.71, 0.89, 1.07, 1.24, 1.42, 1.6]),
+    female: tiers([0, 0.14, 0.28, 0.42, 0.57, 0.71, 0.85, 0.99, 1.13, 1.27]),
+  },
+  "body weight_hamstrings": {
+    male: tiers([0, 0.11, 0.22, 0.33, 0.44, 0.55, 0.66, 0.77, 0.88, 1.0]),
+    female: tiers([0, 0.09, 0.18, 0.27, 0.36, 0.45, 0.54, 0.63, 0.72, 0.8]),
+  },
 };
 
-/** Exclusions par nom (mouvements sans charge mesurable ou 1RM inadapté) */
-const EXCLUDED_PATTERNS = [
+/** Exclusions inconditionnelles par nom */
+const ALWAYS_EXCLUDED_PATTERNS = [
   "bodyweight squat",
-  "crunch",
-  "sit-up",
-  "plank",
-  "leg raise",
-  "russian twist",
-  "mountain climber",
   "burpee",
   "jump rope",
   "stretch",
   "stretching",
-];
+  "mountain climber",
+  "russian twist",
+] as const;
+
+/** Exclusions si équipement non chargeable (policy loaded_only) */
+const LOAD_SENSITIVE_PATTERNS = [
+  "crunch",
+  "sit-up",
+  "sit up",
+  "plank",
+  "leg raise",
+] as const;
+
+const NON_LOADABLE_EQUIPMENT = [
+  "band",
+  "resistance band",
+  "stability ball",
+  "roller",
+  "rope",
+  "bosu ball",
+  "wheel roller",
+  "upper body ergometer",
+  "elliptical machine",
+  "stationary bike",
+  "stepmill machine",
+  "skierg machine",
+] as const;
+
+const LOADABLE_EQUIPMENT_HINTS = [
+  "barbell",
+  "dumbbell",
+  "cable",
+  "machine",
+  "lever",
+  "leverage",
+  "smith",
+  "weighted",
+  "kettlebell",
+  "ez barbell",
+  "trap bar",
+  "medicine ball",
+  "sled",
+  "assisted",
+  "hammer",
+  "tire",
+] as const;
+
+function isLoadableEquipment(equipment: string): boolean {
+  const x = equipment.toLowerCase().trim();
+  if (NON_LOADABLE_EQUIPMENT.some((nl) => x.includes(nl) || x === nl)) {
+    return false;
+  }
+  return LOADABLE_EQUIPMENT_HINTS.some((hint) => x.includes(hint));
+}
+
+/** Exclusion volontaire : cardio, mobilité, bodyweight pur sans charge mesurable. */
+export function isIntentionallyExcluded(
+  equipment: string,
+  target: string,
+  exerciseName: string,
+): boolean {
+  const t = normalizeTarget(target);
+  const n = exerciseName.toLowerCase();
+  const eq = equipment.toLowerCase().trim();
+
+  if (t === "cardio" || t === "cardiovascular system") return true;
+
+  for (const pat of ALWAYS_EXCLUDED_PATTERNS) {
+    if (n.includes(pat)) return true;
+  }
+
+  for (const pat of LOAD_SENSITIVE_PATTERNS) {
+    if (n.includes(pat) && !isLoadableEquipment(equipment)) return true;
+  }
+
+  if (NON_LOADABLE_EQUIPMENT.some((nl) => eq.includes(nl) || eq === nl)) {
+    return true;
+  }
+
+  if (eq === "assisted" && t === "abs") return true;
+
+  if (eq === "body weight") {
+    if (t === "abs" || t === "spine") return true;
+    if (t === "abductors" || t === "adductors") return true;
+    if (
+      n.includes("toe touch") ||
+      n.includes("flutter kick") ||
+      n.includes("warm-up") ||
+      n.includes("warm up")
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 /** Normalise equipment API → clé de lookup */
 function normalizeEquipment(e: string): string {
   const x = e.toLowerCase().trim();
-  if (x.includes("barbell") || x.includes("ez barbell") || x.includes("smith"))
-    return "barbell";
-  if (x.includes("dumbbell") || x.includes("kettlebell")) return "dumbbell";
+  if (x === "weighted") return "weighted";
+  if (x === "assisted") return "assisted";
+  if (x.includes("medicine ball")) return "dumbbell";
+  if (x.includes("trap bar")) return "barbell";
+  if (x.includes("olympic barbell") || x.includes("smith")) return "barbell";
+  if (x.includes("kettlebell")) return "dumbbell";
+  if (x.includes("sled") || x.includes("tire") || x.includes("hammer"))
+    return "machine";
+  if (x.includes("barbell") || x.includes("ez barbell")) return "barbell";
+  if (x.includes("dumbbell")) return "dumbbell";
   if (x.includes("cable")) return "cable";
   if (x.includes("lever") || x.includes("leg press")) return "lever";
   if (x.includes("machine")) return "machine";
@@ -667,17 +831,70 @@ function getStandardsKey(
   target: string,
   exerciseName: string,
 ): string | null {
+  if (isIntentionallyExcluded(equipment, target, exerciseName)) return null;
+
+  const rawEq = equipment.toLowerCase().trim();
   const e = normalizeEquipment(equipment);
   const t = normalizeTarget(target);
   const n = exerciseName.toLowerCase();
 
-  if (t === "cardio") return null;
+  if (t === "cardio" || t === "cardiovascular system") return null;
 
-  for (const pat of EXCLUDED_PATTERNS) {
-    if (n.includes(pat)) return null;
+  // --- Traps ---
+  if (t === "traps") {
+    if (e === "barbell") return "barbell_traps";
+    if (e === "dumbbell") return "dumbbell_traps";
+    if (e === "machine" || e === "leverage machine" || e === "lever")
+      return "machine_traps";
+    if (e === "cable") return "cable_delts_upright";
   }
 
-  // Poids du corps / leverage
+  // --- Spine / extensions lombaires ---
+  if (t === "spine") {
+    if (e === "weighted") return "lever_spine";
+    if (e === "barbell") return "lever_spine";
+    if (e === "lever" || e === "leverage machine") return "lever_spine";
+    if (e === "machine") return "machine_spine";
+  }
+
+  // --- Abductors / adductors ---
+  if (t === "abductors") return "machine_abductors";
+  if (t === "adductors") return "machine_adductors";
+
+  // --- Serratus ---
+  if (t === "serratus anterior") return "dumbbell_serratus";
+
+  // --- Weighted (lest) ---
+  if (e === "weighted") {
+    if (t === "abs") return "weighted_abs";
+    if (t === "lats") return "weighted_lats";
+    if (t === "delts") return "dumbbell_delts_raise";
+    if (t === "biceps") return "barbell_biceps";
+    if (t === "triceps") return "barbell_triceps";
+    if (t === "glutes") return "barbell_glutes_hipthrust";
+    if (t === "pectorals") return "body weight_pectorals_pushup";
+    if (t === "forearms") return "barbell_forearms";
+    if (t === "spine") return "lever_spine";
+    if (t === "quads") return "lever_quads";
+    if (t === "hamstrings") return "machine_hamstrings";
+  }
+
+  // --- Assisted ---
+  if (e === "assisted") {
+    if (t === "lats") return "body weight_lats";
+    if (t === "triceps") return "body weight_triceps";
+    if (t === "pectorals")
+      return n.includes("dip")
+        ? "body weight_pectorals_dips"
+        : "body weight_pectorals_pushup";
+    if (t === "hamstrings") return "machine_hamstrings";
+    if (t === "calves") return "body weight_calves";
+    if (t === "quads") return "lever_quads";
+    if (t === "glutes") return "barbell_glutes_bridge";
+    if (t === "adductors") return "machine_adductors";
+  }
+
+  // --- Poids du corps / leverage ---
   if (e === "body weight" || e === "leverage machine") {
     if (t === "lats")
       return e === "body weight" ? "body weight_lats" : "leverage machine_lats";
@@ -688,11 +905,34 @@ function getStandardsKey(
         ? "body weight_pectorals_dips"
         : "body weight_pectorals_pushup";
     if (t === "upper back") return "body weight_upper back";
+    if (t === "calves") return "body weight_calves";
+    if (t === "glutes") {
+      if (n.includes("hip thrust")) return "barbell_glutes_hipthrust";
+      if (n.includes("bridge")) return "barbell_glutes_bridge";
+      if (n.includes("step-up") || n.includes("step up"))
+        return "dumbbell_quads_lunge";
+      return "body weight_glutes";
+    }
+    if (t === "quads") {
+      if (n.includes("lunge") || n.includes("step-up") || n.includes("step up"))
+        return "dumbbell_quads_lunge";
+      if (n.includes("sissy") || n.includes("pistol")) return "body weight_quads";
+      return "body weight_quads";
+    }
+    if (t === "hamstrings") {
+      if (n.includes("nordic") || n.includes("curl")) return "body weight_hamstrings";
+      return "body weight_hamstrings";
+    }
+    if (t === "delts") return "dumbbell_delts_raise";
+    if (t === "forearms") return "barbell_forearms";
   }
 
   // Charges externes
-  if (n.includes("leg press")) {
+  if (n.includes("leg press") || (n.includes("leg") && n.includes("press"))) {
     if (t === "quads" || t === "glutes") return "lever_quads";
+  }
+  if (n.includes("tire flip") || n.includes("flip")) {
+    if (t === "glutes") return "barbell_glutes_deadlift";
   }
 
   // Calves
@@ -700,7 +940,8 @@ function getStandardsKey(
     if (e === "barbell") return "barbell_calves";
     if (e === "dumbbell") return "dumbbell_calves";
     if (e === "cable") return "cable_calves";
-    if (e === "machine" || e === "leverage machine") return "machine_calves";
+    if (e === "lever") return "lever_calves";
+    if (e === "machine" || e === "leverage machine") return "lever_calves";
     if (e === "body weight") return "body weight_calves";
   }
 
@@ -709,12 +950,18 @@ function getStandardsKey(
     if (e === "barbell") return "barbell_forearms";
     if (e === "dumbbell") return "dumbbell_forearms";
     if (e === "cable") return "cable_forearms";
+    if (e === "leverage machine" || e === "lever") return "barbell_forearms";
   }
 
   // Abs (chargés uniquement)
   if (t === "abs") {
+    if (rawEq.includes("kettlebell")) return "kettlebell_abs";
     if (e === "cable") return "cable_abs";
     if (e === "barbell") return "barbell_abs";
+    if (e === "lever" || e === "leverage machine") return "lever_abs";
+    if (e === "weighted") return "weighted_abs";
+    if (e === "dumbbell") return "cable_abs";
+    if (e === "machine") return "lever_abs";
   }
 
   if (e === "barbell") {
@@ -776,10 +1023,13 @@ function getStandardsKey(
     }
     if (t === "glutes") {
       if (n.includes("bridge")) return "dumbbell_glutes_bridge";
+      if (n.includes("hip thrust")) return "barbell_glutes_hipthrust";
       if (!n.includes("deadlift")) return "dumbbell_quads";
     }
-    if (t === "hamstrings" && n.includes("deadlift"))
-      return "barbell_hamstrings";
+    if (t === "hamstrings") {
+      if (n.includes("deadlift")) return "barbell_hamstrings";
+      return "machine_hamstrings";
+    }
     if (t === "upper back" || t === "lats") return "dumbbell_upper_back";
     if (t === "delts") {
       if (n.includes("upright")) return "dumbbell_delts_upright";
@@ -822,6 +1072,8 @@ function getStandardsKey(
     }
     if (t === "triceps") return "cable_triceps";
     if (t === "biceps") return "cable_biceps";
+    if (t === "traps") return "cable_delts_upright";
+    if (t === "adductors") return "machine_adductors";
   }
 
   if (e === "lever") {
@@ -829,6 +1081,21 @@ function getStandardsKey(
       return n.includes("hack") ? "barbell_quads_hack" : "lever_quads";
     if (t === "hamstrings" && n.includes("curl")) return "machine_hamstrings";
     if (t === "triceps") return "lever_triceps";
+    if (t === "calves") return "lever_calves";
+    if (t === "biceps") return "lever_biceps";
+    if (t === "abs") return "lever_abs";
+    if (t === "spine") return "lever_spine";
+    if (t === "glutes") {
+      if (n.includes("hip") || n.includes("good morning"))
+        return n.includes("good morning")
+          ? "barbell_hamstrings"
+          : "barbell_glutes_hipthrust";
+      return "barbell_glutes_hipthrust";
+    }
+    if (t === "traps") return "machine_traps";
+    if (t === "abductors") return "machine_abductors";
+    if (t === "adductors") return "machine_adductors";
+    if (t === "forearms") return "barbell_forearms";
   }
 
   if (e === "machine" || e === "leverage machine") {
@@ -841,11 +1108,25 @@ function getStandardsKey(
       return n.includes("hack") ? "barbell_quads_hack" : "lever_quads";
     }
     if (t === "hamstrings" && n.includes("curl")) return "machine_hamstrings";
-    if (t === "glutes" && (n.includes("hip thrust") || n.includes("kickback")))
-      return "barbell_glutes_hipthrust";
+    if (t === "glutes") {
+      if (n.includes("hip thrust") || n.includes("kickback") || n.includes("hip extension"))
+        return "barbell_glutes_hipthrust";
+      if (n.includes("good morning")) return "barbell_hamstrings";
+      if (n.includes("reverse hyper")) return "lever_spine";
+    }
     if (t === "triceps")
       return n.includes("dip") ? "lever_triceps" : "cable_triceps";
-    if (t === "biceps") return "cable_biceps";
+    if (t === "biceps")
+      return n.includes("preacher") || n.includes("hammer")
+        ? "lever_biceps"
+        : "cable_biceps";
+    if (t === "calves") return "lever_calves";
+    if (t === "traps") return "machine_traps";
+    if (t === "spine") return "lever_spine";
+    if (t === "abs") return "lever_abs";
+    if (t === "abductors") return "machine_abductors";
+    if (t === "adductors") return "machine_adductors";
+    if (t === "forearms") return "barbell_forearms";
   }
 
   return null;
@@ -928,6 +1209,25 @@ function getEquipmentTargetFromName(
     (n.includes("cable") || n.includes("poulie") || n.includes("charge"))
   )
     return { equipment: "cable", target: "abs" };
+  if (n.includes("shrug")) return { equipment: "barbell", target: "traps" };
+  if (n.includes("back extension") || n.includes("hyperextension"))
+    return { equipment: "leverage machine", target: "spine" };
+  if (n.includes("hip abduction")) return { equipment: "leverage machine", target: "abductors" };
+  if (n.includes("hip adduction")) return { equipment: "leverage machine", target: "adductors" };
+  if (n.includes("preacher curl"))
+    return { equipment: "leverage machine", target: "biceps" };
+  if (n.includes("good morning"))
+    return { equipment: "barbell", target: "hamstrings" };
+  if (n.includes("serratus") || n.includes("protraction"))
+    return { equipment: "dumbbell", target: "serratus anterior" };
+  if (n.includes("hang clean") || n.includes("clean"))
+    return { equipment: "barbell", target: "hamstrings" };
+  if (n.includes("step-up") || n.includes("step up"))
+    return { equipment: "body weight", target: "glutes" };
+  if (n.includes("squatting row"))
+    return { equipment: "body weight", target: "upper back" };
+  if (n.includes("curl-up")) return { equipment: "body weight", target: "abs" };
+  if (n.includes("gorilla chin")) return { equipment: "body weight", target: "abs" };
   return null;
 }
 
@@ -971,6 +1271,7 @@ const BODYWEIGHT_STANDARDS_KEYS = new Set([
   "body weight_pectorals_pushup",
   "body weight_pectorals_dips",
   "body weight_upper back",
+  "weighted_lats",
 ]);
 
 function isBodyweightAdditiveKey(key: string | null): boolean {
@@ -1179,4 +1480,25 @@ export function inferTargetForLeague(
   const fb = getEquipmentTargetFromName(exerciseName);
   if (!fb) return null;
   return normalizeTarget(fb.target);
+}
+
+export type RankCoverageStatus = "ok" | "intentional" | "gap";
+
+/** Classifie la couverture rang d'un exercice catalogue (audit / CI). */
+export function classifyExerciseRankCoverage(
+  exerciseName: string,
+  metadata?: ExerciseMetadata,
+): RankCoverageStatus {
+  const equipment = metadata?.equipment ?? "";
+  const target = metadata?.target ?? "";
+  if (isIntentionallyExcluded(equipment, target, exerciseName)) {
+    return "intentional";
+  }
+  if (
+    getAllTiers(75, "male", exerciseName, metadata) ||
+    getAllTiers(75, "female", exerciseName, metadata)
+  ) {
+    return "ok";
+  }
+  return "gap";
 }

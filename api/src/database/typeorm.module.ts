@@ -17,6 +17,10 @@ import { FriendshipEntity } from '../social/entities/friendship.entity.js';
 import { ConversationEntity } from '../messaging/entities/conversation.entity.js';
 import { MessageEntity } from '../messaging/entities/message.entity.js';
 import { UserPresenceEntity } from '../presence/entities/user-presence.entity.js';
+import { DeviceTokenEntity } from '../notifications/entities/device-token.entity.js';
+import { NotificationPreferencesEntity } from '../notifications/entities/notification-preferences.entity.js';
+import { NotificationDeliveryEntity } from '../notifications/entities/notification-delivery.entity.js';
+import { FriendTrainingAlertEntity } from '../notifications/entities/friend-training-alert.entity.js';
 
 export const TYPEORM_ENTITIES = [
   UserEntity,
@@ -32,6 +36,10 @@ export const TYPEORM_ENTITIES = [
   ConversationEntity,
   MessageEntity,
   UserPresenceEntity,
+  DeviceTokenEntity,
+  NotificationPreferencesEntity,
+  NotificationDeliveryEntity,
+  FriendTrainingAlertEntity,
 ] as const;
 
 const getDatabaseUrl = (config: ConfigService): string => {

@@ -2,7 +2,7 @@ import { History, Home, User, Users } from 'lucide-react'
 import type { JSX } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
-import { useUnreadMessagesCount } from '@/hooks/use-mark-conversation-read'
+import { useFriendsBadgeCount } from '@/hooks/use-friends-badge-count'
 import { hapticTab } from '@/lib/haptics'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
@@ -21,7 +21,7 @@ const NAV_ITEMS: Array<{
 function BottomNav() {
     const location = useLocation()
     const activeTo = location.pathname
-    const unreadMessages = useUnreadMessagesCount()
+    const friendsBadge = useFriendsBadgeCount()
 
     return (
         <nav
@@ -32,7 +32,7 @@ function BottomNav() {
                 {NAV_ITEMS.map((item) => {
                     const active = activeTo === item.to
                     const showUnreadBadge =
-                        item.to === '/friends' && unreadMessages > 0
+                        item.to === '/friends' && friendsBadge > 0
                     return (
                         <Link
                             key={item.to}
@@ -43,7 +43,7 @@ function BottomNav() {
                             aria-current={active ? 'page' : undefined}
                             aria-label={
                                 showUnreadBadge
-                                    ? `${item.label}, ${unreadMessages} message${unreadMessages > 1 ? 's' : ''} non lu${unreadMessages > 1 ? 's' : ''}`
+                                    ? `${item.label}, ${friendsBadge} notification${friendsBadge > 1 ? 's' : ''}`
                                     : item.label
                             }
                             className={cn(
@@ -60,7 +60,7 @@ function BottomNav() {
                                 />
                                 {showUnreadBadge ? (
                                     <span className="absolute right-1 top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground">
-                                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                                        {friendsBadge > 9 ? '9+' : friendsBadge}
                                     </span>
                                 ) : null}
                             </div>

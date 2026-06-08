@@ -55,6 +55,28 @@ export function computeStreakAfterActivity(
   return { current: 1 };
 }
 
+/** Dernier jour de grâce : la série sera perdue demain sans séance. */
+export function isStreakOnGraceDay(
+  lastActiveDate: string | null,
+  currentStreak: number,
+  today: string = todayDateKey(),
+): boolean {
+  return (
+    currentStreak > 0 &&
+    !!lastActiveDate &&
+    daysWithoutActivitySince(lastActiveDate, today) === 1
+  );
+}
+
+/** Alias sémantique pour les rappels push. */
+export function isStreakAtRisk(
+  lastActiveDate: string | null,
+  currentStreak: number,
+  today: string = todayDateKey(),
+): boolean {
+  return isStreakOnGraceDay(lastActiveDate, currentStreak, today);
+}
+
 export function computeStreakFromActivityDates(
   dates: string[],
   today: string = todayDateKey(),

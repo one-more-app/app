@@ -17,6 +17,7 @@ import { FriendsService } from '../social/friends.service.js';
 import { PresenceHeartbeatDto } from '../presence/dto/presence-heartbeat.dto.js';
 import { PresenceStatus } from '../presence/entities/presence-status.enum.js';
 import { PresenceService } from '../presence/presence.service.js';
+import { NotificationDispatchService } from '../notifications/notification-dispatch.service.js';
 import { RealtimeBroadcaster } from './realtime-broadcaster.service.js';
 import { WsJwtGuard } from './ws-jwt.guard.js';
 
@@ -40,6 +41,7 @@ export class RealtimeGateway
     private readonly wsJwtGuard: WsJwtGuard,
     private readonly presenceService: PresenceService,
     private readonly friendsService: FriendsService,
+    private readonly notifications: NotificationDispatchService,
     @InjectRepository(ConversationEntity)
     private readonly conversationsRepo: Repository<ConversationEntity>,
   ) {}
@@ -87,9 +89,19 @@ export class RealtimeGateway
     @MessageBody() body: PresenceHeartbeatDto,
   ) {
     const userId = client.data.user.sub as string;
+    const prev = await this.presenceService.getPresence(userId);
     const presence = await this.presenceService.updateHeartbeat(userId, body);
     const friendIds = await this.friendsService.getAcceptedFriendIds(userId);
     this.broadcaster.emitPresenceUpdate(friendIds, presence);
+    if (
+      body.status === PresenceStatus.TRAINING &&
+      prev?.status !== PresenceStatus.TRAINING
+    ) {
+      void this.notifications.notifyFriendTraining({
+        trainingUserId: userId,
+        exerciseName: presence.exerciseName,
+      });
+    }
     return { ok: true, presence };
   }
 

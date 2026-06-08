@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
+import { NotificationsModule } from '../notifications/notifications.module.js';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LeagueModule } from '../league/league.module.js';
 import { ProgressModule } from '../progress/progress.module.js';
@@ -12,6 +13,7 @@ import { PerformanceEntriesService } from './performance-entries.service.js';
     TypeOrmModule.forFeature([PerformanceEntryEntity, TrackedExerciseEntity]),
     ProgressModule,
     LeagueModule,
+    forwardRef(() => NotificationsModule),
   ],
   controllers: [PerformanceEntriesController],
   providers: [PerformanceEntriesService],

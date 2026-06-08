@@ -1,4 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
+import { NotificationDispatchService } from '../notifications/notification-dispatch.service.js';
+import { XpSourceType } from '../progress/entities/xp-source-type.enum.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LeagueService } from '../league/league.service.js';
@@ -24,6 +26,8 @@ export class PerformanceEntriesService {
     private readonly trackedRepo: Repository<TrackedExerciseEntity>,
     private readonly progressService: ProgressService,
     private readonly leagueService: LeagueService,
+    @Inject(forwardRef(() => NotificationDispatchService))
+    private readonly notifications: NotificationDispatchService,
   ) {}
 
   async list(
@@ -119,6 +123,18 @@ export class PerformanceEntriesService {
       weight: entity.weight,
       reps: entity.reps,
     });
+
+    const hasPr = xp.grants.some(
+      (g) => g.sourceType === XpSourceType.PersonalRecord,
+    );
+    if (hasPr) {
+      void this.notifications.notifyFriendPr({
+        athleteUserId: userId,
+        exerciseName: entity.trackedExercise.name,
+        weight: entity.weight,
+        reps: entity.reps,
+      });
+    }
 
     return {
       id: entity.clientId,

@@ -1,228 +1,125 @@
-# Analyse du mapping exercices → types de standards (ligues)
+# Mapping exercices → rangs (ligues)
 
-## Sources des noms d'exercices
+Documentation à jour du système de rangs basé sur `(equipment, target, name)`.
 
-| Source | Langue | Exemple |
-|--------|--------|---------|
-| API ExerciseDB | Anglais | `barbell bench press`, `lat pulldown` |
-| Exercices personnalisés | FR ou EN | `Développé couché`, `Tirage corde triceps` |
-| Dictionnaire EXERCISE_NAMES | Clé EN → Val FR | 140+ exercices |
+## Source de vérité
 
----
+| Fichier | Rôle |
+|---------|------|
+| [`shared/strength-standards.ts`](../shared/strength-standards.ts) | Profils de seuils, résolution exercice → profil, calcul 1RM/rang |
+| [`shared/league-aggregate.ts`](../shared/league-aggregate.ts) | Agrégation profil global / par muscle |
+| [`api/scripts/check-rank-coverage.mjs`](../api/scripts/check-rank-coverage.mjs) | Audit CI de couverture catalogue |
 
-## Ordre actuel des conditions (priorité haute → basse)
+Les rangs ne sont **pas stockés en base** : ils sont calculés à la demande via le ratio `1RM / poids du corps`.
 
-1. **bench** : bench press, développé couché, chest press
-2. **squat** : squat (exclut bulgarian, hack, leg press)
-3. **deadlift** : deadlift, soulevé de terre, romanian, sumo
-4. **overhead** : military press, overhead press, développé militaire/épaules, shoulder press, arnold press
-5. **triceps** : tricep, triceps, extension triceps, pushdown
-6. **row** : row, rowing, bent over, pulldown, tirage, lat pulldown
-7. **null** : tout le reste
+## Architecture
 
----
+```
+Exercice (equipment, target, name)
+  → isIntentionallyExcluded ? → null (pas de rang)
+  → normalizeEquipment + getStandardsKey
+  → STANDARDS_BY_EQUIPMENT_TARGET (~85 profils)
+  → expandLegacyTiersToRankTiers → 16 rangs (bronze_1 … legend)
+  → getLeagueInfo
+```
 
-## Analyse exercice par exercice (EXERCISE_NAMES)
+## Couverture catalogue (juin 2025)
 
-### ✅ PECTORAUX
+| Catalogue | Avec rang | Exclusion volontaire | Gap fixable |
+|-----------|-----------|----------------------|-------------|
+| `popular-exercises.json` (1500) | **1149** | 351 | **0** |
+| `popular-exercises.filtered.json` (569) | **536** | 33 | **0** |
 
-| Nom API (EN) | Nom FR | Mapping actuel | Correct ? |
-|--------------|--------|----------------|-----------|
-| bench press | Développé couché | bench | ✅ |
-| barbell bench press | Développé couché barre | bench | ✅ |
-| dumbbell bench press | Développé couché haltères | bench | ✅ |
-| incline bench press | Développé incliné | bench | ⚠️ Incliné = moins de charge, ratio différent ? |
-| barbell incline bench press | Développé incliné barre | bench | ⚠️ idem |
-| dumbbell incline press | Développé incliné haltères | bench | ⚠️ idem |
-| chest press | Développé pectoraux | bench | ✅ |
-| close grip bench press | Développé couché prise serrée | bench | ⚠️ **CONFLIT** : prise serrée = plus triceps, souvent mappé triceps ailleurs |
-| push-up, wide push-up, diamond push-up, decline push-up | Pompes | null | ❌ Poids du corps, ratio différent |
-| cable crossover, pec deck fly, dumbbell fly, etc. | Écartés | null | ⏸️ Isolation, pas de standard 1RM classique |
-| dumbbell pullover | Pull-over haltère | null | ⏸️ Mouvement hybride pectoraux/dos, pas de standard row |
+Commande d'audit :
 
-### ✅ ÉPAULES
+```bash
+cd api && npm run test:coverage-ranks
+```
 
-| Nom API (EN) | Nom FR | Mapping actuel | Correct ? |
-|--------------|--------|----------------|-----------|
-| military press | Développé militaire | overhead | ✅ |
-| overhead press | Développé épaules | overhead | ✅ |
-| barbell military press | Développé militaire barre | overhead | ✅ |
-| dumbbell shoulder press | Développé haltères | overhead | ✅ |
-| arnold press | Développé Arnold | overhead | ✅ |
-| upright row | Rowing menton | row | ⚠️ **DISCUTABLE** : rowing menton = épaules/trapèzes, pas tirage dos. Ratio très différent. |
-| barbell upright row | Rowing menton barre | row | ⚠️ idem |
-| front raise, lateral raise, rear delt fly, etc. | Élévations, Oiseau | null | ⏸️ Isolation, pas de standard |
-| face pull | Face pull | row | ⚠️ Face pull = petite charge, isolation dos/épaules. Proche de row en mouvement mais charge très faible |
+## Policy d'exclusion (`isIntentionallyExcluded`)
 
-### ✅ DOS / ROW
+Exclusions **volontaires** (pas de rang, classées `intentional` dans l'audit) :
 
-| Nom API (EN) | Nom FR | Mapping actuel | Correct ? |
-|--------------|--------|----------------|-----------|
-| bent over row | Rowing buste penché | row | ✅ |
-| barbell bent over row | Rowing barre buste penché | row | ✅ |
-| dumbbell bent over row | Rowing haltères buste penché | row | ✅ |
-| one arm row | Rowing un bras | row | ✅ |
-| t-bar row | Rowing barre T | row | ✅ |
-| seated row | Rowing assis | row | ✅ |
-| cable seated row | Tirage horizontal | row | ✅ |
-| cable low seated row | Tirage horizontal bas | row | ✅ |
-| inverted row | Tirage inversé | row | ⚠️ Poids du corps, ratio différent (angle) |
-| chin-up, pull-up | Tractions | row | ⚠️ Poids du corps, ratio = répétitions ou +poids. Standards différents |
-| lat pulldown | Tirage vertical | row | ✅ |
-| cable pulldown | Tirage vertical poulie | row | ✅ |
-| close grip lat pulldown | Tirage vertical prise serrée | row | ✅ |
-| straight arm pulldown | Tirage bras tendus | row | ⚠️ Isolation, mouvement différent |
+| Catégorie | Exemples |
+|-----------|----------|
+| Cardio | `target: cardiovascular system`, machines elliptique/vélo |
+| Bodyweight pur abs/spine | crunch, plank, sit-up au sol, leg raise sans charge |
+| Mobilité BW | toe touch, flutter kicks, warm-up |
+| Équipement non standardisé | band, stability ball, roller, rope, bosu ball |
+| Assisted abs | knee raise assisté (mobilité, pas 1RM) |
+| BW abductors/adductors | mobilité hanche sans charge mesurable |
 
-### ✅ JAMBES
+**Variantes chargées autorisées** (policy `loaded_only`) :
 
-| Nom API (EN) | Nom FR | Mapping actuel | Correct ? |
-|--------------|--------|----------------|-----------|
-| squat | Squat | squat | ✅ |
-| barbell squat | Squat barre | squat | ✅ |
-| front squat | Squat avant | squat | ✅ (ratio légèrement plus bas en général) |
-| barbell front squat | Squat avant barre | squat | ✅ |
-| goblet squat | Squat goblet | squat | ⚠️ Charge limitée par le goblet, ratio plus bas |
-| bodyweight squat | Squat au poids du corps | squat | ❌ **FAUX** : pas de charge externe, null ou type spécial |
-| leg press | Presse à cuisses | null | ⚠️ Exercice lourd, pourrait avoir type "leg-press" |
-| hack squat | Hack squat | null (exclu) | ⚠️ Proche du squat, ratio similaire |
-| bulgarian split squat | Squat bulgare | null (exclu) | ⚠️ Unilateral, ratio différent |
-| lunge, walking lunge | Fente | null | ⏸️ Unilateral |
-| leg extension | Extension de jambes | null | ⏸️ Isolation |
-| leg curl | Leg curl | null | ⏸️ Isolation ischio |
-| calf raise | Mollets | null | ⏸️ Isolation |
-| hip thrust | Hip thrust | null | ⚠️ Gros mouvement fessiers, pourrait avoir type |
-| glute bridge | Pont fessier | null | ⏸️ Souvent poids du corps |
+- Câble / barre / machine / lest : crunch, sit-up, leg raise **avec charge** → profils `cable_abs`, `barbell_abs`, `lever_abs`, `weighted_abs`, etc.
 
-### ✅ BICEPS
+## Normalisation équipement
 
-| Nom API (EN) | Nom FR | Mapping actuel | Correct ? |
-|--------------|--------|----------------|-----------|
-| bicep curl, barbell curl, dumbbell curl, etc. | Curl biceps | null | ❌ **MANQUANT** : type "biceps" avec standards |
-| hammer curl | Marteau | null | ❌ idem |
+| Equipment API | Clé normalisée |
+|---------------|----------------|
+| `smith machine`, `olympic barbell`, `ez barbell`, `trap bar` | `barbell` |
+| `kettlebell`, `medicine ball` | `dumbbell` |
+| `sled machine`, `tire`, `hammer` | `machine` |
+| `weighted` | `weighted` (profils lest dédiés) |
+| `assisted` | `assisted` (mappé sur profils BW / machine) |
+| `leverage machine` | `leverage machine` |
 
-### ✅ TRICEPS
+## Profils de seuils (~85 clés)
 
-| Nom API (EN) | Nom FR | Mapping actuel | Correct ? |
-|--------------|--------|----------------|-----------|
-| tricep extension | Extension triceps | triceps | ✅ |
-| cable tricep pushdown | Extension triceps poulie | triceps | ✅ |
-| skull crusher | Skull crusher | null | ❌ **BUG** : pas de "tricep" dans "skull crusher" ! |
-| lying triceps extension | Extension triceps allongé | triceps | ✅ |
-| overhead tricep extension | Extension triceps au-dessus de la tête | triceps | ✅ |
-| dumbbell tricep extension | Extension triceps haltère | triceps | ✅ |
-| tricep pushdown | Extension triceps poulie | triceps | ✅ |
-| close grip bench press | Développé couché prise serrée | bench | ⚠️ Composante triceps forte, débat bench vs triceps |
-| dips, bench dip, tricep dip | Dips | null | ❌ **MANQUANT** : Dips = poids du corps + additionnel, ratio différent |
+Chaque profil définit 10 ratios legacy (M/F) interpolés en **16 rangs**.
 
----
+### Pectoraux / dos / épaules / jambes (existants)
 
-## Cas complexes identifiés
+`barbell_pectorals`, `dumbbell_pectorals`, `cable_pectorals`, `machine_pectorals`, incliné, fly, pullover, row, lats, delts, squat, deadlift, triceps, biceps, mollets, hip thrust, fentes, upright row, face pull, forearms…
 
-### 1. **Ambiguïtés "tirage"**
-- **Tirage vertical** → row ✅ (dos)
-- **Tirage corde triceps** → triceps ✅ (vérifié avant "tirage")
-- **Tirage horizontal** → row ✅
-- **Tirage bras tendus** → row (isolation, peut-être à part)
-- **Face pull** → row (charge faible, à considérer)
+### Nouveaux profils (extension couverture)
 
-### 2. **"Pushdown" seul**
-- `pushdown` sans "tricep" → triceps (actuellement)
-- **Straight arm pulldown** contient "pulldown" → row. Pas "pushdown". OK.
-- **Cable crossover** : pas pushdown. OK.
+| Clé | Usage |
+|-----|-------|
+| `lever_abs` | Crunch machine leverage |
+| `weighted_abs` | Crunch / sit-up lesté |
+| `kettlebell_abs` | Abdos kettlebell |
+| `lever_biceps` | Preacher curl machine |
+| `lever_calves` | Calf press machine |
+| `barbell_traps` / `dumbbell_traps` / `machine_traps` | Shrugs |
+| `lever_spine` / `machine_spine` | Back extension, hyperextension |
+| `machine_abductors` / `machine_adductors` | Hip ab/adduction machine |
+| `dumbbell_serratus` | Serratus punch |
+| `weighted_lats` | Tractions lestées |
+| `body weight_quads` / `body weight_glutes` / `body weight_hamstrings` | Force au poids du corps (pistol, nordic, step-up…) |
 
-### 3. **"Extension" ambigu**
-- Extension triceps → triceps ✅
-- **Extension de jambes** (leg extension) : contient "extension" mais pas "tricep". Actuellement null. ✅
-- **Overhead tricep extension** → triceps ✅
+## Résolution `getStandardsKey`
 
-### 4. **"Row" ambigu**
-- Bent over row → row ✅
-- **Upright row** → row actuellement, mais mouvement épaules/trapèzes. Ratio ≠ row dos.
-- **Face pull** → row, charge très faible
+Ordre de priorité :
 
-### 5. **Poids du corps**
-- Push-up, chin-up, pull-up, inverted row, bodyweight squat, dips, plank
-- → Soit null, soit type dédié avec standards différents (réps ou +poids)
-- Actuellement presque tous null
+1. Exclusion intentionnelle
+2. Muscles spéciaux : traps, spine, abductors, adductors, serratus
+3. Équipement `weighted` / `assisted`
+4. Bodyweight force (lats, dips, pompes, nordic, step-up…)
+5. Leg press / tire flip (par nom)
+6. Branches par équipement normalisé (barbell, dumbbell, cable, lever, machine)
 
-### 6. **Variantes inclinées / déclinées**
-- Incline bench : on mappe bench. Ratio réaliste ~10-15% plus bas ?
-- Decline : idem ?
-- → Option : facteur de correction ou type séparé "bench-incline"
+Fallback : `getEquipmentTargetFromName(name)` pour exercices custom ou metadata incomplète.
 
-### 7. **Exercices personnalisés**
-- L'utilisateur peut taper n'importe quoi : "Tirage corde triceps", "Dev couché", "Squat barre"
-- Il faut supporter les variantes françaises ET les fautes de frappe potentielles
-- "dev couché" sans accent → pas "développé" exact. Faut-il "developpe" ou "dev" ?
+## Cas particuliers de charge
 
-### 8. **Skull crusher**
-- `skull crusher` ne contient ni "tricep" ni "triceps" ni "pushdown"
-- → Actuellement **null**. À corriger : ajouter "skull crusher" ou "skull" ?
+| Type | Clés | Ratio |
+|------|------|-------|
+| Haltères | `DUMBBELL_STANDARDS_KEYS` | Poids **d'un seul** haltère / BW |
+| Poids du corps + lest | `BODYWEIGHT_STANDARDS_KEYS` | Lest / BW (1RM total − BW) |
+| Mollets BW | `body weight_calves` | Lest / BW uniquement |
 
-### 9. **Pullover**
-- "pullover".includes("row") = false, "pulldown" = false, "tirage" = false
-- La condition row ne matche pas "pullover"
-- Donc pullover → null actuellement. OK (mouvement hybride, pas de standard adapté)
+## Exclusions hors catalogue
 
-### 10. **Close grip bench press**
-- Contient "bench press" → match bench en premier. OK.
-- Certains considèrent que c'est plus "triceps" en termes de standards. Débat.
+- Exercices **custom** utilisateur (`isCustom: true`) → pas de rang
+- Pas de persistance DB du rang par exercice (calcul dynamique)
 
----
+## Références ratios
 
-## Récapitulatif des corrections nécessaires
+- van den Hoek et al. (2024) — powerlifting raw
+- ExRx.net, Symmetric Strength, Strength Level
 
-| Priorité | Problème | Action proposée |
-|----------|----------|-----------------|
-| Haute | skull crusher → null | Ajouter "skull crusher" ou "skull" dans condition triceps |
-| Haute | bodyweight squat → squat | Exclure "bodyweight squat" du mapping squat |
-| Moyenne | upright row → row | Créer type "upright-row" ou exclure (ratio très différent) |
-| Moyenne | Dips non mappé | Type "dips" avec standards poids du corps + additionnel |
-| Moyenne | Biceps non mappé | Type "biceps" avec standards |
-| Basse | Incline bench ratio | Option : facteur correctif ou garder bench |
-| Basse | Leg press, hack squat | Types optionnels si on étend |
-| Basse | Pullover | Rester null (mouvement hybride) |
-| Basse | Face pull | Rester row ou null (charge faible) |
+## Tests
 
----
-
-## Noms français à supporter (exercices custom)
-
-L'utilisateur peut créer : "Tirage corde triceps", "Extension triceps poulie", "Curl biceps", "Développé couché", "Squat", "Soulevé de terre", "Rowing barre", etc.
-
-Vérifications :
-- "extension triceps" → triceps ✅
-- "curl" → null (biceps pas encore)
-- "développé" → ? La condition bench cherche "développé couché", "bench press", "chest press". "Développé militaire" → overhead. "Développé couché" → bench. "Développé" seul → null.
-- "rowing" → row ✅
-
----
-
-## Recommandation d'architecture
-
-1. **Mapping explicite par clé** (dictionnaire) pour les exercices API connus, plutôt que des includes
-2. **Fallback** : patterns par mots-clés pour les exercices custom
-3. **Exclusions** : liste d'exercices à ignorer (bodyweight squat, etc.)
-4. **Types manquants** : biceps, dips (avec note "poids du corps")
-
----
-
-## Corrections rapides (quick wins)
-
-| Action | Impact |
-|--------|--------|
-| Ajouter `skull crusher` dans condition triceps | skull crusher aurait une ligue |
-| Exclure `bodyweight` du squash (bodyweight squat → null) | éviter un ratio faux |
-| Ajouter `dips` avec standards adaptés (poids du corps) | exercice très courant |
-| Ajouter type `biceps` | curl biceps aurait une ligue |
-| Gérer `upright row` à part (ou exclure) | éviter ratio trompeur |
-
----
-
-## Synthèse (après refacto)
-
-- **7 types** : bench, squat, deadlift, overhead, row, triceps, biceps
-- **Mapping explicite** : ~50 exercices API dans EXPLICIT_MAP
-- **Exclusions explicites** : ~50 exercices dans EXPLICIT_EXCLUSIONS (poids du corps, isolation, ratio inadapté)
-- **Exercices custom** : aucun suivi ligue (vérification isCustom dans les callers)
-- **Fallback** : mots-clés pour variantes API non listées
+- [`api/src/league/league-ranks.spec.ts`](../api/src/league/league-ranks.spec.ts) — smoke profils, exclusions, couverture catalogue, 15 exos populaires
+- `npm run test:coverage-ranks` — garde-fou CI (0 gap fixable)

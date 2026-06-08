@@ -2,6 +2,7 @@ import { BottomNav } from '@/components/BottomNav'
 import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCelebration'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
+import { usePushNotifications } from '@/hooks/use-push-notifications'
 import { RealtimeProvider } from '@/hooks/use-realtime'
 import { useTheme } from '@/hooks/use-theme'
 import { extractInviteCodeFromAttribution, setupAppsFlyer } from '@/lib/appsflyer'
@@ -39,6 +40,7 @@ function StatsRedirect() {
 function AccessGate({ children }: { children: React.ReactNode }) {
     const location = useLocation()
     const auth = useAuth()
+    usePushNotifications()
     const isAuthRoute = location.pathname === '/auth'
     const isOnboardingRoute = location.pathname === '/onboarding'
     const isInviteRoute = location.pathname.startsWith('/invite/')

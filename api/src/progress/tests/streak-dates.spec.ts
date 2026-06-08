@@ -3,6 +3,8 @@ import {
   calendarDaysBetween,
   computeStreakAfterActivity,
   computeStreakFromActivityDates,
+  isStreakAtRisk,
+  isStreakOnGraceDay,
 } from '../lib/streak-dates.js';
 
 describe('streak-dates', () => {
@@ -44,6 +46,14 @@ describe('streak-dates', () => {
 
   it('applyStreakExpiry keeps streak for one day without activity', () => {
     expect(applyStreakExpiry('2024-06-10', 5, '2024-06-11')).toBe(5);
+  });
+
+  it('isStreakOnGraceDay is true exactly one day after last activity', () => {
+    expect(isStreakOnGraceDay('2024-06-10', 5, '2024-06-11')).toBe(true);
+    expect(isStreakAtRisk('2024-06-10', 5, '2024-06-11')).toBe(true);
+    expect(isStreakOnGraceDay('2024-06-10', 5, '2024-06-10')).toBe(false);
+    expect(isStreakOnGraceDay('2024-06-10', 5, '2024-06-12')).toBe(false);
+    expect(isStreakOnGraceDay('2024-06-10', 0, '2024-06-11')).toBe(false);
   });
 
   it('applyStreakExpiry clears streak after two days without activity', () => {

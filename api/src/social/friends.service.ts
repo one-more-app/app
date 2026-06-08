@@ -1,9 +1,12 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
+import { NotificationDispatchService } from '../notifications/notification-dispatch.service.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { LeagueService } from '../league/league.service.js';
@@ -40,6 +43,8 @@ export class FriendsService {
     private readonly trackedExercisesService: TrackedExercisesService,
     private readonly performanceEntriesService: PerformanceEntriesService,
     private readonly leagueService: LeagueService,
+    @Inject(forwardRef(() => NotificationDispatchService))
+    private readonly notifications: NotificationDispatchService,
   ) {}
 
   async listFriends(userId: string) {
@@ -159,6 +164,11 @@ export class FriendsService {
       addresseeId: targetUserId,
       status: FriendshipStatus.PENDING,
     });
+    void this.notifications.notifyFriendRequest({
+      addresseeId: targetUserId,
+      requesterId,
+      friendshipId: created.id,
+    });
     return { friendshipId: created.id, status: created.status };
   }
 
@@ -230,6 +240,11 @@ export class FriendsService {
         existing.status = FriendshipStatus.ACCEPTED;
         await this.friendshipsRepo.save(existing);
         await this.accessService.unlockInviter(inviterProfile.userId);
+        void this.notifications.notifyFriendAccepted({
+          requesterId: inviterProfile.userId,
+          addresseeId: userId,
+          friendshipId: existing.id,
+        });
       }
       return { friendshipId: existing.id, status: existing.status };
     }
@@ -240,6 +255,11 @@ export class FriendsService {
       status: FriendshipStatus.ACCEPTED,
     });
     await this.accessService.unlockInviter(inviterProfile.userId);
+    void this.notifications.notifyFriendAccepted({
+      requesterId: inviterProfile.userId,
+      addresseeId: userId,
+      friendshipId: created.id,
+    });
     return { friendshipId: created.id, status: created.status };
   }
 
@@ -258,6 +278,11 @@ export class FriendsService {
     friendship.status = FriendshipStatus.ACCEPTED;
     await this.friendshipsRepo.save(friendship);
     await this.accessService.unlockInviter(friendship.requesterId);
+    void this.notifications.notifyFriendAccepted({
+      requesterId: friendship.requesterId,
+      addresseeId: friendship.addresseeId,
+      friendshipId: friendship.id,
+    });
 
     return { ok: true, friendshipId: friendship.id };
   }

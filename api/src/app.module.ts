@@ -14,6 +14,7 @@ import { MessagingModule } from './messaging/messaging.module.js';
 import { PresenceModule } from './presence/presence.module.js';
 import { RealtimeModule } from './realtime/realtime.module.js';
 import { LeagueModule } from './league/league.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { LeagueModule } from './league/league.module.js';
     PresenceModule,
     RealtimeModule,
     LeagueModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

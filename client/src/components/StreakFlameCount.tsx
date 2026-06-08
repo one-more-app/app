@@ -5,6 +5,7 @@ import { Flame } from "lucide-react";
 
 type StreakFlameCountProps = {
     count: number;
+    onGraceDay?: boolean;
     className?: string;
     iconClassName?: string;
     textClassName?: string;
@@ -22,6 +23,7 @@ const bonusSizeClasses: Record<NonNullable<StreakFlameCountProps["size"]>, strin
 
 export function StreakFlameCount({
     count,
+    onGraceDay = false,
     className,
     iconClassName = "size-3.5",
     textClassName = "text-xs font-semibold tabular-nums",
@@ -41,16 +43,26 @@ export function StreakFlameCount({
     return (
         <div
             className={cn("flex items-center gap-2 text-orange-500", className)}
-            title={UI.streakRuleHint}
             aria-label={
-                bonusLabel
-                    ? `${UI.streakDays.replace("{days}", String(count))} · ${bonusLabel}`
-                    : UI.streakDays.replace("{days}", String(count))
+                onGraceDay
+                    ? UI.streakGraceDayAria.replace("{days}", String(count))
+                    : bonusLabel
+                      ? `${UI.streakDays.replace("{days}", String(count))} · ${bonusLabel}`
+                      : UI.streakDays.replace("{days}", String(count))
             }
+            title={onGraceDay ? UI.streakGraceDayHint : UI.streakRuleHint}
         >
             <div className="flex items-center gap-1">
                 <Flame className={cn(iconClassName, "shrink-0")} aria-hidden />
                 <span className={textClassName}>{count}</span>
+                {onGraceDay ? (
+                    <span
+                        className="text-orange-400 font-bold leading-none"
+                        aria-hidden
+                    >
+                        *
+                    </span>
+                ) : null}
             </div>
             {bonusLabel ? (
                 <span
