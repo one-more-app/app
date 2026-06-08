@@ -39,7 +39,7 @@ import {
     savePerformanceAndWait,
 } from '@/lib/storage'
 import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
-import { translateBodyPart, UI } from '@/lib/translations'
+import { translateBodyPart, translateTarget, UI } from '@/lib/translations'
 import { notifyXpGrants } from '@/lib/xp-notifications'
 import type { ExerciseDBExercise } from '@/types'
 import { Plus, Search } from 'lucide-react'

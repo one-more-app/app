@@ -6,7 +6,7 @@ import { PerformanceEntryEntity } from '../performance/performance-entry.entity.
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { UserProgressEntity } from '../progress/entities/user-progress.entity.js';
 import { XpEventEntity } from '../progress/entities/xp-event.entity.js';
-import { PresenceModule } from '../presence/presence.module.js';
+import { UserPresenceEntity } from '../presence/entities/user-presence.entity.js';
 import { RealtimeModule } from '../realtime/realtime.module.js';
 import { DeviceTokensService } from './device-tokens.service.js';
 import { FriendTrainingAlertEntity } from './entities/friend-training-alert.entity.js';
@@ -34,8 +34,8 @@ import { WeeklyRecapCron } from './weekly-recap.cron.js';
       UserProgressEntity,
       PerformanceEntryEntity,
       XpEventEntity,
+      UserPresenceEntity,
     ]),
-    PresenceModule,
     forwardRef(() => RealtimeModule),
   ],
   controllers: [NotificationsController],

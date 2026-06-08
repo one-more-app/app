@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SocialModule } from '../social/social.module.js';
 import { UserPresenceEntity } from './entities/user-presence.entity.js';
@@ -8,7 +8,7 @@ import { PresenceService } from './presence.service.js';
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserPresenceEntity]),
-    SocialModule,
+    forwardRef(() => SocialModule),
   ],
   controllers: [PresenceController],
   providers: [PresenceService],

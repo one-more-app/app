@@ -4,6 +4,12 @@ import { LeagueBadge } from '@/components/LeagueBadge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { hapticImpact, hapticImpactMedium } from '@/lib/haptics'
 import { LEAGUE_1RM_STYLES } from '@/lib/league-colors'
@@ -59,6 +65,7 @@ export function ExerciseCard({
 }: ExerciseCardProps) {
     const sizeClass = imageSizes[imageSize]
     const [drawerOpen, setDrawerOpen] = useState(false)
+    const [imagePreviewOpen, setImagePreviewOpen] = useState(false)
     const isLeagueRecord = !!leagueInfo
     const recordContainerClassName = isLeagueRecord
         ? `flex flex-1 flex-col items-start gap-1 rounded-lg p-3 ${LEAGUE_1RM_STYLES[leagueInfo!.tier]}`
@@ -88,14 +95,26 @@ export function ExerciseCard({
                     )}
                 >
                     {!exercise.isCustom && exercise.gifUrl ? (
-                        <img
-                            src={getExerciseImageUrl(exercise.gifUrl)}
-                            alt=""
-                            className={`${sizeClass} rounded-lg object-cover bg-muted`}
-                            onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none'
+                        <button
+                            type="button"
+                            className={`${sizeClass} shrink-0 overflow-hidden rounded-lg bg-muted`}
+                            aria-label={exercise.name}
+                            onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                void hapticImpact()
+                                setImagePreviewOpen(true)
                             }}
-                        />
+                        >
+                            <img
+                                src={getExerciseImageUrl(exercise.gifUrl)}
+                                alt=""
+                                className="size-full object-cover"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none'
+                                }}
+                            />
+                        </button>
                     ) : (
                         <div className={`${sizeClass} flex items-center justify-center rounded-lg bg-muted`}>
                             <Dumbbell className="size-6 text-default" />
@@ -208,6 +227,28 @@ export function ExerciseCard({
                 initialReps={lastPerf?.reps ?? 1}
                 onSave={onSavePerf}
             />
+
+            {!exercise.isCustom && exercise.gifUrl ? (
+                <Dialog open={imagePreviewOpen} onOpenChange={setImagePreviewOpen}>
+                    <DialogContent className="max-w-lg gap-0 overflow-hidden p-0 sm:max-w-lg">
+                        <div className="bg-muted">
+                            <img
+                                src={getExerciseImageUrl(exercise.gifUrl)}
+                                alt=""
+                                className="mx-auto max-h-[min(70vh,480px)] w-full object-contain"
+                                onError={(e) => {
+                                    ;(e.target as HTMLImageElement).style.display = 'none'
+                                }}
+                            />
+                        </div>
+                        <DialogHeader className="space-y-0 p-4 pt-3 text-left">
+                            <DialogTitle className="break-words pr-8 text-left text-lg capitalize leading-snug">
+                                {exercise.name}
+                            </DialogTitle>
+                        </DialogHeader>
+                    </DialogContent>
+                </Dialog>
+            ) : null}
         </>
     )
 }

@@ -17,8 +17,6 @@ export const CARDIO_EQUIPMENT = new Set([
   "elliptical machine",
   "skierg machine",
   "upper body ergometer",
-  "assisted",
-  "leverage machine",
   "rope",
 ]);
 

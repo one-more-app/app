@@ -112,6 +112,8 @@ Fallback : `getEquipmentTargetFromName(name)` pour exercices custom ou metadata 
 ## Exclusions hors catalogue
 
 - Exercices **custom** utilisateur (`isCustom: true`) → pas de rang
+- Équipement cardio pur (`stationary bike`, `elliptical machine`, etc.) via `CARDIO_EQUIPMENT` dans [`shared/league-aggregate.ts`](../shared/league-aggregate.ts) — **ne pas** y inclure `leverage machine` ni `assisted` (machines à levier / assistées pour la muscu)
+- Cible `cardiovascular system` / `cardio` → pas de rang
 - Pas de persistance DB du rang par exercice (calcul dynamique)
 
 ## Références ratios

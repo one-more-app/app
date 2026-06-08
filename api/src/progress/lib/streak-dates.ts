@@ -1,5 +1,11 @@
-/** Jours sans séance avant perte de la série en cours. */
-export const STREAK_BREAK_AFTER_DAYS_WITHOUT = 2;
+/** Jours sans séance tolérés entre deux entraînements (ex. week-end). */
+export const STREAK_ALLOWED_REST_DAYS = 2;
+
+/** Écart calendaire max entre deux séances pour continuer la série. */
+export const STREAK_MAX_GAP_DAYS = STREAK_ALLOWED_REST_DAYS + 1;
+
+/** Jours sans séance avant que la série affichée tombe à 0. */
+export const STREAK_BREAK_AFTER_DAYS_WITHOUT = STREAK_MAX_GAP_DAYS + 1;
 
 /** Différence en jours calendaires entre deux clés `YYYY-MM-DD` (sans fuseau). */
 export function calendarDaysBetween(from: string, to: string): number {
@@ -26,7 +32,7 @@ export function daysWithoutActivitySince(
   return Math.max(0, calendarDaysBetween(lastActiveDate, today));
 }
 
-/** Série affichée : 0 si 2 jours ou plus sans séance depuis la dernière. */
+/** Série affichée : 0 si trop de jours sans séance depuis la dernière. */
 export function applyStreakExpiry(
   lastActiveDate: string | null,
   currentStreak: number,
@@ -50,11 +56,13 @@ export function computeStreakAfterActivity(
   if (!lastActiveDate) return { current: 1 };
   const diffDays = calendarDaysBetween(lastActiveDate, activityDate);
   if (diffDays === 0) return { current: currentStreak };
-  if (diffDays === 1) return { current: currentStreak + 1 };
-  if (diffDays === 2) return { current: currentStreak + 1 };
+  if (diffDays >= 1 && diffDays <= STREAK_MAX_GAP_DAYS) {
+    return { current: currentStreak + 1 };
+  }
   return { current: 1 };
 }
 
+/** Dernier jour pour sauver la série sans séance ce jour-là. */
 export function isStreakOnGraceDay(
   lastActiveDate: string | null,
   currentStreak: number,
@@ -63,7 +71,7 @@ export function isStreakOnGraceDay(
   return (
     currentStreak > 0 &&
     !!lastActiveDate &&
-    daysWithoutActivitySince(lastActiveDate, today) === 1
+    daysWithoutActivitySince(lastActiveDate, today) === STREAK_MAX_GAP_DAYS
   );
 }
 

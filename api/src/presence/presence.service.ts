@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { FriendsService } from '../social/friends.service.js';
@@ -20,6 +20,7 @@ export class PresenceService {
   constructor(
     @InjectRepository(UserPresenceEntity)
     private readonly presenceRepo: Repository<UserPresenceEntity>,
+    @Inject(forwardRef(() => FriendsService))
     private readonly friendsService: FriendsService,
   ) {}
 

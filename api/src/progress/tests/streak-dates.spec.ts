@@ -32,9 +32,15 @@ describe('streak-dates', () => {
     ).toEqual({ current: 5 });
   });
 
-  it('computeStreakAfterActivity resets after two rest days', () => {
+  it('computeStreakAfterActivity continues after a weekend (2 rest days)', () => {
     expect(
       computeStreakAfterActivity('2024-06-07', 10, '2024-06-10'),
+    ).toEqual({ current: 11 });
+  });
+
+  it('computeStreakAfterActivity resets after three rest days', () => {
+    expect(
+      computeStreakAfterActivity('2024-06-07', 10, '2024-06-11'),
     ).toEqual({ current: 1 });
   });
 
@@ -44,20 +50,24 @@ describe('streak-dates', () => {
     ).toEqual({ current: 3 });
   });
 
-  it('applyStreakExpiry keeps streak for one day without activity', () => {
+  it('applyStreakExpiry keeps streak through two days without activity', () => {
     expect(applyStreakExpiry('2024-06-10', 5, '2024-06-11')).toBe(5);
+    expect(applyStreakExpiry('2024-06-10', 5, '2024-06-12')).toBe(5);
   });
 
-  it('isStreakOnGraceDay is true exactly one day after last activity', () => {
-    expect(isStreakOnGraceDay('2024-06-10', 5, '2024-06-11')).toBe(true);
-    expect(isStreakAtRisk('2024-06-10', 5, '2024-06-11')).toBe(true);
-    expect(isStreakOnGraceDay('2024-06-10', 5, '2024-06-10')).toBe(false);
-    expect(isStreakOnGraceDay('2024-06-10', 5, '2024-06-12')).toBe(false);
-    expect(isStreakOnGraceDay('2024-06-10', 0, '2024-06-11')).toBe(false);
+  it('isStreakOnGraceDay is true on the last day to save the streak', () => {
+    const lastActive = '2024-06-07';
+    const graceDay = '2024-06-10';
+    expect(calendarDaysBetween(lastActive, graceDay)).toBe(3);
+    expect(isStreakOnGraceDay(lastActive, 5, graceDay)).toBe(true);
+    expect(isStreakAtRisk(lastActive, 5, graceDay)).toBe(true);
+    expect(isStreakOnGraceDay(lastActive, 5, '2024-06-09')).toBe(false);
+    expect(isStreakOnGraceDay(lastActive, 5, '2024-06-11')).toBe(false);
+    expect(isStreakOnGraceDay(lastActive, 0, graceDay)).toBe(false);
   });
 
-  it('applyStreakExpiry clears streak after two days without activity', () => {
-    expect(applyStreakExpiry('2024-06-10', 5, '2024-06-12')).toBe(0);
+  it('applyStreakExpiry clears streak after missing the save window', () => {
+    expect(applyStreakExpiry('2024-06-07', 5, '2024-06-11')).toBe(0);
   });
 
   it('computeStreakFromActivityDates derives current and longest', () => {
@@ -73,14 +83,14 @@ describe('streak-dates', () => {
     ).toEqual({ current: 3, longest: 3 });
     expect(
       computeStreakFromActivityDates(
-        ['2024-06-08', '2024-06-10', '2024-06-11'],
-        '2024-06-11',
+        ['2024-06-07', '2024-06-10'],
+        '2024-06-10',
       ),
-    ).toEqual({ current: 3, longest: 3 });
+    ).toEqual({ current: 2, longest: 2 });
     expect(
       computeStreakFromActivityDates(
         ['2024-06-08', '2024-06-09', '2024-06-10'],
-        '2024-06-12',
+        '2024-06-14',
       ),
     ).toEqual({ current: 0, longest: 3 });
   });

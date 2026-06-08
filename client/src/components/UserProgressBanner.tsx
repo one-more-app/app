@@ -2,7 +2,6 @@ import { useUserProgressData } from "@/hooks/use-api-data";
 import { StreakFlameCount } from "@/components/StreakFlameCount";
 import { XpProgressBlock } from "@/components/XpProgressBlock";
 import { resolveProgressStreak } from "@/lib/streak-display";
-import { isStreakOnGraceDay } from "@one-more/shared/streak-dates";
 import { resolveStreakXpBonus } from "@/lib/streak-xp-display";
 import { hapticImpact } from "@/lib/haptics";
 import { UI } from "@/lib/translations";
@@ -15,13 +14,6 @@ export function UserProgressBanner({ className }: { className?: string }) {
 
     const { current: currentStreak } = resolveProgressStreak(progress);
     const streakXpBonus = resolveStreakXpBonus(progress);
-    const onGraceDay =
-        progress.streak.current > 0 &&
-        !!progress.lastActiveDate &&
-        isStreakOnGraceDay(
-            progress.lastActiveDate,
-            progress.streak.current,
-        );
 
     return (
         <Link
@@ -43,7 +35,6 @@ export function UserProgressBanner({ className }: { className?: string }) {
                 rightSlot={
                     <StreakFlameCount
                         count={currentStreak}
-                        onGraceDay={onGraceDay}
                         bonusPercent={streakXpBonus.bonusPercent}
                         size="sm"
                         iconClassName="size-4"

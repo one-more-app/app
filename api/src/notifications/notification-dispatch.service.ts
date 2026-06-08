@@ -6,7 +6,7 @@ import { PerformanceEntryEntity } from '../performance/performance-entry.entity.
 import { UserProgressEntity } from '../progress/entities/user-progress.entity.js';
 import { XpEventEntity } from '../progress/entities/xp-event.entity.js';
 import { PresenceStatus } from '../presence/entities/presence-status.enum.js';
-import { PresenceService } from '../presence/presence.service.js';
+import { UserPresenceEntity } from '../presence/entities/user-presence.entity.js';
 import { FriendshipEntity } from '../social/entities/friendship.entity.js';
 import { FriendshipStatus } from '../social/entities/friendship-status.enum.js';
 import { applyStreakExpiry } from '../progress/lib/streak-dates.js';
@@ -18,6 +18,8 @@ import { NotificationPreferencesService } from './notification-preferences.servi
 import { NotificationType } from './entities/notification-type.enum.js';
 import { PushNotificationService } from './push-notification.service.js';
 import { RealtimeBroadcaster } from '../realtime/realtime-broadcaster.service.js';
+
+const PRESENCE_STALE_MS = 90_000;
 
 @Injectable()
 export class NotificationDispatchService {
@@ -35,9 +37,18 @@ export class NotificationDispatchService {
     private readonly trainingAlerts: FriendTrainingAlertsService,
     @InjectRepository(FriendshipEntity)
     private readonly friendshipsRepo: Repository<FriendshipEntity>,
-    private readonly presenceService: PresenceService,
+    @InjectRepository(UserPresenceEntity)
+    private readonly presenceRepo: Repository<UserPresenceEntity>,
     private readonly realtime: RealtimeBroadcaster,
   ) {}
+
+  private async isUserOnline(userId: string): Promise<boolean> {
+    const row = await this.presenceRepo.findOne({ where: { userId } });
+    if (!row) return false;
+    const age = Date.now() - row.lastHeartbeatAt.getTime();
+    if (age > PRESENCE_STALE_MS) return false;
+    return row.status !== PresenceStatus.OFFLINE;
+  }
 
   private async profileName(userId: string): Promise<string> {
     const profile = await this.profilesRepo.findOne({ where: { userId } });
@@ -116,8 +127,7 @@ export class NotificationDispatchService {
     if (!(await this.prefs.isEnabled(params.recipientId, NotificationType.MessageNew))) {
       return;
     }
-    const presence = await this.presenceService.getPresence(params.recipientId);
-    if (presence && presence.status !== PresenceStatus.OFFLINE) {
+    if (await this.isUserOnline(params.recipientId)) {
       return;
     }
     const name = await this.profileName(params.senderId);

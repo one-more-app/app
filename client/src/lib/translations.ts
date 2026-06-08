@@ -263,13 +263,13 @@ export const UI = {
   progressCardTitle: "Progression",
   streakLabel: "Série active",
   streakDays: "{days} jours d'affilée",
-  streakRuleHint: "Perdue après 2 jours sans séance",
+  streakRuleHint: "2 jours off autorisés — séance obligatoire au 3e jour",
   streakSheetTitleFirstDay: "1 jour d'entraînement d'affilée",
   streakSheetSubtitleFirstDay:
-    "Beau départ — tu as 2 jours pour revenir avant de perdre la série.",
+    "Beau départ — le week-end ne casse pas ta série si tu reviens au 3e jour.",
   streakSheetTitleStreak: "{days} jours d'entraînement d'affilée",
   streakSheetSubtitleStreak:
-    "Entraîne-toi au moins une fois tous les 2 jours pour garder tes flammes.",
+    "Tu peux t'accorder 2 jours sans séance (ex. week-end), puis revenir au 3e jour.",
   streakSheetLongest: "Record : {days} jours",
   streakXpBonusLabel: "+{percent}% XP",
   xpGainedBonusDescription: "+{bonus} bonus série · +{percent} %",

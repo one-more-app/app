@@ -35,6 +35,8 @@
     "import:user-local-data:prod": "node dist/database/import-user-local-data.js",
     "backfill:usernames": "node --loader ts-node/esm src/database/backfill-usernames.ts",
     "backfill:usernames:prod": "node dist/database/backfill-usernames.js",
+    "backfill:user-progress": "npm run build --silent && node dist/database/backfill-user-progress.js",
+    "backfill:user-progress:prod": "node dist/database/backfill-user-progress.js",
     "test:coverage-ranks": "npm run build --silent && node scripts/check-rank-coverage.mjs",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:watch": "jest --watch",

@@ -9,7 +9,10 @@ import {
   isIntentionallyExcluded,
   RANK_ORDER,
 } from '../../dist/shared/strength-standards.js';
-import { computeLeagueStatsForTracked } from '../../dist/shared/league-aggregate.js';
+import {
+  computeLeagueStatsForTracked,
+  leagueFromTrackedExercise,
+} from '../../dist/shared/league-aggregate.js';
 
 const DATA_DIR = join(process.cwd(), 'data');
 
@@ -161,6 +164,57 @@ describe('isIntentionallyExcluded', () => {
     expect(
       isIntentionallyExcluded('elliptical machine', 'cardiovascular system', 'run'),
     ).toBe(true);
+  });
+});
+
+describe('leagueFromTrackedExercise', () => {
+  it('returns rank for leverage machine exercises with catalog metadata', () => {
+    const league = leagueFromTrackedExercise(
+      {
+        id: 'test',
+        name: 'Curl pupitre',
+        originalName: 'lever preacher curl',
+        equipment: 'leverage machine',
+        target: 'biceps',
+        isCustom: false,
+        personalBest: { weight: 30, reps: 8 },
+      },
+      { weightKg: 80, gender: 'male' },
+    );
+    expect(league).not.toBeNull();
+    expect(league!.rankId).toMatch(/^(bronze|silver|gold|platinum|diamond)_/);
+  });
+
+  it('returns rank for assisted pull-up with catalog metadata', () => {
+    const league = leagueFromTrackedExercise(
+      {
+        id: 'test',
+        name: 'Traction assistée',
+        originalName: 'assisted pull-up',
+        equipment: 'assisted',
+        target: 'lats',
+        isCustom: false,
+        personalBest: { weight: 0, reps: 8 },
+      },
+      { weightKg: 80, gender: 'male' },
+    );
+    expect(league).not.toBeNull();
+  });
+
+  it('excludes true cardio leverage machines by target', () => {
+    const league = leagueFromTrackedExercise(
+      {
+        id: 'test',
+        name: 'Vélo',
+        originalName: 'cycle cross trainer',
+        equipment: 'leverage machine',
+        target: 'cardiovascular system',
+        isCustom: false,
+        personalBest: { weight: 0, reps: 10 },
+      },
+      { weightKg: 80, gender: 'male' },
+    );
+    expect(league).toBeNull();
   });
 });
 
