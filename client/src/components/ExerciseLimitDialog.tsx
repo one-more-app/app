@@ -11,8 +11,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { inviteFriend } from "@/lib/invite-friend";
 import { UI } from "@/lib/translations";
 import { EXERCISE_LIMIT_LIMITED } from "@one-more/shared/access-config";
-import { Users } from "lucide-react";
+import { Link2, Search } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 type ExerciseLimitDialogProps = {
   open: boolean;
@@ -26,9 +27,10 @@ export function ExerciseLimitDialog({
   activeCount = EXERCISE_LIMIT_LIMITED,
 }: ExerciseLimitDialogProps) {
   const auth = useAuth();
+  const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
 
-  const handleInvite = () => {
+  const handleInviteLink = () => {
     void (async () => {
       setBusy(true);
       try {
@@ -38,6 +40,11 @@ export function ExerciseLimitDialog({
         setBusy(false);
       }
     })();
+  };
+
+  const handleSearchFriend = () => {
+    onOpenChange(false);
+    navigate("/friends?tab=search");
   };
 
   return (
@@ -53,9 +60,18 @@ export function ExerciseLimitDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex-col gap-2 sm:flex-col">
-          <Button className="w-full" onClick={handleInvite} disabled={busy}>
-            <Users className="mr-2 size-4" />
-            {UI.profileInviteButton}
+          <Button className="w-full" onClick={handleInviteLink} disabled={busy}>
+            <Link2 className="mr-2 size-4" />
+            {UI.exerciseLimitInviteLink}
+          </Button>
+          <Button
+            variant="secondary"
+            className="w-full"
+            onClick={handleSearchFriend}
+            disabled={busy}
+          >
+            <Search className="mr-2 size-4" />
+            {UI.exerciseLimitSearchFriend}
           </Button>
           <Button
             variant="ghost"

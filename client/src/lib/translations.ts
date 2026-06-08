@@ -346,7 +346,9 @@ export const UI = {
   inviteShareError: "Impossible de partager l'invitation",
   exerciseLimitTitle: "Limite d'exercices atteinte",
   exerciseLimitDescription:
-    "Tu suis déjà {count} exercices. Invite un pote convaincu pour débloquer l'app complète.",
+    "Tu suis déjà {count} exercices. Envoie une invitation (lien ou recherche) : dès qu'un pote accepte, tu débloques l'app complète.",
+  exerciseLimitInviteLink: "Copier le lien d'invitation",
+  exerciseLimitSearchFriend: "Rechercher un ami",
   accessUnlockHint:
     "Invite un pote sur One More. Dès qu'il accepte ton invitation, tu débloques l'app complète.",
   accessUnlockPending:

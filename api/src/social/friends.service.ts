@@ -225,13 +225,21 @@ export class FriendsService {
         addresseeId: userId,
       },
     });
-    if (existing) return { friendshipId: existing.id, status: existing.status };
+    if (existing) {
+      if (existing.status === FriendshipStatus.PENDING) {
+        existing.status = FriendshipStatus.ACCEPTED;
+        await this.friendshipsRepo.save(existing);
+        await this.accessService.unlockInviter(inviterProfile.userId);
+      }
+      return { friendshipId: existing.id, status: existing.status };
+    }
 
     const created = await this.friendshipsRepo.save({
       requesterId: inviterProfile.userId,
       addresseeId: userId,
-      status: FriendshipStatus.PENDING,
+      status: FriendshipStatus.ACCEPTED,
     });
+    await this.accessService.unlockInviter(inviterProfile.userId);
     return { friendshipId: created.id, status: created.status };
   }
 

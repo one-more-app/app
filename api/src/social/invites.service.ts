@@ -13,6 +13,7 @@ import {
   buildInviteUrl,
   generateInviteCode,
 } from './lib/invite-code.js';
+import { AccessService } from './access.service.js';
 import { UsernameService } from './username.service.js';
 
 export type CreateProfileParams = {
@@ -29,6 +30,7 @@ export class InvitesService {
     private readonly profilesRepo: Repository<UserProfileEntity>,
     @InjectRepository(FriendshipEntity)
     private readonly friendshipsRepo: Repository<FriendshipEntity>,
+    private readonly accessService: AccessService,
     private readonly usernameService: UsernameService,
   ) {}
 
@@ -119,13 +121,21 @@ export class InvitesService {
         addresseeId: params.newUserId,
       },
     });
-    if (existing) return;
+    if (existing) {
+      if (existing.status === FriendshipStatus.PENDING) {
+        existing.status = FriendshipStatus.ACCEPTED;
+        await this.friendshipsRepo.save(existing);
+        await this.accessService.unlockInviter(inviterProfile.userId);
+      }
+      return;
+    }
 
     await this.friendshipsRepo.save({
       requesterId: inviterProfile.userId,
       addresseeId: params.newUserId,
-      status: FriendshipStatus.PENDING,
+      status: FriendshipStatus.ACCEPTED,
     });
+    await this.accessService.unlockInviter(inviterProfile.userId);
   }
 
   private async generateUniqueInviteCode(): Promise<string> {

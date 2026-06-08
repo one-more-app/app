@@ -60,7 +60,7 @@ export default function InviteLandingPage() {
       try {
         await requestFriendFromInvite(code);
         consumePendingInviteCode();
-        toast.success(UI.inviteRequestSent);
+        toast.success(UI.friendAccepted);
         navigate("/friends", { replace: true });
       } catch {
         navigate("/friends", { replace: true });

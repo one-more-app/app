@@ -11,18 +11,31 @@ import { useUnreadMessagesCount } from "@/hooks/use-mark-conversation-read";
 import { CONVERSATIONS_SWR_KEY } from "@/hooks/use-realtime";
 import { fetchFriendsList } from "@/lib/social-api";
 import { UI } from "@/lib/translations";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import useSWR, { useSWRConfig } from "swr";
+
+function parseFriendsTab(value: string | null): FriendsTab {
+    if (value === "search" || value === "messages") return value;
+    return "friends";
+}
 
 export default function FriendsPage() {
     const { mutate } = useSWRConfig();
-    const { access, refresh: refreshAccess } = useAccess();
-    const [tab, setTab] = useState<FriendsTab>("friends");
+    const { refresh: refreshAccess } = useAccess();
+    const [searchParams] = useSearchParams();
+    const [tab, setTab] = useState<FriendsTab>(() =>
+        parseFriendsTab(searchParams.get("tab")),
+    );
     const { data, isLoading, mutate: refreshFriends } = useSWR(
         "friends-list",
         fetchFriendsList,
     );
     const unreadTotal = useUnreadMessagesCount();
+
+    useEffect(() => {
+        setTab(parseFriendsTab(searchParams.get("tab")));
+    }, [searchParams]);
 
     const refreshAll = async () => {
         await Promise.all([
