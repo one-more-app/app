@@ -50,34 +50,31 @@ export class PresenceService {
     },
   ): Promise<PresenceDto> {
     const now = new Date();
-    let row = await this.presenceRepo.findOne({ where: { userId } });
-    if (!row) {
-      row = this.presenceRepo.create({
-        userId,
-        status: PresenceStatus.OFFLINE,
-        exerciseName: null,
-        trackedExerciseId: null,
-        lastHeartbeatAt: now,
-      });
-    }
-
-    row.status =
+    const status =
       payload.status === PresenceStatus.TRAINING
         ? PresenceStatus.TRAINING
         : payload.status === PresenceStatus.ONLINE
           ? PresenceStatus.ONLINE
           : PresenceStatus.OFFLINE;
-    row.exerciseName =
-      row.status === PresenceStatus.TRAINING
-        ? (payload.exerciseName ?? null)
-        : null;
-    row.trackedExerciseId =
-      row.status === PresenceStatus.TRAINING
-        ? (payload.trackedExerciseId ?? null)
-        : null;
-    row.lastHeartbeatAt = now;
 
-    const saved = await this.presenceRepo.save(row);
+    await this.presenceRepo.upsert(
+      {
+        userId,
+        status,
+        exerciseName:
+          status === PresenceStatus.TRAINING
+            ? (payload.exerciseName ?? null)
+            : null,
+        trackedExerciseId:
+          status === PresenceStatus.TRAINING
+            ? (payload.trackedExerciseId ?? null)
+            : null,
+        lastHeartbeatAt: now,
+      },
+      ['userId'],
+    );
+
+    const saved = await this.presenceRepo.findOneOrFail({ where: { userId } });
     return this.toDto(saved);
   }
 
