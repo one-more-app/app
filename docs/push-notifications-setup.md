@@ -31,11 +31,16 @@ cd api && npm run typeorm:migrate
 
 - Capability **Push Notifications**
 - Rebuild : `cd client && npm run ios:build:prod`
+- L'icône affichée dans les notifications est l'**icône de l'app** (assets Xcode / `@capacitor/assets`). Pas de fichier dédié côté push.
 
 ## Android
 
 - `google-services.json` présent → le plugin Gradle s'applique automatiquement
 - Rebuild : `cd client && npm run android:build:prod`
+- **Icône notification** : silhouette blanche du logo (`res/drawable-*/ic_stat_notification.png`), configurée dans `AndroidManifest.xml` + payload FCM (`ic_stat_notification`, accent `#DFFF00`). Régénérer après changement de logo :
+  ```bash
+  cd client && bash scripts/generate-notification-icon.sh
+  ```
 
 ## Préférences utilisateur
 

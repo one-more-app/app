@@ -82,6 +82,12 @@ export class PushNotificationService implements OnModuleInit {
         type: payload.type,
         route: payload.route,
       },
+      android: {
+        notification: {
+          icon: 'ic_stat_notification',
+          color: '#DFFF00',
+        },
+      },
       tokens: tokens.map((t) => t.token),
     };
 
