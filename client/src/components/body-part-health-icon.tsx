@@ -1,37 +1,22 @@
 /**
- * Pictogrammes « parties du corps » depuis Health Icons (CC0)
- * @see https://healthicons.org — https://github.com/resolvetosavelives/healthicons
+ * Pictogrammes muscles / parties du corps — Icons8 « Set of Muscles » (Envato Elements).
+ * @see https://elements.envato.com/muscles-XJGCWH5
  */
-import type { ComponentType, SVGProps } from 'react'
+import { Icons8MaskIcon } from '@/components/icons8-mask-icon'
 import {
-    Arm,
-    Body,
-    Foot,
-    Head,
-    Joints,
-    Leg,
-    Lungs,
-    PpeGloves,
-    Spine,
-    UiMenuGrid,
-    WaistCircumference,
-} from 'healthicons-react/outline'
+    icons8AssetForBodyPart,
+    icons8AssetForTarget,
+    ICONS8_MUSCLE_ASSETS,
+} from '@/lib/icons8-muscle-icons'
 
-type HealthIcon = ComponentType<SVGProps<SVGSVGElement>>
-
-const BODY_PART_ICONS: Record<string, HealthIcon> = {
-    chest: Lungs,
-    back: Spine,
-    shoulders: Joints,
-    'upper arms': Arm,
-    'lower arms': PpeGloves,
-    waist: WaistCircumference,
-    'upper legs': Leg,
-    'lower legs': Foot,
-    neck: Head,
+export function AllMusclesHealthIcon({ className }: { className?: string }) {
+    return (
+        <Icons8MaskIcon
+            src={ICONS8_MUSCLE_ASSETS.muscle}
+            className={className}
+        />
+    )
 }
-
-export const AllMusclesHealthIcon = UiMenuGrid
 
 export function BodyPartHealthIcon({
     bodyPart,
@@ -40,6 +25,25 @@ export function BodyPartHealthIcon({
     bodyPart: string
     className?: string
 }) {
-    const Icon = BODY_PART_ICONS[bodyPart.toLowerCase()] ?? Body
-    return <Icon className={className} aria-hidden />
+    return (
+        <Icons8MaskIcon
+            src={icons8AssetForBodyPart(bodyPart)}
+            className={className}
+        />
+    )
+}
+
+export function TargetMuscleIcon({
+    target,
+    className,
+}: {
+    target: string
+    className?: string
+}) {
+    return (
+        <Icons8MaskIcon
+            src={icons8AssetForTarget(target)}
+            className={className}
+        />
+    )
 }

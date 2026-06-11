@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
+  DEFAULT_NOTIFICATION_PREFERENCES,
   fetchNotificationPreferences,
+  mergeNotificationPreferences,
   updateNotificationPreferences,
   type NotificationPreferences,
 } from "@/lib/notifications-api";
@@ -39,27 +42,16 @@ function NotificationToggle({
   onChange: (next: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2.5">
-      <Label htmlFor={id} className="text-sm font-normal leading-snug">
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 px-3 py-3">
+      <Label htmlFor={id} className="min-w-0 flex-1 text-sm font-normal leading-snug">
         {label}
       </Label>
-      <button
+      <Switch
         id={id}
-        type="button"
-        role="switch"
-        aria-checked={checked}
+        checked={checked}
         disabled={disabled}
-        onClick={() => onChange(!checked)}
-        className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
-          checked ? "bg-primary" : "bg-muted"
-        } ${disabled ? "opacity-50" : ""}`}
-      >
-        <span
-          className={`absolute top-0.5 size-6 rounded-full bg-background shadow transition-transform ${
-            checked ? "translate-x-5" : "translate-x-0.5"
-          }`}
-        />
-      </button>
+        onCheckedChange={onChange}
+      />
     </div>
   );
 }
@@ -76,8 +68,18 @@ export function NotificationSettingsCard() {
     async (key: PrefKey, next: boolean) => {
       setBusyKey(key);
       try {
-        const updated = await updateNotificationPreferences({ [key]: next });
-        await mutate(updated, false);
+        await mutate(
+          async (current) => {
+            const updated = await updateNotificationPreferences({ [key]: next });
+            return mergeNotificationPreferences(current, { [key]: updated[key] });
+          },
+          {
+            optimisticData: (current) =>
+              mergeNotificationPreferences(current, { [key]: next }),
+            rollbackOnError: true,
+            revalidate: false,
+          },
+        );
       } catch {
         toast.error(UI.notifPrefSaveError);
       } finally {
@@ -125,7 +127,9 @@ export function NotificationSettingsCard() {
               key={item.key}
               id={`notif-${item.key}`}
               label={item.label}
-              checked={data?.[item.key] ?? true}
+              checked={
+                data?.[item.key] ?? DEFAULT_NOTIFICATION_PREFERENCES[item.key]
+              }
               disabled={busyKey === item.key}
               onChange={(next) => {
                 void handleToggle(item.key, next);

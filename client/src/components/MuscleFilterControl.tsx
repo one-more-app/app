@@ -42,13 +42,13 @@ export function MuscleFilterControl({
             byGroup={byGroup}
             isSelectionEmpty={(sel) => isMuscleSelectionEmpty(sel as MuscleSelection)}
             allLabel={UI.all}
-            renderAllIcon={<AllMusclesHealthIcon className="size-5" />}
+            renderAllIcon={<AllMusclesHealthIcon className="size-6" />}
             translateGroup={translateBodyPart}
             translateChild={translateTarget}
             renderGroupIcon={(group, active) => (
                 <BodyPartHealthIcon
                     bodyPart={group}
-                    className={cn('size-5 shrink-0', !active && 'opacity-70')}
+                    className={cn('size-6 shrink-0', !active && 'opacity-70')}
                 />
             )}
             className={className}

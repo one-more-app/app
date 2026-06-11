@@ -70,28 +70,8 @@ function ShareStoryTopLevel({ level }: { level: number }) {
     )
 }
 
-function ShareFullBleedImage({
-    exerciseImageUrl,
-}: {
-    exerciseImageUrl?: string
-}) {
-    const src = getShareableExerciseImageUrl(exerciseImageUrl, 'square')
-    if (!src) return null
-
-    return (
-        <img
-            src={src}
-            alt=""
-            crossOrigin="anonymous"
-            decoding="async"
-            className="absolute inset-0 size-full scale-105 object-cover"
-        />
-    )
-}
-
 function ShareStoryShell({
     isDark,
-    exerciseImageUrl,
     glowColor,
     meshAccent,
     radialBackground,
@@ -99,18 +79,12 @@ function ShareStoryShell({
     children,
 }: {
     isDark: boolean
-    exerciseImageUrl?: string
     glowColor: string
     meshAccent?: string
     radialBackground?: string
     topSlot?: ReactNode
     children: ReactNode
 }) {
-    const hasImage = Boolean(
-        exerciseImageUrl &&
-        getShareableExerciseImageUrl(exerciseImageUrl, 'square'),
-    )
-
     return (
         <div
             data-share-card-root
@@ -129,16 +103,10 @@ function ShareStoryShell({
                 style={{
                     width: CELEBRATION_SHARE_SIZE,
                     height: CELEBRATION_SHARE_SIZE,
-                    background: hasImage
-                        ? '#0a0a0a'
-                        : shareStoryMeshBackground(meshAccent ?? glowColor, true),
+                    background: shareStoryMeshBackground(meshAccent ?? glowColor, true),
                 }}
             >
-                {hasImage ? (
-                    <ShareFullBleedImage exerciseImageUrl={exerciseImageUrl} />
-                ) : null}
-
-                {!hasImage && radialBackground ? (
+                {radialBackground ? (
                     <div
                         aria-hidden
                         className="pointer-events-none absolute inset-0 opacity-90"
@@ -174,32 +142,60 @@ function ShareStoryShell({
     )
 }
 
+function ShareStoryExerciseThumb({
+    exerciseImageUrl,
+}: {
+    exerciseImageUrl: string
+}) {
+    const src = getShareableExerciseImageUrl(exerciseImageUrl, 'square')
+    if (!src) return null
+
+    return (
+        <img
+            src={src}
+            alt=""
+            crossOrigin="anonymous"
+            decoding="async"
+            className="size-56 shrink-0 rounded-3xl object-cover ring-2 ring-white/25 shadow-lg"
+        />
+    )
+}
+
 function ShareStoryHeroStat({
     icon: Icon,
+    exerciseImageUrl,
     value,
     iconColor,
     iconFilter,
     valueStyle,
 }: {
-    icon: LucideIcon
+    icon?: LucideIcon
+    exerciseImageUrl?: string
     value: ReactNode
     iconColor: string
     iconFilter?: string
     valueStyle?: CSSProperties
 }) {
+    const exerciseThumb =
+        exerciseImageUrl &&
+        getShareableExerciseImageUrl(exerciseImageUrl, 'square')
+
     return (
         <div className="relative flex flex-col items-center gap-5">
-            <Icon
-                className="size-24 shrink-0"
-                style={{ color: iconColor, filter: iconFilter }}
-                strokeWidth={1.35}
-                aria-hidden
-            />
+            {exerciseThumb ? (
+                <ShareStoryExerciseThumb exerciseImageUrl={exerciseImageUrl!} />
+            ) : Icon ? (
+                <Icon
+                    className="size-24 shrink-0"
+                    style={{ color: iconColor, filter: iconFilter }}
+                    strokeWidth={1.35}
+                    aria-hidden
+                />
+            ) : null}
             <div
                 className="font-one-more text-[7.5rem] font-bold italic leading-[0.9] tracking-tight tabular-nums"
                 style={{
                     color: iconColor,
-                    textShadow: `0 4px 40px color-mix(in srgb, ${iconColor} 45%, transparent), 0 2px 8px rgba(0,0,0,0.5)`,
                     ...valueStyle,
                 }}
             >
@@ -218,12 +214,12 @@ function ShareStoryHeadline({
 }) {
     return (
         <div className="max-w-[90%] space-y-3">
-            <h2 className="text-balance text-[2.5rem] font-bold uppercase leading-tight tracking-wide text-white drop-shadow-lg">
+            <h2 className="text-balance font-one-more text-[2.5rem] font-bold italic uppercase leading-tight tracking-wide text-white">
                 {title}
             </h2>
             {subtitle ? (
                 <p
-                    className="truncate text-[2rem] font-medium capitalize leading-snug text-white/85 drop-shadow-md"
+                    className="truncate text-[2rem] font-medium capitalize leading-snug text-white/85"
                     title={subtitle}
                 >
                     {subtitle}
@@ -268,13 +264,14 @@ function ShareLeagueCard({
     return (
         <ShareStoryShell
             isDark={isDark}
-            exerciseImageUrl={exerciseImageUrl}
             glowColor={glow}
+            meshAccent={glow}
             radialBackground={leagueCelebrationRadialBackground(glow)}
             topSlot={<ShareStoryTopRank league={nextLeague} />}
         >
             <ShareStoryHeroStat
-                icon={Trophy}
+                exerciseImageUrl={exerciseImageUrl}
+                icon={exerciseImageUrl ? undefined : Trophy}
                 value={formatSharePerfHero(weight, reps)}
                 iconColor={glow}
                 iconFilter={leagueIconDropShadow(glow)}
@@ -326,15 +323,16 @@ function ShareRecordCard({
     return (
         <ShareStoryShell
             isDark={isDark}
-            exerciseImageUrl={exerciseImageUrl}
             glowColor={glow}
+            meshAccent={glow}
             radialBackground={leagueCelebrationRadialBackground(glow)}
             topSlot={
                 leagueAfter ? <ShareStoryTopRank league={leagueAfter} /> : undefined
             }
         >
             <ShareStoryHeroStat
-                icon={Trophy}
+                exerciseImageUrl={exerciseImageUrl}
+                icon={exerciseImageUrl ? undefined : Trophy}
                 value={formatSharePerfHero(weight, reps)}
                 iconColor={glow}
                 iconFilter={leagueIconDropShadow(glow)}

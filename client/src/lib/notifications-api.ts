@@ -10,6 +10,27 @@ export type NotificationPreferences = {
   weeklyRecap: boolean;
 };
 
+export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
+  streakReminders: true,
+  friendRequests: true,
+  friendAccepted: true,
+  messages: true,
+  friendTraining: true,
+  friendRecords: true,
+  weeklyRecap: true,
+};
+
+export function mergeNotificationPreferences(
+  current: Partial<NotificationPreferences> | undefined,
+  patch: Partial<NotificationPreferences>,
+): NotificationPreferences {
+  return {
+    ...DEFAULT_NOTIFICATION_PREFERENCES,
+    ...current,
+    ...patch,
+  };
+}
+
 export type DevicePlatform = "ios" | "android";
 
 export async function registerNotificationDevice(params: {

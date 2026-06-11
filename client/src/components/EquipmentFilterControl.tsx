@@ -1,4 +1,8 @@
 import {
+    AllEquipmentIcon,
+    EquipmentIcon,
+} from '@/components/equipment-icon'
+import {
     HierarchicalFilterControl,
     type HierarchicalSelection,
 } from '@/components/HierarchicalFilterControl'
@@ -8,6 +12,7 @@ import {
     type EquipmentSelection,
 } from '@/lib/equipment-filter'
 import { translateEquipment, UI } from '@/lib/translations'
+import { cn } from '@/lib/utils'
 import { useMemo } from 'react'
 
 export interface EquipmentFilterControlProps {
@@ -45,8 +50,15 @@ export function EquipmentFilterControl({
                 isEquipmentSelectionEmpty(sel as EquipmentSelection)
             }
             allLabel={UI.all}
+            renderAllIcon={<AllEquipmentIcon className="size-6" />}
             translateGroup={translateEquipment}
             translateChild={translateEquipment}
+            renderGroupIcon={(group, active) => (
+                <EquipmentIcon
+                    equipment={group}
+                    className={cn('size-6 shrink-0', !active && 'opacity-70')}
+                />
+            )}
             className={className}
         />
     )

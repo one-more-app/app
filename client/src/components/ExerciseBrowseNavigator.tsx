@@ -1,4 +1,8 @@
-import { BodyPartHealthIcon } from '@/components/body-part-health-icon'
+import {
+    BodyPartHealthIcon,
+    TargetMuscleIcon,
+} from '@/components/body-part-health-icon'
+import { EquipmentIcon } from '@/components/equipment-icon'
 import {
     BrowseSectionTitle,
     BrowseTile,
@@ -250,7 +254,7 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
                                 icon={
                                     <BodyPartHealthIcon
                                         bodyPart={zone}
-                                        className="size-5"
+                                        className="size-7"
                                     />
                                 }
                                 onClick={() => onPickZone(zone)}
@@ -270,6 +274,12 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
                                 leagueLevel={browseLeagueLookups?.targetInZone
                                     .get(browse.zone.toLowerCase())
                                     ?.get(target.toLowerCase())}
+                                icon={
+                                    <TargetMuscleIcon
+                                        target={target}
+                                        className="size-7"
+                                    />
+                                }
                                 onClick={() => onPickTarget(target)}
                             />
                         </li>
@@ -294,6 +304,12 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
                                         equipment,
                                     ),
                                 )}
+                                icon={
+                                    <EquipmentIcon
+                                        equipment={equipment}
+                                        className="size-7"
+                                    />
+                                }
                                 onClick={() => onPickEquipment(equipment)}
                             />
                         </li>
