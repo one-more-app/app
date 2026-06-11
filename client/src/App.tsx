@@ -2,6 +2,7 @@ import { BottomNav } from '@/components/BottomNav'
 import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCelebration'
 import { ProfileUsernameSetupHost } from '@/components/profile/ProfileUsernameSetupHost'
 import { Toaster } from '@/components/ui/sonner'
+import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import { usePushNotifications } from '@/hooks/use-push-notifications'
 import { RealtimeProvider } from '@/hooks/use-realtime'
@@ -219,6 +220,7 @@ function App() {
                 <Toaster />
                 <LeaguePromotionCelebrationHost />
                 <AuthProvider>
+                    <AnalyticsProvider>
                     <RealtimeProvider>
                     <ProfileUsernameSetupHost />
                     <AccessGate>
@@ -249,6 +251,7 @@ function App() {
                         </BottomNavHost>
                     </AccessGate>
                     </RealtimeProvider>
+                    </AnalyticsProvider>
                 </AuthProvider>
             </div>
         </HashRouter>

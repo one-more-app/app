@@ -1,0 +1,81 @@
+---
+description: Tracking OpenPanel — KPIs, usage, revenus, satisfaction
+globs: client/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Tracking OpenPanel (One More)
+
+## Configuration
+
+Variables client (dans chaque `.env.*.capacitor` et `.env` dev) :
+
+- `VITE_OPENPANEL_CLIENT_ID` — obligatoire pour activer le tracking
+- `VITE_OPENPANEL_API_URL` — optionnel (défaut `https://api.openpanel.dev`)
+
+Variables serveur (`api/.env`) pour revenus / webhooks :
+
+- `OPENPANEL_CLIENT_ID`
+- `OPENPANEL_CLIENT_SECRET` — jamais côté client
+- `OPENPANEL_API_URL` — optionnel
+
+Lecteurs : `client/src/lib/analytics/config.ts`, `api/src/analytics/analytics.config.ts`.
+
+## Architecture (ne pas dupliquer)
+
+| Couche | Emplacement | Rôle |
+|--------|-------------|------|
+| Taxonomie | `client/src/lib/analytics/events.ts` | Noms d'événements (`AnalyticsEvents`) |
+| API track | `client/src/lib/analytics/track.ts` | `track()`, `identifyUser()`, `trackAttrs()` |
+| Revenus client | `client/src/lib/analytics/monetization.ts` | `trackPurchaseValidated()` — temporaire |
+| Revenus serveur | `api/src/analytics/analytics.service.ts` | Source de vérité achats (RevenueCat) |
+| Contexte page | `AnalyticsProvider` + `PageTracker` | `page_viewed`, identify, props globales |
+| Wrapper UI | `Trackable` | Propage `section` / `feature` aux enfants |
+| Hook | `useAnalytics()` | Tracking impératif avec contexte hérité |
+
+## Règles pour chaque nouveau composant
+
+1. **Envelopper** les sections fonctionnelles avec `<Trackable section="…" feature="…">`.
+2. **Clics / CTA** : spread `{...trackAttrs(AnalyticsEvents.UI_ELEMENT_CLICKED, { element: '…' })}` sur le bouton, ou `data-track` natif OpenPanel.
+3. **Actions métier** (ajout perf, invite, etc.) : `useAnalytics().track(AnalyticsEvents.…, { … })` — jamais de string libre hors `events.ts`.
+4. **Pages** : pas de `page_viewed` manuel — `PageTracker` le fait déjà.
+5. **Auth** : pas de `identify` manuel — `AnalyticsProvider` le fait.
+6. **Convention** : événements `snake_case`, passé (`exercise_added`), propriétés `snake_case`.
+7. **Interdit** : PII dans les propriétés d'événement (email, mot de passe). L'email va uniquement dans `identifyUser()`.
+
+## Revenus (RevenueCat — à brancher)
+
+- Client : `trackPurchaseValidated()` dans `monetization.ts` pour feedback UX immédiat.
+- Serveur : `AnalyticsService.trackValidatedPurchase()` depuis le webhook RevenueCat — **prioritaire** pour les KPIs revenus.
+- Ne pas tracker un achat côté client seul sans confirmation serveur.
+
+## Exemple minimal
+
+```tsx
+import { Trackable } from "@/components/analytics/Trackable";
+import { useAnalytics } from "@/hooks/use-analytics";
+import { AnalyticsEvents } from "@/lib/analytics";
+
+export function MyFeature() {
+  const { track, trackAttrs } = useAnalytics();
+
+  const handleSave = () => {
+    track(AnalyticsEvents.FEATURE_USED, { feature: "my_feature" });
+  };
+
+  return (
+    <Trackable section="my_feature">
+      <button
+        onClick={handleSave}
+        {...trackAttrs(AnalyticsEvents.UI_ELEMENT_CLICKED, { element: "save" })}
+      >
+        Enregistrer
+      </button>
+    </Trackable>
+  );
+}
+```
+
+## Nouvel événement
+
+Ajouter le nom dans `AnalyticsEvents` (`events.ts`) avant toute utilisation — un seul endroit pour la taxonomie OpenPanel.

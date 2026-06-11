@@ -1,3 +1,6 @@
+import { Trackable } from "@/components/analytics/Trackable";
+import { useAnalytics } from "@/hooks/use-analytics";
+import { AnalyticsEvents } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,12 +31,19 @@ export function ExerciseLimitDialog({
   activeCount = EXERCISE_LIMIT_LIMITED,
 }: ExerciseLimitDialogProps) {
   const auth = useAuth();
+  const { track, trackAttrs } = useAnalytics();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (open) void hapticNotificationWarning();
-  }, [open]);
+    if (!open) return;
+    void hapticNotificationWarning();
+    track(AnalyticsEvents.PAYWALL_VIEWED, {
+      paywall_type: "exercise_limit",
+      active_count: activeCount,
+    });
+    track(AnalyticsEvents.EXERCISE_LIMIT_REACHED, { active_count: activeCount });
+  }, [open, activeCount, track]);
 
   const handleInviteLink = () => {
     void (async () => {
@@ -53,6 +63,7 @@ export function ExerciseLimitDialog({
   };
 
   return (
+    <Trackable section="paywall" feature="exercise_limit">
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
@@ -65,7 +76,14 @@ export function ExerciseLimitDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex-col gap-2 sm:flex-col">
-          <Button className="w-full" onClick={handleInviteLink} disabled={busy}>
+          <Button
+            className="w-full"
+            onClick={handleInviteLink}
+            disabled={busy}
+            {...trackAttrs(AnalyticsEvents.UI_ELEMENT_CLICKED, {
+              element: "invite_link",
+            })}
+          >
             <Link2 className="mr-2 size-4" />
             {UI.exerciseLimitInviteLink}
           </Button>
@@ -74,6 +92,9 @@ export function ExerciseLimitDialog({
             className="w-full"
             onClick={handleSearchFriend}
             disabled={busy}
+            {...trackAttrs(AnalyticsEvents.UI_ELEMENT_CLICKED, {
+              element: "search_friend",
+            })}
           >
             <Search className="mr-2 size-4" />
             {UI.exerciseLimitSearchFriend}
@@ -88,5 +109,6 @@ export function ExerciseLimitDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </Trackable>
   );
 }
