@@ -6,7 +6,6 @@ import { usePushNotifications } from '@/hooks/use-push-notifications'
 import { RealtimeProvider } from '@/hooks/use-realtime'
 import { useTheme } from '@/hooks/use-theme'
 import { extractInviteCodeFromAttribution, setupAppsFlyer } from '@/lib/appsflyer'
-import { initNativeSocialSignIn } from '@/lib/oauth-native'
 import { setPendingInviteCode } from '@/lib/invite-code'
 import { needsOnboarding } from '@/lib/storage'
 import { scheduleSafeAreaCssSync } from '@/lib/sync-safe-area-css'
@@ -159,10 +158,6 @@ function App() {
         scheduleSafeAreaCssSync()
 
         void setupAppsFlyer()
-
-        void initNativeSocialSignIn().catch(() => {
-            /* Config Google manquante ou plugin indisponible — login au tap. */
-        })
 
         const handlerPromise = CapacitorApp.addListener('appUrlOpen', (event) => {
             try {

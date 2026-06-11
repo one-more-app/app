@@ -17,6 +17,7 @@ import { UpdateNotificationPreferencesDto } from './dto/update-preferences.dto.j
 import { DeviceTokensService } from './device-tokens.service.js';
 import { FriendTrainingAlertsService } from './friend-training-alerts.service.js';
 import { NotificationPreferencesService } from './notification-preferences.service.js';
+import { PushNotificationService } from './push-notification.service.js';
 
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
@@ -25,6 +26,7 @@ export class NotificationsController {
     private readonly deviceTokens: DeviceTokensService,
     private readonly preferences: NotificationPreferencesService,
     private readonly trainingAlerts: FriendTrainingAlertsService,
+    private readonly push: PushNotificationService,
   ) {}
 
   @Post('devices')
@@ -76,5 +78,10 @@ export class NotificationsController {
     @Param('friendId', ParseUUIDPipe) friendId: string,
   ) {
     return await this.trainingAlerts.unsubscribe(req.user.sub, friendId);
+  }
+
+  @Post('test-push')
+  async testPush(@Req() req: { user: { sub: string } }) {
+    return await this.push.sendTestPush(req.user.sub);
   }
 }

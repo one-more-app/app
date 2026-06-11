@@ -148,8 +148,6 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
         if (requestCode >= GoogleProvider.REQUEST_AUTHORIZE_GOOGLE_MIN
                 && requestCode < GoogleProvider.REQUEST_AUTHORIZE_GOOGLE_MAX) {
             PluginHandle pluginHandle = getBridge().getPlugin("SocialLogin");
@@ -163,7 +161,10 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
                 return;
             }
             ((SocialLoginPlugin) plugin).handleGoogleLoginIntent(requestCode, data);
+            return;
         }
+
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override

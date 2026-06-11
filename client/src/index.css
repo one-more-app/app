@@ -7,7 +7,7 @@
 
 @font-face {
   font-family: "One More";
-  src: url("/fonts/one-more.ttf") format("truetype");
+  src: url("/fonts/one-more.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -16,7 +16,7 @@
 /* Même fichier, prioritaire uniquement pour chiffres et signes usuels (pile sur html via --font-sans). */
 @font-face {
   font-family: "One More Figures";
-  src: url("/fonts/one-more.ttf") format("truetype");
+  src: url("/fonts/one-more.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;

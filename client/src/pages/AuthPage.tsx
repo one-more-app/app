@@ -35,6 +35,27 @@ type AuthPageProps = {
 const showAppleSignIn =
     Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
 
+function oauthErrorCode(error: unknown): string {
+    if (
+        error != null &&
+        typeof error === "object" &&
+        "code" in error &&
+        (error as { code?: unknown }).code != null
+    ) {
+        return String((error as { code?: unknown }).code);
+    }
+    return "";
+}
+
+function oauthErrorMessage(error: unknown, fallback: string): string {
+    if (error instanceof Error && error.message.trim()) {
+        const code = oauthErrorCode(error);
+        return code ? `${error.message} (${code})` : error.message;
+    }
+    const raw = String(error ?? "").trim();
+    return raw || fallback;
+}
+
 export function AuthPage({ embedded = false }: AuthPageProps) {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -557,6 +578,11 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                     <CardTitle>{UI.continueWith}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                    {auth.lastError && (
+                        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                            {auth.lastError}
+                        </div>
+                    )}
                     <Button
                         className="w-full"
                         variant="secondary"
@@ -570,8 +596,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                     auth.acceptSession(session);
                                     await finishSuccess();
                                 } catch (e) {
+                                    console.error("[Auth] Google sign-in failed", e);
                                     auth.setError(
-                                        e instanceof Error ? e.message : "Connexion Google impossible",
+                                        oauthErrorMessage(e, "Connexion Google impossible"),
                                     );
                                 } finally {
                                     setIsBusy(false);
@@ -619,10 +646,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                         auth.acceptSession(session);
                                         await finishSuccess();
                                     } catch (e) {
+                                        console.error("[Auth] Apple sign-in failed", e);
                                         auth.setError(
-                                            e instanceof Error
-                                                ? e.message
-                                                : "Connexion Apple impossible",
+                                            oauthErrorMessage(e, "Connexion Apple impossible"),
                                         );
                                     } finally {
                                         setIsBusy(false);

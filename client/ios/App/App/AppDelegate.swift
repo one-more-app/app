@@ -1,13 +1,22 @@
 import GoogleSignIn
 import UIKit
 import Capacitor
+import FirebaseCore
+import FirebaseMessaging
+import UserNotifications
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
 
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        FirebaseApp.configure()
+        Messaging.messaging().delegate = self
+
+        let center = UNUserNotificationCenter.current()
+        NSLog("[push-native] didFinishLaunching delegate=%@", String(describing: center.delegate))
+
         return true
     }
 
@@ -21,6 +30,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
+        NSLog(
+            "[push-native] didBecomeActive UNCenter delegate=%@",
+            String(describing: UNUserNotificationCenter.current().delegate)
+        )
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
@@ -37,6 +50,51 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
+    }
+
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        #if DEBUG
+        Messaging.messaging().setAPNSToken(deviceToken, type: .sandbox)
+        NSLog("[push-native] APNs type=sandbox (build DEBUG)")
+        #else
+        Messaging.messaging().setAPNSToken(deviceToken, type: .prod)
+        NSLog("[push-native] APNs type=prod (build RELEASE)")
+        #endif
+
+        let apnsHex = deviceToken.map { String(format: "%02x", $0) }.joined()
+        NSLog("[push-native] APNs token registered (%lu bytes) %@", deviceToken.count, apnsHex)
+
+        Messaging.messaging().token { token, error in
+            if let error = error {
+                NSLog("[push-native] FCM token error: %@", error.localizedDescription)
+                NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
+                return
+            }
+            guard let token = token else { return }
+            NSLog("[push-native] FCM token ok (len=%lu)", token.count)
+            NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: token)
+        }
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        NSLog("[push-native] APNs registration failed: %@", error.localizedDescription)
+        NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
+    }
+
+    func application(
+        _ application: UIApplication,
+        didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) {
+        NSLog("[push-native] didReceiveRemoteNotification keys=%@", Array(userInfo.keys))
+        Messaging.messaging().appDidReceiveMessage(userInfo)
+        completionHandler(.newData)
+    }
+
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        guard let fcmToken = fcmToken else { return }
+        NSLog("[push-native] FCM token refresh (len=%lu)", fcmToken.count)
+        NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: fcmToken)
     }
 
 }

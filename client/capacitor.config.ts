@@ -1,4 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 const config: CapacitorConfig = {
   appId: 'com.one_more.app',
