@@ -1,5 +1,5 @@
 ---
-description: Tracking OpenPanel — KPIs, usage, revenus, satisfaction
+description: Tracking OpenPanel — auto-capture, session replay, KPIs métier
 globs: client/src/**/*.{ts,tsx}
 alwaysApply: false
 ---
@@ -8,74 +8,105 @@ alwaysApply: false
 
 ## Configuration
 
-Variables client (dans chaque `.env.*.capacitor` et `.env` dev) :
-
-- `VITE_OPENPANEL_CLIENT_ID` — obligatoire pour activer le tracking
+**Client** (`.env`, `.env.*.capacitor`) :
+- `VITE_OPENPANEL_CLIENT_ID` — active le tracking
 - `VITE_OPENPANEL_API_URL` — optionnel (défaut `https://api.openpanel.dev`)
+- `VITE_OPENPANEL_SESSION_REPLAY` — `true` par défaut ; `false` pour désactiver
 
-Variables serveur (`api/.env`) pour revenus / webhooks :
+**Serveur** (`api/.env`) : `OPENPANEL_CLIENT_ID`, `OPENPANEL_CLIENT_SECRET`
 
-- `OPENPANEL_CLIENT_ID`
-- `OPENPANEL_CLIENT_SECRET` — jamais côté client
-- `OPENPANEL_API_URL` — optionnel
+## Architecture — ne pas réinventer
 
-Lecteurs : `client/src/lib/analytics/config.ts`, `api/src/analytics/analytics.config.ts`.
+| Couche | Fichier | Rôle |
+|--------|---------|------|
+| Auto-clics | `AnalyticsClickCapture` | **Tous** les clics bouton/lien/tab, sans code par composant |
+| Session replay | `lib/analytics/instance.ts` | Enregistrement rrweb (activé par défaut) |
+| Pages | `PageTracker` | `page_viewed` + `current_page` global |
+| Perfs CRUD | `lib/storage.ts` | `performance_logged/edited/deleted` automatique |
+| Records / ligue | `lib/perf-notifications.ts` | `personal_record_broken`, `league_promoted` |
+| Repos | `RestSinceLastSetBar` | `rest_timer_dismissed` |
+| Drawer perf | `AddPerfDrawer` + `ui/drawer` | `perf_drawer_opened`, `drawer_opened/closed` |
+| Picker | `HorizontalWheelPicker` | `wheel_picker_changed` |
+| Overlays | `ui/dialog`, `ui/drawer` | `dialog_opened/closed` via `data-analytics-label` |
+| Boutons | `ui/button` | `data-analytics-label` pour nommer le clic |
+| Taxonomie | `lib/analytics/events.ts` | **Seul** endroit pour les noms d'événements |
 
-## Architecture (ne pas dupliquer)
+## Règles pour tout nouveau composant
 
-| Couche | Emplacement | Rôle |
-|--------|-------------|------|
-| Taxonomie | `client/src/lib/analytics/events.ts` | Noms d'événements (`AnalyticsEvents`) |
-| API track | `client/src/lib/analytics/track.ts` | `track()`, `identifyUser()`, `trackAttrs()` |
-| Revenus client | `client/src/lib/analytics/monetization.ts` | `trackPurchaseValidated()` — temporaire |
-| Revenus serveur | `api/src/analytics/analytics.service.ts` | Source de vérité achats (RevenueCat) |
-| Contexte page | `AnalyticsProvider` + `PageTracker` | `page_viewed`, identify, props globales |
-| Wrapper UI | `Trackable` | Propage `section` / `feature` aux enfants |
-| Hook | `useAnalytics()` | Tracking impératif avec contexte hérité |
+### 1. Clics — rien à coder sauf label optionnel
 
-## Règles pour chaque nouveau composant
+`AnalyticsClickCapture` tracke automatiquement chaque clic interactif avec `page`, `section`, `feature`.
 
-1. **Envelopper** les sections fonctionnelles avec `<Trackable section="…" feature="…">`.
-2. **Clics / CTA** : spread `{...trackAttrs(AnalyticsEvents.UI_ELEMENT_CLICKED, { element: '…' })}` sur le bouton, ou `data-track` natif OpenPanel.
-3. **Actions métier** (ajout perf, invite, etc.) : `useAnalytics().track(AnalyticsEvents.…, { … })` — jamais de string libre hors `events.ts`.
-4. **Pages** : pas de `page_viewed` manuel — `PageTracker` le fait déjà.
-5. **Auth** : pas de `identify` manuel — `AnalyticsProvider` le fait.
-6. **Convention** : événements `snake_case`, passé (`exercise_added`), propriétés `snake_case`.
-7. **Interdit** : PII dans les propriétés d'événement (email, mot de passe). L'email va uniquement dans `identifyUser()`.
+Pour nommer un bouton explicitement :
+```tsx
+<Button data-analytics-label="save_exercise">Enregistrer</Button>
+```
 
-## Revenus (RevenueCat — à brancher)
+### 2. Section / feature — wrapper `Trackable`
 
-- Client : `trackPurchaseValidated()` dans `monetization.ts` pour feedback UX immédiat.
-- Serveur : `AnalyticsService.trackValidatedPurchase()` depuis le webhook RevenueCat — **prioritaire** pour les KPIs revenus.
-- Ne pas tracker un achat côté client seul sans confirmation serveur.
+Envelopper chaque zone fonctionnelle :
+```tsx
+<Trackable section="exercise_detail" feature="history">
+  {children}
+</Trackable>
+```
 
-## Exemple minimal
+Équivalent HTML : `data-analytics-section` / `data-analytics-feature` sur un conteneur.
+
+### 3. Dialogs / Drawers — label obligatoire
+
+```tsx
+<Dialog open={open} onOpenChange={setOpen} data-analytics-label="rename_exercise">
+<Drawer open={open} onOpenChange={setOpen} data-analytics-label="add_perf">
+```
+
+Le tracking open/close est **natif** dans `ui/dialog` et `ui/drawer`.
+
+### 4. Actions métier — hooks centralisés, pas dans le composant
+
+| Action | Où tracker |
+|--------|------------|
+| Ajout / modif / suppression perf | `lib/storage.ts` (déjà fait) |
+| Record / promotion ligue | `lib/perf-notifications.ts` (déjà fait) |
+| Achat validé | `AnalyticsService` serveur (RevenueCat) |
+| Nouvel événement custom | Ajouter dans `events.ts` puis appeler `track()` |
+
+**Ne pas** re-tracker `performance_logged` dans un composant — c'est déjà dans `storage.ts`.
+
+### 5. Opt-out
+
+- `data-analytics-skip` sur un conteneur → ignore les clics enfants
+- `data-analytics-auto="false"` sur un élément → ignore ce clic
+- `data-openpanel-replay-block` → masque du session replay
+
+### 6. Interdits
+
+- PII dans les propriétés d'événement
+- Strings d'événements hors `AnalyticsEvents`
+- `identify` / `page_viewed` manuels (déjà dans `AnalyticsProvider` / `PageTracker`)
+
+## Session replay
+
+Activé par défaut. Vérifier dans le dashboard OpenPanel → Sessions → bouton play.
+Désactiver : `VITE_OPENPANEL_SESSION_REPLAY=false`.
+
+## Exemple page complète
 
 ```tsx
 import { Trackable } from "@/components/analytics/Trackable";
-import { useAnalytics } from "@/hooks/use-analytics";
-import { AnalyticsEvents } from "@/lib/analytics";
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 
-export function MyFeature() {
-  const { track, trackAttrs } = useAnalytics();
-
-  const handleSave = () => {
-    track(AnalyticsEvents.FEATURE_USED, { feature: "my_feature" });
-  };
-
+export function MyPage() {
   return (
-    <Trackable section="my_feature">
-      <button
-        onClick={handleSave}
-        {...trackAttrs(AnalyticsEvents.UI_ELEMENT_CLICKED, { element: "save" })}
-      >
-        Enregistrer
-      </button>
+    <Trackable section="my_page">
+      <Button data-analytics-label="primary_action">Action</Button>
+      <Dialog data-analytics-label="confirm_delete" open={open} onOpenChange={setOpen}>
+        {/* contenu */}
+      </Dialog>
     </Trackable>
   );
 }
 ```
 
-## Nouvel événement
-
-Ajouter le nom dans `AnalyticsEvents` (`events.ts`) avant toute utilisation — un seul endroit pour la taxonomie OpenPanel.
+Les clics et l'ouverture du dialog sont trackés **sans autre code**.

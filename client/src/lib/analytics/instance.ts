@@ -1,5 +1,10 @@
 import { OpenPanel } from "@openpanel/web";
-import { getOpenPanelApiUrl, getOpenPanelClientId, isOpenPanelConfigured } from "./config";
+import {
+  getOpenPanelApiUrl,
+  getOpenPanelClientId,
+  isOpenPanelConfigured,
+  isSessionReplayEnabled,
+} from "./config";
 
 let instance: OpenPanel | null = null;
 
@@ -14,6 +19,14 @@ export function getOpenPanel(): OpenPanel | null {
       trackAttributes: true,
       trackHashChanges: true,
       disabled: false,
+      sessionReplay: isSessionReplayEnabled()
+        ? {
+            enabled: true,
+            maskAllInputs: true,
+            maskAllText: false,
+            blockSelector: "[data-openpanel-replay-block]",
+          }
+        : undefined,
     });
   }
   return instance;

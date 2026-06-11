@@ -40,7 +40,7 @@ Ne pas confondre : `api.onemore.app` (sans tiret) ≠ `api.one-more.app` (prod).
 
 Optionnel — invitations amis (AppsFlyer OneLink) : `VITE_APPSFLYER_DEV_KEY`, `VITE_APPSFLYER_APP_ID`, `VITE_APPSFLYER_ONELINK_ID`, `VITE_APPSFLYER_ONELINK_DOMAIN`. Config dashboard + App Links / Universal Links : [`docs/appsflyer-setup.md`](../../docs/appsflyer-setup.md).
 
-Optionnel — analytics produit (OpenPanel) : `VITE_OPENPANEL_CLIENT_ID`, `VITE_OPENPANEL_API_URL` (défaut `https://api.openpanel.dev`). Règle tracking : [`openpanel-tracking.mdc`](openpanel-tracking.mdc).
+Optionnel — analytics produit (OpenPanel) : `VITE_OPENPANEL_CLIENT_ID`, `VITE_OPENPANEL_API_URL` (défaut `https://api.openpanel.dev`), `VITE_OPENPANEL_SESSION_REPLAY` (`true` par défaut). Règle tracking : [`openpanel-tracking.mdc`](openpanel-tracking.mdc).
 
 ## Commandes (depuis `client/`)
 

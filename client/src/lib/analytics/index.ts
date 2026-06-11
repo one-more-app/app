@@ -1,10 +1,27 @@
 export { AnalyticsEvents, PageNames, resolvePageName } from "./events";
 export type { AnalyticsEventName } from "./events";
 export {
+  findInteractiveElement,
+  resolveAnalyticsFeature,
+  resolveAnalyticsSection,
+  resolveClickLabel,
+  shouldSkipAutoClickTrack,
+} from "./dom";
+export {
   getOpenPanelApiUrl,
   getOpenPanelClientId,
   isOpenPanelConfigured,
+  isSessionReplayEnabled,
 } from "./config";
+export {
+  trackLeaguePromoted,
+  trackPerfDrawerOpened,
+  trackPerformanceDeleted,
+  trackPerformanceEdited,
+  trackPerformanceLogged,
+  trackPersonalRecordBroken,
+  trackRestTimerDismissed,
+} from "./performance-tracking";
 export {
   clearAnalyticsUser,
   identifyUser,

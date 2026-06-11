@@ -1,3 +1,4 @@
+import { AnalyticsClickCapture } from "./AnalyticsClickCapture";
 import { AnalyticsContextProvider } from "./analytics-context";
 import { PageTracker } from "./PageTracker";
 import {
@@ -83,7 +84,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   return (
     <AnalyticsContextProvider value={pageContext}>
       <PageTracker />
-      {children}
+      <AnalyticsClickCapture>{children}</AnalyticsClickCapture>
     </AnalyticsContextProvider>
   );
 }

@@ -31,7 +31,7 @@ export function ExerciseLimitDialog({
   activeCount = EXERCISE_LIMIT_LIMITED,
 }: ExerciseLimitDialogProps) {
   const auth = useAuth();
-  const { track, trackAttrs } = useAnalytics();
+  const { track } = useAnalytics();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
 
@@ -80,9 +80,7 @@ export function ExerciseLimitDialog({
             className="w-full"
             onClick={handleInviteLink}
             disabled={busy}
-            {...trackAttrs(AnalyticsEvents.UI_ELEMENT_CLICKED, {
-              element: "invite_link",
-            })}
+            data-analytics-label="invite_link"
           >
             <Link2 className="mr-2 size-4" />
             {UI.exerciseLimitInviteLink}
@@ -92,9 +90,7 @@ export function ExerciseLimitDialog({
             className="w-full"
             onClick={handleSearchFriend}
             disabled={busy}
-            {...trackAttrs(AnalyticsEvents.UI_ELEMENT_CLICKED, {
-              element: "search_friend",
-            })}
+            data-analytics-label="search_friend"
           >
             <Search className="mr-2 size-4" />
             {UI.exerciseLimitSearchFriend}

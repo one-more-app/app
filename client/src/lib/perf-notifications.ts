@@ -1,3 +1,7 @@
+import {
+  trackLeaguePromoted,
+  trackPersonalRecordBroken,
+} from "@/lib/analytics"
 import { maybeRequestAppReview } from "@/lib/app-review"
 import { enqueueCelebration } from "@/lib/celebration-queue"
 import type { LeagueChangeDto } from "@/lib/league-types"
@@ -73,6 +77,14 @@ export function notifyPerfMilestones(params: {
   if (!isRecord && !leagueChanged) return
 
   if (leagueChanged && nextLeague) {
+    trackLeaguePromoted({
+      exerciseName,
+      weight: savedWeight,
+      reps: savedReps,
+      previousRankId: prevLeague?.rankId,
+      nextRankId: nextLeague.rankId,
+      nextTier: nextLeague.tier,
+    })
     enqueueCelebration({
       kind: "league",
       payload: {
@@ -88,6 +100,14 @@ export function notifyPerfMilestones(params: {
   }
 
   if (isRecord) {
+    trackPersonalRecordBroken({
+      exerciseName,
+      weight: savedWeight,
+      reps: savedReps,
+      previousWeight: prevPB?.weight,
+      previousReps: prevPB?.reps,
+      leagueTier: nextLeague?.tier,
+    })
     enqueueCelebration({
       kind: "record",
       payload: {

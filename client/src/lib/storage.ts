@@ -1,4 +1,9 @@
 import {
+  trackPerformanceDeleted,
+  trackPerformanceEdited,
+  trackPerformanceLogged,
+} from "@/lib/analytics";
+import {
   deletePerformanceEntryRemote,
   deleteTrackedExerciseRemote,
   patchPerformanceEntry,
@@ -286,6 +291,14 @@ export function savePerformance(
   };
   updatePerformanceCache([...getAllPerformanceEntries(), entry]);
   notifyLocalDataChanged("performance");
+  trackPerformanceLogged({
+    trackedExerciseId,
+    entryId: entry.id,
+    weight,
+    reps,
+    date: day,
+    source: "save_performance",
+  });
   void upsertPerformanceEntry(entry)
     .then(({ xp }) => {
       if (xp) applyXpGrantResult(xp);
@@ -322,6 +335,14 @@ export async function savePerformanceAndWait(
       getAllPerformanceEntries().map((e) => (e.id === entry.id ? remote : e)),
     );
     if (xp) applyXpGrantResult(xp);
+    trackPerformanceLogged({
+      trackedExerciseId,
+      entryId: remote.id,
+      weight,
+      reps,
+      date: day,
+      source: "save_performance_and_wait",
+    });
     return { entry: remote, xp };
   } catch (error) {
     notifyRemoteWriteError();
@@ -330,6 +351,7 @@ export async function savePerformanceAndWait(
 }
 
 export function deletePerformance(entryId: string): void {
+  trackPerformanceDeleted({ entryId, source: "delete_performance" });
   const next = getAllPerformanceEntries().map((e) =>
     e.id === entryId ? { ...e, updatedAt: nowIso(), deletedAt: nowIso() } : e,
   );
@@ -341,6 +363,7 @@ export function deletePerformance(entryId: string): void {
 }
 
 export async function deletePerformanceAndWait(entryId: string): Promise<void> {
+  trackPerformanceDeleted({ entryId, source: "delete_performance_and_wait" });
   const next = getAllPerformanceEntries().map((e) =>
     e.id === entryId ? { ...e, updatedAt: nowIso(), deletedAt: nowIso() } : e,
   );
@@ -362,10 +385,19 @@ export function updatePerformance(
   const list = getAllPerformanceEntries();
   const idx = list.findIndex((e) => e.id === entryId);
   if (idx === -1) return null;
+  const previous = list[idx];
   list[idx] = { ...list[idx], weight, reps, updatedAt: nowIso() };
   const updated = list[idx];
   updatePerformanceCache([...list]);
   notifyLocalDataChanged("performance");
+  trackPerformanceEdited({
+    entryId,
+    weight,
+    reps,
+    previousWeight: previous.weight,
+    previousReps: previous.reps,
+    source: "update_performance",
+  });
   void patchPerformanceEntry(entryId, { weight, reps }).catch(() =>
     notifyRemoteWriteError(),
   );
@@ -380,6 +412,7 @@ export async function updatePerformanceAndWait(
   const list = getAllPerformanceEntries();
   const idx = list.findIndex((e) => e.id === entryId);
   if (idx === -1) return null;
+  const previous = list[idx];
   list[idx] = { ...list[idx], weight, reps, updatedAt: nowIso() };
   updatePerformanceCache([...list]);
   notifyLocalDataChanged("performance");
@@ -388,6 +421,14 @@ export async function updatePerformanceAndWait(
     updatePerformanceCache(
       getAllPerformanceEntries().map((e) => (e.id === entryId ? remote : e)),
     );
+    trackPerformanceEdited({
+      entryId,
+      weight,
+      reps,
+      previousWeight: previous.weight,
+      previousReps: previous.reps,
+      source: "update_performance_and_wait",
+    });
     return remote;
   } catch (error) {
     notifyRemoteWriteError();

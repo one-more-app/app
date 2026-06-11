@@ -16,3 +16,11 @@ export function getOpenPanelApiUrl(): string {
 export function isOpenPanelConfigured(): boolean {
   return Boolean(getOpenPanelClientId());
 }
+
+/** Session replay activé par défaut quand OpenPanel est configuré. */
+export function isSessionReplayEnabled(): boolean {
+  if (!isOpenPanelConfigured()) return false;
+  const raw = import.meta.env.VITE_OPENPANEL_SESSION_REPLAY?.trim().toLowerCase();
+  if (raw === "false" || raw === "0" || raw === "off") return false;
+  return true;
+}

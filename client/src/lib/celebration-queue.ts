@@ -1,3 +1,4 @@
+import { AnalyticsEvents, track } from "@/lib/analytics";
 import {
   hapticImpact,
   hapticImpactHeavy,
@@ -120,6 +121,13 @@ export function enqueueCelebration(item: CelebrationItem): void {
 
   if (wasEmpty) {
     playCelebrationFeedback(item);
+    track(AnalyticsEvents.CELEBRATION_VIEWED, {
+      kind: item.kind,
+      exercise_name:
+        item.kind === "league" || item.kind === "record"
+          ? item.payload.exerciseName
+          : undefined,
+    });
   }
 
   syncCachedSnapshot();

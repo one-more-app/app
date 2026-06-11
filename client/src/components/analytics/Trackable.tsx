@@ -10,6 +10,8 @@ type TrackableProps = {
   className?: string;
   /** Balise HTML du conteneur (défaut : `div`). */
   as?: "div" | "section" | "article" | "main" | "span";
+  /** Désactive la capture auto des clics dans cette zone. */
+  skipClickCapture?: boolean;
 };
 
 /**
@@ -23,6 +25,7 @@ export function Trackable({
   children,
   className,
   as: Tag = "div",
+  skipClickCapture = false,
 }: TrackableProps) {
   const parent = useAnalyticsContext();
   const value = useMemo(
@@ -36,7 +39,12 @@ export function Trackable({
 
   return (
     <AnalyticsContextProvider value={value}>
-      <Tag className={className} data-analytics-section={section}>
+      <Tag
+        className={className}
+        data-analytics-section={section}
+        {...(feature ? { "data-analytics-feature": feature } : {})}
+        {...(skipClickCapture ? { "data-analytics-skip": "" } : {})}
+      >
         {children}
       </Tag>
     </AnalyticsContextProvider>

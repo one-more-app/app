@@ -1,12 +1,27 @@
 import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
+import { trackDrawerOpenChange } from "@/lib/analytics/overlay-tracking"
 import { cn } from "@/lib/utils"
 
+type DrawerProps = React.ComponentProps<typeof DrawerPrimitive.Root> & {
+  "data-analytics-label"?: string
+}
+
 function Drawer({
+  onOpenChange,
+  "data-analytics-label": analyticsLabel,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root>) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />
+}: DrawerProps) {
+  return (
+    <DrawerPrimitive.Root
+      data-slot="drawer"
+      onOpenChange={(open) =>
+        trackDrawerOpenChange(open, analyticsLabel, onOpenChange)
+      }
+      {...props}
+    />
+  )
 }
 
 function DrawerTrigger({
