@@ -121,7 +121,7 @@
        "isCustom":false,
        "id":"api-dU605di",
        "updatedAt":"2026-03-20T09:53:35.858Z",
-       "deletedAt":null
+       "acaacdeletedAt":null
     },
     {
        "exerciseId":"wQ2c4XD",
@@ -798,6 +798,19 @@
        "isCustom":false,
        "id":"api-bOOdeyc",
        "updatedAt":"2026-05-28T17:41:29.424Z",
+       "deletedAt":null
+    },
+    {
+       "exerciseId":"CuaWCmC",
+       "name":"cable lateral pulldown (with rope attachment)",
+       "originalName":"cable lateral pulldown (with rope attachment)",
+       "bodyPart":"back",
+       "target":"lats",
+       "equipment":"cable",
+       "gifUrl":"https://static.exercisedb.dev/media/CuaWCmC.gif",
+       "isCustom":false,
+       "id":"api-CuaWCmC",
+       "updatedAt":"2026-06-07T06:33:27.104Z",
        "deletedAt":null
     }
  ]
