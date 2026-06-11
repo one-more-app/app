@@ -409,7 +409,7 @@ export function ExerciseListPage() {
     const customExerciseDialog = (
         <Dialog open={customOpen} onOpenChange={setCustomOpen}>
             <DialogTrigger asChild>
-                <Button size="sm" className="w-full">
+                <Button className="w-full">
                     <Plus className="mr-2 size-4" />
                     {UI.custom}
                 </Button>

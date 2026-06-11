@@ -11,7 +11,7 @@ const buttonVariants = cva(
         variants: {
             variant: {
                 default:
-                    "rounded-lg bg-primary text-[12px] text-primary-foreground font-one-more uppercase tracking-wide hover:bg-primary/90",
+                    "rounded-lg bg-primary dark:bg-primary-foreground text-[12px] text-primary-foreground dark:text-primary font-one-more uppercase tracking-wide hover:bg-primary/90",
                 accent:
                     "rounded-lg bg-accent text-[12px] text-accent-foreground font-one-more uppercase tracking-wide hover:bg-accent/90 hover:text-accent-foreground",
                 destructive:

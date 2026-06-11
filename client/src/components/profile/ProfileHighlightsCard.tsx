@@ -60,16 +60,16 @@ export function ProfileHighlightsCard({
                             aria-label={
                                 progress
                                     ? UI.xpLevelLabel.replace(
-                                          "{level}",
-                                          String(progress.level),
-                                      )
+                                        "{level}",
+                                        String(progress.level),
+                                    )
                                     : undefined
                             }
                         >
                             {progress ? (
                                 <>
                                     {UI.profileLevelLabel}
-                                    <span className="text-base font-bold tabular-nums leading-none text-primary not-italic">
+                                    <span className="text-base font-bold tabular-nums leading-none text-primary dark:text-primary-foreground italic">
                                         {progress.level}
                                     </span>
                                 </>
@@ -80,14 +80,14 @@ export function ProfileHighlightsCard({
                         {progress ? (
                             <>
                                 <div
-                                    className="h-2 overflow-hidden rounded-full bg-background"
+                                    className="h-2 overflow-hidden rounded-full bg-background dark:bg-muted"
                                     role="progressbar"
                                     aria-valuenow={pct}
                                     aria-valuemin={0}
                                     aria-valuemax={100}
                                 >
                                     <div
-                                        className="h-full rounded-full bg-primary transition-all"
+                                        className="h-full rounded-full bg-primary dark:bg-primary-foreground transition-all"
                                         style={{ width: `${pct}%` }}
                                     />
                                 </div>

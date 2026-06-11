@@ -67,7 +67,7 @@ export function XpProgressBlock({
                         aria-label={UI.xpLevelLabel.replace("{level}", String(level))}
                     >
                         {UI.profileLevelLabel}
-                        <span className="font-one-more text-base font-bold  tabular-nums leading-none text-primary">
+                        <span className="font-one-more text-base font-bold  tabular-nums leading-none text-primary dark:text-primary-foreground">
                             {level}
                         </span>
                     </span>
@@ -84,7 +84,7 @@ export function XpProgressBlock({
             >
                 <div
                     className={cn(
-                        "h-full rounded-full bg-primary",
+                        "h-full rounded-full bg-primary dark:bg-primary-foreground",
                         isAnimating
                             ? "transition-[width] duration-700 ease-out"
                             : "transition-all duration-500",

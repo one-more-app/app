@@ -42,7 +42,7 @@ export function BackHeader({
                 <ArrowLeft className="size-4" />
             </Button>
             <div className="min-w-0 flex-1 flex flex-col">
-                <h1 className={cn('truncate text-sm font-one-more uppercase italic', titleClassName)}>{title}</h1>
+                <h1 className={cn('truncate text-md font-one-more uppercase italic', titleClassName)}>{title}</h1>
                 {description && <p className="text-sm text-muted-foreground">{description}</p>}
             </div>
             {right != null ? <div className="shrink-0">{right}</div> : null}

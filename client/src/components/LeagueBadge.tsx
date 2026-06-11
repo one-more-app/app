@@ -79,7 +79,7 @@ export function LeagueBadge({
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
                         <div
-                            className="h-full rounded-full bg-primary transition-all"
+                            className="h-full rounded-full bg-primary dark:bg-primary-foreground transition-all"
                             style={{ width: `${league.progressToNext * 100}%` }}
                         />
                     </div>

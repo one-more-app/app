@@ -49,7 +49,7 @@ export function UserProgressCard() {
           aria-valuemax={100}
         >
           <div
-            className="h-full rounded-full bg-primary transition-all"
+            className="h-full rounded-full bg-primary dark:bg-primary-foreground transition-all"
             style={{ width: `${pct}%` }}
           />
         </div>
