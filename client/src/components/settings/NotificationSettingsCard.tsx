@@ -3,15 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   fetchNotificationPreferences,
-  sendTestPushNotification,
   updateNotificationPreferences,
   type NotificationPreferences,
 } from "@/lib/notifications-api";
-import {
-  refreshPushToken,
-  requestPushPermission,
-} from "@/lib/push-notifications";
-import { pushDebug } from "@/lib/push-debug";
+import { requestPushPermission } from "@/lib/push-notifications";
 import { UI } from "@/lib/translations";
 import { Capacitor } from "@capacitor/core";
 import { useCallback, useEffect, useState } from "react";
@@ -75,8 +70,6 @@ export function NotificationSettingsCard() {
     fetchNotificationPreferences,
   );
   const [busyKey, setBusyKey] = useState<PrefKey | null>(null);
-  const [testBusy, setTestBusy] = useState(false);
-  const [refreshBusy, setRefreshBusy] = useState(false);
   const isNative = Capacitor.isNativePlatform();
 
   const handleToggle = useCallback(
@@ -94,23 +87,10 @@ export function NotificationSettingsCard() {
     [mutate],
   );
 
-  const requestPushFromSettings = useCallback(async (source: string) => {
-    console.log("[push] NotificationSettingsCard: request permission", {
-      source,
-      platform: Capacitor.getPlatform(),
-    });
-    const granted = await requestPushPermission();
-    console.log("[push] NotificationSettingsCard: permission result", {
-      source,
-      granted,
-      platform: Capacitor.getPlatform(),
-    });
-  }, []);
-
   useEffect(() => {
     if (!isNative) return;
-    void requestPushFromSettings("mount");
-  }, [isNative, requestPushFromSettings]);
+    void requestPushPermission();
+  }, [isNative]);
 
   return (
     <Card>
@@ -122,81 +102,16 @@ export function NotificationSettingsCard() {
       </CardHeader>
       <CardContent className="space-y-2">
         {isNative ? (
-          <div className="mb-2 space-y-2">
-            <Button
-              type="button"
-              variant="secondary"
-              className="w-full"
-              onClick={() => {
-                void requestPushFromSettings("button");
-              }}
-            >
-              {UI.notificationsEnablePush}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              disabled={refreshBusy}
-              onClick={() => {
-                setRefreshBusy(true);
-                void refreshPushToken()
-                  .then(() => {
-                    toast.success(UI.notifRefreshTokenOk);
-                  })
-                  .finally(() => {
-                    setRefreshBusy(false);
-                  });
-              }}
-            >
-              {UI.notifRefreshToken}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              disabled={testBusy}
-              onClick={() => {
-                setTestBusy(true);
-                pushDebug("NotificationSettingsCard.tsx:test", "test-push clicked", {}, "H-B");
-                void sendTestPushNotification()
-                  .then((res) => {
-                    console.log("[push] test-push API result", res);
-                    pushDebug("NotificationSettingsCard.tsx:test-result", "test-push API response", {
-                      ok: res.ok,
-                      firebaseConfigured: res.firebaseConfigured,
-                      resultCount: res.results.length,
-                      results: res.results.map((r) => ({
-                        platform: r.platform,
-                        success: r.success,
-                        errorCode: r.errorCode ?? null,
-                        tokenSuffix: r.tokenSuffix,
-                      })),
-                    }, "H-B");
-                    if (res.ok) {
-                      toast.success(UI.notifTestPushOk);
-                      return;
-                    }
-                    const detail = res.results
-                      .map(
-                        (r) =>
-                          `${r.platform}: ${r.errorCode ?? "no-token"} ${r.errorMessage ?? ""}`.trim(),
-                      )
-                      .join(" | ");
-                    toast.error(UI.notifTestPushError, { description: detail });
-                  })
-                  .catch((err) => {
-                    console.error("[push] test-push API failed", err);
-                    toast.error(UI.notifTestPushError);
-                  })
-                  .finally(() => {
-                    setTestBusy(false);
-                  });
-              }}
-            >
-              {UI.notifTestPush}
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            className="mb-2 w-full"
+            onClick={() => {
+              void requestPushPermission();
+            }}
+          >
+            {UI.notificationsEnablePush}
+          </Button>
         ) : (
           <p className="mb-2 text-xs text-muted-foreground">
             {UI.notificationsNativeOnly}

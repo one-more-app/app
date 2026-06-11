@@ -63,21 +63,3 @@ export async function disableTrainingAlert(friendId: string) {
     { method: "DELETE" },
   );
 }
-
-export type PushTestResult = {
-  ok: boolean;
-  firebaseConfigured: boolean;
-  results: Array<{
-    platform: string;
-    tokenSuffix: string;
-    success: boolean;
-    errorCode?: string;
-    errorMessage?: string;
-  }>;
-};
-
-export async function sendTestPushNotification() {
-  return apiFetch<PushTestResult>("/notifications/test-push", {
-    method: "POST",
-  });
-}
