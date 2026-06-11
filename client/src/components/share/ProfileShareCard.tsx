@@ -109,7 +109,7 @@ export function ProfileShareCard({
                                 <p className={`${txs} text-muted-foreground`}>
                                     {UI.profileTopByLeague}
                                 </p>
-                                <p className="mt-2 font-semibold capitalize">
+                                <p className="mt-2 truncate font-semibold capitalize" title={topByLeague.exercise.name}>
                                     {topByLeague.exercise.name}
                                 </p>
                                 <RankBadge
@@ -125,7 +125,7 @@ export function ProfileShareCard({
                                 <p className={`${txs} text-muted-foreground`}>
                                     {UI.profileMostTrained}
                                 </p>
-                                <p className="mt-2 font-semibold capitalize">
+                                <p className="mt-2 truncate font-semibold capitalize" title={mostTrained.exercise.name}>
                                     {mostTrained.exercise.name}
                                 </p>
                                 <p className="mt-2 text-muted-foreground">

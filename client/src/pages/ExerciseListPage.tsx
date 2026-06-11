@@ -571,7 +571,7 @@ export function ExerciseListPage() {
                                 </div>
                                 <div className="space-y-3 p-4 pt-4">
                                     <DialogHeader className="space-y-0 p-0 text-left">
-                                        <DialogTitle className="break-words pr-8 text-left text-xl capitalize leading-snug">
+                                        <DialogTitle className="truncate pr-8 text-left text-xl capitalize leading-snug">
                                             {selectedExercise.name}
                                         </DialogTitle>
                                     </DialogHeader>

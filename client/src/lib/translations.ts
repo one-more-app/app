@@ -399,7 +399,8 @@ export const UI = {
   friendsSearchPlaceholder: "Prénom, nom ou @pseudo…",
   friendsSearchHint: "Recherche partielle — pas besoin du nom complet.",
   friendsSearchEmpty: "Tape un prénom, un nom ou un @pseudo pour chercher.",
-  friendsSearchMinChars: "Saisis au moins 2 caractères (ou @ + 1 caractère pour un pseudo).",
+  friendsSearchMinChars:
+    "Saisis au moins 2 caractères (ou @ + 1 caractère pour un pseudo).",
   friendsSearchNoResults: "Aucun résultat.",
   friendsTrainingNow: "En ce moment",
   friendsTrainingGeneric: "En séance",

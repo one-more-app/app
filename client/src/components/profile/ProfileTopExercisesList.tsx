@@ -1,3 +1,4 @@
+import { ExerciseTitle } from "@/components/ExerciseTitle";
 import { RankBadge } from "@/components/RankBadge";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,7 +65,7 @@ export function ProfileTopExercisesList({
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <CardTitle>
-                                        {row.exercise.name}
+                                        <ExerciseTitle>{row.exercise.name}</ExerciseTitle>
                                     </CardTitle>
                                     <p className="text-xs tabular-nums text-muted-foreground">
                                         {formatPerfLabel(

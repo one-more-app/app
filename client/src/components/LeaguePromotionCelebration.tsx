@@ -4,6 +4,7 @@ import {
     formatPerfBadge,
     leagueIconDropShadow,
 } from '@/components/celebration-modal-ui'
+import { ExerciseTitle } from '@/components/ExerciseTitle'
 import { RankBadge } from '@/components/RankBadge'
 import { Button } from '@/components/ui/button'
 import {
@@ -18,12 +19,12 @@ import { useAnimatedCounter } from '@/hooks/use-animated-counter'
 import { useCelebrationQueueSnapshot } from '@/hooks/use-celebration-queue-active'
 import { useTheme } from '@/hooks/use-theme'
 import { advanceCelebrationQueue } from '@/lib/celebration-queue'
+import { shareCelebrationPng } from '@/lib/celebration-share'
 import {
     invalidateCelebrationShareCache,
     isCelebrationShareReady,
     prewarmCelebrationShare,
 } from '@/lib/celebration-share-prewarm'
-import { shareCelebrationPng } from '@/lib/celebration-share'
 import {
     leagueCelebrationRadialBackground,
     levelCelebrationRadialBackground,
@@ -80,9 +81,12 @@ function NewRecordCelebrationContent({
                     {UI.newRecordCelebrationTitle}
                 </DialogTitle>
                 <DialogDescription asChild>
-                    <p className="text-base text-foreground/90 capitalize">
+                    <ExerciseTitle
+                        as="p"
+                        className="max-w-full text-base text-foreground/90 capitalize"
+                    >
                         {exerciseName}
-                    </p>
+                    </ExerciseTitle>
                 </DialogDescription>
             </DialogHeader>
             <p className="text-sm text-muted-foreground">{perfLabel}</p>
@@ -124,9 +128,12 @@ function LeaguePromotionContent({
                     {UI.leaguePromotionCelebrationTitle}
                 </DialogTitle>
                 <DialogDescription asChild>
-                    <p className="text-base text-foreground/90 capitalize">
+                    <ExerciseTitle
+                        as="p"
+                        className="max-w-full text-base text-foreground/90 capitalize"
+                    >
                         {exerciseName}
-                    </p>
+                    </ExerciseTitle>
                 </DialogDescription>
             </DialogHeader>
             {!prevLeague ? (

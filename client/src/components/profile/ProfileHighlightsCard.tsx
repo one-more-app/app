@@ -55,10 +55,27 @@ export function ProfileHighlightsCard({
             <CardContent className="pt-0">
                 <div className="grid grid-cols-2 gap-3">
                     <div className="col-span-2 space-y-2">
-                        <span className="text-sm font-semibold">
-                            {progress
-                                ? UI.xpLevelLabel.replace("{level}", String(progress.level))
-                                : "—"}
+                        <span
+                            className="inline-flex items-baseline gap-1 text-xs font-semibold font-one-more uppercase italic text-muted-foreground"
+                            aria-label={
+                                progress
+                                    ? UI.xpLevelLabel.replace(
+                                          "{level}",
+                                          String(progress.level),
+                                      )
+                                    : undefined
+                            }
+                        >
+                            {progress ? (
+                                <>
+                                    {UI.profileLevelLabel}
+                                    <span className="text-base font-bold tabular-nums leading-none text-primary not-italic">
+                                        {progress.level}
+                                    </span>
+                                </>
+                            ) : (
+                                "—"
+                            )}
                         </span>
                         {progress ? (
                             <>

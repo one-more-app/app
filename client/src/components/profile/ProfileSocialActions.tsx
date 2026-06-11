@@ -37,7 +37,6 @@ export function ProfileSocialActions() {
         <div className="space-y-2">
             <div className="flex gap-2">
                 <Button
-                    size="sm"
                     className="flex-1"
                     disabled={busy !== null}
                     onClick={handleInvite}

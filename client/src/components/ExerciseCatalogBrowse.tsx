@@ -1,4 +1,5 @@
 import { ExerciseBrowseNavigator } from '@/components/ExerciseBrowseNavigator'
+import { ExerciseTitle } from '@/components/ExerciseTitle'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
@@ -87,8 +88,8 @@ function ExerciseCatalogGrid({
                                     />
                                 </div>
                                 <CardHeader className="flex shrink-0 flex-col gap-0.5 px-2 py-1.5 pb-1">
-                                    <CardTitle className="line-clamp-2 text-[11px] leading-snug">
-                                        {ex.name}
+                                    <CardTitle className="text-[11px] leading-snug">
+                                        <ExerciseTitle lines={2}>{ex.name}</ExerciseTitle>
                                     </CardTitle>
                                     <div className="flex min-h-4 items-start">
                                         {label ? (

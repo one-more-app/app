@@ -224,7 +224,7 @@ function HomePage() {
 
                     </div>
                 ) : null}
-                <Button size="sm" className="w-full mb-4" onClick={goToAddExercise}>
+                <Button className="w-full mb-4" onClick={goToAddExercise}>
                     <Plus className="mr-2 size-4" />
                     {UI.addExercise}
                 </Button>

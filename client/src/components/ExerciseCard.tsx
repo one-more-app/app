@@ -1,4 +1,5 @@
 import { AddPerfDrawer } from '@/components/AddPerfDrawer'
+import { ExerciseTitle } from '@/components/ExerciseTitle'
 import { BodyWeightLabel } from '@/components/BodyWeightLabel'
 import { LeagueBadge } from '@/components/LeagueBadge'
 import { Badge } from '@/components/ui/badge'
@@ -90,14 +91,14 @@ export function ExerciseCard({
             >
                 <CardHeader
                     className={cn(
-                        'flex min-w-0 flex-row items-center gap-4',
+                        'flex min-w-0 flex-row items-stretch gap-4',
                         compact ? 'p-0' : 'pb-4',
                     )}
                 >
                     {!exercise.isCustom && exercise.gifUrl ? (
                         <button
                             type="button"
-                            className={`${sizeClass} shrink-0 overflow-hidden rounded-lg bg-muted`}
+                            className={`${sizeClass} shrink-0 self-center overflow-hidden rounded-lg bg-muted`}
                             aria-label={exercise.name}
                             onClick={(e) => {
                                 e.preventDefault()
@@ -116,15 +117,18 @@ export function ExerciseCard({
                             />
                         </button>
                     ) : (
-                        <div className={`${sizeClass} flex items-center justify-center rounded-lg bg-muted`}>
+                        <div className={`${sizeClass} flex shrink-0 self-center items-center justify-center rounded-lg bg-muted`}>
                             <Dumbbell className="size-6 text-default" />
                         </div>
                     )}
-                    <div className="min-w-0 flex-1">
-                        <h3 className="min-w-0 font-one-more text-xs uppercase italic">
+                    <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-center gap-2 self-stretch">
+                        <ExerciseTitle
+                            as="h3"
+                            className="font-one-more text-xs uppercase italic"
+                        >
                             {exercise.name}
-                        </h3>
-                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        </ExerciseTitle>
+                        <div className="flex flex-wrap items-center gap-1.5">
                             {(exercise.bodyPart || exercise.target) && (
                                 <Badge variant="secondary">
                                     {(exercise.bodyPart && translateBodyPart(exercise.bodyPart)) ||
@@ -141,7 +145,7 @@ export function ExerciseCard({
                     <Button
                         size="icon"
                         variant="default"
-                        className="size-11 shrink-0 rounded-full"
+                        className="size-11 shrink-0 self-center rounded-full"
                         onClick={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
@@ -242,7 +246,7 @@ export function ExerciseCard({
                             />
                         </div>
                         <DialogHeader className="space-y-0 p-4 pt-3 text-left">
-                            <DialogTitle className="break-words pr-8 text-left text-lg capitalize leading-snug">
+                            <DialogTitle className="truncate pr-8 text-left text-lg capitalize leading-snug">
                                 {exercise.name}
                             </DialogTitle>
                         </DialogHeader>

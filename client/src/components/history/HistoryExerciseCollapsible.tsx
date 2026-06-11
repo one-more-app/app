@@ -1,5 +1,6 @@
 import { HistoryCollapsedHighlights } from '@/components/history/HistoryCollapsedHighlights'
 import { PerfEntryList } from '@/components/history/PerfEntryList'
+import { ExerciseTitle } from '@/components/ExerciseTitle'
 import { Card, CardTitle } from '@/components/ui/card'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { hapticSelectionChanged } from '@/lib/haptics'
@@ -105,7 +106,7 @@ export function HistoryExerciseCollapsible({
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <CardTitle>
-                                        <span className="min-w-0 flex-1 truncate">{title}</span>
+                                        <ExerciseTitle className="flex-1">{title}</ExerciseTitle>
                                         {!stillTracked && exercise?.deletedAt ? (
                                             <span className="shrink-0 text-xs font-normal normal-case text-muted-foreground">
                                                 ({UI.exerciseRemovedFromTracking})

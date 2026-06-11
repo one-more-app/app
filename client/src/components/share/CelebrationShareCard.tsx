@@ -1,24 +1,24 @@
-import { streakXpBonusPercent } from '@one-more/shared/streak-xp-multiplier'
 import { RankBadge } from '@/components/RankBadge'
 import { leagueIconDropShadow } from '@/components/celebration-modal-ui'
-import type { LeagueInfo } from '@/lib/strength-standards'
+import type { CelebrationItem } from '@/lib/celebration-queue'
 import {
-    levelCelebrationRadialBackground,
     leagueCelebrationRadialBackground,
+    levelCelebrationRadialBackground,
     recordCelebrationGlow,
     shareCardThemeVars,
     shareStoryMeshBackground,
     shareStoryVignette,
     streakCelebrationRadialBackground,
 } from '@/lib/celebration-visual'
-import type { CelebrationItem } from '@/lib/celebration-queue'
 import {
     getShareableExerciseImageUrl,
     resolvePublicAssetUrl,
 } from '@/lib/exercise-share-media'
 import { leagueMapFill } from '@/lib/league-colors'
+import type { LeagueInfo } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
+import { streakXpBonusPercent } from '@one-more/shared/streak-xp-multiplier'
 import { ArrowRight, Flame, Sparkles, Trophy, type LucideIcon } from 'lucide-react'
 import type { CSSProperties, ReactNode } from 'react'
 
@@ -108,7 +108,7 @@ function ShareStoryShell({
 }) {
     const hasImage = Boolean(
         exerciseImageUrl &&
-            getShareableExerciseImageUrl(exerciseImageUrl, 'square'),
+        getShareableExerciseImageUrl(exerciseImageUrl, 'square'),
     )
 
     return (
@@ -222,7 +222,10 @@ function ShareStoryHeadline({
                 {title}
             </h2>
             {subtitle ? (
-                <p className="text-balance text-[2rem] font-medium capitalize leading-snug text-white/85 drop-shadow-md">
+                <p
+                    className="truncate text-[2rem] font-medium capitalize leading-snug text-white/85 drop-shadow-md"
+                    title={subtitle}
+                >
                     {subtitle}
                 </p>
             ) : null}

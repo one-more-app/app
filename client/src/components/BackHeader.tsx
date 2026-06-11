@@ -56,7 +56,7 @@ export function BackHeader({
     return (
         <header
             data-sticky-app-header
-            className="sticky-top-safe z-100 bg-card px-4 py-3"
+            className="sticky-top-safe z-100 bg-card px-4 py-3 border-b border-border"
         >
             {content}
         </header>

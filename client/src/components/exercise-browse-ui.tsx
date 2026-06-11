@@ -34,7 +34,7 @@ export function BrowseSectionTitle({
     return (
         <h2
             className={cn(
-                'mb-2 font-one-more text-[10px] font-semibold uppercase italic tracking-normal text-muted-foreground',
+                'mb-2  text-sm tracking-normal text-muted-foreground',
                 className,
             )}
             {...props}
