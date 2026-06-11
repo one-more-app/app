@@ -1,6 +1,7 @@
 import { useUserProgressData } from "@/hooks/use-api-data";
 import { StreakFlameCount } from "@/components/StreakFlameCount";
 import { XpProgressBlock } from "@/components/XpProgressBlock";
+import { Card, CardContent } from "@/components/ui/card";
 import { resolveProgressStreak } from "@/lib/streak-display";
 import { resolveStreakXpBonus } from "@/lib/streak-xp-display";
 import { hapticImpact } from "@/lib/haptics";
@@ -22,26 +23,30 @@ export function UserProgressBanner({ className }: { className?: string }) {
                 void hapticImpact();
             }}
             className={cn(
-                "mb-4 block rounded-xl bg-card p-3 outline-none transition-colors",
-                "hover:bg-card/90 focus-visible:ring-2 focus-visible:ring-ring",
+                "mb-4 block outline-none transition-colors",
+                "hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring",
                 className,
             )}
             aria-label={UI.xpBannerGoToProfile}
         >
-            <XpProgressBlock
-                level={progress.level}
-                xpIntoLevel={progress.xpIntoLevel}
-                xpForNextLevel={progress.xpForNextLevel}
-                rightSlot={
-                    <StreakFlameCount
-                        count={currentStreak}
-                        bonusPercent={streakXpBonus.bonusPercent}
-                        size="sm"
-                        iconClassName="size-4"
-                        textClassName="text-sm font-semibold tabular-nums"
+            <Card className="py-3">
+                <CardContent className="pt-0">
+                    <XpProgressBlock
+                        level={progress.level}
+                        xpIntoLevel={progress.xpIntoLevel}
+                        xpForNextLevel={progress.xpForNextLevel}
+                        rightSlot={
+                            <StreakFlameCount
+                                count={currentStreak}
+                                bonusPercent={streakXpBonus.bonusPercent}
+                                size="sm"
+                                iconClassName="size-4"
+                                textClassName="text-sm font-semibold tabular-nums"
+                            />
+                        }
                     />
-                }
-            />
+                </CardContent>
+            </Card>
         </Link>
     );
 }

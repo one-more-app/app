@@ -23,6 +23,7 @@ import type {
 const ONBOARDING_V1_KEY = "one-more-onboarding-v1";
 const ONBOARDING_FIRST_EXERCISE_PENDING_KEY =
   "one-more-onboarding-first-exercise-pending-v1";
+const ONBOARDING_TOUR_COMPLETE_KEY = "one-more-onboarding-tour-complete-v1";
 const ONBOARDING_POST_AUTH_REDIRECT_KEY =
   "one-more-onboarding-post-auth-redirect-v1";
 const THEME_PREFERENCE_KEY = "one-more-theme-preference-v1";
@@ -508,6 +509,18 @@ export function setOnboardingFirstExercisePending(pending: boolean): void {
 
 export function isOnboardingFirstExercisePending(): boolean {
   return localStorage.getItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY) === "1";
+}
+
+export function setOnboardingTourComplete(complete: boolean): void {
+  if (complete) {
+    localStorage.setItem(ONBOARDING_TOUR_COMPLETE_KEY, "1");
+  } else {
+    localStorage.removeItem(ONBOARDING_TOUR_COMPLETE_KEY);
+  }
+}
+
+export function isOnboardingTourComplete(): boolean {
+  return localStorage.getItem(ONBOARDING_TOUR_COMPLETE_KEY) === "1";
 }
 
 export function setOnboardingPostAuthRedirect(path: string | null): void {

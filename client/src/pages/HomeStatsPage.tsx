@@ -176,7 +176,7 @@ export default function HomeStatsPage() {
                                         <div className="min-w-0">
                                             <p className="truncate font-medium">{stats.bestPB.name}</p>
                                             <p className="mt-1 text-sm text-muted-foreground">
-                                                {stats.bestPB.pb.weight} kg x {stats.bestPB.pb.reps} reps
+                                                {stats.bestPB.pb.weight} kg × {stats.bestPB.pb.reps}
                                             </p>
                                         </div>
                                         <Button asChild variant="secondary" size="sm">

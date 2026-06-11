@@ -28,7 +28,6 @@ Exercice (equipment, target, name)
 | Catalogue | Avec rang | Exclusion volontaire | Gap fixable |
 |-----------|-----------|----------------------|-------------|
 | `popular-exercises.json` (1500) | **1149** | 351 | **0** |
-| `popular-exercises.filtered.json` (569) | **536** | 33 | **0** |
 
 Commande d'audit :
 

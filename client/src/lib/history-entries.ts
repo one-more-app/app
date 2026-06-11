@@ -70,7 +70,7 @@ export function formatPerfLabel(weight: number, reps: number): string {
         weight === 0
             ? `${UI.bodyWeightAbbr} (${UI.bodyWeightOnly})`
             : `${weight} kg`
-    return `${weightLabel} × ${reps} reps`
+    return `${weightLabel} × ${reps}`
 }
 
 export function formatTimeOnly(createdAt: string): string {

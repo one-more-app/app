@@ -8,7 +8,7 @@ import {
 } from "@/lib/strength-standards";
 import { cn } from "@/lib/utils";
 
-type RankBadgeSize = "xs" | "sm" | "md" | "lg";
+type RankBadgeSize = "xs" | "sm" | "md" | "lg" | "xl";
 type RankBadgeVariant = "auto" | "light" | "dark";
 
 const PILL_VARIANT: Record<RankBadgeVariant, string> = {
@@ -46,6 +46,11 @@ const SIZE_CLASSES: Record<
         pill: "h-8 gap-1 px-4",
         tier: "text-sm",
         sub: "text-sm",
+    },
+    xl: {
+        pill: "h-11 gap-1.5 px-6",
+        tier: "text-xl",
+        sub: "text-xl",
     },
 };
 

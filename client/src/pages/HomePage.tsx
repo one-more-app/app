@@ -80,8 +80,15 @@ function HomePage() {
         [nonCardioExercises],
     )
 
-    const { browse, pickZone, pickTarget, pickEquipment, goToStep } =
-        useExerciseCatalogBrowse()
+    const {
+        browse,
+        viewAll,
+        pickZone,
+        pickTarget,
+        pickEquipment,
+        goToStep,
+        toggleViewAll,
+    } = useExerciseCatalogBrowse()
 
     const isSearchMode = searchQuery.trim().length > 0
     const showTodaySection = !isSearchMode && browse.step === 'zone'
@@ -246,6 +253,8 @@ function HomePage() {
                             searchQuery={searchQuery}
                             searchSort="latestPerf"
                             getLatestPerfAt={getLatestPerfAt}
+                            viewAll={viewAll}
+                            onToggleViewAll={toggleViewAll}
                             onPickZone={pickZone}
                             onPickTarget={pickTarget}
                             onPickEquipment={pickEquipment}

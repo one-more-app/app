@@ -1,4 +1,5 @@
 import { RankBadge } from "@/components/RankBadge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
     usePerformanceEntriesData,
     useUserProgressData,
@@ -9,10 +10,7 @@ import {
     countActiveDaysInMonth,
     countPersonalRecordsInMonth,
 } from "@/lib/profile-month-stats";
-import {
-    profileNestedClass,
-    profileSectionClass,
-} from "@/lib/profile-section";
+import { profileNestedClass } from "@/lib/profile-section";
 import { UI } from "@/lib/translations";
 import type { PerformanceEntry, UserProgressState } from "@/types";
 import { Flame, Medal, Trophy } from "lucide-react";
@@ -53,80 +51,82 @@ export function ProfileHighlightsCard({
     }, [performanceEntries, monthKey]);
 
     return (
-        <section className={profileSectionClass}>
-            <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2 space-y-2">
-                    <span className="text-sm font-semibold">
-                        {progress
-                            ? UI.xpLevelLabel.replace("{level}", String(progress.level))
-                            : "—"}
-                    </span>
-                    {progress ? (
-                        <>
-                            <div
-                                className="h-2 overflow-hidden rounded-full bg-background"
-                                role="progressbar"
-                                aria-valuenow={pct}
-                                aria-valuemin={0}
-                                aria-valuemax={100}
-                            >
+        <Card>
+            <CardContent className="pt-0">
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2 space-y-2">
+                        <span className="text-sm font-semibold">
+                            {progress
+                                ? UI.xpLevelLabel.replace("{level}", String(progress.level))
+                                : "—"}
+                        </span>
+                        {progress ? (
+                            <>
                                 <div
-                                    className="h-full rounded-full bg-primary transition-all"
-                                    style={{ width: `${pct}%` }}
-                                />
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                {UI.xpTotalLabel.replace("{xp}", String(progress.totalXp))}
-                            </p>
-                        </>
-                    ) : null}
-                </div>
+                                    className="h-2 overflow-hidden rounded-full bg-background"
+                                    role="progressbar"
+                                    aria-valuenow={pct}
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                >
+                                    <div
+                                        className="h-full rounded-full bg-primary transition-all"
+                                        style={{ width: `${pct}%` }}
+                                    />
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {UI.xpTotalLabel.replace("{xp}", String(progress.totalXp))}
+                                </p>
+                            </>
+                        ) : null}
+                    </div>
 
-                <div className={`${profileNestedClass} p-3`}>
-                    <p className="text-xs text-muted-foreground">
-                        {UI.profileGlobalLeague}
-                    </p>
-                    {leagueSummary ? (
-                        <RankBadge
-                            rankId={leagueSummary.globalRank}
-                            size="md"
-                            className="mt-1.5"
-                        />
-                    ) : (
-                        <p className="mt-1 text-sm text-muted-foreground">—</p>
-                    )}
-                </div>
+                    <div className={`${profileNestedClass} p-3`}>
+                        <p className="text-xs text-muted-foreground">
+                            {UI.profileGlobalLeague}
+                        </p>
+                        {leagueSummary ? (
+                            <RankBadge
+                                rankId={leagueSummary.globalRank}
+                                size="md"
+                                className="mt-1.5"
+                            />
+                        ) : (
+                            <p className="mt-1 text-sm text-muted-foreground">—</p>
+                        )}
+                    </div>
 
-                <div className={`${profileNestedClass} p-3`}>
-                    <p className="text-xs text-muted-foreground">
-                        {UI.profileRankedExercises}
-                    </p>
-                    <p className="mt-1 flex items-center gap-1 text-lg font-bold tabular-nums">
-                        <Trophy className="size-4 text-muted-foreground" aria-hidden />
-                        {leagueSummary?.exerciseCount ?? 0}
-                    </p>
-                </div>
+                    <div className={`${profileNestedClass} p-3`}>
+                        <p className="text-xs text-muted-foreground">
+                            {UI.profileRankedExercises}
+                        </p>
+                        <p className="mt-1 flex items-center gap-1 text-lg font-bold tabular-nums">
+                            <Trophy className="size-4 text-muted-foreground" aria-hidden />
+                            {leagueSummary?.exerciseCount ?? 0}
+                        </p>
+                    </div>
 
-                <div className={`${profileNestedClass} p-3`}>
-                    <p className="text-xs text-muted-foreground">
-                        {UI.profileRecordsThisMonth}
-                    </p>
-                    <p className="mt-1 flex items-center gap-1 text-lg font-bold tabular-nums">
-                        <Medal className="size-4 text-amber-500" aria-hidden />
-                        {recordsThisMonth}
-                    </p>
-                </div>
+                    <div className={`${profileNestedClass} p-3`}>
+                        <p className="text-xs text-muted-foreground">
+                            {UI.profileRecordsThisMonth}
+                        </p>
+                        <p className="mt-1 flex items-center gap-1 text-lg font-bold tabular-nums">
+                            <Medal className="size-4 text-amber-500" aria-hidden />
+                            {recordsThisMonth}
+                        </p>
+                    </div>
 
-                <div className={`${profileNestedClass} p-3`}>
-                    <p className="text-xs text-muted-foreground">
-                        {UI.profileActiveDaysThisMonth}
-                    </p>
-                    <p className="mt-1 flex items-center gap-1 text-lg font-bold tabular-nums">
-                        <Flame className="size-4 text-red-500" aria-hidden />
-                        {activeDaysThisMonth}
-                    </p>
+                    <div className={`${profileNestedClass} p-3`}>
+                        <p className="text-xs text-muted-foreground">
+                            {UI.profileActiveDaysThisMonth}
+                        </p>
+                        <p className="mt-1 flex items-center gap-1 text-lg font-bold tabular-nums">
+                            <Flame className="size-4 text-red-500" aria-hidden />
+                            {activeDaysThisMonth}
+                        </p>
+                    </div>
                 </div>
-            </div>
-        </section>
+            </CardContent>
+        </Card>
     );
 }

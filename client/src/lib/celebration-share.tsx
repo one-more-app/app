@@ -1,41 +1,9 @@
-import { CelebrationShareCard } from '@/components/share/CelebrationShareCard'
 import type { CelebrationShareOpen } from '@/components/share/CelebrationShareCard'
+import { getCelebrationShareBlob } from '@/lib/celebration-share-prewarm'
 import { UI } from '@/lib/translations'
-import { toBlob } from 'html-to-image'
-import { createRoot } from 'react-dom/client'
+import { Capacitor } from '@capacitor/core'
 
 export type { CelebrationShareOpen }
-
-const FONT_READY_MS = 250
-const IMAGE_READY_MS = 600
-
-function waitForImage(img: HTMLImageElement): Promise<void> {
-  if (img.complete && img.naturalWidth > 0) return Promise.resolve()
-  return new Promise((resolve) => {
-    const done = () => resolve()
-    img.addEventListener('load', done, { once: true })
-    img.addEventListener('error', done, { once: true })
-  })
-}
-
-async function waitForShareReady(container: HTMLElement): Promise<void> {
-  await Promise.race([
-    document.fonts.ready,
-    new Promise<void>((resolve) => setTimeout(resolve, FONT_READY_MS)),
-  ])
-
-  const imgs = [...container.querySelectorAll('img')]
-  if (imgs.length > 0) {
-    await Promise.race([
-      Promise.all(imgs.map((img) => waitForImage(img))),
-      new Promise<void>((resolve) => setTimeout(resolve, IMAGE_READY_MS)),
-    ])
-  }
-
-  await new Promise<void>((resolve) =>
-    requestAnimationFrame(() => requestAnimationFrame(resolve)),
-  )
-}
 
 function shareText(open: CelebrationShareOpen): string {
   switch (open.kind) {
@@ -57,46 +25,70 @@ function shareText(open: CelebrationShareOpen): string {
   }
 }
 
-export async function createCelebrationShareBlob(
-  open: CelebrationShareOpen,
-  isDark: boolean,
-): Promise<Blob> {
-  const host = document.createElement('div')
-  host.style.cssText =
-    'position:fixed;left:-12000px;top:0;z-index:-9999;pointer-events:none'
-  document.body.appendChild(host)
-
-  const root = createRoot(host)
-
-  try {
-    root.render(<CelebrationShareCard open={open} isDark={isDark} />)
-    await waitForShareReady(host)
-
-    const el = host.querySelector('[data-share-card-root]') as HTMLElement | null
-    if (!el) throw new Error('CelebrationShareCard introuvable')
-
-    const blob = await toBlob(el, {
-      pixelRatio: 1.5,
-      cacheBust: false,
-      backgroundColor: isDark ? 'oklch(0.22 0 0)' : 'oklch(1 0 0)',
-    })
-    if (!blob) throw new Error('toBlob')
-    return blob
-  } finally {
-    root.unmount()
-    host.remove()
-  }
+function isShareCancelled(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return /cancel/i.test(message)
 }
 
-export async function shareCelebrationPng(
-  open: CelebrationShareOpen,
-  isDark: boolean,
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const result = reader.result
+      if (typeof result !== 'string') {
+        reject(new Error('readAsDataURL'))
+        return
+      }
+      const base64 = result.split(',')[1]
+      if (!base64) {
+        reject(new Error('base64'))
+        return
+      }
+      resolve(base64)
+    }
+    reader.onerror = () => reject(reader.error ?? new Error('readAsDataURL'))
+    reader.readAsDataURL(blob)
+  })
+}
+
+async function shareBlobNative(
+  blob: Blob,
+  text: string,
+): Promise<'shared'> {
+  const { Filesystem, Directory } = await import('@capacitor/filesystem')
+  const { Share } = await import('@capacitor/share')
+  const fileName = `one-more-${Date.now()}.png`
+  const base64 = await blobToBase64(blob)
+
+  await Filesystem.writeFile({
+    path: fileName,
+    data: base64,
+    directory: Directory.Cache,
+  })
+
+  const { uri } = await Filesystem.getUri({
+    directory: Directory.Cache,
+    path: fileName,
+  })
+
+  await Share.share({
+    title: 'One More',
+    text,
+    files: [uri],
+    dialogTitle: UI.share,
+  })
+
+  return 'shared'
+}
+
+async function shareBlobWeb(
+  blob: Blob,
+  text: string,
 ): Promise<'shared' | 'downloaded'> {
-  const blob = await createCelebrationShareBlob(open, isDark)
   const file = new File([blob], 'one-more.png', { type: 'image/png' })
   const data: ShareData = {
     title: 'One More',
-    text: shareText(open),
+    text,
     files: [file],
   }
 
@@ -112,4 +104,33 @@ export async function shareCelebrationPng(
   a.click()
   URL.revokeObjectURL(url)
   return 'downloaded'
+}
+
+export async function shareCelebrationPng(
+  open: CelebrationShareOpen,
+  isDark: boolean,
+): Promise<'shared' | 'downloaded'> {
+  const blob = await getCelebrationShareBlob(open, isDark)
+  const text = shareText(open)
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await shareBlobNative(blob, text)
+      return 'shared'
+    } catch (error) {
+      if (isShareCancelled(error)) {
+        throw new DOMException('Share cancelled', 'AbortError')
+      }
+      return shareBlobWeb(blob, text)
+    }
+  }
+
+  try {
+    return await shareBlobWeb(blob, text)
+  } catch (error) {
+    if (isShareCancelled(error)) {
+      throw new DOMException('Share cancelled', 'AbortError')
+    }
+    throw error
+  }
 }

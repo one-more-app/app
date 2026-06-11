@@ -1,8 +1,11 @@
 import { fetchTrackedExercises } from "@/lib/data-api";
 import { CARDIO_EQUIPMENT } from "@/lib/exercisedb";
-import { setOnboardingFirstExercisePending } from "@/lib/storage";
+import {
+  setOnboardingFirstExercisePending,
+  setOnboardingTourComplete,
+} from "@/lib/storage";
 
-function hasVisibleTrackedExercise(
+export function hasVisibleTrackedExercise(
   tracked: Awaited<ReturnType<typeof fetchTrackedExercises>>,
 ): boolean {
   return tracked.some(
@@ -24,6 +27,7 @@ export async function resolvePostAuthNavigation(
     const tracked = await fetchTrackedExercises();
     if (hasVisibleTrackedExercise(tracked)) {
       setOnboardingFirstExercisePending(false);
+      setOnboardingTourComplete(true);
       return "/home";
     }
     setOnboardingFirstExercisePending(true);

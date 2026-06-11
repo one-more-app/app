@@ -1,19 +1,19 @@
-import { PerfEntryList } from '@/components/history/PerfEntryList'
 import { HistoryCollapsedHighlights } from '@/components/history/HistoryCollapsedHighlights'
-import { Card } from '@/components/ui/card'
+import { PerfEntryList } from '@/components/history/PerfEntryList'
+import { Card, CardTitle } from '@/components/ui/card'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
-import { profileNestedClass } from '@/lib/profile-section'
+import { hapticSelectionChanged } from '@/lib/haptics'
 import {
     summarizeExerciseGroupInsights,
     type HistoryEntryInsight,
 } from '@/lib/history-entries'
-import { hapticSelectionChanged } from '@/lib/haptics'
+import { profileNestedClass } from '@/lib/profile-section'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import type { PerformanceEntry, TrackedExercise } from '@/types'
 import { ChevronDown, Dumbbell } from 'lucide-react'
-import { useMemo } from 'react'
 import { Collapsible } from 'radix-ui'
+import { useMemo } from 'react'
 
 type HistoryExerciseCollapsibleProps = {
     trackedExerciseId: string
@@ -104,14 +104,14 @@ export function HistoryExerciseCollapsible({
                                     ) : null}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <p className="flex min-w-0 items-baseline gap-1 text-base font-semibold capitalize leading-tight text-foreground">
+                                    <CardTitle>
                                         <span className="min-w-0 flex-1 truncate">{title}</span>
                                         {!stillTracked && exercise?.deletedAt ? (
                                             <span className="shrink-0 text-xs font-normal normal-case text-muted-foreground">
                                                 ({UI.exerciseRemovedFromTracking})
                                             </span>
                                         ) : null}
-                                    </p>
+                                    </CardTitle>
                                     <HistoryCollapsedHighlights
                                         seriesLabel={seriesLabel}
                                         summary={groupHighlights}

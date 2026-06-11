@@ -256,8 +256,6 @@ export class OAuthService {
       });
     }
 
-    await this.invites.ensureUsername(userId);
-
     return await this.auth.createSessionForUser({
       userId,
       email: userEmail,

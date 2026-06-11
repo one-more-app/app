@@ -18,6 +18,11 @@ import { useAnimatedCounter } from '@/hooks/use-animated-counter'
 import { useCelebrationQueueSnapshot } from '@/hooks/use-celebration-queue-active'
 import { useTheme } from '@/hooks/use-theme'
 import { advanceCelebrationQueue } from '@/lib/celebration-queue'
+import {
+    invalidateCelebrationShareCache,
+    isCelebrationShareReady,
+    prewarmCelebrationShare,
+} from '@/lib/celebration-share-prewarm'
 import { shareCelebrationPng } from '@/lib/celebration-share'
 import {
     leagueCelebrationRadialBackground,
@@ -306,15 +311,20 @@ export function LeaguePromotionCelebrationHost() {
 
     const dismiss = () => advanceCelebrationQueue()
 
-    useEffect(() => {
-        if (!open) setShareBusy(false)
-    }, [open])
-
     const isDark = resolvedTheme === 'dark'
+
+    useEffect(() => {
+        if (!open) {
+            invalidateCelebrationShareCache()
+            return
+        }
+        prewarmCelebrationShare(open, isDark)
+    }, [open, isDark])
 
     const handleShare = async () => {
         if (!open || shareBusy) return
-        setShareBusy(true)
+        const needsWait = !isCelebrationShareReady(open, isDark)
+        if (needsWait) setShareBusy(true)
         try {
             const result = await shareCelebrationPng(open, isDark)
             if (result === 'downloaded') toast.success(UI.shareImageSaved)

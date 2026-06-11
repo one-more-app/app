@@ -131,6 +131,24 @@ export function filterCatalogBySearch(
   return filterBrowseableBySearch(exercises, searchQuery, "popularity");
 }
 
+/** Exercices filtrés par zone seule ou zone + muscle (mode « voir tout »). */
+export function exercisesForBrowseScope<T extends BrowseableExercise>(
+  exercises: T[],
+  zone: string | null,
+  target: string | null,
+): T[] {
+  if (!zone) return [];
+  const z = zone.toLowerCase();
+  if (!target) {
+    return exercises.filter((ex) => exerciseZone(ex) === z);
+  }
+  const t = target.toLowerCase();
+  return exercises.filter((ex) => {
+    if (exerciseZone(ex) !== z) return false;
+    return (ex.target ?? "").toLowerCase() === t;
+  });
+}
+
 export function exercisesForBrowsePath<T extends BrowseableExercise>(
   exercises: T[],
   zone: string | null,

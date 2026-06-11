@@ -4,12 +4,14 @@ import {
     BrowseTile,
     CatalogBreadcrumb,
 } from '@/components/exercise-browse-ui'
+import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import {
     countByEquipment,
     countByTarget,
     countByZone,
     exercisesForBrowsePath,
+    exercisesForBrowseScope,
     filterBrowseableBySearch,
     sortBrowseableByLatestPerf,
     type BrowseableExercise,
@@ -29,7 +31,7 @@ import {
     UI,
 } from '@/lib/translations'
 import type { ExerciseDBExercise } from '@/types'
-import { Dumbbell } from 'lucide-react'
+import { Dumbbell, LayoutGrid, List } from 'lucide-react'
 import { useMemo, type ReactNode } from 'react'
 
 export interface ExerciseBrowseNavigatorProps<T extends BrowseableExercise> {
@@ -40,6 +42,8 @@ export interface ExerciseBrowseNavigatorProps<T extends BrowseableExercise> {
     getLatestPerfAt?: (id: string) => number | null
     requireGif?: boolean
     isGifBroken?: (id: string) => boolean
+    viewAll?: boolean
+    onToggleViewAll?: () => void
     onPickZone: (zone: string) => void
     onPickTarget: (target: string) => void
     onPickEquipment: (equipment: string) => void
@@ -59,6 +63,8 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
     getLatestPerfAt,
     requireGif = false,
     isGifBroken,
+    viewAll = false,
+    onToggleViewAll,
     onPickZone,
     onPickTarget,
     onPickEquipment,
@@ -120,7 +126,45 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
         return list
     }, [pool, browse, leafSort, getLatestPerfAt])
 
+    const scopeExercises = useMemo(() => {
+        if (!viewAll || browse.step === 'zone' || browse.step === 'list') {
+            return [] as T[]
+        }
+        let list = exercisesForBrowseScope(
+            pool,
+            browse.zone,
+            browse.step === 'equipment' ? browse.target : null,
+        )
+        if (leafSort === 'latestPerf' && getLatestPerfAt) {
+            list = sortBrowseableByLatestPerf(list, getLatestPerfAt)
+        } else if (leafSort === 'popularity') {
+            list = sortExercisesByPopularity(
+                list as ExerciseDBExercise[],
+            ) as T[]
+        }
+        return list
+    }, [pool, browse, viewAll, leafSort, getLatestPerfAt])
+
+    const canToggleViewAll =
+        !isSearchMode &&
+        (browse.step === 'muscle' || browse.step === 'equipment') &&
+        !!onToggleViewAll
+
+    const showingViewAll = canToggleViewAll && viewAll
+
     const stepTitle = useMemo(() => {
+        if (showingViewAll && browse.zone) {
+            if (browse.step === 'equipment' && browse.target) {
+                return UI.browseAllExercisesForMuscle.replace(
+                    '{muscle}',
+                    translateTarget(browse.target),
+                )
+            }
+            return UI.browseAllExercisesInZone.replace(
+                '{zone}',
+                translateBodyPart(browse.zone),
+            )
+        }
         switch (browse.step) {
             case 'zone':
                 return UI.browseChooseZone
@@ -133,7 +177,7 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
             default:
                 return UI.browseChooseZone
         }
-    }, [browse.step])
+    }, [browse.step, browse.zone, browse.target, showingViewAll])
 
     if (isSearchMode) {
         return (
@@ -161,11 +205,39 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
                 <div className="mb-3">{beforeZoneStep}</div>
             ) : null}
             <CatalogBreadcrumb browse={browse} onGoTo={onGoToStep} />
-            <BrowseSectionTitle data-tour="first-exercise-browse-anchor">
-                {stepTitle}
-            </BrowseSectionTitle>
+            <div className="mb-2 flex flex-wrap items-center justify-between align-center gap-x-2 gap-y-1">
+                <BrowseSectionTitle
+                    className="mb-0"
+                    data-tour="first-exercise-browse-anchor"
+                >
+                    {stepTitle}
+                </BrowseSectionTitle>
+                {canToggleViewAll ? (
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="h-6 shrink-0 px-2 text-[10px]"
+                        onClick={onToggleViewAll}
+                    >
+                        {viewAll ? (
+                            <>
+                                <LayoutGrid className="mr-1 size-3.5" />
+                                {UI.browseViewByCategory}
+                            </>
+                        ) : (
+                            <>
+                                <List className="mr-1 size-3.5" />
+                                {UI.browseViewAll}
+                            </>
+                        )}
+                    </Button>
+                ) : null}
+            </div>
 
-            {browse.step === 'zone' ? (
+            {showingViewAll ? renderExerciseList(scopeExercises) : null}
+
+            {!showingViewAll && browse.step === 'zone' ? (
                 <ul className="space-y-3">
                     {zoneEntries.map(({ zone, count }) => (
                         <li key={zone}>
@@ -188,7 +260,7 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
                 </ul>
             ) : null}
 
-            {browse.step === 'muscle' && browse.zone ? (
+            {!showingViewAll && browse.step === 'muscle' && browse.zone ? (
                 <ul className="space-y-3">
                     {targetEntries.map(({ target, count }) => (
                         <li key={target}>
@@ -205,7 +277,10 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
                 </ul>
             ) : null}
 
-            {browse.step === 'equipment' && browse.zone && browse.target ? (
+            {!showingViewAll &&
+                browse.step === 'equipment' &&
+                browse.zone &&
+                browse.target ? (
                 <ul className="space-y-3">
                     {equipmentEntries.map(({ equipment, count }) => (
                         <li key={equipment}>
@@ -228,7 +303,8 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
 
             {browse.step === 'list' ? renderExerciseList(leafExercises) : null}
 
-            {browse.step !== 'list' &&
+            {!showingViewAll &&
+                browse.step !== 'list' &&
                 browse.step === 'muscle' &&
                 targetEntries.length === 0 ? (
                 <EmptyState

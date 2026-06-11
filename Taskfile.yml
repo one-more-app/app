@@ -115,61 +115,30 @@ tasks:
     cmds:
       - "{{.NPM}} run typeorm:migration:generate"
 
+  db:clear:
+    desc: Vide la base, ré-applique les migrations et importe le catalogue exercices
+    deps: [docker]
+    dir: api
+    cmds:
+      - "{{.NPM}} run db:clear"
+
   seed:exercises:
-    desc: Seed du catalogue exercices (api/data/popular-exercises.json)
+    desc: Importe le catalogue complet en base (api/data/popular-exercises.json)
     dir: api
     cmds:
       - "{{.NPM}} run seed:exercises"
 
-  seed:exercises:replace:
-    desc: Seed catalogue + supprime les exos absents du JSON actif (rollback propre)
-    dir: api
-    cmds:
-      - "{{.NPM}} run seed:exercises:replace"
-
   seed:exercises:prod:
-    desc: Seed catalogue en prod (dist compilé, sans ts-node)
+    desc: Import catalogue en prod (dist compilé, sans ts-node)
     dir: api
     cmds:
       - "{{.NPM}} run seed:exercises:prod"
 
-  seed:exercises:replace:prod:
-    desc: Seed catalogue en prod + purge des exos absents du JSON actif
+  exercises:fetch:
+    desc: Télécharge tous les exercices ExerciseDB vers api/data/popular-exercises.json
     dir: api
     cmds:
-      - "{{.NPM}} run seed:exercises:replace:prod"
-
-  catalog:fetch-all:
-    desc: Télécharge tous les exercices ExerciseDB vers api/data/popular-exercises.all.json
-    dir: api
-    cmds:
-      - "{{.NPM}} run fetch:all-exercises"
-
-  catalog:use-all:
-    desc: Active le catalogue complet (1500 exos) + seed base
-    dir: api
-    cmds:
-      - "{{.NPM}} run catalog:use-all"
-      - "{{.NPM}} run seed:exercises:replace"
-
-  catalog:use-filtered:
-    desc: Rollback vers le catalogue filtré (569 exos) + seed base
-    dir: api
-    cmds:
-      - "{{.NPM}} run catalog:use-filtered"
-      - "{{.NPM}} run seed:exercises:replace"
-
-  catalog:use-all:prod:
-    desc: Active le catalogue complet + seed prod (dist compilé)
-    dir: api
-    cmds:
-      - "{{.NPM}} run catalog:use-all:prod"
-
-  catalog:use-filtered:prod:
-    desc: Rollback catalogue filtré + seed prod (dist compilé)
-    dir: api
-    cmds:
-      - "{{.NPM}} run catalog:use-filtered:prod"
+      - "{{.NPM}} run fetch:exercises"
 
   test:api:
     desc: Tests unitaires API

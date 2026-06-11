@@ -1,9 +1,3 @@
-/** Section profil : surface principale (pas de bordure ni d’ombre). */
-export const profileSectionClass = "rounded-xl bg-card p-4";
-
-export const profileSectionTitleClass =
-  "mb-3 text-sm font-medium text-foreground";
-
 /** Bloc ou ligne imbriqué dans une section — contraste via `secondary`. */
 export const profileNestedClass = "rounded-lg bg-secondary";
 

@@ -3,10 +3,14 @@ import { RankBadge } from "@/components/RankBadge";
 import { useTheme } from "@/hooks/use-theme";
 import type { GlobalLeagueSummary } from "@/lib/muscle-league-stats";
 import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import {
     profileNestedInteractiveClass,
     profileNestedListClass,
-    profileSectionClass,
-    profileSectionTitleClass,
 } from "@/lib/profile-section";
 import { translateTarget, UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
@@ -37,8 +41,11 @@ export function ProfileMuscleMapSection({
     }, []);
 
     return (
-        <section className={profileSectionClass}>
-            <h2 className={profileSectionTitleClass}>{UI.profileMuscleMapTitle}</h2>
+        <Card>
+            <CardHeader className="pb-0">
+                <CardTitle>{UI.profileMuscleMapTitle}</CardTitle>
+            </CardHeader>
+            <CardContent>
             <BodyMuscleLeagueMap
                 byMuscle={leagueSummary.byMuscle}
                 isDark={resolvedTheme === "dark"}
@@ -110,6 +117,7 @@ export function ProfileMuscleMapSection({
                     })}
                 </ul>
             </div>
-        </section>
+            </CardContent>
+        </Card>
     );
 }

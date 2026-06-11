@@ -14,7 +14,13 @@ import {
 } from "@/lib/history-entries";
 import { notifyPerfMilestones } from "@/lib/perf-notifications";
 import { notifyXpGrants } from "@/lib/xp-notifications";
-import { profileSectionClass } from "@/lib/profile-section";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   deletePerformanceAndWait,
   getPersonalBest,
@@ -142,21 +148,22 @@ export function ProfileRecentHistory({
 
   return (
     <>
-      <section className={profileSectionClass}>
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <h2 className="text-sm font-medium text-foreground">
-            {UI.profileRecentHistory}
-          </h2>
+      <Card>
+        <CardHeader className="pb-0">
+          <CardTitle>{UI.profileRecentHistory}</CardTitle>
           {!readOnly ? (
-            <Link
-              to="/history"
-              className="text-xs font-medium text-primary underline-offset-2 hover:underline"
-            >
-              {UI.profileHistorySeeAll}
-            </Link>
+            <CardAction>
+              <Link
+                to="/history"
+                className="text-xs font-medium text-primary underline-offset-2 hover:underline"
+              >
+                {UI.profileHistorySeeAll}
+              </Link>
+            </CardAction>
           ) : null}
-        </div>
+        </CardHeader>
 
+        <CardContent>
         <ul className="space-y-8">
           {shownByDayThenExercise.map(({ date: dayKey, exercises }) => (
             <HistoryDaySection
@@ -183,7 +190,8 @@ export function ProfileRecentHistory({
             />
           ))}
         </ul>
-      </section>
+        </CardContent>
+      </Card>
 
       {!readOnly && editEntry && editExercise ? (
         <AddPerfDrawer

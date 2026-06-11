@@ -1,16 +1,22 @@
 import { streakXpBonusPercent } from '@one-more/shared/streak-xp-multiplier'
 import { RankBadge } from '@/components/RankBadge'
-import { formatPerfBadge, leagueIconDropShadow } from '@/components/celebration-modal-ui'
+import { leagueIconDropShadow } from '@/components/celebration-modal-ui'
+import type { LeagueInfo } from '@/lib/strength-standards'
 import {
     levelCelebrationRadialBackground,
     leagueCelebrationRadialBackground,
     recordCelebrationGlow,
     shareCardThemeVars,
+    shareStoryMeshBackground,
+    shareStoryVignette,
     streakCelebrationRadialBackground,
 } from '@/lib/celebration-visual'
 import type { CelebrationItem } from '@/lib/celebration-queue'
-import { resolvePublicAssetUrl } from '@/lib/exercise-share-media'
-import { LEAGUE_COLORS, leagueMapFill } from '@/lib/league-colors'
+import {
+    getShareableExerciseImageUrl,
+    resolvePublicAssetUrl,
+} from '@/lib/exercise-share-media'
+import { leagueMapFill } from '@/lib/league-colors'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import { ArrowRight, Flame, Sparkles, Trophy, type LucideIcon } from 'lucide-react'
@@ -18,15 +24,15 @@ import type { CSSProperties, ReactNode } from 'react'
 
 export type CelebrationShareOpen = CelebrationItem
 
-/** Largeur export — assez pour les stories, plus rapide qu’en 1080px. */
-export const CELEBRATION_SHARE_WIDTH = 720
+/** Export carré 1:1 optimisé stories / réseaux. */
+export const CELEBRATION_SHARE_SIZE = 1080
 
-const dropAccent =
-    'drop-shadow(0 10px 28px color-mix(in srgb, var(--accent) 50%, transparent))'
-const dropOrange =
-    'drop-shadow(0 10px 28px color-mix(in srgb, #f97316 50%, transparent))'
 const logoLockupShadow =
-    'drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)] drop-shadow-[0_1px_3px_rgba(0,0,0,0.25)]'
+    'drop-shadow-[0_2px_16px_rgba(0,0,0,0.55)] drop-shadow-[0_1px_4px_rgba(0,0,0,0.35)]'
+
+function formatSharePerfHero(weight: number, reps: number): string {
+    return `${weight}kg×${reps}`
+}
 
 function ShareCardLogo() {
     const logoSrc = resolvePublicAssetUrl('logo-white-text.png')
@@ -34,82 +40,214 @@ function ShareCardLogo() {
         <img
             src={logoSrc}
             alt="One More"
-            width={200}
-            height={56}
+            width={400}
+            height={112}
             crossOrigin="anonymous"
             decoding="async"
-            className={cn('h-9 w-auto max-w-[70%] object-contain opacity-95', logoLockupShadow)}
+            className={cn('h-[5.25rem] w-auto object-contain opacity-90', logoLockupShadow)}
         />
     )
 }
 
-function ShareCardShell({
-    background,
+function ShareStoryTopRank({ league }: { league: LeagueInfo }) {
+    return (
+        <div className="flex w-full justify-center">
+            <RankBadge league={league} size="xl" variant="dark" className="scale-[1.35]" />
+        </div>
+    )
+}
+
+function ShareStoryTopLevel({ level }: { level: number }) {
+    return (
+        <div className="flex w-full justify-center">
+            <span className="inline-flex items-center gap-3 rounded-full bg-black/40 px-8 py-3 ring-1 ring-white/20 backdrop-blur-md">
+                <Sparkles className="size-9 shrink-0 text-accent" aria-hidden />
+                <span className="font-one-more text-[2rem] font-bold italic tabular-nums text-white">
+                    {UI.xpLevelLabel.replace('{level}', String(level))}
+                </span>
+            </span>
+        </div>
+    )
+}
+
+function ShareFullBleedImage({
+    exerciseImageUrl,
+}: {
+    exerciseImageUrl?: string
+}) {
+    const src = getShareableExerciseImageUrl(exerciseImageUrl, 'square')
+    if (!src) return null
+
+    return (
+        <img
+            src={src}
+            alt=""
+            crossOrigin="anonymous"
+            decoding="async"
+            className="absolute inset-0 size-full scale-105 object-cover"
+        />
+    )
+}
+
+function ShareStoryShell({
     isDark,
+    exerciseImageUrl,
+    glowColor,
+    meshAccent,
+    radialBackground,
+    topSlot,
     children,
 }: {
-    background: string
     isDark: boolean
+    exerciseImageUrl?: string
+    glowColor: string
+    meshAccent?: string
+    radialBackground?: string
+    topSlot?: ReactNode
     children: ReactNode
 }) {
+    const hasImage = Boolean(
+        exerciseImageUrl &&
+            getShareableExerciseImageUrl(exerciseImageUrl, 'square'),
+    )
+
     return (
         <div
             data-share-card-root
-            className="inline-block antialiased"
+            className="inline-block antialiased text-white"
             style={{
                 ...shareCardThemeVars(isDark),
-                width: CELEBRATION_SHARE_WIDTH,
-                minWidth: CELEBRATION_SHARE_WIDTH,
+                width: CELEBRATION_SHARE_SIZE,
+                height: CELEBRATION_SHARE_SIZE,
+                minWidth: CELEBRATION_SHARE_SIZE,
+                minHeight: CELEBRATION_SHARE_SIZE,
+                color: '#ffffff',
             }}
         >
             <div
-                className="relative overflow-hidden rounded-2xl border-2 border-border bg-card text-card-foreground"
-                style={{ width: CELEBRATION_SHARE_WIDTH }}
+                className="relative size-full overflow-hidden"
+                style={{
+                    width: CELEBRATION_SHARE_SIZE,
+                    height: CELEBRATION_SHARE_SIZE,
+                    background: hasImage
+                        ? '#0a0a0a'
+                        : shareStoryMeshBackground(meshAccent ?? glowColor, true),
+                }}
             >
+                {hasImage ? (
+                    <ShareFullBleedImage exerciseImageUrl={exerciseImageUrl} />
+                ) : null}
+
+                {!hasImage && radialBackground ? (
+                    <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 opacity-90"
+                        style={{ background: radialBackground }}
+                    />
+                ) : null}
+
                 <div
                     aria-hidden
-                    className={`pointer-events-none absolute inset-0 ${isDark ? 'opacity-100' : 'opacity-95'}`}
-                    style={{ background }}
+                    className="pointer-events-none absolute inset-0"
+                    style={{ background: shareStoryVignette(glowColor) }}
                 />
-                <div className="relative z-[1] flex flex-col items-center gap-6 px-10 py-10 text-center">
-                    {children}
-                    <ShareCardLogo />
+
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute left-1/2 top-[38%] size-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-50 blur-3xl"
+                    style={{
+                        background: `radial-gradient(circle, color-mix(in srgb, ${glowColor} 55%, transparent), transparent 68%)`,
+                    }}
+                />
+
+                <div className="relative z-[1] flex size-full flex-col justify-between px-14 pb-12 pt-14">
+                    {topSlot ? <div className="min-h-[4.5rem]">{topSlot}</div> : <div />}
+                    <div className="flex flex-1 flex-col items-center justify-center gap-8 py-6 text-center">
+                        {children}
+                    </div>
+                    <div className="flex justify-center">
+                        <ShareCardLogo />
+                    </div>
                 </div>
             </div>
         </div>
     )
 }
 
-function ShareHero({
+function ShareStoryHeroStat({
     icon: Icon,
-    iconClassName,
-    iconStyle,
-    badge,
-    badgeClassName,
+    value,
+    iconColor,
+    iconFilter,
+    valueStyle,
 }: {
     icon: LucideIcon
-    iconClassName?: string
-    iconStyle?: CSSProperties
-    badge: ReactNode
-    badgeClassName?: string
+    value: ReactNode
+    iconColor: string
+    iconFilter?: string
+    valueStyle?: CSSProperties
 }) {
     return (
-        <div className="relative inline-flex">
+        <div className="relative flex flex-col items-center gap-5">
             <Icon
-                className={cn('size-24 shrink-0', iconClassName)}
-                style={iconStyle}
-                strokeWidth={1.5}
+                className="size-24 shrink-0"
+                style={{ color: iconColor, filter: iconFilter }}
+                strokeWidth={1.35}
                 aria-hidden
             />
-            <span
-                className={cn(
-                    'absolute -bottom-1 left-1/2 flex max-w-[14rem] -translate-x-1/2 items-center justify-center rounded-full px-4 py-1 font-one-more text-2xl font-bold italic tabular-nums shadow-lg ring-4 ring-card',
-                    badgeClassName,
-                )}
+            <div
+                className="font-one-more text-[7.5rem] font-bold italic leading-[0.9] tracking-tight tabular-nums"
+                style={{
+                    color: iconColor,
+                    textShadow: `0 4px 40px color-mix(in srgb, ${iconColor} 45%, transparent), 0 2px 8px rgba(0,0,0,0.5)`,
+                    ...valueStyle,
+                }}
             >
-                {badge}
-            </span>
+                {value}
+            </div>
         </div>
+    )
+}
+
+function ShareStoryHeadline({
+    title,
+    subtitle,
+}: {
+    title: string
+    subtitle?: string
+}) {
+    return (
+        <div className="max-w-[90%] space-y-3">
+            <h2 className="text-balance text-[2.5rem] font-bold uppercase leading-tight tracking-wide text-white drop-shadow-lg">
+                {title}
+            </h2>
+            {subtitle ? (
+                <p className="text-balance text-[2rem] font-medium capitalize leading-snug text-white/85 drop-shadow-md">
+                    {subtitle}
+                </p>
+            ) : null}
+        </div>
+    )
+}
+
+function ShareStoryPerfChip({
+    label,
+    accentColor,
+}: {
+    label: string
+    accentColor: string
+}) {
+    return (
+        <span
+            className="inline-flex items-center rounded-full px-8 py-3 text-[1.75rem] font-semibold tabular-nums backdrop-blur-md"
+            style={{
+                color: accentColor,
+                backgroundColor: 'rgba(0,0,0,0.45)',
+                boxShadow: `0 0 0 1px color-mix(in srgb, ${accentColor} 50%, transparent), 0 8px 32px rgba(0,0,0,0.35)`,
+            }}
+        >
+            {label}
+        </span>
     )
 }
 
@@ -120,61 +258,52 @@ function ShareLeagueCard({
     open: Extract<CelebrationShareOpen, { kind: 'league' }>
     isDark: boolean
 }) {
-    const { exerciseName, prevLeague, nextLeague, weight, reps } = open.payload
+    const { exerciseName, prevLeague, nextLeague, weight, reps, exerciseImageUrl } =
+        open.payload
     const glow = leagueMapFill(nextLeague.tier, isDark)
-    const perfLabel = UI.leaguePromotionCelebrationPerf
-        .replace('{weight}', String(weight))
-        .replace('{reps}', String(reps))
 
     return (
-        <ShareCardShell
+        <ShareStoryShell
             isDark={isDark}
-            background={leagueCelebrationRadialBackground(glow)}
+            exerciseImageUrl={exerciseImageUrl}
+            glowColor={glow}
+            radialBackground={leagueCelebrationRadialBackground(glow)}
+            topSlot={<ShareStoryTopRank league={nextLeague} />}
         >
-            <ShareHero
+            <ShareStoryHeroStat
                 icon={Trophy}
-                iconStyle={{ color: glow, filter: leagueIconDropShadow(glow) }}
-                badge={
-                    <RankBadge
-                        league={nextLeague}
-                        size="md"
-                        variant={isDark ? 'dark' : 'light'}
-                    />
-                }
-                badgeClassName="!bg-transparent !p-0 !shadow-none !ring-0 !font-sans !not-italic"
+                value={formatSharePerfHero(weight, reps)}
+                iconColor={glow}
+                iconFilter={leagueIconDropShadow(glow)}
             />
-            <div className="space-y-2">
-                <h2 className="text-balance text-3xl font-semibold tracking-tight">
-                    {UI.leaguePromotionCelebrationTitle}
-                </h2>
-                <p className="text-xl capitalize text-foreground/90">{exerciseName}</p>
-            </div>
+            <ShareStoryHeadline
+                title={UI.leaguePromotionCelebrationTitle}
+                subtitle={exerciseName}
+            />
             {!prevLeague ? (
-                <p className="text-lg font-medium" style={{ color: glow }}>
+                <p
+                    className="text-[1.625rem] font-semibold"
+                    style={{ color: glow }}
+                >
                     {UI.leaguePromotionCelebrationFirst}
                 </p>
             ) : (
-                <div className="flex flex-wrap items-center justify-center gap-2">
+                <div className="flex flex-wrap items-center justify-center gap-4 rounded-2xl bg-black/35 px-8 py-4 ring-1 ring-white/15 backdrop-blur-md">
                     <RankBadge
                         league={prevLeague}
-                        size="md"
-                        variant={isDark ? 'dark' : 'light'}
-                        className="opacity-80"
+                        size="xl"
+                        variant="dark"
+                        className="opacity-85"
                     />
                     <ArrowRight
-                        className="size-6 shrink-0"
+                        className="size-10 shrink-0"
                         style={{ color: glow }}
                         aria-hidden
                     />
-                    <RankBadge
-                        league={nextLeague}
-                        size="md"
-                        variant={isDark ? 'dark' : 'light'}
-                    />
+                    <RankBadge league={nextLeague} size="xl" variant="dark" />
                 </div>
             )}
-            <p className="text-lg text-muted-foreground">{perfLabel}</p>
-        </ShareCardShell>
+        </ShareStoryShell>
     )
 }
 
@@ -185,42 +314,36 @@ function ShareRecordCard({
     open: Extract<CelebrationShareOpen, { kind: 'record' }>
     isDark: boolean
 }) {
-    const { exerciseName, weight, reps, leagueAfter } = open.payload
+    const { exerciseName, weight, reps, leagueAfter, exerciseImageUrl } = open.payload
     const glow = recordCelebrationGlow(leagueAfter, isDark)
     const perfLabel = UI.leaguePromotionCelebrationPerf
         .replace('{weight}', String(weight))
         .replace('{reps}', String(reps))
 
     return (
-        <ShareCardShell
+        <ShareStoryShell
             isDark={isDark}
-            background={leagueCelebrationRadialBackground(glow)}
+            exerciseImageUrl={exerciseImageUrl}
+            glowColor={glow}
+            radialBackground={leagueCelebrationRadialBackground(glow)}
+            topSlot={
+                leagueAfter ? <ShareStoryTopRank league={leagueAfter} /> : undefined
+            }
         >
-            <ShareHero
+            <ShareStoryHeroStat
                 icon={Trophy}
-                iconStyle={{ color: glow, filter: leagueIconDropShadow(glow) }}
-                badge={formatPerfBadge(weight, reps)}
-                badgeClassName={
-                    leagueAfter
-                        ? LEAGUE_COLORS[leagueAfter.tier]
-                        : 'bg-primary text-primary-foreground'
-                }
+                value={formatSharePerfHero(weight, reps)}
+                iconColor={glow}
+                iconFilter={leagueIconDropShadow(glow)}
             />
-            <div className="space-y-2">
-                <h2 className="text-balance text-3xl font-semibold tracking-tight">
-                    {UI.newRecordCelebrationTitle}
-                </h2>
-                <p className="text-xl capitalize text-foreground/90">{exerciseName}</p>
-            </div>
-            <p className="text-lg text-muted-foreground">{perfLabel}</p>
-            {leagueAfter ? (
-                <RankBadge
-                    league={leagueAfter}
-                    size="md"
-                    variant={isDark ? 'dark' : 'light'}
-                />
+            <ShareStoryHeadline
+                title={UI.newRecordCelebrationTitle}
+                subtitle={exerciseName}
+            />
+            {!leagueAfter ? (
+                <ShareStoryPerfChip label={perfLabel} accentColor={glow} />
             ) : null}
-        </ShareCardShell>
+        </ShareStoryShell>
     )
 }
 
@@ -231,8 +354,9 @@ function ShareStreakCard({
     open: Extract<CelebrationShareOpen, { kind: 'streak' }>
     isDark: boolean
 }) {
-    const { current } = open.payload
+    const { current, level } = open.payload
     const bonusPercent = streakXpBonusPercent(current)
+    const streakOrange = '#f97316'
     const title =
         current === 1
             ? UI.streakSheetTitleFirstDay
@@ -243,32 +367,29 @@ function ShareStreakCard({
             : UI.streakSheetSubtitleStreak
 
     return (
-        <ShareCardShell
+        <ShareStoryShell
             isDark={isDark}
-            background={streakCelebrationRadialBackground()}
+            glowColor={streakOrange}
+            meshAccent={streakOrange}
+            radialBackground={streakCelebrationRadialBackground()}
+            topSlot={<ShareStoryTopLevel level={level} />}
         >
-            <ShareHero
+            <ShareStoryHeroStat
                 icon={Flame}
-                iconClassName="text-orange-500"
-                iconStyle={{ filter: dropOrange }}
-                badge={current}
-                badgeClassName="bg-orange-500 text-white"
+                value={current}
+                iconColor={streakOrange}
+                iconFilter="drop-shadow(0 12px 36px color-mix(in srgb, #f97316 55%, transparent))"
             />
-            <div className="space-y-2">
-                <h2 className="text-balance text-3xl font-semibold tracking-tight">
-                    {title}
-                </h2>
-                <p className="text-lg text-foreground/90">{description}</p>
-                {bonusPercent > 0 ? (
-                    <p className="text-xl font-extrabold tabular-nums text-orange-400">
-                        {UI.streakXpBonusLabel.replace(
-                            '{percent}',
-                            String(bonusPercent),
-                        )}
-                    </p>
-                ) : null}
-            </div>
-        </ShareCardShell>
+            <ShareStoryHeadline title={title} subtitle={description} />
+            {bonusPercent > 0 ? (
+                <span className="inline-flex items-center rounded-full border border-orange-500/60 bg-orange-500/20 px-8 py-3 text-[1.875rem] font-extrabold tabular-nums text-orange-300 backdrop-blur-md">
+                    {UI.streakXpBonusLabel.replace(
+                        '{percent}',
+                        String(bonusPercent),
+                    )}
+                </span>
+            ) : null}
+        </ShareStoryShell>
     )
 }
 
@@ -281,48 +402,49 @@ function ShareLevelUpCard({
 }) {
     const { previousLevel, level, totalXp } = open.payload
     const leveledMultiple = level - previousLevel > 1
+    const accent = '#dfff5e'
 
     return (
-        <ShareCardShell
+        <ShareStoryShell
             isDark={isDark}
-            background={levelCelebrationRadialBackground()}
+            glowColor={accent}
+            meshAccent={accent}
+            radialBackground={levelCelebrationRadialBackground()}
+            topSlot={<ShareStoryTopLevel level={level} />}
         >
-            <ShareHero
+            <ShareStoryHeroStat
                 icon={Sparkles}
-                iconClassName="text-accent"
-                iconStyle={{ filter: dropAccent }}
-                badge={level}
-                badgeClassName="bg-accent text-accent-foreground"
+                value={level}
+                iconColor={accent}
+                iconFilter="drop-shadow(0 12px 36px color-mix(in srgb, #dfff5e 55%, transparent))"
+                valueStyle={{ color: accent }}
             />
-            <div className="space-y-2">
-                <h2 className="text-balance text-3xl font-semibold tracking-tight">
-                    {UI.levelUpCelebrationTitle}
-                </h2>
-                <p className="text-lg text-foreground/90">
-                    {UI.levelUpCelebrationSubtitle.replace(
-                        '{level}',
-                        String(level),
-                    )}
-                </p>
-            </div>
+            <ShareStoryHeadline
+                title={UI.levelUpCelebrationTitle}
+                subtitle={UI.levelUpCelebrationSubtitle.replace(
+                    '{level}',
+                    String(level),
+                )}
+            />
             {leveledMultiple ? (
-                <p className="flex items-center gap-2 text-lg text-muted-foreground">
+                <p className="flex items-center gap-4 text-[1.625rem] text-white/75">
                     <span>
                         {UI.xpLevelLabel.replace(
                             '{level}',
                             String(previousLevel),
                         )}
                     </span>
-                    <ArrowRight className="size-5 shrink-0 text-accent" aria-hidden />
-                    <span className="font-semibold text-foreground">
+                    <ArrowRight className="size-8 shrink-0 text-accent" aria-hidden />
+                    <span className="font-bold text-white">
                         {UI.xpLevelLabel.replace('{level}', String(level))}
                     </span>
                 </p>
             ) : null}
-            <p className="text-lg text-muted-foreground">
-                {UI.xpTotalLabel.replace('{xp}', String(totalXp))}
-            </p>
-        </ShareCardShell>
+            <ShareStoryPerfChip
+                label={UI.xpTotalLabel.replace('{xp}', String(totalXp))}
+                accentColor={accent}
+            />
+        </ShareStoryShell>
     )
 }
 

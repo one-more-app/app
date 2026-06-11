@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   isFriendSearchReady,
@@ -64,7 +65,8 @@ function SearchResultRow({
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-card p-3">
+    <Card className="py-0">
+      <CardContent className="flex items-center gap-3 p-3">
       <Link to={`/friends/preview/${item.userId}`} className="flex min-w-0 flex-1 items-center gap-3">
         {item.avatarUrl ? (
           <img
@@ -85,7 +87,8 @@ function SearchResultRow({
         </div>
       </Link>
       {action}
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 

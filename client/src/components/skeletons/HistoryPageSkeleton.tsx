@@ -1,9 +1,10 @@
-import { Card } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
 function HistoryWeekStreakSkeleton() {
     return (
-        <div className="rounded-xl bg-card px-2 py-3" aria-hidden>
+        <Card className="py-3" aria-hidden>
+            <CardContent className="px-2 pt-0">
             <div className="flex items-center gap-1">
                 <Skeleton className="size-6 shrink-0 rounded-lg" />
                 <div className="grid min-w-0 flex-1 grid-cols-7 gap-0.5">
@@ -16,7 +17,8 @@ function HistoryWeekStreakSkeleton() {
                 </div>
                 <Skeleton className="size-6 shrink-0 rounded-lg" />
             </div>
-        </div>
+            </CardContent>
+        </Card>
     )
 }
 

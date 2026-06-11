@@ -3,13 +3,13 @@ import { OnboardingVideoShell } from "@/components/OnboardingVideoShell";
 import { StepCard } from "@/components/StepCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    UsernameField,
+    type UsernameFieldStatus,
+} from "@/components/profile/UsernameField";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
-import {
-    checkUsernameAvailability,
-    identifyEmail,
-    suggestUsername,
-} from "@/lib/auth";
+import { identifyEmail, suggestUsername } from "@/lib/auth";
 import { signInWithApple, signInWithGoogle } from "@/lib/oauth";
 import { resolvePostAuthNavigation } from "@/lib/post-auth-navigation";
 import { setUserProfile } from "@/lib/storage";
@@ -17,7 +17,7 @@ import { UI } from "@/lib/translations";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
 import { Capacitor } from "@capacitor/core";
 import { X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 type AuthStep =
@@ -75,9 +75,8 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [username, setUsername] = useState("");
-    const [usernameStatus, setUsernameStatus] = useState<
-        "idle" | "checking" | "available" | "taken" | "invalid"
-    >("idle");
+    const [usernameStatus, setUsernameStatus] =
+        useState<UsernameFieldStatus>("idle");
     const [password, setPassword] = useState("");
     const [passwordConfirm, setPasswordConfirm] = useState("");
     const [isBusy, setIsBusy] = useState(false);
@@ -177,35 +176,6 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
             setIsBusy(false);
         }
     };
-
-    useEffect(() => {
-        if (step !== "register_username") return;
-        const normalized = normalizeUsername(username);
-        if (!normalized || !isValidUsername(normalized)) {
-            setUsernameStatus(normalized.length > 0 ? "invalid" : "idle");
-            return;
-        }
-
-        setUsernameStatus("checking");
-        const timer = window.setTimeout(() => {
-            void (async () => {
-                try {
-                    const result = await checkUsernameAvailability(normalized);
-                    if (!result.available) {
-                        setUsernameStatus(
-                            result.reason === "invalid" ? "invalid" : "taken",
-                        );
-                        return;
-                    }
-                    setUsernameStatus("available");
-                } catch {
-                    setUsernameStatus("idle");
-                }
-            })();
-        }, 350);
-
-        return () => window.clearTimeout(timer);
-    }, [step, username]);
 
     const registerTotal = 4;
     const registerStepLabel = (current: number) =>
@@ -356,43 +326,11 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                         </>
                     ) : step === "register_username" ? (
                         <>
-                            <div className="space-y-1">
-                                <Input
-                                    label={UI.usernameLabel}
-                                    value={username}
-                                    onChange={(e) =>
-                                        setUsername(
-                                            normalizeUsername(e.target.value),
-                                        )
-                                    }
-                                    placeholder={UI.usernamePlaceholder}
-                                    autoCapitalize="none"
-                                    autoCorrect="off"
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                    {UI.usernameHint}
-                                </p>
-                                {usernameStatus === "checking" ? (
-                                    <p className="text-xs text-muted-foreground">
-                                        {UI.loading}
-                                    </p>
-                                ) : null}
-                                {usernameStatus === "invalid" ? (
-                                    <p className="text-xs text-destructive">
-                                        {UI.usernameInvalid}
-                                    </p>
-                                ) : null}
-                                {usernameStatus === "taken" ? (
-                                    <p className="text-xs text-destructive">
-                                        {UI.usernameTaken}
-                                    </p>
-                                ) : null}
-                                {usernameStatus === "available" ? (
-                                    <p className="text-xs text-emerald-600">
-                                        @{normalizedUsername} — {UI.usernameAvailable}
-                                    </p>
-                                ) : null}
-                            </div>
+                            <UsernameField
+                                value={username}
+                                onChange={setUsername}
+                                onStatusChange={setUsernameStatus}
+                            />
 
                             {auth.lastError && (
                                 <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">

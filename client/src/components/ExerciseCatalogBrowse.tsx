@@ -17,6 +17,8 @@ export interface ExerciseCatalogBrowseProps {
     searchQuery: string
     trackedIds: Set<string>
     brokenImageIds: Set<string>
+    viewAll?: boolean
+    onToggleViewAll?: () => void
     onPickZone: (zone: string) => void
     onPickTarget: (target: string) => void
     onPickEquipment: (equipment: string) => void
@@ -57,8 +59,8 @@ function ExerciseCatalogGrid({
         ex.target
             ? translateTarget(ex.target)
             : ex.bodyPart
-              ? translateBodyPart(ex.bodyPart)
-              : null
+                ? translateBodyPart(ex.bodyPart)
+                : null
 
     return (
         <ul className="grid grid-cols-3 items-stretch gap-2">
@@ -84,8 +86,8 @@ function ExerciseCatalogGrid({
                                         onError={() => onImageError(ex.id)}
                                     />
                                 </div>
-                                <CardHeader className="flex flex-1 flex-col gap-0.5 px-2 py-1.5 pb-1">
-                                    <CardTitle className="line-clamp-2 min-h-[2.125rem] text-[11px] font-semibold capitalize leading-tight">
+                                <CardHeader className="flex shrink-0 flex-col gap-0.5 px-2 py-1.5 pb-1">
+                                    <CardTitle className="line-clamp-2 text-[11px] leading-snug">
                                         {ex.name}
                                     </CardTitle>
                                     <div className="flex min-h-4 items-start">
@@ -137,6 +139,8 @@ export function ExerciseCatalogBrowse({
     searchQuery,
     trackedIds,
     brokenImageIds,
+    viewAll,
+    onToggleViewAll,
     onPickZone,
     onPickTarget,
     onPickEquipment,
@@ -157,6 +161,8 @@ export function ExerciseCatalogBrowse({
             searchSort="popularity"
             requireGif
             isGifBroken={(id) => brokenImageIds.has(id)}
+            viewAll={viewAll}
+            onToggleViewAll={onToggleViewAll}
             onPickZone={onPickZone}
             onPickTarget={onPickTarget}
             onPickEquipment={onPickEquipment}

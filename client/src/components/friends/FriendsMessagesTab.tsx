@@ -1,3 +1,4 @@
+import { Card, CardContent } from "@/components/ui/card";
 import {
   useConversationUnreadActions,
   useConversationsList,
@@ -31,36 +32,40 @@ function ConversationRow({
   return (
     <Link
       to={`/friends/chat/${item.id}`}
-      className="flex items-center gap-3 rounded-xl bg-card p-3"
+      className="block"
       onClick={() => {
         void hapticImpact();
         onOpen(item.id);
       }}
     >
-      {item.otherUser.avatarUrl ? (
-        <img
-          src={item.otherUser.avatarUrl}
-          alt=""
-          className="size-10 shrink-0 rounded-full object-cover"
-        />
-      ) : (
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-          {initials}
-        </div>
-      )}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <p className="min-w-0 truncate font-medium">{name}</p>
-          {item.unreadCount > 0 ? (
-            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
-              {item.unreadCount > 9 ? "9+" : item.unreadCount}
-            </span>
-          ) : null}
-        </div>
-        <p className="truncate text-xs text-muted-foreground">
-          {item.lastMessage?.body ?? UI.messagesEmptyPreview}
-        </p>
-      </div>
+      <Card className="py-0 transition-colors hover:bg-card/90">
+        <CardContent className="flex items-center gap-3 p-3">
+          {item.otherUser.avatarUrl ? (
+            <img
+              src={item.otherUser.avatarUrl}
+              alt=""
+              className="size-10 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+              {initials}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-2">
+              <p className="min-w-0 truncate font-medium">{name}</p>
+              {item.unreadCount > 0 ? (
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+                  {item.unreadCount > 9 ? "9+" : item.unreadCount}
+                </span>
+              ) : null}
+            </div>
+            <p className="truncate text-xs text-muted-foreground">
+              {item.lastMessage?.body ?? UI.messagesEmptyPreview}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </Link>
   );
 }

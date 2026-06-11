@@ -16,11 +16,6 @@ type SeedExercise = {
   gifUrl?: string;
 };
 
-function shouldReplaceCatalog(): boolean {
-  const raw = process.env.EXERCISES_CATALOG_REPLACE;
-  return raw === '1' || raw === 'true';
-}
-
 async function run() {
   const filePath = resolveSeedJsonPath();
   const raw = await readFile(filePath, 'utf8');
@@ -29,17 +24,15 @@ async function run() {
   await dataSource.initialize();
   const repo = dataSource.getRepository(ExerciseCatalogEntity);
 
-  if (shouldReplaceCatalog()) {
-    const ids = exercises.map((ex) => ex.id);
-    if (ids.length > 0) {
-      await repo
-        .createQueryBuilder()
-        .delete()
-        .where('exerciseId NOT IN (:...ids)', { ids })
-        .execute();
-    } else {
-      await repo.clear();
-    }
+  const ids = exercises.map((ex) => ex.id);
+  if (ids.length > 0) {
+    await repo
+      .createQueryBuilder()
+      .delete()
+      .where('exerciseId NOT IN (:...ids)', { ids })
+      .execute();
+  } else {
+    await repo.clear();
   }
 
   for (const ex of exercises) {

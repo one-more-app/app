@@ -10,13 +10,9 @@ import { classifyExerciseRankCoverage } from "../dist/shared/strength-standards.
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dataDir = join(__dirname, "..", "data");
+const catalogPath = join(dataDir, "popular-exercises.json");
 
-const CATALOGS = [
-  { file: "popular-exercises.json", label: "full (1500)" },
-  { file: "popular-exercises.filtered.json", label: "filtered (569)" },
-];
-
-function analyzeCatalog(catalogPath, label) {
+function analyzeCatalog(catalogPath) {
   const exercises = JSON.parse(readFileSync(catalogPath, "utf8"));
   const stats = { ok: 0, intentional: 0, gap: 0 };
   const gaps = [];
@@ -33,34 +29,25 @@ function analyzeCatalog(catalogPath, label) {
     }
   }
 
-  return { label, total: exercises.length, stats, gaps };
+  return { total: exercises.length, stats, gaps };
 }
 
-let failed = false;
+const { total, stats, gaps } = analyzeCatalog(catalogPath);
+const fixable = stats.ok + stats.gap;
+const pct = fixable > 0 ? ((stats.ok / fixable) * 100).toFixed(1) : "100.0";
 
-for (const { file, label } of CATALOGS) {
-  const { total, stats, gaps } = analyzeCatalog(join(dataDir, file), label);
-  const fixable = stats.ok + stats.gap;
-  const pct =
-    fixable > 0 ? ((stats.ok / fixable) * 100).toFixed(1) : "100.0";
+console.log("\n=== popular-exercises.json ===");
+console.log(`Total: ${total}`);
+console.log(`  ok:           ${stats.ok}`);
+console.log(`  intentional:  ${stats.intentional}`);
+console.log(`  gap:          ${stats.gap}`);
+console.log(`Couverture fixable: ${stats.ok}/${fixable} (${pct}%)`);
 
-  console.log(`\n=== ${label} ===`);
-  console.log(`Total: ${total}`);
-  console.log(`  ok:           ${stats.ok}`);
-  console.log(`  intentional:  ${stats.intentional}`);
-  console.log(`  gap:          ${stats.gap}`);
-  console.log(`Couverture fixable: ${stats.ok}/${fixable} (${pct}%)`);
-
-  if (gaps.length > 0) {
-    failed = true;
-    console.error(`\nExercices sans rang (gap) dans ${file}:`);
-    for (const ex of gaps) {
-      console.error(`  - [${ex.equipment} / ${ex.target}] ${ex.name} (${ex.id})`);
-    }
+if (gaps.length > 0) {
+  console.error("\nExercices sans rang (gap):");
+  for (const ex of gaps) {
+    console.error(`  - [${ex.equipment} / ${ex.target}] ${ex.name} (${ex.id})`);
   }
-}
-
-if (failed) {
   console.error("\nÉchec : des exercices fixables n'ont pas de rang.");
   process.exit(1);
 }

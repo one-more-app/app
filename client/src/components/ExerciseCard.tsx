@@ -3,7 +3,7 @@ import { BodyWeightLabel } from '@/components/BodyWeightLabel'
 import { LeagueBadge } from '@/components/LeagueBadge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
     Dialog,
     DialogContent,
@@ -76,22 +76,22 @@ export function ExerciseCard({
             <Card
                 className={
                     onClick
-                        ? 'relative cursor-pointer'
+                        ? 'relative cursor-pointer px-3 py-3'
                         : undefined
                 }
                 onClick={
                     onClick
                         ? () => {
-                              void hapticImpact()
-                              onClick()
-                          }
+                            void hapticImpact()
+                            onClick()
+                        }
                         : undefined
                 }
             >
                 <CardHeader
                     className={cn(
                         'flex min-w-0 flex-row items-center gap-4',
-                        compact ? 'pb-0' : 'pb-2',
+                        compact ? 'p-0' : 'pb-4',
                     )}
                 >
                     {!exercise.isCustom && exercise.gifUrl ? (
@@ -121,9 +121,9 @@ export function ExerciseCard({
                         </div>
                     )}
                     <div className="min-w-0 flex-1">
-                        <CardTitle className="min-w-0 truncate text-base capitalize">
+                        <h3 className="min-w-0 font-one-more text-xs uppercase italic">
                             {exercise.name}
-                        </CardTitle>
+                        </h3>
                         <div className="mt-1 flex flex-wrap items-center gap-1.5">
                             {(exercise.bodyPart || exercise.target) && (
                                 <Badge variant="secondary">
@@ -173,7 +173,7 @@ export function ExerciseCard({
                                                 </div>
                                             )}
                                         </span>
-                                        <span className="text-muted-foreground">× {lastPerf.reps} reps</span>
+                                        <span className="text-muted-foreground">× {lastPerf.reps}</span>
                                     </span>
                                 ) : (
                                     <span className="text-muted-foreground">—</span>
@@ -207,7 +207,7 @@ export function ExerciseCard({
                                             )}
                                         </span>
                                         <span className={isLeagueRecord ? 'text-muted-foreground' : undefined}>
-                                            × {personalBest.reps} reps
+                                            × {personalBest.reps}
                                         </span>
                                     </span>
                                 ) : (
@@ -237,7 +237,7 @@ export function ExerciseCard({
                                 alt=""
                                 className="mx-auto max-h-[min(70vh,480px)] w-full object-contain"
                                 onError={(e) => {
-                                    ;(e.target as HTMLImageElement).style.display = 'none'
+                                    ; (e.target as HTMLImageElement).style.display = 'none'
                                 }}
                             />
                         </div>

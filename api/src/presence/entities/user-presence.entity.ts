@@ -22,7 +22,7 @@ export class UserPresenceEntity {
   @Column({ type: 'text', nullable: true })
   exerciseName!: string | null;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: 'text', nullable: true })
   trackedExerciseId!: string | null;
 
   @Column({ type: 'timestamptz' })

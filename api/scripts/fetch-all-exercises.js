@@ -1,11 +1,11 @@
 /**
  * Récupère tous les exercices ExerciseDB (sans filtrage de pertinence).
- * Sortie : api/data/popular-exercises.all.json
+ * Sortie : api/data/popular-exercises.json
  *
  * Usage:
- *   npm run fetch:all-exercises
- *   npm run catalog:use-all
- *   npm run seed:exercises:replace
+ *   npm run fetch:exercises
+ *   task exercises:fetch
+ *   task seed:exercises
  */
 
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs'
@@ -18,7 +18,7 @@ import {
 } from './exercisedb-fetch.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const OUT_PATH = join(__dirname, '../data/popular-exercises.all.json')
+const OUT_PATH = join(__dirname, '../data/popular-exercises.json')
 
 function isValid(raw) {
   return Boolean(raw?.exerciseId && raw?.name?.trim())
@@ -70,10 +70,7 @@ async function main() {
 
   console.log(`\n→ ${final.length} exercices dans ${OUT_PATH}`)
   console.log(`   (${totalScanned} scannés ce run)`)
-  console.log('\nProchaines étapes:')
-  console.log('  npm run catalog:use-all')
-  console.log('  npm run seed:exercises:replace        # dev')
-  console.log('  npm run catalog:use-all:prod            # prod (dist compilé)')
+  console.log('\nProchaine étape: task seed:exercises')
 }
 
 main().catch((err) => {

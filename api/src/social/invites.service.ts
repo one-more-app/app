@@ -79,12 +79,10 @@ export class InvitesService {
 
   async createDefaultProfile(userId: string, params?: CreateProfileParams) {
     const inviteCode = await this.generateUniqueInviteCode();
-    const username = await this.usernameService.resolveUsernameForSignup({
-      requestedUsername: params?.username,
-      firstName: params?.firstName ?? null,
-      lastName: params?.lastName ?? null,
-      email: params?.email ?? null,
-    });
+    const requestedUsername = params?.username?.trim();
+    const username = requestedUsername
+      ? await this.usernameService.assertAvailable(requestedUsername)
+      : null;
 
     return await this.profilesRepo.save({
       userId,

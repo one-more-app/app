@@ -9,7 +9,7 @@ import { RankBadge } from '@/components/RankBadge'
 import { RestSinceLastSetBar } from '@/components/RestSinceLastSetBar'
 import { ExerciseDetailPageSkeleton } from '@/components/skeletons'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
     Dialog,
     DialogContent,
@@ -45,6 +45,7 @@ import {
     isOnboardingFirstExercisePending,
     removeTrackedExerciseAndWait,
     setOnboardingFirstExercisePending,
+    setOnboardingTourComplete,
     updateTrackedExerciseAndWait,
 } from '@/lib/storage'
 import { isDumbbellExercise } from '@/lib/strength-standards'
@@ -193,6 +194,7 @@ export function ExerciseDetailPage() {
 
     const finishOnboardingTour = useCallback(() => {
         const next = new URLSearchParams(searchParams)
+        setOnboardingTourComplete(true)
         if (searchParams.get('from') === 'first-exercise' || onboardingFirstExercisePending) {
             setOnboardingFirstExercisePending(false)
         }
@@ -430,7 +432,6 @@ export function ExerciseDetailPage() {
                     embedded
                     compact
                     title={exercise.name}
-                    titleClassName="capitalize"
                     onBack={handleBack}
                     right={
                         <Button
@@ -506,7 +507,7 @@ export function ExerciseDetailPage() {
                 {leagueInfo && (
                     <Card className="gap-0" data-tour="exercise-league">
                         <CardHeader className="gap-0">
-                            <h2 className="font-semibold m-0 p-0">{UI.league}</h2>
+                            <CardTitle>{UI.league}</CardTitle>
                         </CardHeader>
                         <CardContent className="flex flex-col pb-1">
                             <LeagueBadge
@@ -594,7 +595,7 @@ export function ExerciseDetailPage() {
                 {entries.length > 0 && (
                     <Card data-tour="exercise-history">
                         <CardHeader>
-                            <h2 className="font-semibold ">{UI.history} (poids)</h2>
+                            <CardTitle>{UI.history} (poids)</CardTitle>
                         </CardHeader>
                         <CardContent className='pb-0 pt-0'>
                             <PerformanceChart
@@ -674,7 +675,7 @@ export function ExerciseDetailPage() {
                 )}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
-                        <h2 className="font-semibold">{UI.options}</h2>
+                        <CardTitle>{UI.options}</CardTitle>
                         <Button
                             variant="outline-destructive"
                             size="sm"

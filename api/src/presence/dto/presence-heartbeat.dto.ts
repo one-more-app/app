@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { PresenceStatus } from '../entities/presence-status.enum.js';
 
 export class PresenceHeartbeatDto {
@@ -10,6 +10,6 @@ export class PresenceHeartbeatDto {
   exerciseName?: string;
 
   @IsOptional()
-  @IsUUID()
+  @IsString()
   trackedExerciseId?: string;
 }

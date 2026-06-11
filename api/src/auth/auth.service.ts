@@ -110,8 +110,6 @@ export class AuthService {
     const ok = await argon2.verify(user.password, params.password);
     if (!ok) throw new UnauthorizedException('Identifiants invalides');
 
-    await this.invites.ensureUsername(user.id);
-
     return await this.issueSession({
       user: { id: user.id, email: user.email },
       deviceId: params.deviceId,

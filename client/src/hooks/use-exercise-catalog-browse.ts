@@ -45,11 +45,30 @@ export function useExerciseCatalogBrowse(options?: {
   const location = useLocation();
   const browse = readBrowseParams(searchParams);
 
+  const viewAll = searchParams.get("view") === "all";
+
+  const navigateWithParams = useCallback(
+    (
+      params: URLSearchParams,
+      navigateOptions?: {
+        replace?: boolean;
+      },
+    ) => {
+      const search = params.toString();
+      navigate(
+        { pathname: location.pathname, search: search ? `?${search}` : "" },
+        { replace: navigateOptions?.replace ?? replaceOnNavigate },
+      );
+    },
+    [navigate, location.pathname, replaceOnNavigate],
+  );
+
   const navigateBrowse = useCallback(
     (
       nextBrowse: CatalogBrowseParams,
       navigateOptions?: {
         replace?: boolean;
+        keepViewAll?: boolean;
       },
     ) => {
       const params = new URLSearchParams(searchParams);
@@ -57,14 +76,13 @@ export function useExerciseCatalogBrowse(options?: {
       params.delete("page");
       params.delete("muscle");
       params.delete("eq");
+      if (!navigateOptions?.keepViewAll) {
+        params.delete("view");
+      }
 
-      const search = params.toString();
-      navigate(
-        { pathname: location.pathname, search: search ? `?${search}` : "" },
-        { replace: navigateOptions?.replace ?? replaceOnNavigate },
-      );
+      navigateWithParams(params, navigateOptions);
     },
-    [searchParams, navigate, location.pathname, replaceOnNavigate],
+    [searchParams, navigateWithParams],
   );
 
   const pickZone = useCallback(
@@ -141,8 +159,24 @@ export function useExerciseCatalogBrowse(options?: {
     [browse.zone, browse.target, navigateBrowse],
   );
 
+  const toggleViewAll = useCallback(() => {
+    const params = new URLSearchParams(searchParams);
+    if (params.get("view") === "all") {
+      params.delete("view");
+    } else {
+      params.set("view", "all");
+    }
+    navigateWithParams(params, { replace: true });
+  }, [searchParams, navigateWithParams]);
+
   /** Recule d’une étape du parcours (list → equipment → muscle → zone). Retourne false si déjà à la zone. */
   const goBackInBrowse = useCallback((): boolean => {
+    if (searchParams.get("view") === "all") {
+      const params = new URLSearchParams(searchParams);
+      params.delete("view");
+      navigateWithParams(params, { replace: true });
+      return true;
+    }
     if (browse.step === "list" && browse.zone && browse.target) {
       navigateBrowse(
         {
@@ -175,14 +209,23 @@ export function useExerciseCatalogBrowse(options?: {
       return true;
     }
     return false;
-  }, [browse.step, browse.zone, browse.target, navigateBrowse]);
+  }, [
+    browse.step,
+    browse.zone,
+    browse.target,
+    navigateBrowse,
+    searchParams,
+    navigateWithParams,
+  ]);
 
   return {
     browse,
+    viewAll,
     pickZone,
     pickTarget,
     pickEquipment,
     goToStep,
     goBackInBrowse,
+    toggleViewAll,
   };
 }

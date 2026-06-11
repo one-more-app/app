@@ -104,9 +104,9 @@ Ports par défaut : client Vite `5173`, API `3000`, Postgres `5433`.
 
 ### Catalogue exercices
 
-- Données issues d’[ExerciseDB v1](https://www.exercisedb.dev/docs) (gratuit, sans clé), consolidées dans `client/src/data/popular-exercises.json`.
-- **Seed API** : `task seed:exercises` charge le catalogue en base pour les listes `/exercises` et `/exercises/meta`.
-- Script de maintenance : `npm run fetch:popular-exercises` (racine ou `client/`).
+- Données issues d’[ExerciseDB v1](https://www.exercisedb.dev/docs) (gratuit, sans clé), consolidées dans `api/data/popular-exercises.json` (~1500 exercices).
+- **Import en base** : `task seed:exercises` charge le catalogue pour les listes `/exercises` et `/exercises/meta`.
+- **Mise à jour du JSON** (optionnel) : `task exercises:fetch` puis `task seed:exercises`.
 
 ## API (`api/`)
 

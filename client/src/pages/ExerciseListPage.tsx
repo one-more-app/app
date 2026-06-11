@@ -130,8 +130,16 @@ export function ExerciseListPage() {
         setEquipmentOptions(metaData.equipment)
     }, [metaData])
 
-    const { browse, pickZone, pickTarget, pickEquipment, goToStep, goBackInBrowse } =
-        useExerciseCatalogBrowse({ replaceOnNavigate: true })
+    const {
+        browse,
+        viewAll,
+        pickZone,
+        pickTarget,
+        pickEquipment,
+        goToStep,
+        goBackInBrowse,
+        toggleViewAll,
+    } = useExerciseCatalogBrowse({ replaceOnNavigate: true })
     const navigateBack = useBack()
 
     const catalogExercises = useMemo(() => {
@@ -487,6 +495,8 @@ export function ExerciseListPage() {
                         searchQuery={searchQuery}
                         trackedIds={trackedIds}
                         brokenImageIds={brokenImageIds}
+                        viewAll={viewAll}
+                        onToggleViewAll={toggleViewAll}
                         onPickZone={pickZone}
                         onPickTarget={pickTarget}
                         onPickEquipment={pickEquipment}

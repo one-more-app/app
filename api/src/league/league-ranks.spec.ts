@@ -219,17 +219,11 @@ describe('leagueFromTrackedExercise', () => {
 });
 
 describe('catalog rank coverage', () => {
-  it('has zero fixable gaps in full catalog', () => {
+  it('has zero fixable gaps in catalog', () => {
     const stats = summarizeCoverage(loadCatalog('popular-exercises.json'));
     expect(stats.gap).toBe(0);
     expect(stats.ok).toBeGreaterThan(1100);
     expect(stats.intentional).toBeGreaterThan(200);
-  });
-
-  it('has zero fixable gaps in filtered catalog', () => {
-    const stats = summarizeCoverage(loadCatalog('popular-exercises.filtered.json'));
-    expect(stats.gap).toBe(0);
-    expect(stats.ok).toBeGreaterThan(500);
   });
 
   it('keeps ranks for popular gym exercises', () => {

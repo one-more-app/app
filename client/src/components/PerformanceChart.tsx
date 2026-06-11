@@ -5,6 +5,7 @@ import {
     PopoverAnchor,
     PopoverContent,
 } from '@/components/ui/popover'
+import { formatPerfLabel } from '@/lib/history-entries'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import type { PerformanceEntry } from '@/types'
@@ -57,14 +58,6 @@ function getBestPerDayAndAllByDate(entries: PerformanceEntry[]) {
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     )
     return { bestList, allByDate }
-}
-
-function formatPerfLabel(weight: number, reps: number): string {
-    const weightLabel =
-        weight === 0
-            ? `${UI.bodyWeightAbbr} (${UI.bodyWeightOnly})`
-            : `${weight} kg`
-    return `${weightLabel} × ${reps} reps`
 }
 
 export function PerformanceChart({ className, entries, exercise, onDelete, onUpdate, onRefresh }: Props) {

@@ -1,5 +1,6 @@
 import { BottomNav } from '@/components/BottomNav'
 import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCelebration'
+import { ProfileUsernameSetupHost } from '@/components/profile/ProfileUsernameSetupHost'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import { usePushNotifications } from '@/hooks/use-push-notifications'
@@ -219,6 +220,7 @@ function App() {
                 <LeaguePromotionCelebrationHost />
                 <AuthProvider>
                     <RealtimeProvider>
+                    <ProfileUsernameSetupHost />
                     <AccessGate>
                         <BottomNavHost>
                             <Routes>

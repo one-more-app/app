@@ -8,7 +8,8 @@ import {
 } from "@/lib/profile-avatar";
 import { ProfileNameDisplay } from "@/components/profile/ProfileNameDisplay";
 import { getProfileInitials } from "@/lib/profile-display";
-import { profileNestedClass, profileSectionClass } from "@/lib/profile-section";
+import { Card, CardContent } from "@/components/ui/card";
+import { profileNestedClass } from "@/lib/profile-section";
 import { UI } from "@/lib/translations";
 import type { UserProfile } from "@/types";
 import { cn } from "@/lib/utils";
@@ -95,7 +96,8 @@ export function ProfileIdentityHeader({
   );
 
   return (
-    <section className={cn(profileSectionClass, "py-3")}>
+    <Card className="py-3">
+      <CardContent className="pt-0">
       <div className="flex items-center gap-3">
         {readOnly ? (
           <div className={avatarClassName}>{avatarInner}</div>
@@ -147,6 +149,7 @@ export function ProfileIdentityHeader({
           ) : null}
         </div>
       </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }

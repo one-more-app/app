@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -19,7 +19,6 @@ export class ProfileService {
   ) {}
 
   async getProfile(userId: string) {
-    await this.usernameService.ensureUsername(userId);
     const profile = await this.profilesRepo.findOne({ where: { userId } });
     if (!profile) return null;
     return this.toProfileDto(profile);
@@ -71,6 +70,24 @@ export class ProfileService {
       username: profile.username,
       updatedAt: profile.updatedAt.toISOString(),
     };
+  }
+
+  async updateUsername(userId: string, rawUsername: string) {
+    const profile = await this.profilesRepo.findOne({ where: { userId } });
+    if (!profile) throw new NotFoundException('Profil introuvable');
+
+    const username = await this.usernameService.assertAvailable(
+      rawUsername,
+      userId,
+    );
+
+    if (profile.username === username) {
+      return this.toProfileDto(profile);
+    }
+
+    profile.username = username;
+    await this.profilesRepo.save(profile);
+    return this.toProfileDto(profile);
   }
 
   async upsertProfile(userId: string, body: UpsertProfileDto) {

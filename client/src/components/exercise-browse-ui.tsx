@@ -1,7 +1,8 @@
-import { Badge } from '@/components/ui/badge'
-import { Card } from '@/components/ui/card'
-import type { CatalogBrowseParams, CatalogBrowseStep } from '@/lib/exercise-catalog-browse'
 import { RankBadge } from '@/components/RankBadge'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardTitle } from '@/components/ui/card'
+import type { CatalogBrowseParams, CatalogBrowseStep } from '@/lib/exercise-catalog-browse'
+import { hapticImpact, hapticTab } from '@/lib/haptics'
 import type { RankId } from '@/lib/strength-standards'
 import {
     translateBodyPart,
@@ -9,7 +10,6 @@ import {
     translateTarget,
     UI,
 } from '@/lib/translations'
-import { hapticImpact, hapticTab } from '@/lib/haptics'
 import { cn } from '@/lib/utils'
 import { ChevronRight } from 'lucide-react'
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
@@ -34,7 +34,7 @@ export function BrowseSectionTitle({
     return (
         <h2
             className={cn(
-                'mb-2 font-one-more text-[10px] font-semibold uppercase italic leading-tight tracking-normal text-muted-foreground',
+                'mb-2 font-one-more text-[10px] font-semibold uppercase italic tracking-normal text-muted-foreground',
                 className,
             )}
             {...props}
@@ -76,9 +76,9 @@ export function BrowseTile({
                     <span className="size-12 shrink-0 rounded-lg bg-muted" />
                 )}
                 <span className="min-w-0 flex-1">
-                    <span className="block truncate text-base font-semibold capitalize leading-snug">
+                    <CardTitle>
                         {label}
-                    </span>
+                    </CardTitle>
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                         <Badge variant="secondary" className="font-normal">
                             {UI.browseExercisesCount.replace('{count}', String(count))}

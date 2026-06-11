@@ -1,5 +1,6 @@
 import { PresenceBadge } from "@/components/friends/PresenceBadge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { useFriendsPresence } from "@/hooks/use-friends-presence";
 import {
   acceptFriendRequest,
@@ -52,7 +53,8 @@ function FriendRow({
     item.status === "pending" && item.direction === "outgoing";
 
   const content = (
-    <div className="flex items-center gap-3 rounded-xl bg-card p-3">
+    <Card className="py-0">
+      <CardContent className="flex items-center gap-3 p-3">
       <div className="relative shrink-0">
         {item.avatarUrl ? (
           <img
@@ -84,7 +86,8 @@ function FriendRow({
       {!isPendingIncoming && !isPendingOutgoing ? (
         <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
       ) : null}
-    </div>
+      </CardContent>
+    </Card>
   );
 
   if (isPendingIncoming) {
@@ -193,27 +196,31 @@ export function FriendsListTab({
                 <Link
                   key={p.userId}
                   to={`/friends/${p.userId}`}
-                  className="flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3"
+                  className="block"
                   onClick={() => {
                     void hapticImpact();
                   }}
                 >
-                  <Dumbbell className="size-5 shrink-0 text-amber-600" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">
-                      {getProfileDisplayName(
-                        {
-                          firstName: friend.firstName ?? undefined,
-                          lastName: friend.lastName ?? undefined,
-                          username: friend.username ?? undefined,
-                        },
-                        null,
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {p.exerciseName ?? UI.friendsTrainingGeneric}
-                    </p>
-                  </div>
+                  <Card className="border border-amber-500/30 bg-amber-500/5 py-0">
+                    <CardContent className="flex items-center gap-3 p-3">
+                      <Dumbbell className="size-5 shrink-0 text-amber-600" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium">
+                          {getProfileDisplayName(
+                            {
+                              firstName: friend.firstName ?? undefined,
+                              lastName: friend.lastName ?? undefined,
+                              username: friend.username ?? undefined,
+                            },
+                            null,
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {p.exerciseName ?? UI.friendsTrainingGeneric}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </Link>
               );
             })}

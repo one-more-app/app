@@ -1,4 +1,11 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class UpsertProfileDto {
   @IsNumber()
@@ -21,4 +28,12 @@ export class UpsertProfileDto {
   @IsOptional()
   @IsString()
   avatarUrl?: string | null;
+}
+
+export class UpdateUsernameDto {
+  @IsString()
+  @MinLength(3)
+  @MaxLength(20)
+  @Matches(/^[a-z0-9_]+$/)
+  username!: string;
 }

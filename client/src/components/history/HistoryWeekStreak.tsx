@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   buildWeekCells,
   getWeekStartDateKey,
@@ -43,10 +44,8 @@ export function HistoryWeekStreak({ entries }: HistoryWeekStreakProps) {
   const canGoNext = weekOffset < 0;
 
   return (
-    <section
-      className="rounded-xl bg-card px-2 py-3"
-      aria-label={UI.historyWeekNavLabel}
-    >
+    <Card className="py-3" aria-label={UI.historyWeekNavLabel}>
+      <CardContent className="px-2 pt-0">
       <div className="flex items-center gap-1">
         <Button
           variant="ghost"
@@ -128,6 +127,7 @@ export function HistoryWeekStreak({ entries }: HistoryWeekStreakProps) {
           <ChevronRight className="size-4" />
         </Button>
       </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }

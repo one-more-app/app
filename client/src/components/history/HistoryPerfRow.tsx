@@ -1,7 +1,7 @@
+import { LeaguePromotionBadges } from '@/components/history/LeaguePromotionBadges'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { LeaguePromotionBadges } from '@/components/history/LeaguePromotionBadges'
 import { formatPerfLabel, type HistoryEntryInsight } from '@/lib/history-entries'
 import { UI } from '@/lib/translations'
 import type { PerformanceEntry } from '@/types'
@@ -48,26 +48,26 @@ export function HistoryPerfRow({
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
                         {!readOnly ? (
-                        <div className="flex gap-1">
-                            <Button
-                                variant="secondary"
-                                size="icon"
-                                disabled={!canEdit}
-                                onClick={onEdit}
-                                aria-label={UI.modifyPerf}
-                            >
-                                <Pencil className="size-4" />
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                size="icon"
-                                className="text-destructive"
-                                onClick={onDelete}
-                                aria-label={UI.deletePerf}
-                            >
-                                <Trash2 className="size-4" />
-                            </Button>
-                        </div>
+                            <div className="flex gap-1">
+                                <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    disabled={!canEdit}
+                                    onClick={onEdit}
+                                    aria-label={UI.modifyPerf}
+                                >
+                                    <Pencil className="size-4" />
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    className="text-destructive"
+                                    onClick={onDelete}
+                                    aria-label={UI.deletePerf}
+                                >
+                                    <Trash2 className="size-4" />
+                                </Button>
+                            </div>
                         ) : null}
                     </div>
                 </CardContent>
