@@ -3,12 +3,27 @@ import { Dialog as DialogPrimitive } from "radix-ui"
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
+import { trackDialogOpenChange } from "@/lib/analytics/overlay-tracking"
 import { cn } from "@/lib/utils"
 
+type DialogProps = React.ComponentProps<typeof DialogPrimitive.Root> & {
+    "data-analytics-label"?: string
+}
+
 function Dialog({
+    onOpenChange,
+    "data-analytics-label": analyticsLabel,
     ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root>) {
-    return <DialogPrimitive.Root data-slot="dialog" {...props} />
+}: DialogProps) {
+    return (
+        <DialogPrimitive.Root
+            data-slot="dialog"
+            onOpenChange={(open) =>
+                trackDialogOpenChange(open, analyticsLabel, onOpenChange)
+            }
+            {...props}
+        />
+    )
 }
 
 function DialogTrigger({

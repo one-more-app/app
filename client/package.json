@@ -55,6 +55,7 @@
     "@capgo/capacitor-social-login": "^8.3.22",
     "@fontsource-variable/hanken-grotesk": "^5.2.8",
     "@ncdai/react-wheel-picker": "^1.2.0",
+    "@openpanel/web": "^1.4.1",
     "@radix-ui/react-progress": "^1.1.8",
     "appsflyer-capacitor-plugin": "^6.18.0",
     "class-variance-authority": "^0.7.1",
