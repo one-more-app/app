@@ -463,6 +463,7 @@ export function ExerciseDetailPage() {
                 <RestSinceLastSetBar
                     key={lastPerf?.createdAt ?? 'none'}
                     createdAt={lastPerf?.createdAt ?? null}
+                    trackedExerciseId={id}
                 />
             </div>
 

@@ -51,12 +51,15 @@ function Button({
     asChild = false,
     haptic = true,
     onClick,
+    "data-analytics-label": analyticsLabel,
     ...props
 }: React.ComponentProps<"button"> &
     VariantProps<typeof buttonVariants> & {
         asChild?: boolean
         /** Désactive le retour haptique pour ce bouton */
         haptic?: boolean
+        /** Libellé explicite pour le tracking auto des clics */
+        "data-analytics-label"?: string
     }) {
     const Comp = asChild ? Slot.Root : "button"
 
@@ -70,6 +73,7 @@ function Button({
             data-slot="button"
             data-variant={variant}
             data-size={size}
+            {...(analyticsLabel ? { "data-analytics-label": analyticsLabel } : {})}
             className={cn(buttonVariants({ variant, size, className }))}
             onClick={handleClick}
             {...props}

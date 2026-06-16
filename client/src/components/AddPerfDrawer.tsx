@@ -6,6 +6,7 @@ import {
     DrawerHeader,
     DrawerTitle,
 } from '@/components/ui/drawer'
+import { trackPerfDrawerOpened } from '@/lib/analytics'
 import { hapticImpact, hapticImpactMedium } from '@/lib/haptics'
 import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
@@ -50,8 +51,14 @@ export function AddPerfDrawer({
             setWeight(initialWeight)
             setReps(initialReps)
             void hapticImpactMedium()
+            trackPerfDrawerOpened({
+                mode: entryId && onUpdate ? 'edit' : 'add',
+                trackedExerciseId: exercise.id,
+                initialWeight,
+                initialReps,
+            })
         }
-    }, [open, initialWeight, initialReps])
+    }, [open, initialWeight, initialReps, entryId, onUpdate, exercise.id])
 
     const exerciseName = exercise.originalName ?? exercise.name
     const metadata =
@@ -87,7 +94,11 @@ export function AddPerfDrawer({
     }
 
     return (
-        <Drawer open={open} onOpenChange={handleOpenChange}>
+        <Drawer
+            open={open}
+            onOpenChange={handleOpenChange}
+            data-analytics-label={entryId && onUpdate ? 'edit_perf' : 'add_perf'}
+        >
             <DrawerContent>
                 <div className="w-full p-4">
                     <DrawerHeader>

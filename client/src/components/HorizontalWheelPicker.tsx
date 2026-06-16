@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { AnalyticsEvents, track } from '@/lib/analytics'
 import { hapticImpact, hapticSelectionChanged } from '@/lib/haptics'
 import { cn } from '@/lib/utils'
 import { Minus, Plus } from 'lucide-react'
@@ -53,6 +54,20 @@ export function HorizontalWheelPicker({
     className,
 }: HorizontalWheelPickerProps) {
     const options = useMemo(() => buildOptions(min, max, step), [min, max, step])
+
+    const emitChange = useCallback(
+        (newValue: number, source: 'scroll' | 'button' | 'input') => {
+            if (newValue === value) return
+            track(AnalyticsEvents.WHEEL_PICKER_CHANGED, {
+                picker_label: label,
+                value: newValue,
+                unit: unit || undefined,
+                source,
+            })
+            onChange(newValue)
+        },
+        [value, onChange, label, unit],
+    )
     const scrollRef = useRef<HTMLDivElement>(null)
     const isInternalUpdate = useRef(false)
     const isReady = useRef(false)
@@ -98,10 +113,10 @@ export function HorizontalWheelPicker({
         const newValue = parseAndClamp(inputText)
         setInputText(null)
         if (newValue !== value) {
-            onChange(newValue)
+            emitChange(newValue, 'input')
             hapticImpact()
         }
-    }, [inputText, parseAndClamp, value, onChange])
+    }, [inputText, parseAndClamp, value, emitChange])
 
     const handleInputKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
@@ -145,24 +160,24 @@ export function HorizontalWheelPicker({
         const clamped = Math.max(0, Math.min(i, options.length - 1))
         const newValue = options[clamped]?.value
         if (newValue !== undefined && newValue !== value) {
-            onChange(newValue)
+            emitChange(newValue, 'scroll')
             hapticSelectionChanged()
         }
-    }, [options, value, onChange])
+    }, [options, value, emitChange])
 
     const handleDecrement = useCallback(() => {
         const next = Math.max(0, clampedIndex - 1)
         scrollToIndex(next, true)
-        onChange(options[next]!.value)
+        emitChange(options[next]!.value, 'button')
         hapticImpact()
-    }, [clampedIndex, options, onChange, scrollToIndex])
+    }, [clampedIndex, options, emitChange, scrollToIndex])
 
     const handleIncrement = useCallback(() => {
         const next = Math.min(options.length - 1, clampedIndex + 1)
         scrollToIndex(next, true)
-        onChange(options[next]!.value)
+        emitChange(options[next]!.value, 'button')
         hapticImpact()
-    }, [clampedIndex, options, onChange, scrollToIndex])
+    }, [clampedIndex, options, emitChange, scrollToIndex])
 
     useEffect(() => {
         if (document.activeElement === inputRef.current) {

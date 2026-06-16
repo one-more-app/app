@@ -1,3 +1,4 @@
+import { trackRestTimerDismissed } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { useRestSinceLastSet } from "@/hooks/use-rest-since-last-set";
 import { formatRestElapsedA11y } from "@/lib/format-rest-elapsed";
@@ -9,11 +10,13 @@ import { useMemo, useState } from "react";
 type RestSinceLastSetBarProps = {
   createdAt: string | null | undefined;
   className?: string;
+  trackedExerciseId?: string;
 };
 
 export function RestSinceLastSetBar({
   createdAt,
   className,
+  trackedExerciseId,
 }: RestSinceLastSetBarProps) {
   const [dismissed, setDismissed] = useState(false);
   const { visible, elapsedMs, formatted, progress01 } =
@@ -63,7 +66,10 @@ export function RestSinceLastSetBar({
           variant="ghost"
           size="icon"
           className="size-8 shrink-0 text-muted-foreground"
-          onClick={() => setDismissed(true)}
+          onClick={() => {
+            trackRestTimerDismissed({ elapsedMs, trackedExerciseId });
+            setDismissed(true);
+          }}
           aria-label={UI.restSinceLastSetDismiss}
         >
           <X className="size-4" />

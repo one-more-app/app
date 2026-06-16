@@ -8,6 +8,7 @@ import {
   registerWithEmail,
   writeStoredSession,
 } from "@/lib/auth";
+import { AnalyticsEvents, track } from "@/lib/analytics";
 import { syncAppsFlyerCustomerUserId } from "@/lib/appsflyer";
 import { consumePendingInviteCode } from "@/lib/invite-code";
 import { ApiError } from "@/lib/api";
@@ -110,6 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           lastName: lastName?.trim() || undefined,
         });
         applySession(session);
+        track(AnalyticsEvents.USER_REGISTERED, { method: "email" });
       } catch (e) {
         setLastError(normalizeError(e));
         throw e;
@@ -123,6 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const session = await loginWithEmail({ email, password });
       applySession(session);
+      track(AnalyticsEvents.USER_LOGGED_IN, { method: "email" });
     } catch (e) {
       setLastError(normalizeError(e));
       throw e;

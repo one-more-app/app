@@ -2,6 +2,8 @@ import { BottomNav } from '@/components/BottomNav'
 import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCelebration'
 import { ProfileUsernameSetupHost } from '@/components/profile/ProfileUsernameSetupHost'
 import { Toaster } from '@/components/ui/sonner'
+import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider'
+import { PageSection } from '@/components/analytics/PageSection'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import { usePushNotifications } from '@/hooks/use-push-notifications'
 import { RealtimeProvider } from '@/hooks/use-realtime'
@@ -219,10 +221,12 @@ function App() {
                 <Toaster />
                 <LeaguePromotionCelebrationHost />
                 <AuthProvider>
+                    <AnalyticsProvider>
                     <RealtimeProvider>
                     <ProfileUsernameSetupHost />
                     <AccessGate>
                         <BottomNavHost>
+                            <PageSection>
                             <Routes>
                                 <Route
                                     path="/"
@@ -246,9 +250,11 @@ function App() {
                                 <Route path="/friends/:userId" element={<FriendProfilePage />} />
 
                             </Routes>
+                            </PageSection>
                         </BottomNavHost>
                     </AccessGate>
                     </RealtimeProvider>
+                    </AnalyticsProvider>
                 </AuthProvider>
             </div>
         </HashRouter>
