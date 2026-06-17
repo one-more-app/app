@@ -630,6 +630,7 @@ export function ExerciseListPage() {
                     open={limitDialogOpen}
                     onOpenChange={setLimitDialogOpen}
                     activeCount={access?.activeExerciseCount}
+                    exerciseLimit={access?.exerciseLimit}
                 />
             </main>
         </div>

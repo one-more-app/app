@@ -1,19 +1,23 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
-import { EXERCISE_LIMIT_LIMITED } from '../shared/access-config.js';
+import {
+  EXERCISE_BONUS_FOR_USING_REFERRAL,
+  EXERCISE_BONUS_PER_REFERRAL,
+  computeExerciseLimit,
+  computeReferralBonus,
+} from '../shared/access-config.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
-import { FriendshipEntity } from './entities/friendship.entity.js';
-import { FriendshipStatus } from './entities/friendship-status.enum.js';
-import { AccessTier } from './entities/access-tier.enum.js';
 
 export type UserAccessDto = {
-  accessTier: AccessTier;
-  exerciseLimit: number | null;
+  exerciseLimit: number;
   activeExerciseCount: number;
   canAddExercise: boolean;
-  validatedInvitesCount: number;
+  referralCount: number;
+  hasUsedReferralCode: boolean;
+  bonusFromReferrals: number;
+  bonusFromBeingReferred: number;
 };
 
 @Injectable()
@@ -23,26 +27,31 @@ export class AccessService {
     private readonly profilesRepo: Repository<UserProfileEntity>,
     @InjectRepository(TrackedExerciseEntity)
     private readonly trackedRepo: Repository<TrackedExerciseEntity>,
-    @InjectRepository(FriendshipEntity)
-    private readonly friendshipsRepo: Repository<FriendshipEntity>,
   ) {}
 
   async getAccess(userId: string): Promise<UserAccessDto> {
     const profile = await this.profilesRepo.findOne({ where: { userId } });
-    const accessTier = profile?.accessTier ?? AccessTier.LIMITED;
     const activeExerciseCount = await this.countActiveExercises(userId);
-    const validatedInvitesCount = await this.countValidatedInvites(userId);
-    const hasFullAccess = accessTier === AccessTier.FULL;
-    const exerciseLimit = hasFullAccess ? null : EXERCISE_LIMIT_LIMITED;
-    const canAddExercise =
-      hasFullAccess || activeExerciseCount < EXERCISE_LIMIT_LIMITED;
+    const referralCount = await this.countReferrals(userId);
+    const hasUsedReferralCode = profile?.referredByUserId != null;
+    const bonusFromReferrals = computeReferralBonus(referralCount);
+    const bonusFromBeingReferred = hasUsedReferralCode
+      ? EXERCISE_BONUS_FOR_USING_REFERRAL
+      : 0;
+    const exerciseLimit = computeExerciseLimit({
+      referralCount,
+      hasUsedReferralCode,
+    });
+    const canAddExercise = activeExerciseCount < exerciseLimit;
 
     return {
-      accessTier,
       exerciseLimit,
       activeExerciseCount,
       canAddExercise,
-      validatedInvitesCount,
+      referralCount,
+      hasUsedReferralCode,
+      bonusFromReferrals,
+      bonusFromBeingReferred,
     };
   }
 
@@ -52,12 +61,9 @@ export class AccessService {
     });
   }
 
-  async countValidatedInvites(userId: string): Promise<number> {
-    return await this.friendshipsRepo.count({
-      where: {
-        requesterId: userId,
-        status: FriendshipStatus.ACCEPTED,
-      },
+  async countReferrals(userId: string): Promise<number> {
+    return await this.profilesRepo.count({
+      where: { referredByUserId: userId },
     });
   }
 
@@ -65,9 +71,9 @@ export class AccessService {
     const access = await this.getAccess(userId);
     if (!access.canAddExercise) {
       throw new ForbiddenException({
-        message: `Limite de ${EXERCISE_LIMIT_LIMITED} exercices atteinte. Invite un pote pour débloquer l'app complète.`,
+        message: `Limite de ${access.exerciseLimit} exercices atteinte. Parraine un pote pour gagner ${EXERCISE_BONUS_PER_REFERRAL} exercices supplémentaires.`,
         code: 'EXERCISE_LIMIT_REACHED',
-        exerciseLimit: EXERCISE_LIMIT_LIMITED,
+        exerciseLimit: access.exerciseLimit,
         activeExerciseCount: access.activeExerciseCount,
       });
     }
@@ -82,12 +88,5 @@ export class AccessService {
     });
     if (!existing) return true;
     return existing.deletedAt != null;
-  }
-
-  async unlockInviter(requesterId: string): Promise<void> {
-    await this.profilesRepo.update(
-      { userId: requesterId, accessTier: AccessTier.LIMITED },
-      { accessTier: AccessTier.FULL },
-    );
   }
 }

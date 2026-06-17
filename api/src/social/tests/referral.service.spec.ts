@@ -1,0 +1,105 @@
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+
+const notifyFriendAccepted = jest.fn();
+
+const { ReferralService } = await import('../referral.service.js');
+
+describe('ReferralService', () => {
+  const profilesRepo = {
+    findOne: jest.fn(),
+    update: jest.fn(),
+  };
+  const friendshipsRepo = {
+    findOne: jest.fn(),
+    save: jest.fn(),
+  };
+  const invitesService = {
+    findInviterProfileByCode: jest.fn(),
+  };
+  const notifications = {
+    notifyFriendAccepted,
+  };
+
+  let service: InstanceType<typeof ReferralService>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    service = new ReferralService(
+      profilesRepo as any,
+      friendshipsRepo as any,
+      invitesService as any,
+      notifications as any,
+    );
+  });
+
+  it('applies a valid referral code', async () => {
+    invitesService.findInviterProfileByCode.mockResolvedValue({
+      userId: 'referrer-1',
+    });
+    profilesRepo.findOne.mockResolvedValue({
+      userId: 'user-1',
+      referredByUserId: null,
+    });
+    friendshipsRepo.findOne.mockResolvedValue(null);
+    friendshipsRepo.save.mockResolvedValue({
+      id: 'friendship-1',
+      status: 'accepted',
+    });
+
+    const result = await service.applyReferralCode('user-1', 'abc12345');
+    expect(result).toEqual({ ok: true, referrerUserId: 'referrer-1' });
+    expect(profilesRepo.update).toHaveBeenCalledWith(
+      { userId: 'user-1' },
+      { referredByUserId: 'referrer-1' },
+    );
+    expect(friendshipsRepo.save).toHaveBeenCalledWith({
+      requesterId: 'referrer-1',
+      addresseeId: 'user-1',
+      status: 'accepted',
+    });
+  });
+
+  it('rejects invalid code', async () => {
+    invitesService.findInviterProfileByCode.mockResolvedValue(null);
+    await expect(
+      service.applyReferralCode('user-1', 'badcode'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('rejects self referral', async () => {
+    invitesService.findInviterProfileByCode.mockResolvedValue({
+      userId: 'user-1',
+    });
+    await expect(
+      service.applyReferralCode('user-1', 'abc12345'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects when code already used', async () => {
+    invitesService.findInviterProfileByCode.mockResolvedValue({
+      userId: 'referrer-1',
+    });
+    profilesRepo.findOne.mockResolvedValue({
+      userId: 'user-1',
+      referredByUserId: 'referrer-2',
+    });
+    await expect(
+      service.applyReferralCode('user-1', 'abc12345'),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('silently ignores invalid code on signup', async () => {
+    invitesService.findInviterProfileByCode.mockResolvedValue(null);
+    await expect(
+      service.applyReferralCodeOnSignup({
+        newUserId: 'user-1',
+        inviteCode: 'badcode',
+      }),
+    ).resolves.toBeUndefined();
+  });
+});

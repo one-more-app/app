@@ -5,14 +5,14 @@ import type { UserProgressState } from "@/types";
 
 export const ACCESS_SWR_KEY = "user-access";
 
-export type AccessTier = "limited" | "full";
-
 export type UserAccess = {
-  accessTier: AccessTier;
-  exerciseLimit: number | null;
+  exerciseLimit: number;
   activeExerciseCount: number;
   canAddExercise: boolean;
-  validatedInvitesCount: number;
+  referralCount: number;
+  hasUsedReferralCode: boolean;
+  bonusFromReferrals: number;
+  bonusFromBeingReferred: number;
 };
 
 export type InviteLink = {
@@ -68,6 +68,15 @@ export async function fetchInvitePreview(code: string): Promise<InvitePreview> {
   return await apiFetch<InvitePreview>(
     `/social/invite/${encodeURIComponent(code)}/preview`,
   );
+}
+
+export async function applyReferralCode(
+  inviteCode: string,
+): Promise<{ ok: true; referrerUserId: string }> {
+  return await apiFetch("/social/referral/apply", {
+    method: "POST",
+    body: JSON.stringify({ inviteCode }),
+  });
 }
 
 export async function requestFriendFromInvite(

@@ -271,6 +271,7 @@ function HomePage() {
                 open={limitDialogOpen}
                 onOpenChange={setLimitDialogOpen}
                 activeCount={access?.activeExerciseCount}
+                exerciseLimit={access?.exerciseLimit}
             />
         </div>
     )

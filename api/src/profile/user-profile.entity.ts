@@ -8,7 +8,6 @@ import {
 } from 'typeorm';
 import type { Relation } from 'typeorm';
 import { UserEntity } from '../auth/entities/user.entity.js';
-import { AccessTier } from '../social/entities/access-tier.enum.js';
 
 @Entity({ name: 'user_profiles' })
 export class UserProfileEntity {
@@ -52,12 +51,8 @@ export class UserProfileEntity {
   @Column({ type: 'boolean', default: true })
   discoverableByUsername!: boolean;
 
-  @Column({
-    type: 'enum',
-    enum: AccessTier,
-    default: AccessTier.LIMITED,
-  })
-  accessTier!: AccessTier;
+  @Column({ type: 'uuid', nullable: true })
+  referredByUserId!: string | null;
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;

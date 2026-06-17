@@ -6,14 +6,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
-import { FriendshipEntity } from './entities/friendship.entity.js';
-import { FriendshipStatus } from './entities/friendship-status.enum.js';
-import { AccessTier } from './entities/access-tier.enum.js';
 import {
   buildInviteUrl,
   generateInviteCode,
 } from './lib/invite-code.js';
-import { AccessService } from './access.service.js';
 import { UsernameService } from './username.service.js';
 
 export type CreateProfileParams = {
@@ -28,9 +24,6 @@ export class InvitesService {
   constructor(
     @InjectRepository(UserProfileEntity)
     private readonly profilesRepo: Repository<UserProfileEntity>,
-    @InjectRepository(FriendshipEntity)
-    private readonly friendshipsRepo: Repository<FriendshipEntity>,
-    private readonly accessService: AccessService,
     private readonly usernameService: UsernameService,
   ) {}
 
@@ -89,7 +82,6 @@ export class InvitesService {
       weightKg: 75,
       heightCm: 175,
       gender: 'male',
-      accessTier: AccessTier.LIMITED,
       inviteCode,
       username,
       searchableByName: true,
@@ -101,39 +93,6 @@ export class InvitesService {
 
   async ensureUsername(userId: string): Promise<string> {
     return await this.usernameService.ensureUsername(userId);
-  }
-
-  async processInviteOnSignup(params: {
-    newUserId: string;
-    inviteCode?: string | null;
-  }): Promise<void> {
-    if (!params.inviteCode?.trim()) return;
-
-    const inviterProfile = await this.findInviterProfileByCode(params.inviteCode);
-    if (!inviterProfile) return;
-    if (inviterProfile.userId === params.newUserId) return;
-
-    const existing = await this.friendshipsRepo.findOne({
-      where: {
-        requesterId: inviterProfile.userId,
-        addresseeId: params.newUserId,
-      },
-    });
-    if (existing) {
-      if (existing.status === FriendshipStatus.PENDING) {
-        existing.status = FriendshipStatus.ACCEPTED;
-        await this.friendshipsRepo.save(existing);
-        await this.accessService.unlockInviter(inviterProfile.userId);
-      }
-      return;
-    }
-
-    await this.friendshipsRepo.save({
-      requesterId: inviterProfile.userId,
-      addresseeId: params.newUserId,
-      status: FriendshipStatus.ACCEPTED,
-    });
-    await this.accessService.unlockInviter(inviterProfile.userId);
   }
 
   private async generateUniqueInviteCode(): Promise<string> {

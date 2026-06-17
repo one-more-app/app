@@ -9,6 +9,7 @@ import { TrackedExercisesModule } from '../tracked-exercises/tracked-exercises.m
 import { AccessModule } from './access.module.js';
 import { FriendsService } from './friends.service.js';
 import { InvitesService } from './invites.service.js';
+import { ReferralService } from './referral.service.js';
 import { UserSearchService } from './user-search.service.js';
 import { UserEntity } from '../auth/entities/user.entity.js';
 import { FriendshipEntity } from './entities/friendship.entity.js';
@@ -26,7 +27,19 @@ import { UsernameService } from './username.service.js';
     forwardRef(() => NotificationsModule),
   ],
   controllers: [SocialController],
-  providers: [InvitesService, FriendsService, UserSearchService, UsernameService],
-  exports: [AccessModule, InvitesService, FriendsService, UsernameService],
+  providers: [
+    InvitesService,
+    FriendsService,
+    ReferralService,
+    UserSearchService,
+    UsernameService,
+  ],
+  exports: [
+    AccessModule,
+    InvitesService,
+    FriendsService,
+    ReferralService,
+    UsernameService,
+  ],
 })
 export class SocialModule {}

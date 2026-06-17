@@ -17,7 +17,9 @@ export function useAccess() {
     isLoading,
     error,
     refresh: mutate,
-    isLimited: data?.accessTier === "limited",
     canAddExercise: data?.canAddExercise ?? true,
+    exerciseLimit: data?.exerciseLimit ?? null,
+    referralCount: data?.referralCount ?? 0,
+    hasUsedReferralCode: data?.hasUsedReferralCode ?? false,
   };
 }

@@ -11,10 +11,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
+import { useAccess } from "@/hooks/use-access";
 import { inviteFriend } from "@/lib/invite-friend";
 import { UI } from "@/lib/translations";
-import { EXERCISE_LIMIT_LIMITED } from "@one-more/shared/access-config";
-import { Link2, Search } from "lucide-react";
+import {
+  EXERCISE_BONUS_PER_REFERRAL,
+  EXERCISE_LIMIT_BASE,
+} from "@one-more/shared/access-config";
+import { Link2, Users } from "lucide-react";
 import { hapticNotificationWarning } from "@/lib/haptics";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -23,14 +27,17 @@ type ExerciseLimitDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   activeCount?: number;
+  exerciseLimit?: number;
 };
 
 export function ExerciseLimitDialog({
   open,
   onOpenChange,
-  activeCount = EXERCISE_LIMIT_LIMITED,
+  activeCount = EXERCISE_LIMIT_BASE,
+  exerciseLimit = EXERCISE_LIMIT_BASE,
 }: ExerciseLimitDialogProps) {
   const auth = useAuth();
+  const { referralCount } = useAccess();
   const { track } = useAnalytics();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
@@ -41,9 +48,14 @@ export function ExerciseLimitDialog({
     track(AnalyticsEvents.PAYWALL_VIEWED, {
       paywall_type: "exercise_limit",
       active_count: activeCount,
+      exercise_limit: exerciseLimit,
+      referral_count: referralCount,
     });
-    track(AnalyticsEvents.EXERCISE_LIMIT_REACHED, { active_count: activeCount });
-  }, [open, activeCount, track]);
+    track(AnalyticsEvents.EXERCISE_LIMIT_REACHED, {
+      active_count: activeCount,
+      exercise_limit: exerciseLimit,
+    });
+  }, [open, activeCount, exerciseLimit, referralCount, track]);
 
   const handleInviteLink = () => {
     void (async () => {
@@ -57,10 +69,15 @@ export function ExerciseLimitDialog({
     })();
   };
 
-  const handleSearchFriend = () => {
+  const handleViewFriends = () => {
     onOpenChange(false);
-    navigate("/friends?tab=search");
+    navigate("/friends");
   };
+
+  const description = UI.exerciseLimitDescription
+    .replace("{count}", String(activeCount))
+    .replace("{limit}", String(exerciseLimit))
+    .replace("{bonus}", String(EXERCISE_BONUS_PER_REFERRAL));
 
   return (
     <Trackable section="paywall" feature="exercise_limit">
@@ -68,12 +85,7 @@ export function ExerciseLimitDialog({
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>{UI.exerciseLimitTitle}</DialogTitle>
-          <DialogDescription>
-            {UI.exerciseLimitDescription.replace(
-              "{count}",
-              String(activeCount),
-            )}
-          </DialogDescription>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex-col gap-2 sm:flex-col">
           <Button
@@ -88,11 +100,11 @@ export function ExerciseLimitDialog({
           <Button
             variant="secondary"
             className="w-full"
-            onClick={handleSearchFriend}
+            onClick={handleViewFriends}
             disabled={busy}
-            data-analytics-label="search_friend"
+            data-analytics-label="view_friends"
           >
-            <Search className="mr-2 size-4" />
+            <Users className="mr-2 size-4" />
             {UI.exerciseLimitSearchFriend}
           </Button>
           <Button

@@ -55,7 +55,8 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
       profileId: userId,
       email: auth.user.email,
       properties: {
-        access_tier: access?.accessTier ?? "unknown",
+        exercise_limit: access?.exerciseLimit ?? "unknown",
+        referral_count: access?.referralCount ?? 0,
       },
     });
     incrementUserProperty({
@@ -64,7 +65,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
       value: 1,
     });
     identifiedRef.current = userId;
-  }, [auth.status, auth.user, access?.accessTier]);
+  }, [auth.status, auth.user, access?.exerciseLimit, access?.referralCount]);
 
   useEffect(() => {
     if (!isOpenPanelConfigured()) return;
@@ -74,9 +75,10 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
       profileId: auth.user.id,
       email: auth.user.email,
       properties: {
-        access_tier: access.accessTier,
         exercise_count: access.activeExerciseCount,
         exercise_limit: access.exerciseLimit,
+        referral_count: access.referralCount,
+        has_used_referral_code: access.hasUsedReferralCode,
       },
     });
   }, [auth.status, auth.user, access]);

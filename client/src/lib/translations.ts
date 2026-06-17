@@ -365,14 +365,22 @@ export const UI = {
   inviteShareDialogTitle: "Inviter un pote",
   exerciseLimitTitle: "Limite d'exercices atteinte",
   exerciseLimitDescription:
-    "Tu suis déjà {count} exercices. Envoie une invitation (lien ou recherche) : dès qu'un pote accepte, tu débloques l'app complète.",
+    "Tu suis {count}/{limit} exercices. Parraine un pote avec ton lien d'invitation pour gagner {bonus} exercices supplémentaires.",
   exerciseLimitInviteLink: "Inviter un pote",
-  exerciseLimitSearchFriend: "Rechercher un ami",
-  accessUnlockHint:
-    "Invite un pote sur One More. Dès qu'il accepte ton invitation, tu débloques l'app complète.",
-  accessUnlockPending:
-    "Invitation en attente — ton accès complet se débloquera quand ton pote acceptera.",
-  accessUnlocked: "Accès complet débloqué !",
+  exerciseLimitSearchFriend: "Voir mes amis",
+  referralSettingsTitle: "Parrainage",
+  referralSettingsDescription:
+    "Utilise le code d'un pote pour gagner {bonus} exercices supplémentaires. Tu ne peux utiliser qu'un seul code.",
+  referralCodeLabel: "Code de parrainage",
+  referralCodePlaceholder: "ex. abc12def",
+  referralCodeApply: "Appliquer le code",
+  referralCodeApplied: "Code de parrainage appliqué",
+  referralCodeAlreadyUsed: "Tu as déjà utilisé un code de parrainage",
+  referralCodeInvalid: "Code de parrainage invalide",
+  referralCodeSelf: "Tu ne peux pas utiliser ton propre code",
+  referralStats:
+    "Tu as parrainé {count} personne(s) — limite actuelle : {limit} exercices",
+  referralBonusPerInvite: "+{bonus} exercices par pote parrainé",
   friendsTitle: "Amis",
   friendsListTitle: "Mes potes",
   friendRequestsTitle: "Demandes reçues",

@@ -15,6 +15,7 @@ import { RequestFriendDto } from './dto/request-friend.dto.js';
 import { SearchUsersQueryDto } from './dto/search-users-query.dto.js';
 import { FriendsService } from './friends.service.js';
 import { InvitesService } from './invites.service.js';
+import { ReferralService } from './referral.service.js';
 import { InviteCodeDto } from './dto/invite-code.dto.js';
 import { UserSearchService } from './user-search.service.js';
 
@@ -23,6 +24,7 @@ export class SocialController {
   constructor(
     private readonly accessService: AccessService,
     private readonly invitesService: InvitesService,
+    private readonly referralService: ReferralService,
     private readonly friendsService: FriendsService,
     private readonly userSearchService: UserSearchService,
   ) {}
@@ -91,12 +93,24 @@ export class SocialController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('/social/referral/apply')
+  async applyReferralCode(
+    @Req() req: { user: { sub: string } },
+    @Body() body: InviteCodeDto,
+  ) {
+    return await this.referralService.applyReferralCode(
+      req.user.sub,
+      body.inviteCode,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('/social/friends/request-from-invite')
   async requestFromInvite(
     @Req() req: { user: { sub: string } },
     @Body() body: InviteCodeDto,
   ) {
-    return await this.friendsService.requestFromInvite(
+    return await this.referralService.requestFromInvite(
       req.user.sub,
       body.inviteCode,
     );
