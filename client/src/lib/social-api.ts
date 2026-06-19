@@ -13,10 +13,17 @@ export type UserAccess = {
   hasUsedReferralCode: boolean;
   bonusFromReferrals: number;
   bonusFromBeingReferred: number;
+  isPremium: boolean;
+  tshirtRewardEligible: boolean;
+  referralsUntilTshirt: number | null;
 };
 
-export type InviteLink = {
+export type InviteCode = {
   code: string;
+};
+
+/** @deprecated Utiliser InviteCode */
+export type InviteLink = InviteCode & {
   url: string;
 };
 
@@ -60,6 +67,11 @@ export async function fetchUserAccess(): Promise<UserAccess> {
   return await apiFetch<UserAccess>("/me/access");
 }
 
+export async function fetchInviteCode(): Promise<InviteCode> {
+  return await apiFetch<InviteCode>("/social/invite-code");
+}
+
+/** @deprecated Utiliser fetchInviteCode */
 export async function fetchInviteLink(): Promise<InviteLink> {
   return await apiFetch<InviteLink>("/social/invite-link");
 }
@@ -183,17 +195,67 @@ function isShareCancelled(error: unknown): boolean {
   return /cancel/i.test(message);
 }
 
+/** @deprecated Utiliser shareInviteCode */
 function buildInviteShareContent(url: string) {
-  const { inviteShareTitle, inviteShareMessage, inviteShareDialogTitle } = UI;
+  const { inviteShareTitle, inviteShareDialogTitle } = UI;
+  const text = UI.inviteCodeShareMessage.replace("{code}", url);
   return {
     title: inviteShareTitle,
-    text: inviteShareMessage,
+    text,
     url,
     dialogTitle: inviteShareDialogTitle,
-    clipboardText: `${inviteShareMessage}\n\n${url}`,
+    clipboardText: text,
   };
 }
 
+function buildInviteCodeShareContent(code: string) {
+  const text = UI.inviteCodeShareMessage.replace("{code}", code);
+  return {
+    title: UI.inviteShareTitle,
+    text,
+    dialogTitle: UI.inviteShareDialogTitle,
+    clipboardText: text,
+  };
+}
+
+export async function shareInviteCode(code: string): Promise<InviteShareResult> {
+  const share = buildInviteCodeShareContent(code);
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const { Share } = await import("@capacitor/share");
+      await Share.share({
+        title: share.title,
+        text: share.text,
+        dialogTitle: share.dialogTitle,
+      });
+      return "shared";
+    } catch (error) {
+      if (isShareCancelled(error)) return "dismissed";
+      throw error;
+    }
+  }
+
+  if (typeof navigator !== "undefined" && navigator.share) {
+    try {
+      await navigator.share({
+        title: share.title,
+        text: share.text,
+      });
+      return "shared";
+    } catch (error) {
+      if (isShareCancelled(error)) return "dismissed";
+      // fallback copy
+    }
+  }
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(share.clipboardText);
+    return "copied";
+  }
+  throw new Error("Partage non disponible");
+}
+
+/** @deprecated Utiliser shareInviteCode */
 export async function shareInviteUrl(url: string): Promise<InviteShareResult> {
   const share = buildInviteShareContent(url);
 

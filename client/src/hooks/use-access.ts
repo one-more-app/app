@@ -21,5 +21,8 @@ export function useAccess() {
     exerciseLimit: data?.exerciseLimit ?? null,
     referralCount: data?.referralCount ?? 0,
     hasUsedReferralCode: data?.hasUsedReferralCode ?? false,
+    isPremium: data?.isPremium ?? false,
+    tshirtRewardEligible: data?.tshirtRewardEligible ?? false,
+    referralsUntilTshirt: data?.referralsUntilTshirt ?? null,
   };
 }

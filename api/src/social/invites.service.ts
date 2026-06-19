@@ -44,6 +44,12 @@ export class InvitesService {
     throw new BadRequestException('Impossible de générer un code d’invitation');
   }
 
+  async getInviteCode(userId: string) {
+    const code = await this.ensureInviteCode(userId);
+    return { code };
+  }
+
+  /** @deprecated Utiliser getInviteCode — conservé pour compatibilité. */
   async getInviteLink(userId: string) {
     const code = await this.ensureInviteCode(userId);
     return { code, url: buildInviteUrl(code) };

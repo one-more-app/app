@@ -3,13 +3,12 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 const EXERCISE_LIMIT_BASE = 10;
 const EXERCISE_BONUS_PER_REFERRAL = 10;
-const EXERCISE_BONUS_FOR_USING_REFERRAL = 5;
+const EXERCISE_BONUS_FOR_USING_REFERRAL = 10;
 
 await jest.unstable_mockModule('../../shared/access-config.js', () => ({
   EXERCISE_LIMIT_BASE,
   EXERCISE_BONUS_PER_REFERRAL,
   EXERCISE_BONUS_FOR_USING_REFERRAL,
-  MAX_REWARDED_REFERRALS: 10,
   computeExerciseLimit: ({
     referralCount,
     hasUsedReferralCode,
@@ -17,15 +16,28 @@ await jest.unstable_mockModule('../../shared/access-config.js', () => ({
     referralCount: number;
     hasUsedReferralCode: boolean;
   }) => {
-    const referralBonus =
-      Math.min(referralCount, 10) * EXERCISE_BONUS_PER_REFERRAL;
+    const referralBonus = referralCount * EXERCISE_BONUS_PER_REFERRAL;
     const inviteeBonus = hasUsedReferralCode
       ? EXERCISE_BONUS_FOR_USING_REFERRAL
       : 0;
     return EXERCISE_LIMIT_BASE + referralBonus + inviteeBonus;
   },
   computeReferralBonus: (referralCount: number) =>
-    Math.min(referralCount, 10) * EXERCISE_BONUS_PER_REFERRAL,
+    referralCount * EXERCISE_BONUS_PER_REFERRAL,
+  computeTshirtRewardEligible: ({
+    referralCount,
+    isPremium,
+  }: {
+    referralCount: number;
+    isPremium: boolean;
+  }) => isPremium && referralCount >= 5,
+  computeReferralsUntilTshirt: ({
+    referralCount,
+    isPremium,
+  }: {
+    referralCount: number;
+    isPremium: boolean;
+  }) => (isPremium ? Math.max(0, 5 - referralCount) : null),
 }));
 
 const { AccessService } = await import('../access.service.js');
@@ -38,12 +50,20 @@ describe('AccessService', () => {
   const trackedRepo = {
     count: jest.fn(),
   };
+  const usersRepo = {
+    findOne: jest.fn(),
+  };
 
   let service: InstanceType<typeof AccessService>;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new AccessService(profilesRepo as any, trackedRepo as any);
+    usersRepo.findOne.mockResolvedValue({ isPremium: false });
+    service = new AccessService(
+      profilesRepo as any,
+      trackedRepo as any,
+      usersRepo as any,
+    );
   });
 
   it('allows add when under base limit', async () => {
@@ -94,5 +114,28 @@ describe('AccessService', () => {
     expect(access.hasUsedReferralCode).toBe(true);
     expect(access.bonusFromBeingReferred).toBe(EXERCISE_BONUS_FOR_USING_REFERRAL);
     expect(access.canAddExercise).toBe(true);
+  });
+
+  it('does not cap referral bonus', async () => {
+    profilesRepo.findOne.mockResolvedValue({ referredByUserId: null });
+    trackedRepo.count.mockResolvedValue(0);
+    profilesRepo.count.mockResolvedValue(15);
+
+    const access = await service.getAccess('user-1');
+    expect(access.exerciseLimit).toBe(
+      EXERCISE_LIMIT_BASE + 15 * EXERCISE_BONUS_PER_REFERRAL,
+    );
+    expect(access.bonusFromReferrals).toBe(15 * EXERCISE_BONUS_PER_REFERRAL);
+  });
+
+  it('marks t-shirt eligible for premium users with 5 referrals', async () => {
+    profilesRepo.findOne.mockResolvedValue({ referredByUserId: null });
+    trackedRepo.count.mockResolvedValue(0);
+    profilesRepo.count.mockResolvedValue(5);
+    usersRepo.findOne.mockResolvedValue({ isPremium: true });
+
+    const access = await service.getAccess('user-1');
+    expect(access.tshirtRewardEligible).toBe(true);
+    expect(access.referralsUntilTshirt).toBe(0);
   });
 });

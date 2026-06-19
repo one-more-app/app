@@ -350,28 +350,37 @@ export const UI = {
   profileNameSaved: "Nom enregistré",
   profileUsernameSaved: "Pseudo enregistré",
   profileUsernameSaveError: "Impossible d'enregistrer le pseudo",
-  profileInviteButton: "Inviter un pote",
+  profileInviteButton: "Partager mon code",
+  profileCopyInviteCode: "Copier mon code",
   profileShareButton: "Partager ma fiche",
   profileShareText: "Ma fiche One More",
   profileShareSuccess: "Fiche partagée",
   profileShareDownloaded: "Fiche téléchargée",
   profileShareError: "Impossible de partager la fiche",
-  inviteLinkCopied: "Invitation copiée",
-  inviteLinkShared: "Invitation envoyée",
-  inviteShareError: "Impossible de partager l'invitation",
+  inviteCodeCopied: "Code copié",
+  inviteCodeShared: "Code partagé",
+  inviteShareError: "Impossible de partager le code",
   inviteShareTitle: "One More",
-  inviteShareMessage:
-    "Rejoins-moi sur One More pour suivre ta muscu ensemble — perfs, séries et progression.",
+  inviteCodeShareMessage:
+    "Rejoins-moi sur One More pour suivre ta muscu ensemble ! Utilise mon code de parrainage : {code}",
   inviteShareDialogTitle: "Inviter un pote",
+  inviteCodeLabel: "Mon code de parrainage",
+  /** @deprecated */
+  inviteLinkCopied: "Code copié",
+  /** @deprecated */
+  inviteLinkShared: "Code partagé",
   exerciseLimitTitle: "Limite d'exercices atteinte",
   exerciseLimitDescription:
-    "Tu suis {count}/{limit} exercices. Parraine un pote avec ton lien d'invitation pour gagner {bonus} exercices supplémentaires.",
-  exerciseLimitInviteLink: "Inviter un pote",
+    "Tu suis {count}/{limit} exercices. Parraine un pote avec ton code pour gagner {bonus} exercices supplémentaires.",
+  exerciseLimitInviteLink: "Partager mon code",
   exerciseLimitSearchFriend: "Voir mes amis",
   referralSettingsTitle: "Parrainage",
   referralSettingsDescription:
     "Utilise le code d'un pote pour gagner {bonus} exercices supplémentaires. Tu ne peux utiliser qu'un seul code.",
+  referralYourCodeDescription:
+    "Partage ton code unique : chaque pote qui l'utilise te rapporte {bonus} exercices.",
   referralCodeLabel: "Code de parrainage",
+  referralYourCodeLabel: "Mon code à partager",
   referralCodePlaceholder: "ex. abc12def",
   referralCodeApply: "Appliquer le code",
   referralCodeApplied: "Code de parrainage appliqué",
@@ -380,7 +389,13 @@ export const UI = {
   referralCodeSelf: "Tu ne peux pas utiliser ton propre code",
   referralStats:
     "Tu as parrainé {count} personne(s) — limite actuelle : {limit} exercices",
-  referralBonusPerInvite: "+{bonus} exercices par pote parrainé",
+  referralBonusPerInvite: "+{bonus} exercices par pote parrainé (sans limite)",
+  referralTshirtEarned:
+    "Bravo ! Tu as débloqué ton t-shirt One More grâce à tes parrainages.",
+  referralTshirtProgress:
+    "Encore {count} parrainage(s) pour débloquer ton t-shirt One More (abonnés premium).",
+  referralTshirtPremiumHint:
+    "Avec l'abonnement premium, 5 parrainages te donnent droit à un t-shirt One More.",
   friendsTitle: "Amis",
   friendsListTitle: "Mes potes",
   friendRequestsTitle: "Demandes reçues",

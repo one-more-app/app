@@ -7,19 +7,17 @@ export const EXERCISE_LIMIT_LIMITED = EXERCISE_LIMIT_BASE;
 /** Bonus d'exercices par filleul validé (parrain). */
 export const EXERCISE_BONUS_PER_REFERRAL = 10;
 
-/** Bonus d'exercices pour l'utilisateur qui utilise un code de parrainage. */
-export const EXERCISE_BONUS_FOR_USING_REFERRAL = 5;
+/** Bonus d'exercices pour l'utilisateur qui utilise un code de parrainage (une seule fois). */
+export const EXERCISE_BONUS_FOR_USING_REFERRAL = 10;
 
-/** Nombre max de parrainages récompensés pour le parrain. */
-export const MAX_REWARDED_REFERRALS = 10;
+/** Parrainages requis pour débloquer le t-shirt (abonnés premium uniquement). */
+export const REFERRALS_FOR_TSHIRT_REWARD = 5;
 
 export function computeExerciseLimit(params: {
   referralCount: number;
   hasUsedReferralCode: boolean;
 }): number {
-  const referralBonus =
-    Math.min(params.referralCount, MAX_REWARDED_REFERRALS) *
-    EXERCISE_BONUS_PER_REFERRAL;
+  const referralBonus = params.referralCount * EXERCISE_BONUS_PER_REFERRAL;
   const inviteeBonus = params.hasUsedReferralCode
     ? EXERCISE_BONUS_FOR_USING_REFERRAL
     : 0;
@@ -27,8 +25,20 @@ export function computeExerciseLimit(params: {
 }
 
 export function computeReferralBonus(referralCount: number): number {
-  return (
-    Math.min(referralCount, MAX_REWARDED_REFERRALS) *
-    EXERCISE_BONUS_PER_REFERRAL
-  );
+  return referralCount * EXERCISE_BONUS_PER_REFERRAL;
+}
+
+export function computeTshirtRewardEligible(params: {
+  referralCount: number;
+  isPremium: boolean;
+}): boolean {
+  return params.isPremium && params.referralCount >= REFERRALS_FOR_TSHIRT_REWARD;
+}
+
+export function computeReferralsUntilTshirt(params: {
+  referralCount: number;
+  isPremium: boolean;
+}): number | null {
+  if (!params.isPremium) return null;
+  return Math.max(0, REFERRALS_FOR_TSHIRT_REWARD - params.referralCount);
 }

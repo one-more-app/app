@@ -10,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useAuth } from "@/hooks/use-auth";
 import { useAccess } from "@/hooks/use-access";
 import { inviteFriend } from "@/lib/invite-friend";
 import { UI } from "@/lib/translations";
@@ -18,7 +17,7 @@ import {
   EXERCISE_BONUS_PER_REFERRAL,
   EXERCISE_LIMIT_BASE,
 } from "@one-more/shared/access-config";
-import { Link2, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { hapticNotificationWarning } from "@/lib/haptics";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -36,7 +35,6 @@ export function ExerciseLimitDialog({
   activeCount = EXERCISE_LIMIT_BASE,
   exerciseLimit = EXERCISE_LIMIT_BASE,
 }: ExerciseLimitDialogProps) {
-  const auth = useAuth();
   const { referralCount } = useAccess();
   const { track } = useAnalytics();
   const navigate = useNavigate();
@@ -57,11 +55,11 @@ export function ExerciseLimitDialog({
     });
   }, [open, activeCount, exerciseLimit, referralCount, track]);
 
-  const handleInviteLink = () => {
+  const handleInviteCode = () => {
     void (async () => {
       setBusy(true);
       try {
-        const ok = await inviteFriend(auth.user?.id);
+        const ok = await inviteFriend();
         if (ok) onOpenChange(false);
       } finally {
         setBusy(false);
@@ -90,11 +88,11 @@ export function ExerciseLimitDialog({
         <DialogFooter className="flex-col gap-2 sm:flex-col">
           <Button
             className="w-full"
-            onClick={handleInviteLink}
+            onClick={handleInviteCode}
             disabled={busy}
-            data-analytics-label="invite_link"
+            data-analytics-label="invite_code"
           >
-            <Link2 className="mr-2 size-4" />
+            <Users className="mr-2 size-4" />
             {UI.exerciseLimitInviteLink}
           </Button>
           <Button

@@ -6,7 +6,10 @@ import {
   EXERCISE_BONUS_PER_REFERRAL,
   computeExerciseLimit,
   computeReferralBonus,
+  computeReferralsUntilTshirt,
+  computeTshirtRewardEligible,
 } from '../shared/access-config.js';
+import { UserEntity } from '../auth/entities/user.entity.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
 
@@ -18,6 +21,9 @@ export type UserAccessDto = {
   hasUsedReferralCode: boolean;
   bonusFromReferrals: number;
   bonusFromBeingReferred: number;
+  isPremium: boolean;
+  tshirtRewardEligible: boolean;
+  referralsUntilTshirt: number | null;
 };
 
 @Injectable()
@@ -27,13 +33,19 @@ export class AccessService {
     private readonly profilesRepo: Repository<UserProfileEntity>,
     @InjectRepository(TrackedExerciseEntity)
     private readonly trackedRepo: Repository<TrackedExerciseEntity>,
+    @InjectRepository(UserEntity)
+    private readonly usersRepo: Repository<UserEntity>,
   ) {}
 
   async getAccess(userId: string): Promise<UserAccessDto> {
-    const profile = await this.profilesRepo.findOne({ where: { userId } });
+    const [profile, user] = await Promise.all([
+      this.profilesRepo.findOne({ where: { userId } }),
+      this.usersRepo.findOne({ where: { id: userId }, select: ['isPremium'] }),
+    ]);
     const activeExerciseCount = await this.countActiveExercises(userId);
     const referralCount = await this.countReferrals(userId);
     const hasUsedReferralCode = profile?.referredByUserId != null;
+    const isPremium = user?.isPremium ?? false;
     const bonusFromReferrals = computeReferralBonus(referralCount);
     const bonusFromBeingReferred = hasUsedReferralCode
       ? EXERCISE_BONUS_FOR_USING_REFERRAL
@@ -43,6 +55,14 @@ export class AccessService {
       hasUsedReferralCode,
     });
     const canAddExercise = activeExerciseCount < exerciseLimit;
+    const tshirtRewardEligible = computeTshirtRewardEligible({
+      referralCount,
+      isPremium,
+    });
+    const referralsUntilTshirt = computeReferralsUntilTshirt({
+      referralCount,
+      isPremium,
+    });
 
     return {
       exerciseLimit,
@@ -52,6 +72,9 @@ export class AccessService {
       hasUsedReferralCode,
       bonusFromReferrals,
       bonusFromBeingReferred,
+      isPremium,
+      tshirtRewardEligible,
+      referralsUntilTshirt,
     };
   }
 
