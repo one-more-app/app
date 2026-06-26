@@ -74,7 +74,7 @@ function NewRecordCelebrationContent({
                         ? LEAGUE_COLORS[leagueAfter.tier]
                         : 'bg-primary text-primary-foreground'
                 }
-                ariaLabel={`${UI.newRecordCelebrationTitle} — ${perfLabel}`}
+                ariaLabel={`${UI.newRecordCelebrationTitle}, ${perfLabel}`}
             />
             <DialogHeader className="flex w-full flex-col items-center gap-2 space-y-0 text-center sm:text-center">
                 <DialogTitle className="text-balance text-xl font-semibold tracking-tight">
@@ -121,7 +121,7 @@ function LeaguePromotionContent({
                 iconDropShadow={leagueIconDropShadow(leagueGlow)}
                 badge={<RankBadge league={nextLeague} size="sm" />}
                 badgeClassName="!bg-transparent !p-0 !shadow-none !ring-0 !font-sans !not-italic"
-                ariaLabel={`${UI.leaguePromotionCelebrationTitle} — ${nextLeague.label}`}
+                ariaLabel={`${UI.leaguePromotionCelebrationTitle}, ${nextLeague.label}`}
             />
             <DialogHeader className="flex w-full flex-col items-center gap-2 space-y-0 text-center sm:text-center">
                 <DialogTitle className="text-balance text-xl font-semibold tracking-tight">

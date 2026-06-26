@@ -59,7 +59,7 @@ export function SettingsPage() {
     const handleDeleteAccount = () => {
         if (!window.confirm(UI.deleteAccountConfirm)) return
 
-        const accountEmail = auth.user?.email ?? auth.user?.id ?? '—'
+        const accountEmail = auth.user?.email ?? auth.user?.id ?? '–'
         const subject = encodeURIComponent(UI.deleteAccountEmailSubject)
         const body = encodeURIComponent(
             UI.deleteAccountEmailBody.replace('{email}', accountEmail),

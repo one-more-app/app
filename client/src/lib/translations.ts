@@ -231,9 +231,9 @@ export const UI = {
   historyWeekNavLabel: "Activité hebdomadaire",
   historyWeekPrev: "Semaine précédente",
   historyWeekNext: "Semaine suivante",
-  historyWeekTrainedDay: "Entraîné — {day}",
-  historyWeekRestDay: "Repos — {day}",
-  historyWeekFutureDay: "À venir — {day}",
+  historyWeekTrainedDay: "Entraîné · {day}",
+  historyWeekRestDay: "Repos · {day}",
+  historyWeekFutureDay: "À venir · {day}",
   historyGlobalSubtitle:
     "Par jour, puis par exercice ; chaque exercice se déplie pour voir les séries.",
   historySeriesCount: "{count} séries",
@@ -263,10 +263,10 @@ export const UI = {
   progressCardTitle: "Progression",
   streakLabel: "Série active",
   streakDays: "{days} jours d'affilée",
-  streakRuleHint: "2 jours off autorisés — séance obligatoire au 3e jour",
+  streakRuleHint: "2 jours off autorisés. Séance obligatoire au 3e jour.",
   streakSheetTitleFirstDay: "1 jour d'entraînement d'affilée",
   streakSheetSubtitleFirstDay:
-    "Beau départ — le week-end ne casse pas ta série si tu reviens au 3e jour.",
+    "Beau départ. Le week-end ne casse pas ta série si tu reviens au 3e jour.",
   streakSheetTitleStreak: "{days} jours d'entraînement d'affilée",
   streakSheetSubtitleStreak:
     "Tu peux t'accorder 2 jours sans séance (ex. week-end), puis revenir au 3e jour.",
@@ -322,8 +322,8 @@ export const UI = {
   browseChooseExercise: "Choisir l'exercice",
   browseViewAll: "Voir tout",
   browseViewByCategory: "Par catégorie",
-  browseAllExercisesInZone: "Tous les exercices — {zone}",
-  browseAllExercisesForMuscle: "Tous les exercices — {muscle}",
+  browseAllExercisesInZone: "Tous les exercices : {zone}",
+  browseAllExercisesForMuscle: "Tous les exercices : {muscle}",
   browseExercisesCount: "{count} exercices",
   browseBreadcrumbZones: "Zones",
   browseBreadcrumbLabel: "Parcours de sélection",
@@ -382,6 +382,7 @@ export const UI = {
   referralCodeLabel: "Code de parrainage",
   referralYourCodeLabel: "Mon code à partager",
   referralCodePlaceholder: "ex. abc12def",
+  signupReferralCodeTitle: "Tu as un code de parrainage ?",
   signupReferralCodeLabel: "Code de parrainage (optionnel)",
   signupReferralCodeHint: "Tu as le code d'un pote ? Gagne +{bonus} exercices.",
   profileReferralBannerTitle: "Gagne un t-shirt en édition limitée",
@@ -392,8 +393,8 @@ export const UI = {
   referralCodeInvalid: "Code de parrainage invalide",
   referralCodeSelf: "Tu ne peux pas utiliser ton propre code",
   referralStats:
-    "Tu as parrainé {count} personne(s) — limite actuelle : {limit} exercices",
-  referralBonusPerInvite: "+{bonus} exercices par pote parrainé (sans limite)",
+    "Tu as parrainé {count} personne(s). Limite actuelle : {limit} exercices.",
+  referralBonusPerInvite: "+{bonus} exercices pour toi et ton pote",
   referralTshirtEarned:
     "Bravo ! Tu as débloqué ton t-shirt One More grâce à tes parrainages.",
   referralTshirtProgress:
@@ -404,11 +405,11 @@ export const UI = {
   referralTshirtSloganBold: "ONE MORE",
   referralHubTitle: "Parrainage",
   referralHubDescription:
-    "Partage ton code et débloque des exercices — +{bonus} si tu utilises le code d'un pote.",
+    "Partage ton code et débloque des exercices. +{bonus} si tu utilises le code d'un pote.",
   referralDrawerShortDescription:
-    "Partage ton code : +{bonus} exercices par pote parrainé.",
+    "Partage ton code : +{bonus} exercices pour toi et ton pote.",
   referralLimitHint:
-    "Limite atteinte — parraine un pote pour gagner +{bonus} exercices.",
+    "Limite atteinte. Parraine un pote pour gagner +{bonus} exercices.",
   referralHubSettingsHint:
     "Ouvre le panneau parrainage pour partager ton code et suivre tes gains.",
   referralOpenDrawer: "Ouvrir le parrainage",
@@ -421,7 +422,7 @@ export const UI = {
   referralCountZero: "Aucun pote parrainé",
   referralCountOne: "1 pote parrainé",
   referralCountMany: "{count} potes parrainés",
-  referralBattlePassTitle: "Récompense t-shirt",
+  referralBattlePassTitle: "Gagne ton t-shirt en édition limitée",
   referralBattlePassRemaining: "Encore {count} parrainage(s) pour le t-shirt.",
   referralBattlePassReward: "T-shirt",
   referralBattlePassLegend:
@@ -451,7 +452,7 @@ export const UI = {
   tshirtClaimCountry: "Pays",
   tshirtClaimSize: "Taille",
   tshirtClaimSubmit: "Envoyer ma demande",
-  tshirtClaimSuccess: "Demande enregistrée — ton t-shirt est en préparation",
+  tshirtClaimSuccess: "Demande enregistrée. Ton t-shirt est en préparation.",
   tshirtClaimError: "Impossible d'enregistrer ta demande",
   tshirtClaimNotEligible: "Tu n'es pas encore éligible au t-shirt",
   tshirtClaimAlreadyDone: "Tu as déjà réclamé ton t-shirt",
@@ -485,7 +486,7 @@ export const UI = {
   friendsTabSearch: "Rechercher",
   friendsTabMessages: "Messages",
   friendsSearchPlaceholder: "Prénom, nom ou @pseudo…",
-  friendsSearchHint: "Recherche partielle — pas besoin du nom complet.",
+  friendsSearchHint: "Recherche partielle : pas besoin du nom complet.",
   friendsSearchEmpty: "Tape un prénom, un nom ou un @pseudo pour chercher.",
   friendsSearchMinChars:
     "Saisis au moins 2 caractères (ou @ + 1 caractère pour un pseudo).",
@@ -682,7 +683,7 @@ export const UI = {
   statsGlobalGaugeCaption:
     "Ta moyenne combine palier + progression sur chaque exo. La jauge montre l’avancement entre deux paliers d’affilée (Fer → Bronze → …).",
   statsGlobalGaugeMax:
-    "En moyenne tu es au palier Légende — objectif maintenu ou records sur de nouveaux exos.",
+    "En moyenne tu es au palier Légende. Objectif maintenu ou records sur de nouveaux exos.",
   statsProfileInvalid: "Indique un poids et une taille valides.",
   statsProfileSaved: "Profil enregistré",
   /** Lien sous la modal profil ligues vers la page paramètres complète */
@@ -711,5 +712,5 @@ export const UI = {
   notifFriendTrainingMasterOff:
     "Active « Séances d'amis » dans Paramètres pour utiliser la cloche",
   streakGraceDayHint: "Dernier jour pour garder ta série",
-  streakGraceDayAria: "Série de {days} jours — dernier jour de grâce",
+  streakGraceDayAria: "Série de {days} jours, dernier jour de grâce",
 };

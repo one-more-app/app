@@ -36,27 +36,19 @@ export function ReferralShareHero({
             }
         })();
     };
-
-    const countLabel =
-        referralCount === 0
-            ? UI.referralCountZero
-            : referralCount === 1
-                ? UI.referralCountOne
-                : UI.referralCountMany.replace("{count}", String(referralCount));
-
     return (
-        <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
+        <div className="space-y-3 rounded-xl bg-card p-3">
             {inviteCode ? (
                 <button
                     type="button"
                     onClick={() => void handleCopy()}
                     disabled={busy}
-                    className="flex w-full items-center justify-between rounded-md bg-background px-3 py-3 text-left transition-colors hover:bg-muted/50"
+                    className="flex w-full items-center justify-between rounded-md bg-secondary px-3 py-2 text-left transition-colors hover:bg-muted/50"
                 >
                     <span className="text-xs text-muted-foreground">
                         {UI.referralYourCodeLabel}
                     </span>
-                    <span className="font-mono font-one-more uppercase italic text-sm tracking-widest">
+                    <span className="font-one-more uppercase italic text-sm tracking-widest">
                         {inviteCode}
                     </span>
                 </button>
@@ -72,7 +64,7 @@ export function ReferralShareHero({
                     {UI.profileInviteButton}
                 </Button>
                 <Button
-                    variant="outline"
+                    variant="secondary"
                     disabled={busy || !inviteCode}
                     onClick={handleCopy}
                     aria-label={UI.profileCopyInviteCode}
@@ -80,8 +72,6 @@ export function ReferralShareHero({
                     <Copy className="size-4" />
                 </Button>
             </div>
-
-            <p className="text-center text-sm text-muted-foreground">{countLabel}</p>
         </div>
     );
 }

@@ -30,7 +30,8 @@ type AuthStep =
     | "register_firstName"
     | "register_lastName"
     | "register_username"
-    | "register_password";
+    | "register_password"
+    | "register_referral";
 
 type AuthPageProps = {
     embedded?: boolean;
@@ -185,7 +186,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         }
     };
 
-    const registerTotal = 4;
+    const registerTotal = 5;
     const registerStepLabel = (current: number) =>
         UI.onboardingStepIndicator
             .replace("{current}", String(current))
@@ -206,13 +207,18 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
             {step === "register_firstName" ||
                 step === "register_lastName" ||
                 step === "register_username" ||
-                step === "register_password" ? (
+                step === "register_password" ||
+                step === "register_referral" ? (
                 <StepCard
                     key={`register-${step}`}
                     animated
                     className="shadow-2xl border-border/80 bg-card/95 backdrop-blur-sm"
                     onBack={() => {
                         auth.clearError();
+                        if (step === "register_referral") {
+                            setStep("register_password");
+                            return;
+                        }
                         if (step === "register_password") {
                             setPassword("");
                             setPasswordConfirm("");
@@ -237,7 +243,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 ? registerStepLabel(2)
                                 : step === "register_username"
                                     ? registerStepLabel(3)
-                                    : registerStepLabel(4)
+                                    : step === "register_password"
+                                        ? registerStepLabel(4)
+                                        : registerStepLabel(5)
                     }
                     progressPercent={
                         step === "register_firstName"
@@ -246,7 +254,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 ? registerProgress(2)
                                 : step === "register_username"
                                     ? registerProgress(3)
-                                    : registerProgress(4)
+                                    : step === "register_password"
+                                        ? registerProgress(4)
+                                        : registerProgress(5)
                     }
                     title={
                         step === "register_firstName"
@@ -255,7 +265,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 ? UI.lastNameTitle
                                 : step === "register_username"
                                     ? UI.usernameTitle
-                                    : UI.passwordTitle
+                                    : step === "register_password"
+                                        ? UI.passwordTitle
+                                        : UI.signupReferralCodeTitle
                     }
                     contentClassName="space-y-3"
                 >
@@ -360,7 +372,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 </Button>
                             </div>
                         </>
-                    ) : (
+                    ) : step === "register_password" ? (
                         <>
                             <div className="space-y-1">
                                 <Input
@@ -396,6 +408,28 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 )}
                             </div>
 
+                            {auth.lastError && (
+                                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                                    {auth.lastError}
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                <Button
+                                    className="w-full"
+                                    onClick={() => {
+                                        if (!canRegisterPassword) return;
+                                        auth.clearError();
+                                        setStep("register_referral");
+                                    }}
+                                    disabled={!canRegisterPassword}
+                                >
+                                    {UI.continue}
+                                </Button>
+                            </div>
+                        </>
+                    ) : (
+                        <>
                             <div className="space-y-1">
                                 <Input
                                     label={UI.signupReferralCodeLabel}
@@ -423,7 +457,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 <Button
                                     className="w-full"
                                     onClick={() => void submitRegisterPassword()}
-                                    disabled={!canRegisterPassword}
+                                    disabled={isBusy}
                                 >
                                     {UI.createAccount}
                                 </Button>

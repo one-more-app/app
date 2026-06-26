@@ -205,7 +205,7 @@ export class NotificationDispatchService {
       await this.push.sendToUser(friendId, {
         type: NotificationType.FriendPr,
         title: 'Nouveau record',
-        body: `${name} — ${params.exerciseName} : ${params.weight} kg × ${params.reps}`,
+        body: `${name} : ${params.exerciseName} : ${params.weight} kg × ${params.reps}`,
         route: `/friends/${params.athleteUserId}`,
         dedupKey: `pr:${params.athleteUserId}:${today}:${Date.now()}`,
       });
@@ -243,7 +243,7 @@ export class NotificationDispatchService {
     await this.push.sendToUser(userId, {
       type: NotificationType.StreakAtRisk,
       title: 'Série en danger',
-      body: `Ta série de ${streak} jours expire ce soir — une séance suffit !`,
+      body: `Ta série de ${streak} jours expire ce soir. Une séance suffit !`,
       route: '/home',
       dedupKey: `streak:${today}`,
     });
