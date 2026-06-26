@@ -58,6 +58,7 @@
     "@openpanel/web": "^1.4.1",
     "@radix-ui/react-progress": "^1.1.8",
     "@revenuecat/purchases-capacitor": "^10.4.0",
+    "@revenuecat/purchases-capacitor-ui": "^10.4.0",
     "appsflyer-capacitor-plugin": "^6.18.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

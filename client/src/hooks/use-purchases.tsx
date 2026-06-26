@@ -6,7 +6,9 @@ import {
   restorePurchases,
   syncPurchasesAfterLogin,
 } from "@/lib/purchases";
+import { UI } from "@/lib/translations";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export function usePurchases() {
   const auth = useAuth();
@@ -27,21 +29,36 @@ export function usePurchases() {
     void logOutPurchases();
   }, [auth.status]);
 
-  const subscribe = useCallback(async () => {
+  const subscribe = useCallback(
+    async (source?: string) => {
+      if (!available) return false;
+      setBusy(true);
+      try {
+        const success = await presentPaywall({ source });
+        if (success) {
+          toast.success(UI.premiumSubscribeSuccess);
+        }
+        return success;
+      } catch {
+        toast.error(UI.premiumSubscribeError);
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [available],
+  );
+
+  const restore = useCallback(async () => {
     if (!available) return false;
     setBusy(true);
     try {
-      return await presentPaywall();
-    } finally {
-      setBusy(false);
-    }
-  }, [available]);
-
-  const restore = useCallback(async () => {
-    if (!available) return;
-    setBusy(true);
-    try {
       await restorePurchases();
+      toast.success(UI.premiumRestoreSuccess);
+      return true;
+    } catch {
+      toast.error(UI.premiumRestoreError);
+      return false;
     } finally {
       setBusy(false);
     }

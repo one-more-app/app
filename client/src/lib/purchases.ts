@@ -1,4 +1,6 @@
 import { Capacitor } from "@capacitor/core";
+import { AnalyticsEvents } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
 import { syncPremiumStatus } from "@/lib/billing-api";
 import { ACCESS_SWR_KEY } from "@/lib/social-api";
 import { mutate } from "swr";
@@ -63,19 +65,44 @@ export async function restorePurchases(): Promise<void> {
   await mutate(ACCESS_SWR_KEY);
 }
 
-export async function presentPaywall(): Promise<boolean> {
+export async function presentPaywall(options?: {
+  source?: string;
+}): Promise<boolean> {
   const purchases = await getPurchases();
   if (!purchases) return false;
 
-  const offerings = await purchases.Purchases.getOfferings();
-  const current = offerings.current;
-  const packageToBuy = current?.availablePackages[0];
-  if (!packageToBuy) return false;
+  const source = options?.source ?? "settings";
+  track(AnalyticsEvents.PURCHASE_STARTED, { source });
 
-  await purchases.Purchases.purchasePackage({ aPackage: packageToBuy });
-  await syncPremiumStatus();
-  await mutate(ACCESS_SWR_KEY);
-  return true;
+  try {
+    const { RevenueCatUI } = await import("@revenuecat/purchases-capacitor-ui");
+    const { PAYWALL_RESULT } = await import(
+      "@revenuecat/purchases-typescript-internal-esm"
+    );
+
+    const { result } = await RevenueCatUI.presentPaywall({
+      displayCloseButton: true,
+    });
+
+    if (
+      result === PAYWALL_RESULT.PURCHASED ||
+      result === PAYWALL_RESULT.RESTORED
+    ) {
+      await syncPremiumStatus();
+      await mutate(ACCESS_SWR_KEY);
+      track(AnalyticsEvents.PURCHASE_VALIDATED, { source, paywall_result: result });
+      return true;
+    }
+
+    if (result === PAYWALL_RESULT.ERROR) {
+      track(AnalyticsEvents.PURCHASE_FAILED, { source, paywall_result: result });
+    }
+
+    return false;
+  } catch {
+    track(AnalyticsEvents.PURCHASE_FAILED, { source });
+    return false;
+  }
 }
 
 export async function syncPurchasesAfterLogin(userId: string): Promise<void> {

@@ -409,7 +409,13 @@ export const UI = {
   referralDrawerShortDescription:
     "Partage ton code : +{bonus} exercices pour toi et ton pote.",
   referralLimitHint:
-    "Limite atteinte. Parraine un pote pour gagner +{bonus} exercices.",
+    "Limite atteinte. Passe Premium pour des exercices illimités ou parraine un pote pour gagner +{bonus} exercices.",
+  exerciseLimitPremiumTitle: "Exercices illimités",
+  exerciseLimitPremiumDescription:
+    "Passe Premium et suis autant d'exercices que tu veux, sans limite.",
+  exerciseLimitPremiumButton: "Passer Premium",
+  exerciseLimitOrDivider: "ou",
+  exerciseLimitReferralTitle: "Parraine un pote",
   referralHubSettingsHint:
     "Ouvre le panneau parrainage pour partager ton code et suivre tes gains.",
   referralOpenDrawer: "Ouvrir le parrainage",
@@ -461,6 +467,11 @@ export const UI = {
   tshirtClaimShippedWithTracking:
     "Ton t-shirt a été expédié. Suivi : {tracking}",
   tshirtClaimDelivered: "Ton t-shirt a été livré. Profites-en !",
+  tshirtDeliveryTrackingTitle: "Suivi de livraison",
+  tshirtDeliveryStepPreparing: "Préparation",
+  tshirtDeliveryStepShipping: "En livraison",
+  tshirtDeliveryStepDelivered: "Livré",
+  tshirtDeliveryTrackingLabel: "Suivi",
 
   friendsTitle: "Amis",
   friendsListTitle: "Mes potes",

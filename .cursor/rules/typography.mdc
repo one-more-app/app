@@ -1,0 +1,38 @@
+---
+description: Typographie One More — chiffres vs texte et police brand
+globs: client/src/**/*.{ts,tsx,css}
+alwaysApply: false
+---
+
+# Typographie (One More)
+
+## Deux mécanismes distincts
+
+| Mécanisme | Usage | Portée |
+|-----------|--------|--------|
+| **`One More Figures`** (via `--font-sans`) | Chiffres dans le texte courant | **Uniquement `0-9`** (`unicode-range` dans [`index.css`](client/src/index.css)) |
+| **`font-one-more`** (`--font-one-more`) | Titres, boutons, labels brand, gros records | Toute la chaîne du nœud (italique uppercase) |
+
+Ne pas élargir `unicode-range` aux signes de ponctuation (`. , + - / : % ( ) ×`, etc.) : ils doivent rester en **Hanken Grotesk**.
+
+## Bonnes pratiques en JSX
+
+```tsx
+// ✅ Chiffre hero isolé : police brand explicite
+<span className="font-one-more text-2xl font-bold italic">{weight}</span>
+<span className="text-sm text-muted-foreground">kg</span>
+
+// ✅ Texte mixte : laisser font-sans ; seuls les chiffres passent en One More Figures
+<p>Encore {count} parrainage(s)</p>
+
+// ❌ Éviter font-one-more sur une chaîne entière si elle mélange ponctuation et texte courant
+<span className="font-one-more">+5 exercices</span>
+```
+
+## Saisie utilisateur
+
+`input`, `textarea`, `select` utilisent `--font-sans-input` (Hanken seul). Exception : inputs dans `.font-one-more` (ex. wheel picker).
+
+## `tabular-nums`
+
+Classe utilitaire pour l’alignement des chiffres ; ne change pas la famille de police.

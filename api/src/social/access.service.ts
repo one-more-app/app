@@ -54,7 +54,8 @@ export class AccessService {
       referralCount,
       hasUsedReferralCode,
     });
-    const canAddExercise = activeExerciseCount < exerciseLimit;
+    const canAddExercise =
+      isPremium || activeExerciseCount < exerciseLimit;
     const tshirtRewardEligible = computeTshirtRewardEligible({ referralCount });
     const referralsUntilTshirt = computeReferralsUntilTshirt({ referralCount });
 
@@ -88,7 +89,7 @@ export class AccessService {
     const access = await this.getAccess(userId);
     if (!access.canAddExercise) {
       throw new ForbiddenException({
-        message: `Limite de ${access.exerciseLimit} exercices atteinte. Parraine un pote pour gagner ${EXERCISE_BONUS_PER_REFERRAL} exercices supplémentaires.`,
+        message: `Limite de ${access.exerciseLimit} exercices atteinte. Passe Premium pour des exercices illimités ou parraine un pote pour gagner ${EXERCISE_BONUS_PER_REFERRAL} exercices supplémentaires.`,
         code: 'EXERCISE_LIMIT_REACHED',
         exerciseLimit: access.exerciseLimit,
         activeExerciseCount: access.activeExerciseCount,

@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { identifyEmail, suggestUsername } from "@/lib/auth";
 import { peekPendingInviteCode } from "@/lib/invite-code";
 import { signInWithApple, signInWithGoogle } from "@/lib/oauth";
+import { fetchInvitePreview } from "@/lib/social-api";
 import { resolvePostAuthNavigation } from "@/lib/post-auth-navigation";
 import { setUserProfile } from "@/lib/storage";
 import { UI } from "@/lib/translations";
@@ -159,18 +160,27 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         }
     };
 
-    const submitRegisterPassword = async () => {
-        if (!canRegisterPassword) return;
+    const submitRegisterReferral = async () => {
+        if (!canRegisterPassword || isBusy) return;
+        const trimmedReferralCode = referralCode.trim();
         setIsBusy(true);
         auth.clearError();
         try {
+            if (trimmedReferralCode) {
+                try {
+                    await fetchInvitePreview(trimmedReferralCode);
+                } catch {
+                    auth.setError(UI.referralCodeInvalid);
+                    return;
+                }
+            }
             await auth.register({
                 email: normalizedEmail,
                 password,
                 username: normalizedUsername,
                 firstName: firstName.trim(),
                 lastName: lastName.trim(),
-                inviteCode: referralCode.trim() || undefined,
+                inviteCode: trimmedReferralCode || undefined,
             });
             setUserProfile(
                 {
@@ -434,7 +444,10 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 <Input
                                     label={UI.signupReferralCodeLabel}
                                     value={referralCode}
-                                    onChange={(e) => setReferralCode(e.target.value)}
+                                    onChange={(e) => {
+                                        setReferralCode(e.target.value);
+                                        auth.clearError();
+                                    }}
                                     placeholder={UI.referralCodePlaceholder}
                                     autoCapitalize="none"
                                     autoCorrect="off"
@@ -456,7 +469,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                             <div className="space-y-2">
                                 <Button
                                     className="w-full"
-                                    onClick={() => void submitRegisterPassword()}
+                                    onClick={() => void submitRegisterReferral()}
                                     disabled={isBusy}
                                 >
                                     {UI.createAccount}

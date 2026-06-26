@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { useAccess } from "@/hooks/use-access";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { useAuth } from "@/hooks/use-auth";
+import { usePurchases } from "@/hooks/use-purchases";
 import {
     useReferralDrawer,
     type ReferralDrawerSource,
@@ -25,12 +26,13 @@ import {
     TSHIRT_REWARD_SWR_KEY,
 } from "@/lib/rewards-api";
 import { applyReferralCode, fetchInviteCode } from "@/lib/social-api";
+import { isPurchasesAvailable } from "@/lib/purchases";
 import { UI } from "@/lib/translations";
 import {
     EXERCISE_BONUS_FOR_USING_REFERRAL,
     EXERCISE_BONUS_PER_REFERRAL,
 } from "@one-more/shared/access-config";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Crown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
@@ -48,6 +50,43 @@ function LimitBanner() {
     );
 }
 
+function ExerciseLimitPremiumSection({
+    busy,
+    onSubscribe,
+}: {
+    busy: boolean;
+    onSubscribe: () => void;
+}) {
+    return (
+        <div className="space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+            <div className="space-y-1">
+                <p className="text-sm font-semibold text-foreground">
+                    {UI.exerciseLimitPremiumTitle}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                    {UI.exerciseLimitPremiumDescription}
+                </p>
+            </div>
+            <Button className="w-full" disabled={busy} onClick={onSubscribe}>
+                <Crown className="mr-2 size-4" />
+                {UI.exerciseLimitPremiumButton}
+            </Button>
+        </div>
+    );
+}
+
+function ExerciseLimitOrDivider() {
+    return (
+        <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {UI.exerciseLimitOrDivider}
+            </span>
+            <div className="h-px flex-1 bg-border" />
+        </div>
+    );
+}
+
 export function ReferralDrawerHost() {
     const auth = useAuth();
     const location = useLocation();
@@ -61,7 +100,10 @@ export function ReferralDrawerHost() {
         referralCount,
         tshirtRewardEligible,
         referralsUntilTshirt,
+        isPremium,
     } = useAccess();
+    const { available: purchasesAvailable, busy: purchasesBusy, subscribe } =
+        usePurchases();
 
     const { data: tshirtReward, mutate: refreshTshirtReward } = useSWR(
         auth.status === "authenticated" ? TSHIRT_REWARD_SWR_KEY : null,
@@ -162,6 +204,20 @@ export function ReferralDrawerHost() {
 
     const drawerTitle = resolveDrawerTitle(source);
     const applyOnly = source === "apply";
+    const showPremiumOption =
+        source === "limit" &&
+        !isPremium &&
+        purchasesAvailable &&
+        isPurchasesAvailable();
+
+    const handlePremiumSubscribe = () => {
+        void (async () => {
+            const success = await subscribe("exercise_limit");
+            if (!success) return;
+            await refresh();
+            closeReferralDrawer();
+        })();
+    };
 
     return (
         <>
@@ -181,6 +237,21 @@ export function ReferralDrawerHost() {
 
                         <div className="space-y-4">
                             {source === "limit" ? <LimitBanner /> : null}
+
+                            {showPremiumOption ? (
+                                <ExerciseLimitPremiumSection
+                                    busy={purchasesBusy}
+                                    onSubscribe={handlePremiumSubscribe}
+                                />
+                            ) : null}
+
+                            {showPremiumOption ? <ExerciseLimitOrDivider /> : null}
+
+                            {source === "limit" && !applyOnly ? (
+                                <p className="text-sm font-semibold text-foreground">
+                                    {UI.exerciseLimitReferralTitle}
+                                </p>
+                            ) : null}
 
                             {applyOnly && !hasUsedReferralCode ? (
                                 <div className="flex flex-col gap-2">

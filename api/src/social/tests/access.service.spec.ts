@@ -127,4 +127,16 @@ describe('AccessService', () => {
     expect(access.tshirtRewardEligible).toBe(true);
     expect(access.referralsUntilTshirt).toBe(0);
   });
+
+  it('allows premium user above exercise limit', async () => {
+    usersRepo.findOne.mockResolvedValue({ isPremium: true });
+    profilesRepo.findOne.mockResolvedValue({ referredByUserId: null });
+    trackedRepo.count.mockResolvedValue(50);
+    profilesRepo.count.mockResolvedValue(0);
+
+    const access = await service.getAccess('user-1');
+    expect(access.isPremium).toBe(true);
+    expect(access.canAddExercise).toBe(true);
+    await expect(service.assertCanAddExercise('user-1')).resolves.toBeUndefined();
+  });
 });

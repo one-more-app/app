@@ -1,5 +1,6 @@
 import { BackHeader } from '@/components/BackHeader'
 import { NotificationSettingsCard } from '@/components/settings/NotificationSettingsCard'
+import { PremiumSettingsCard } from '@/components/settings/PremiumSettingsCard'
 import { SettingsReferralLinkCard } from '@/components/settings/SettingsReferralLinkCard'
 import { ProfileNameDialog } from '@/components/profile/ProfileNameDialog'
 import { SettingsProfileSkeleton } from '@/components/skeletons'
@@ -110,6 +111,8 @@ export function SettingsPage() {
                 </Card>
 
                 {auth.status === 'authenticated' ? <NotificationSettingsCard /> : null}
+
+                {auth.status === 'authenticated' ? <PremiumSettingsCard /> : null}
 
                 {auth.status === 'authenticated' ? <SettingsReferralLinkCard /> : null}
 
