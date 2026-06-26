@@ -16,6 +16,8 @@ import { RealtimeModule } from './realtime/realtime.module.js';
 import { LeagueModule } from './league/league.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { AnalyticsModule } from './analytics/analytics.module.js';
+import { BillingModule } from './billing/billing.module.js';
+import { RewardsModule } from './rewards/rewards.module.js';
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { AnalyticsModule } from './analytics/analytics.module.js';
     LeagueModule,
     NotificationsModule,
     AnalyticsModule,
+    BillingModule,
+    RewardsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

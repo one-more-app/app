@@ -15,6 +15,7 @@ import {
     type FriendsListResponse,
 } from "@/lib/social-api";
 import { UI } from "@/lib/translations";
+import { useReferralDrawer } from "@/hooks/use-referral-drawer";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Dumbbell, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -143,6 +144,7 @@ export function FriendsListTab({
     isLoading: boolean;
     onRefresh: () => Promise<void>;
 }) {
+    const { openReferralDrawer } = useReferralDrawer();
     const { byUserId, trainingFriends } = useFriendsPresence();
 
     const handleAccept = (friendshipId: string) => {
@@ -265,8 +267,12 @@ export function FriendsListTab({
                     >
                         <UserPlus className="size-8 text-muted-foreground" />
                         <p className="text-sm text-muted-foreground">{UI.friendsEmpty}</p>
-                        <Button asChild size="sm" variant="secondary">
-                            <Link to="/profile">{UI.profileInviteButton}</Link>
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => openReferralDrawer("invite")}
+                        >
+                            {UI.profileInviteButton}
                         </Button>
                     </div>
                 ) : (

@@ -10,11 +10,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { identifyEmail, suggestUsername } from "@/lib/auth";
+import { peekPendingInviteCode } from "@/lib/invite-code";
 import { signInWithApple, signInWithGoogle } from "@/lib/oauth";
 import { resolvePostAuthNavigation } from "@/lib/post-auth-navigation";
 import { setUserProfile } from "@/lib/storage";
 import { UI } from "@/lib/translations";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
+import {
+  EXERCISE_BONUS_FOR_USING_REFERRAL,
+} from "@one-more/shared/access-config";
 import { Capacitor } from "@capacitor/core";
 import { X } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -79,6 +83,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         useState<UsernameFieldStatus>("idle");
     const [password, setPassword] = useState("");
     const [passwordConfirm, setPasswordConfirm] = useState("");
+    const [referralCode, setReferralCode] = useState(
+        () => peekPendingInviteCode() ?? "",
+    );
     const [isBusy, setIsBusy] = useState(false);
     const normalizedEmail = email.trim().toLowerCase();
     const canContinueEmail = normalizedEmail.includes("@") && !isBusy;
@@ -162,6 +169,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                 username: normalizedUsername,
                 firstName: firstName.trim(),
                 lastName: lastName.trim(),
+                inviteCode: referralCode.trim() || undefined,
             });
             setUserProfile(
                 {
@@ -386,6 +394,23 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 {passwordConfirm.length > 0 && passwordConfirm !== password && (
                                     <p className="text-xs text-destructive">{UI.passwordsDoNotMatch}</p>
                                 )}
+                            </div>
+
+                            <div className="space-y-1">
+                                <Input
+                                    label={UI.signupReferralCodeLabel}
+                                    value={referralCode}
+                                    onChange={(e) => setReferralCode(e.target.value)}
+                                    placeholder={UI.referralCodePlaceholder}
+                                    autoCapitalize="none"
+                                    autoCorrect="off"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    {UI.signupReferralCodeHint.replace(
+                                        "{bonus}",
+                                        String(EXERCISE_BONUS_FOR_USING_REFERRAL),
+                                    )}
+                                </p>
                             </div>
 
                             {auth.lastError && (

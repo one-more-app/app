@@ -23,7 +23,7 @@ export type UserAccessDto = {
   bonusFromBeingReferred: number;
   isPremium: boolean;
   tshirtRewardEligible: boolean;
-  referralsUntilTshirt: number | null;
+  referralsUntilTshirt: number;
 };
 
 @Injectable()
@@ -55,14 +55,8 @@ export class AccessService {
       hasUsedReferralCode,
     });
     const canAddExercise = activeExerciseCount < exerciseLimit;
-    const tshirtRewardEligible = computeTshirtRewardEligible({
-      referralCount,
-      isPremium,
-    });
-    const referralsUntilTshirt = computeReferralsUntilTshirt({
-      referralCount,
-      isPremium,
-    });
+    const tshirtRewardEligible = computeTshirtRewardEligible({ referralCount });
+    const referralsUntilTshirt = computeReferralsUntilTshirt({ referralCount });
 
     return {
       exerciseLimit,

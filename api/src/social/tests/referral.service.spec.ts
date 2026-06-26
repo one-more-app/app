@@ -6,6 +6,7 @@ import {
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 const notifyFriendAccepted = jest.fn();
+const notifyReferralUsed = jest.fn();
 
 const { ReferralService } = await import('../referral.service.js');
 
@@ -23,6 +24,7 @@ describe('ReferralService', () => {
   };
   const notifications = {
     notifyFriendAccepted,
+    notifyReferralUsed,
   };
 
   let service: InstanceType<typeof ReferralService>;
@@ -61,6 +63,10 @@ describe('ReferralService', () => {
       requesterId: 'referrer-1',
       addresseeId: 'user-1',
       status: 'accepted',
+    });
+    expect(notifyReferralUsed).toHaveBeenCalledWith({
+      referrerId: 'referrer-1',
+      referredUserId: 'user-1',
     });
   });
 

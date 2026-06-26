@@ -54,6 +54,11 @@ export class ReferralService {
 
     await this.ensureAcceptedFriendship(inviterProfile.userId, userId);
 
+    void this.notifications.notifyReferralUsed({
+      referrerId: inviterProfile.userId,
+      referredUserId: userId,
+    });
+
     return { ok: true, referrerUserId: inviterProfile.userId };
   }
 

@@ -1,6 +1,6 @@
 import { ExerciseBrowseNavigator } from '@/components/ExerciseBrowseNavigator'
 import { ExerciseCard } from '@/components/ExerciseCard'
-import { ExerciseLimitDialog } from '@/components/ExerciseLimitDialog'
+import { useReferralDrawer } from '@/hooks/use-referral-drawer'
 import { UserProgressBanner } from '@/components/UserProgressBanner'
 import { BrowseSectionTitle } from '@/components/exercise-browse-ui'
 import { ExerciseCardSkeletonList } from '@/components/skeletons'
@@ -40,9 +40,9 @@ function HomePage() {
     const { data: performanceEntries = [] } = usePerformanceEntriesData()
     const refreshAfterPerfChange = usePerformanceDataRefresh()
     const { data: browseLookupsRaw } = useLeagueBrowseLookupsData()
-    const { access, canAddExercise } = useAccess()
+    const { canAddExercise } = useAccess()
     const navigate = useNavigate()
-    const [limitDialogOpen, setLimitDialogOpen] = useState(false)
+    const { openReferralDrawer } = useReferralDrawer()
     const location = useLocation()
 
     const addExerciseLinkSearch = useMemo(() => {
@@ -52,11 +52,11 @@ function HomePage() {
 
     const goToAddExercise = useCallback(() => {
         if (!canAddExercise) {
-            setLimitDialogOpen(true)
+            openReferralDrawer('limit')
             return
         }
         navigate(`/exercises${addExerciseLinkSearch}`)
-    }, [canAddExercise, navigate, addExerciseLinkSearch])
+    }, [canAddExercise, navigate, addExerciseLinkSearch, openReferralDrawer])
 
     const { searchInput, searchQuery, handleSearchChange } = useExerciseFilters()
 
@@ -266,13 +266,6 @@ function HomePage() {
                     </>
                 )}
             </main>
-
-            <ExerciseLimitDialog
-                open={limitDialogOpen}
-                onOpenChange={setLimitDialogOpen}
-                activeCount={access?.activeExerciseCount}
-                exerciseLimit={access?.exerciseLimit}
-            />
         </div>
     )
 }

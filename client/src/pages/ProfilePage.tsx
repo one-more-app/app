@@ -1,5 +1,5 @@
+import { ReferralTshirtBanner } from "@/components/referral/ReferralTshirtBanner";
 import { ProfileView } from "@/components/profile/ProfileView";
-import { ProfileSocialActions } from "@/components/profile/ProfileSocialActions";
 import {
   useLeagueSummaryData,
   usePerformanceEntriesData,
@@ -28,7 +28,7 @@ export default function ProfilePage() {
         topByLeague: leagueSummary?.topByLeague,
         isLoading: !hasLoaded,
       }}
-      headerActions={<ProfileSocialActions />}
+      headerActions={<ReferralTshirtBanner />}
     />
   );
 }

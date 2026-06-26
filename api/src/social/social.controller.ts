@@ -41,7 +41,6 @@ export class SocialController {
     return await this.invitesService.getInviteCode(req.user.sub);
   }
 
-  /** @deprecated Utiliser /social/invite-code */
   @UseGuards(JwtAuthGuard)
   @Get('/social/invite-link')
   async getInviteLink(@Req() req: { user: { sub: string } }) {

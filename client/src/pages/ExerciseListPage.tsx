@@ -1,7 +1,7 @@
 import { BackHeader } from '@/components/BackHeader'
 import { CustomExerciseMetadataFields } from '@/components/CustomExerciseMetadataFields'
 import { ExerciseCatalogBrowse } from '@/components/ExerciseCatalogBrowse'
-import { ExerciseLimitDialog } from '@/components/ExerciseLimitDialog'
+import { useReferralDrawer } from '@/hooks/use-referral-drawer'
 import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { ExerciseCatalogSkeletonList } from '@/components/skeletons'
 import { Badge } from '@/components/ui/badge'
@@ -69,18 +69,18 @@ export function ExerciseListPage() {
     const [selectedExercise, setSelectedExercise] = useState<ExerciseDBExercise | null>(null)
     const [perfWeight, setPerfWeight] = useState(0)
     const [perfReps, setPerfReps] = useState(1)
-    const [limitDialogOpen, setLimitDialogOpen] = useState(false)
-    const { canAddExercise, access } = useAccess()
+    const { openReferralDrawer } = useReferralDrawer()
+    const { canAddExercise } = useAccess()
 
     const guardAddExercise = useCallback(
         (action: () => void) => {
             if (!canAddExercise) {
-                setLimitDialogOpen(true)
+                openReferralDrawer('limit')
                 return
             }
             action()
         },
-        [canAddExercise],
+        [canAddExercise, openReferralDrawer],
     )
     const firstExerciseTourActive =
         searchParams.get('tour') === 'onboarding-first' &&
@@ -625,13 +625,6 @@ export function ExerciseListPage() {
                         onEvent={handleFirstExerciseJoyrideEvent}
                     />
                 ) : null}
-
-                <ExerciseLimitDialog
-                    open={limitDialogOpen}
-                    onOpenChange={setLimitDialogOpen}
-                    activeCount={access?.activeExerciseCount}
-                    exerciseLimit={access?.exerciseLimit}
-                />
             </main>
         </div>
     )

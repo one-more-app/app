@@ -15,14 +15,14 @@ export type UserAccess = {
   bonusFromBeingReferred: number;
   isPremium: boolean;
   tshirtRewardEligible: boolean;
-  referralsUntilTshirt: number | null;
+  referralsUntilTshirt: number;
 };
 
 export type InviteCode = {
   code: string;
 };
 
-/** @deprecated Utiliser InviteCode */
+/** @deprecated Utiliser InviteCode — conservé pour compatibilité URL */
 export type InviteLink = InviteCode & {
   url: string;
 };
@@ -71,7 +71,6 @@ export async function fetchInviteCode(): Promise<InviteCode> {
   return await apiFetch<InviteCode>("/social/invite-code");
 }
 
-/** @deprecated Utiliser fetchInviteCode */
 export async function fetchInviteLink(): Promise<InviteLink> {
   return await apiFetch<InviteLink>("/social/invite-link");
 }
@@ -195,7 +194,6 @@ function isShareCancelled(error: unknown): boolean {
   return /cancel/i.test(message);
 }
 
-/** @deprecated Utiliser shareInviteCode */
 function buildInviteShareContent(url: string) {
   const { inviteShareTitle, inviteShareDialogTitle } = UI;
   const text = UI.inviteCodeShareMessage.replace("{code}", url);
@@ -255,7 +253,6 @@ export async function shareInviteCode(code: string): Promise<InviteShareResult> 
   throw new Error("Partage non disponible");
 }
 
-/** @deprecated Utiliser shareInviteCode */
 export async function shareInviteUrl(url: string): Promise<InviteShareResult> {
   const share = buildInviteShareContent(url);
 

@@ -96,6 +96,25 @@ export class NotificationDispatchService {
     });
   }
 
+  async notifyReferralUsed(params: {
+    referrerId: string;
+    referredUserId: string;
+  }) {
+    if (
+      !(await this.prefs.isEnabled(params.referrerId, NotificationType.ReferralUsed))
+    ) {
+      return;
+    }
+    const name = await this.profileName(params.referredUserId);
+    await this.push.sendToUser(params.referrerId, {
+      type: NotificationType.ReferralUsed,
+      title: 'Nouveau parrainage',
+      body: `${name} a utilisé ton code de parrainage`,
+      route: '/settings',
+      dedupKey: `referral:${params.referredUserId}`,
+    });
+  }
+
   async notifyFriendAccepted(params: {
     requesterId: string;
     addresseeId: string;

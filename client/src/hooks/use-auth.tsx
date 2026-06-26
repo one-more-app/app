@@ -30,6 +30,7 @@ type AuthContextValue = AuthState & {
     username: string;
     firstName?: string;
     lastName?: string;
+    inviteCode?: string;
   }) => Promise<void>;
   login: (params: { email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
@@ -92,16 +93,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       username,
       firstName,
       lastName,
+      inviteCode: inviteCodeParam,
     }: {
       email: string;
       password: string;
       username: string;
       firstName?: string;
       lastName?: string;
+      inviteCode?: string;
     }) => {
       clearError();
       try {
-        const inviteCode = consumePendingInviteCode() ?? undefined;
+        const inviteCode =
+          inviteCodeParam?.trim() ||
+          consumePendingInviteCode() ||
+          undefined;
         const session = await registerWithEmail({
           email,
           password,

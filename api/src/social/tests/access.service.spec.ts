@@ -24,20 +24,10 @@ await jest.unstable_mockModule('../../shared/access-config.js', () => ({
   },
   computeReferralBonus: (referralCount: number) =>
     referralCount * EXERCISE_BONUS_PER_REFERRAL,
-  computeTshirtRewardEligible: ({
-    referralCount,
-    isPremium,
-  }: {
-    referralCount: number;
-    isPremium: boolean;
-  }) => isPremium && referralCount >= 5,
-  computeReferralsUntilTshirt: ({
-    referralCount,
-    isPremium,
-  }: {
-    referralCount: number;
-    isPremium: boolean;
-  }) => (isPremium ? Math.max(0, 5 - referralCount) : null),
+  computeTshirtRewardEligible: ({ referralCount }: { referralCount: number }) =>
+    referralCount >= 5,
+  computeReferralsUntilTshirt: ({ referralCount }: { referralCount: number }) =>
+    Math.max(0, 5 - referralCount),
 }));
 
 const { AccessService } = await import('../access.service.js');
@@ -128,11 +118,10 @@ describe('AccessService', () => {
     expect(access.bonusFromReferrals).toBe(15 * EXERCISE_BONUS_PER_REFERRAL);
   });
 
-  it('marks t-shirt eligible for premium users with 5 referrals', async () => {
+  it('marks t-shirt eligible with 5 referrals', async () => {
     profilesRepo.findOne.mockResolvedValue({ referredByUserId: null });
     trackedRepo.count.mockResolvedValue(0);
     profilesRepo.count.mockResolvedValue(5);
-    usersRepo.findOne.mockResolvedValue({ isPremium: true });
 
     const access = await service.getAccess('user-1');
     expect(access.tshirtRewardEligible).toBe(true);

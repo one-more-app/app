@@ -84,13 +84,13 @@ Puis **SHA-256** du keystore dans AppsFlyer (Paramètres Android → App Links).
 | App installée, clic OneLink | UDL → `setPendingInviteCode` → `#/invite/{code}` |
 | Install depuis le store (deferred) | `conversion_callback` + `deep_link_value` au 1er lancement |
 | Web sans app | URL OneLink → store ou landing ; code dans `deep_link_value` |
-| Inscription | `inviteCode` envoyé à l’API → `processInviteOnSignup` |
+| Inscription | `inviteCode` envoyé à l’API → `applyReferralCodeOnSignup` |
 
 ## 7. Tests
 
 1. Dashboard AppsFlyer → **Test devices** : ajouter l’IDFA/GAID de l’appareil de test.
 2. Activer `isDebug` (déjà lié à `import.meta.env.DEV` dans le code).
-3. Tester un lien généré depuis **Profil → Inviter un pote**.
+3. Tester un lien généré depuis **Paramètres → Parrainage → Partager mon invitation**.
 4. Vérifier dans les logs : `UDL_CALLBACK` avec `status: FOUND` et `deep_link_value`.
 
 ## 8. Store (Play / App Store)

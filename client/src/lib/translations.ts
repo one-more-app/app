@@ -350,7 +350,7 @@ export const UI = {
   profileNameSaved: "Nom enregistré",
   profileUsernameSaved: "Pseudo enregistré",
   profileUsernameSaveError: "Impossible d'enregistrer le pseudo",
-  profileInviteButton: "Partager mon code",
+  profileInviteButton: "Partager mon invitation",
   profileCopyInviteCode: "Copier mon code",
   profileShareButton: "Partager ma fiche",
   profileShareText: "Ma fiche One More",
@@ -372,7 +372,7 @@ export const UI = {
   exerciseLimitTitle: "Limite d'exercices atteinte",
   exerciseLimitDescription:
     "Tu suis {count}/{limit} exercices. Parraine un pote avec ton code pour gagner {bonus} exercices supplémentaires.",
-  exerciseLimitInviteLink: "Partager mon code",
+  exerciseLimitInviteLink: "Partager mon invitation",
   exerciseLimitSearchFriend: "Voir mes amis",
   referralSettingsTitle: "Parrainage",
   referralSettingsDescription:
@@ -382,6 +382,10 @@ export const UI = {
   referralCodeLabel: "Code de parrainage",
   referralYourCodeLabel: "Mon code à partager",
   referralCodePlaceholder: "ex. abc12def",
+  signupReferralCodeLabel: "Code de parrainage (optionnel)",
+  signupReferralCodeHint: "Tu as le code d'un pote ? Gagne +{bonus} exercices.",
+  profileReferralBannerTitle: "Gagne un t-shirt en édition limitée",
+  profileReferralBannerSubtitle: "5 potes parrainés = t-shirt One More offert",
   referralCodeApply: "Appliquer le code",
   referralCodeApplied: "Code de parrainage appliqué",
   referralCodeAlreadyUsed: "Tu as déjà utilisé un code de parrainage",
@@ -393,9 +397,70 @@ export const UI = {
   referralTshirtEarned:
     "Bravo ! Tu as débloqué ton t-shirt One More grâce à tes parrainages.",
   referralTshirtProgress:
-    "Encore {count} parrainage(s) pour débloquer ton t-shirt One More (abonnés premium).",
-  referralTshirtPremiumHint:
-    "Avec l'abonnement premium, 5 parrainages te donnent droit à un t-shirt One More.",
+    "Encore {count} parrainage(s) pour débloquer ton t-shirt One More.",
+  referralTshirtHint: "5 parrainages = t-shirt One More offert.",
+  referralTshirtImageAlt: "T-shirt de récompense One More",
+  referralTshirtSloganOutline: "ALWAYS",
+  referralTshirtSloganBold: "ONE MORE",
+  referralHubTitle: "Parrainage",
+  referralHubDescription:
+    "Partage ton code et débloque des exercices — +{bonus} si tu utilises le code d'un pote.",
+  referralDrawerShortDescription:
+    "Partage ton code : +{bonus} exercices par pote parrainé.",
+  referralLimitHint:
+    "Limite atteinte — parraine un pote pour gagner +{bonus} exercices.",
+  referralHubSettingsHint:
+    "Ouvre le panneau parrainage pour partager ton code et suivre tes gains.",
+  referralOpenDrawer: "Ouvrir le parrainage",
+  settingsReferralInviteButton: "Je parraine",
+  settingsReferralApplyButton: "J'ai un code de parrainage",
+  referralApplyDrawerTitle: "Utiliser un code de parrainage",
+  referralApplyDrawerDescription:
+    "Entre le code d'un ami pour gagner +{bonus} exercices.",
+  referralApplyCodeToggle: "J'ai reçu un code de parrainage",
+  referralCountZero: "Aucun pote parrainé",
+  referralCountOne: "1 pote parrainé",
+  referralCountMany: "{count} potes parrainés",
+  referralBattlePassTitle: "Récompense t-shirt",
+  referralBattlePassRemaining: "Encore {count} parrainage(s) pour le t-shirt.",
+  referralBattlePassReward: "T-shirt",
+  referralBattlePassLegend:
+    "Chaque pote parrainé = +{bonus} exercices · 5 potes = t-shirt offert",
+  exerciseLimitViewReferral: "Voir mon parrainage",
+
+  premiumSettingsTitle: "Abonnement Premium",
+  premiumActiveDescription: "Tu bénéficies de l'abonnement premium One More.",
+  premiumInactiveDescription:
+    "Passe premium pour débloquer des avantages exclusifs One More.",
+  premiumActiveBadge: "Abonnement premium actif",
+  premiumSubscribeButton: "Passer Premium",
+  premiumRestoreButton: "Restaurer mes achats",
+  premiumSubscribeSuccess: "Abonnement activé",
+  premiumSubscribeError: "Impossible de finaliser l'achat",
+  premiumRestoreSuccess: "Achats restaurés",
+  premiumRestoreError: "Impossible de restaurer les achats",
+
+  tshirtClaimButton: "Réclamer mon t-shirt",
+  tshirtClaimTitle: "Réclamer ton t-shirt One More",
+  tshirtClaimDescription:
+    "Renseigne ton adresse de livraison. Nous te contacterons si besoin.",
+  tshirtClaimFullName: "Nom complet",
+  tshirtClaimStreet: "Adresse",
+  tshirtClaimCity: "Ville",
+  tshirtClaimPostalCode: "Code postal",
+  tshirtClaimCountry: "Pays",
+  tshirtClaimSize: "Taille",
+  tshirtClaimSubmit: "Envoyer ma demande",
+  tshirtClaimSuccess: "Demande enregistrée — ton t-shirt est en préparation",
+  tshirtClaimError: "Impossible d'enregistrer ta demande",
+  tshirtClaimNotEligible: "Tu n'es pas encore éligible au t-shirt",
+  tshirtClaimAlreadyDone: "Tu as déjà réclamé ton t-shirt",
+  tshirtClaimPending: "Ton t-shirt est en cours de préparation.",
+  tshirtClaimShipped: "Ton t-shirt a été expédié.",
+  tshirtClaimShippedWithTracking:
+    "Ton t-shirt a été expédié. Suivi : {tracking}",
+  tshirtClaimDelivered: "Ton t-shirt a été livré. Profites-en !",
+
   friendsTitle: "Amis",
   friendsListTitle: "Mes potes",
   friendRequestsTitle: "Demandes reçues",

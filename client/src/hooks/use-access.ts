@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { fetchUserAccess, type UserAccess, ACCESS_SWR_KEY } from "@/lib/social-api";
+import { REFERRALS_FOR_TSHIRT_REWARD } from "@one-more/shared/access-config";
 import useSWR from "swr";
 
 export { ACCESS_SWR_KEY };
@@ -23,6 +24,6 @@ export function useAccess() {
     hasUsedReferralCode: data?.hasUsedReferralCode ?? false,
     isPremium: data?.isPremium ?? false,
     tshirtRewardEligible: data?.tshirtRewardEligible ?? false,
-    referralsUntilTshirt: data?.referralsUntilTshirt ?? null,
+    referralsUntilTshirt: data?.referralsUntilTshirt ?? REFERRALS_FOR_TSHIRT_REWARD,
   };
 }
