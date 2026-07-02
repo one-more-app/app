@@ -1,0 +1,67 @@
+---
+description: Compteur de repos "temps depuis la dernière série" (RestSinceLastSetBar) — comportement, source de données, contraintes UI/analytics
+globs: client/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Compteur de repos entre séries — One More
+
+Barre fine qui se lance **automatiquement** dès qu'une performance est enregistrée et affiche le temps `m:ss` écoulé depuis la dernière série, quel que soit l'exercice consulté.
+
+## Source unique de vérité
+
+| Concern | Fichier |
+|---|---|
+| UI | [`client/src/components/RestSinceLastSetBar.tsx`](../../client/src/components/RestSinceLastSetBar.tsx) |
+| Ticker + throttle onglet caché | [`client/src/hooks/use-rest-since-last-set.ts`](../../client/src/hooks/use-rest-since-last-set.ts) |
+| **Dernière perf globale** (tous exercices) | [`client/src/hooks/use-latest-global-perf.ts`](../../client/src/hooks/use-latest-global-perf.ts) |
+| Formatage, seuils, progression | [`client/src/lib/format-rest-elapsed.ts`](../../client/src/lib/format-rest-elapsed.ts) |
+| Analytics | `trackRestTimerDismissed` dans [`client/src/lib/analytics/performance-tracking.ts`](../../client/src/lib/analytics/performance-tracking.ts) |
+| Point de montage | Header sticky de [`client/src/pages/ExerciseDetailPage.tsx`](../../client/src/pages/ExerciseDetailPage.tsx) |
+
+## Règles de comportement
+
+1. **Global à tous les exercices** — Le `createdAt` alimentant la barre vient **toujours** de `useLatestGlobalPerf()` (dernière perf loggée, tous exercices confondus, `deletedAt` exclu). Ne **jamais** repasser à `usePerformance(id).lastPerf` pour l'alimenter : la barre doit rester visible quand l'utilisateur change d'exercice.
+2. **Nom de l'exo source affiché** — La barre montre `REPOS` **et** le nom de l'exercice où la perf a été loggée, résolu via `useLatestGlobalPerf().exercise`. Le hook croise `useHomeExercisesData` + `getTrackedExerciseById` (fallback storage) pour trouver le nom même si l'exo n'est plus dans la home list active.
+3. **Tap = ouvrir l'exo source** — La zone `REPOS + nom` est un `<button>` qui navigue vers `/exercise/{sourceExercise.id}` via `useNavigate()`. Le bouton est désactivé (`cursor-default`, pas de hover) quand `sourceExercise.id === currentExerciseId` — évite un re-navigate vers soi-même. Toujours passer `currentExerciseId` depuis les pages qui montent la barre.
+4. **Auto-start** — Aucun bouton "démarrer". Enregistrer une perf via `savePerformanceAndWait` suffit : SWR revalide, `useLatestGlobalPerf` renvoie la nouvelle entrée, la barre se re-monte via `key={createdAt}` et repart à `0:00`.
+5. **Durée max** — Masquée automatiquement après `REST_SINCE_LAST_SET_MAX_MS` (10 min). Cette constante est **la seule** poignée pour changer la durée ; ne pas dupliquer la valeur.
+6. **Dismiss manuel** — Le bouton croix cache la barre localement (state React) et **doit** `event.stopPropagation()` sinon le tap remonte au bouton parent et rouvre l'exo. Le dismiss se réinitialise dès qu'une nouvelle perf change le `key={createdAt}`. Ne pas persister le dismiss dans le storage.
+7. **Onglet caché** — Le ticker s'arrête sur `visibilitychange` puis resynchronise `now = Date.now()` au retour. Ne pas remplacer par un `setInterval` non-conditionnel (coût batterie / drift iOS).
+8. **Motion** — Respect de `prefers-reduced-motion` : la barre de progression saute au lieu de transitionner. À conserver pour tout nouveau visuel ajouté.
+9. **Accessibilité** — `role="status"`, `aria-label` en français localisé via `UI.restSinceLastSetA11y`. Quand un exo source est cliquable, le `aria-label` du bouton concatène le nom pour annoncer la destination. Mise à jour `sr-only` à chaque nouvelle minute (bucket) sans spammer le lecteur d'écran.
+
+## À faire pour tout nouveau point de montage
+
+Si la barre doit apparaître sur une autre page (ex. Home, History) :
+
+- Récupérer `const latestGlobalPerf = useLatestGlobalPerf()` puis :
+
+```tsx
+<RestSinceLastSetBar
+  key={latestGlobalPerf?.entry.createdAt ?? 'none'}
+  createdAt={latestGlobalPerf?.entry.createdAt ?? null}
+  sourceExercise={latestGlobalPerf?.exercise ?? null}
+  currentExerciseId={/* id de la page si exo, sinon null */}
+/>
+```
+
+- Toujours utiliser `key={createdAt}` pour que dismiss + compteur se réinitialisent au bon moment.
+- Passer `currentExerciseId` (peut être `null` hors page exo) — sinon le tap re-navigue vers soi-même.
+- La barre doit rester dans un header **`sticky-top-safe`** existant (voir [`mobile-safe-area.mdc`](mobile-safe-area.mdc)) ; ne pas la placer en flottant fixe (conflit avec la bottom nav et les scrims safe-area).
+
+## Interdits
+
+- Ne pas créer un second hook "timer de repos" — étendre `use-rest-since-last-set` / `use-latest-global-perf`.
+- Ne pas alimenter la barre avec `Date.now()` local (perdrait la persistance entre navigations et remounts).
+- Ne pas afficher deux barres simultanément (dédupliquer si ajoutée dans un layout global **et** une page).
+- Ne pas re-tracker `rest_timer_dismissed` ailleurs que dans le handler de la croix : l'événement doit rester 1:1 avec l'action utilisateur.
+- Ne pas coder en dur `10 * 60 * 1000` : importer `REST_SINCE_LAST_SET_MAX_MS`.
+- Ne pas oublier `event.stopPropagation()` sur le bouton croix, sinon le clic remonte au bouton parent et re-navigue vers l'exo source.
+- Ne pas dupliquer la résolution du nom d'exo dans les composants : passer par `useLatestGlobalPerf().exercise`.
+
+## Voir aussi
+
+- [`openpanel-tracking.mdc`](openpanel-tracking.mdc) — taxonomie `rest_timer_dismissed`.
+- [`mobile-safe-area.mdc`](mobile-safe-area.mdc) — contraintes header sticky + safe area iOS/Android.
+- [`typography.mdc`](typography.mdc) — police `font-one-more` italique tabular-nums utilisée pour le chrono.

@@ -27,6 +27,7 @@ import {
 } from '@/hooks/use-api-data'
 import { useCelebrationQueueActive } from '@/hooks/use-celebration-queue-active'
 import { useExercisePresence } from '@/hooks/use-exercise-presence'
+import { useLatestGlobalPerf } from '@/hooks/use-latest-global-perf'
 import { usePerformance } from '@/hooks/use-performance'
 import { useTheme } from '@/hooks/use-theme'
 import { fetchExercisesMeta, fetchExerciseTierLadder, fetchPerformanceEntries } from '@/lib/data-api'
@@ -111,6 +112,7 @@ export function ExerciseDetailPage() {
         updatePerformance,
         refresh,
     } = usePerformance(id ?? null)
+    const latestGlobalPerf = useLatestGlobalPerf()
     const leagueInfo =
         exercise && 'league' in exercise ? exercise.league ?? null : null
     const { data: allTiers } = useSWR(
@@ -461,9 +463,10 @@ export function ExerciseDetailPage() {
                     }
                 />
                 <RestSinceLastSetBar
-                    key={lastPerf?.createdAt ?? 'none'}
-                    createdAt={lastPerf?.createdAt ?? null}
-                    trackedExerciseId={id}
+                    key={latestGlobalPerf?.entry.createdAt ?? 'none'}
+                    createdAt={latestGlobalPerf?.entry.createdAt ?? null}
+                    sourceExercise={latestGlobalPerf?.exercise ?? null}
+                    currentExerciseId={id ?? null}
                 />
             </div>
 
