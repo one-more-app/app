@@ -180,7 +180,7 @@ export function ExerciseCard({
                                         <span className="text-muted-foreground">× {lastPerf.reps}</span>
                                     </span>
                                 ) : (
-                                    <span className="text-muted-foreground">—</span>
+                                    <span className="text-muted-foreground">–</span>
                                 )}
                             </div>
                             <div className={recordContainerClassName}>
@@ -215,7 +215,7 @@ export function ExerciseCard({
                                         </span>
                                     </span>
                                 ) : (
-                                    <span className="text-muted-foreground">—</span>
+                                    <span className="text-muted-foreground">–</span>
                                 )}
                             </div>
                         </div>

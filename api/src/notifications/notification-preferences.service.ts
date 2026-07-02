@@ -70,6 +70,8 @@ export class NotificationPreferencesService {
         return prefs.friendRecords;
       case 'weekly_recap':
         return prefs.weeklyRecap;
+      case 'referral_used':
+        return prefs.friendAccepted;
       default:
         return false;
     }

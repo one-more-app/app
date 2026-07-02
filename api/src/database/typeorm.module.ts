@@ -21,6 +21,7 @@ import { DeviceTokenEntity } from '../notifications/entities/device-token.entity
 import { NotificationPreferencesEntity } from '../notifications/entities/notification-preferences.entity.js';
 import { NotificationDeliveryEntity } from '../notifications/entities/notification-delivery.entity.js';
 import { FriendTrainingAlertEntity } from '../notifications/entities/friend-training-alert.entity.js';
+import { TshirtRewardClaimEntity } from '../rewards/entities/tshirt-reward-claim.entity.js';
 
 export const TYPEORM_ENTITIES = [
   UserEntity,
@@ -40,6 +41,7 @@ export const TYPEORM_ENTITIES = [
   NotificationPreferencesEntity,
   NotificationDeliveryEntity,
   FriendTrainingAlertEntity,
+  TshirtRewardClaimEntity,
 ] as const;
 
 const getDatabaseUrl = (config: ConfigService): string => {

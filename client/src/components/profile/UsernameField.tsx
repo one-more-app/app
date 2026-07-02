@@ -91,7 +91,7 @@ export function UsernameField({
       ) : null}
       {status === "available" ? (
         <p className="text-xs text-emerald-600">
-          @{normalized} — {UI.usernameAvailable}
+          @{normalized} · {UI.usernameAvailable}
         </p>
       ) : null}
     </div>

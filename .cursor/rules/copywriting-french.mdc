@@ -1,0 +1,47 @@
+---
+description: Ton et ponctuation des textes UI en français (éviter le style IA)
+globs: client/src/**/*.{ts,tsx},api/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Copywriting UI (français)
+
+## Interdit dans les textes visibles par l'utilisateur
+
+- **Tiret cadratin** (`—`, U+2014) : ne pas l'utiliser pour relier deux idées ou séparer label/valeur.
+- **Double tiret** (`--`) dans les chaînes affichées.
+
+Ces ponctuations donnent un ton « généré par IA ». Les commentaires de code et la doc technique peuvent les garder si besoin.
+
+## Alternatives naturelles
+
+| Situation | Préférer |
+|-----------|----------|
+| Deux phrases liées | Point (`.`) ou virgule |
+| Label : valeur | Deux-points (`:`) ou point médian (`·`) |
+| Valeur manquante en UI | Tiret demi-cadratin (`–`) ou rien |
+| Liste / détail court | Virgule ou `·` |
+
+## Exemples
+
+```text
+❌ Limite atteinte — parraine un pote pour gagner +5 exercices.
+✅ Limite atteinte. Parraine un pote pour gagner +5 exercices.
+
+❌ Entraîné — lundi
+✅ Entraîné · lundi
+
+❌ +120 XP — Record personnel
+✅ +120 XP · Record personnel
+```
+
+## Où centraliser
+
+- Chaînes produit : `client/src/lib/translations.ts` (`UI.*`)
+- Notifications push : `api/src/notifications/`
+- Éviter les tirets cadratin en dur dans les composants ; passer par `UI` quand c'est du copy.
+
+## Ton
+
+- Tutoiement, phrases courtes, direct.
+- Pas de formulations emphatiques ou marketing creux.

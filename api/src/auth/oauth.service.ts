@@ -17,6 +17,7 @@ import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { UserEntity } from './entities/user.entity.js';
 import { AuthService } from './auth.service.js';
 import { InvitesService } from '../social/invites.service.js';
+import { ReferralService } from '../social/referral.service.js';
 import { consumeOAuthState, saveOAuthState } from './oauth-state.store.js';
 
 type Provider = 'google' | 'apple';
@@ -63,6 +64,7 @@ export class OAuthService {
     private readonly profilesRepo: Repository<UserProfileEntity>,
     private auth: AuthService,
     private invites: InvitesService,
+    private referrals: ReferralService,
   ) {}
 
   start(
@@ -240,7 +242,7 @@ export class OAuthService {
         await this.invites.createDefaultProfile(created.id, {
           email: normalizedEmail,
         });
-        await this.invites.processInviteOnSignup({
+        await this.referrals.applyReferralCodeOnSignup({
           newUserId: created.id,
           inviteCode: params.inviteCode,
         });

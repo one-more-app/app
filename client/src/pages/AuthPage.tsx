@@ -10,11 +10,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { identifyEmail, suggestUsername } from "@/lib/auth";
+import { peekPendingInviteCode } from "@/lib/invite-code";
 import { signInWithApple, signInWithGoogle } from "@/lib/oauth";
+import { fetchInvitePreview } from "@/lib/social-api";
 import { resolvePostAuthNavigation } from "@/lib/post-auth-navigation";
 import { setUserProfile } from "@/lib/storage";
 import { UI } from "@/lib/translations";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
+import {
+  EXERCISE_BONUS_FOR_USING_REFERRAL,
+} from "@one-more/shared/access-config";
 import { Capacitor } from "@capacitor/core";
 import { X } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -26,7 +31,8 @@ type AuthStep =
     | "register_firstName"
     | "register_lastName"
     | "register_username"
-    | "register_password";
+    | "register_password"
+    | "register_referral";
 
 type AuthPageProps = {
     embedded?: boolean;
@@ -79,6 +85,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         useState<UsernameFieldStatus>("idle");
     const [password, setPassword] = useState("");
     const [passwordConfirm, setPasswordConfirm] = useState("");
+    const [referralCode, setReferralCode] = useState(
+        () => peekPendingInviteCode() ?? "",
+    );
     const [isBusy, setIsBusy] = useState(false);
     const normalizedEmail = email.trim().toLowerCase();
     const canContinueEmail = normalizedEmail.includes("@") && !isBusy;
@@ -151,17 +160,27 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         }
     };
 
-    const submitRegisterPassword = async () => {
-        if (!canRegisterPassword) return;
+    const submitRegisterReferral = async () => {
+        if (!canRegisterPassword || isBusy) return;
+        const trimmedReferralCode = referralCode.trim();
         setIsBusy(true);
         auth.clearError();
         try {
+            if (trimmedReferralCode) {
+                try {
+                    await fetchInvitePreview(trimmedReferralCode);
+                } catch {
+                    auth.setError(UI.referralCodeInvalid);
+                    return;
+                }
+            }
             await auth.register({
                 email: normalizedEmail,
                 password,
                 username: normalizedUsername,
                 firstName: firstName.trim(),
                 lastName: lastName.trim(),
+                inviteCode: trimmedReferralCode || undefined,
             });
             setUserProfile(
                 {
@@ -177,7 +196,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         }
     };
 
-    const registerTotal = 4;
+    const registerTotal = 5;
     const registerStepLabel = (current: number) =>
         UI.onboardingStepIndicator
             .replace("{current}", String(current))
@@ -198,13 +217,18 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
             {step === "register_firstName" ||
                 step === "register_lastName" ||
                 step === "register_username" ||
-                step === "register_password" ? (
+                step === "register_password" ||
+                step === "register_referral" ? (
                 <StepCard
                     key={`register-${step}`}
                     animated
                     className="shadow-2xl border-border/80 bg-card/95 backdrop-blur-sm"
                     onBack={() => {
                         auth.clearError();
+                        if (step === "register_referral") {
+                            setStep("register_password");
+                            return;
+                        }
                         if (step === "register_password") {
                             setPassword("");
                             setPasswordConfirm("");
@@ -229,7 +253,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 ? registerStepLabel(2)
                                 : step === "register_username"
                                     ? registerStepLabel(3)
-                                    : registerStepLabel(4)
+                                    : step === "register_password"
+                                        ? registerStepLabel(4)
+                                        : registerStepLabel(5)
                     }
                     progressPercent={
                         step === "register_firstName"
@@ -238,7 +264,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 ? registerProgress(2)
                                 : step === "register_username"
                                     ? registerProgress(3)
-                                    : registerProgress(4)
+                                    : step === "register_password"
+                                        ? registerProgress(4)
+                                        : registerProgress(5)
                     }
                     title={
                         step === "register_firstName"
@@ -247,7 +275,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 ? UI.lastNameTitle
                                 : step === "register_username"
                                     ? UI.usernameTitle
-                                    : UI.passwordTitle
+                                    : step === "register_password"
+                                        ? UI.passwordTitle
+                                        : UI.signupReferralCodeTitle
                     }
                     contentClassName="space-y-3"
                 >
@@ -352,7 +382,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 </Button>
                             </div>
                         </>
-                    ) : (
+                    ) : step === "register_password" ? (
                         <>
                             <div className="space-y-1">
                                 <Input
@@ -397,8 +427,50 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                             <div className="space-y-2">
                                 <Button
                                     className="w-full"
-                                    onClick={() => void submitRegisterPassword()}
+                                    onClick={() => {
+                                        if (!canRegisterPassword) return;
+                                        auth.clearError();
+                                        setStep("register_referral");
+                                    }}
                                     disabled={!canRegisterPassword}
+                                >
+                                    {UI.continue}
+                                </Button>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="space-y-1">
+                                <Input
+                                    label={UI.signupReferralCodeLabel}
+                                    value={referralCode}
+                                    onChange={(e) => {
+                                        setReferralCode(e.target.value);
+                                        auth.clearError();
+                                    }}
+                                    placeholder={UI.referralCodePlaceholder}
+                                    autoCapitalize="none"
+                                    autoCorrect="off"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    {UI.signupReferralCodeHint.replace(
+                                        "{bonus}",
+                                        String(EXERCISE_BONUS_FOR_USING_REFERRAL),
+                                    )}
+                                </p>
+                            </div>
+
+                            {auth.lastError && (
+                                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                                    {auth.lastError}
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                <Button
+                                    className="w-full"
+                                    onClick={() => void submitRegisterReferral()}
+                                    disabled={isBusy}
                                 >
                                     {UI.createAccount}
                                 </Button>

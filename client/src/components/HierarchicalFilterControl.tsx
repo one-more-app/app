@@ -253,7 +253,7 @@ export function HierarchicalFilterControl({
                                                 chipInactiveInnerHover,
                                             ),
                                     )}
-                                    aria-label={`${translateGroup(group)} — affiner`}
+                                    aria-label={`${translateGroup(group)}, affiner`}
                                     onClick={() => setOpenGroup(group)}
                                 >
                                     <ChevronRight className="size-4" />

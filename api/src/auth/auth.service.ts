@@ -9,6 +9,7 @@ import { SessionEntity } from './entities/session.entity.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { UserEntity } from './entities/user.entity.js';
 import { InvitesService } from '../social/invites.service.js';
+import { ReferralService } from '../social/referral.service.js';
 
 type AuthUser = { id: string; email: string | null };
 type AuthSession = { accessToken: string; refreshToken: string; user: AuthUser };
@@ -25,6 +26,7 @@ export class AuthService {
     private jwt: JwtService,
     private config: ConfigService,
     private invites: InvitesService,
+    private referrals: ReferralService,
   ) {}
 
   private async signAccessToken(user: AuthUser): Promise<string> {
@@ -86,7 +88,7 @@ export class AuthService {
       username: params.username,
       email: user.email,
     });
-    await this.invites.processInviteOnSignup({
+    await this.referrals.applyReferralCodeOnSignup({
       newUserId: user.id,
       inviteCode: params.inviteCode,
     });

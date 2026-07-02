@@ -96,6 +96,25 @@ export class NotificationDispatchService {
     });
   }
 
+  async notifyReferralUsed(params: {
+    referrerId: string;
+    referredUserId: string;
+  }) {
+    if (
+      !(await this.prefs.isEnabled(params.referrerId, NotificationType.ReferralUsed))
+    ) {
+      return;
+    }
+    const name = await this.profileName(params.referredUserId);
+    await this.push.sendToUser(params.referrerId, {
+      type: NotificationType.ReferralUsed,
+      title: 'Nouveau parrainage',
+      body: `${name} a utilisé ton code de parrainage`,
+      route: '/settings',
+      dedupKey: `referral:${params.referredUserId}`,
+    });
+  }
+
   async notifyFriendAccepted(params: {
     requesterId: string;
     addresseeId: string;
@@ -186,7 +205,7 @@ export class NotificationDispatchService {
       await this.push.sendToUser(friendId, {
         type: NotificationType.FriendPr,
         title: 'Nouveau record',
-        body: `${name} — ${params.exerciseName} : ${params.weight} kg × ${params.reps}`,
+        body: `${name} : ${params.exerciseName} : ${params.weight} kg × ${params.reps}`,
         route: `/friends/${params.athleteUserId}`,
         dedupKey: `pr:${params.athleteUserId}:${today}:${Date.now()}`,
       });
@@ -224,7 +243,7 @@ export class NotificationDispatchService {
     await this.push.sendToUser(userId, {
       type: NotificationType.StreakAtRisk,
       title: 'Série en danger',
-      body: `Ta série de ${streak} jours expire ce soir — une séance suffit !`,
+      body: `Ta série de ${streak} jours expire ce soir. Une séance suffit !`,
       route: '/home',
       dedupKey: `streak:${today}`,
     });

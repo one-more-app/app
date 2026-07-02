@@ -5,18 +5,25 @@ import type { UserProgressState } from "@/types";
 
 export const ACCESS_SWR_KEY = "user-access";
 
-export type AccessTier = "limited" | "full";
-
 export type UserAccess = {
-  accessTier: AccessTier;
-  exerciseLimit: number | null;
+  exerciseLimit: number;
   activeExerciseCount: number;
   canAddExercise: boolean;
-  validatedInvitesCount: number;
+  referralCount: number;
+  hasUsedReferralCode: boolean;
+  bonusFromReferrals: number;
+  bonusFromBeingReferred: number;
+  isPremium: boolean;
+  tshirtRewardEligible: boolean;
+  referralsUntilTshirt: number;
 };
 
-export type InviteLink = {
+export type InviteCode = {
   code: string;
+};
+
+/** @deprecated Utiliser InviteCode — conservé pour compatibilité URL */
+export type InviteLink = InviteCode & {
   url: string;
 };
 
@@ -60,6 +67,10 @@ export async function fetchUserAccess(): Promise<UserAccess> {
   return await apiFetch<UserAccess>("/me/access");
 }
 
+export async function fetchInviteCode(): Promise<InviteCode> {
+  return await apiFetch<InviteCode>("/social/invite-code");
+}
+
 export async function fetchInviteLink(): Promise<InviteLink> {
   return await apiFetch<InviteLink>("/social/invite-link");
 }
@@ -68,6 +79,15 @@ export async function fetchInvitePreview(code: string): Promise<InvitePreview> {
   return await apiFetch<InvitePreview>(
     `/social/invite/${encodeURIComponent(code)}/preview`,
   );
+}
+
+export async function applyReferralCode(
+  inviteCode: string,
+): Promise<{ ok: true; referrerUserId: string }> {
+  return await apiFetch("/social/referral/apply", {
+    method: "POST",
+    body: JSON.stringify({ inviteCode }),
+  });
 }
 
 export async function requestFriendFromInvite(
@@ -175,14 +195,62 @@ function isShareCancelled(error: unknown): boolean {
 }
 
 function buildInviteShareContent(url: string) {
-  const { inviteShareTitle, inviteShareMessage, inviteShareDialogTitle } = UI;
+  const { inviteShareTitle, inviteShareDialogTitle } = UI;
+  const text = UI.inviteCodeShareMessage.replace("{code}", url);
   return {
     title: inviteShareTitle,
-    text: inviteShareMessage,
+    text,
     url,
     dialogTitle: inviteShareDialogTitle,
-    clipboardText: `${inviteShareMessage}\n\n${url}`,
+    clipboardText: text,
   };
+}
+
+function buildInviteCodeShareContent(code: string) {
+  const text = UI.inviteCodeShareMessage.replace("{code}", code);
+  return {
+    title: UI.inviteShareTitle,
+    text,
+    dialogTitle: UI.inviteShareDialogTitle,
+    clipboardText: text,
+  };
+}
+
+export async function shareInviteCode(code: string): Promise<InviteShareResult> {
+  const share = buildInviteCodeShareContent(code);
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const { Share } = await import("@capacitor/share");
+      await Share.share({
+        title: share.title,
+        text: share.text,
+        dialogTitle: share.dialogTitle,
+      });
+      return "shared";
+    } catch (error) {
+      if (isShareCancelled(error)) return "dismissed";
+      throw error;
+    }
+  }
+
+  if (typeof navigator !== "undefined" && navigator.share) {
+    try {
+      await navigator.share({
+        title: share.title,
+        text: share.text,
+      });
+      return "shared";
+    } catch (error) {
+      if (isShareCancelled(error)) return "dismissed";
+      // fallback copy
+    }
+  }
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(share.clipboardText);
+    return "copied";
+  }
+  throw new Error("Partage non disponible");
 }
 
 export async function shareInviteUrl(url: string): Promise<InviteShareResult> {

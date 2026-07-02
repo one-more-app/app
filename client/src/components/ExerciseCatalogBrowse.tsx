@@ -33,6 +33,7 @@ export interface ExerciseCatalogBrowseProps {
 function ExerciseCatalogGrid({
     exercises,
     trackedIds,
+    brokenImageIds,
     onSelectExercise,
     onAddExercise,
     onImageError,
@@ -40,6 +41,7 @@ function ExerciseCatalogGrid({
 }: {
     exercises: ExerciseDBExercise[]
     trackedIds: Set<string>
+    brokenImageIds: Set<string>
     onSelectExercise: (ex: ExerciseDBExercise) => void
     onAddExercise: (ex: ExerciseDBExercise) => void
     onImageError: (exId: string) => void
@@ -80,12 +82,18 @@ function ExerciseCatalogGrid({
                                 }}
                             >
                                 <div className="relative aspect-square w-full shrink-0 bg-muted">
-                                    <img
-                                        src={getExerciseImageUrl(ex.gifUrl)}
-                                        alt=""
-                                        className="size-full object-cover"
-                                        onError={() => onImageError(ex.id)}
-                                    />
+                                    {brokenImageIds.has(ex.id) ? (
+                                        <div className="flex size-full items-center justify-center text-muted-foreground">
+                                            <Dumbbell className="size-6" />
+                                        </div>
+                                    ) : (
+                                        <img
+                                            src={getExerciseImageUrl(ex.gifUrl)}
+                                            alt=""
+                                            className="size-full object-cover"
+                                            onError={() => onImageError(ex.id)}
+                                        />
+                                    )}
                                 </div>
                                 <CardHeader className="flex shrink-0 flex-col gap-0.5 px-2 py-1.5 pb-1">
                                     <CardTitle className="text-[11px] leading-snug">
@@ -160,8 +168,6 @@ export function ExerciseCatalogBrowse({
             browse={browse}
             searchQuery={searchQuery}
             searchSort="popularity"
-            requireGif
-            isGifBroken={(id) => brokenImageIds.has(id)}
             viewAll={viewAll}
             onToggleViewAll={onToggleViewAll}
             onPickZone={onPickZone}
@@ -175,6 +181,7 @@ export function ExerciseCatalogBrowse({
                         .map((b) => idToCatalog.get(b.id))
                         .filter((ex): ex is ExerciseDBExercise => !!ex)}
                     trackedIds={trackedIds}
+                    brokenImageIds={brokenImageIds}
                     onSelectExercise={onSelectExercise}
                     onAddExercise={onAddExercise}
                     onImageError={onImageError}

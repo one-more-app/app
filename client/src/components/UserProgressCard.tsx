@@ -60,7 +60,7 @@ export function UserProgressCard() {
           <ul className="space-y-1 border-t border-border pt-2 text-xs text-muted-foreground">
             {progress.recentGrants.map((g, i) => (
               <li key={`${g.sourceType}-${i}`}>
-                +{g.amount} XP — {formatGrantSource(g.sourceType)}
+                +{g.amount} XP · {formatGrantSource(g.sourceType)}
               </li>
             ))}
           </ul>

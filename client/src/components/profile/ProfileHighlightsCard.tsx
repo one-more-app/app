@@ -74,7 +74,7 @@ export function ProfileHighlightsCard({
                                     </span>
                                 </>
                             ) : (
-                                "—"
+                                "–"
                             )}
                         </span>
                         {progress ? (
@@ -109,7 +109,7 @@ export function ProfileHighlightsCard({
                                 className="mt-1.5"
                             />
                         ) : (
-                            <p className="mt-1 text-sm text-muted-foreground">—</p>
+                            <p className="mt-1 text-sm text-muted-foreground">–</p>
                         )}
                     </div>
 

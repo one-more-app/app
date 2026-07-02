@@ -1,5 +1,7 @@
 import { BackHeader } from '@/components/BackHeader'
 import { NotificationSettingsCard } from '@/components/settings/NotificationSettingsCard'
+import { PremiumSettingsCard } from '@/components/settings/PremiumSettingsCard'
+import { SettingsReferralLinkCard } from '@/components/settings/SettingsReferralLinkCard'
 import { ProfileNameDialog } from '@/components/profile/ProfileNameDialog'
 import { SettingsProfileSkeleton } from '@/components/skeletons'
 import { Button } from '@/components/ui/button'
@@ -58,7 +60,7 @@ export function SettingsPage() {
     const handleDeleteAccount = () => {
         if (!window.confirm(UI.deleteAccountConfirm)) return
 
-        const accountEmail = auth.user?.email ?? auth.user?.id ?? '—'
+        const accountEmail = auth.user?.email ?? auth.user?.id ?? '–'
         const subject = encodeURIComponent(UI.deleteAccountEmailSubject)
         const body = encodeURIComponent(
             UI.deleteAccountEmailBody.replace('{email}', accountEmail),
@@ -109,6 +111,10 @@ export function SettingsPage() {
                 </Card>
 
                 {auth.status === 'authenticated' ? <NotificationSettingsCard /> : null}
+
+                {auth.status === 'authenticated' ? <PremiumSettingsCard /> : null}
+
+                {auth.status === 'authenticated' ? <SettingsReferralLinkCard /> : null}
 
                 <Card>
                     <CardHeader>

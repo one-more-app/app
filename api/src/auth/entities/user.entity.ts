@@ -25,6 +25,9 @@ export class UserEntity {
   @Column({ type: 'text', nullable: true })
   password!: string | null;
 
+  @Column({ type: 'boolean', default: false })
+  isPremium!: boolean;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 

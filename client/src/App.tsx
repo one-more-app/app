@@ -32,12 +32,20 @@ import { SettingsPage } from '@/pages/SettingsPage'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
+import { ReferralDrawerHost } from '@/components/referral/ReferralDrawerHost'
+import { ReferralDrawerProvider } from '@/hooks/use-referral-drawer'
+import { usePurchases } from '@/hooks/use-purchases'
 import { useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 
 function StatsRedirect() {
     return <Navigate to="/profile" replace />
+}
+
+function PurchasesSyncHost() {
+    usePurchases()
+    return null
 }
 
 function AccessGate({ children }: { children: React.ReactNode }) {
@@ -224,6 +232,9 @@ function App() {
                 <Toaster />
                 <LeaguePromotionCelebrationHost />
                 <AuthProvider>
+                    <ReferralDrawerProvider>
+                    <PurchasesSyncHost />
+                    <ReferralDrawerHost />
                     <AnalyticsProvider>
                     <RealtimeProvider>
                     <ProfileUsernameSetupHost />
@@ -258,6 +269,7 @@ function App() {
                     </AccessGate>
                     </RealtimeProvider>
                     </AnalyticsProvider>
+                    </ReferralDrawerProvider>
                 </AuthProvider>
             </div>
         </HashRouter>

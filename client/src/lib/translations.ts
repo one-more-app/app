@@ -231,9 +231,9 @@ export const UI = {
   historyWeekNavLabel: "Activité hebdomadaire",
   historyWeekPrev: "Semaine précédente",
   historyWeekNext: "Semaine suivante",
-  historyWeekTrainedDay: "Entraîné — {day}",
-  historyWeekRestDay: "Repos — {day}",
-  historyWeekFutureDay: "À venir — {day}",
+  historyWeekTrainedDay: "Entraîné · {day}",
+  historyWeekRestDay: "Repos · {day}",
+  historyWeekFutureDay: "À venir · {day}",
   historyGlobalSubtitle:
     "Par jour, puis par exercice ; chaque exercice se déplie pour voir les séries.",
   historySeriesCount: "{count} séries",
@@ -263,10 +263,10 @@ export const UI = {
   progressCardTitle: "Progression",
   streakLabel: "Série active",
   streakDays: "{days} jours d'affilée",
-  streakRuleHint: "2 jours off autorisés — séance obligatoire au 3e jour",
+  streakRuleHint: "2 jours off autorisés. Séance obligatoire au 3e jour.",
   streakSheetTitleFirstDay: "1 jour d'entraînement d'affilée",
   streakSheetSubtitleFirstDay:
-    "Beau départ — le week-end ne casse pas ta série si tu reviens au 3e jour.",
+    "Beau départ. Le week-end ne casse pas ta série si tu reviens au 3e jour.",
   streakSheetTitleStreak: "{days} jours d'entraînement d'affilée",
   streakSheetSubtitleStreak:
     "Tu peux t'accorder 2 jours sans séance (ex. week-end), puis revenir au 3e jour.",
@@ -322,8 +322,8 @@ export const UI = {
   browseChooseExercise: "Choisir l'exercice",
   browseViewAll: "Voir tout",
   browseViewByCategory: "Par catégorie",
-  browseAllExercisesInZone: "Tous les exercices {zone}",
-  browseAllExercisesForMuscle: "Tous les exercices {muscle}",
+  browseAllExercisesInZone: "Tous les exercices : {zone}",
+  browseAllExercisesForMuscle: "Tous les exercices : {muscle}",
   browseExercisesCount: "{count} exercices",
   browseBreadcrumbZones: "Zones",
   browseBreadcrumbLabel: "Parcours de sélection",
@@ -350,29 +350,129 @@ export const UI = {
   profileNameSaved: "Nom enregistré",
   profileUsernameSaved: "Pseudo enregistré",
   profileUsernameSaveError: "Impossible d'enregistrer le pseudo",
-  profileInviteButton: "Inviter un pote",
+  profileInviteButton: "Partager mon invitation",
+  profileCopyInviteCode: "Copier mon code",
   profileShareButton: "Partager ma fiche",
   profileShareText: "Ma fiche One More",
   profileShareSuccess: "Fiche partagée",
   profileShareDownloaded: "Fiche téléchargée",
   profileShareError: "Impossible de partager la fiche",
-  inviteLinkCopied: "Invitation copiée",
-  inviteLinkShared: "Invitation envoyée",
-  inviteShareError: "Impossible de partager l'invitation",
+  inviteCodeCopied: "Code copié",
+  inviteCodeShared: "Code partagé",
+  inviteShareError: "Impossible de partager le code",
   inviteShareTitle: "One More",
-  inviteShareMessage:
-    "Rejoins-moi sur One More pour suivre ta muscu ensemble — perfs, séries et progression.",
+  inviteCodeShareMessage:
+    "Rejoins-moi sur One More pour suivre ta muscu ensemble ! Utilise mon code de parrainage : {code}",
   inviteShareDialogTitle: "Inviter un pote",
+  inviteCodeLabel: "Mon code de parrainage",
+  /** @deprecated */
+  inviteLinkCopied: "Code copié",
+  /** @deprecated */
+  inviteLinkShared: "Code partagé",
   exerciseLimitTitle: "Limite d'exercices atteinte",
   exerciseLimitDescription:
-    "Tu suis déjà {count} exercices. Envoie une invitation (lien ou recherche) : dès qu'un pote accepte, tu débloques l'app complète.",
-  exerciseLimitInviteLink: "Inviter un pote",
-  exerciseLimitSearchFriend: "Rechercher un ami",
-  accessUnlockHint:
-    "Invite un pote sur One More. Dès qu'il accepte ton invitation, tu débloques l'app complète.",
-  accessUnlockPending:
-    "Invitation en attente — ton accès complet se débloquera quand ton pote acceptera.",
-  accessUnlocked: "Accès complet débloqué !",
+    "Tu suis {count}/{limit} exercices. Parraine un pote avec ton code pour gagner {bonus} exercices supplémentaires.",
+  exerciseLimitInviteLink: "Partager mon invitation",
+  exerciseLimitSearchFriend: "Voir mes amis",
+  referralSettingsTitle: "Parrainage",
+  referralSettingsDescription:
+    "Utilise le code d'un pote pour gagner {bonus} exercices supplémentaires. Tu ne peux utiliser qu'un seul code.",
+  referralYourCodeDescription:
+    "Partage ton code unique : chaque pote qui l'utilise te rapporte {bonus} exercices.",
+  referralCodeLabel: "Code de parrainage",
+  referralYourCodeLabel: "Mon code à partager",
+  referralCodePlaceholder: "ex. abc12def",
+  signupReferralCodeTitle: "Tu as un code de parrainage ?",
+  signupReferralCodeLabel: "Code de parrainage (optionnel)",
+  signupReferralCodeHint: "Tu as le code d'un pote ? Gagne +{bonus} exercices.",
+  profileReferralBannerTitle: "Gagne un t-shirt en édition limitée",
+  profileReferralBannerSubtitle: "5 potes parrainés = t-shirt One More offert",
+  referralCodeApply: "Appliquer le code",
+  referralCodeApplied: "Code de parrainage appliqué",
+  referralCodeAlreadyUsed: "Tu as déjà utilisé un code de parrainage",
+  referralCodeInvalid: "Code de parrainage invalide",
+  referralCodeSelf: "Tu ne peux pas utiliser ton propre code",
+  referralStats:
+    "Tu as parrainé {count} personne(s). Limite actuelle : {limit} exercices.",
+  referralBonusPerInvite: "+{bonus} exercices pour toi et ton pote",
+  referralTshirtEarned:
+    "Bravo ! Tu as débloqué ton t-shirt One More grâce à tes parrainages.",
+  referralTshirtProgress:
+    "Encore {count} parrainage(s) pour débloquer ton t-shirt One More.",
+  referralTshirtHint: "5 parrainages = t-shirt One More offert.",
+  referralTshirtImageAlt: "T-shirt de récompense One More",
+  referralTshirtSloganOutline: "ALWAYS",
+  referralTshirtSloganBold: "ONE MORE",
+  referralHubTitle: "Parrainage",
+  referralHubDescription:
+    "Partage ton code et débloque des exercices. +{bonus} si tu utilises le code d'un pote.",
+  referralDrawerShortDescription:
+    "Partage ton code : +{bonus} exercices pour toi et ton pote.",
+  referralLimitHint:
+    "Limite atteinte. Passe Premium pour des exercices illimités ou parraine un pote pour gagner +{bonus} exercices.",
+  exerciseLimitPremiumTitle: "Exercices illimités",
+  exerciseLimitPremiumDescription:
+    "Passe Premium et suis autant d'exercices que tu veux, sans limite.",
+  exerciseLimitPremiumButton: "Passer Premium",
+  exerciseLimitOrDivider: "ou",
+  exerciseLimitReferralTitle: "Parraine un pote",
+  referralHubSettingsHint:
+    "Ouvre le panneau parrainage pour partager ton code et suivre tes gains.",
+  referralOpenDrawer: "Ouvrir le parrainage",
+  settingsReferralInviteButton: "Je parraine",
+  settingsReferralApplyButton: "J'ai un code de parrainage",
+  referralApplyDrawerTitle: "Utiliser un code de parrainage",
+  referralApplyDrawerDescription:
+    "Entre le code d'un ami pour gagner +{bonus} exercices.",
+  referralApplyCodeToggle: "J'ai reçu un code de parrainage",
+  referralCountZero: "Aucun pote parrainé",
+  referralCountOne: "1 pote parrainé",
+  referralCountMany: "{count} potes parrainés",
+  referralBattlePassTitle: "Gagne ton t-shirt en édition limitée",
+  referralBattlePassRemaining: "Encore {count} parrainage(s) pour le t-shirt.",
+  referralBattlePassReward: "T-shirt",
+  referralBattlePassLegend:
+    "Chaque pote parrainé = +{bonus} exercices · 5 potes = t-shirt offert",
+  exerciseLimitViewReferral: "Voir mon parrainage",
+
+  premiumSettingsTitle: "Abonnement Premium",
+  premiumActiveDescription: "Tu bénéficies de l'abonnement premium One More.",
+  premiumInactiveDescription:
+    "Passe premium pour débloquer des avantages exclusifs One More.",
+  premiumActiveBadge: "Abonnement premium actif",
+  premiumSubscribeButton: "Passer Premium",
+  premiumRestoreButton: "Restaurer mes achats",
+  premiumSubscribeSuccess: "Abonnement activé",
+  premiumSubscribeError: "Impossible de finaliser l'achat",
+  premiumRestoreSuccess: "Achats restaurés",
+  premiumRestoreError: "Impossible de restaurer les achats",
+
+  tshirtClaimButton: "Réclamer mon t-shirt",
+  tshirtClaimTitle: "Réclamer ton t-shirt One More",
+  tshirtClaimDescription:
+    "Renseigne ton adresse de livraison. Nous te contacterons si besoin.",
+  tshirtClaimFullName: "Nom complet",
+  tshirtClaimStreet: "Adresse",
+  tshirtClaimCity: "Ville",
+  tshirtClaimPostalCode: "Code postal",
+  tshirtClaimCountry: "Pays",
+  tshirtClaimSize: "Taille",
+  tshirtClaimSubmit: "Envoyer ma demande",
+  tshirtClaimSuccess: "Demande enregistrée. Ton t-shirt est en préparation.",
+  tshirtClaimError: "Impossible d'enregistrer ta demande",
+  tshirtClaimNotEligible: "Tu n'es pas encore éligible au t-shirt",
+  tshirtClaimAlreadyDone: "Tu as déjà réclamé ton t-shirt",
+  tshirtClaimPending: "Ton t-shirt est en cours de préparation.",
+  tshirtClaimShipped: "Ton t-shirt a été expédié.",
+  tshirtClaimShippedWithTracking:
+    "Ton t-shirt a été expédié. Suivi : {tracking}",
+  tshirtClaimDelivered: "Ton t-shirt a été livré. Profites-en !",
+  tshirtDeliveryTrackingTitle: "Suivi de livraison",
+  tshirtDeliveryStepPreparing: "Préparation",
+  tshirtDeliveryStepShipping: "En livraison",
+  tshirtDeliveryStepDelivered: "Livré",
+  tshirtDeliveryTrackingLabel: "Suivi",
+
   friendsTitle: "Amis",
   friendsListTitle: "Mes potes",
   friendRequestsTitle: "Demandes reçues",
@@ -397,7 +497,7 @@ export const UI = {
   friendsTabSearch: "Rechercher",
   friendsTabMessages: "Messages",
   friendsSearchPlaceholder: "Prénom, nom ou @pseudo…",
-  friendsSearchHint: "Recherche partielle — pas besoin du nom complet.",
+  friendsSearchHint: "Recherche partielle : pas besoin du nom complet.",
   friendsSearchEmpty: "Tape un prénom, un nom ou un @pseudo pour chercher.",
   friendsSearchMinChars:
     "Saisis au moins 2 caractères (ou @ + 1 caractère pour un pseudo).",
@@ -594,7 +694,7 @@ export const UI = {
   statsGlobalGaugeCaption:
     "Ta moyenne combine palier + progression sur chaque exo. La jauge montre l’avancement entre deux paliers d’affilée (Fer → Bronze → …).",
   statsGlobalGaugeMax:
-    "En moyenne tu es au palier Légende — objectif maintenu ou records sur de nouveaux exos.",
+    "En moyenne tu es au palier Légende. Objectif maintenu ou records sur de nouveaux exos.",
   statsProfileInvalid: "Indique un poids et une taille valides.",
   statsProfileSaved: "Profil enregistré",
   /** Lien sous la modal profil ligues vers la page paramètres complète */
@@ -623,5 +723,5 @@ export const UI = {
   notifFriendTrainingMasterOff:
     "Active « Séances d'amis » dans Paramètres pour utiliser la cloche",
   streakGraceDayHint: "Dernier jour pour garder ta série",
-  streakGraceDayAria: "Série de {days} jours — dernier jour de grâce",
+  streakGraceDayAria: "Série de {days} jours, dernier jour de grâce",
 };

@@ -14,8 +14,6 @@ import { PerformanceEntriesService } from '../performance/performance-entries.se
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { ProgressService } from '../progress/progress.service.js';
 import { TrackedExercisesService } from '../tracked-exercises/tracked-exercises.service.js';
-import { AccessService } from './access.service.js';
-import { InvitesService } from './invites.service.js';
 import { FriendshipEntity } from './entities/friendship.entity.js';
 import { FriendshipStatus } from './entities/friendship-status.enum.js';
 
@@ -37,8 +35,6 @@ export class FriendsService {
     private readonly friendshipsRepo: Repository<FriendshipEntity>,
     @InjectRepository(UserProfileEntity)
     private readonly profilesRepo: Repository<UserProfileEntity>,
-    private readonly accessService: AccessService,
-    private readonly invitesService: InvitesService,
     private readonly progressService: ProgressService,
     private readonly trackedExercisesService: TrackedExercisesService,
     private readonly performanceEntriesService: PerformanceEntriesService,
@@ -219,50 +215,6 @@ export class FriendsService {
     };
   }
 
-  async requestFromInvite(userId: string, inviteCode: string) {
-    const inviterProfile =
-      await this.invitesService.findInviterProfileByCode(inviteCode);
-    if (!inviterProfile) {
-      throw new NotFoundException('Invitation introuvable');
-    }
-    if (inviterProfile.userId === userId) {
-      throw new BadRequestException('Tu ne peux pas t’inviter toi-même');
-    }
-
-    const existing = await this.friendshipsRepo.findOne({
-      where: {
-        requesterId: inviterProfile.userId,
-        addresseeId: userId,
-      },
-    });
-    if (existing) {
-      if (existing.status === FriendshipStatus.PENDING) {
-        existing.status = FriendshipStatus.ACCEPTED;
-        await this.friendshipsRepo.save(existing);
-        await this.accessService.unlockInviter(inviterProfile.userId);
-        void this.notifications.notifyFriendAccepted({
-          requesterId: inviterProfile.userId,
-          addresseeId: userId,
-          friendshipId: existing.id,
-        });
-      }
-      return { friendshipId: existing.id, status: existing.status };
-    }
-
-    const created = await this.friendshipsRepo.save({
-      requesterId: inviterProfile.userId,
-      addresseeId: userId,
-      status: FriendshipStatus.ACCEPTED,
-    });
-    await this.accessService.unlockInviter(inviterProfile.userId);
-    void this.notifications.notifyFriendAccepted({
-      requesterId: inviterProfile.userId,
-      addresseeId: userId,
-      friendshipId: created.id,
-    });
-    return { friendshipId: created.id, status: created.status };
-  }
-
   async accept(userId: string, friendshipId: string) {
     const friendship = await this.friendshipsRepo.findOne({
       where: { id: friendshipId },
@@ -277,7 +229,6 @@ export class FriendsService {
 
     friendship.status = FriendshipStatus.ACCEPTED;
     await this.friendshipsRepo.save(friendship);
-    await this.accessService.unlockInviter(friendship.requesterId);
     void this.notifications.notifyFriendAccepted({
       requesterId: friendship.requesterId,
       addresseeId: friendship.addresseeId,
