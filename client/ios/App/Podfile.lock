@@ -28,6 +28,8 @@ PODS:
     - IONFilesystemLib (~> 1.1.1)
   - CapacitorHaptics (8.0.2):
     - Capacitor
+  - CapacitorKeyboard (8.0.5):
+    - Capacitor
   - CapacitorPushNotifications (8.1.1):
     - Capacitor
   - CapacitorShare (8.0.1):
@@ -79,6 +81,7 @@ DEPENDENCIES:
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorFilesystem (from `../../node_modules/@capacitor/filesystem`)"
   - "CapacitorHaptics (from `../../node_modules/@capacitor/haptics`)"
+  - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
   - "CapacitorPushNotifications (from `../../node_modules/@capacitor/push-notifications`)"
   - "CapacitorShare (from `../../node_modules/@capacitor/share`)"
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
@@ -117,6 +120,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/filesystem"
   CapacitorHaptics:
     :path: "../../node_modules/@capacitor/haptics"
+  CapacitorKeyboard:
+    :path: "../../node_modules/@capacitor/keyboard"
   CapacitorPushNotifications:
     :path: "../../node_modules/@capacitor/push-notifications"
   CapacitorShare:
@@ -140,6 +145,7 @@ SPEC CHECKSUMS:
   CapacitorCordova: c07921bdcfec6f691bae22274446b4d606ebf6a4
   CapacitorFilesystem: 2db285a1ac6e475cc27cae2e1bea999000f9e2be
   CapacitorHaptics: 296f771ecd89c7a1bd92a7b6826a7d268e2e70f5
+  CapacitorKeyboard: b6b0744890cdb1d9a96e2cafcc9253fdcc55de3b
   CapacitorPushNotifications: ec08d589c226a2c0db7c032ec1bf5b044ec85f8e
   CapacitorShare: 0c58305114538568059bfc07111f22dcb9cb2a82
   CapacitorStatusBar: 01d5763b4ed720de5ce2edbc938de6a98f4c8f32
@@ -156,6 +162,6 @@ SPEC CHECKSUMS:
   IONFilesystemLib: 21a63377696b2d8fab5632ecfb7d2ac67bddb68a
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
 
-PODFILE CHECKSUM: 2619ffe0b524d4654fed2e7731c9d4086bf48294
+PODFILE CHECKSUM: 60c02e24f4feddfc1a77d935fa8080109ca816c5
 
 COCOAPODS: 1.16.2

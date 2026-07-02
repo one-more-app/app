@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+import { KeyboardResize, KeyboardStyle } from '@capacitor/keyboard';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -29,6 +30,13 @@ const config: CapacitorConfig = {
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
+    },
+    // Le clavier iOS gère lui-même le décalage via --keyboard-inset (voir client/src/hooks/use-keyboard-inset.ts).
+    // Resize=None => WebView pleine hauteur, aucun scroll auto ; on aligne le drawer / la page en CSS.
+    Keyboard: {
+      resize: KeyboardResize.None,
+      resizeOnFullScreen: true,
+      style: KeyboardStyle.Default,
     },
   },
 };
