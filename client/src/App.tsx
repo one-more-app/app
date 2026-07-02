@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider'
 import { PageSection } from '@/components/analytics/PageSection'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
+import { useKeyboardInset } from '@/hooks/use-keyboard-inset'
 import { usePushNotifications } from '@/hooks/use-push-notifications'
 import { RealtimeProvider } from '@/hooks/use-realtime'
 import { useTheme } from '@/hooks/use-theme'
@@ -148,6 +149,8 @@ function NativeSystemBarsSync() {
 }
 
 function App() {
+    useKeyboardInset()
+
     useEffect(() => {
         if (typeof document === 'undefined') return
         document.documentElement.dataset.platform = Capacitor.isNativePlatform()
