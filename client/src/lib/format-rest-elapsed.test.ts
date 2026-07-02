@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  clampRestTargetMs,
+  DEFAULT_REST_TARGET_MS,
   formatRestElapsed,
   formatRestElapsedA11y,
   getRestElapsedMs,
   getRestProgress01,
   isRestSinceLastSetVisible,
+  isRestTargetComplete,
+  msToRestTargetParts,
+  adjustRestTargetMs,
   REST_SINCE_LAST_SET_MAX_MS,
+  restTargetPartsToMs,
 } from "./format-rest-elapsed";
 
 describe("formatRestElapsed", () => {
@@ -51,11 +57,42 @@ describe("isRestSinceLastSetVisible", () => {
 });
 
 describe("getRestProgress01", () => {
-  it("returns ratio capped at 1", () => {
+  it("returns ratio capped at 1 against rest target", () => {
     expect(getRestProgress01(0)).toBe(0);
-    expect(getRestProgress01(REST_SINCE_LAST_SET_MAX_MS / 2)).toBe(0.5);
-    expect(getRestProgress01(REST_SINCE_LAST_SET_MAX_MS)).toBe(1);
-    expect(getRestProgress01(REST_SINCE_LAST_SET_MAX_MS * 2)).toBe(1);
+    expect(getRestProgress01(DEFAULT_REST_TARGET_MS / 2)).toBe(0.5);
+    expect(getRestProgress01(DEFAULT_REST_TARGET_MS)).toBe(1);
+    expect(getRestProgress01(DEFAULT_REST_TARGET_MS * 2)).toBe(1);
+  });
+});
+
+describe("isRestTargetComplete", () => {
+  it("is complete at or after target", () => {
+    expect(isRestTargetComplete(DEFAULT_REST_TARGET_MS - 1)).toBe(false);
+    expect(isRestTargetComplete(DEFAULT_REST_TARGET_MS)).toBe(true);
+    expect(isRestTargetComplete(DEFAULT_REST_TARGET_MS + 60_000)).toBe(true);
+  });
+});
+
+describe("rest target helpers", () => {
+  it("clamps rest target between 30s and 5min", () => {
+    expect(clampRestTargetMs(10_000)).toBe(30_000);
+    expect(clampRestTargetMs(DEFAULT_REST_TARGET_MS)).toBe(DEFAULT_REST_TARGET_MS);
+    expect(clampRestTargetMs(600_000)).toBe(300_000);
+  });
+
+  it("converts ms to parts and back", () => {
+    expect(msToRestTargetParts(DEFAULT_REST_TARGET_MS)).toEqual({
+      minutes: 1,
+      seconds: 30,
+    });
+    expect(restTargetPartsToMs(1, 30)).toBe(DEFAULT_REST_TARGET_MS);
+    expect(restTargetPartsToMs(0, 0)).toBe(30_000);
+  });
+
+  it("adjusts rest target in 15s steps within bounds", () => {
+    expect(adjustRestTargetMs(DEFAULT_REST_TARGET_MS, 15_000)).toBe(105_000);
+    expect(adjustRestTargetMs(30_000, -15_000)).toBe(30_000);
+    expect(adjustRestTargetMs(300_000, 15_000)).toBe(300_000);
   });
 });
 

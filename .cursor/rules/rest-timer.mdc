@@ -16,6 +16,10 @@ Barre fine qui se lance **automatiquement** dès qu'une performance est enregist
 | Ticker + throttle onglet caché | [`client/src/hooks/use-rest-since-last-set.ts`](../../client/src/hooks/use-rest-since-last-set.ts) |
 | **Dernière perf globale** (tous exercices) | [`client/src/hooks/use-latest-global-perf.ts`](../../client/src/hooks/use-latest-global-perf.ts) |
 | Formatage, seuils, progression | [`client/src/lib/format-rest-elapsed.ts`](../../client/src/lib/format-rest-elapsed.ts) |
+| **Durée cible utilisateur** (défaut 1:30) | [`client/src/hooks/use-rest-target-ms.ts`](../../client/src/hooks/use-rest-target-ms.ts) + `getRestTargetMs` / `setRestTargetMs` dans [`client/src/lib/storage.ts`](../../client/src/lib/storage.ts) |
+| Réglage dans Paramètres | [`client/src/components/settings/RestTimeSettingsCard.tsx`](../../client/src/components/settings/RestTimeSettingsCard.tsx) |
+| **Tour first-time** (AppTour) | [`client/src/components/AppTour.tsx`](../../client/src/components/AppTour.tsx) + [`client/src/components/RestCounterTour.tsx`](../../client/src/components/RestCounterTour.tsx) |
+| Styles Joyride partagés | [`client/src/lib/app-tour-config.ts`](../../client/src/lib/app-tour-config.ts) |
 | Analytics | `trackRestTimerDismissed` dans [`client/src/lib/analytics/performance-tracking.ts`](../../client/src/lib/analytics/performance-tracking.ts) |
 | Point de montage | Header sticky de [`client/src/pages/ExerciseDetailPage.tsx`](../../client/src/pages/ExerciseDetailPage.tsx) |
 
@@ -23,13 +27,18 @@ Barre fine qui se lance **automatiquement** dès qu'une performance est enregist
 
 1. **Global à tous les exercices** — Le `createdAt` alimentant la barre vient **toujours** de `useLatestGlobalPerf()` (dernière perf loggée, tous exercices confondus, `deletedAt` exclu). Ne **jamais** repasser à `usePerformance(id).lastPerf` pour l'alimenter : la barre doit rester visible quand l'utilisateur change d'exercice.
 2. **Nom de l'exo source affiché** — La barre montre `REPOS` **et** le nom de l'exercice où la perf a été loggée, résolu via `useLatestGlobalPerf().exercise`. Le hook croise `useHomeExercisesData` + `getTrackedExerciseById` (fallback storage) pour trouver le nom même si l'exo n'est plus dans la home list active.
-3. **Tap = ouvrir l'exo source** — La zone `REPOS + nom` est un `<button>` qui navigue vers `/exercise/{sourceExercise.id}` via `useNavigate()`. Le bouton est désactivé (`cursor-default`, pas de hover) quand `sourceExercise.id === currentExerciseId` — évite un re-navigate vers soi-même. Toujours passer `currentExerciseId` depuis les pages qui montent la barre.
+3. **Tap = ouvrir l'exo source** — Seul le **nom d'exercice** (ligne du dessous) navigue vers `/exercise/{sourceExercise.id}`. Désactivé quand `sourceExercise.id === currentExerciseId`. La pill `RestTargetQuickEdit` et le badge `REPOS` ne naviguent pas.
 4. **Auto-start** — Aucun bouton "démarrer". Enregistrer une perf via `savePerformanceAndWait` suffit : SWR revalide, `useLatestGlobalPerf` renvoie la nouvelle entrée, la barre se re-monte via `key={createdAt}` et repart à `0:00`.
-5. **Durée max** — Masquée automatiquement après `REST_SINCE_LAST_SET_MAX_MS` (10 min). Cette constante est **la seule** poignée pour changer la durée ; ne pas dupliquer la valeur.
-6. **Dismiss manuel** — Le bouton croix cache la barre localement (state React) et **doit** `event.stopPropagation()` sinon le tap remonte au bouton parent et rouvre l'exo. Le dismiss se réinitialise dès qu'une nouvelle perf change le `key={createdAt}`. Ne pas persister le dismiss dans le storage.
-7. **Onglet caché** — Le ticker s'arrête sur `visibilitychange` puis resynchronise `now = Date.now()` au retour. Ne pas remplacer par un `setInterval` non-conditionnel (coût batterie / drift iOS).
-8. **Motion** — Respect de `prefers-reduced-motion` : la barre de progression saute au lieu de transitionner. À conserver pour tout nouveau visuel ajouté.
-9. **Accessibilité** — `role="status"`, `aria-label` en français localisé via `UI.restSinceLastSetA11y`. Quand un exo source est cliquable, le `aria-label` du bouton concatène le nom pour annoncer la destination. Mise à jour `sr-only` à chaque nouvelle minute (bucket) sans spammer le lecteur d'écran.
+5. **Durée max d'affichage** — Masquée automatiquement après `REST_SINCE_LAST_SET_MAX_MS` (10 min). Distinct de la **durée cible** (`DEFAULT_REST_TARGET_MS` = 1:30 par défaut) qui pilote uniquement la barre de progression.
+6. **Durée cible personnalisable** — Stockée en localStorage via `getRestTargetMs` / `setRestTargetMs` (clé `one-more-rest-target-ms-v1`). Bornes : `REST_TARGET_MIN_MS` (30 s) → `REST_TARGET_MAX_MS` (5 min). Réglage dans Paramètres (`RestTimeSettingsCard`, minutes + secondes par pas de 15 s). Le hook `useRestTargetMs` écoute l'événement `one-more:rest-target-changed` pour propager le changement sans reload.
+7. **Barre de progression** — `getRestProgress01(elapsedMs, targetMs)` : remplissage sur la durée cible, plafonné à 100 %. Au-delà, la barre reste pleine ; le compteur `m:ss` **continue** sans reset.
+8. **Fin de repos** — Quand `elapsedMs >= targetMs` : toast `UI.restTimeFinished` + `hapticNotificationSuccess()`, une seule fois par `createdAt` (ref dans `RestSinceLastSetBar`). Visuel : fond `bg-accent/25` + bordure `border-accent/50`, badge `REPOS` en `bg-accent text-accent-foreground` (check inclus), chrono en `text-foreground` pour le contraste — **jamais** `text-accent` seul sur fond clair.
+9. **Édition rapide inline** — Pill `RestTargetQuickEdit` à côté de `REPOS` (popover : ±15 s + presets 1:00–3:00). `stopPropagation` obligatoire pour ne pas déclencher la nav exo. Persiste via `setRestTargetMs` (même storage que Paramètres).
+10. **Dismiss manuel** — Le bouton croix cache la barre localement (state React) et **doit** `event.stopPropagation()` sinon le tap remonte au bouton parent et rouvre l'exo. Le dismiss se réinitialise dès qu'une nouvelle perf change le `key={createdAt}`. Ne pas persister le dismiss dans le storage.
+11. **Onglet caché** — Le ticker s'arrête sur `visibilitychange` puis resynchronise `now = Date.now()` au retour. Ne pas remplacer par un `setInterval` non-conditionnel (coût batterie / drift iOS).
+12. **Motion** — Respect de `prefers-reduced-motion` : la barre de progression saute au lieu de transitionner. À conserver pour tout nouveau visuel ajouté.
+13. **Accessibilité** — `role="status"`, `aria-label` via `UI.restSinceLastSetA11y` ou `UI.restTimeFinishedA11y` une fois la cible atteinte. Quand un exo source est cliquable, le `aria-label` du bouton concatène le nom pour annoncer la destination. Mise à jour `sr-only` à chaque nouvelle minute (bucket) sans spammer le lecteur d'écran.
+14. **Tour first-time (`RestCounterTour`)** — Une seule fois par appareil (`isRestCounterTourComplete` / `setRestCounterTourComplete`, clé `one-more-rest-counter-tour-complete-v1`). Cible `[data-tour="rest-counter"]` sur la barre. Se lance 500 ms après la première apparition visible. **Reporté** tant qu'un autre tour Joyride est actif (`?tour=onboarding` ou `?tour=onboarding-first`) pour ne pas chevaucher le tour premier exercice / fiche exo. Lien « Personnaliser dans les paramètres » → `/settings?focus=rest-time` (scroll vers `#rest-time-settings`). Utiliser `AppTour` pour tout nouveau tour produit — ne pas dupliquer les styles Joyride.
 
 ## À faire pour tout nouveau point de montage
 
@@ -57,6 +66,9 @@ Si la barre doit apparaître sur une autre page (ex. Home, History) :
 - Ne pas afficher deux barres simultanément (dédupliquer si ajoutée dans un layout global **et** une page).
 - Ne pas re-tracker `rest_timer_dismissed` ailleurs que dans le handler de la croix : l'événement doit rester 1:1 avec l'action utilisateur.
 - Ne pas coder en dur `10 * 60 * 1000` : importer `REST_SINCE_LAST_SET_MAX_MS`.
+- Ne pas confondre durée d'affichage (10 min) et durée cible (1:30 par défaut) : deux constantes distinctes.
+- Ne pas reset le compteur quand la cible est atteinte — seule la barre et le visuel changent.
+- Ne pas re-déclencher le toast de fin de repos pour le même `createdAt`.
 - Ne pas oublier `event.stopPropagation()` sur le bouton croix, sinon le clic remonte au bouton parent et re-navigue vers l'exo source.
 - Ne pas dupliquer la résolution du nom d'exo dans les composants : passer par `useLatestGlobalPerf().exercise`.
 

@@ -14,6 +14,10 @@ import {
 } from "@/lib/data-api";
 import { getLocalDateKey } from "@/lib/local-date";
 import {
+  clampRestTargetMs,
+  DEFAULT_REST_TARGET_MS,
+} from "@/lib/format-rest-elapsed";
+import {
   chronologicalPerfOrder,
   getLatestPerformanceEntry,
 } from "@/lib/performance-order";
@@ -32,6 +36,8 @@ const ONBOARDING_TOUR_COMPLETE_KEY = "one-more-onboarding-tour-complete-v1";
 const ONBOARDING_POST_AUTH_REDIRECT_KEY =
   "one-more-onboarding-post-auth-redirect-v1";
 const THEME_PREFERENCE_KEY = "one-more-theme-preference-v1";
+const REST_TARGET_MS_KEY = "one-more-rest-target-ms-v1";
+const REST_COUNTER_TOUR_COMPLETE_KEY = "one-more-rest-counter-tour-complete-v1";
 
 type LocalChangeKind =
   | "trackedExercise"
@@ -603,4 +609,44 @@ export function getThemePreference(): ThemePreference {
 
 export function setThemePreference(theme: ThemePreference): void {
   localStorage.setItem(THEME_PREFERENCE_KEY, theme);
+}
+
+export function getRestTargetMs(): number {
+  try {
+    const raw = localStorage.getItem(REST_TARGET_MS_KEY);
+    if (raw == null) return DEFAULT_REST_TARGET_MS;
+    const parsed = Number.parseInt(raw, 10);
+    if (!Number.isFinite(parsed)) return DEFAULT_REST_TARGET_MS;
+    return clampRestTargetMs(parsed);
+  } catch {
+    return DEFAULT_REST_TARGET_MS;
+  }
+}
+
+export function setRestTargetMs(ms: number): void {
+  const clamped = clampRestTargetMs(ms);
+  localStorage.setItem(REST_TARGET_MS_KEY, String(clamped));
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("one-more:rest-target-changed", {
+        detail: { ms: clamped },
+      }),
+    );
+  }
+}
+
+export function isRestCounterTourComplete(): boolean {
+  try {
+    return localStorage.getItem(REST_COUNTER_TOUR_COMPLETE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setRestCounterTourComplete(complete: boolean): void {
+  if (complete) {
+    localStorage.setItem(REST_COUNTER_TOUR_COMPLETE_KEY, "1");
+  } else {
+    localStorage.removeItem(REST_COUNTER_TOUR_COMPLETE_KEY);
+  }
 }

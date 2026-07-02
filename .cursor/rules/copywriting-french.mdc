@@ -1,26 +1,51 @@
 ---
-description: Ton et ponctuation des textes UI en français (éviter le style IA)
+description: Règles STRICTES de ponctuation pour tous les textes affichés à l'utilisateur (client + notifications API). Interdit les tirets « style IA » (`--`, `—`).
 globs: client/src/**/*.{ts,tsx},api/src/**/*.{ts,tsx}
-alwaysApply: false
+alwaysApply: true
 ---
 
-# Copywriting UI (français)
+# Copywriting UI (français) — règles strictes
 
-## Interdit dans les textes visibles par l'utilisateur
+Ces règles s'appliquent à **tout texte visible ou audible par l'utilisateur** : UI, toasts, notifications push, aria-labels, textes de partage, deep-links, e-mails, webhooks visibles côté utilisateur.
 
-- **Tiret cadratin** (`—`, U+2014) : ne pas l'utiliser pour relier deux idées ou séparer label/valeur.
-- **Double tiret** (`--`) dans les chaînes affichées.
+## Interdits absolus dans les chaînes affichées
 
-Ces ponctuations donnent un ton « généré par IA ». Les commentaires de code et la doc technique peuvent les garder si besoin.
+### 1. Double tiret `--` (deux hyphens accolés) — INTERDIT
 
-## Alternatives naturelles
+Ne **jamais** écrire `--` dans une chaîne de caractères destinée à être rendue à l'utilisateur, quel que soit le contexte : littéral (`"…"`, `'…'`), template string (`` `…` ``), JSX, `aria-label`, `title`, `alt`, `placeholder`, `body`/`title` de notification, texte de partage, etc.
+
+C'est une signature typique des textes générés par LLM. **Aucune exception** dans le copy produit.
+
+### 2. Tiret cadratin `—` (U+2014) — INTERDIT
+
+Idem : pas de `—` dans les chaînes affichées, y compris les `aria-label` (lus par les lecteurs d'écran) et les textes de notification côté API.
+
+### 3. Ne pas contourner la règle
+
+- Ne pas concaténer `-` + `-` pour produire `--` (`"foo" + "-" + "-" + "bar"`).
+- Ne pas utiliser `String.fromCharCode(0x2014)` ou équivalents pour insérer un `—`.
+- Ne pas passer par une variable intermédiaire pour masquer un `--` / `—`.
+
+## Exceptions autorisées (contexte technique, non affiché)
+
+Les tirets `--` / `—` restent autorisés **uniquement** dans :
+
+- **Commentaires de code** (`//`, `/* */`, JSDoc). Ex. : `// --- SECTION ---`.
+- **Noms techniques non affichés** : variables CSS custom (`--accent`, `var(--card)`), classes utilitaires Tailwind (`border-t`, `data-[state=*]`), flags CLI (`--dry-run`, `--user-id`).
+- **Documentation** (`.md`, `.mdc`, README).
+- **Attributs `className`, `style`, `data-*`** et autres API bas-niveau CSS/DOM qui ne produisent pas de texte affiché.
+
+En cas de doute : **si l'utilisateur peut le lire ou l'entendre → règle appliquée**.
+
+## Alternatives naturelles à utiliser
 
 | Situation | Préférer |
 |-----------|----------|
-| Deux phrases liées | Point (`.`) ou virgule |
-| Label : valeur | Deux-points (`:`) ou point médian (`·`) |
-| Valeur manquante en UI | Tiret demi-cadratin (`–`) ou rien |
+| Séparer deux idées liées | Point (`.`) ou virgule |
+| Label et valeur | Deux-points (`:`) ou point médian (`·`, U+00B7) |
+| Valeur manquante en UI | Tiret demi-cadratin (`–`, U+2013) ou rien |
 | Liste / détail court | Virgule ou `·` |
+| Puce visuelle inline | `·` |
 
 ## Exemples
 
@@ -28,20 +53,36 @@ Ces ponctuations donnent un ton « généré par IA ». Les commentaires de code
 ❌ Limite atteinte — parraine un pote pour gagner +5 exercices.
 ✅ Limite atteinte. Parraine un pote pour gagner +5 exercices.
 
-❌ Entraîné — lundi
+❌ Entraîné -- lundi
 ✅ Entraîné · lundi
 
 ❌ +120 XP — Record personnel
 ✅ +120 XP · Record personnel
+
+❌ `${a11yLabel} — ${sourceExercise.name}`
+✅ `${a11yLabel} · ${sourceExercise.name}`
+
+❌ body: 'One More — préparation'
+✅ body: 'One More · préparation'
 ```
 
-## Où centraliser
+## Où centraliser les textes
 
-- Chaînes produit : `client/src/lib/translations.ts` (`UI.*`)
-- Notifications push : `api/src/notifications/`
-- Éviter les tirets cadratin en dur dans les composants ; passer par `UI` quand c'est du copy.
+- **Chaînes produit client** : [`client/src/lib/translations.ts`](../../client/src/lib/translations.ts) (`UI.*`).
+- **Notifications push serveur** : [`api/src/notifications/`](../../api/src/notifications/) (`title`, `body`).
+- **Webhooks visibles côté utilisateur** : `api/src/rewards/`, `api/src/social/`, etc.
+- Éviter les chaînes en dur dans les composants ; passer par `UI` quand c'est du copy.
 
-## Ton
+## Ton général
 
 - Tutoiement, phrases courtes, direct.
 - Pas de formulations emphatiques ou marketing creux.
+- Pas de style « IA » : pas de `--`, pas de `—`, pas de listes à rallonge dans les toasts.
+
+## Checklist avant chaque commit
+
+Avant d'ajouter/modifier un texte utilisateur, vérifier qu'il ne contient :
+
+1. Aucun `--` (double hyphen).
+2. Aucun `—` (tiret cadratin U+2014).
+3. Une alternative propre (`.`, `,`, `:`, `·`, `–`) a été choisie.

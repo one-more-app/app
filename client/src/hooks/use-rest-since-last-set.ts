@@ -3,11 +3,14 @@ import {
   getRestElapsedMs,
   getRestProgress01,
   isRestSinceLastSetVisible,
+  isRestTargetComplete,
   REST_SINCE_LAST_SET_MAX_MS,
 } from "@/lib/format-rest-elapsed";
+import { useRestTargetMs } from "@/hooks/use-rest-target-ms";
 import { useEffect, useState } from "react";
 
 export function useRestSinceLastSet(createdAt: string | null | undefined) {
+  const { targetMs } = useRestTargetMs();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -61,12 +64,15 @@ export function useRestSinceLastSet(createdAt: string | null | undefined) {
 
   const elapsedMs = getRestElapsedMs(createdAt, now) ?? 0;
   const visible = isRestSinceLastSetVisible(createdAt, now);
+  const targetComplete = visible && isRestTargetComplete(elapsedMs, targetMs);
 
   return {
     visible,
     elapsedMs: visible ? elapsedMs : 0,
     formatted: formatRestElapsed(elapsedMs),
-    progress01: visible ? getRestProgress01(elapsedMs) : 0,
+    progress01: visible ? getRestProgress01(elapsedMs, targetMs) : 0,
+    targetComplete,
+    targetMs,
   };
 }
 

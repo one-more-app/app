@@ -1,5 +1,6 @@
 import { BackHeader } from '@/components/BackHeader'
 import { NotificationSettingsCard } from '@/components/settings/NotificationSettingsCard'
+import { RestTimeSettingsCard } from '@/components/settings/RestTimeSettingsCard'
 import { PremiumSettingsCard } from '@/components/settings/PremiumSettingsCard'
 import { SettingsReferralLinkCard } from '@/components/settings/SettingsReferralLinkCard'
 import { ProfileNameDialog } from '@/components/profile/ProfileNameDialog'
@@ -23,11 +24,12 @@ import type { ThemePreference } from '@/lib/storage'
 import { setUserProfileAndWait } from '@/lib/storage'
 import { UI } from '@/lib/translations'
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
 export function SettingsPage() {
     const auth = useAuth()
+    const [searchParams] = useSearchParams()
     const { theme, setTheme } = useTheme()
     const { data: profile } = useUserProfileData()
     const refreshProfile = useProfileDataRefresh()
@@ -45,6 +47,16 @@ export function SettingsPage() {
         setGender(p.gender)
         setProfileHydrated(true)
     }, [profile])
+
+    useEffect(() => {
+        if (searchParams.get('focus') !== 'rest-time') return
+        const el = document.getElementById('rest-time-settings')
+        if (!el) return
+        const timer = window.setTimeout(() => {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 150)
+        return () => window.clearTimeout(timer)
+    }, [searchParams])
 
     const handleSave = () => {
         const w = parseFloat(weightKg)
@@ -111,6 +123,8 @@ export function SettingsPage() {
                 </Card>
 
                 {auth.status === 'authenticated' ? <NotificationSettingsCard /> : null}
+
+                <RestTimeSettingsCard />
 
                 {auth.status === 'authenticated' ? <PremiumSettingsCard /> : null}
 
