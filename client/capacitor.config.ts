@@ -31,6 +31,10 @@ const config: CapacitorConfig = {
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
+    LocalNotifications: {
+      smallIcon: 'ic_stat_notification',
+      iconColor: '#DFFF5E',
+    },
     // Le clavier iOS gère lui-même le décalage via --keyboard-inset (voir client/src/hooks/use-keyboard-inset.ts).
     // Resize=None => WebView pleine hauteur, aucun scroll auto ; on aligne le drawer / la page en CSS.
     Keyboard: {

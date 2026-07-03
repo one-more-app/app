@@ -7,6 +7,7 @@ import {
   isRestSinceLastSetVisible,
   isRestTargetComplete,
 } from "@/lib/format-rest-elapsed";
+import { cancelRestFinishedLocalNotification } from "@/lib/rest-timer-local-notifications";
 import { hapticNotificationSuccess } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
@@ -121,6 +122,7 @@ export function RestTimeFinishedToastHost() {
     if (notifiedForCreatedAtRef.current === createdAt) return;
 
     notifiedForCreatedAtRef.current = createdAt;
+    void cancelRestFinishedLocalNotification();
     showRestTimeFinishedToast({
       exerciseName: exercise.name,
       onOpen: () => navigate(`/exercise/${exercise.id}`),

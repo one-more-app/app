@@ -6,12 +6,16 @@ import {
 } from "@/lib/storage";
 import { UI } from "@/lib/translations";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import type { Step } from "react-joyride";
+import { useSearchParams } from "react-router-dom";
+import { EVENTS, type EventData, type Step } from "react-joyride";
 
 type RestCounterTourProps = {
   /** La barre repos est visible à l'écran. */
   barVisible: boolean;
+  /** Étape 2 : ouvrir le panneau d'édition rapide en mode inline (dans la zone spotlight). */
+  onQuickEditStep?: () => void;
+  /** Fin ou abandon du tour : fermer le panneau. */
+  onTourEnd?: () => void;
 };
 
 function isOtherAppTourActive(searchParams: URLSearchParams): boolean {
@@ -19,9 +23,36 @@ function isOtherAppTourActive(searchParams: URLSearchParams): boolean {
   return tour === "onboarding" || tour === "onboarding-first";
 }
 
-export function RestCounterTour({ barVisible }: RestCounterTourProps) {
+async function waitForTourZoneReady(): Promise<void> {
+  return new Promise((resolve) => {
+    const deadline = Date.now() + 800;
+    const tick = () => {
+      const zone = document.querySelector(
+        '[data-tour="rest-counter-target-zone"]',
+      );
+      const panel = document.querySelector(
+        '[data-tour="rest-counter-target-panel"]',
+      );
+      if (zone && panel && zone.getBoundingClientRect().height > 50) {
+        resolve();
+        return;
+      }
+      if (Date.now() > deadline) {
+        resolve();
+        return;
+      }
+      requestAnimationFrame(tick);
+    };
+    tick();
+  });
+}
+
+export function RestCounterTour({
+  barVisible,
+  onQuickEditStep,
+  onTourEnd,
+}: RestCounterTourProps) {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const [domReady, setDomReady] = useState(false);
 
   const otherTourActive = isOtherAppTourActive(searchParams);
@@ -31,45 +62,66 @@ export function RestCounterTour({ barVisible }: RestCounterTourProps) {
   const dismissTour = useCallback(() => {
     setRestCounterTourComplete(true);
     setDomReady(false);
-  }, []);
-
-  const goToSettings = useCallback(() => {
-    dismissTour();
-    navigate("/settings?focus=rest-time");
-  }, [dismissTour, navigate]);
+    onTourEnd?.();
+  }, [onTourEnd]);
 
   const steps = useMemo<Step[]>(
     () => [
       {
         target: '[data-tour="rest-counter"]',
         title: UI.restCounterTourTitle,
-        content: (
-          <div className="space-y-3">
-            <p>{UI.restCounterTourContent}</p>
-            <button
-              type="button"
-              className="text-sm font-medium text-accent underline-offset-2 hover:underline"
-              onClick={goToSettings}
-            >
-              {UI.restCounterTourSettingsLink}
-            </button>
-          </div>
-        ),
+        content: UI.restCounterTourContent,
         placement: "bottom",
         skipScroll: true,
         floatingOptions: {
           shiftOptions: { padding: getJoyrideShiftPadding() },
         },
       },
+      {
+        target: '[data-tour="rest-counter-target-zone"]',
+        title: UI.restCounterTourQuickEditTitle,
+        content: UI.restCounterTourQuickEditContent,
+        placement: "bottom",
+        skipScroll: true,
+        spotlightPadding: 8,
+        blockTargetInteraction: false,
+        disableFocusTrap: true,
+        before: async () => {
+          onQuickEditStep?.();
+          await waitForTourZoneReady();
+        },
+        floatingOptions: {
+          shiftOptions: { padding: getJoyrideShiftPadding() },
+        },
+      },
     ],
-    [goToSettings],
+    [onQuickEditStep],
+  );
+
+  const handleJoyrideEvent = useCallback(
+    (data: EventData) => {
+      if (
+        data.type === EVENTS.STEP_BEFORE &&
+        data.index === 0 &&
+        data.action === "prev"
+      ) {
+        onTourEnd?.();
+      }
+      if (data.type === EVENTS.TOUR_END) {
+        onTourEnd?.();
+      }
+    },
+    [onTourEnd],
   );
 
   useEffect(() => {
     if (!tourEligible) return undefined;
 
     const timer = window.setTimeout(() => {
-      if (document.querySelector('[data-tour="rest-counter"]')) {
+      if (
+        document.querySelector('[data-tour="rest-counter"]') &&
+        document.querySelector('[data-tour="rest-counter-target-zone"]')
+      ) {
         setDomReady(true);
       }
     }, 500);
@@ -84,8 +136,10 @@ export function RestCounterTour({ barVisible }: RestCounterTourProps) {
     <AppTour
       steps={steps}
       run={tourEligible && domReady}
+      continuous
       onFinish={dismissTour}
       onDismiss={dismissTour}
+      onJoyrideEvent={handleJoyrideEvent}
     />
   );
 }

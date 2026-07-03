@@ -30,6 +30,8 @@ export function RestSinceLastSetBar({
   currentExerciseId,
 }: RestSinceLastSetBarProps) {
   const [dismissed, setDismissed] = useState(false);
+  const [quickEditOpen, setQuickEditOpen] = useState(false);
+  const [tourQuickEditInline, setTourQuickEditInline] = useState(false);
   const {
     visible,
     elapsedMs,
@@ -94,7 +96,11 @@ export function RestSinceLastSetBar({
                   {UI.restSinceLastSet}
                 </span>
               )}
-              <RestTargetQuickEdit />
+              <RestTargetQuickEdit
+                open={quickEditOpen}
+                onOpenChange={setQuickEditOpen}
+                inlinePanel={tourQuickEditInline}
+              />
             </div>
             {sourceExercise?.name ? (
               canNavigate ? (
@@ -105,7 +111,7 @@ export function RestSinceLastSetBar({
                     "truncate text-left text-[0.6875rem] leading-tight text-muted-foreground/80",
                     "rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
                   )}
-                  aria-label={`${UI.restSinceLastSet} — ${sourceExercise.name}`}
+                  aria-label={`${UI.restSinceLastSet} · ${sourceExercise.name}`}
                 >
                   {sourceExercise.name}
                 </button>
@@ -159,7 +165,17 @@ export function RestSinceLastSetBar({
           </span>
         ) : null}
       </div>
-      <RestCounterTour barVisible />
+      <RestCounterTour
+        barVisible
+        onQuickEditStep={() => {
+          setTourQuickEditInline(true);
+          setQuickEditOpen(true);
+        }}
+        onTourEnd={() => {
+          setTourQuickEditInline(false);
+          setQuickEditOpen(false);
+        }}
+      />
     </>
   );
 }

@@ -12,6 +12,8 @@ type AppTourProps = {
   onDismiss?: () => void;
   /** Joyride `continuous` — enchaîne les étapes avec Suivant. */
   continuous?: boolean;
+  /** Callback Joyride additionnel (ex. ouvrir un popover à l'étape 2). */
+  onJoyrideEvent?: (data: EventData) => void;
 };
 
 export function AppTour({
@@ -20,6 +22,7 @@ export function AppTour({
   onFinish,
   onDismiss,
   continuous = false,
+  onJoyrideEvent,
 }: AppTourProps) {
   const { resolvedTheme } = useTheme();
 
@@ -34,6 +37,7 @@ export function AppTour({
   );
 
   const handleEvent = (data: EventData) => {
+    onJoyrideEvent?.(data);
     if (data.type !== EVENTS.TOUR_END) return;
     if (data.status === "skipped") {
       onDismiss?.();

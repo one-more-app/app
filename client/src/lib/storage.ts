@@ -17,6 +17,7 @@ import {
   clampRestTargetMs,
   DEFAULT_REST_TARGET_MS,
 } from "@/lib/format-rest-elapsed";
+import { scheduleRestFinishedLocalNotificationForEntry } from "@/lib/rest-timer-local-notifications";
 import {
   chronologicalPerfOrder,
   getLatestPerformanceEntry,
@@ -310,6 +311,7 @@ export function savePerformance(
       if (xp) applyXpGrantResult(xp);
     })
     .catch(() => notifyRemoteWriteError());
+  scheduleRestFinishedLocalNotificationForEntry(entry);
   return entry;
 }
 
@@ -349,6 +351,7 @@ export async function savePerformanceAndWait(
       date: day,
       source: "save_performance_and_wait",
     });
+    scheduleRestFinishedLocalNotificationForEntry(remote);
     return { entry: remote, xp };
   } catch (error) {
     notifyRemoteWriteError();

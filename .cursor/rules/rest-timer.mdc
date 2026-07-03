@@ -19,10 +19,12 @@ Barre fine qui se lance **automatiquement** dès qu'une performance est enregist
 | **Durée cible utilisateur** (défaut 1:30) | [`client/src/hooks/use-rest-target-ms.ts`](../../client/src/hooks/use-rest-target-ms.ts) + `getRestTargetMs` / `setRestTargetMs` dans [`client/src/lib/storage.ts`](../../client/src/lib/storage.ts) |
 | Réglage dans Paramètres | [`client/src/components/settings/RestTimeSettingsCard.tsx`](../../client/src/components/settings/RestTimeSettingsCard.tsx) |
 | **Tour first-time** (AppTour) | [`client/src/components/AppTour.tsx`](../../client/src/components/AppTour.tsx) + [`client/src/components/RestCounterTour.tsx`](../../client/src/components/RestCounterTour.tsx) |
+| **Édition rapide inline** | [`client/src/components/RestTargetQuickEdit.tsx`](../../client/src/components/RestTargetQuickEdit.tsx) — zone tour étape 2 : `data-tour="rest-counter-target-zone"` (pill + panneau) |
 | Styles Joyride partagés | [`client/src/lib/app-tour-config.ts`](../../client/src/lib/app-tour-config.ts) |
 | Analytics | `trackRestTimerDismissed` dans [`client/src/lib/analytics/performance-tracking.ts`](../../client/src/lib/analytics/performance-tracking.ts) |
 | Point de montage | Header sticky de [`client/src/pages/ExerciseDetailPage.tsx`](../../client/src/pages/ExerciseDetailPage.tsx) |
 | **Toast fin de repos (global)** | [`client/src/components/RestTimeFinishedToastHost.tsx`](../../client/src/components/RestTimeFinishedToastHost.tsx) + [`client/src/components/RestTimeFinishedToast.tsx`](../../client/src/components/RestTimeFinishedToast.tsx) |
+| **Notif système repos (background)** | [`client/src/lib/rest-timer-local-notifications.ts`](../../client/src/lib/rest-timer-local-notifications.ts) + [`client/src/hooks/use-rest-timer-local-notifications.ts`](../../client/src/hooks/use-rest-timer-local-notifications.ts) |
 
 ## Règles de comportement
 
@@ -33,13 +35,18 @@ Barre fine qui se lance **automatiquement** dès qu'une performance est enregist
 5. **Durée max d'affichage** — Masquée automatiquement après `REST_SINCE_LAST_SET_MAX_MS` (10 min). Distinct de la **durée cible** (`DEFAULT_REST_TARGET_MS` = 1:30 par défaut) qui pilote uniquement la barre de progression.
 6. **Durée cible personnalisable** — Stockée en localStorage via `getRestTargetMs` / `setRestTargetMs` (clé `one-more-rest-target-ms-v1`). Bornes : `REST_TARGET_MIN_MS` (30 s) → `REST_TARGET_MAX_MS` (5 min). Réglage dans Paramètres (`RestTimeSettingsCard`, minutes + secondes par pas de 15 s). Le hook `useRestTargetMs` écoute l'événement `one-more:rest-target-changed` pour propager le changement sans reload.
 7. **Barre de progression** — `getRestProgress01(elapsedMs, targetMs)` : remplissage sur la durée cible, plafonné à 100 %. Au-delà, la barre reste pleine ; le compteur `m:ss` **continue** sans reset.
-8. **Fin de repos** — Quand `elapsedMs >= targetMs` : toast in-app global via `RestTimeFinishedToastHost` (monté dans `App.tsx`, toutes pages). Toast custom cliquable (`showRestTimeFinishedToast`) : titre + nom exo + chevron → `/exercise/{id}`. Haptique succès au déclenchement. Une seule fois par `createdAt`. La barre `RestSinceLastSetBar` gère uniquement le visuel (badge, fond) — **pas** le toast.
+8. **Fin de repos** — Double canal :
+    - **In-app (premier plan)** — toast global via `RestTimeFinishedToastHost` + `showRestTimeFinishedToast` (cliquable → fiche exo). Annule la notif locale planifiée pour éviter le doublon.
+    - **Système (arrière-plan / app fermée)** — `@capacitor/local-notifications` via [`client/src/lib/rest-timer-local-notifications.ts`](../../client/src/lib/rest-timer-local-notifications.ts). Planifiée à `createdAt + targetMs` dès qu'une perf est enregistrée (`scheduleRestFinishedLocalNotificationForEntry` dans `storage.ts`). Resync via `useRestTimerLocalNotifications` si la durée cible change ou au retour foreground. Tap notif → `/exercise/{id}`. ID fixe `REST_FINISHED_NOTIFICATION_ID = 42`.
 9. **Édition rapide inline** — Pill `RestTargetQuickEdit` à côté de `REPOS` (popover : ±15 s + presets 1:00–3:00). `stopPropagation` obligatoire pour ne pas déclencher la nav exo. Persiste via `setRestTargetMs` (même storage que Paramètres).
 10. **Dismiss manuel** — Le bouton croix cache la barre localement (state React) et **doit** `event.stopPropagation()` sinon le tap remonte au bouton parent et rouvre l'exo. Le dismiss se réinitialise dès qu'une nouvelle perf change le `key={createdAt}`. Ne pas persister le dismiss dans le storage.
 11. **Onglet caché** — Le ticker s'arrête sur `visibilitychange` puis resynchronise `now = Date.now()` au retour. Ne pas remplacer par un `setInterval` non-conditionnel (coût batterie / drift iOS).
 12. **Motion** — Respect de `prefers-reduced-motion` : la barre de progression saute au lieu de transitionner. À conserver pour tout nouveau visuel ajouté.
 13. **Accessibilité** — `role="status"`, `aria-label` via `UI.restSinceLastSetA11y` ou `UI.restTimeFinishedA11y` une fois la cible atteinte. Quand un exo source est cliquable, le `aria-label` du bouton concatène le nom pour annoncer la destination. Mise à jour `sr-only` à chaque nouvelle minute (bucket) sans spammer le lecteur d'écran.
-14. **Tour first-time (`RestCounterTour`)** — Une seule fois par appareil (`isRestCounterTourComplete` / `setRestCounterTourComplete`, clé `one-more-rest-counter-tour-complete-v1`). Cible `[data-tour="rest-counter"]` sur la barre. Se lance 500 ms après la première apparition visible. **Reporté** tant qu'un autre tour Joyride est actif (`?tour=onboarding` ou `?tour=onboarding-first`) pour ne pas chevaucher le tour premier exercice / fiche exo. Lien « Personnaliser dans les paramètres » → `/settings?focus=rest-time` (scroll vers `#rest-time-settings`). Utiliser `AppTour` pour tout nouveau tour produit — ne pas dupliquer les styles Joyride.
+14. **Tour first-time (`RestCounterTour`)** — Une seule fois par appareil (`isRestCounterTourComplete`, clé `one-more-rest-counter-tour-complete-v1`). **Deux étapes** (`continuous`) via `AppTour` :
+    - **Étape 1** — cible `[data-tour="rest-counter"]` : présente le compteur et la barre de progression (1:30 par défaut). Pas de lien Paramètres.
+    - **Étape 2** — cible `[data-tour="rest-counter-target-zone"]` (pill + panneau `RestTargetQuickEdit`) : invite à ajuster le repos inline. À l'entrée (`before` hook) : `onQuickEditStep` active le mode `inlinePanel` (panneau rendu dans le DOM sans portal, inclus dans le spotlight) et ouvre le choix du temps. Step options : `blockTargetInteraction: false`, `disableFocusTrap: true`, `spotlightPadding: 8`. Fermer le panneau à la fin du tour ou au retour étape 1 (`onTourEnd`).
+    - Reporté tant qu'un autre tour Joyride est actif (`?tour=onboarding` ou `?tour=onboarding-first`). Démarrage 500 ms après apparition de **les deux** cibles DOM.
 
 ## À faire pour tout nouveau point de montage
 
@@ -72,6 +79,8 @@ Si la barre doit apparaître sur une autre page (ex. Home, History) :
 - Ne pas re-déclencher le toast de fin de repos pour le même `createdAt`.
 - Ne pas oublier `event.stopPropagation()` sur le bouton croix, sinon le clic remonte au bouton parent et re-navigue vers l'exo source.
 - Ne pas dupliquer la résolution du nom d'exo dans les composants : passer par `useLatestGlobalPerf().exercise`.
+- Ne pas remettre de lien Paramètres dans le tour repos — l'édition se fait via `RestTargetQuickEdit` (étape 2).
+- Ne pas bloquer les interactions sur l'étape 2 du tour (`blockTargetInteraction: false`, `hideOverlay: true`).
 
 ## Voir aussi
 

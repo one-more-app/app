@@ -300,7 +300,7 @@ export const UI = {
   restSinceLastSetDismiss: "Masquer le repos",
   restTimeFinished: "Temps de repos terminé",
   restTimeFinishedA11y: "Temps de repos terminé, {time} écoulées",
-  restTimeFinishedToastA11y: "Temps de repos terminé — ouvrir {exercise}",
+  restTimeFinishedToastA11y: "Temps de repos terminé. Ouvrir {exercise}",
   restTimeSettingsTitle: "Temps de repos",
   restTimeSettingsDescription:
     "Durée cible entre deux séries. La barre se remplit sur cette durée, puis le compteur continue.",
@@ -313,8 +313,10 @@ export const UI = {
   restTimeIncrease: "Augmenter de 15 secondes",
   restCounterTourTitle: "Compteur de repos",
   restCounterTourContent:
-    "Ce compteur démarre dès que tu enregistres une série. Par défaut, la barre se remplit en 1 min 30 — le temps de repos recommandé entre deux séries.",
-  restCounterTourSettingsLink: "Personnaliser dans les paramètres →",
+    "Ce compteur démarre automatiquement quand tu enregistres une série. La barre se remplit jusqu'à ton temps de repos (1 min 30 par défaut).",
+  restCounterTourQuickEditTitle: "Ajuste ton repos",
+  restCounterTourQuickEditContent:
+    "Appuie sur le chrono pour modifier la durée entre tes séries. Essaie plus ou moins, ou choisis un raccourci.",
   options: "Options",
   rename: "Renommer",
   renameExercise: "Renommer l'exercice",

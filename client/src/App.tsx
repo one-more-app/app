@@ -8,6 +8,7 @@ import { PageSection } from '@/components/analytics/PageSection'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import { useKeyboardInset } from '@/hooks/use-keyboard-inset'
 import { usePushNotifications } from '@/hooks/use-push-notifications'
+import { useRestTimerLocalNotifications } from '@/hooks/use-rest-timer-local-notifications'
 import { RealtimeProvider } from '@/hooks/use-realtime'
 import { useTheme } from '@/hooks/use-theme'
 import { extractInviteCodeFromAttribution, setupAppsFlyer } from '@/lib/appsflyer'
@@ -53,6 +54,7 @@ function AccessGate({ children }: { children: React.ReactNode }) {
     const location = useLocation()
     const auth = useAuth()
     usePushNotifications()
+    useRestTimerLocalNotifications()
     const isAuthRoute = location.pathname === '/auth'
     const isOnboardingRoute = location.pathname === '/onboarding'
     const isInviteRoute = location.pathname.startsWith('/invite/')
