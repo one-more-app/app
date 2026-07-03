@@ -22,9 +22,9 @@
     "_billingIssuesEnabled" : false,
     "_disableDialogs" : false,
     "_failTransactionsEnabled" : false,
-    "_locale" : "en_US",
+    "_locale" : "fr",
     "_renewalBillingIssuesEnabled" : false,
-    "_storefront" : "USA",
+    "_storefront" : "FRA",
     "_storeKitErrors" : [
 
     ],
@@ -103,8 +103,8 @@
           "localizations" : [
             {
               "description" : "",
-              "displayName" : "",
-              "locale" : "en_US"
+              "displayName" : "France",
+              "locale" : "fr"
             }
           ],
           "productID" : "starter_mensual",
