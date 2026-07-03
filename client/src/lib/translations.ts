@@ -364,6 +364,8 @@ export const UI = {
   profileDefaultName: "Athlète One More",
   profileEditName: "Modifier le nom",
   profileChangePhoto: "Changer la photo de profil",
+  profileCropPhoto: "Recadrer la photo",
+  profileCropZoom: "Zoom",
   profileFirstName: "Prénom",
   profileLastName: "Nom",
   profileNameSaved: "Nom enregistré",

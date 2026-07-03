@@ -1,11 +1,8 @@
 import { useUserProfileData } from "@/hooks/use-api-data";
 import { useAuth } from "@/hooks/use-auth";
 import { upsertRemoteProfile } from "@/lib/data-api";
-import {
-  fileToAvatarDataUrl,
-  getProfileAvatarUrl,
-  setProfileAvatarUrl,
-} from "@/lib/profile-avatar";
+import { ProfileAvatarCropDialog } from "@/components/profile/ProfileAvatarCropDialog";
+import { getProfileAvatarUrl, setProfileAvatarUrl } from "@/lib/profile-avatar";
 import { ProfileNameDisplay } from "@/components/profile/ProfileNameDisplay";
 import { getProfileInitials } from "@/lib/profile-display";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,6 +30,9 @@ export function ProfileIdentityHeader({
   const { data: profileFromHook } = useUserProfileData();
   const profile = profileProp ?? profileFromHook;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cropObjectUrlRef = useRef<string | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
 
   const resolveAvatarUrl = () => {
     const fromProfile = avatarUrlProp ?? profile?.avatarUrl ?? null;
@@ -48,6 +48,15 @@ export function ProfileIdentityHeader({
     if (!readOnly && next) setProfileAvatarUrl(next);
   }, [avatarUrlProp, profile?.avatarUrl, readOnly]);
 
+  useEffect(
+    () => () => {
+      if (cropObjectUrlRef.current) {
+        URL.revokeObjectURL(cropObjectUrlRef.current);
+      }
+    },
+    [],
+  );
+
   const initials = getProfileInitials(profile, readOnly ? null : auth.user);
 
   const handleAvatarClick = () => {
@@ -55,26 +64,40 @@ export function ProfileIdentityHeader({
     fileInputRef.current?.click();
   };
 
+  const clearCropImage = () => {
+    if (cropObjectUrlRef.current) {
+      URL.revokeObjectURL(cropObjectUrlRef.current);
+      cropObjectUrlRef.current = null;
+    }
+    setCropImageSrc(null);
+  };
+
+  const handleCropOpenChange = (open: boolean) => {
+    setCropOpen(open);
+    if (!open) clearCropImage();
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file?.type.startsWith("image/")) return;
 
-    void (async () => {
-      try {
-        const dataUrl = await fileToAvatarDataUrl(file);
-        setProfileAvatarUrl(dataUrl);
-        setAvatarUrl(dataUrl);
-        if (profile?.weightKg && profile.heightCm && profile.gender) {
-          await upsertRemoteProfile({
-            ...profile,
-            avatarUrl: dataUrl,
-          });
-        }
-      } catch {
-        // ignore — fichier illisible ou canvas indisponible
-      }
-    })();
+    clearCropImage();
+    const objectUrl = URL.createObjectURL(file);
+    cropObjectUrlRef.current = objectUrl;
+    setCropImageSrc(objectUrl);
+    setCropOpen(true);
+  };
+
+  const handleCropConfirm = (dataUrl: string) => {
+    setProfileAvatarUrl(dataUrl);
+    setAvatarUrl(dataUrl);
+    if (profile?.weightKg && profile.heightCm && profile.gender) {
+      void upsertRemoteProfile({
+        ...profile,
+        avatarUrl: dataUrl,
+      });
+    }
   };
 
   const avatarClassName = cn(
@@ -150,6 +173,15 @@ export function ProfileIdentityHeader({
         </div>
       </div>
       </CardContent>
+
+      {!readOnly ? (
+        <ProfileAvatarCropDialog
+          open={cropOpen}
+          imageSrc={cropImageSrc}
+          onOpenChange={handleCropOpenChange}
+          onConfirm={handleCropConfirm}
+        />
+      ) : null}
     </Card>
   );
 }
