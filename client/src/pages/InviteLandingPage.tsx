@@ -5,9 +5,9 @@ import {
   fetchInvitePreview,
   requestFriendFromInvite,
 } from "@/lib/social-api";
-import { extractInviteCodeFromAttribution } from "@/lib/appsflyer";
+import { extractInviteCodeFromUrl } from "@/lib/appsflyer";
 import {
-  consumePendingInviteCode,
+  clearPendingInviteCode,
   setPendingInviteCode,
 } from "@/lib/invite-code";
 import { UI } from "@/lib/translations";
@@ -28,9 +28,7 @@ export default function InviteLandingPage() {
 
   useEffect(() => {
     if (code) return;
-    const fromQuery = extractInviteCodeFromAttribution(
-      Object.fromEntries(new URLSearchParams(window.location.search).entries()),
-    );
+    const fromQuery = extractInviteCodeFromUrl(window.location.href);
     if (fromQuery) {
       navigate(`/invite/${fromQuery}`, { replace: true });
     }
@@ -59,7 +57,7 @@ export default function InviteLandingPage() {
     void (async () => {
       try {
         await requestFriendFromInvite(code);
-        consumePendingInviteCode();
+        clearPendingInviteCode();
         toast.success(UI.friendAccepted);
         navigate("/friends", { replace: true });
       } catch {

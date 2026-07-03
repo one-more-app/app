@@ -1,20 +1,32 @@
-import { readStoredSession } from "@/lib/auth";
-import { resolveInviteShareUrl } from "@/lib/invite-link";
 import {
   fetchInviteCode,
-  fetchInviteLink,
   shareInviteCode,
-  shareInviteUrl,
+  shareInviteMessage,
 } from "@/lib/social-api";
 import { UI } from "@/lib/translations";
 import { toast } from "sonner";
 
+const PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=com.one_more.app";
+
+function getAppleStoreUrl(): string {
+  const appStoreId = String(import.meta.env.VITE_APPSFLYER_APP_ID ?? "").trim();
+  if (/^\d+$/.test(appStoreId)) {
+    return `https://apps.apple.com/app/id${appStoreId}`;
+  }
+  return "https://apps.apple.com/app";
+}
+
+function buildReferralShareMessage(code: string): string {
+  const base = UI.inviteCodeShareMessage.replace("{code}", code.trim().toLowerCase());
+  return `${base}\n\nApp Store (iOS): ${getAppleStoreUrl()}\nGoogle Play (Android): ${PLAY_STORE_URL}`;
+}
+
 export async function inviteFriend(): Promise<boolean> {
   try {
-    const session = readStoredSession();
-    const link = await fetchInviteLink();
-    const shareUrl = await resolveInviteShareUrl(link, session?.user.id);
-    const result = await shareInviteUrl(shareUrl);
+    const { code } = await fetchInviteCode();
+    const message = buildReferralShareMessage(code);
+    const result = await shareInviteMessage(message);
     if (result === "dismissed") return false;
     toast.success(
       result === "copied" ? UI.inviteLinkCopied : UI.inviteLinkShared,

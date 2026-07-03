@@ -92,7 +92,13 @@ function SearchResultRow({
   );
 }
 
-export function FriendsSearchTab({ onRefreshFriends }: { onRefreshFriends: () => void }) {
+export function FriendsSearchTab({
+  onRefreshFriends,
+  autoFocus = false,
+}: {
+  onRefreshFriends: () => void;
+  autoFocus?: boolean;
+}) {
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [results, setResults] = useState<UserSearchResult[]>([]);
@@ -143,7 +149,7 @@ export function FriendsSearchTab({ onRefreshFriends }: { onRefreshFriends: () =>
   };
 
   return (
-    <div className="space-y-4">
+    <section className="space-y-4">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -151,6 +157,7 @@ export function FriendsSearchTab({ onRefreshFriends }: { onRefreshFriends: () =>
           placeholder={UI.friendsSearchPlaceholder}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          autoFocus={autoFocus}
         />
       </div>
       <p className="text-xs text-muted-foreground">{UI.friendsSearchHint}</p>
@@ -174,6 +181,6 @@ export function FriendsSearchTab({ onRefreshFriends }: { onRefreshFriends: () =>
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }

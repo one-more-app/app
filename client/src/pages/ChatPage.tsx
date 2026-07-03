@@ -11,8 +11,9 @@ import { fetchMessages, sendMessage, type Message } from "@/lib/messaging-api";
 import { getProfileDisplayName } from "@/lib/profile-display";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
+import { User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import useSWR from "swr";
 
 export default function ChatPage() {
@@ -78,7 +79,21 @@ export default function ChatPage() {
 
   return (
     <div className="flex min-h-screen-app flex-col bg-background">
-      <BackHeader title={title} />
+      <BackHeader
+        title={title}
+        right={
+          conversation ? (
+            <Button variant="ghost" size="icon" asChild>
+              <Link
+                to={`/friends/${conversation.otherUser.userId}`}
+                aria-label={UI.friendViewProfile}
+              >
+                <User className="size-4" />
+              </Link>
+            </Button>
+          ) : null
+        }
+      />
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-3">
         <div className="flex flex-1 flex-col gap-2 overflow-y-auto pb-4">
           {(data?.messages ?? []).map((m) => (

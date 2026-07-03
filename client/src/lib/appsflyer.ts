@@ -32,18 +32,39 @@ export function extractInviteCodeFromAttribution(
   return null;
 }
 
-function applyInviteAttribution(
-  data: Record<string, unknown> | null | undefined,
-): void {
+export function extractInviteCodeFromUrl(input: string): string | null {
+  try {
+    const url = new URL(input);
+    const hash = url.hash.replace(/^#\/?/, "");
+    const inviteMatch = hash.match(/^invite\/([^/?#]+)/);
+    if (inviteMatch?.[1]) return inviteMatch[1].trim().toLowerCase();
+
+    const pathInvite = url.pathname.match(/\/invite\/([^/]+)/);
+    if (pathInvite?.[1]) return pathInvite[1].trim().toLowerCase();
+
+    return extractInviteCodeFromAttribution(
+      Object.fromEntries(url.searchParams.entries()),
+    );
+  } catch {
+    return null;
+  }
+}
+
+export function persistAndNavigateToInvite(code: string): void {
+  const normalizedCode = code.trim().toLowerCase();
+  if (!normalizedCode) return;
+  setPendingInviteCode(normalizedCode);
+  const target = `#/invite/${encodeURIComponent(normalizedCode)}`;
+  if (window.location.hash !== target) {
+    window.location.hash = target;
+  }
+}
+
+function applyInviteAttribution(data: Record<string, unknown> | null | undefined): void {
   const code = extractInviteCodeFromAttribution(data);
   if (!code) return;
 
-  setPendingInviteCode(code);
-
-  const target = `#/invite/${encodeURIComponent(code)}`;
-  if (!window.location.hash.includes(`/invite/${code}`)) {
-    window.location.hash = target;
-  }
+  persistAndNavigateToInvite(code);
 }
 
 function registerAppsFlyerListeners(): void {

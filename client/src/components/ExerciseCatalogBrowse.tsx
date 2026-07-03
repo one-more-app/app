@@ -1,4 +1,5 @@
 import { ExerciseBrowseNavigator } from '@/components/ExerciseBrowseNavigator'
+import { ExerciseImage } from '@/components/ExerciseImage'
 import { ExerciseTitle } from '@/components/ExerciseTitle'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -6,7 +7,6 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import type { CatalogBrowseParams, CatalogBrowseStep } from '@/lib/exercise-catalog-browse'
 import { catalogToBrowseable } from '@/lib/exercise-catalog-browse'
-import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { hapticImpact } from '@/lib/haptics'
 import { translateBodyPart, translateTarget, UI } from '@/lib/translations'
 import type { ExerciseDBExercise } from '@/types'
@@ -17,7 +17,6 @@ export interface ExerciseCatalogBrowseProps {
     browse: CatalogBrowseParams
     searchQuery: string
     trackedIds: Set<string>
-    brokenImageIds: Set<string>
     viewAll?: boolean
     onToggleViewAll?: () => void
     onPickZone: (zone: string) => void
@@ -26,25 +25,20 @@ export interface ExerciseCatalogBrowseProps {
     onGoToStep: (step: CatalogBrowseStep) => void
     onSelectExercise: (ex: ExerciseDBExercise) => void
     onAddExercise: (ex: ExerciseDBExercise) => void
-    onImageError: (exId: string) => void
     tourAddButtonIndex?: number
 }
 
 function ExerciseCatalogGrid({
     exercises,
     trackedIds,
-    brokenImageIds,
     onSelectExercise,
     onAddExercise,
-    onImageError,
     tourAddButtonIndex = 0,
 }: {
     exercises: ExerciseDBExercise[]
     trackedIds: Set<string>
-    brokenImageIds: Set<string>
     onSelectExercise: (ex: ExerciseDBExercise) => void
     onAddExercise: (ex: ExerciseDBExercise) => void
-    onImageError: (exId: string) => void
     tourAddButtonIndex?: number
 }) {
     if (exercises.length === 0) {
@@ -82,18 +76,14 @@ function ExerciseCatalogGrid({
                                 }}
                             >
                                 <div className="relative aspect-square w-full shrink-0 bg-muted">
-                                    {brokenImageIds.has(ex.id) ? (
-                                        <div className="flex size-full items-center justify-center text-muted-foreground">
-                                            <Dumbbell className="size-6" />
-                                        </div>
-                                    ) : (
-                                        <img
-                                            src={getExerciseImageUrl(ex.gifUrl)}
-                                            alt=""
-                                            className="size-full object-cover"
-                                            onError={() => onImageError(ex.id)}
-                                        />
-                                    )}
+                                    <ExerciseImage
+                                        gifUrl={ex.gifUrl}
+                                        bodyPart={ex.bodyPart}
+                                        target={ex.target}
+                                        className="size-full"
+                                        imgClassName="size-full object-cover"
+                                        fallbackIconClassName="size-8 text-muted-foreground"
+                                    />
                                 </div>
                                 <CardHeader className="flex shrink-0 flex-col gap-0.5 px-2 py-1.5 pb-1">
                                     <CardTitle className="text-[11px] leading-snug">
@@ -147,7 +137,6 @@ export function ExerciseCatalogBrowse({
     browse,
     searchQuery,
     trackedIds,
-    brokenImageIds,
     viewAll,
     onToggleViewAll,
     onPickZone,
@@ -156,7 +145,6 @@ export function ExerciseCatalogBrowse({
     onGoToStep,
     onSelectExercise,
     onAddExercise,
-    onImageError,
     tourAddButtonIndex = 0,
 }: ExerciseCatalogBrowseProps) {
     const browseable = exercises.map(catalogToBrowseable)
@@ -181,10 +169,8 @@ export function ExerciseCatalogBrowse({
                         .map((b) => idToCatalog.get(b.id))
                         .filter((ex): ex is ExerciseDBExercise => !!ex)}
                     trackedIds={trackedIds}
-                    brokenImageIds={brokenImageIds}
                     onSelectExercise={onSelectExercise}
                     onAddExercise={onAddExercise}
-                    onImageError={onImageError}
                     tourAddButtonIndex={tourAddButtonIndex}
                 />
             )}

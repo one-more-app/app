@@ -167,6 +167,8 @@ function HomePage() {
                                     league: xp?.league,
                                     exerciseImageUrl:
                                         getExerciseImageUrl(ex.gifUrl) || undefined,
+                                    bodyPart: ex.bodyPart,
+                                    target: ex.target,
                                 })
                             } finally {
                                 void refreshAfterPerfChange()

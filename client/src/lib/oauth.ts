@@ -1,6 +1,6 @@
 import { apiFetch } from "@/lib/api";
 import type { AuthSession } from "@/lib/auth";
-import { consumePendingInviteCode } from "@/lib/invite-code";
+import { clearPendingInviteCode, peekPendingInviteCode } from "@/lib/invite-code";
 import {
   loginWithAppleNative,
   loginWithGoogleNative,
@@ -50,11 +50,13 @@ export async function signInWithGoogle(): Promise<AuthSession> {
 
   const platform = oauthPlatform();
   const idToken = await loginWithGoogleNative();
-  const inviteCode = consumePendingInviteCode() ?? undefined;
-  return apiFetch<AuthSession>("/oauth/google/id-token", {
+  const inviteCode = peekPendingInviteCode() ?? undefined;
+  const session = await apiFetch<AuthSession>("/oauth/google/id-token", {
     method: "POST",
     body: JSON.stringify({ idToken, platform, inviteCode }),
   });
+  clearPendingInviteCode();
+  return session;
 }
 
 export async function signInWithApple(): Promise<AuthSession> {
@@ -64,11 +66,13 @@ export async function signInWithApple(): Promise<AuthSession> {
 
   const platform = oauthPlatform();
   const idToken = await loginWithAppleNative();
-  const inviteCode = consumePendingInviteCode() ?? undefined;
-  return apiFetch<AuthSession>("/oauth/apple/id-token", {
+  const inviteCode = peekPendingInviteCode() ?? undefined;
+  const session = await apiFetch<AuthSession>("/oauth/apple/id-token", {
     method: "POST",
     body: JSON.stringify({ idToken, platform, inviteCode }),
   });
+  clearPendingInviteCode();
+  return session;
 }
 
 export async function signInWithOAuth(provider: Provider): Promise<AuthSession> {
@@ -155,8 +159,9 @@ export async function signInWithOAuth(provider: Provider): Promise<AuthSession> 
       redirectUri: start.redirectUri ?? redirectUri,
       codeVerifier,
       state,
-      inviteCode: consumePendingInviteCode() ?? undefined,
+      inviteCode: peekPendingInviteCode() ?? undefined,
     }),
   });
+  clearPendingInviteCode();
   return session;
 }

@@ -1,6 +1,7 @@
 import { BackHeader } from '@/components/BackHeader'
 import { CustomExerciseMetadataFields } from '@/components/CustomExerciseMetadataFields'
 import { ExerciseCatalogBrowse } from '@/components/ExerciseCatalogBrowse'
+import { ExerciseImage } from '@/components/ExerciseImage'
 import { useReferralDrawer } from '@/hooks/use-referral-drawer'
 import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
 import { ExerciseCatalogSkeletonList } from '@/components/skeletons'
@@ -30,7 +31,6 @@ import { useTheme } from '@/hooks/use-theme'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
 import { fetchExercisesCatalog, fetchExercisesMeta } from '@/lib/data-api'
 import { filterCatalogExercises } from '@/lib/exercise-catalog-browse'
-import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
 import { getJoyrideScrollOffset, getJoyrideShiftPadding } from '@/lib/joyride-config'
 import {
@@ -64,7 +64,6 @@ export function ExerciseListPage() {
     const [customName, setCustomName] = useState('')
     const [customTarget, setCustomTarget] = useState('chest' as string)
     const [customEquipment, setCustomEquipment] = useState('body weight')
-    const [brokenImageIds, setBrokenImageIds] = useState<Set<string>>(new Set())
     const [addWithPerfExercise, setAddWithPerfExercise] = useState<ExerciseDBExercise | null>(null)
     const [selectedExercise, setSelectedExercise] = useState<ExerciseDBExercise | null>(null)
     const [perfWeight, setPerfWeight] = useState(0)
@@ -320,10 +319,6 @@ export function ExerciseListPage() {
         [resolvedTheme],
     )
 
-    const handleImageError = (exId: string) => {
-        setBrokenImageIds((prev) => new Set(prev).add(exId))
-    }
-
     const openAddWithPerf = (ex: ExerciseDBExercise) => {
         if (trackedIds.has(`api-${ex.id}`)) return
         guardAddExercise(() => {
@@ -494,7 +489,6 @@ export function ExerciseListPage() {
                         browse={browse}
                         searchQuery={searchQuery}
                         trackedIds={trackedIds}
-                        brokenImageIds={brokenImageIds}
                         viewAll={viewAll}
                         onToggleViewAll={toggleViewAll}
                         onPickZone={pickZone}
@@ -503,7 +497,6 @@ export function ExerciseListPage() {
                         onGoToStep={goToStep}
                         onSelectExercise={setSelectedExercise}
                         onAddExercise={openAddWithPerf}
-                        onImageError={handleImageError}
                     />
                 )}
 
@@ -560,13 +553,14 @@ export function ExerciseListPage() {
                         {selectedExercise && (
                             <>
                                 <div className="bg-muted">
-                                    <img
-                                        src={getExerciseImageUrl(selectedExercise.gifUrl)}
-                                        alt=""
-                                        className="mx-auto max-h-[min(44vh,340px)] w-full object-contain"
-                                        onError={(e) => {
-                                            ; (e.target as HTMLImageElement).style.display = 'none'
-                                        }}
+                                    <ExerciseImage
+                                        gifUrl={selectedExercise.gifUrl}
+                                        bodyPart={selectedExercise.bodyPart}
+                                        target={selectedExercise.target}
+                                        className="mx-auto max-h-[min(44vh,340px)] w-full"
+                                        imgClassName="mx-auto max-h-[min(44vh,340px)] w-full object-contain"
+                                        fallbackIconClassName="size-20 text-muted-foreground"
+                                        fit="contain"
                                     />
                                 </div>
                                 <div className="space-y-3 p-4 pt-4">

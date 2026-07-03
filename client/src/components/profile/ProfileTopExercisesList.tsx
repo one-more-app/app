@@ -1,3 +1,4 @@
+import { ExerciseImage } from "@/components/ExerciseImage";
 import { ExerciseTitle } from "@/components/ExerciseTitle";
 import { RankBadge } from "@/components/RankBadge";
 import { Button } from "@/components/ui/button";
@@ -7,12 +8,10 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { getExerciseImageUrl } from "@/lib/exercisedb";
 import { formatPerfLabel } from "@/lib/history-entries";
 import type { TopExerciseByLeague } from "@/lib/profile-highlights";
 import { profileNestedInteractiveClass } from "@/lib/profile-section";
 import { UI } from "@/lib/translations";
-import { Dumbbell } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -40,28 +39,21 @@ export function ProfileTopExercisesList({
             <CardContent>
                 <ol className="space-y-2">
                     {visible.map((row, index) => {
-                        const showGif =
-                            !row.exercise.isCustom && Boolean(row.exercise.gifUrl?.trim());
-
                         const inner = (
                             <>
                                 <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background text-xs font-bold tabular-nums text-muted-foreground">
                                     {index + 1}
                                 </span>
-                                <div className="relative size-10 shrink-0 overflow-hidden rounded-md bg-background">
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <Dumbbell className="size-4 text-muted-foreground" aria-hidden />
-                                    </div>
-                                    {showGif ? (
-                                        <img
-                                            src={getExerciseImageUrl(row.exercise.gifUrl)}
-                                            alt=""
-                                            className="relative z-10 size-10 object-cover"
-                                            onError={(e) => {
-                                                e.currentTarget.style.visibility = "hidden";
-                                            }}
-                                        />
-                                    ) : null}
+                                <div className="size-10 shrink-0 overflow-hidden rounded-md bg-background">
+                                    <ExerciseImage
+                                        gifUrl={row.exercise.gifUrl}
+                                        isCustom={row.exercise.isCustom}
+                                        bodyPart={row.exercise.bodyPart}
+                                        target={row.exercise.target}
+                                        className="size-full"
+                                        imgClassName="size-full object-cover"
+                                        fallbackIconClassName="size-6 text-muted-foreground"
+                                    />
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <CardTitle>

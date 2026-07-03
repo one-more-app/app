@@ -498,6 +498,8 @@ export function ExerciseDetailPage() {
                                         exerciseImageUrl:
                                             getExerciseImageUrl(exercise.gifUrl) ||
                                             undefined,
+                                        bodyPart: exercise.bodyPart,
+                                        target: exercise.target,
                                     })
                                 } finally {
                                     refresh()
@@ -843,6 +845,8 @@ export function ExerciseDetailPage() {
                                                 getExerciseImageUrl(
                                                     exercise.gifUrl,
                                                 ) || undefined,
+                                            bodyPart: exercise.bodyPart,
+                                            target: exercise.target,
                                         })
                                     } finally {
                                         refresh()

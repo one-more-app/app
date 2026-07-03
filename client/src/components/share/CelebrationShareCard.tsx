@@ -1,4 +1,5 @@
 import { RankBadge } from '@/components/RankBadge'
+import { ExerciseMuscleFallback } from '@/components/ExerciseImage'
 import { leagueIconDropShadow } from '@/components/celebration-modal-ui'
 import type { CelebrationItem } from '@/lib/celebration-queue'
 import {
@@ -21,6 +22,7 @@ import { cn } from '@/lib/utils'
 import { streakXpBonusPercent } from '@one-more/shared/streak-xp-multiplier'
 import { ArrowRight, Flame, Sparkles, Trophy, type LucideIcon } from 'lucide-react'
 import type { CSSProperties, ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 
 export type CelebrationShareOpen = CelebrationItem
 
@@ -144,26 +146,56 @@ function ShareStoryShell({
 
 function ShareStoryExerciseThumb({
     exerciseImageUrl,
+    bodyPart,
+    target,
+    iconColor,
 }: {
-    exerciseImageUrl: string
+    exerciseImageUrl?: string
+    bodyPart?: string
+    target?: string
+    iconColor?: string
 }) {
-    const src = getShareableExerciseImageUrl(exerciseImageUrl, 'square')
-    if (!src) return null
+    const [broken, setBroken] = useState(false)
+    const src = exerciseImageUrl
+        ? getShareableExerciseImageUrl(exerciseImageUrl, 'square')
+        : null
+
+    useEffect(() => {
+        setBroken(false)
+    }, [exerciseImageUrl])
+
+    if (src && !broken) {
+        return (
+            <img
+                src={src}
+                alt=""
+                crossOrigin="anonymous"
+                decoding="async"
+                className="size-56 shrink-0 rounded-3xl object-cover ring-2 ring-white/25 shadow-lg"
+                onError={() => setBroken(true)}
+            />
+        )
+    }
 
     return (
-        <img
-            src={src}
-            alt=""
-            crossOrigin="anonymous"
-            decoding="async"
-            className="size-56 shrink-0 rounded-3xl object-cover ring-2 ring-white/25 shadow-lg"
-        />
+        <div
+            className="flex size-56 shrink-0 items-center justify-center rounded-3xl bg-black/30 ring-2 ring-white/25 shadow-lg"
+            style={iconColor ? { color: iconColor } : undefined}
+        >
+            <ExerciseMuscleFallback
+                target={target}
+                bodyPart={bodyPart}
+                className="size-28 text-white/90"
+            />
+        </div>
     )
 }
 
 function ShareStoryHeroStat({
     icon: Icon,
     exerciseImageUrl,
+    bodyPart,
+    target,
     value,
     iconColor,
     iconFilter,
@@ -171,6 +203,8 @@ function ShareStoryHeroStat({
 }: {
     icon?: LucideIcon
     exerciseImageUrl?: string
+    bodyPart?: string
+    target?: string
     value: ReactNode
     iconColor: string
     iconFilter?: string
@@ -179,11 +213,17 @@ function ShareStoryHeroStat({
     const exerciseThumb =
         exerciseImageUrl &&
         getShareableExerciseImageUrl(exerciseImageUrl, 'square')
+    const showMuscleThumb = exerciseThumb || bodyPart || target
 
     return (
         <div className="relative flex flex-col items-center gap-5">
-            {exerciseThumb ? (
-                <ShareStoryExerciseThumb exerciseImageUrl={exerciseImageUrl!} />
+            {showMuscleThumb ? (
+                <ShareStoryExerciseThumb
+                    exerciseImageUrl={exerciseImageUrl}
+                    bodyPart={bodyPart}
+                    target={target}
+                    iconColor={iconColor}
+                />
             ) : Icon ? (
                 <Icon
                     className="size-24 shrink-0"
@@ -257,7 +297,7 @@ function ShareLeagueCard({
     open: Extract<CelebrationShareOpen, { kind: 'league' }>
     isDark: boolean
 }) {
-    const { exerciseName, prevLeague, nextLeague, weight, reps, exerciseImageUrl } =
+    const { exerciseName, prevLeague, nextLeague, weight, reps, exerciseImageUrl, bodyPart, target } =
         open.payload
     const glow = leagueMapFill(nextLeague.tier, isDark)
 
@@ -271,7 +311,9 @@ function ShareLeagueCard({
         >
             <ShareStoryHeroStat
                 exerciseImageUrl={exerciseImageUrl}
-                icon={exerciseImageUrl ? undefined : Trophy}
+                bodyPart={bodyPart}
+                target={target}
+                icon={exerciseImageUrl || bodyPart || target ? undefined : Trophy}
                 value={formatSharePerfHero(weight, reps)}
                 iconColor={glow}
                 iconFilter={leagueIconDropShadow(glow)}
@@ -314,7 +356,7 @@ function ShareRecordCard({
     open: Extract<CelebrationShareOpen, { kind: 'record' }>
     isDark: boolean
 }) {
-    const { exerciseName, weight, reps, leagueAfter, exerciseImageUrl } = open.payload
+    const { exerciseName, weight, reps, leagueAfter, exerciseImageUrl, bodyPart, target } = open.payload
     const glow = recordCelebrationGlow(leagueAfter, isDark)
     const perfLabel = UI.leaguePromotionCelebrationPerf
         .replace('{weight}', String(weight))
@@ -332,7 +374,9 @@ function ShareRecordCard({
         >
             <ShareStoryHeroStat
                 exerciseImageUrl={exerciseImageUrl}
-                icon={exerciseImageUrl ? undefined : Trophy}
+                bodyPart={bodyPart}
+                target={target}
+                icon={exerciseImageUrl || bodyPart || target ? undefined : Trophy}
                 value={formatSharePerfHero(weight, reps)}
                 iconColor={glow}
                 iconFilter={leagueIconDropShadow(glow)}

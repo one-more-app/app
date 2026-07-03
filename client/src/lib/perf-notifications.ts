@@ -18,6 +18,8 @@ export type LeaguePromotionPayload = {
   weight: number
   reps: number
   exerciseImageUrl?: string
+  bodyPart?: string
+  target?: string
 }
 
 export type NewRecordCelebrationPayload = {
@@ -26,6 +28,8 @@ export type NewRecordCelebrationPayload = {
   reps: number
   leagueAfter: LeagueInfo | null
   exerciseImageUrl?: string
+  bodyPart?: string
+  target?: string
 }
 
 export function isNewPersonalBest(prevPB: PB, nextPB: PB): boolean {
@@ -54,6 +58,8 @@ export function notifyPerfMilestones(params: {
   savedReps: number
   league?: LeagueChangeDto | null
   exerciseImageUrl?: string
+  bodyPart?: string
+  target?: string
 }): void {
   const {
     exerciseName,
@@ -63,6 +69,8 @@ export function notifyPerfMilestones(params: {
     savedReps,
     league,
     exerciseImageUrl,
+    bodyPart,
+    target,
   } = params
 
   const prevLeague = league?.before ?? null
@@ -94,6 +102,8 @@ export function notifyPerfMilestones(params: {
         weight: savedWeight,
         reps: savedReps,
         exerciseImageUrl,
+        bodyPart,
+        target,
       },
     })
     return
@@ -116,6 +126,8 @@ export function notifyPerfMilestones(params: {
         reps: savedReps,
         leagueAfter: nextLeague,
         exerciseImageUrl,
+        bodyPart,
+        target,
       },
     })
     void maybeRequestAppReview("milestone")

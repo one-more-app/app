@@ -252,6 +252,8 @@ export function ProfileRecentHistory({
                   league: xp?.league,
                   exerciseImageUrl:
                     getExerciseImageUrl(addExercise.gifUrl) || undefined,
+                  bodyPart: addExercise.bodyPart,
+                  target: addExercise.target,
                 });
               } finally {
                 void refreshAfterPerfChange();

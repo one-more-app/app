@@ -1,8 +1,8 @@
+import { ExerciseImage } from '@/components/ExerciseImage'
 import { HistoryCollapsedHighlights } from '@/components/history/HistoryCollapsedHighlights'
 import { PerfEntryList } from '@/components/history/PerfEntryList'
 import { ExerciseTitle } from '@/components/ExerciseTitle'
 import { Card, CardTitle } from '@/components/ui/card'
-import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { hapticSelectionChanged } from '@/lib/haptics'
 import {
     summarizeExerciseGroupInsights,
@@ -12,7 +12,7 @@ import { profileNestedClass } from '@/lib/profile-section'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import type { PerformanceEntry, TrackedExercise } from '@/types'
-import { ChevronDown, Dumbbell } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { Collapsible } from 'radix-ui'
 import { useMemo } from 'react'
 
@@ -46,10 +46,6 @@ export function HistoryExerciseCollapsible({
     surface = 'card',
 }: HistoryExerciseCollapsibleProps) {
     const title = exercise?.name ?? UI.exerciseNotFound
-    const showGif =
-        exercise &&
-        !exercise.isCustom &&
-        Boolean(exercise.gifUrl?.trim())
     const canEdit = !!exercise
 
     const Shell = surface === 'profile' ? 'div' : Card
@@ -90,19 +86,15 @@ export function HistoryExerciseCollapsible({
                                         thumbBg,
                                     )}
                                 >
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <Dumbbell className="size-6" />
-                                    </div>
-                                    {showGif ? (
-                                        <img
-                                            src={getExerciseImageUrl(exercise.gifUrl)}
-                                            alt=""
-                                            className="relative z-10 size-12 object-cover"
-                                            onError={(e) => {
-                                                e.currentTarget.style.visibility = 'hidden'
-                                            }}
-                                        />
-                                    ) : null}
+                                    <ExerciseImage
+                                        gifUrl={exercise?.gifUrl}
+                                        isCustom={exercise?.isCustom}
+                                        bodyPart={exercise?.bodyPart}
+                                        target={exercise?.target}
+                                        className="size-full"
+                                        imgClassName="size-full object-cover"
+                                        fallbackIconClassName="size-7 text-muted-foreground"
+                                    />
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <CardTitle>

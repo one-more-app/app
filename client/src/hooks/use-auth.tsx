@@ -10,8 +10,8 @@ import {
 } from "@/lib/auth";
 import { AnalyticsEvents, track } from "@/lib/analytics";
 import { syncAppsFlyerCustomerUserId } from "@/lib/appsflyer";
-import { consumePendingInviteCode } from "@/lib/invite-code";
 import { ApiError } from "@/lib/api";
+import { clearPendingInviteCode, peekPendingInviteCode } from "@/lib/invite-code";
 import { ACCESS_SWR_KEY } from "@/lib/social-api";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const inviteCode =
           inviteCodeParam?.trim() ||
-          consumePendingInviteCode() ||
+          peekPendingInviteCode() ||
           undefined;
         const session = await registerWithEmail({
           email,
@@ -117,6 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           lastName: lastName?.trim() || undefined,
         });
         applySession(session);
+        clearPendingInviteCode();
         track(AnalyticsEvents.USER_REGISTERED, { method: "email" });
       } catch (e) {
         setLastError(normalizeError(e));

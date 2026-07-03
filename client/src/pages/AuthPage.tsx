@@ -9,6 +9,7 @@ import {
 } from "@/components/profile/UsernameField";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
+import { ApiError } from "@/lib/api";
 import { identifyEmail, suggestUsername } from "@/lib/auth";
 import { peekPendingInviteCode } from "@/lib/invite-code";
 import { signInWithApple, signInWithGoogle } from "@/lib/oauth";
@@ -22,7 +23,7 @@ import {
 } from "@one-more/shared/access-config";
 import { Capacitor } from "@capacitor/core";
 import { X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 type AuthStep =
@@ -112,6 +113,15 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         setStep("email");
     };
 
+    useEffect(() => {
+        if (step !== "register_referral") return;
+        if (referralCode.trim()) return;
+        const pendingCode = peekPendingInviteCode();
+        if (pendingCode) {
+            setReferralCode(pendingCode);
+        }
+    }, [step, referralCode]);
+
     const handleEmailChange = (value: string) => {
         setEmail(value);
         if (step === "login") {
@@ -169,9 +179,13 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
             if (trimmedReferralCode) {
                 try {
                     await fetchInvitePreview(trimmedReferralCode);
-                } catch {
-                    auth.setError(UI.referralCodeInvalid);
-                    return;
+                } catch (error) {
+                    if (error instanceof ApiError && error.status === 404) {
+                        auth.setError(UI.referralCodeInvalid);
+                        return;
+                    }
+                    // L'API de preview peut être indisponible: on tente quand même l'inscription.
+                    console.warn("[Auth] Invite preview unavailable, fallback to signup", error);
                 }
             }
             await auth.register({

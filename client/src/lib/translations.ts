@@ -383,7 +383,7 @@ export const UI = {
   inviteShareError: "Impossible de partager le code",
   inviteShareTitle: "One More",
   inviteCodeShareMessage:
-    "Rejoins-moi sur One More pour suivre ta muscu ensemble ! Utilise mon code de parrainage : {code}",
+    "Rejoins-moi sur One More pour suivre ta muscu ensemble ! Utilise mon code de parrainage : {code}. On gagne des exos supplémentaires tous les deux.",
   inviteShareDialogTitle: "Inviter un pote",
   inviteCodeLabel: "Mon code de parrainage",
   /** @deprecated */
@@ -495,6 +495,7 @@ export const UI = {
   tshirtDeliveryTrackingLabel: "Suivi",
 
   friendsTitle: "Amis",
+  friendsAddTitle: "Ajouter des amis",
   friendsListTitle: "Mes potes",
   friendRequestsTitle: "Demandes reçues",
   friendsEmpty:

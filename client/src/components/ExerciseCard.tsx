@@ -11,13 +11,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog'
-import { getExerciseImageUrl } from '@/lib/exercisedb'
+import { ExerciseImage } from '@/components/ExerciseImage'
 import { hapticImpact, hapticImpactMedium } from '@/lib/haptics'
 import { LEAGUE_1RM_STYLES } from '@/lib/league-colors'
 import type { LeagueInfo } from '@/lib/strength-standards'
 import { UI, translateBodyPart, translateTarget } from '@/lib/translations'
 import { cn } from '@/lib/utils'
-import { Dumbbell, Plus, Trophy } from 'lucide-react'
+import { Plus, Trophy } from 'lucide-react'
 import { useState } from 'react'
 
 export interface ExerciseCardExercise {
@@ -107,18 +107,25 @@ export function ExerciseCard({
                                 setImagePreviewOpen(true)
                             }}
                         >
-                            <img
-                                src={getExerciseImageUrl(exercise.gifUrl)}
-                                alt=""
-                                className="size-full object-cover"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none'
-                                }}
+                            <ExerciseImage
+                                gifUrl={exercise.gifUrl}
+                                bodyPart={exercise.bodyPart}
+                                target={exercise.target}
+                                className="size-full"
+                                imgClassName="size-full object-cover"
+                                fallbackIconClassName="size-7 text-muted-foreground"
                             />
                         </button>
                     ) : (
-                        <div className={`${sizeClass} flex shrink-0 self-center items-center justify-center rounded-lg bg-muted`}>
-                            <Dumbbell className="size-6 text-default" />
+                        <div className={`${sizeClass} shrink-0 self-center overflow-hidden rounded-lg bg-muted`}>
+                            <ExerciseImage
+                                gifUrl={exercise.gifUrl}
+                                isCustom={exercise.isCustom}
+                                bodyPart={exercise.bodyPart}
+                                target={exercise.target}
+                                className="size-full"
+                                fallbackIconClassName="size-7 text-muted-foreground"
+                            />
                         </div>
                     )}
                     <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-center gap-2 self-stretch">
@@ -236,13 +243,14 @@ export function ExerciseCard({
                 <Dialog open={imagePreviewOpen} onOpenChange={setImagePreviewOpen}>
                     <DialogContent className="max-w-lg gap-0 overflow-hidden p-0 sm:max-w-lg">
                         <div className="bg-muted">
-                            <img
-                                src={getExerciseImageUrl(exercise.gifUrl)}
-                                alt=""
-                                className="mx-auto max-h-[min(70vh,480px)] w-full object-contain"
-                                onError={(e) => {
-                                    ; (e.target as HTMLImageElement).style.display = 'none'
-                                }}
+                            <ExerciseImage
+                                gifUrl={exercise.gifUrl}
+                                bodyPart={exercise.bodyPart}
+                                target={exercise.target}
+                                className="mx-auto max-h-[min(70vh,480px)] w-full"
+                                imgClassName="mx-auto max-h-[min(70vh,480px)] w-full object-contain"
+                                fallbackIconClassName="size-24 text-muted-foreground"
+                                fit="contain"
                             />
                         </div>
                         <DialogHeader className="space-y-0 p-4 pt-3 text-left">

@@ -209,6 +209,8 @@ export function HistoryPage() {
                                     exerciseImageUrl:
                                         getExerciseImageUrl(addExercise.gifUrl) ||
                                         undefined,
+                                    bodyPart: addExercise.bodyPart,
+                                    target: addExercise.target,
                                 })
                             } finally {
                                 void refreshAfterPerfChange()

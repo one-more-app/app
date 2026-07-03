@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useFriendsPresence } from "@/hooks/use-friends-presence";
 import { hapticImpact } from "@/lib/haptics";
+import { getOrCreateConversation } from "@/lib/messaging-api";
 import {
     getProfileDisplayName,
     getProfileInitials,
@@ -15,29 +16,101 @@ import {
     type FriendsListResponse,
 } from "@/lib/social-api";
 import { UI } from "@/lib/translations";
-import { useReferralDrawer } from "@/hooks/use-referral-drawer";
 import { cn } from "@/lib/utils";
-import { ChevronRight, Dumbbell, UserPlus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { MessageCircle, UserPlus } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-function FriendRow({
+function AcceptedFriendRow({
     item,
-    onAccept,
-    onDecline,
-    onCancel,
     presence,
 }: {
     item: FriendListItem;
-    onAccept?: () => void;
-    onDecline?: () => void;
-    onCancel?: () => void;
     presence?: ReturnType<typeof useFriendsPresence>["byUserId"] extends Map<
         string,
         infer V
     >
     ? V
     : never;
+}) {
+    const profile = {
+        firstName: item.firstName ?? undefined,
+        lastName: item.lastName ?? undefined,
+        username: item.username ?? undefined,
+    };
+    const name = getProfileDisplayName(profile, null);
+    const initials = getProfileInitials(profile, null);
+    const showUsername =
+        item.username && (item.firstName || item.lastName);
+    const navigate = useNavigate();
+
+    const openConversation = () => {
+        void (async () => {
+            try {
+                const conversation = await getOrCreateConversation(item.userId);
+                navigate(`/friends/chat/${conversation.id}`);
+            } catch {
+                toast.error(UI.friendActionError);
+            }
+        })();
+    };
+
+    return (
+        <Card
+            className="cursor-pointer py-0"
+            onClick={() => {
+                void hapticImpact();
+                openConversation();
+            }}
+        >
+            <CardContent className="flex items-center gap-3 p-3">
+                <Link
+                    to={`/friends/${item.userId}`}
+                    className="flex shrink-0 items-center gap-3"
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        void hapticImpact();
+                    }}
+                >
+                    <div className="relative shrink-0">
+                        {item.avatarUrl ? (
+                            <img
+                                src={item.avatarUrl}
+                                alt=""
+                                className="size-10 rounded-full object-cover"
+                            />
+                        ) : (
+                            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                                {initials}
+                            </div>
+                        )}
+                    </div>
+                    <div className="min-w-0">
+                        <p className="truncate font-medium">{name}</p>
+                        {showUsername ? (
+                            <p className="truncate text-xs text-muted-foreground">@{item.username}</p>
+                        ) : null}
+                    </div>
+                </Link>
+                <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+                    <PresenceBadge presence={presence} />
+                    <MessageCircle className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function PendingFriendRow({
+    item,
+    onAccept,
+    onDecline,
+    onCancel,
+}: {
+    item: FriendListItem;
+    onAccept?: () => void;
+    onDecline?: () => void;
+    onCancel?: () => void;
 }) {
     const profile = {
         firstName: item.firstName ?? undefined,
@@ -56,37 +129,37 @@ function FriendRow({
     const content = (
         <Card className="py-0">
             <CardContent className="flex items-center gap-3 p-3">
-                <div className="relative shrink-0">
-                    {item.avatarUrl ? (
-                        <img
-                            src={item.avatarUrl}
-                            alt=""
-                            className="size-10 rounded-full object-cover"
-                        />
-                    ) : (
-                        <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                            {initials}
-                        </div>
-                    )}
-                </div>
-                <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{name}</p>
-                    {isPendingIncoming ? (
-                        <p className="text-xs text-muted-foreground">{UI.friendRequestPending}</p>
-                    ) : isPendingOutgoing ? (
-                        <p className="text-xs text-muted-foreground">{UI.friendRequestOutgoing}</p>
-                    ) : (
-                        <>
-                            {showUsername ? (
-                                <p className="truncate text-xs text-muted-foreground">@{item.username}</p>
-                            ) : null}
-                            <PresenceBadge presence={presence} />
-                        </>
-                    )}
-                </div>
-                {!isPendingIncoming && !isPendingOutgoing ? (
-                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                ) : null}
+                <Link
+                    to={`/friends/preview/${item.userId}`}
+                    className="flex min-w-0 flex-1 items-center gap-3"
+                    onClick={() => {
+                        void hapticImpact();
+                    }}
+                >
+                    <div className="relative shrink-0">
+                        {item.avatarUrl ? (
+                            <img
+                                src={item.avatarUrl}
+                                alt=""
+                                className="size-10 rounded-full object-cover"
+                            />
+                        ) : (
+                            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                                {initials}
+                            </div>
+                        )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium">{name}</p>
+                        {isPendingIncoming ? (
+                            <p className="text-xs text-muted-foreground">{UI.friendRequestPending}</p>
+                        ) : isPendingOutgoing ? (
+                            <p className="text-xs text-muted-foreground">{UI.friendRequestOutgoing}</p>
+                        ) : showUsername ? (
+                            <p className="truncate text-xs text-muted-foreground">@{item.username}</p>
+                        ) : null}
+                    </div>
+                </Link>
             </CardContent>
         </Card>
     );
@@ -118,20 +191,6 @@ function FriendRow({
         );
     }
 
-    if (item.status === "accepted") {
-        return (
-            <Link
-                to={`/friends/${item.userId}`}
-                className="block"
-                onClick={() => {
-                    void hapticImpact();
-                }}
-            >
-                {content}
-            </Link>
-        );
-    }
-
     return content;
 }
 
@@ -144,8 +203,7 @@ export function FriendsListTab({
     isLoading: boolean;
     onRefresh: () => Promise<void>;
 }) {
-    const { openReferralDrawer } = useReferralDrawer();
-    const { byUserId, trainingFriends } = useFriendsPresence();
+    const { byUserId } = useFriendsPresence();
 
     const handleAccept = (friendshipId: string) => {
         void (async () => {
@@ -187,54 +245,11 @@ export function FriendsListTab({
 
     return (
         <div className="space-y-6">
-            {trainingFriends.length > 0 ? (
-                <section className="space-y-3">
-                    <h2 className="text-sm font-semibold">{UI.friendsTrainingNow}</h2>
-                    <div className="space-y-2">
-                        {trainingFriends.map((p) => {
-                            const friend = data?.friends.find((f) => f.userId === p.userId);
-                            if (!friend) return null;
-                            return (
-                                <Link
-                                    key={p.userId}
-                                    to={`/friends/${p.userId}`}
-                                    className="block"
-                                    onClick={() => {
-                                        void hapticImpact();
-                                    }}
-                                >
-                                    <Card className="border border-amber-500/30 bg-amber-500/5 py-0">
-                                        <CardContent className="flex items-center gap-3 p-3">
-                                            <Dumbbell className="size-5 shrink-0 text-amber-600" />
-                                            <div className="min-w-0 flex-1">
-                                                <p className="truncate font-medium">
-                                                    {getProfileDisplayName(
-                                                        {
-                                                            firstName: friend.firstName ?? undefined,
-                                                            lastName: friend.lastName ?? undefined,
-                                                            username: friend.username ?? undefined,
-                                                        },
-                                                        null,
-                                                    )}
-                                                </p>
-                                                <p className="truncate text-xs text-muted-foreground">
-                                                    {p.exerciseName ?? UI.friendsTrainingGeneric}
-                                                </p>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </Link>
-                            );
-                        })}
-                    </div>
-                </section>
-            ) : null}
-
             {(data?.pendingIncoming.length ?? 0) > 0 ? (
                 <section className="space-y-3">
                     <h2 className="text-sm font-semibold">{UI.friendRequestsTitle}</h2>
                     {data!.pendingIncoming.map((item) => (
-                        <FriendRow
+                        <PendingFriendRow
                             key={item.friendshipId}
                             item={item}
                             onAccept={() => handleAccept(item.friendshipId)}
@@ -248,7 +263,7 @@ export function FriendsListTab({
                 <section className="space-y-3">
                     <h2 className="text-sm font-semibold">{UI.friendRequestsOutgoingTitle}</h2>
                     {data!.pendingOutgoing.map((item) => (
-                        <FriendRow
+                        <PendingFriendRow
                             key={item.friendshipId}
                             item={item}
                             onCancel={() => handleCancel(item.friendshipId)}
@@ -267,17 +282,11 @@ export function FriendsListTab({
                     >
                         <UserPlus className="size-8 text-muted-foreground" />
                         <p className="text-sm text-muted-foreground">{UI.friendsEmpty}</p>
-                        <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => openReferralDrawer("invite")}
-                        >
-                            {UI.profileInviteButton}
-                        </Button>
+                        <p className="text-xs text-muted-foreground">{UI.friendsSearchHint}</p>
                     </div>
                 ) : (
                     data!.friends.map((item) => (
-                        <FriendRow
+                        <AcceptedFriendRow
                             key={item.friendshipId}
                             item={item}
                             presence={byUserId.get(item.userId)}

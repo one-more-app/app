@@ -291,3 +291,49 @@ export async function shareInviteUrl(url: string): Promise<InviteShareResult> {
   }
   throw new Error("Partage non disponible");
 }
+
+export async function shareInviteMessage(
+  message: string,
+): Promise<InviteShareResult> {
+  const share = {
+    title: UI.inviteShareTitle,
+    text: message,
+    dialogTitle: UI.inviteShareDialogTitle,
+    clipboardText: message,
+  };
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const { Share } = await import("@capacitor/share");
+      await Share.share({
+        title: share.title,
+        text: share.text,
+        dialogTitle: share.dialogTitle,
+      });
+      return "shared";
+    } catch (error) {
+      if (isShareCancelled(error)) return "dismissed";
+      throw error;
+    }
+  }
+
+  if (typeof navigator !== "undefined" && navigator.share) {
+    try {
+      await navigator.share({
+        title: share.title,
+        text: share.text,
+      });
+      return "shared";
+    } catch (error) {
+      if (isShareCancelled(error)) return "dismissed";
+      // fallback copy
+    }
+  }
+
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(share.clipboardText);
+    return "copied";
+  }
+
+  throw new Error("Partage non disponible");
+}

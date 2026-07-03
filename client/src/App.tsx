@@ -11,8 +11,11 @@ import { usePushNotifications } from '@/hooks/use-push-notifications'
 import { useRestTimerLocalNotifications } from '@/hooks/use-rest-timer-local-notifications'
 import { RealtimeProvider } from '@/hooks/use-realtime'
 import { useTheme } from '@/hooks/use-theme'
-import { extractInviteCodeFromAttribution, setupAppsFlyer } from '@/lib/appsflyer'
-import { setPendingInviteCode } from '@/lib/invite-code'
+import {
+    extractInviteCodeFromUrl,
+    persistAndNavigateToInvite,
+    setupAppsFlyer,
+} from '@/lib/appsflyer'
 import { needsOnboarding } from '@/lib/storage'
 import { scheduleSafeAreaCssSync } from '@/lib/sync-safe-area-css'
 import { routeUsesBackHeader } from '@/lib/back-header-routes'
@@ -23,6 +26,7 @@ import { ExerciseDetailPage } from '@/pages/ExerciseDetailPage'
 import { ExerciseListPage } from '@/pages/ExerciseListPage'
 import ChatPage from '@/pages/ChatPage'
 import FriendProfilePage from '@/pages/FriendProfilePage'
+import FriendSearchPage from '@/pages/FriendSearchPage'
 import FriendsPage from '@/pages/FriendsPage'
 import UserPreviewPage from '@/pages/UserPreviewPage'
 import { HistoryPage } from '@/pages/HistoryPage'
@@ -177,31 +181,9 @@ function App() {
         void setupAppsFlyer()
 
         const handlerPromise = CapacitorApp.addListener('appUrlOpen', (event) => {
-            try {
-                const url = new URL(event.url)
-                const hash = url.hash.replace(/^#\/?/, '')
-                const inviteMatch = hash.match(/^invite\/([^/?#]+)/)
-                if (inviteMatch?.[1]) {
-                    setPendingInviteCode(inviteMatch[1])
-                    window.location.hash = `#/invite/${inviteMatch[1]}`
-                    return
-                }
-                const pathInvite = url.pathname.match(/\/invite\/([^/]+)/)
-                if (pathInvite?.[1]) {
-                    setPendingInviteCode(pathInvite[1])
-                    window.location.hash = `#/invite/${pathInvite[1]}`
-                    return
-                }
-                const fromQuery = extractInviteCodeFromAttribution(
-                    Object.fromEntries(url.searchParams.entries()),
-                )
-                if (fromQuery) {
-                    setPendingInviteCode(fromQuery)
-                    window.location.hash = `#/invite/${fromQuery}`
-                }
-            } catch {
-                // ignore malformed URLs
-            }
+            const inviteCode = extractInviteCodeFromUrl(event.url)
+            if (!inviteCode) return
+            persistAndNavigateToInvite(inviteCode)
         })
 
         return () => {
@@ -263,6 +245,7 @@ function App() {
                                 <Route path="/settings" element={<SettingsPage />} />
                                 <Route path="/invite/:code" element={<InviteLandingPage />} />
                                 <Route path="/friends" element={<FriendsPage />} />
+                                <Route path="/friends/search" element={<FriendSearchPage />} />
                                 <Route path="/friends/chat/:conversationId" element={<ChatPage />} />
                                 <Route path="/friends/preview/:userId" element={<UserPreviewPage />} />
                                 <Route path="/friends/:userId" element={<FriendProfilePage />} />
