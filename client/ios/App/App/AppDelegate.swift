@@ -10,6 +10,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Sport app: movement triggers iOS "shake to undo" during text input.
+        application.applicationSupportsShakeToEdit = false
         FirebaseApp.configure()
         Messaging.messaging().delegate = self
         return true
