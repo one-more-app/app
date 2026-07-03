@@ -170,6 +170,7 @@ function HomePage() {
                                     bodyPart: ex.bodyPart,
                                     target: ex.target,
                                 })
+                                navigate(`/exercise/${ex.id}`)
                             } finally {
                                 void refreshAfterPerfChange()
                             }

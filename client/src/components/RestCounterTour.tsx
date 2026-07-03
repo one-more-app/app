@@ -1,5 +1,6 @@
 import { AppTour } from "@/components/AppTour";
 import { getJoyrideShiftPadding } from "@/lib/joyride-config";
+import { setRestCounterTourQuickEditStep2Active } from "@/lib/rest-counter-tour-quick-edit";
 import {
   isRestCounterTourComplete,
   setRestCounterTourComplete,
@@ -12,15 +13,15 @@ import { EVENTS, type EventData, type Step } from "react-joyride";
 type RestCounterTourProps = {
   /** La barre repos est visible à l'écran. */
   barVisible: boolean;
-  /** Étape 2 : ouvrir le panneau d'édition rapide en mode inline (dans la zone spotlight). */
-  onQuickEditStep?: () => void;
-  /** Fin ou abandon du tour : fermer le panneau. */
-  onTourEnd?: () => void;
 };
 
 function isOtherAppTourActive(searchParams: URLSearchParams): boolean {
   const tour = searchParams.get("tour");
   return tour === "onboarding" || tour === "onboarding-first";
+}
+
+function endTourQuickEditStep2(): void {
+  setRestCounterTourQuickEditStep2Active(false);
 }
 
 async function waitForTourZoneReady(): Promise<void> {
@@ -33,7 +34,8 @@ async function waitForTourZoneReady(): Promise<void> {
       const panel = document.querySelector(
         '[data-tour="rest-counter-target-panel"]',
       );
-      if (zone && panel && zone.getBoundingClientRect().height > 50) {
+      const zoneRect = zone?.getBoundingClientRect();
+      if (zone && panel && (zoneRect?.height ?? 0) > 50) {
         resolve();
         return;
       }
@@ -47,11 +49,7 @@ async function waitForTourZoneReady(): Promise<void> {
   });
 }
 
-export function RestCounterTour({
-  barVisible,
-  onQuickEditStep,
-  onTourEnd,
-}: RestCounterTourProps) {
+export function RestCounterTour({ barVisible }: RestCounterTourProps) {
   const [searchParams] = useSearchParams();
   const [domReady, setDomReady] = useState(false);
 
@@ -60,10 +58,10 @@ export function RestCounterTour({
     barVisible && !isRestCounterTourComplete() && !otherTourActive;
 
   const dismissTour = useCallback(() => {
+    endTourQuickEditStep2();
     setRestCounterTourComplete(true);
     setDomReady(false);
-    onTourEnd?.();
-  }, [onTourEnd]);
+  }, []);
 
   const steps = useMemo<Step[]>(
     () => [
@@ -87,7 +85,10 @@ export function RestCounterTour({
         blockTargetInteraction: false,
         disableFocusTrap: true,
         before: async () => {
-          onQuickEditStep?.();
+          setRestCounterTourQuickEditStep2Active(true);
+          await new Promise<void>((resolve) => {
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+          });
           await waitForTourZoneReady();
         },
         floatingOptions: {
@@ -95,24 +96,21 @@ export function RestCounterTour({
         },
       },
     ],
-    [onQuickEditStep],
+    [],
   );
 
-  const handleJoyrideEvent = useCallback(
-    (data: EventData) => {
-      if (
-        data.type === EVENTS.STEP_BEFORE &&
-        data.index === 0 &&
-        data.action === "prev"
-      ) {
-        onTourEnd?.();
-      }
-      if (data.type === EVENTS.TOUR_END) {
-        onTourEnd?.();
-      }
-    },
-    [onTourEnd],
-  );
+  const handleJoyrideEvent = useCallback((data: EventData) => {
+    if (
+      data.type === EVENTS.STEP_BEFORE &&
+      data.index === 0 &&
+      data.action === "prev"
+    ) {
+      endTourQuickEditStep2();
+    }
+    if (data.type === EVENTS.TOUR_END) {
+      endTourQuickEditStep2();
+    }
+  }, []);
 
   useEffect(() => {
     if (!tourEligible) return undefined;
@@ -131,6 +129,12 @@ export function RestCounterTour({
       setDomReady(false);
     };
   }, [tourEligible]);
+
+  useEffect(() => {
+    return () => {
+      endTourQuickEditStep2();
+    };
+  }, []);
 
   return (
     <AppTour

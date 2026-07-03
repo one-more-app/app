@@ -7,6 +7,7 @@ import {
   isRestSinceLastSetVisible,
 } from "@/lib/format-rest-elapsed";
 import type { PerformanceEntry } from "@/types";
+import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 
@@ -46,6 +47,20 @@ export async function ensureRestTimerNotificationPermission(): Promise<boolean> 
   }
 }
 
+export async function isNativeAppInForeground(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) {
+    return typeof document !== "undefined"
+      ? document.visibilityState === "visible"
+      : true;
+  }
+  try {
+    const { isActive } = await CapacitorApp.getState();
+    return isActive;
+  } catch {
+    return document.visibilityState === "visible";
+  }
+}
+
 export async function cancelRestFinishedLocalNotification(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
   try {
@@ -79,6 +94,8 @@ export async function syncRestFinishedLocalNotification(
   const now = Date.now();
   if (fireAt <= now) return;
   if (!isRestSinceLastSetVisible(params.createdAt, now)) return;
+
+  if (await isNativeAppInForeground()) return;
 
   const granted = await ensureRestTimerNotificationPermission();
   if (!granted) return;

@@ -17,9 +17,11 @@ Barre fine qui se lance **automatiquement** dès qu'une performance est enregist
 | **Dernière perf globale** (tous exercices) | [`client/src/hooks/use-latest-global-perf.ts`](../../client/src/hooks/use-latest-global-perf.ts) |
 | Formatage, seuils, progression | [`client/src/lib/format-rest-elapsed.ts`](../../client/src/lib/format-rest-elapsed.ts) |
 | **Durée cible utilisateur** (défaut 1:30) | [`client/src/hooks/use-rest-target-ms.ts`](../../client/src/hooks/use-rest-target-ms.ts) + `getRestTargetMs` / `setRestTargetMs` dans [`client/src/lib/storage.ts`](../../client/src/lib/storage.ts) |
+| **Préservation `createdAt` à l'édition** | [`client/src/lib/activity-from-performances.ts`](../../client/src/lib/activity-from-performances.ts) (`preservePerformanceLogCreatedAt`) |
 | Réglage dans Paramètres | [`client/src/components/settings/RestTimeSettingsCard.tsx`](../../client/src/components/settings/RestTimeSettingsCard.tsx) |
 | **Tour first-time** (AppTour) | [`client/src/components/AppTour.tsx`](../../client/src/components/AppTour.tsx) + [`client/src/components/RestCounterTour.tsx`](../../client/src/components/RestCounterTour.tsx) |
-| **Édition rapide inline** | [`client/src/components/RestTargetQuickEdit.tsx`](../../client/src/components/RestTargetQuickEdit.tsx) — zone tour étape 2 : `data-tour="rest-counter-target-zone"` (pill + panneau) |
+| **Sync tour ↔ popover repos** | [`client/src/lib/rest-counter-tour-quick-edit.ts`](../../client/src/lib/rest-counter-tour-quick-edit.ts) |
+| **Édition rapide inline** | [`client/src/components/RestTargetQuickEdit.tsx`](../../client/src/components/RestTargetQuickEdit.tsx) — zone tour : `data-tour="rest-counter-target-zone"` |
 | Styles Joyride partagés | [`client/src/lib/app-tour-config.ts`](../../client/src/lib/app-tour-config.ts) |
 | Analytics | `trackRestTimerDismissed` dans [`client/src/lib/analytics/performance-tracking.ts`](../../client/src/lib/analytics/performance-tracking.ts) |
 | Point de montage | Header sticky de [`client/src/pages/ExerciseDetailPage.tsx`](../../client/src/pages/ExerciseDetailPage.tsx) |
@@ -37,16 +39,24 @@ Barre fine qui se lance **automatiquement** dès qu'une performance est enregist
 7. **Barre de progression** — `getRestProgress01(elapsedMs, targetMs)` : remplissage sur la durée cible, plafonné à 100 %. Au-delà, la barre reste pleine ; le compteur `m:ss` **continue** sans reset.
 8. **Fin de repos** — Double canal :
     - **In-app (premier plan)** — toast global via `RestTimeFinishedToastHost` + `showRestTimeFinishedToast` (cliquable → fiche exo). Annule la notif locale planifiée pour éviter le doublon.
-    - **Système (arrière-plan / app fermée)** — `@capacitor/local-notifications` via [`client/src/lib/rest-timer-local-notifications.ts`](../../client/src/lib/rest-timer-local-notifications.ts). Planifiée à `createdAt + targetMs` dès qu'une perf est enregistrée (`scheduleRestFinishedLocalNotificationForEntry` dans `storage.ts`). Resync via `useRestTimerLocalNotifications` si la durée cible change ou au retour foreground. Tap notif → `/exercise/{id}`. ID fixe `REST_FINISHED_NOTIFICATION_ID = 42`.
-9. **Édition rapide inline** — Pill `RestTargetQuickEdit` à côté de `REPOS` (popover : ±15 s + presets 1:00–3:00). `stopPropagation` obligatoire pour ne pas déclencher la nav exo. Persiste via `setRestTargetMs` (même storage que Paramètres).
+    - **Système (arrière-plan / app fermée)** — `@capacitor/local-notifications` via [`client/src/lib/rest-timer-local-notifications.ts`](../../client/src/lib/rest-timer-local-notifications.ts). Planifiée à `createdAt + targetMs` **uniquement si l'app est en arrière-plan** (`isNativeAppInForeground` / `appStateChange`). Premier plan : toast in-app seul, pas de bannière système. Resync au passage background via `useRestTimerLocalNotifications`. Annulation au retour foreground et quand le toast in-app se déclenche. Tap notif → `/exercise/{id}`. ID fixe `REST_FINISHED_NOTIFICATION_ID = 42`.
+9. **Édition rapide inline (`RestTargetQuickEdit`)** — Popover autonome (state `open` **interne**, jamais remonté dans `RestSinceLastSetBar`). Pill ±15 s + presets 1:00–3:00. `stopPropagation` sur le trigger et le panneau pour ne pas déclencher la nav exo. Persiste via `setRestTargetMs` (même storage que Paramètres).
 10. **Dismiss manuel** — Le bouton croix cache la barre localement (state React) et **doit** `event.stopPropagation()` sinon le tap remonte au bouton parent et rouvre l'exo. Le dismiss se réinitialise dès qu'une nouvelle perf change le `key={createdAt}`. Ne pas persister le dismiss dans le storage.
 11. **Onglet caché** — Le ticker s'arrête sur `visibilitychange` puis resynchronise `now = Date.now()` au retour. Ne pas remplacer par un `setInterval` non-conditionnel (coût batterie / drift iOS).
 12. **Motion** — Respect de `prefers-reduced-motion` : la barre de progression saute au lieu de transitionner. À conserver pour tout nouveau visuel ajouté.
-13. **Accessibilité** — `role="status"`, `aria-label` via `UI.restSinceLastSetA11y` ou `UI.restTimeFinishedA11y` une fois la cible atteinte. Quand un exo source est cliquable, le `aria-label` du bouton concatène le nom pour annoncer la destination. Mise à jour `sr-only` à chaque nouvelle minute (bucket) sans spammer le lecteur d'écran.
+13. **Accessibilité** — `role="status"`, `aria-label` via `UI.restSinceLastSetA11y` ou `UI.restTimeFinishedA11y` une fois la cible atteinte. Quand un exo source est cliquable, le `aria-label` du bouton concatène le nom pour annoncer la destination (`·`, pas de tiret cadratin). Mise à jour `sr-only` à chaque nouvelle minute (bucket) sans spammer le lecteur d'écran.
 14. **Tour first-time (`RestCounterTour`)** — Une seule fois par appareil (`isRestCounterTourComplete`, clé `one-more-rest-counter-tour-complete-v1`). **Deux étapes** (`continuous`) via `AppTour` :
     - **Étape 1** — cible `[data-tour="rest-counter"]` : présente le compteur et la barre de progression (1:30 par défaut). Pas de lien Paramètres.
-    - **Étape 2** — cible `[data-tour="rest-counter-target-zone"]` (pill + panneau `RestTargetQuickEdit`) : invite à ajuster le repos inline. À l'entrée (`before` hook) : `onQuickEditStep` active le mode `inlinePanel` (panneau rendu dans le DOM sans portal, inclus dans le spotlight) et ouvre le choix du temps. Step options : `blockTargetInteraction: false`, `disableFocusTrap: true`, `spotlightPadding: 8`. Fermer le panneau à la fin du tour ou au retour étape 1 (`onTourEnd`).
-    - Reporté tant qu'un autre tour Joyride est actif (`?tour=onboarding` ou `?tour=onboarding-first`). Démarrage 500 ms après apparition de **les deux** cibles DOM.
+    - **Étape 2** — cible `[data-tour="rest-counter-target-zone"]` (pill + panneau) : invite à ajuster le repos inline. À l'entrée (`before` hook) : `setRestCounterTourQuickEditStep2Active(true)` → le popover s'ouvre via [`rest-counter-tour-quick-edit.ts`](../../client/src/lib/rest-counter-tour-quick-edit.ts) et active `disablePortal` pour entrer dans le spotlight Joyride. Fin / abandon du tour : `setRestCounterTourQuickEditStep2Active(false)`.
+    - Reporté tant qu'un autre tour Joyride est actif (`?tour=onboarding` ou `?tour=onboarding-first`). Démarrage 500 ms après apparition des cibles DOM.
+
+## `RestTargetQuickEdit` — contraintes Radix (régression connue)
+
+Le popover **doit rester cliquable hors tour**. Lors de refactors :
+
+- `<PopoverTrigger asChild>` exige un **`<button>` natif direct** en enfant, **ou** un composant avec `React.forwardRef` qui transmet ref + props au DOM. Un wrapper intermédiaire sans `forwardRef` casse silencieusement l'ouverture (clic visible, pas de `onOpenChange`).
+- Ne **pas** remonter `open` / `onOpenChange` dans `RestSinceLastSetBar` pour le tour : coordination via `rest-counter-tour-quick-edit.ts` uniquement.
+- Étape 2 tour : `disablePortal` sur `PopoverContent` (prop dans [`popover.tsx`](../../client/src/components/ui/popover.tsx)) pour inclure le panneau dans la zone spotlight ; hors tour, portal normal.
 
 ## À faire pour tout nouveau point de montage
 
@@ -76,14 +86,19 @@ Si la barre doit apparaître sur une autre page (ex. Home, History) :
 - Ne pas coder en dur `10 * 60 * 1000` : importer `REST_SINCE_LAST_SET_MAX_MS`.
 - Ne pas confondre durée d'affichage (10 min) et durée cible (1:30 par défaut) : deux constantes distinctes.
 - Ne pas reset le compteur quand la cible est atteinte — seule la barre et le visuel changent.
+- Ne pas reset le compteur à l'édition d'une perf — `preservePerformanceLogCreatedAt` obligatoire.
 - Ne pas re-déclencher le toast de fin de repos pour le même `createdAt`.
 - Ne pas oublier `event.stopPropagation()` sur le bouton croix, sinon le clic remonte au bouton parent et re-navigue vers l'exo source.
 - Ne pas dupliquer la résolution du nom d'exo dans les composants : passer par `useLatestGlobalPerf().exercise`.
 - Ne pas remettre de lien Paramètres dans le tour repos — l'édition se fait via `RestTargetQuickEdit` (étape 2).
-- Ne pas bloquer les interactions sur l'étape 2 du tour (`blockTargetInteraction: false`, `hideOverlay: true`).
+- Ne pas bloquer les interactions sur l'étape 2 du tour (`blockTargetInteraction: false`, `disableFocusTrap: true`).
+- Ne pas extraire le trigger du popover dans un sous-composant sans `forwardRef` sous `<PopoverTrigger asChild>`.
+- Ne pas coupler le tour au state `open` du parent — module `rest-counter-tour-quick-edit.ts` seulement.
+- Ne pas planifier de notif système repos au premier plan — toast in-app uniquement.
 
 ## Voir aussi
 
+- [`copywriting-french.mdc`](copywriting-french.mdc) — ponctuation UI (pas de `--` / `—` dans les chaînes affichées).
 - [`openpanel-tracking.mdc`](openpanel-tracking.mdc) — taxonomie `rest_timer_dismissed`.
 - [`mobile-safe-area.mdc`](mobile-safe-area.mdc) — contraintes header sticky + safe area iOS/Android.
 - [`typography.mdc`](typography.mdc) — police `font-one-more` italique tabular-nums utilisée pour le chrono.
