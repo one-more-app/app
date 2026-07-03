@@ -25,13 +25,34 @@ export function getActivityDayKey(entry: PerformanceEntry): string {
   return getLocalDateKey(new Date(entry.createdAt));
 }
 
+/**
+ * Conserve le timestamp de première saisie lors d'un merge ou sync.
+ * L'API renvoie parfois `updatedAt` dans `createdAt` après édition ;
+ * le compteur de repos ne doit pas repartir de zéro dans ce cas.
+ */
+export function preservePerformanceLogCreatedAt(
+  incoming: PerformanceEntry,
+  existing?: PerformanceEntry | null,
+): PerformanceEntry {
+  if (!existing) return incoming;
+  const incomingMs = new Date(incoming.createdAt).getTime();
+  const existingMs = new Date(existing.createdAt).getTime();
+  const createdAt =
+    existingMs <= incomingMs ? existing.createdAt : incoming.createdAt;
+  return { ...incoming, createdAt };
+}
+
 export function mergePerformanceEntriesById(
   remote: PerformanceEntry[],
   local: PerformanceEntry[],
 ): PerformanceEntry[] {
+  const localById = new Map(local.map((entry) => [entry.id, entry]));
   const byId = new Map<string, PerformanceEntry>();
   for (const entry of remote) {
-    byId.set(entry.id, entry);
+    byId.set(
+      entry.id,
+      preservePerformanceLogCreatedAt(entry, localById.get(entry.id)),
+    );
   }
   for (const entry of local) {
     if (!byId.has(entry.id)) {

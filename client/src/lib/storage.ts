@@ -13,6 +13,7 @@ import {
   upsertTrackedExercise,
 } from "@/lib/data-api";
 import { getLocalDateKey } from "@/lib/local-date";
+import { preservePerformanceLogCreatedAt } from "@/lib/activity-from-performances";
 import {
   clampRestTargetMs,
   DEFAULT_REST_TARGET_MS,
@@ -427,8 +428,9 @@ export async function updatePerformanceAndWait(
   notifyLocalDataChanged("performance");
   try {
     const remote = await patchPerformanceEntry(entryId, { weight, reps });
+    const merged = preservePerformanceLogCreatedAt(remote, previous);
     updatePerformanceCache(
-      getAllPerformanceEntries().map((e) => (e.id === entryId ? remote : e)),
+      getAllPerformanceEntries().map((e) => (e.id === entryId ? merged : e)),
     );
     trackPerformanceEdited({
       entryId,
@@ -438,7 +440,7 @@ export async function updatePerformanceAndWait(
       previousReps: previous.reps,
       source: "update_performance_and_wait",
     });
-    return remote;
+    return merged;
   } catch (error) {
     notifyRemoteWriteError();
     throw error;
