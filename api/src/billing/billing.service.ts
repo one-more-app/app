@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AnalyticsService } from '../analytics/analytics.service.js';
 import { UserEntity } from '../auth/entities/user.entity.js';
+import { extractRevenueFromRevenueCatEvent } from './lib/revenuecat-event-revenue.js';
 
 const PREMIUM_ACTIVE_EVENTS = new Set([
   'INITIAL_PURCHASE',
@@ -131,15 +132,14 @@ export class BillingService {
       if (hasPremiumEntitlement || type === 'NON_RENEWING_PURCHASE') {
         await this.setPremium(appUserId, true);
 
-        const price = event.price as number | undefined;
-        const currency = event.currency as string | undefined;
+        const revenue = extractRevenueFromRevenueCatEvent(event);
         const productId =
           typeof event.product_id === 'string' ? event.product_id : 'unknown';
-        if (typeof price === 'number' && currency) {
+        if (revenue) {
           void this.analytics.trackValidatedPurchase({
             profileId: appUserId,
-            amount: price,
-            currency,
+            amount: revenue.amount,
+            currency: revenue.currency,
             productId,
             properties: { event_type: type },
           });

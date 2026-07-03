@@ -14,12 +14,22 @@ export type ServerAnalyticsProperties = Record<
 
 export type ServerRevenueParams = {
   profileId: string;
+  /** Montant en unité majeure (ex. 9,99 €), converti en centimes pour OpenPanel. */
   amount: number;
   currency: string;
   productId: string;
   provider?: string;
   properties?: ServerAnalyticsProperties;
 };
+
+/** OpenPanel attend __revenue en entier (centimes pour EUR/USD). */
+export function toOpenPanelRevenueCents(amountMajorUnits: number): number {
+  return Math.round(amountMajorUnits * 100);
+}
+
+function normalizeOpenPanelCurrency(currency: string): string {
+  return currency.trim().toLowerCase();
+}
 
 /**
  * Tracking serveur OpenPanel — source de vérité pour revenus et événements critiques.
@@ -88,9 +98,11 @@ export class AnalyticsService {
   async trackValidatedPurchase(params: ServerRevenueParams): Promise<void> {
     if (!this.op) return;
 
+    const currency = normalizeOpenPanelCurrency(params.currency);
+    const amountCents = toOpenPanelRevenueCents(params.amount);
     const eventProps = this.compact({
       product_id: params.productId,
-      currency: params.currency,
+      currency,
       provider: params.provider ?? "revenuecat",
       ...params.properties,
     });
@@ -100,9 +112,9 @@ export class AnalyticsService {
         ...eventProps,
         profileId: params.profileId,
       });
-      await this.op.revenue(params.amount, {
+      await this.op.revenue(amountCents, {
         ...eventProps,
-        currency: params.currency,
+        currency,
         profileId: params.profileId,
       });
     } catch (err) {

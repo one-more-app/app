@@ -41,7 +41,8 @@ describe('BillingService', () => {
         app_user_id: 'user-1',
         entitlement_ids: ['premium'],
         product_id: 'monthly',
-        price: 9.99,
+        price: 10.99,
+        price_in_purchased_currency: 9.99,
         currency: 'EUR',
       },
     });
@@ -49,6 +50,13 @@ describe('BillingService', () => {
       { id: 'user-1' },
       { isPremium: true },
     );
+    expect(analytics.trackValidatedPurchase).toHaveBeenCalledWith({
+      profileId: 'user-1',
+      amount: 9.99,
+      currency: 'EUR',
+      productId: 'monthly',
+      properties: { event_type: 'INITIAL_PURCHASE' },
+    });
   });
 
   it('clears premium on EXPIRATION', async () => {
