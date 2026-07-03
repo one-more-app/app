@@ -1,6 +1,7 @@
 import { BottomNav } from '@/components/BottomNav'
 import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCelebration'
 import { ProfileUsernameSetupHost } from '@/components/profile/ProfileUsernameSetupHost'
+import { RestTimeFinishedToastHost } from '@/components/RestTimeFinishedToastHost'
 import { Toaster } from '@/components/ui/sonner'
 import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider'
 import { PageSection } from '@/components/analytics/PageSection'
@@ -232,6 +233,7 @@ function App() {
                 <Toaster />
                 <LeaguePromotionCelebrationHost />
                 <AuthProvider>
+                    <RestTimeFinishedToastHost />
                     <ReferralDrawerProvider>
                     <PurchasesSyncHost />
                     <ReferralDrawerHost />

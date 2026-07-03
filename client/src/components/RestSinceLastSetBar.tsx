@@ -4,13 +4,11 @@ import { RestCounterTour } from "@/components/RestCounterTour";
 import { RestTargetQuickEdit } from "@/components/RestTargetQuickEdit";
 import { useRestSinceLastSet } from "@/hooks/use-rest-since-last-set";
 import { formatRestElapsedA11y } from "@/lib/format-rest-elapsed";
-import { hapticNotificationSuccess } from "@/lib/haptics";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { Check, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 
 type RestSinceLastSetBarSourceExercise = {
   id: string;
@@ -40,15 +38,6 @@ export function RestSinceLastSetBar({
     targetComplete,
   } = useRestSinceLastSet(createdAt);
   const navigate = useNavigate();
-  const notifiedForCreatedAtRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!createdAt || !visible || !targetComplete) return;
-    if (notifiedForCreatedAtRef.current === createdAt) return;
-    notifiedForCreatedAtRef.current = createdAt;
-    toast.success(UI.restTimeFinished);
-    void hapticNotificationSuccess();
-  }, [createdAt, targetComplete, visible]);
 
   const a11yTime = useMemo(
     () => formatRestElapsedA11y(elapsedMs),

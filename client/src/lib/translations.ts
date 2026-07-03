@@ -300,6 +300,7 @@ export const UI = {
   restSinceLastSetDismiss: "Masquer le repos",
   restTimeFinished: "Temps de repos terminé",
   restTimeFinishedA11y: "Temps de repos terminé, {time} écoulées",
+  restTimeFinishedToastA11y: "Temps de repos terminé — ouvrir {exercise}",
   restTimeSettingsTitle: "Temps de repos",
   restTimeSettingsDescription:
     "Durée cible entre deux séries. La barre se remplit sur cette durée, puis le compteur continue.",
