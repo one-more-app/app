@@ -485,6 +485,12 @@ export function getUserProfile(): UserProfile {
   return profileCache;
 }
 
+export function resetUserProfileCache(): void {
+  profileCache = { ...DEFAULT_PROFILE };
+  hasProfilePersistedCache = false;
+  notifyLocalDataChanged("profile");
+}
+
 export function hasPersistedUserProfile(): boolean {
   return hasProfilePersistedCache;
 }

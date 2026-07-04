@@ -18,9 +18,20 @@ describe('ProfileService', () => {
 
   let service: ProfileService;
 
+  const objectStorage = {
+    isEnabled: jest.fn(() => false),
+    uploadObject: jest.fn(),
+    deleteObjectByPublicUrl: jest.fn(),
+    isManagedPublicUrl: jest.fn(() => false),
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new ProfileService(profilesRepo as any, usernameService as any);
+    service = new ProfileService(
+      profilesRepo as any,
+      usernameService as any,
+      objectStorage as any,
+    );
   });
 
   it('getProfile returns username as stored without auto-generation', async () => {

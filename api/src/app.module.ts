@@ -18,6 +18,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
 import { AnalyticsModule } from './analytics/analytics.module.js';
 import { BillingModule } from './billing/billing.module.js';
 import { RewardsModule } from './rewards/rewards.module.js';
+import { StorageModule } from './storage/storage.module.js';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { RewardsModule } from './rewards/rewards.module.js';
       isGlobal: true,
       envFilePath: ['api/.env', '.env'],
     }),
+    StorageModule,
     TypeormDatabaseModule,
     AuthModule,
     ProfileModule,

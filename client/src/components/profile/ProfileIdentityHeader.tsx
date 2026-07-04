@@ -1,10 +1,15 @@
 import { useUserProfileData } from "@/hooks/use-api-data";
 import { useAuth } from "@/hooks/use-auth";
-import { upsertRemoteProfile } from "@/lib/data-api";
+import { uploadRemoteProfileAvatar } from "@/lib/data-api";
 import { ProfileAvatarCropDialog } from "@/components/profile/ProfileAvatarCropDialog";
-import { getProfileAvatarUrl, setProfileAvatarUrl } from "@/lib/profile-avatar";
+import {
+  dataUrlToAvatarBlob,
+  getProfileAvatarUrl,
+  setProfileAvatarUrl,
+} from "@/lib/profile-avatar";
 import { ProfileNameDisplay } from "@/components/profile/ProfileNameDisplay";
 import { getProfileInitials } from "@/lib/profile-display";
+import { setUserProfile } from "@/lib/storage";
 import { Card, CardContent } from "@/components/ui/card";
 import { profileNestedClass } from "@/lib/profile-section";
 import { UI } from "@/lib/translations";
@@ -29,6 +34,7 @@ export function ProfileIdentityHeader({
   const auth = useAuth();
   const { data: profileFromHook } = useUserProfileData();
   const profile = profileProp ?? profileFromHook;
+  const userId = auth.user?.id ?? null;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cropObjectUrlRef = useRef<string | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
@@ -37,7 +43,8 @@ export function ProfileIdentityHeader({
   const resolveAvatarUrl = () => {
     const fromProfile = avatarUrlProp ?? profile?.avatarUrl ?? null;
     if (readOnly) return fromProfile;
-    return fromProfile ?? getProfileAvatarUrl();
+    if (fromProfile) return fromProfile;
+    return getProfileAvatarUrl(userId);
   };
 
   const [avatarUrl, setAvatarUrl] = useState(resolveAvatarUrl);
@@ -45,8 +52,8 @@ export function ProfileIdentityHeader({
   useEffect(() => {
     const next = resolveAvatarUrl();
     setAvatarUrl(next);
-    if (!readOnly && next) setProfileAvatarUrl(next);
-  }, [avatarUrlProp, profile?.avatarUrl, readOnly]);
+    if (!readOnly && next) setProfileAvatarUrl(userId, next);
+  }, [avatarUrlProp, profile?.avatarUrl, readOnly, userId]);
 
   useEffect(
     () => () => {
@@ -90,14 +97,27 @@ export function ProfileIdentityHeader({
   };
 
   const handleCropConfirm = (dataUrl: string) => {
-    setProfileAvatarUrl(dataUrl);
-    setAvatarUrl(dataUrl);
-    if (profile?.weightKg && profile.heightCm && profile.gender) {
-      void upsertRemoteProfile({
-        ...profile,
-        avatarUrl: dataUrl,
-      });
-    }
+    void (async () => {
+      try {
+        const blob = await dataUrlToAvatarBlob(dataUrl);
+        const remote = await uploadRemoteProfileAvatar(blob);
+        const nextUrl = remote.avatarUrl ?? dataUrl;
+        setProfileAvatarUrl(userId, nextUrl);
+        setAvatarUrl(nextUrl);
+        if (profile) {
+          setUserProfile(
+            {
+              ...profile,
+              avatarUrl: nextUrl,
+            },
+            { silent: true },
+          );
+        }
+      } catch {
+        setProfileAvatarUrl(userId, dataUrl);
+        setAvatarUrl(dataUrl);
+      }
+    })();
   };
 
   const avatarClassName = cn(

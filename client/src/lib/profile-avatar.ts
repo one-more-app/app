@@ -1,8 +1,13 @@
 import type { Area } from "react-easy-crop";
 
-const PROFILE_AVATAR_KEY = "one-more-profile-avatar";
+const PROFILE_AVATAR_KEY_PREFIX = "one-more-profile-avatar-v2";
 
 const MAX_AVATAR_EDGE = 256;
+
+function avatarStorageKey(userId: string | null | undefined): string | null {
+  if (!userId) return null;
+  return `${PROFILE_AVATAR_KEY_PREFIX}:${userId}`;
+}
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -13,24 +18,64 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-export function getProfileAvatarUrl(): string | null {
+export function getProfileAvatarUrl(
+  userId: string | null | undefined,
+): string | null {
+  const key = avatarStorageKey(userId);
+  if (!key) return null;
   try {
-    return localStorage.getItem(PROFILE_AVATAR_KEY);
+    return localStorage.getItem(key);
   } catch {
     return null;
   }
 }
 
-export function setProfileAvatarUrl(dataUrl: string | null): void {
+export function setProfileAvatarUrl(
+  userId: string | null | undefined,
+  dataUrl: string | null,
+): void {
+  const key = avatarStorageKey(userId);
+  if (!key) return;
   try {
     if (dataUrl) {
-      localStorage.setItem(PROFILE_AVATAR_KEY, dataUrl);
+      localStorage.setItem(key, dataUrl);
     } else {
-      localStorage.removeItem(PROFILE_AVATAR_KEY);
+      localStorage.removeItem(key);
     }
   } catch {
     // quota ou stockage indisponible
   }
+}
+
+export function clearProfileAvatarCache(userId?: string | null): void {
+  try {
+    if (userId) {
+      const key = avatarStorageKey(userId);
+      if (key) localStorage.removeItem(key);
+      return;
+    }
+
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(`${PROFILE_AVATAR_KEY_PREFIX}:`)) {
+        keysToRemove.push(key);
+      }
+    }
+    for (const key of keysToRemove) {
+      localStorage.removeItem(key);
+    }
+
+    // Ancienne clé globale (avant scope par utilisateur)
+    localStorage.removeItem("one-more-profile-avatar");
+  } catch {
+    // stockage indisponible
+  }
+}
+
+export async function dataUrlToAvatarBlob(dataUrl: string): Promise<Blob> {
+  const response = await fetch(dataUrl);
+  return await response.blob();
 }
 
 export async function fileToAvatarDataUrl(file: File): Promise<string> {

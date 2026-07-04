@@ -12,6 +12,8 @@ import { AnalyticsEvents, track } from "@/lib/analytics";
 import { syncAppsFlyerCustomerUserId } from "@/lib/appsflyer";
 import { ApiError } from "@/lib/api";
 import { clearPendingInviteCode, peekPendingInviteCode } from "@/lib/invite-code";
+import { clearProfileAvatarCache } from "@/lib/profile-avatar";
+import { resetUserProfileCache } from "@/lib/storage";
 import { ACCESS_SWR_KEY } from "@/lib/social-api";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -61,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [lastError, setLastError] = useState<string | null>(null);
 
   const applySession = useCallback((session: AuthSession) => {
+    resetUserProfileCache();
     const stored: StoredAuthSession = {
       accessToken: session.accessToken,
       refreshToken: session.refreshToken,
@@ -73,6 +76,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const clearSession = useCallback(() => {
     clearStoredSession();
+    clearProfileAvatarCache();
+    resetUserProfileCache();
     setState({ status: "anonymous", user: null, accessToken: null, refreshToken: null });
     void syncAppsFlyerCustomerUserId(null);
   }, []);

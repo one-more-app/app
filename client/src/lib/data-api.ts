@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchFormData } from "@/lib/api";
 import type {
   HistoryEntryLeagueInsight,
   LeagueInfo,
@@ -253,6 +253,14 @@ export async function upsertRemoteProfile(
     method: "PUT",
     body: JSON.stringify(profile),
   });
+}
+
+export async function uploadRemoteProfileAvatar(
+  blob: Blob,
+): Promise<RemoteProfile> {
+  const formData = new FormData();
+  formData.append("avatar", blob, "avatar.jpg");
+  return await apiFetchFormData<RemoteProfile>("/profile/avatar", formData);
 }
 
 type ListExercisesResponse = {

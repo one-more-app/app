@@ -1,5 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { randomUUID } from 'node:crypto';
 import { Repository } from 'typeorm';
 import {
   assertValidUsername,
@@ -7,8 +12,16 @@ import {
   suggestUsernameFromProfile,
 } from '../social/lib/username.js';
 import { UsernameService } from '../social/username.service.js';
+import { ObjectStorageService } from '../storage/object-storage.service.js';
 import { UserProfileEntity } from './user-profile.entity.js';
 import type { UpsertProfileDto } from './profile.dto.js';
+
+const MAX_AVATAR_BYTES = 512 * 1024;
+const ALLOWED_AVATAR_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+]);
 
 @Injectable()
 export class ProfileService {
@@ -16,6 +29,7 @@ export class ProfileService {
     @InjectRepository(UserProfileEntity)
     private readonly profilesRepo: Repository<UserProfileEntity>,
     private readonly usernameService: UsernameService,
+    private readonly objectStorage: ObjectStorageService,
   ) {}
 
   async getProfile(userId: string) {
@@ -104,10 +118,63 @@ export class ProfileService {
       payload.lastName = body.lastName ?? null;
     }
     if (body.avatarUrl !== undefined) {
+      if (
+        this.objectStorage.isEnabled() &&
+        body.avatarUrl?.startsWith('data:')
+      ) {
+        throw new BadRequestException(
+          'Utilise POST /profile/avatar pour changer ta photo en production',
+        );
+      }
       payload.avatarUrl = body.avatarUrl;
     }
     await this.profilesRepo.upsert(payload, ['userId']);
     const profile = await this.profilesRepo.findOneOrFail({ where: { userId } });
     return this.toProfileDto(profile);
+  }
+
+  async uploadAvatar(
+    userId: string,
+    file: { buffer: Buffer; mimetype: string; size: number },
+  ) {
+    if (!file.buffer?.length) {
+      throw new BadRequestException('Fichier image requis');
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      throw new BadRequestException('Image trop lourde (max 512 Ko)');
+    }
+    if (!ALLOWED_AVATAR_MIME_TYPES.has(file.mimetype)) {
+      throw new BadRequestException('Format image non supporté');
+    }
+
+    const profile = await this.profilesRepo.findOne({ where: { userId } });
+    const previousAvatarUrl = profile?.avatarUrl ?? null;
+
+    let avatarUrl: string;
+    if (this.objectStorage.isEnabled()) {
+      const ext =
+        file.mimetype === 'image/png'
+          ? 'png'
+          : file.mimetype === 'image/webp'
+            ? 'webp'
+            : 'jpg';
+      const key = `avatars/${userId}/${randomUUID()}.${ext}`;
+      avatarUrl = await this.objectStorage.uploadObject({
+        key,
+        body: file.buffer,
+        contentType: file.mimetype,
+      });
+      if (this.objectStorage.isManagedPublicUrl(previousAvatarUrl)) {
+        await this.objectStorage
+          .deleteObjectByPublicUrl(previousAvatarUrl)
+          .catch(() => undefined);
+      }
+    } else {
+      avatarUrl = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    }
+
+    await this.profilesRepo.upsert({ userId, avatarUrl }, ['userId']);
+    const saved = await this.profilesRepo.findOneOrFail({ where: { userId } });
+    return this.toProfileDto(saved);
   }
 }

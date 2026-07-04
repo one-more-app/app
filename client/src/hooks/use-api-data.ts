@@ -217,7 +217,7 @@ function mergeRemoteProfile(
     gender: remote.gender,
     firstName: remote.firstName ?? local.firstName,
     lastName: remote.lastName ?? local.lastName,
-    avatarUrl: remote.avatarUrl ?? local.avatarUrl,
+    avatarUrl: remote.avatarUrl ?? null,
     username: remote.username ?? local.username,
   };
 }

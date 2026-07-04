@@ -208,3 +208,75 @@ export async function apiFetch<T>(
   return payload as T;
 }
 
+export async function apiFetchFormData<T>(
+  path: string,
+  formData: FormData,
+  init: RequestInit & { authToken?: string; skipAuthRefresh?: boolean } = {},
+): Promise<T> {
+  const baseUrl = getApiBaseUrl();
+  const url = path.startsWith("http") ? path : `${baseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
+
+  const { authToken, headers, skipAuthRefresh, ...rest } = init;
+  const stored = readStoredSession();
+  const tokenToUse = authToken ?? stored?.accessToken ?? null;
+
+  const buildHeaders = (token: string | null): HeadersInit => ({
+    ...(token ? { authorization: `Bearer ${token}` } : {}),
+    ...(headers ?? {}),
+  });
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...rest,
+      method: rest.method ?? "POST",
+      body: formData,
+      headers: buildHeaders(tokenToUse),
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new ApiError(
+      `Impossible de joindre l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}. ${reason}`,
+      0,
+      null,
+    );
+  }
+
+  const contentType = res.headers.get("content-type") ?? "";
+  const isJson = contentType.includes("application/json");
+  const payload = isJson ? ((await res.json().catch(() => null)) as unknown) : await res.text();
+
+  if (!res.ok) {
+    const isAuthPath = typeof path === "string" && path.startsWith("/auth/");
+    if (res.status === 401 && !skipAuthRefresh && !isAuthPath && tokenToUse) {
+      const refreshed = await refreshAccessToken(baseUrl);
+      const retryRes = await fetch(url, {
+        ...rest,
+        method: rest.method ?? "POST",
+        body: formData,
+        headers: buildHeaders(refreshed.accessToken),
+      });
+      const retryContentType = retryRes.headers.get("content-type") ?? "";
+      const retryIsJson = retryContentType.includes("application/json");
+      const retryPayload = retryIsJson
+        ? await retryRes.json().catch(() => null)
+        : await retryRes.text();
+      if (!retryRes.ok) {
+        throw new ApiError(
+          `Requête API échouée (${retryRes.status})`,
+          retryRes.status,
+          retryPayload,
+        );
+      }
+      return retryPayload as T;
+    }
+
+    const p = payload as ApiErrorPayload | null;
+    const msg =
+      (p && typeof p === "object" && (p.message || p.error)) ||
+      `Requête API échouée (${res.status})`;
+    throw new ApiError(String(msg), res.status, payload);
+  }
+  return payload as T;
+}
+
