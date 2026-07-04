@@ -37,6 +37,7 @@ import {
     addTrackedExerciseAndWait,
     isOnboardingFirstExercisePending,
     savePerformanceAndWait,
+    setOnboardingFirstExercisePending,
 } from '@/lib/storage'
 import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import { translateBodyPart, translateTarget, UI } from '@/lib/translations'
@@ -196,8 +197,22 @@ export function ExerciseListPage() {
             return
         }
         if (goBackInBrowse()) return
+        // Après onboarding, l'arrivée sur /exercises remplace l'historique : navigate(-1) ne fait rien.
+        if (isOnboardingFirstExercisePending()) {
+            setOnboardingFirstExercisePending(false)
+            stopFirstExerciseTour()
+            navigate('/home', { replace: true })
+            return
+        }
         navigateBack()
-    }, [isSearchMode, handleSearchChange, goBackInBrowse, navigateBack])
+    }, [
+        isSearchMode,
+        handleSearchChange,
+        goBackInBrowse,
+        navigateBack,
+        navigate,
+        stopFirstExerciseTour,
+    ])
 
     const firstExerciseOnboardingSteps = useMemo<Step[]>(() => {
         const scrollOffset = getJoyrideScrollOffset()

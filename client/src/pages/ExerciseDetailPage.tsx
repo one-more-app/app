@@ -62,7 +62,7 @@ import {
     SearchX,
     Trash2,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EVENTS, Joyride, type EventData, type Step } from 'react-joyride'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import useSWR from 'swr'
@@ -78,12 +78,19 @@ export function ExerciseDetailPage() {
     const fromAddExercise =
         (location.state as ExerciseDetailLocationState | null)?.fromAddExercise ===
         true
+    const [searchParams, setSearchParams] = useSearchParams()
+    /** Survit au replace de setSearchParams après le tour (sinon le retour ne fait rien). */
+    const arrivedFromAddExerciseRef = useRef(
+        fromAddExercise || searchParams.get('from') === 'first-exercise',
+    )
+    if (fromAddExercise || searchParams.get('from') === 'first-exercise') {
+        arrivedFromAddExerciseRef.current = true
+    }
     const { resolvedTheme } = useTheme()
     const { data: homeExercises = [], isLoading: isLoadingTracked } = useHomeExercisesData()
     const refreshAfterTrackedChange = useTrackedDataRefresh()
     const refreshAfterPerfChange = usePerformanceDataRefresh()
     const { data: profile } = useUserProfileData()
-    const [searchParams, setSearchParams] = useSearchParams()
     const exercise = useMemo(
         () =>
             id
@@ -391,12 +398,12 @@ export function ExerciseDetailPage() {
     )
 
     const handleBack = useCallback(() => {
-        if (fromAddExercise) {
+        if (arrivedFromAddExerciseRef.current) {
             navigate('/home', { replace: true })
             return
         }
         navigate(-1)
-    }, [fromAddExercise, navigate])
+    }, [navigate])
 
     if (id && isLoadingTracked && !exercise) {
         return (

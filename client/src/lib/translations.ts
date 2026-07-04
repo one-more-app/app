@@ -626,6 +626,12 @@ export const UI = {
   deleteAccountEmailSubject: "Demande de suppression de compte One More",
   deleteAccountEmailBody:
     "Bonjour,\n\nJe souhaite supprimer définitivement mon compte One More.\n\nEmail du compte : {email}\n\nMerci.",
+  settingsBuildVersion: "Version",
+  settingsBuildNumber: "Build",
+  settingsBuildEnv: "Env",
+  settingsBuildMode: "Mode",
+  settingsBuildPlatform: "Plateforme",
+  settingsBuildApi: "API",
 
   // Onboarding (premier lancement)
   onboardingTitle: "Prêt à progresser ?",

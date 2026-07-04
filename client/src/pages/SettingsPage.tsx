@@ -2,6 +2,7 @@ import { BackHeader } from '@/components/BackHeader'
 import { NotificationSettingsCard } from '@/components/settings/NotificationSettingsCard'
 import { RestTimeSettingsCard } from '@/components/settings/RestTimeSettingsCard'
 import { PremiumSettingsCard } from '@/components/settings/PremiumSettingsCard'
+import { SettingsBuildInfo } from '@/components/settings/SettingsBuildInfo'
 import { SettingsReferralLinkCard } from '@/components/settings/SettingsReferralLinkCard'
 import { ProfileNameDialog } from '@/components/profile/ProfileNameDialog'
 import { SettingsProfileSkeleton } from '@/components/skeletons'
@@ -269,7 +270,7 @@ export function SettingsPage() {
                 </Card>
 
                 {auth.status === 'authenticated' && (
-                    <div className="pt-6 pb-10 text-center">
+                    <div className="pt-6 text-center">
                         <button
                             type="button"
                             className="text-xs text-muted-foreground/50 underline-offset-2 transition-colors hover:text-muted-foreground hover:underline"
@@ -279,6 +280,8 @@ export function SettingsPage() {
                         </button>
                     </div>
                 )}
+
+                <SettingsBuildInfo />
             </main>
 
             <ProfileNameDialog
