@@ -20,7 +20,7 @@ export async function verifyGoogleIdToken(
       issuer: ['https://accounts.google.com', 'accounts.google.com'],
       audience: clientId,
     });
-    payload = verified.payload as GoogleIdTokenClaims;
+    payload = verified.payload;
   } catch {
     throw new BadRequestException('id_token Google invalide');
   }

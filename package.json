@@ -1,0 +1,24 @@
+{
+  "name": "one-more",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Application de suivi de progression en musculation — PWA web et apps natives (iOS / Android via Capacitor).",
+  "scripts": {
+    "check:fast": "npm run typecheck:gate --prefix client && npm run build --prefix api",
+    "check:smoke": "npm run test:smoke --prefix client",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/start-line-dev/one-more.git"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2"
+  },
+  "lint-staged": {
+    "client/**/*.{ts,tsx}": "npm exec --prefix client -- eslint --fix",
+    "api/**/*.ts": "npm exec --prefix api -- eslint --fix"
+  }
+}

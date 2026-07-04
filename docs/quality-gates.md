@@ -1,0 +1,67 @@
+# Quality gates
+
+Deux filets automatiques pour limiter les régressions sans multiplier les tests unitaires.
+
+## À chaque commit (`pre-commit`)
+
+- TypeScript sur le chemin auth critique (`typecheck:gate`)
+- Build API Nest (compile TypeScript serveur)
+- ESLint auto-fix sur les fichiers **stagés** client + API (`lint-staged`)
+
+Durée typique : 20 à 40 secondes.
+
+Pour un typecheck complet du client (hors scope du hook) : `npm run typecheck --prefix client`.
+
+## Avant chaque push (`pre-push`)
+
+- 5 smoke tests Playwright sur les parcours critiques :
+  - chargement de `/auth`
+  - inscription complète (API mockée)
+  - déconnexion (session effacée)
+  - ajout d'un exercice depuis le catalogue (perf incluse)
+  - enregistrement d'une performance sur la fiche exercice
+
+Durée typique : 30 à 60 secondes (build Vite + preview inclus).
+
+## Commandes manuelles
+
+```bash
+task check          # filet rapide
+task check:smoke    # smoke Playwright
+task check:all      # les deux
+```
+
+Depuis la racine :
+
+```bash
+npm run check:fast
+npm run check:smoke
+```
+
+## Bypass d'urgence
+
+```bash
+git commit --no-verify
+git push --no-verify
+```
+
+À réserver aux cas exceptionnels.
+
+## Ajouter un parcours smoke
+
+1. Copier un fichier dans [`client/e2e/smoke/`](../client/e2e/smoke/).
+2. Réutiliser [`helpers.ts`](../client/e2e/smoke/helpers.ts) et [`workflow-api.ts`](../client/e2e/smoke/workflow-api.ts).
+3. Vérifier les sélecteurs sur le texte UI français (`UI.*` dans `translations.ts`).
+4. Lancer `task check:smoke` avant de pousser.
+
+Pour générer un test à partir d'une description : skill [`.cursor/skills/e2e-test/SKILL.md`](../.cursor/skills/e2e-test/SKILL.md).
+
+## Ce que ça attrape
+
+| Problème | Couche |
+|----------|--------|
+| Import manquant (`peekPendingInviteCode`) | pre-commit (TypeScript) |
+| Erreur JS au runtime sur l'inscription | pre-push (Playwright) |
+| Session non effacée au logout | pre-push (Playwright) |
+| Ajout exercice / perf ne navigue pas | pre-push (Playwright) |
+| `setBrokenImageIds` ou erreur JS catalogue | pre-push (Playwright) |

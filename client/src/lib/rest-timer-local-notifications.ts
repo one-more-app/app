@@ -157,7 +157,13 @@ export function attachRestTimerLocalNotificationListeners(): () => void {
     () => {
       /* Premier plan : le toast in-app prend le relais — pas de bannière système en double. */
       void LocalNotifications.removeDeliveredNotifications({
-        notifications: [{ id: REST_FINISHED_NOTIFICATION_ID }],
+        notifications: [
+          {
+            id: REST_FINISHED_NOTIFICATION_ID,
+            title: "",
+            body: "",
+          },
+        ],
       });
     },
   );

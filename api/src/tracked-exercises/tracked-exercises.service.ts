@@ -77,7 +77,9 @@ export class TrackedExercisesService {
     if (tracked.length === 0) return [];
 
     const trackedDbIds = tracked.map((item) => item.id);
-    const trackedByDbId = new Map(tracked.map((item) => [item.id, item.clientId]));
+    const trackedByDbId = new Map(
+      tracked.map((item) => [item.id, item.clientId]),
+    );
 
     const entries = await this.perfRepo.find({
       where: {
@@ -103,15 +105,14 @@ export class TrackedExercisesService {
     const rows = tracked.map((item) => {
       const itemEntries = entriesByTrackedId.get(item.id) ?? [];
       const lastPerfEntity = itemEntries[itemEntries.length - 1];
-      const personalBestEntity = itemEntries.reduce<PerformanceEntryEntity | undefined>(
-        (best, curr) => {
-          if (!best) return curr;
-          if (curr.weight > best.weight) return curr;
-          if (curr.weight === best.weight && curr.reps > best.reps) return curr;
-          return best;
-        },
-        undefined,
-      );
+      const personalBestEntity = itemEntries.reduce<
+        PerformanceEntryEntity | undefined
+      >((best, curr) => {
+        if (!best) return curr;
+        if (curr.weight > best.weight) return curr;
+        if (curr.weight === best.weight && curr.reps > best.reps) return curr;
+        return best;
+      }, undefined);
 
       return {
         ...this.mapTrackedExercise(item),
@@ -156,7 +157,11 @@ export class TrackedExercisesService {
     return this.mapTrackedExercise(entity);
   }
 
-  async update(userId: string, clientId: string, body: UpdateTrackedExerciseDto) {
+  async update(
+    userId: string,
+    clientId: string,
+    body: UpdateTrackedExerciseDto,
+  ) {
     const existing = await this.trackedRepo.findOne({
       where: { userId, clientId },
     });

@@ -17,7 +17,10 @@ export enum OAuthProvider {
 }
 
 @Entity({ name: 'oauth_accounts' })
-@Unique('oauth_accounts_provider_provideruserid_key', ['provider', 'providerUserId'])
+@Unique('oauth_accounts_provider_provideruserid_key', [
+  'provider',
+  'providerUserId',
+])
 @Index('oauth_accounts_userid_provider_idx', ['userId', 'provider'])
 export class OAuthAccountEntity {
   @PrimaryGeneratedColumn('uuid')

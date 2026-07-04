@@ -21,33 +21,33 @@ describe('streak-dates', () => {
   });
 
   it('computeStreakAfterActivity increments on consecutive days', () => {
-    expect(
-      computeStreakAfterActivity('2024-06-09', 4, '2024-06-10'),
-    ).toEqual({ current: 5 });
+    expect(computeStreakAfterActivity('2024-06-09', 4, '2024-06-10')).toEqual({
+      current: 5,
+    });
   });
 
   it('computeStreakAfterActivity continues after one rest day', () => {
-    expect(
-      computeStreakAfterActivity('2024-06-09', 4, '2024-06-11'),
-    ).toEqual({ current: 5 });
+    expect(computeStreakAfterActivity('2024-06-09', 4, '2024-06-11')).toEqual({
+      current: 5,
+    });
   });
 
   it('computeStreakAfterActivity continues after a weekend (2 rest days)', () => {
-    expect(
-      computeStreakAfterActivity('2024-06-07', 10, '2024-06-10'),
-    ).toEqual({ current: 11 });
+    expect(computeStreakAfterActivity('2024-06-07', 10, '2024-06-10')).toEqual({
+      current: 11,
+    });
   });
 
   it('computeStreakAfterActivity resets after three rest days', () => {
-    expect(
-      computeStreakAfterActivity('2024-06-07', 10, '2024-06-11'),
-    ).toEqual({ current: 1 });
+    expect(computeStreakAfterActivity('2024-06-07', 10, '2024-06-11')).toEqual({
+      current: 1,
+    });
   });
 
   it('computeStreakAfterActivity keeps streak on same calendar day', () => {
-    expect(
-      computeStreakAfterActivity('2024-06-10', 3, '2024-06-10'),
-    ).toEqual({ current: 3 });
+    expect(computeStreakAfterActivity('2024-06-10', 3, '2024-06-10')).toEqual({
+      current: 3,
+    });
   });
 
   it('applyStreakExpiry keeps streak through two days without activity', () => {

@@ -22,7 +22,10 @@ export class OAuthController {
   }
 
   @Post('/:provider/start')
-  start(@Param('provider') provider: 'google' | 'apple', @Body() body: OAuthStartDto) {
+  start(
+    @Param('provider') provider: 'google' | 'apple',
+    @Body() body: OAuthStartDto,
+  ) {
     return this.oauth.start(provider, body);
   }
 
@@ -34,4 +37,3 @@ export class OAuthController {
     return await this.oauth.callback(provider, body);
   }
 }
-

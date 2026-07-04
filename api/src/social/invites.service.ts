@@ -6,10 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
-import {
-  buildInviteUrl,
-  generateInviteCode,
-} from './lib/invite-code.js';
+import { buildInviteUrl, generateInviteCode } from './lib/invite-code.js';
 import { UsernameService } from './username.service.js';
 
 export type CreateProfileParams = {
@@ -68,7 +65,9 @@ export class InvitesService {
     };
   }
 
-  async findInviterProfileByCode(code: string): Promise<UserProfileEntity | null> {
+  async findInviterProfileByCode(
+    code: string,
+  ): Promise<UserProfileEntity | null> {
     const normalized = code.trim().toLowerCase();
     if (!normalized) return null;
     return await this.profilesRepo.findOne({

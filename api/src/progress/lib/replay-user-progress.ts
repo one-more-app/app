@@ -95,12 +95,15 @@ function tryGrant(
     amount,
     activityDate,
     earnedAt: new Date(),
-  } as XpEventEntity);
+  });
   ctx.progress.totalXp += amount;
   return true;
 }
 
-function processPerformance(ctx: ReplayContext, perf: PerformanceEntryEntity): void {
+function processPerformance(
+  ctx: ReplayContext,
+  perf: PerformanceEntryEntity,
+): void {
   const tracked = ctx.trackedById.get(perf.trackedExerciseId);
   if (!tracked) return;
 
@@ -160,10 +163,7 @@ function processPerformance(ctx: ReplayContext, perf: PerformanceEntryEntity): v
 
   const beforeLeague = leagueFromTracked(tracked, prevPB, ctx.profile);
   const afterLeague = leagueFromTracked(tracked, nextPB, ctx.profile);
-  if (
-    ranksDidPromote(beforeLeague, afterLeague) &&
-    afterLeague?.rankId
-  ) {
+  if (ranksDidPromote(beforeLeague, afterLeague) && afterLeague?.rankId) {
     if (
       tryGrant(
         ctx,

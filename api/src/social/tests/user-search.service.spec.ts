@@ -27,7 +27,10 @@ describe('UserSearchService', () => {
       createQueryBuilder: jest.fn(),
     };
 
-    service = new UserSearchService(profilesRepo as any, friendshipsRepo as any);
+    service = new UserSearchService(
+      profilesRepo as any,
+      friendshipsRepo as any,
+    );
 
     qb = {
       where: jest.fn().mockReturnThis(),

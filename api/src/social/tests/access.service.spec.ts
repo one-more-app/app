@@ -64,7 +64,9 @@ describe('AccessService', () => {
     const access = await service.getAccess('user-1');
     expect(access.exerciseLimit).toBe(EXERCISE_LIMIT_BASE);
     expect(access.canAddExercise).toBe(true);
-    await expect(service.assertCanAddExercise('user-1')).resolves.toBeUndefined();
+    await expect(
+      service.assertCanAddExercise('user-1'),
+    ).resolves.toBeUndefined();
   });
 
   it('blocks add at base limit', async () => {
@@ -102,7 +104,9 @@ describe('AccessService', () => {
       EXERCISE_LIMIT_BASE + EXERCISE_BONUS_FOR_USING_REFERRAL,
     );
     expect(access.hasUsedReferralCode).toBe(true);
-    expect(access.bonusFromBeingReferred).toBe(EXERCISE_BONUS_FOR_USING_REFERRAL);
+    expect(access.bonusFromBeingReferred).toBe(
+      EXERCISE_BONUS_FOR_USING_REFERRAL,
+    );
     expect(access.canAddExercise).toBe(true);
   });
 
@@ -137,6 +141,8 @@ describe('AccessService', () => {
     const access = await service.getAccess('user-1');
     expect(access.isPremium).toBe(true);
     expect(access.canAddExercise).toBe(true);
-    await expect(service.assertCanAddExercise('user-1')).resolves.toBeUndefined();
+    await expect(
+      service.assertCanAddExercise('user-1'),
+    ).resolves.toBeUndefined();
   });
 });

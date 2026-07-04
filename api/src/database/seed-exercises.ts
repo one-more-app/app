@@ -53,8 +53,10 @@ async function run() {
   }
 
   await dataSource.destroy();
-  // eslint-disable-next-line no-console
-  console.log(`Seeded exercise catalog (${exercises.length} rows from ${filePath})`);
+
+  console.log(
+    `Seeded exercise catalog (${exercises.length} rows from ${filePath})`,
+  );
 }
 
 void run();

@@ -199,7 +199,6 @@ async function run() {
 
   await dataSource.destroy();
 
-  // eslint-disable-next-line no-console
   console.log(
     `Import terminé (dataset=${dataset}) pour user=${user.id} (${user.email ?? 'email-null'}) | tracked=${importedTracked} | perf=${importedPerf} | perf_skipped=${skippedPerf}`,
   );

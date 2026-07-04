@@ -48,10 +48,7 @@ export class MessagingService {
     };
   }
 
-  private async getConversationForUser(
-    userId: string,
-    conversationId: string,
-  ) {
+  private async getConversationForUser(userId: string, conversationId: string) {
     const conversation = await this.conversationsRepo.findOne({
       where: { id: conversationId },
     });
@@ -145,11 +142,7 @@ export class MessagingService {
     };
   }
 
-  async listMessages(
-    userId: string,
-    conversationId: string,
-    cursor?: string,
-  ) {
+  async listMessages(userId: string, conversationId: string, cursor?: string) {
     await this.getConversationForUser(userId, conversationId);
 
     const qb = this.messagesRepo
@@ -172,7 +165,7 @@ export class MessagingService {
     const messages = await qb.getMany();
     const ordered = messages.reverse().map((m) => this.toMessageDto(m));
     const nextCursor =
-      messages.length === PAGE_SIZE ? messages[0]?.id ?? null : null;
+      messages.length === PAGE_SIZE ? (messages[0]?.id ?? null) : null;
 
     return { messages: ordered, nextCursor };
   }
@@ -199,11 +192,7 @@ export class MessagingService {
     return { message: dto, recipientId: otherId };
   }
 
-  async markRead(
-    userId: string,
-    conversationId: string,
-    messageId?: string,
-  ) {
+  async markRead(userId: string, conversationId: string, messageId?: string) {
     const conversation = await this.getConversationForUser(
       userId,
       conversationId,

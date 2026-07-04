@@ -22,7 +22,10 @@ export class UsernameService {
     private readonly usersRepo: Repository<UserEntity>,
   ) {}
 
-  async isAvailable(username: string, excludeUserId?: string): Promise<boolean> {
+  async isAvailable(
+    username: string,
+    excludeUserId?: string,
+  ): Promise<boolean> {
     const normalized = normalizeUsername(username);
     if (!normalized) return false;
 
@@ -38,7 +41,10 @@ export class UsernameService {
     return !taken;
   }
 
-  async assertAvailable(username: string, excludeUserId?: string): Promise<string> {
+  async assertAvailable(
+    username: string,
+    excludeUserId?: string,
+  ): Promise<string> {
     const normalized = normalizeUsername(username);
     assertValidUsername(normalized);
     if (!(await this.isAvailable(normalized, excludeUserId))) {

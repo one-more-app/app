@@ -4,9 +4,7 @@ export const XP_LEVEL_EXPONENT = 1.35;
 
 export function xpRequiredForLevel(level: number): number {
   if (level <= 1) return 0;
-  return Math.floor(
-    XP_LEVEL_BASE * Math.pow(level - 1, XP_LEVEL_EXPONENT),
-  );
+  return Math.floor(XP_LEVEL_BASE * Math.pow(level - 1, XP_LEVEL_EXPONENT));
 }
 
 /** Niveau actuel dérivé du total XP (minimum 1). */

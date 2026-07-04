@@ -54,8 +54,7 @@ export class AccessService {
       referralCount,
       hasUsedReferralCode,
     });
-    const canAddExercise =
-      isPremium || activeExerciseCount < exerciseLimit;
+    const canAddExercise = isPremium || activeExerciseCount < exerciseLimit;
     const tshirtRewardEligible = computeTshirtRewardEligible({ referralCount });
     const referralsUntilTshirt = computeReferralsUntilTshirt({ referralCount });
 

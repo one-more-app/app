@@ -64,7 +64,8 @@ export class ObjectStorageService {
         Key: params.key,
         Body: params.body,
         ContentType: params.contentType,
-        CacheControl: params.cacheControl ?? 'public, max-age=31536000, immutable',
+        CacheControl:
+          params.cacheControl ?? 'public, max-age=31536000, immutable',
       }),
     );
 

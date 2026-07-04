@@ -1,11 +1,11 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { OpenPanel } from "@openpanel/sdk";
+import { Injectable, Logger } from '@nestjs/common';
+import { OpenPanel } from '@openpanel/sdk';
 import {
   getOpenPanelApiUrl,
   getOpenPanelClientId,
   getOpenPanelClientSecret,
   isOpenPanelServerConfigured,
-} from "./analytics.config.js";
+} from './analytics.config.js';
 
 export type ServerAnalyticsProperties = Record<
   string,
@@ -87,7 +87,7 @@ export class AnalyticsService {
           : undefined,
       });
     } catch (err) {
-      this.logger.warn("OpenPanel identify failed", err);
+      this.logger.warn('OpenPanel identify failed', err);
     }
   }
 
@@ -103,12 +103,12 @@ export class AnalyticsService {
     const eventProps = this.compact({
       product_id: params.productId,
       currency,
-      provider: params.provider ?? "revenuecat",
+      provider: params.provider ?? 'revenuecat',
       ...params.properties,
     });
 
     try {
-      await this.op.track("purchase_validated", {
+      await this.op.track('purchase_validated', {
         ...eventProps,
         profileId: params.profileId,
       });
@@ -118,7 +118,7 @@ export class AnalyticsService {
         profileId: params.profileId,
       });
     } catch (err) {
-      this.logger.warn("OpenPanel revenue track failed", err);
+      this.logger.warn('OpenPanel revenue track failed', err);
     }
   }
 

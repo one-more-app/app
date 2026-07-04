@@ -16,7 +16,7 @@ async function main() {
   const userIdArg = getArgValue('--user-id');
   const emailArg = getArgValue('--email');
 
-  const ds = dataSource as DataSource;
+  const ds = dataSource;
   if (!ds.isInitialized) await ds.initialize();
 
   const userRepo = ds.getRepository(UserEntity);
@@ -32,7 +32,10 @@ async function main() {
     }
     userIds = [user.id];
   } else {
-    const users = await userRepo.find({ select: ['id'], order: { createdAt: 'ASC' } });
+    const users = await userRepo.find({
+      select: ['id'],
+      order: { createdAt: 'ASC' },
+    });
     userIds = users.map((u) => u.id);
   }
 

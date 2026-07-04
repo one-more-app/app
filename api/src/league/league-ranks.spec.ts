@@ -58,7 +58,7 @@ describe('expandLegacyTiersToRankTiers', () => {
     expect(ranks).toHaveLength(16);
     expect(ranks.map((r) => r.rankId)).toEqual([...RANK_ORDER]);
     for (let i = 1; i < ranks.length; i++) {
-      expect(ranks[i]!.ratio).toBeGreaterThanOrEqual(ranks[i - 1]!.ratio);
+      expect(ranks[i].ratio).toBeGreaterThanOrEqual(ranks[i - 1].ratio);
     }
   });
 });
@@ -121,37 +121,62 @@ describe('new strength standard profiles', () => {
     target: string;
   }> = [
     { name: 'cable standing crunch', equipment: 'cable', target: 'abs' },
-    { name: 'lever preacher curl', equipment: 'leverage machine', target: 'biceps' },
-    { name: 'lever seated calf press', equipment: 'leverage machine', target: 'calves' },
+    {
+      name: 'lever preacher curl',
+      equipment: 'leverage machine',
+      target: 'biceps',
+    },
+    {
+      name: 'lever seated calf press',
+      equipment: 'leverage machine',
+      target: 'calves',
+    },
     { name: 'lever shrug', equipment: 'leverage machine', target: 'traps' },
-    { name: 'lever back extension', equipment: 'leverage machine', target: 'spine' },
+    {
+      name: 'lever back extension',
+      equipment: 'leverage machine',
+      target: 'spine',
+    },
     { name: 'weighted crunch', equipment: 'weighted', target: 'abs' },
     { name: 'weighted pull-up', equipment: 'weighted', target: 'lats' },
-    { name: 'lever seated hip abduction', equipment: 'leverage machine', target: 'abductors' },
+    {
+      name: 'lever seated hip abduction',
+      equipment: 'leverage machine',
+      target: 'abductors',
+    },
     { name: 'smith leg press', equipment: 'smith machine', target: 'glutes' },
-    { name: 'kettlebell hang clean', equipment: 'kettlebell', target: 'hamstrings' },
+    {
+      name: 'kettlebell hang clean',
+      equipment: 'kettlebell',
+      target: 'hamstrings',
+    },
   ];
 
-  it.each(smokeCases)('returns tiers for $name', ({ name, equipment, target }) => {
-    expect(getAllTiers(80, 'male', name, { equipment, target })).not.toBeNull();
-    expect(
-      getLeagueInfo({
-        weight: 40,
-        reps: 5,
-        bodyWeightKg: 80,
-        gender: 'male',
-        exerciseName: name,
-        exerciseMetadata: { equipment, target },
-      }),
-    ).not.toBeNull();
-  });
+  it.each(smokeCases)(
+    'returns tiers for $name',
+    ({ name, equipment, target }) => {
+      expect(
+        getAllTiers(80, 'male', name, { equipment, target }),
+      ).not.toBeNull();
+      expect(
+        getLeagueInfo({
+          weight: 40,
+          reps: 5,
+          bodyWeightKg: 80,
+          gender: 'male',
+          exerciseName: name,
+          exerciseMetadata: { equipment, target },
+        }),
+      ).not.toBeNull();
+    },
+  );
 });
 
 describe('isIntentionallyExcluded', () => {
   it('excludes pure bodyweight abs', () => {
-    expect(
-      isIntentionallyExcluded('body weight', 'abs', 'crunch floor'),
-    ).toBe(true);
+    expect(isIntentionallyExcluded('body weight', 'abs', 'crunch floor')).toBe(
+      true,
+    );
   });
 
   it('allows loaded cable crunch', () => {
@@ -162,7 +187,11 @@ describe('isIntentionallyExcluded', () => {
 
   it('excludes cardio', () => {
     expect(
-      isIntentionallyExcluded('elliptical machine', 'cardiovascular system', 'run'),
+      isIntentionallyExcluded(
+        'elliptical machine',
+        'cardiovascular system',
+        'run',
+      ),
     ).toBe(true);
   });
 });

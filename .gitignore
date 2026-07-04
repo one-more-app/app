@@ -8,6 +8,10 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+# Playwright
+playwright-report
+test-results
+blob-report
 # Sortie PWA avant copie vers public/icons (npm run assets:generate)
 /icons
 dist

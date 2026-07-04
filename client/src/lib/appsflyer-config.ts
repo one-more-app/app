@@ -30,7 +30,7 @@ export function getAppsFlyerBrandedDomains(): string[] {
   if (!raw) return [];
   return raw
     .split(",")
-    .map((d) => d.trim().replace(/^https?:\/\//, "").replace(/\/+$/, ""))
+    .map((d: string) => d.trim().replace(/^https?:\/\//, "").replace(/\/+$/, ""))
     .filter(Boolean);
 }
 

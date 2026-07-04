@@ -74,8 +74,7 @@ export class RealtimeGateway
       const presence = await this.presenceService.updateHeartbeat(userId, {
         status: PresenceStatus.OFFLINE,
       });
-      const friendIds =
-        await this.friendsService.getAcceptedFriendIds(userId);
+      const friendIds = await this.friendsService.getAcceptedFriendIds(userId);
       this.broadcaster.emitPresenceUpdate(friendIds, presence);
     } catch (err) {
       this.logger.warn(`Disconnect presence failed: ${String(err)}`);

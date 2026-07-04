@@ -29,7 +29,10 @@ export class UserSearchService {
     private readonly friendshipsRepo: Repository<FriendshipEntity>,
   ) {}
 
-  async search(viewerId: string, rawQuery: string): Promise<UserSearchResult[]> {
+  async search(
+    viewerId: string,
+    rawQuery: string,
+  ): Promise<UserSearchResult[]> {
     const parsed = parseSearchInput(rawQuery);
     if ('error' in parsed) {
       throw new BadRequestException(parsed.error);
@@ -57,22 +60,20 @@ export class UserSearchService {
             tokenMatch
               .where(
                 new Brackets((nameMatch) => {
-                  nameMatch
-                    .where('p.searchableByName = true')
-                    .andWhere(
-                      new Brackets((nameFields) => {
-                        nameFields
-                          .where(
-                            `unaccent(COALESCE(p."firstName", '')) ILIKE unaccent(:${paramKey})`,
-                          )
-                          .orWhere(
-                            `unaccent(COALESCE(p."lastName", '')) ILIKE unaccent(:${paramKey})`,
-                          )
-                          .orWhere(
-                            `unaccent(COALESCE(p."firstName", '') || ' ' || COALESCE(p."lastName", '')) ILIKE unaccent(:${paramKey})`,
-                          );
-                      }),
-                    );
+                  nameMatch.where('p.searchableByName = true').andWhere(
+                    new Brackets((nameFields) => {
+                      nameFields
+                        .where(
+                          `unaccent(COALESCE(p."firstName", '')) ILIKE unaccent(:${paramKey})`,
+                        )
+                        .orWhere(
+                          `unaccent(COALESCE(p."lastName", '')) ILIKE unaccent(:${paramKey})`,
+                        )
+                        .orWhere(
+                          `unaccent(COALESCE(p."firstName", '') || ' ' || COALESCE(p."lastName", '')) ILIKE unaccent(:${paramKey})`,
+                        );
+                    }),
+                  );
                 }),
               )
               .orWhere(

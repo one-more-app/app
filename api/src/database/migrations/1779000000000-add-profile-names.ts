@@ -21,4 +21,3 @@ export class AddProfileNames1779000000000 implements MigrationInterface {
     );
   }
 }
-

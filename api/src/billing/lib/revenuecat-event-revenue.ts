@@ -1,4 +1,4 @@
-const DEFAULT_REVENUE_CURRENCY = "EUR";
+const DEFAULT_REVENUE_CURRENCY = 'EUR';
 
 export type RevenueCatEventRevenue = {
   amount: number;
@@ -14,7 +14,7 @@ export function extractRevenueFromRevenueCatEvent(
 ): RevenueCatEventRevenue | null {
   const currencyRaw = event.currency;
   const currency =
-    typeof currencyRaw === "string" && currencyRaw.trim()
+    typeof currencyRaw === 'string' && currencyRaw.trim()
       ? currencyRaw.trim().toUpperCase()
       : DEFAULT_REVENUE_CURRENCY;
 
@@ -22,9 +22,9 @@ export function extractRevenueFromRevenueCatEvent(
   const usd = event.price;
 
   const amount =
-    typeof purchased === "number" && Number.isFinite(purchased)
+    typeof purchased === 'number' && Number.isFinite(purchased)
       ? purchased
-      : typeof usd === "number" && Number.isFinite(usd)
+      : typeof usd === 'number' && Number.isFinite(usd)
         ? usd
         : null;
 

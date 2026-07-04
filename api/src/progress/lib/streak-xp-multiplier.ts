@@ -45,9 +45,7 @@ export function streakXpProgress(streakDays: number): StreakXpProgress {
     STREAK_XP_BONUS.maxBonusPercent > 0
       ? Math.min(
           100,
-          Math.round(
-            (bonusPercent / STREAK_XP_BONUS.maxBonusPercent) * 100,
-          ),
+          Math.round((bonusPercent / STREAK_XP_BONUS.maxBonusPercent) * 100),
         )
       : 0;
 

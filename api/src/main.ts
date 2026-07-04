@@ -31,7 +31,10 @@ function parseCorsOrigins(raw: string | undefined): string[] {
 function buildCorsOriginOption():
   | boolean
   | string[]
-  | ((origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => void) {
+  | ((
+      origin: string | undefined,
+      cb: (err: Error | null, allow?: boolean) => void,
+    ) => void) {
   const fromEnv = parseCorsOrigins(process.env.CORS_ORIGINS);
   const isDev = process.env.NODE_ENV !== 'production';
   const allowed =
@@ -48,7 +51,10 @@ function buildCorsOriginOption():
   if (allowed.length === 0) {
     return true;
   }
-  return (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+  return (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void,
+  ) => {
     if (!origin) {
       callback(null, true);
       return;
@@ -64,7 +70,13 @@ async function bootstrap() {
     origin: buildCorsOriginOption(),
     credentials: true,
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'Origin',
+      'X-Requested-With',
+    ],
   });
   app.useGlobalPipes(
     new ValidationPipe({

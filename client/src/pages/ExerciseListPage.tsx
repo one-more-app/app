@@ -159,10 +159,6 @@ export function ExerciseListPage() {
     }, [searchQuery, goToStep])
 
     useEffect(() => {
-        void Promise.resolve().then(() => setBrokenImageIds(new Set()))
-    }, [searchQuery, browse.zone, browse.target, browse.beq])
-
-    useEffect(() => {
         if (isSearchMode) return
         if (browse.step === 'list' && (!browse.zone || !browse.target || !browse.beq)) {
             goToStep('zone', { replace: true })

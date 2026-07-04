@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ProfileService } from '../profile/profile.service.js';
 import { AuthService } from './auth.service.js';
 import {
@@ -67,4 +75,3 @@ export class AuthController {
     return await this.auth.me(req.user.sub);
   }
 }
-

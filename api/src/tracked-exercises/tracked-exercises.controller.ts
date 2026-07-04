@@ -21,12 +21,16 @@ import { TrackedExercisesService } from './tracked-exercises.service.js';
 @UseGuards(JwtAuthGuard)
 @Controller('/tracked-exercises')
 export class TrackedExercisesController {
-  constructor(private readonly trackedExercisesService: TrackedExercisesService) {}
+  constructor(
+    private readonly trackedExercisesService: TrackedExercisesService,
+  ) {}
 
   @Get()
   async list(@Req() req: any, @Query() query: ListTrackedExercisesQueryDto) {
     if (query.withPerformance === true) {
-      return await this.trackedExercisesService.listWithPerformance(req.user.sub);
+      return await this.trackedExercisesService.listWithPerformance(
+        req.user.sub,
+      );
     }
 
     return await this.trackedExercisesService.list(

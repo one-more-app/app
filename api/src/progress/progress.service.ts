@@ -157,10 +157,9 @@ export class ProgressService {
         },
       });
       if (!tracked) {
-        return this.emptyGrantResult(await this.getOrCreateProgressInRepo(
-          progressRepo,
-          params.userId,
-        ));
+        return this.emptyGrantResult(
+          await this.getOrCreateProgressInRepo(progressRepo, params.userId),
+        );
       }
 
       const profile = await profileRepo.findOne({
@@ -370,7 +369,9 @@ export class ProgressService {
     };
   }
 
-  private async getOrCreateProgress(userId: string): Promise<UserProgressEntity> {
+  private async getOrCreateProgress(
+    userId: string,
+  ): Promise<UserProgressEntity> {
     return this.getOrCreateProgressInRepo(this.progressRepo, userId);
   }
 

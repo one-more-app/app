@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,7 +16,11 @@ import { InvitesService } from '../social/invites.service.js';
 import { ReferralService } from '../social/referral.service.js';
 
 type AuthUser = { id: string; email: string | null };
-type AuthSession = { accessToken: string; refreshToken: string; user: AuthUser };
+type AuthSession = {
+  accessToken: string;
+  refreshToken: string;
+  user: AuthUser;
+};
 
 @Injectable()
 export class AuthService {
@@ -34,7 +42,10 @@ export class AuthService {
     const expiresIn = this.config.get<string>('JWT_EXPIRES_IN') ?? '15m';
     return await this.jwt.signAsync(
       { sub: user.id, email: user.email },
-      { secret, expiresIn: expiresIn as any } as any,
+      {
+        secret,
+        expiresIn: expiresIn as any,
+      },
     );
   }
 
@@ -108,7 +119,8 @@ export class AuthService {
       where: { email },
       select: ['id', 'email', 'password'],
     });
-    if (!user || !user.password) throw new UnauthorizedException('Identifiants invalides');
+    if (!user || !user.password)
+      throw new UnauthorizedException('Identifiants invalides');
     const ok = await argon2.verify(user.password, params.password);
     if (!ok) throw new UnauthorizedException('Identifiants invalides');
 
@@ -118,17 +130,20 @@ export class AuthService {
     });
   }
 
-  async refresh(params: { refreshToken: string; deviceId?: string }): Promise<AuthSession> {
+  async refresh(params: {
+    refreshToken: string;
+    deviceId?: string;
+  }): Promise<AuthSession> {
     const sessions = await this.sessionsRepo.find({
       where: { revokedAt: IsNull() },
       relations: { user: true },
       order: { createdAt: 'DESC' },
       take: 50,
     });
-    const match = (await this.findSessionByRefreshToken(
+    const match = await this.findSessionByRefreshToken(
       sessions,
       params.refreshToken,
-    )) as (typeof sessions)[number] | null;
+    );
     if (!match) throw new UnauthorizedException('Session expirée');
 
     await this.sessionsRepo.update({ id: match.id }, { revokedAt: new Date() });
@@ -143,7 +158,10 @@ export class AuthService {
       select: ['id', 'refreshTokenHash'],
       order: { createdAt: 'DESC' },
     });
-    const match = await this.findSessionByRefreshToken(sessions, params.refreshToken);
+    const match = await this.findSessionByRefreshToken(
+      sessions,
+      params.refreshToken,
+    );
     if (!match) return;
     await this.sessionsRepo.update({ id: match.id }, { revokedAt: new Date() });
   }
@@ -183,4 +201,3 @@ export class AuthService {
     return { exists: Boolean(existing) };
   }
 }
-

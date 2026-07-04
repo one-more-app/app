@@ -20,7 +20,7 @@ export async function verifyAppleIdToken(
       issuer: 'https://appleid.apple.com',
       audience,
     });
-    payload = verified.payload as AppleIdTokenClaims;
+    payload = verified.payload;
   } catch {
     throw new BadRequestException('id_token Apple invalide');
   }

@@ -13,7 +13,9 @@ export class NotificationPreferencesService {
     private readonly repo: Repository<NotificationPreferencesEntity>,
   ) {}
 
-  private toDto(entity: NotificationPreferencesEntity): NotificationPreferencesDto {
+  private toDto(
+    entity: NotificationPreferencesEntity,
+  ): NotificationPreferencesDto {
     return {
       streakReminders: entity.streakReminders,
       friendRequests: entity.friendRequests,

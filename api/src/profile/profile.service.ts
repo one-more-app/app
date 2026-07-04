@@ -46,13 +46,21 @@ export class ProfileService {
     try {
       assertValidUsername(normalized);
     } catch {
-      return { available: false, username: normalized, reason: 'invalid' as const };
+      return {
+        available: false,
+        username: normalized,
+        reason: 'invalid' as const,
+      };
     }
     const available = await this.usernameService.isAvailable(
       normalized,
       excludeUserId,
     );
-    return { available, username: normalized, reason: available ? null : ('taken' as const) };
+    return {
+      available,
+      username: normalized,
+      reason: available ? null : ('taken' as const),
+    };
   }
 
   async suggestAvailableUsername(params: {
@@ -129,7 +137,9 @@ export class ProfileService {
       payload.avatarUrl = body.avatarUrl;
     }
     await this.profilesRepo.upsert(payload, ['userId']);
-    const profile = await this.profilesRepo.findOneOrFail({ where: { userId } });
+    const profile = await this.profilesRepo.findOneOrFail({
+      where: { userId },
+    });
     return this.toProfileDto(profile);
   }
 

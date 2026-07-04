@@ -44,18 +44,16 @@ export class LeagueService {
     };
   }
 
-  toLeagueInputFromTracked(
-    tracked: {
-      clientId: string;
-      name: string;
-      originalName: string | null;
-      bodyPart: string | null;
-      target: string | null;
-      equipment: string | null;
-      isCustom: boolean;
-      personalBest?: { weight: number; reps: number } | null;
-    },
-  ): TrackedExerciseLeagueInput {
+  toLeagueInputFromTracked(tracked: {
+    clientId: string;
+    name: string;
+    originalName: string | null;
+    bodyPart: string | null;
+    target: string | null;
+    equipment: string | null;
+    isCustom: boolean;
+    personalBest?: { weight: number; reps: number } | null;
+  }): TrackedExerciseLeagueInput {
     return {
       id: tracked.clientId,
       name: tracked.name,
@@ -195,11 +193,16 @@ export class LeagueService {
     });
     if (!tracked) throw new NotFoundException('Exercice suivi introuvable');
 
-    const tiers = getAllTiers(profile.weightKg, profile.gender, tracked.originalName ?? tracked.name, {
-      equipment: tracked.equipment ?? undefined,
-      target: tracked.target ?? undefined,
-      bodyPart: tracked.bodyPart ?? undefined,
-    });
+    const tiers = getAllTiers(
+      profile.weightKg,
+      profile.gender,
+      tracked.originalName ?? tracked.name,
+      {
+        equipment: tracked.equipment ?? undefined,
+        target: tracked.target ?? undefined,
+        bodyPart: tracked.bodyPart ?? undefined,
+      },
+    );
 
     return tiers ? { tiers } : null;
   }
@@ -232,9 +235,7 @@ export class LeagueService {
     const trackedList = await this.trackedRepo.find({
       where: { userId },
     });
-    const trackedByClientId = new Map(
-      trackedList.map((t) => [t.clientId, t]),
-    );
+    const trackedByClientId = new Map(trackedList.map((t) => [t.clientId, t]));
 
     const byTracked = new Map<string, typeof entries>();
     for (const e of entries) {
@@ -254,7 +255,7 @@ export class LeagueService {
       });
 
       for (let i = 0; i < list.length; i++) {
-        const entry = list[i]!;
+        const entry = list[i];
         const before = list.slice(0, i);
         const prevPB = getPersonalBestFromEntries(before);
         const isRecord = isNewPersonalBest(prevPB, {
@@ -278,8 +279,16 @@ export class LeagueService {
           continue;
         }
 
-        const prevLeague = this.leagueFromTrackedEntity(tracked, prevPB, profile);
-        const nextLeague = this.leagueFromTrackedEntity(tracked, newPB, profile);
+        const prevLeague = this.leagueFromTrackedEntity(
+          tracked,
+          prevPB,
+          profile,
+        );
+        const nextLeague = this.leagueFromTrackedEntity(
+          tracked,
+          newPB,
+          profile,
+        );
         const leagueUp = ranksDidPromote(prevLeague, nextLeague);
 
         out[entry.id] = {
@@ -305,7 +314,10 @@ export class LeagueService {
       isCustom: boolean;
       personalBest?: { weight: number; reps: number } | null;
     },
-  >(exercises: T[], profile: LeagueProfileInput | null): (T & { league: LeagueInfo | null })[] {
+  >(
+    exercises: T[],
+    profile: LeagueProfileInput | null,
+  ): (T & { league: LeagueInfo | null })[] {
     return exercises.map((ex) => ({
       ...ex,
       league: profile

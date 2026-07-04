@@ -35,7 +35,8 @@ export class PresenceService {
     return {
       userId: row.userId,
       status,
-      exerciseName: status === PresenceStatus.TRAINING ? row.exerciseName : null,
+      exerciseName:
+        status === PresenceStatus.TRAINING ? row.exerciseName : null,
       trackedExerciseId:
         status === PresenceStatus.TRAINING ? row.trackedExerciseId : null,
       lastHeartbeatAt: row.lastHeartbeatAt.toISOString(),

@@ -10,8 +10,8 @@ export function getOpenPanelClientSecret(): string | undefined {
 
 export function getOpenPanelApiUrl(): string {
   const raw = process.env.OPENPANEL_API_URL?.trim();
-  if (!raw) return "https://api.openpanel.dev";
-  return raw.replace(/\/+$/, "");
+  if (!raw) return 'https://api.openpanel.dev';
+  return raw.replace(/\/+$/, '');
 }
 
 export function isOpenPanelServerConfigured(): boolean {

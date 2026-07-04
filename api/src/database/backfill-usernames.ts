@@ -7,7 +7,7 @@ import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { UserEntity } from '../auth/entities/user.entity.js';
 
 async function main() {
-  const ds = dataSource as DataSource;
+  const ds = dataSource;
   if (!ds.isInitialized) await ds.initialize();
 
   const profilesRepo = ds.getRepository(UserProfileEntity);
@@ -18,7 +18,7 @@ async function main() {
 
   const missing = await profilesRepo
     .createQueryBuilder('p')
-    .where('p.username IS NULL OR TRIM(p.username) = \'\'')
+    .where("p.username IS NULL OR TRIM(p.username) = ''")
     .getMany();
 
   console.log(`Profils sans pseudo : ${missing.length}`);

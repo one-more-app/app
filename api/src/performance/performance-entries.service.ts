@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  forwardRef,
+} from '@nestjs/common';
 import { NotificationDispatchService } from '../notifications/notification-dispatch.service.js';
 import { XpSourceType } from '../progress/entities/xp-source-type.enum.js';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -149,7 +154,11 @@ export class PerformanceEntriesService {
     };
   }
 
-  async update(userId: string, clientId: string, body: UpdatePerformanceEntryDto) {
+  async update(
+    userId: string,
+    clientId: string,
+    body: UpdatePerformanceEntryDto,
+  ) {
     const existing = await this.perfRepo.findOne({
       where: { userId, clientId },
       relations: { trackedExercise: true },

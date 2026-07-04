@@ -72,6 +72,7 @@ function mapTrackedWithPerformance(
     ...mapTracked(e),
     lastPerf: e.lastPerf ? mapPerformance(e.lastPerf) : null,
     personalBest: e.personalBest ? mapPerformance(e.personalBest) : null,
+    league: e.league ?? null,
   };
 }
 

@@ -26,10 +26,7 @@ export class WsJwtGuard implements CanActivate {
   authenticateSocket(client: Socket): JwtPayload {
     const token =
       (client.handshake.auth?.token as string | undefined) ??
-      (client.handshake.headers.authorization as string | undefined)?.replace(
-        /^Bearer\s+/i,
-        '',
-      );
+      client.handshake.headers.authorization?.replace(/^Bearer\s+/i, '');
 
     if (!token) {
       throw new UnauthorizedException('Token manquant');

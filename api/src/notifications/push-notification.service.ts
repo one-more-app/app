@@ -34,12 +34,13 @@ export class PushNotificationService implements OnModuleInit {
       return;
     }
     try {
-      const { initializeApp, cert, getApps } = await import('firebase-admin/app');
+      const { initializeApp, cert, getApps } =
+        await import('firebase-admin/app');
       const { getMessaging } = await import('firebase-admin/messaging');
       const serviceAccount = JSON.parse(raw) as Record<string, unknown>;
       this.firebaseApp =
         getApps().length > 0
-          ? getApps()[0]!
+          ? getApps()[0]
           : initializeApp({ credential: cert(serviceAccount) });
       this.messaging = getMessaging(this.firebaseApp);
       this.logger.log('Firebase Admin initialisé pour les push notifications');

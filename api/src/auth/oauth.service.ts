@@ -43,7 +43,9 @@ async function postForm(url: string, data: Record<string, string>) {
     // ignore
   }
   if (!res.ok) {
-    throw new BadRequestException(json?.error_description ?? json?.error ?? 'OAuth échoué');
+    throw new BadRequestException(
+      json?.error_description ?? json?.error ?? 'OAuth échoué',
+    );
   }
   return json;
 }
@@ -223,7 +225,9 @@ export class OAuthService {
       userId = linked.user.id;
       userEmail = linked.user.email;
     } else {
-      const normalizedEmail = params.email ? params.email.trim().toLowerCase() : null;
+      const normalizedEmail = params.email
+        ? params.email.trim().toLowerCase()
+        : null;
       const existingByEmail = normalizedEmail
         ? await this.usersRepo.findOne({
             where: { email: normalizedEmail },
@@ -276,7 +280,8 @@ export class OAuthService {
   ): Promise<{ providerUserId: string; email: string | null }> {
     if (provider === 'google') {
       const clientId = this.googleClientId(params.platform);
-      const clientSecret = this.config.get<string>('GOOGLE_CLIENT_SECRET') ?? '';
+      const clientSecret =
+        this.config.get<string>('GOOGLE_CLIENT_SECRET') ?? '';
       const token = await postForm('https://oauth2.googleapis.com/token', {
         client_id: clientId,
         ...(clientSecret ? { client_secret: clientSecret } : {}),
@@ -346,8 +351,9 @@ export class OAuthService {
       throw new BadRequestException('Variable manquante: APPLE_CLIENT_ID_IOS');
     }
 
-    const androidClientId =
-      this.config.get<string>('APPLE_CLIENT_ID_ANDROID')?.trim();
+    const androidClientId = this.config
+      .get<string>('APPLE_CLIENT_ID_ANDROID')
+      ?.trim();
     if (androidClientId) return androidClientId;
 
     return this.mustGet('APPLE_CLIENT_ID');

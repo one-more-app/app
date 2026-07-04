@@ -58,10 +58,7 @@ export class SocialController {
     @Req() req: { user: { sub: string } },
     @Query() query: SearchUsersQueryDto,
   ) {
-    const results = await this.userSearchService.search(
-      req.user.sub,
-      query.q,
-    );
+    const results = await this.userSearchService.search(req.user.sub, query.q);
     return { results };
   }
 
@@ -80,10 +77,7 @@ export class SocialController {
     @Req() req: { user: { sub: string } },
     @Body() body: RequestFriendDto,
   ) {
-    return await this.friendsService.requestFriend(
-      req.user.sub,
-      body.userId,
-    );
+    return await this.friendsService.requestFriend(req.user.sub, body.userId);
   }
 
   @UseGuards(JwtAuthGuard)

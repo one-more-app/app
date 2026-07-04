@@ -24,17 +24,13 @@ const sampleClaim = {
 describe('isDiscordWebhookUrl', () => {
   it('detects discord.com webhooks', () => {
     expect(
-      isDiscordWebhookUrl(
-        'https://discord.com/api/webhooks/123456/abcdef',
-      ),
+      isDiscordWebhookUrl('https://discord.com/api/webhooks/123456/abcdef'),
     ).toBe(true);
   });
 
   it('detects legacy discordapp.com webhooks', () => {
     expect(
-      isDiscordWebhookUrl(
-        'https://discordapp.com/api/webhooks/123456/abcdef',
-      ),
+      isDiscordWebhookUrl('https://discordapp.com/api/webhooks/123456/abcdef'),
     ).toBe(true);
   });
 

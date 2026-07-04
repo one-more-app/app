@@ -145,3 +145,19 @@ tasks:
     dir: api
     cmds:
       - "{{.NPM}} run test"
+
+  check:
+    desc: Vérifications rapides (typecheck gate auth + build API)
+    cmds:
+      - "{{.NPM}} run check:fast"
+
+  check:smoke:
+    desc: Smoke tests produit Playwright (parcours auth)
+    cmds:
+      - "{{.NPM}} run check:smoke"
+
+  check:all:
+    desc: Vérifications rapides + smoke tests
+    cmds:
+      - task: check
+      - task: check:smoke

@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
 import { ExerciseCatalogEntity } from './exercise-catalog.entity.js';
-import type { ExerciseCatalogDto, ListExercisesQueryDto } from './exercises.dto.js';
+import type {
+  ExerciseCatalogDto,
+  ListExercisesQueryDto,
+} from './exercises.dto.js';
 
 @Injectable()
 export class ExercisesService {
@@ -25,7 +28,8 @@ export class ExercisesService {
       const q = `%${query.search.trim()}%`;
       qb.andWhere('(ex.name ILIKE :q OR ex."nameFr" ILIKE :q)', { q });
     }
-    if (query.target) qb.andWhere('ex.target = :target', { target: query.target });
+    if (query.target)
+      qb.andWhere('ex.target = :target', { target: query.target });
     if (query.equipment) {
       qb.andWhere('ex.equipment = :equipment', { equipment: query.equipment });
     }
@@ -59,8 +63,12 @@ export class ExercisesService {
       where: { equipment: ILike('%') },
     });
 
-    const targets = Array.from(new Set(targetsRows.map((r) => r.target))).sort();
-    const equipment = Array.from(new Set(equipmentRows.map((r) => r.equipment))).sort();
+    const targets = Array.from(
+      new Set(targetsRows.map((r) => r.target)),
+    ).sort();
+    const equipment = Array.from(
+      new Set(equipmentRows.map((r) => r.equipment)),
+    ).sort();
     return { targets, equipment };
   }
 }

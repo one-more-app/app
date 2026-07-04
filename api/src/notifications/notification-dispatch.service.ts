@@ -79,7 +79,12 @@ export class NotificationDispatchService {
     requesterId: string;
     friendshipId: string;
   }) {
-    if (!(await this.prefs.isEnabled(params.addresseeId, NotificationType.FriendRequest))) {
+    if (
+      !(await this.prefs.isEnabled(
+        params.addresseeId,
+        NotificationType.FriendRequest,
+      ))
+    ) {
       return;
     }
     const name = await this.profileName(params.requesterId);
@@ -89,7 +94,7 @@ export class NotificationDispatchService {
     });
     await this.push.sendToUser(params.addresseeId, {
       type: NotificationType.FriendRequest,
-      title: 'Demande d\'ami',
+      title: "Demande d'ami",
       body: `${name} veut t'ajouter en ami`,
       route: '/friends',
       dedupKey: `request:${params.friendshipId}`,
@@ -101,7 +106,10 @@ export class NotificationDispatchService {
     referredUserId: string;
   }) {
     if (
-      !(await this.prefs.isEnabled(params.referrerId, NotificationType.ReferralUsed))
+      !(await this.prefs.isEnabled(
+        params.referrerId,
+        NotificationType.ReferralUsed,
+      ))
     ) {
       return;
     }
@@ -120,7 +128,12 @@ export class NotificationDispatchService {
     addresseeId: string;
     friendshipId: string;
   }) {
-    if (!(await this.prefs.isEnabled(params.requesterId, NotificationType.FriendAccepted))) {
+    if (
+      !(await this.prefs.isEnabled(
+        params.requesterId,
+        NotificationType.FriendAccepted,
+      ))
+    ) {
       return;
     }
     const name = await this.profileName(params.addresseeId);
@@ -143,7 +156,12 @@ export class NotificationDispatchService {
     conversationId: string;
     body: string;
   }) {
-    if (!(await this.prefs.isEnabled(params.recipientId, NotificationType.MessageNew))) {
+    if (
+      !(await this.prefs.isEnabled(
+        params.recipientId,
+        NotificationType.MessageNew,
+      ))
+    ) {
       return;
     }
     if (await this.isUserOnline(params.recipientId)) {
@@ -173,7 +191,12 @@ export class NotificationDispatchService {
     const today = localDateKey('UTC');
 
     for (const subscriberId of subscribers) {
-      if (!(await this.prefs.isEnabled(subscriberId, NotificationType.FriendTraining))) {
+      if (
+        !(await this.prefs.isEnabled(
+          subscriberId,
+          NotificationType.FriendTraining,
+        ))
+      ) {
         continue;
       }
       await this.push.sendToUser(subscriberId, {
@@ -222,7 +245,9 @@ export class NotificationDispatchService {
     }
 
     const today = localDateKey(timezone);
-    if (!isStreakAtRisk(progress.lastActiveDate, progress.currentStreak, today)) {
+    if (
+      !isStreakAtRisk(progress.lastActiveDate, progress.currentStreak, today)
+    ) {
       return;
     }
 

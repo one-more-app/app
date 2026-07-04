@@ -40,7 +40,10 @@ export class ProfileController {
 
   @Put('/username')
   async updateUsername(@Req() req: any, @Body() body: UpdateUsernameDto) {
-    return await this.profileService.updateUsername(req.user.sub, body.username);
+    return await this.profileService.updateUsername(
+      req.user.sub,
+      body.username,
+    );
   }
 
   @Post('/avatar')

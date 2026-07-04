@@ -35,10 +35,7 @@ export async function trackPurchaseValidated(
   track(AnalyticsEvents.PURCHASE_VALIDATED, eventProps);
 
   if (op) {
-    await op.revenue(params.amount, {
-      currency: params.currency,
-      ...eventProps,
-    });
+    await op.revenue(params.amount, eventProps);
   }
 }
 

@@ -9,9 +9,7 @@ export type ParsedSearchInput = {
   tokens: string[];
 };
 
-export type ParseSearchInputResult =
-  | ParsedSearchInput
-  | { error: string };
+export type ParseSearchInputResult = ParsedSearchInput | { error: string };
 
 const MIN_TEXT_TOKEN_LENGTH = 2;
 

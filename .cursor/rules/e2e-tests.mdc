@@ -1,0 +1,113 @@
+---
+description: Architecture et conventions des tests e2e Playwright (smoke)
+alwaysApply: true
+---
+
+# Tests e2e Playwright (One More)
+
+## Où vivent les tests
+
+| Fichier | Rôle |
+|---------|------|
+| `client/e2e/smoke/*.spec.ts` | Parcours smoke (pre-push) |
+| `client/e2e/smoke/helpers.ts` | Session, mocks API de base, `trackPageErrors` |
+| `client/e2e/smoke/workflow-api.ts` | Mocks stateful exercices + perfs (POST/GET) |
+| `client/e2e/fixtures/` | Données catalogue stables (`e2e-bench-press`) |
+| `client/playwright.config.ts` | Preview Vite `127.0.0.1:4173`, build auto |
+
+## Commandes
+
+```bash
+npm run test:smoke --prefix client   # depuis la racine
+task check:smoke                     # alias Taskfile
+```
+
+Lancé automatiquement par `.husky/pre-push`.
+
+## Principes
+
+1. **Pas de backend réel** : tout passe par `page.route()` (mocks JSON).
+2. **API sur la même origine** : `seedE2eApiOrigin()` pose `window.__ONE_MORE_API_URL__ = location.origin` pour que Playwright intercepte les POST (évite `localhost:3000` hors reach).
+3. **HashRouter** : URLs `/#/auth`, `/#/exercises`, `/#/exercise/{id}`.
+4. **Texte UI français** : sélecteurs via `UI.*` dans `client/src/lib/translations.ts`, jamais de chaîne inventée.
+5. **Zéro erreur JS** : chaque spec appelle `trackPageErrors(page)` et finit par `expect(pageErrors).toEqual([])`.
+6. **Pas de `--` ni `—`** dans les assertions sur du copy produit (règle copywriting).
+
+## Anatomie d'un spec smoke
+
+```typescript
+import { expect, test } from "@playwright/test";
+import { seedAuthenticatedSession, seedOnboardingDone, trackPageErrors } from "./helpers";
+import { mockExerciseWorkflowApi } from "./workflow-api";
+
+test("description du parcours", async ({ page }) => {
+  const pageErrors = trackPageErrors(page);
+  await seedOnboardingDone(page);
+  await seedAuthenticatedSession(page);        // si auth requise
+  await mockExerciseWorkflowApi(page);         // si exercices/perfs
+
+  await page.goto("/#/route");
+
+  // interactions getByRole / getByPlaceholder, exact: true si ambigu
+  expect(pageErrors).toEqual([]);
+});
+```
+
+## Mocks API
+
+### Auth simple (register, logout)
+
+`mockAuthApi(page)` : auth + profil + listes vides. Les POST `tracked-exercises` / `performance-entries` font `route.fallback()` pour laisser passer les handlers workflow.
+
+### Parcours exercice / perf
+
+`mockExerciseWorkflowApi(page, { seedTrackedExercise?: boolean })` :
+
+- Catalogue : `GET /exercises` → `e2eCatalogExercise`
+- `POST /tracked-exercises` : upsert en mémoire
+- `POST /performance-entries` : ajoute une perf + `xp` au format `XpGrantResult` (`grants: [{ sourceType: "perf", amount: 10 }]`, pas `granted`)
+- `GET` avec `withPerformance=true` renvoie `lastPerf` / `personalBest`
+
+**Important** : le mock `xp` doit respecter `XpGrantResult` (`grants` array). Sinon `notifyXpGrants()` plante et le drawer reste ouvert.
+
+### Endpoints courants à mocker
+
+- `**/me/access**` (pas `/access`)
+- `**/auth/refresh`, `**/profile`, `**/progress**`
+- `**/exercises/meta`, `/exercises(\?.*)?$`
+
+## Sélecteurs (pièges connus)
+
+| Élément | Bon sélecteur |
+|---------|---------------|
+| Bouton auth email | `getByRole('button', { name: 'Continuer', exact: true })` |
+| Titre auth | `getByText(...)` (CardTitle = `div`, pas `heading`) |
+| Drawer ajout + perf | `getByRole('dialog', { name: 'Ajouter et enregistrer une perf' })` |
+| Enregistrer perf | bouton dans le `dialog` actif |
+| Nom exercice fiche | `locator('h1').filter({ hasText: name })` (évite strict mode) |
+| Dernière perf | `getByText('Dernier')` |
+
+## Parcours smoke actuels (5)
+
+1. `auth-loads` : page `/auth` sans erreur JS
+2. `register-no-crash` : inscription complète mockée
+3. `logout-clears-session` : session localStorage purgée
+4. `add-exercise` : catalogue → Ajouter → perf → fiche exercice
+5. `log-performance` : fiche exercice → Nouvelle performance → Dernier visible
+
+## Déboguer un échec
+
+1. Lire `client/test-results/**/error-context.md`
+2. Vérifier que le drawer reste ouvert = souvent API non mockée ou `xp.grants` manquant
+3. Relancer un seul test : `npx playwright test e2e/smoke/nom.spec.ts --prefix client`
+4. Tuer le preview stale si code app modifié : `lsof -ti:4173 | xargs kill -9`
+
+## Ajouter un parcours
+
+1. Explorer le composant / page cible et `data-api.ts` pour les routes API
+2. Étendre `workflow-api.ts` ou `helpers.ts` si nouvel endpoint
+3. Créer `client/e2e/smoke/mon-parcours.spec.ts`
+4. Lancer `npm run test:smoke --prefix client`
+5. Mettre à jour `docs/quality-gates.md`
+
+Pour générer un test à partir d'une description en langage naturel, utiliser le skill `.cursor/skills/e2e-test/SKILL.md`.

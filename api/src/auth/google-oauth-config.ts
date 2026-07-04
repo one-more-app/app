@@ -42,7 +42,10 @@ export function resolveGoogleRedirectUri(
     return googleReverseRedirectUri(clientId);
   }
 
-  const fromList = config.get<string>('OAUTH_REDIRECT_URIS')?.split(',')[0]?.trim();
+  const fromList = config
+    .get<string>('OAUTH_REDIRECT_URIS')
+    ?.split(',')[0]
+    ?.trim();
   if (fromList) {
     return normalizeRedirectUri(fromList);
   }
@@ -50,8 +53,14 @@ export function resolveGoogleRedirectUri(
   return 'com.one_more.app:/oauth';
 }
 
-function appendReverseRedirectUris(config: ConfigService, allowed: string[]): void {
-  for (const key of ['GOOGLE_CLIENT_ID_IOS', 'GOOGLE_CLIENT_ID_ANDROID'] as const) {
+function appendReverseRedirectUris(
+  config: ConfigService,
+  allowed: string[],
+): void {
+  for (const key of [
+    'GOOGLE_CLIENT_ID_IOS',
+    'GOOGLE_CLIENT_ID_ANDROID',
+  ] as const) {
     const clientId = config.get<string>(key)?.trim();
     if (!clientId) continue;
     try {
@@ -64,9 +73,17 @@ function appendReverseRedirectUris(config: ConfigService, allowed: string[]): vo
 
 export function listAllowedRedirectUris(config: ConfigService): string[] {
   const raw = config.get<string>('OAUTH_REDIRECT_URIS')?.trim();
-  const defaults = ['com.one_more.app:/oauth', 'com.one_more.app://oauth', 'com.onemore.app:/oauth', 'com.onemore.app://oauth'];
+  const defaults = [
+    'com.one_more.app:/oauth',
+    'com.one_more.app://oauth',
+    'com.onemore.app:/oauth',
+    'com.onemore.app://oauth',
+  ];
   const fromEnv = raw
-    ? raw.split(',').map((s) => normalizeRedirectUri(s)).filter(Boolean)
+    ? raw
+        .split(',')
+        .map((s) => normalizeRedirectUri(s))
+        .filter(Boolean)
     : [];
   const allowed = [...new Set([...fromEnv, ...defaults])];
   appendReverseRedirectUris(config, allowed);
