@@ -499,7 +499,7 @@ export const UI = {
   friendsListTitle: "Mes potes",
   friendRequestsTitle: "Demandes reçues",
   friendsEmpty:
-    "Aucun pote pour l'instant. Invite quelqu'un depuis ton profil.",
+    "Aucun pote pour l'instant. Invite quelqu'un avec ton code de parrainage.",
   friendRequestPending: "Demande en attente",
   friendAccept: "Accepter",
   friendDecline: "Refuser",

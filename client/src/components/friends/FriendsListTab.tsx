@@ -1,7 +1,9 @@
 import { PresenceBadge } from "@/components/friends/PresenceBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useFriendsPresence } from "@/hooks/use-friends-presence";
+import { useReferralDrawer } from "@/hooks/use-referral-drawer";
 import { hapticImpact } from "@/lib/haptics";
 import { getOrCreateConversation } from "@/lib/messaging-api";
 import {
@@ -16,8 +18,7 @@ import {
     type FriendsListResponse,
 } from "@/lib/social-api";
 import { UI } from "@/lib/translations";
-import { cn } from "@/lib/utils";
-import { MessageCircle, UserPlus } from "lucide-react";
+import { MessageCircle, UserPlus, Users } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -204,6 +205,7 @@ export function FriendsListTab({
     onRefresh: () => Promise<void>;
 }) {
     const { byUserId } = useFriendsPresence();
+    const { openReferralDrawer } = useReferralDrawer();
 
     const handleAccept = (friendshipId: string) => {
         void (async () => {
@@ -275,15 +277,18 @@ export function FriendsListTab({
             <section className="space-y-3">
                 <h2 className="text-sm font-semibold">{UI.friendsListTitle}</h2>
                 {(data?.friends.length ?? 0) === 0 ? (
-                    <div
-                        className={cn(
-                            "flex flex-col items-center gap-3 rounded-xl border border-dashed border-border/60 p-8 text-center",
-                        )}
+                    <EmptyState
+                        title={UI.friendsEmpty}
+                        icon={UserPlus}
                     >
-                        <UserPlus className="size-8 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">{UI.friendsEmpty}</p>
-                        <p className="text-xs text-muted-foreground">{UI.friendsSearchHint}</p>
-                    </div>
+                        <Button
+                            className="w-full"
+                            onClick={() => openReferralDrawer("invite")}
+                        >
+                            <Users className="mr-2 size-4" />
+                            {UI.profileInviteButton}
+                        </Button>
+                    </EmptyState>
                 ) : (
                     data!.friends.map((item) => (
                         <AcceptedFriendRow
