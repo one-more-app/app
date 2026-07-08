@@ -26,6 +26,9 @@ type Platform = 'android' | 'ios';
 type IdTokenClaims = {
   sub?: string;
   email?: string;
+  given_name?: string;
+  family_name?: string;
+  name?: string;
 };
 
 async function postForm(url: string, data: Record<string, string>) {
@@ -176,15 +179,24 @@ export class OAuthService {
     platform: Platform;
     deviceId?: string;
     inviteCode?: string;
+    firstName?: string;
+    lastName?: string;
   }) {
     const audience = this.googleIdTokenAudience(params.platform);
-    const { sub, email } = await verifyGoogleIdToken(params.idToken, audience);
+    const {
+      sub,
+      email,
+      firstName: tokenFirstName,
+      lastName: tokenLastName,
+    } = await verifyGoogleIdToken(params.idToken, audience);
     return await this.linkOAuthUser({
       provider: 'google',
       providerUserId: sub,
       email,
       deviceId: params.deviceId,
       inviteCode: params.inviteCode,
+      firstName: tokenFirstName ?? this.normalizeName(params.firstName),
+      lastName: tokenLastName ?? this.normalizeName(params.lastName),
     });
   }
 
@@ -193,15 +205,24 @@ export class OAuthService {
     platform: Platform;
     deviceId?: string;
     inviteCode?: string;
+    firstName?: string;
+    lastName?: string;
   }) {
     const audience = this.appleIdTokenAudience(params.platform);
-    const { sub, email } = await verifyAppleIdToken(params.idToken, audience);
+    const {
+      sub,
+      email,
+      firstName: tokenFirstName,
+      lastName: tokenLastName,
+    } = await verifyAppleIdToken(params.idToken, audience);
     return await this.linkOAuthUser({
       provider: 'apple',
       providerUserId: sub,
       email,
       deviceId: params.deviceId,
       inviteCode: params.inviteCode,
+      firstName: tokenFirstName ?? this.normalizeName(params.firstName),
+      lastName: tokenLastName ?? this.normalizeName(params.lastName),
     });
   }
 
@@ -211,6 +232,8 @@ export class OAuthService {
     email: string | null;
     deviceId?: string;
     inviteCode?: string;
+    firstName?: string | null;
+    lastName?: string | null;
   }) {
     const oauthProvider = toOAuthProvider(params.provider);
     const linked = await this.oauthAccountsRepo.findOne({
@@ -235,6 +258,9 @@ export class OAuthService {
           })
         : null;
 
+      const normalizedFirstName = this.normalizeName(params.firstName);
+      const normalizedLastName = this.normalizeName(params.lastName);
+
       if (existingByEmail) {
         userId = existingByEmail.id;
         userEmail = existingByEmail.email;
@@ -245,6 +271,8 @@ export class OAuthService {
         });
         await this.invites.createDefaultProfile(created.id, {
           email: normalizedEmail,
+          firstName: normalizedFirstName,
+          lastName: normalizedLastName,
         });
         await this.referrals.applyReferralCodeOnSignup({
           newUserId: created.id,
@@ -252,6 +280,14 @@ export class OAuthService {
         });
         userId = created.id;
         userEmail = created.email;
+      }
+
+      if (existingByEmail && (normalizedFirstName || normalizedLastName)) {
+        await this.backfillProfileNamesIfMissing({
+          userId,
+          firstName: normalizedFirstName,
+          lastName: normalizedLastName,
+        });
       }
 
       await this.oauthAccountsRepo.save({
@@ -395,5 +431,36 @@ export class OAuthService {
       .setIssuer(teamId)
       .setSubject(clientId)
       .sign(key);
+  }
+
+  private normalizeName(value?: string | null): string | null {
+    const normalized = value?.trim();
+    return normalized ? normalized : null;
+  }
+
+  private async backfillProfileNamesIfMissing(params: {
+    userId: string;
+    firstName: string | null;
+    lastName: string | null;
+  }): Promise<void> {
+    const profile = await this.profilesRepo.findOne({
+      where: { userId: params.userId },
+      select: ['id', 'firstName', 'lastName'],
+    });
+    if (!profile) return;
+
+    const nextFirstName = profile.firstName ?? params.firstName;
+    const nextLastName = profile.lastName ?? params.lastName;
+    if (nextFirstName === profile.firstName && nextLastName === profile.lastName) {
+      return;
+    }
+
+    await this.profilesRepo.update(
+      { id: profile.id },
+      {
+        firstName: nextFirstName,
+        lastName: nextLastName,
+      },
+    );
   }
 }

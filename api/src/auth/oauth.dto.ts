@@ -52,6 +52,14 @@ export class GoogleIdTokenDto {
   @IsOptional()
   @IsString()
   inviteCode?: string;
+
+  @IsOptional()
+  @IsString()
+  firstName?: string;
+
+  @IsOptional()
+  @IsString()
+  lastName?: string;
 }
 
 export class AppleIdTokenDto {
@@ -68,4 +76,12 @@ export class AppleIdTokenDto {
   @IsOptional()
   @IsString()
   inviteCode?: string;
+
+  @IsOptional()
+  @IsString()
+  firstName?: string;
+
+  @IsOptional()
+  @IsString()
+  lastName?: string;
 }

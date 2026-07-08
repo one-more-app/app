@@ -1,4 +1,3 @@
-import { useTheme } from "@/hooks/use-theme";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 
@@ -16,8 +15,7 @@ export function TshirtRewardVisual({
     highlight = false,
     className,
 }: TshirtRewardVisualProps) {
-    const { resolvedTheme } = useTheme();
-    const src = TSHIRT_IMAGES[resolvedTheme];
+    const src = TSHIRT_IMAGES.light;
 
     return (
         <div

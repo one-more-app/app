@@ -49,11 +49,17 @@ export async function signInWithGoogle(): Promise<AuthSession> {
   }
 
   const platform = oauthPlatform();
-  const idToken = await loginWithGoogleNative();
+  const { idToken, firstName, lastName } = await loginWithGoogleNative();
   const inviteCode = peekPendingInviteCode() ?? undefined;
   const session = await apiFetch<AuthSession>("/oauth/google/id-token", {
     method: "POST",
-    body: JSON.stringify({ idToken, platform, inviteCode }),
+    body: JSON.stringify({
+      idToken,
+      platform,
+      inviteCode,
+      firstName: firstName ?? undefined,
+      lastName: lastName ?? undefined,
+    }),
   });
   clearPendingInviteCode();
   return session;
@@ -65,11 +71,17 @@ export async function signInWithApple(): Promise<AuthSession> {
   }
 
   const platform = oauthPlatform();
-  const idToken = await loginWithAppleNative();
+  const { idToken, firstName, lastName } = await loginWithAppleNative();
   const inviteCode = peekPendingInviteCode() ?? undefined;
   const session = await apiFetch<AuthSession>("/oauth/apple/id-token", {
     method: "POST",
-    body: JSON.stringify({ idToken, platform, inviteCode }),
+    body: JSON.stringify({
+      idToken,
+      platform,
+      inviteCode,
+      firstName: firstName ?? undefined,
+      lastName: lastName ?? undefined,
+    }),
   });
   clearPendingInviteCode();
   return session;
