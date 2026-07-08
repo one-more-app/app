@@ -1,11 +1,21 @@
 import { Capacitor } from "@capacitor/core";
-import { AnalyticsEvents } from "@/lib/analytics/events";
-import { track } from "@/lib/analytics/track";
 import { syncPremiumStatus } from "@/lib/billing-api";
 import { ACCESS_SWR_KEY } from "@/lib/social-api";
 import { mutate } from "swr";
 
 type PurchasesModule = typeof import("@revenuecat/purchases-capacitor");
+type PurchasesPackage =
+  import("@revenuecat/purchases-capacitor").PurchasesPackage;
+type PurchasesOffering =
+  import("@revenuecat/purchases-capacitor").PurchasesOffering;
+
+export type PurchaseOutcome = "purchased" | "cancelled" | "error";
+
+export type CurrentOffering = {
+  offering: PurchasesOffering;
+  annual: PurchasesPackage | null;
+  monthly: PurchasesPackage | null;
+};
 
 let purchasesModule: PurchasesModule | null = null;
 let configuredForUserId: string | null = null;
@@ -41,7 +51,7 @@ export async function configurePurchases(userId: string): Promise<void> {
   if (configuredForUserId === userId) return;
 
   const { Purchases, LOG_LEVEL } = purchases;
-  await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+  await Purchases.setLogLevel({ level: LOG_LEVEL.VERBOSE });
   await Purchases.configure({ apiKey, appUserID: userId });
   configuredForUserId = userId;
 }
@@ -65,44 +75,47 @@ export async function restorePurchases(): Promise<void> {
   await mutate(ACCESS_SWR_KEY);
 }
 
-export async function presentPaywall(options?: {
-  source?: string;
-}): Promise<boolean> {
+export async function getCurrentOffering(): Promise<CurrentOffering | null> {
   const purchases = await getPurchases();
-  if (!purchases) return false;
+  if (!purchases) return null;
 
-  const source = options?.source ?? "settings";
-  track(AnalyticsEvents.PURCHASE_STARTED, { source });
+  const offerings = await purchases.Purchases.getOfferings();
+  const offering = offerings.current;
+  if (!offering) return null;
+
+  return {
+    offering,
+    annual: offering.annual ?? null,
+    monthly: offering.monthly ?? null,
+  };
+}
+
+export async function purchasePackage(
+  aPackage: PurchasesPackage,
+): Promise<PurchaseOutcome> {
+  const purchases = await getPurchases();
+  if (!purchases) return "error";
 
   try {
-    const { RevenueCatUI } = await import("@revenuecat/purchases-capacitor-ui");
-    const { PAYWALL_RESULT } = await import(
-      "@revenuecat/purchases-typescript-internal-esm"
-    );
-
-    const { result } = await RevenueCatUI.presentPaywall({
-      displayCloseButton: true,
-    });
-
-    if (
-      result === PAYWALL_RESULT.PURCHASED ||
-      result === PAYWALL_RESULT.RESTORED
-    ) {
-      await syncPremiumStatus();
-      await mutate(ACCESS_SWR_KEY);
-      track(AnalyticsEvents.PURCHASE_VALIDATED, { source, paywall_result: result });
-      return true;
-    }
-
-    if (result === PAYWALL_RESULT.ERROR) {
-      track(AnalyticsEvents.PURCHASE_FAILED, { source, paywall_result: result });
-    }
-
-    return false;
-  } catch {
-    track(AnalyticsEvents.PURCHASE_FAILED, { source });
-    return false;
+    await purchases.Purchases.purchasePackage({ aPackage });
+    await syncPremiumStatus();
+    await mutate(ACCESS_SWR_KEY);
+    return "purchased";
+  } catch (error) {
+    if (isUserCancelledError(error)) return "cancelled";
+    return "error";
   }
+}
+
+function isUserCancelledError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const record = error as Record<string, unknown>;
+  if (record.userCancelled === true) return true;
+  if (record.code === "1") return true;
+  if (typeof record.message === "string" && /cancel/i.test(record.message)) {
+    return true;
+  }
+  return false;
 }
 
 export async function syncPurchasesAfterLogin(userId: string): Promise<void> {

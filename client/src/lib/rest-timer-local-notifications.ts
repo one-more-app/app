@@ -7,7 +7,6 @@ import {
   isRestSinceLastSetVisible,
 } from "@/lib/format-rest-elapsed";
 import type { PerformanceEntry } from "@/types";
-import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 
@@ -47,20 +46,6 @@ export async function ensureRestTimerNotificationPermission(): Promise<boolean> 
   }
 }
 
-export async function isNativeAppInForeground(): Promise<boolean> {
-  if (!Capacitor.isNativePlatform()) {
-    return typeof document !== "undefined"
-      ? document.visibilityState === "visible"
-      : true;
-  }
-  try {
-    const { isActive } = await CapacitorApp.getState();
-    return isActive;
-  } catch {
-    return document.visibilityState === "visible";
-  }
-}
-
 export async function cancelRestFinishedLocalNotification(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
   try {
@@ -95,14 +80,13 @@ export async function syncRestFinishedLocalNotification(
   if (fireAt <= now) return;
   if (!isRestSinceLastSetVisible(params.createdAt, now)) return;
 
-  if (await isNativeAppInForeground()) return;
-
   const granted = await ensureRestTimerNotificationPermission();
   if (!granted) return;
 
   await ensureRestTimerChannel();
 
   const route = `/exercise/${params.exerciseId}`;
+  const platform = Capacitor.getPlatform();
 
   await LocalNotifications.schedule({
     notifications: [
@@ -111,7 +95,12 @@ export async function syncRestFinishedLocalNotification(
         title: UI.restTimeFinished,
         body: params.exerciseName,
         channelId: REST_TIMER_CHANNEL_ID,
-        schedule: { at: new Date(fireAt) },
+        schedule: {
+          at: new Date(fireAt),
+          allowWhileIdle: platform === "android",
+        },
+        // iOS : pas de bannière si l'app est encore au premier plan (toast in-app).
+        ...(platform === "ios" ? { silent: true } : {}),
         extra: { route, exerciseId: params.exerciseId },
       },
     ],

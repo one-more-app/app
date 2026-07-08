@@ -46,6 +46,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Alarme exacte pour le timer de repos (Capacitor Local Notifications). -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="com.android.vending.BILLING" />
 
     <!-- Phone / tablet only -->

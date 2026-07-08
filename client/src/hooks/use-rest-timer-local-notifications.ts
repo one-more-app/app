@@ -15,8 +15,10 @@ import { useEffect, useMemo } from "react";
  * Resynchronise la notif locale planifiée quand la dernière perf ou la
  * durée cible change, et écoute le tap sur la notif système.
  *
- * Premier plan : toast in-app uniquement (pas de planification système).
- * Arrière-plan : notif locale planifiée à createdAt + targetMs.
+ * Planifiée dès l'enregistrement de la perf (alarme OS à createdAt + targetMs).
+ * Premier plan : toast in-app ; la notif est annulée au retour foreground
+ * et quand le toast se déclenche (iOS silent évite la bannière si encore active).
+ * Arrière-plan : l'alarme déjà enregistrée fire à l'heure exacte.
  */
 export function useRestTimerLocalNotifications() {
   const auth = useAuth();

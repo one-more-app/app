@@ -38,7 +38,9 @@ import { SettingsPage } from '@/pages/SettingsPage'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
+import { CustomPaywallDrawer } from '@/components/paywall/CustomPaywallDrawer'
 import { ReferralDrawerHost } from '@/components/referral/ReferralDrawerHost'
+import { PaywallProvider } from '@/hooks/use-paywall'
 import { ReferralDrawerProvider } from '@/hooks/use-referral-drawer'
 import { usePurchases } from '@/hooks/use-purchases'
 import { useEffect } from 'react'
@@ -218,8 +220,10 @@ function App() {
                 <LeaguePromotionCelebrationHost />
                 <AuthProvider>
                     <RestTimeFinishedToastHost />
+                    <PaywallProvider>
                     <ReferralDrawerProvider>
                     <PurchasesSyncHost />
+                    <CustomPaywallDrawer />
                     <ReferralDrawerHost />
                     <AnalyticsProvider>
                     <RealtimeProvider>
@@ -257,6 +261,7 @@ function App() {
                     </RealtimeProvider>
                     </AnalyticsProvider>
                     </ReferralDrawerProvider>
+                    </PaywallProvider>
                 </AuthProvider>
             </div>
         </HashRouter>

@@ -1,0 +1,96 @@
+---
+description: Paywall custom One More — architecture, source de données RC, A/B testing via offering.metadata, points d'entrée
+globs: client/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Paywall custom One More
+
+Le paywall d'abonnement est **100% custom React** (rendu dans la WebView Capacitor), identique iOS et Android. **Aucun appel à `RevenueCatUI.presentPaywall`** ni `@revenuecat/purchases-capacitor-ui`. RevenueCat sert uniquement au backend : lister l'offering courant, déclencher l'achat natif, remonter le statut premium.
+
+## Source unique de vérité
+
+| Concern | Fichier |
+|---|---|
+| Drawer UI | [`client/src/components/paywall/CustomPaywallDrawer.tsx`](../../client/src/components/paywall/CustomPaywallDrawer.tsx) |
+| Contexte + hook global | [`client/src/hooks/use-paywall.tsx`](../../client/src/hooks/use-paywall.tsx) |
+| Data layer RC (offering + purchase) | [`client/src/lib/purchases.ts`](../../client/src/lib/purchases.ts) |
+| Wrapper qui déclenche le paywall | [`client/src/hooks/use-purchases.tsx`](../../client/src/hooks/use-purchases.tsx) (`subscribe(source)`) |
+| Copy | [`client/src/lib/translations.ts`](../../client/src/lib/translations.ts) (préfixe `paywall*`) |
+| Montage global | [`client/src/App.tsx`](../../client/src/App.tsx) via `<PaywallProvider>` + `<CustomPaywallDrawer />` |
+| Assets | `client/public/images/marcus.png` (hero), `client/public/images/abonnement mensual t shirts.png` (T-shirts) |
+
+## Ouvrir le paywall
+
+Depuis n'importe quel composant :
+
+```tsx
+const { subscribe } = usePurchases()
+const success = await subscribe("exercise_limit") // ou "settings", "onboarding", etc.
+if (success) {
+  // achat validé, syncPremiumStatus + swr mutate déjà faits
+}
+```
+
+Ne PAS appeler `Purchases.purchasePackage` en dehors de [`purchases.ts`](../../client/src/lib/purchases.ts). Toujours passer par le drawer pour garder la même UX, les mêmes toasts et le même tracking.
+
+## Comportement conditionnel
+
+Il n'y a qu'une seule règle conditionnelle côté UI : la section **« Offre spéciale pour l'annuel »** (2 T-shirts) est affichée UNIQUEMENT quand le package Annuel est sélectionné (`selected === "annual"` → `PACKAGE_TYPE.ANNUAL`). L'animation d'apparition utilise un wrapper `grid` (`grid-rows-[0fr]` → `grid-rows-[1fr]`) pour un transition CSS pur, aucune dépendance framer-motion.
+
+Le reste du layout est stable : cliquer sur une card change les états visuels (radio, bordure jaune, prix "Facturé...") mais ne réordonne pas la structure.
+
+## A/B testing via `offering.metadata`
+
+L'offering RC expose `offering.metadata: Record<string, unknown>`. On lit ces clés (fallback = valeur par défaut hardcodée dans le drawer) :
+
+| Clé metadata | Type | Défaut | Effet |
+|---|---|---|---|
+| `annualOldPrice` | `string` | `"59,99€"` | Prix barré affiché à côté du prix Annuel |
+| `showTshirtsSection` | `boolean` (ou `"true"`/`"false"`) | `true` | Affiche ou cache la section T-shirts |
+
+Pour créer une variante A/B :
+1. Dans le dashboard RC → Experiments, dupliquer l'offering courant.
+2. Modifier `metadata` sur la variante (par ex. `showTshirtsSection: false`).
+3. Créer l'expérience et l'activer. RC route l'user vers l'offering variant, `getCurrentOffering()` renvoie l'offering assigné, et `PAYWALL_VIEWED` remonte `offering: <identifier>` pour segmenter dans OpenPanel.
+
+Ne PAS coder de logique de variant en dur dans le composant : tout doit passer par `metadata` avec un fallback typé.
+
+## Ajouter / modifier un package
+
+Les packages proviennent de l'offering RC courant. Pour l'instant on gère uniquement `annual` et `monthly` (via `offering.annual` et `offering.monthly`). Si tu ajoutes un plan (ex. hebdomadaire ou lifetime) :
+1. Créer le package dans le dashboard RC et l'ajouter à l'offering courant.
+2. Étendre `SelectedKey` dans [`CustomPaywallDrawer.tsx`](../../client/src/components/paywall/CustomPaywallDrawer.tsx) et rendre une nouvelle `PackageCard`.
+3. Étendre le mapping `packages` et le formatage `Facturé ...`.
+
+## Tracking
+
+| Événement | Quand |
+|---|---|
+| `paywall_viewed` | À l'ouverture du drawer, avec `source`, `offering` |
+| `purchase_started` | Au clic sur le CTA `Je rejoins` |
+| `purchase_validated` | Après succès de `Purchases.purchasePackage` |
+| `purchase_failed` | Après erreur (hors annulation utilisateur) |
+
+L'annulation utilisateur (fermeture drawer, dismiss natif Apple/Google) n'émet PAS d'événement d'erreur.
+
+## Restore
+
+Le "Restaurer mes achats" reste géré par [`use-purchases.tsx`](../../client/src/hooks/use-purchases.tsx) (`restore()`) et [`restorePurchases`](../../client/src/lib/purchases.ts). Il n'ouvre pas le drawer.
+
+## Nettoyage Android historique
+
+Le paquet `@revenuecat/purchases-capacitor-ui` a été retiré du projet ainsi que :
+- Style `Theme.RevenueCatPaywall` dans [`client/android/app/src/main/res/values/styles.xml`](../../client/android/app/src/main/res/values/styles.xml)
+- Override `<activity com.revenuecat.purchases.ui.revenuecatui.activity.PaywallActivity>` dans [`client/android/app/src/main/AndroidManifest.xml`](../../client/android/app/src/main/AndroidManifest.xml)
+- Dépendance `com.google.android.material:material:1.12.0` dans [`client/android/app/build.gradle`](../../client/android/app/build.gradle)
+
+Ne PAS réinstaller `@revenuecat/purchases-capacitor-ui` : le rendu Compose de `PaywallActivity` a des bugs connus sur Android 15 (CTA invisible, image overflow, badge lowercase, edge-to-edge cassé).
+
+## Copywriting
+
+Toute chaîne visible côté user respecte [`copywriting-french.mdc`](./copywriting-french.mdc) : aucun `--` ni `—`, séparateurs `.` / `,` / `:` / `·` uniquement. Les strings vivent dans `UI.paywall*` de [`translations.ts`](../../client/src/lib/translations.ts).
+
+## E2E
+
+Le paywall n'est pas activé côté web (`isPurchasesAvailable()` renvoie `false` hors Capacitor natif). Les E2E Playwright existants ne le rencontrent donc pas. Si un smoke paywall devient nécessaire, injecter un stub `getCurrentOffering` via `page.addInitScript` avant l'appel `subscribe`, plutôt que de mocker `Purchases.getOfferings` (dynamic import). Cf. [`e2e-tests.mdc`](./e2e-tests.mdc).

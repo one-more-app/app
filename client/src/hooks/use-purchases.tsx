@@ -1,8 +1,8 @@
 import { useAuth } from "@/hooks/use-auth";
+import { usePaywall } from "@/hooks/use-paywall";
 import {
   isPurchasesAvailable,
   logOutPurchases,
-  presentPaywall,
   restorePurchases,
   syncPurchasesAfterLogin,
 } from "@/lib/purchases";
@@ -12,12 +12,9 @@ import { toast } from "sonner";
 
 export function usePurchases() {
   const auth = useAuth();
-  const [available, setAvailable] = useState(isPurchasesAvailable());
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    setAvailable(isPurchasesAvailable());
-  }, []);
+  const paywall = usePaywall();
+  const [available] = useState(isPurchasesAvailable);
+  const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
     if (auth.status !== "authenticated" || !auth.user?.id) return;
@@ -32,26 +29,14 @@ export function usePurchases() {
   const subscribe = useCallback(
     async (source?: string) => {
       if (!available) return false;
-      setBusy(true);
-      try {
-        const success = await presentPaywall({ source });
-        if (success) {
-          toast.success(UI.premiumSubscribeSuccess);
-        }
-        return success;
-      } catch {
-        toast.error(UI.premiumSubscribeError);
-        return false;
-      } finally {
-        setBusy(false);
-      }
+      return paywall.openPaywall(source ?? "unknown");
     },
-    [available],
+    [available, paywall],
   );
 
   const restore = useCallback(async () => {
     if (!available) return false;
-    setBusy(true);
+    setRestoring(true);
     try {
       await restorePurchases();
       toast.success(UI.premiumRestoreSuccess);
@@ -60,13 +45,13 @@ export function usePurchases() {
       toast.error(UI.premiumRestoreError);
       return false;
     } finally {
-      setBusy(false);
+      setRestoring(false);
     }
   }, [available]);
 
   return {
     available,
-    busy,
+    busy: restoring,
     subscribe,
     restore,
   };

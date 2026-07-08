@@ -21,7 +21,6 @@ dependencies {
     implementation project(':capawesome-capacitor-app-review')
     implementation project(':capgo-capacitor-social-login')
     implementation project(':revenuecat-purchases-capacitor')
-    implementation project(':revenuecat-purchases-capacitor-ui')
     implementation project(':appsflyer-capacitor-plugin')
 
 }
