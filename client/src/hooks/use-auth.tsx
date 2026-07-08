@@ -22,6 +22,7 @@ import { resetUserProfileCache } from "@/lib/storage";
 import { ACCESS_SWR_KEY } from "@/lib/social-api";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import { SWR_KEYS } from "@/hooks/use-api-data";
 
 type AuthState = {
   status: "anonymous" | "authenticated";
@@ -201,6 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void Promise.all([
       mutate("tracked-exercises"),
       mutate("performance-entries"),
+      mutate(SWR_KEYS.performanceEntriesWithInsights),
       mutate("profile"),
       mutate("home-exercises"),
       mutate(ACCESS_SWR_KEY),

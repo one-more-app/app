@@ -36,6 +36,7 @@ import { useSWRConfig } from "swr";
 export const SWR_KEYS = {
   trackedExercises: "tracked-exercises",
   performanceEntries: "performance-entries",
+  performanceEntriesWithInsights: "performance-entries-with-insights",
   profile: "profile",
   homeExercises: "home-exercises",
   progress: "progress",
@@ -55,6 +56,7 @@ export function usePerformanceDataRefresh() {
   return useCallback(async () => {
     await Promise.all([
       mutate(SWR_KEYS.performanceEntries),
+      mutate(SWR_KEYS.performanceEntriesWithInsights),
       mutate(SWR_KEYS.homeExercises),
       mutate(SWR_KEYS.trackedExercises),
       mutate(SWR_KEYS.progress),
@@ -94,6 +96,7 @@ export function useTrackedDataRefresh() {
       mutate(SWR_KEYS.trackedExercises),
       mutate(SWR_KEYS.homeExercises),
       mutate(SWR_KEYS.performanceEntries),
+      mutate(SWR_KEYS.performanceEntriesWithInsights),
       mutate(SWR_KEYS.leagueSummary),
       mutate(SWR_KEYS.leagueBrowse),
     ]);
@@ -150,7 +153,7 @@ export function usePerformanceEntriesData(opts?: {
   return useSWR<PerformanceEntry[]>(
     auth.status === "authenticated"
       ? withInsights
-        ? [...SWR_KEYS.performanceEntries, "insights"]
+        ? SWR_KEYS.performanceEntriesWithInsights
         : SWR_KEYS.performanceEntries
       : null,
     async () => {

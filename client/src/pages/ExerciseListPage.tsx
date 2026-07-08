@@ -364,6 +364,7 @@ export function ExerciseListPage() {
             await Promise.all([
                 mutate(SWR_KEYS.trackedExercises),
                 mutate(SWR_KEYS.performanceEntries),
+                mutate(SWR_KEYS.performanceEntriesWithInsights),
                 mutate(SWR_KEYS.homeExercises),
                 mutate(SWR_KEYS.progress),
             ])
