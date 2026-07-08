@@ -2,6 +2,11 @@ import { AppTour } from "@/components/AppTour";
 import { getJoyrideShiftPadding } from "@/lib/joyride-config";
 import { setRestCounterTourQuickEditStep2Active } from "@/lib/rest-counter-tour-quick-edit";
 import {
+  startRestCounterTourSpotlightSync,
+  stopRestCounterTourSpotlightSync,
+  waitForRestCounterTourSpotlightReady,
+} from "@/lib/rest-counter-tour-spotlight";
+import {
   isRestCounterTourComplete,
   setRestCounterTourComplete,
 } from "@/lib/storage";
@@ -21,32 +26,8 @@ function isOtherAppTourActive(searchParams: URLSearchParams): boolean {
 }
 
 function endTourQuickEditStep2(): void {
+  stopRestCounterTourSpotlightSync();
   setRestCounterTourQuickEditStep2Active(false);
-}
-
-async function waitForTourZoneReady(): Promise<void> {
-  return new Promise((resolve) => {
-    const deadline = Date.now() + 800;
-    const tick = () => {
-      const zone = document.querySelector(
-        '[data-tour="rest-counter-target-zone"]',
-      );
-      const panel = document.querySelector(
-        '[data-tour="rest-counter-target-panel"]',
-      );
-      const zoneRect = zone?.getBoundingClientRect();
-      if (zone && panel && (zoneRect?.height ?? 0) > 50) {
-        resolve();
-        return;
-      }
-      if (Date.now() > deadline) {
-        resolve();
-        return;
-      }
-      requestAnimationFrame(tick);
-    };
-    tick();
-  });
 }
 
 export function RestCounterTour({ barVisible }: RestCounterTourProps) {
@@ -81,7 +62,7 @@ export function RestCounterTour({ barVisible }: RestCounterTourProps) {
         content: UI.restCounterTourQuickEditContent,
         placement: "bottom",
         skipScroll: true,
-        spotlightPadding: 8,
+        spotlightPadding: 0,
         blockTargetInteraction: false,
         disableFocusTrap: true,
         before: async () => {
@@ -89,7 +70,8 @@ export function RestCounterTour({ barVisible }: RestCounterTourProps) {
           await new Promise<void>((resolve) => {
             requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
           });
-          await waitForTourZoneReady();
+          await waitForRestCounterTourSpotlightReady();
+          startRestCounterTourSpotlightSync();
         },
         floatingOptions: {
           shiftOptions: { padding: getJoyrideShiftPadding() },
@@ -110,6 +92,9 @@ export function RestCounterTour({ barVisible }: RestCounterTourProps) {
     if (data.type === EVENTS.TOUR_END) {
       endTourQuickEditStep2();
     }
+    if (data.type === EVENTS.STEP_AFTER && data.index === 1) {
+      startRestCounterTourSpotlightSync();
+    }
   }, []);
 
   useEffect(() => {
@@ -118,7 +103,7 @@ export function RestCounterTour({ barVisible }: RestCounterTourProps) {
     const timer = window.setTimeout(() => {
       if (
         document.querySelector('[data-tour="rest-counter"]') &&
-        document.querySelector('[data-tour="rest-counter-target-zone"]')
+        document.querySelector('[data-tour="rest-counter-target"]')
       ) {
         setDomReady(true);
       }

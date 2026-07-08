@@ -20,7 +20,7 @@ Barre fine qui se lance **automatiquement** dès qu'une performance est enregist
 | **Préservation `createdAt` à l'édition** | [`client/src/lib/activity-from-performances.ts`](../../client/src/lib/activity-from-performances.ts) (`preservePerformanceLogCreatedAt`) |
 | Réglage dans Paramètres | [`client/src/components/settings/RestTimeSettingsCard.tsx`](../../client/src/components/settings/RestTimeSettingsCard.tsx) |
 | **Tour first-time** (AppTour) | [`client/src/components/AppTour.tsx`](../../client/src/components/AppTour.tsx) + [`client/src/components/RestCounterTour.tsx`](../../client/src/components/RestCounterTour.tsx) |
-| **Sync tour ↔ popover repos** | [`client/src/lib/rest-counter-tour-quick-edit.ts`](../../client/src/lib/rest-counter-tour-quick-edit.ts) |
+| **Sync tour ↔ popover repos** | [`client/src/lib/rest-counter-tour-quick-edit.ts`](../../client/src/lib/rest-counter-tour-quick-edit.ts) + [`client/src/lib/rest-counter-tour-spotlight.ts`](../../client/src/lib/rest-counter-tour-spotlight.ts) |
 | **Édition rapide inline** | [`client/src/components/RestTargetQuickEdit.tsx`](../../client/src/components/RestTargetQuickEdit.tsx) — zone tour : `data-tour="rest-counter-target-zone"` |
 | Styles Joyride partagés | [`client/src/lib/app-tour-config.ts`](../../client/src/lib/app-tour-config.ts) |
 | Analytics | `trackRestTimerDismissed` dans [`client/src/lib/analytics/performance-tracking.ts`](../../client/src/lib/analytics/performance-tracking.ts) |
@@ -47,7 +47,7 @@ Barre fine qui se lance **automatiquement** dès qu'une performance est enregist
 13. **Accessibilité** — `role="status"`, `aria-label` via `UI.restSinceLastSetA11y` ou `UI.restTimeFinishedA11y` une fois la cible atteinte. Quand un exo source est cliquable, le `aria-label` du bouton concatène le nom pour annoncer la destination (`·`, pas de tiret cadratin). Mise à jour `sr-only` à chaque nouvelle minute (bucket) sans spammer le lecteur d'écran.
 14. **Tour first-time (`RestCounterTour`)** — Une seule fois par appareil (`isRestCounterTourComplete`, clé `one-more-rest-counter-tour-complete-v1`). **Deux étapes** (`continuous`) via `AppTour` :
     - **Étape 1** — cible `[data-tour="rest-counter"]` : présente le compteur et la barre de progression (1:30 par défaut). Pas de lien Paramètres.
-    - **Étape 2** — cible `[data-tour="rest-counter-target-zone"]` (pill + panneau) : invite à ajuster le repos inline. À l'entrée (`before` hook) : `setRestCounterTourQuickEditStep2Active(true)` → le popover s'ouvre via [`rest-counter-tour-quick-edit.ts`](../../client/src/lib/rest-counter-tour-quick-edit.ts) et active `disablePortal` pour entrer dans le spotlight Joyride. Fin / abandon du tour : `setRestCounterTourQuickEditStep2Active(false)`.
+    - **Étape 2** — cible `[data-tour="rest-counter-target-zone"]` : ancre **fixed** calculée par [`rest-counter-tour-spotlight.ts`](../../client/src/lib/rest-counter-tour-spotlight.ts) (union pill + panneau portal). Le popover s'ouvre **normalement** (portal sous le chrono) ; le spotlight Joyride suit tag + choix du temps. Fin / abandon : `stopRestCounterTourSpotlightSync()` + `setRestCounterTourQuickEditStep2Active(false)`.
     - Reporté tant qu'un autre tour Joyride est actif (`?tour=onboarding` ou `?tour=onboarding-first`). Démarrage 500 ms après apparition des cibles DOM.
 
 ## `RestTargetQuickEdit` — contraintes Radix (régression connue)
@@ -56,7 +56,7 @@ Le popover **doit rester cliquable hors tour**. Lors de refactors :
 
 - `<PopoverTrigger asChild>` exige un **`<button>` natif direct** en enfant, **ou** un composant avec `React.forwardRef` qui transmet ref + props au DOM. Un wrapper intermédiaire sans `forwardRef` casse silencieusement l'ouverture (clic visible, pas de `onOpenChange`).
 - Ne **pas** remonter `open` / `onOpenChange` dans `RestSinceLastSetBar` pour le tour : coordination via `rest-counter-tour-quick-edit.ts` uniquement.
-- Étape 2 tour : `disablePortal` sur `PopoverContent` (prop dans [`popover.tsx`](../../client/src/components/ui/popover.tsx)) pour inclure le panneau dans la zone spotlight ; hors tour, portal normal.
+- Étape 2 tour : popover portal normal + ancre spotlight calculée (`rest-counter-tour-spotlight.ts`). `<PopoverTrigger asChild>` → `<button>` natif direct (ou `forwardRef`).
 
 ## À faire pour tout nouveau point de montage
 

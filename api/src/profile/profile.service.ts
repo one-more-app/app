@@ -88,7 +88,7 @@ export class ProfileService {
       gender: profile.gender,
       firstName: profile.firstName,
       lastName: profile.lastName,
-      avatarUrl: profile.avatarUrl,
+      avatarUrl: this.objectStorage.normalizePublicObjectUrl(profile.avatarUrl),
       username: profile.username,
       updatedAt: profile.updatedAt.toISOString(),
     };

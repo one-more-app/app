@@ -50,7 +50,11 @@ function DrawerOverlay({
         <DrawerPrimitive.Overlay
             data-slot="drawer-overlay"
             className={cn(
-                "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
+                // z-[200] : au-dessus de `.sticky-top-safe` (z-100) et de tout ce qui est
+                // "page-level" (headers sticky, scrim safe-area, popovers). Sinon un header
+                // sticky (ex. RestSinceLastSetBar sur ExerciseDetailPage) passe DEVANT le
+                // drawer une fois qu'il est ouvert et le clavier remonte le drawer.
+                "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-[200] bg-black/50",
                 className
             )}
             {...props}
@@ -69,10 +73,16 @@ function DrawerContent({
             <DrawerPrimitive.Content
                 data-slot="drawer-content"
                 style={{
+                    // `--keyboard-inset` est alimenté UNIQUEMENT sur iOS
+                    // (voir `client/src/hooks/use-keyboard-inset.ts`).
+                    // Sur Android (MainActivity rétrécit déjà la WebView) et sur web,
+                    // la variable reste à 0px → `bottom: 0` + `max-h: 80vh` sans effet
+                    // parasite. Ne pas retirer ce fallback.
                     ["--drawer-keyboard-inset" as string]: "var(--keyboard-inset, 0px)",
                 }}
                 className={cn(
-                    "group/drawer-content bg-background fixed z-50 flex h-auto flex-col",
+                    // z-[200] cohérent avec DrawerOverlay ci-dessus (voir commentaire).
+                    "group/drawer-content bg-background fixed z-[200] flex h-auto flex-col",
                     "data-[vaul-drawer-direction=top]:inset-x-0 data-[vaul-drawer-direction=top]:top-0 data-[vaul-drawer-direction=top]:mb-24 data-[vaul-drawer-direction=top]:max-h-[80vh] data-[vaul-drawer-direction=top]:rounded-b-lg data-[vaul-drawer-direction=top]:border-b",
                     "data-[vaul-drawer-direction=bottom]:inset-x-0 data-[vaul-drawer-direction=bottom]:bottom-[var(--drawer-keyboard-inset)] data-[vaul-drawer-direction=bottom]:mt-24 data-[vaul-drawer-direction=bottom]:max-h-[calc(80vh-var(--drawer-keyboard-inset))] data-[vaul-drawer-direction=bottom]:rounded-t-lg data-[vaul-drawer-direction=bottom]:border-t",
                     "data-[vaul-drawer-direction=right]:inset-y-0 data-[vaul-drawer-direction=right]:right-0 data-[vaul-drawer-direction=right]:w-3/4 data-[vaul-drawer-direction=right]:border-l data-[vaul-drawer-direction=right]:sm:max-w-sm",

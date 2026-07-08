@@ -1,4 +1,4 @@
-import { useUserProfileData } from "@/hooks/use-api-data";
+import { SWR_KEYS, useUserProfileData } from "@/hooks/use-api-data";
 import { useAuth } from "@/hooks/use-auth";
 import { uploadRemoteProfileAvatar } from "@/lib/data-api";
 import { ProfileAvatarCropDialog } from "@/components/profile/ProfileAvatarCropDialog";
@@ -19,6 +19,12 @@ import { Button } from "@/components/ui/button";
 import { Camera, Settings } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useSWRConfig } from "swr";
+
+function withAvatarCacheBuster(url: string): string {
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}v=${Date.now()}`;
+}
 
 type ProfileIdentityHeaderProps = {
   profile?: UserProfile;
@@ -32,6 +38,7 @@ export function ProfileIdentityHeader({
   readOnly = false,
 }: ProfileIdentityHeaderProps = {}) {
   const auth = useAuth();
+  const { mutate } = useSWRConfig();
   const { data: profileFromHook } = useUserProfileData();
   const profile = profileProp ?? profileFromHook;
   const userId = auth.user?.id ?? null;
@@ -48,10 +55,18 @@ export function ProfileIdentityHeader({
   };
 
   const [avatarUrl, setAvatarUrl] = useState(resolveAvatarUrl);
+  const [avatarDisplaySrc, setAvatarDisplaySrc] = useState<string | null>(
+    resolveAvatarUrl,
+  );
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
+  const avatarRetryRef = useRef(false);
 
   useEffect(() => {
     const next = resolveAvatarUrl();
     setAvatarUrl(next);
+    setAvatarDisplaySrc(next);
+    setAvatarLoadFailed(false);
+    avatarRetryRef.current = false;
     if (!readOnly && next) setProfileAvatarUrl(userId, next);
   }, [avatarUrlProp, profile?.avatarUrl, readOnly, userId]);
 
@@ -104,6 +119,9 @@ export function ProfileIdentityHeader({
         const nextUrl = remote.avatarUrl ?? dataUrl;
         setProfileAvatarUrl(userId, nextUrl);
         setAvatarUrl(nextUrl);
+        setAvatarDisplaySrc(nextUrl);
+        setAvatarLoadFailed(false);
+        avatarRetryRef.current = false;
         if (profile) {
           setUserProfile(
             {
@@ -113,6 +131,7 @@ export function ProfileIdentityHeader({
             { silent: true },
           );
         }
+        void mutate(SWR_KEYS.profile);
       } catch {
         setProfileAvatarUrl(userId, dataUrl);
         setAvatarUrl(dataUrl);
@@ -127,8 +146,27 @@ export function ProfileIdentityHeader({
       "outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring",
   );
 
-  const avatarInner = avatarUrl ? (
-    <img src={avatarUrl} alt="" className="size-full object-cover" />
+  const handleAvatarImageError = () => {
+    if (
+      avatarUrl &&
+      !avatarUrl.startsWith("data:") &&
+      !avatarRetryRef.current
+    ) {
+      avatarRetryRef.current = true;
+      setAvatarDisplaySrc(withAvatarCacheBuster(avatarUrl));
+      return;
+    }
+    setAvatarLoadFailed(true);
+  };
+
+  const avatarInner = avatarDisplaySrc && !avatarLoadFailed ? (
+    <img
+      key={avatarDisplaySrc}
+      src={avatarDisplaySrc}
+      alt=""
+      className="size-full object-cover"
+      onError={handleAvatarImageError}
+    />
   ) : (
     <span
       className="flex size-full items-center justify-center text-sm font-semibold text-primary"

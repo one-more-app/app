@@ -1,1 +1,1 @@
-npm run check:smoke --prefix client
+npm run check:smoke

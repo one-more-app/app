@@ -16,9 +16,5 @@
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^15.5.2"
-  },
-  "lint-staged": {
-    "client/**/*.{ts,tsx}": "npm exec --prefix client -- eslint --fix",
-    "api/**/*.ts": "npm exec --prefix api -- eslint --fix"
   }
 }

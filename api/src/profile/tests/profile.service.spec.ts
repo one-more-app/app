@@ -23,6 +23,7 @@ describe('ProfileService', () => {
     uploadObject: jest.fn(),
     deleteObjectByPublicUrl: jest.fn(),
     isManagedPublicUrl: jest.fn(() => false),
+    normalizePublicObjectUrl: jest.fn((url: string | null) => url),
   };
 
   beforeEach(() => {

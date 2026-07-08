@@ -4,15 +4,29 @@ import { useEffect } from 'react'
 
 /**
  * Expose la hauteur du clavier natif via la variable CSS `--keyboard-inset`
- * sur l'élément `<html>`, et bascule `data-keyboard-open` pour le styling.
+ * sur `<html>`, et bascule `data-keyboard-open` pour le styling.
  *
- * Combiné avec `KeyboardResize.None` dans `capacitor.config.ts`, ça permet
- * aux drawers (Vaul) et écrans de se décaler en CSS proprement,
- * plutôt que de subir le resize WebView + scroll auto d'iOS qui pousse
- * les overlays hors de l'écran.
+ * ⚠️ Stratégie DIFFÉRENTE par plateforme — ne pas uniformiser :
  *
- * Fallback web : écoute `visualViewport.resize` pour détecter l'ouverture
- * du clavier soft dans un navigateur mobile.
+ * - iOS : `KeyboardResize.None` (voir `capacitor.config.ts`) gèle la WebView,
+ *   iOS ne pousse rien tout seul. C'est CE hook qui alimente `--keyboard-inset`
+ *   pour que le drawer / la page se décale en CSS. Sans lui, tout passe sous
+ *   le clavier.
+ *
+ * - Android : le champ `resize` du plugin est iOS-only. Sur Android c'est
+ *   `MainActivity.applyForcedEdgeToEdgeInsets()` qui ajoute
+ *   `padding-bottom = ime.bottom` au parent de la WebView → la WebView
+ *   rétrécit de la hauteur du clavier, donc `position: fixed; bottom: 0`
+ *   se retrouve AUTOMATIQUEMENT au-dessus du clavier. Appliquer en plus
+ *   `--keyboard-inset` doublerait le décalage (drawer trop haut, max-height
+ *   riquiqui, wheel picker coupé). On laisse donc `--keyboard-inset = 0px`.
+ *
+ * - Web (navigateur mobile) : fallback `visualViewport` — le browser fournit
+ *   déjà la nouvelle hauteur visible, on l'expose en variable pour rester
+ *   cohérent avec iOS.
+ *
+ * Règle si tu ajoutes un nouveau fix clavier : n'affecte QUE la plateforme
+ * concernée (via `Capacitor.getPlatform()` ou du CSS `[data-platform="…"]`).
  */
 export function useKeyboardInset() {
     useEffect(() => {
@@ -31,7 +45,9 @@ export function useKeyboardInset() {
 
         setInset(0)
 
-        if (Capacitor.isNativePlatform()) {
+        const platform = Capacitor.getPlatform()
+
+        if (platform === 'ios') {
             const showHandle = Keyboard.addListener('keyboardWillShow', (info) => {
                 setInset(info.keyboardHeight)
             })
@@ -43,6 +59,13 @@ export function useKeyboardInset() {
                 void hideHandle.then((h) => h.remove())
                 setInset(0)
             }
+        }
+
+        if (platform === 'android') {
+            // Rien à faire : MainActivity.java rétrécit déjà la WebView via
+            // `padding-bottom = ime.bottom`. Toute valeur d'inset côté CSS
+            // ferait double emploi.
+            return
         }
 
         const vv = window.visualViewport

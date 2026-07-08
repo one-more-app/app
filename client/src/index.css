@@ -240,6 +240,16 @@
     scroll-padding-top: calc(var(--safe-top) + var(--back-header-height) + 0.5rem);
   }
 
+  /*
+   * Scale d'empilement (z-index) — respecter cette hiérarchie :
+   *   99  : .safe-area-top-scrim              (fond fixe sous la barre de statut)
+   *   100 : .sticky-top-safe                  (headers / rest counter)
+   *   130 : RestTargetQuickEdit (popover imbriqué au-dessus du header)
+   *   200 : Drawer / Dialog (overlay + content, voir components/ui/{drawer,dialog}.tsx)
+   * Un overlay modal (drawer, dialog) DOIT rester au-dessus des .sticky-top-safe,
+   * sinon un header sticky (ex. RestSinceLastSetBar) passe par-dessus l'overlay
+   * une fois qu'il s'ouvre au niveau du header.
+   */
   .sticky-top-safe {
     position: sticky;
     top: 0;

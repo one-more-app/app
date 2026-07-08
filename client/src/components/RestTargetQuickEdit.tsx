@@ -14,7 +14,6 @@ import {
 } from "@/lib/format-rest-elapsed";
 import { hapticSelectionChanged } from "@/lib/haptics";
 import {
-  isRestCounterTourQuickEditStep2Active,
   subscribeRestCounterTourQuickEditStep2,
 } from "@/lib/rest-counter-tour-quick-edit";
 import { UI } from "@/lib/translations";
@@ -26,17 +25,87 @@ type RestTargetQuickEditProps = {
   className?: string;
 };
 
+type RestTargetQuickEditPanelBodyProps = {
+  formatted: string;
+  targetMs: number;
+  atMin: boolean;
+  atMax: boolean;
+  onStep: (deltaMs: number) => void;
+  onApplyTarget: (nextMs: number) => void;
+};
+
+function RestTargetQuickEditPanelBody({
+  formatted,
+  targetMs,
+  atMin,
+  atMax,
+  onStep,
+  onApplyTarget,
+}: RestTargetQuickEditPanelBodyProps) {
+  return (
+    <>
+      <p className="text-xs font-medium text-muted-foreground">
+        {UI.restTimeQuickEditLabel}
+      </p>
+      <div className="flex items-center justify-between gap-2">
+        <Button
+          type="button"
+          variant="secondary"
+          size="icon"
+          className="size-10 shrink-0 rounded-full"
+          disabled={atMin}
+          aria-label={UI.restTimeDecrease}
+          onClick={() => onStep(-15_000)}
+        >
+          <Minus className="size-4" />
+        </Button>
+        <span className="font-one-more text-2xl font-bold italic tabular-nums text-foreground">
+          {formatted}
+        </span>
+        <Button
+          type="button"
+          variant="secondary"
+          size="icon"
+          className="size-10 shrink-0 rounded-full"
+          disabled={atMax}
+          aria-label={UI.restTimeIncrease}
+          onClick={() => onStep(15_000)}
+        >
+          <Plus className="size-4" />
+        </Button>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {REST_TARGET_PRESETS_MS.map((presetMs) => {
+          const presetLabel = formatRestElapsed(presetMs);
+          const active = presetMs === targetMs;
+          return (
+            <button
+              key={presetMs}
+              type="button"
+              className={cn(
+                "rounded-full px-2.5 py-1 text-xs font-medium tabular-nums transition-colors",
+                active
+                  ? "bg-accent text-accent-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+              )}
+              onClick={() => onApplyTarget(presetMs)}
+            >
+              {presetLabel}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
 export function RestTargetQuickEdit({ className }: RestTargetQuickEditProps) {
   const { targetMs, setTargetMs } = useRestTargetMs();
   const [open, setOpen] = useState(false);
-  const [tourStep2, setTourStep2] = useState(() =>
-    isRestCounterTourQuickEditStep2Active(),
-  );
   const formatted = formatRestElapsed(targetMs);
 
   useEffect(() => {
     return subscribeRestCounterTourQuickEditStep2((active) => {
-      setTourStep2(active);
       setOpen(active);
     });
   }, []);
@@ -54,11 +123,17 @@ export function RestTargetQuickEdit({ className }: RestTargetQuickEditProps) {
     applyTarget(adjustRestTargetMs(targetMs, deltaMs));
   };
 
+  const panelBodyProps = {
+    formatted,
+    targetMs,
+    atMin,
+    atMax,
+    onStep: step,
+    onApplyTarget: applyTarget,
+  };
+
   return (
-    <div
-      data-tour="rest-counter-target-zone"
-      className="relative inline-flex flex-col items-start"
-    >
+    <div className="relative inline-flex shrink-0">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
@@ -82,66 +157,11 @@ export function RestTargetQuickEdit({ className }: RestTargetQuickEditProps) {
         <PopoverContent
           align="start"
           side="bottom"
-          disablePortal={tourStep2}
           data-tour="rest-counter-target-panel"
-          className={cn(
-            "z-[130] w-64 space-y-3 p-3",
-            tourStep2 &&
-              "relative top-auto left-auto mt-1.5 !translate-x-0 !translate-y-0 data-[side=bottom]:slide-in-from-top-0",
-          )}
+          className="z-[130] w-64 space-y-3 p-3"
           onClick={(event) => event.stopPropagation()}
         >
-          <p className="text-xs font-medium text-muted-foreground">
-            {UI.restTimeQuickEditLabel}
-          </p>
-          <div className="flex items-center justify-between gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              size="icon"
-              className="size-10 shrink-0 rounded-full"
-              disabled={atMin}
-              aria-label={UI.restTimeDecrease}
-              onClick={() => step(-15_000)}
-            >
-              <Minus className="size-4" />
-            </Button>
-            <span className="font-one-more text-2xl font-bold italic tabular-nums text-foreground">
-              {formatted}
-            </span>
-            <Button
-              type="button"
-              variant="secondary"
-              size="icon"
-              className="size-10 shrink-0 rounded-full"
-              disabled={atMax}
-              aria-label={UI.restTimeIncrease}
-              onClick={() => step(15_000)}
-            >
-              <Plus className="size-4" />
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {REST_TARGET_PRESETS_MS.map((presetMs) => {
-              const presetLabel = formatRestElapsed(presetMs);
-              const active = presetMs === targetMs;
-              return (
-                <button
-                  key={presetMs}
-                  type="button"
-                  className={cn(
-                    "rounded-full px-2.5 py-1 text-xs font-medium tabular-nums transition-colors",
-                    active
-                      ? "bg-accent text-accent-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
-                  )}
-                  onClick={() => applyTarget(presetMs)}
-                >
-                  {presetLabel}
-                </button>
-              );
-            })}
-          </div>
+          <RestTargetQuickEditPanelBody {...panelBodyProps} />
         </PopoverContent>
       </Popover>
     </div>

@@ -45,6 +45,30 @@ Variables sur `html` dans [`client/src/index.css`](client/src/index.css) :
 - `#root { padding-top: ... }` (crée une marge visuelle, pas du contenu edge-to-edge)
 - `bg-card` sur header/nav si la page est `bg-background` (utiliser `bg-background`)
 
+## Clavier natif (iOS vs Android — logiques opposées)
+
+Le comportement clavier est **radicalement différent** entre les deux plateformes ; ne JAMAIS appliquer le même fix aux deux.
+
+| Plateforme | Qui rétrécit la WebView ? | Variable `--keyboard-inset` |
+|-----|----|-----|
+| **iOS** | Personne (config `KeyboardResize.None` dans [`capacitor.config.ts`](client/capacitor.config.ts)) | Alimentée par [`use-keyboard-inset.ts`](client/src/hooks/use-keyboard-inset.ts) via `keyboardWillShow/Hide` du plugin `@capacitor/keyboard`. **Obligatoire** — sans elle les overlays passent sous le clavier. |
+| **Android** | [`MainActivity.applyForcedEdgeToEdgeInsets()`](client/android/app/src/main/java/com/one_more/app/MainActivity.java) — `padding-bottom = ime.bottom` sur le parent de la WebView | **Reste à 0px** (hook no-op sur Android). L'appliquer doublerait le décalage → drawer trop haut, `max-h` riquiqui, contenu coupé. |
+| Web (browser mobile) | Le browser via `visualViewport` | Alimentée par le fallback `visualViewport.resize` dans le hook. |
+
+Usage côté composant (ex. drawer Vaul dans [`drawer.tsx`](client/src/components/ui/drawer.tsx)) :
+
+```tsx
+<DrawerPrimitive.Content
+  style={{ "--drawer-keyboard-inset": "var(--keyboard-inset, 0px)" }}
+  className="... data-[vaul-drawer-direction=bottom]:bottom-[var(--drawer-keyboard-inset)]
+              data-[vaul-drawer-direction=bottom]:max-h-[calc(80vh-var(--drawer-keyboard-inset))] ..."
+/>
+```
+
+- Le fallback `var(--keyboard-inset, 0px)` rend le CSS **inoffensif** sur Android/web.
+- Le champ `resize` du plugin `@capacitor/keyboard` est **iOS-only** (voir docs) → n'essaie pas de le régler pour Android, ça ne fait rien.
+- Si tu ajoutes un fix clavier futur, gate-le sur `Capacitor.getPlatform()` (`'ios' | 'android' | 'web'`) ou via un sélecteur CSS `html[data-platform="native"]` — jamais un fix universel.
+
 Après changement : `cd client && npm run android:build:dev` ou `ios:build:dev`.
 
 Voir aussi : [`mobile-builds.mdc`](mobile-builds.mdc).

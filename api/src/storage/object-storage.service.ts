@@ -8,6 +8,7 @@ import {
 import {
   getObjectStorageConfig,
   isObjectStorageEnabled,
+  normalizeGcsPublicObjectUrl,
   type ObjectStorageConfig,
 } from './storage.config.js';
 
@@ -45,7 +46,14 @@ export class ObjectStorageService {
 
   isManagedPublicUrl(url: string | null | undefined): boolean {
     if (!url || !this.config) return false;
-    return url.startsWith(`${this.config.publicUrl}/`);
+    const normalized = this.normalizePublicObjectUrl(url);
+    if (!normalized) return false;
+    return normalized.startsWith(`${this.config.publicUrl}/`);
+  }
+
+  normalizePublicObjectUrl(url: string | null | undefined): string | null {
+    if (!url || !this.config) return url ?? null;
+    return normalizeGcsPublicObjectUrl(url, this.config.bucket);
   }
 
   async uploadObject(params: {
@@ -74,9 +82,10 @@ export class ObjectStorageService {
 
   async deleteObjectByPublicUrl(url: string | null | undefined): Promise<void> {
     if (!this.client || !this.config || !url) return;
-    if (!this.isManagedPublicUrl(url)) return;
+    const normalized = this.normalizePublicObjectUrl(url);
+    if (!normalized || !this.isManagedPublicUrl(normalized)) return;
 
-    const key = url.slice(this.config.publicUrl.length + 1);
+    const key = normalized.slice(this.config.publicUrl.length + 1);
     if (!key) return;
 
     await this.client.send(

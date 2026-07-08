@@ -35,8 +35,13 @@ const config: CapacitorConfig = {
       smallIcon: 'ic_stat_notification',
       iconColor: '#DFFF5E',
     },
-    // Le clavier iOS gère lui-même le décalage via --keyboard-inset (voir client/src/hooks/use-keyboard-inset.ts).
-    // Resize=None => WebView pleine hauteur, aucun scroll auto ; on aligne le drawer / la page en CSS.
+    // ⚠️ Cette section n'affecte QUE iOS (le champ `resize` est iOS-only per plugin docs).
+    // - iOS : `KeyboardResize.None` = WebView pleine hauteur, aucun resize auto.
+    //   Le décalage est alors piloté en CSS via `--keyboard-inset`
+    //   (voir `client/src/hooks/use-keyboard-inset.ts` + `client/src/components/ui/drawer.tsx`).
+    // - Android : rien à configurer ici ; le keyboard est géré côté natif dans
+    //   `client/android/app/src/main/java/com/one_more/app/MainActivity.java`
+    //   (padding IME sur le parent de la WebView).
     Keyboard: {
       resize: KeyboardResize.None,
       resizeOnFullScreen: true,
