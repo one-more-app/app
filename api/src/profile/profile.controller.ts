@@ -13,7 +13,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt.guard.js';
 import { ProfileService } from './profile.service.js';
-import { UpdateUsernameDto, UpsertProfileDto } from './profile.dto.js';
+import { UpdateUsernameDto, UpsertAttributionDto, UpsertProfileDto } from './profile.dto.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('/profile')
@@ -28,6 +28,14 @@ export class ProfileController {
   @Put()
   async upsertProfile(@Req() req: any, @Body() body: UpsertProfileDto) {
     return await this.profileService.upsertProfile(req.user.sub, body);
+  }
+
+  @Put('/attribution')
+  async upsertAttribution(
+    @Req() req: any,
+    @Body() body: UpsertAttributionDto,
+  ): Promise<{ ok: true }> {
+    return await this.profileService.upsertAttribution(req.user.sub, body);
   }
 
   @Get('/username/check')

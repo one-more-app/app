@@ -10,6 +10,7 @@ import {
   isAppsFlyerConfigured,
 } from "@/lib/appsflyer-config";
 import { setPendingInviteCode } from "@/lib/invite-code";
+import { setPendingAttribution } from "@/lib/appsflyer-attribution";
 
 const INVITE_ATTRIBUTION_KEYS = [
   "deep_link_value",
@@ -67,10 +68,91 @@ function applyInviteAttribution(data: Record<string, unknown> | null | undefined
   persistAndNavigateToInvite(code);
 }
 
+function getStringValue(
+  data: Record<string, unknown> | null | undefined,
+  keys: readonly string[],
+): string | null {
+  if (!data) return null;
+  for (const key of keys) {
+    const raw = data[key];
+    if (typeof raw === "string" && raw.trim()) return raw.trim();
+  }
+  return null;
+}
+
+function getBooleanValue(
+  data: Record<string, unknown> | null | undefined,
+  keys: readonly string[],
+): boolean | null {
+  if (!data) return null;
+  for (const key of keys) {
+    const raw = data[key];
+    if (typeof raw === "boolean") return raw;
+    if (typeof raw === "string") {
+      const v = raw.trim().toLowerCase();
+      if (v === "true") return true;
+      if (v === "false") return false;
+    }
+  }
+  return null;
+}
+
+function extractAdsAttribution(
+  data: Record<string, unknown> | null | undefined,
+): {
+  mediaSource?: string | null;
+  campaign?: string | null;
+  adset?: string | null;
+  adgroup?: string | null;
+  keywords?: string | null;
+  isRetargeting?: boolean | null;
+  afSub1?: string | null;
+  deepLinkValue?: string | null;
+} | null {
+  if (!data) return null;
+
+  const mediaSource = getStringValue(data, ["media_source", "mediaSource"]);
+  const campaign = getStringValue(data, ["campaign"]);
+  const adset = getStringValue(data, ["adset"]);
+  const adgroup = getStringValue(data, ["adgroup"]);
+  const keywords = getStringValue(data, ["keywords"]);
+  const isRetargeting = getBooleanValue(data, ["is_retargeting", "isRetargeting"]);
+  const afSub1 = getStringValue(data, ["af_sub1"]);
+  const deepLinkValue = getStringValue(data, ["deep_link_value", "deepLinkValue"]);
+
+  if (
+    !mediaSource &&
+    !campaign &&
+    !adset &&
+    !adgroup &&
+    !keywords &&
+    isRetargeting == null &&
+    !afSub1 &&
+    !deepLinkValue
+  ) {
+    return null;
+  }
+
+  return {
+    mediaSource,
+    campaign,
+    adset,
+    adgroup,
+    keywords,
+    isRetargeting,
+    afSub1,
+    deepLinkValue,
+  };
+}
+
 function registerAppsFlyerListeners(): void {
   AppsFlyer.addListener(AFConstants.UDL_CALLBACK, (event) => {
     if (event.status === "FOUND" && event.deepLink) {
-      applyInviteAttribution(event.deepLink as Record<string, unknown>);
+      const deepLink = event.deepLink as Record<string, unknown>;
+      applyInviteAttribution(deepLink);
+
+      const attribution = extractAdsAttribution(deepLink);
+      if (attribution) setPendingAttribution(attribution);
     }
   });
 
@@ -84,6 +166,9 @@ function registerAppsFlyerListeners(): void {
     if (!isFirstLaunch) return;
 
     applyInviteAttribution(data);
+
+    const attribution = extractAdsAttribution(data);
+    if (attribution) setPendingAttribution(attribution);
   });
 }
 

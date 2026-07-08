@@ -54,6 +54,33 @@ export class UserProfileEntity {
   @Column({ type: 'uuid', nullable: true })
   referredByUserId!: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  afMediaSource!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  afCampaign!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  afAdset!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  afAdgroup!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  afKeywords!: string | null;
+
+  @Column({ type: 'boolean', nullable: true })
+  afIsRetargeting!: boolean | null;
+
+  @Column({ type: 'text', nullable: true })
+  afSub1!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  afDeepLinkValue!: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  attributionRecordedAt!: Date | null;
+
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 }

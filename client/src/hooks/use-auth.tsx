@@ -10,8 +10,13 @@ import {
 } from "@/lib/auth";
 import { AnalyticsEvents, track } from "@/lib/analytics";
 import { syncAppsFlyerCustomerUserId } from "@/lib/appsflyer";
+import {
+  peekPendingAttribution,
+  clearPendingAttribution,
+} from "@/lib/appsflyer-attribution";
 import { ApiError } from "@/lib/api";
 import { clearPendingInviteCode, peekPendingInviteCode } from "@/lib/invite-code";
+import { upsertUserAppsFlyerAttribution } from "@/lib/attribution-api";
 import { clearProfileAvatarCache } from "@/lib/profile-avatar";
 import { resetUserProfileCache } from "@/lib/storage";
 import { ACCESS_SWR_KEY } from "@/lib/social-api";
@@ -72,6 +77,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     writeStoredSession(stored);
     setState(sessionToState(stored));
     void syncAppsFlyerCustomerUserId(session.user.id);
+
+    // Sauvegarde en une fois (si dispo) l’attribution marketing reçue avant l’auth.
+    void (async () => {
+      const pending = peekPendingAttribution();
+      if (!pending) return;
+      try {
+        await upsertUserAppsFlyerAttribution(pending);
+        clearPendingAttribution();
+      } catch {
+        // Best effort: ne bloque pas l’app si l’endpoint est indisponible.
+      }
+    })();
   }, []);
 
   const clearSession = useCallback(() => {

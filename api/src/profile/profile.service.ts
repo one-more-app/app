@@ -14,7 +14,7 @@ import {
 import { UsernameService } from '../social/username.service.js';
 import { ObjectStorageService } from '../storage/object-storage.service.js';
 import { UserProfileEntity } from './user-profile.entity.js';
-import type { UpsertProfileDto } from './profile.dto.js';
+import type { UpsertProfileDto, UpsertAttributionDto } from './profile.dto.js';
 
 const MAX_AVATAR_BYTES = 512 * 1024;
 const ALLOWED_AVATAR_MIME_TYPES = new Set([
@@ -141,6 +141,32 @@ export class ProfileService {
       where: { userId },
     });
     return this.toProfileDto(profile);
+  }
+
+  async upsertAttribution(
+    userId: string,
+    body: UpsertAttributionDto,
+  ): Promise<{ ok: true }> {
+    const profile = await this.profilesRepo.findOne({ where: { userId } });
+    if (!profile) throw new NotFoundException('Profil introuvable');
+
+    // Write-once : on conserve l’attribution initiale de l’install.
+    if (profile.attributionRecordedAt) return { ok: true };
+
+    const now = new Date();
+    profile.afMediaSource = body.mediaSource?.trim() ? body.mediaSource.trim() : null;
+    profile.afCampaign = body.campaign?.trim() ? body.campaign.trim() : null;
+    profile.afAdset = body.adset?.trim() ? body.adset.trim() : null;
+    profile.afAdgroup = body.adgroup?.trim() ? body.adgroup.trim() : null;
+    profile.afKeywords = body.keywords?.trim() ? body.keywords.trim() : null;
+    profile.afIsRetargeting =
+      typeof body.isRetargeting === 'boolean' ? body.isRetargeting : null;
+    profile.afSub1 = body.afSub1?.trim() ? body.afSub1.trim() : null;
+    profile.afDeepLinkValue = body.deepLinkValue?.trim() ? body.deepLinkValue.trim() : null;
+    profile.attributionRecordedAt = now;
+
+    await this.profilesRepo.save(profile);
+    return { ok: true };
   }
 
   async uploadAvatar(
