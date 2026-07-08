@@ -23,6 +23,7 @@ import {
   TSHIRT_REWARD_SWR_KEY,
   TSHIRT_SIZES,
   type TshirtSize,
+  type TshirtRewardType,
 } from "@/lib/rewards-api";
 import { UI } from "@/lib/translations";
 import { useState } from "react";
@@ -31,12 +32,14 @@ import { mutate } from "swr";
 
 type TshirtClaimDialogProps = {
   open: boolean;
+  rewardType: TshirtRewardType;
   onOpenChange: (open: boolean) => void;
   onClaimed?: () => void;
 };
 
 export function TshirtClaimDialog({
   open,
+  rewardType,
   onOpenChange,
   onClaimed,
 }: TshirtClaimDialogProps) {
@@ -54,6 +57,7 @@ export function TshirtClaimDialog({
       setBusy(true);
       try {
         await claimTshirtReward({
+          rewardType,
           fullName: fullName.trim(),
           street: street.trim(),
           city: city.trim(),
@@ -95,6 +99,11 @@ export function TshirtClaimDialog({
         </DialogHeader>
 
         <TshirtRewardVisual highlight className="mb-2" />
+        <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+          {rewardType === "annual_classic_pack"
+            ? UI.tshirtClaimAnnualRewardLabel
+            : UI.tshirtClaimReferralRewardLabel}
+        </p>
 
         <div className="space-y-3 py-2">
           <Input

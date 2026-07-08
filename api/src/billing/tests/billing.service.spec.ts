@@ -4,6 +4,9 @@ import { ConfigService } from '@nestjs/config';
 await jest.unstable_mockModule('../../analytics/analytics.service.js', () => ({
   AnalyticsService: class MockAnalyticsService {},
 }));
+await jest.unstable_mockModule('../../rewards/rewards.service.js', () => ({
+  RewardsService: class MockRewardsService {},
+}));
 
 const { BillingService } = await import('../billing.service.js');
 
@@ -14,6 +17,9 @@ describe('BillingService', () => {
   };
   const analytics = {
     trackValidatedPurchase: jest.fn(),
+  };
+  const rewardsService = {
+    grantAnnualClassicPackIfMissing: jest.fn(),
   };
   const config = {
     get: jest.fn((key: string) => {
@@ -30,6 +36,7 @@ describe('BillingService', () => {
       usersRepo as any,
       config as unknown as ConfigService,
       analytics as any,
+      rewardsService as any,
     );
   });
 
@@ -57,6 +64,22 @@ describe('BillingService', () => {
       productId: 'monthly',
       properties: { event_type: 'INITIAL_PURCHASE' },
     });
+    expect(rewardsService.grantAnnualClassicPackIfMissing).not.toHaveBeenCalled();
+  });
+
+  it('grants annual reward on annual purchase', async () => {
+    usersRepo.findOne.mockResolvedValue({ id: 'user-1' });
+    await service.handleRevenueCatWebhook({
+      event: {
+        type: 'INITIAL_PURCHASE',
+        app_user_id: 'user-1',
+        entitlement_ids: ['premium'],
+        product_id: 'premium_annual',
+      },
+    });
+    expect(rewardsService.grantAnnualClassicPackIfMissing).toHaveBeenCalledWith(
+      'user-1',
+    );
   });
 
   it('clears premium on EXPIRATION', async () => {

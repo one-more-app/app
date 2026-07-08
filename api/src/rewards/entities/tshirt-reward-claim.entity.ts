@@ -7,46 +7,56 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { TshirtRewardStatus } from './tshirt-reward-status.enum.js';
+import { TshirtRewardType } from './tshirt-reward-type.enum.js';
 
 @Entity('tshirt_reward_claims')
+@Index(['userId', 'rewardType'], { unique: true })
 export class TshirtRewardClaimEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Index({ unique: true })
   @Column({ type: 'uuid' })
   userId!: string;
 
   @Column({
     type: 'enum',
+    enum: TshirtRewardType,
+  })
+  rewardType!: TshirtRewardType;
+
+  @Column({
+    type: 'enum',
     enum: TshirtRewardStatus,
-    default: TshirtRewardStatus.Pending,
+    default: TshirtRewardStatus.ClaimPending,
   })
   status!: TshirtRewardStatus;
 
-  @Column({ type: 'varchar', length: 8 })
-  size!: string;
+  @Column({ type: 'varchar', length: 8, nullable: true })
+  size!: string | null;
 
-  @Column({ type: 'varchar', length: 120 })
-  fullName!: string;
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  fullName!: string | null;
 
-  @Column({ type: 'varchar', length: 200 })
-  street!: string;
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  street!: string | null;
 
-  @Column({ type: 'varchar', length: 100 })
-  city!: string;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  city!: string | null;
 
-  @Column({ type: 'varchar', length: 20 })
-  postalCode!: string;
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  postalCode!: string | null;
 
-  @Column({ type: 'varchar', length: 80 })
-  country!: string;
+  @Column({ type: 'varchar', length: 80, nullable: true })
+  country!: string | null;
 
   @Column({ type: 'varchar', length: 80, nullable: true })
   trackingNumber!: string | null;
 
+  @Column({ type: 'timestamptz', nullable: true })
+  claimedAt!: Date | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
-  claimedAt!: Date;
+  createdAt!: Date;
 
   @Column({ type: 'timestamptz', nullable: true })
   shippedAt!: Date | null;

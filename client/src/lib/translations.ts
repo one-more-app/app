@@ -472,6 +472,9 @@ export const UI = {
   tshirtClaimTitle: "Réclamer ton t-shirt One More",
   tshirtClaimDescription:
     "Renseigne ton adresse de livraison. Nous te contacterons si besoin.",
+  tshirtClaimReferralRewardLabel: "Récompense: 1 t-shirt édition limitée One More",
+  tshirtClaimAnnualRewardLabel:
+    "Récompense: pack annuel 2 t-shirts classiques (noir et blanc)",
   tshirtClaimFullName: "Nom complet",
   tshirtClaimStreet: "Adresse",
   tshirtClaimCity: "Ville",

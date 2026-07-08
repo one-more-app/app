@@ -49,36 +49,40 @@ export function buildTshirtOpsWebhookPayload(
     claimId: claim.id,
     userId: claim.userId,
     status: claim.status,
-    size: claim.size,
-    fullName: claim.fullName,
-    street: claim.street,
-    city: claim.city,
-    postalCode: claim.postalCode,
-    country: claim.country,
-    claimedAt: claim.claimedAt.toISOString(),
+    size: claim.size ?? '',
+    fullName: claim.fullName ?? '',
+    street: claim.street ?? '',
+    city: claim.city ?? '',
+    postalCode: claim.postalCode ?? '',
+    country: claim.country ?? '',
+    claimedAt: claim.claimedAt?.toISOString() ?? new Date().toISOString(),
   };
 
   if (!isDiscordWebhookUrl(webhookUrl)) {
     return generic;
   }
 
-  const address = `${claim.street}\n${claim.postalCode} ${claim.city}\n${claim.country}`;
+  const address = `${claim.street ?? ''}\n${claim.postalCode ?? ''} ${claim.city ?? ''}\n${claim.country ?? ''}`;
+  const rewardTitle =
+    claim.rewardType === 'annual_classic_pack'
+      ? 'Pack annuel noir + blanc'
+      : 'T-shirt edition limitee parrainage';
 
   return {
     content: '🎽 **Nouveau claim t-shirt One More**',
     embeds: [
       {
-        title: 'T-shirt de parrainage',
+        title: rewardTitle,
         color: 0x58cc02,
         fields: [
-          { name: 'Nom', value: claim.fullName, inline: true },
-          { name: 'Taille', value: claim.size, inline: true },
+          { name: 'Nom', value: claim.fullName ?? '', inline: true },
+          { name: 'Taille', value: claim.size ?? '', inline: true },
           { name: 'Statut', value: claim.status, inline: true },
           { name: 'Adresse', value: address },
           { name: 'User ID', value: claim.userId },
           { name: 'Claim ID', value: claim.id },
         ],
-        timestamp: claim.claimedAt.toISOString(),
+        timestamp: claim.claimedAt?.toISOString() ?? new Date().toISOString(),
         footer: { text: 'One More — fulfilment t-shirt' },
       },
     ],

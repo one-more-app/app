@@ -24,6 +24,7 @@ import { hapticNotificationWarning } from "@/lib/haptics";
 import {
     fetchTshirtRewardStatus,
     TSHIRT_REWARD_SWR_KEY,
+    type TshirtRewardType,
 } from "@/lib/rewards-api";
 import { applyReferralCode, fetchInviteCode } from "@/lib/social-api";
 import { isPurchasesAvailable } from "@/lib/purchases";
@@ -33,7 +34,7 @@ import {
     EXERCISE_BONUS_PER_REFERRAL,
 } from "@one-more/shared/access-config";
 import { ChevronDown, Crown } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -114,7 +115,21 @@ export function ReferralDrawerHost() {
     const [code, setCode] = useState("");
     const [busy, setBusy] = useState(false);
     const [claimDialogOpen, setClaimDialogOpen] = useState(false);
+    const [claimRewardType, setClaimRewardType] =
+        useState<TshirtRewardType>("referral_limited");
+    const [hasAutoPromptedThisSession, setHasAutoPromptedThisSession] =
+        useState(false);
     const [applyOpen, setApplyOpen] = useState(false);
+
+    const claimedReferralReward = useMemo(
+        () =>
+            (tshirtReward?.claims ?? []).find(
+                (claim) =>
+                    claim.rewardType === "referral_limited" &&
+                    claim.status !== "claim_pending",
+            ) ?? null,
+        [tshirtReward?.claims],
+    );
 
     useEffect(() => {
         if (!open) {
@@ -143,6 +158,15 @@ export function ReferralDrawerHost() {
             .then(({ code: inviteCode }) => setMyCode(inviteCode))
             .catch(() => setMyCode(null));
     }, [open]);
+
+    useEffect(() => {
+        if (hasAutoPromptedThisSession) return;
+        const nextPending = tshirtReward?.pendingRewards?.[0];
+        if (!nextPending) return;
+        setClaimRewardType(nextPending);
+        setClaimDialogOpen(true);
+        setHasAutoPromptedThisSession(true);
+    }, [hasAutoPromptedThisSession, tshirtReward?.pendingRewards]);
 
     useEffect(() => {
         if (!open || source !== "limit") return;
@@ -226,7 +250,6 @@ export function ReferralDrawerHost() {
                 onOpenChange={(next) => {
                     if (!next) closeReferralDrawer();
                 }}
-                analyticsLabel="referral"
             >
                 <DrawerContent className="max-h-[92vh]">
                     <div className="mx-auto w-full max-w-lg overflow-y-auto px-4 pb-8">
@@ -288,8 +311,11 @@ export function ReferralDrawerHost() {
                                         referralCount={referralCount}
                                         tshirtRewardEligible={tshirtRewardEligible}
                                         referralsUntilTshirt={referralsUntilTshirt}
-                                        claim={tshirtReward?.claim ?? null}
-                                        onClaimTshirt={() => setClaimDialogOpen(true)}
+                                        claim={claimedReferralReward}
+                                        onClaimTshirt={() => {
+                                            setClaimRewardType("referral_limited");
+                                            setClaimDialogOpen(true);
+                                        }}
                                     />
                                 </>
                             ) : null}
@@ -335,6 +361,7 @@ export function ReferralDrawerHost() {
 
             <TshirtClaimDialog
                 open={claimDialogOpen}
+                rewardType={claimRewardType}
                 onOpenChange={setClaimDialogOpen}
                 onClaimed={() => void refreshTshirtReward()}
             />

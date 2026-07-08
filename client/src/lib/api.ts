@@ -103,7 +103,10 @@ async function refreshAccessToken(baseUrl: string): Promise<StoredSessionShape> 
     const payload = isJson ? await res.json().catch(() => null) : await res.text();
 
     if (!res.ok) {
-      clearStoredSession();
+      // On purge localement uniquement si le refresh token est réellement rejeté.
+      if (res.status === 401 || res.status === 403) {
+        clearStoredSession();
+      }
       const msg =
         payload && typeof payload === "object" && (payload.message || payload.error)
           ? String(payload.message || payload.error)

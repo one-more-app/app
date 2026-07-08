@@ -150,8 +150,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const session = await refreshSession({ refreshToken: state.refreshToken });
       applySession(session);
       return true;
-    } catch {
-      clearSession();
+    } catch (error) {
+      // Évite une déconnexion forcée sur panne réseau/serveur temporaire.
+      if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+        clearSession();
+      }
       return false;
     }
   }, [applySession, clearSession, state.refreshToken]);

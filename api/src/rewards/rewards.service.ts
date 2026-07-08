@@ -11,25 +11,27 @@ import { AccessService } from '../social/access.service.js';
 import { ClaimTshirtDto } from './dto/claim-tshirt.dto.js';
 import { TshirtRewardClaimEntity } from './entities/tshirt-reward-claim.entity.js';
 import { TshirtRewardStatus } from './entities/tshirt-reward-status.enum.js';
+import { TshirtRewardType } from './entities/tshirt-reward-type.enum.js';
 import { buildTshirtOpsWebhookPayload } from './lib/tshirt-ops-webhook.js';
 
 export type TshirtRewardClaimDto = {
   id: string;
+  rewardType: TshirtRewardType;
   status: TshirtRewardStatus;
-  size: string;
-  fullName: string;
-  street: string;
-  city: string;
-  postalCode: string;
-  country: string;
+  size: string | null;
+  fullName: string | null;
+  street: string | null;
+  city: string | null;
+  postalCode: string | null;
+  country: string | null;
   trackingNumber: string | null;
-  claimedAt: string;
+  claimedAt: string | null;
   shippedAt: string | null;
 };
 
 export type TshirtRewardStatusResponse = {
-  eligible: boolean;
-  claim: TshirtRewardClaimDto | null;
+  pendingRewards: TshirtRewardType[];
+  claims: TshirtRewardClaimDto[];
 };
 
 @Injectable()
@@ -46,6 +48,7 @@ export class RewardsService {
   private toDto(claim: TshirtRewardClaimEntity): TshirtRewardClaimDto {
     return {
       id: claim.id,
+      rewardType: claim.rewardType,
       status: claim.status,
       size: claim.size,
       fullName: claim.fullName,
@@ -54,20 +57,60 @@ export class RewardsService {
       postalCode: claim.postalCode,
       country: claim.country,
       trackingNumber: claim.trackingNumber,
-      claimedAt: claim.claimedAt.toISOString(),
+      claimedAt: claim.claimedAt?.toISOString() ?? null,
       shippedAt: claim.shippedAt?.toISOString() ?? null,
     };
+  }
+
+  private async ensureReferralPendingReward(userId: string): Promise<void> {
+    const access = await this.accessService.getAccess(userId);
+    if (!access.tshirtRewardEligible) return;
+
+    const existing = await this.claimsRepo.findOne({
+      where: { userId, rewardType: TshirtRewardType.ReferralLimited },
+    });
+    if (existing) return;
+
+    await this.claimsRepo.save(
+      this.claimsRepo.create({
+        userId,
+        rewardType: TshirtRewardType.ReferralLimited,
+        status: TshirtRewardStatus.ClaimPending,
+      }),
+    );
+  }
+
+  async grantAnnualClassicPackIfMissing(userId: string): Promise<boolean> {
+    const existing = await this.claimsRepo.findOne({
+      where: { userId, rewardType: TshirtRewardType.AnnualClassicPack },
+    });
+    if (existing) return false;
+
+    await this.claimsRepo.save(
+      this.claimsRepo.create({
+        userId,
+        rewardType: TshirtRewardType.AnnualClassicPack,
+        status: TshirtRewardStatus.ClaimPending,
+      }),
+    );
+    return true;
   }
 
   async getTshirtRewardStatus(
     userId: string,
   ): Promise<TshirtRewardStatusResponse> {
-    const access = await this.accessService.getAccess(userId);
-    const claim = await this.claimsRepo.findOne({ where: { userId } });
+    await this.ensureReferralPendingReward(userId);
+    const claims = await this.claimsRepo.find({
+      where: { userId },
+      order: { createdAt: 'ASC' },
+    });
+    const pendingRewards = claims
+      .filter((claim) => claim.status === TshirtRewardStatus.ClaimPending)
+      .map((claim) => claim.rewardType);
 
     return {
-      eligible: access.tshirtRewardEligible,
-      claim: claim ? this.toDto(claim) : null,
+      pendingRewards,
+      claims: claims.map((claim) => this.toDto(claim)),
     };
   }
 
@@ -75,30 +118,28 @@ export class RewardsService {
     userId: string,
     dto: ClaimTshirtDto,
   ): Promise<TshirtRewardClaimDto> {
-    const access = await this.accessService.getAccess(userId);
-    if (!access.tshirtRewardEligible) {
-      throw new ForbiddenException(
-        'Tu n’es pas encore éligible au t-shirt de parrainage',
-      );
+    if (dto.rewardType === TshirtRewardType.ReferralLimited) {
+      await this.ensureReferralPendingReward(userId);
     }
-
-    const existing = await this.claimsRepo.findOne({ where: { userId } });
-    if (existing) {
-      throw new ConflictException('Tu as déjà réclamé ton t-shirt');
+    const reward = await this.claimsRepo.findOne({
+      where: { userId, rewardType: dto.rewardType },
+    });
+    if (!reward) {
+      throw new ForbiddenException("Aucune récompense t-shirt à réclamer");
     }
+    if (reward.status !== TshirtRewardStatus.ClaimPending) {
+      throw new ConflictException('Tu as déjà réclamé cette récompense');
+    }
+    reward.size = dto.size;
+    reward.fullName = dto.fullName.trim();
+    reward.street = dto.street.trim();
+    reward.city = dto.city.trim();
+    reward.postalCode = dto.postalCode.trim();
+    reward.country = dto.country.trim();
+    reward.status = TshirtRewardStatus.Pending;
+    reward.claimedAt = new Date();
 
-    const claim = await this.claimsRepo.save(
-      this.claimsRepo.create({
-        userId,
-        status: TshirtRewardStatus.Pending,
-        size: dto.size,
-        fullName: dto.fullName.trim(),
-        street: dto.street.trim(),
-        city: dto.city.trim(),
-        postalCode: dto.postalCode.trim(),
-        country: dto.country.trim(),
-      }),
-    );
+    const claim = await this.claimsRepo.save(reward);
 
     void this.notifyOps(claim);
 
@@ -107,6 +148,11 @@ export class RewardsService {
 
   async listTshirtClaimsForAdmin(): Promise<TshirtRewardClaimDto[]> {
     const claims = await this.claimsRepo.find({
+      where: [
+        { status: TshirtRewardStatus.Pending },
+        { status: TshirtRewardStatus.Shipped },
+        { status: TshirtRewardStatus.Delivered },
+      ],
       order: { claimedAt: 'ASC' },
     });
     return claims.map((claim) => this.toDto(claim));

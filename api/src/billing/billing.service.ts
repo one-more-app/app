@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AnalyticsService } from '../analytics/analytics.service.js';
 import { UserEntity } from '../auth/entities/user.entity.js';
+import { RewardsService } from '../rewards/rewards.service.js';
 import { extractRevenueFromRevenueCatEvent } from './lib/revenuecat-event-revenue.js';
 
 const PREMIUM_ACTIVE_EVENTS = new Set([
@@ -36,7 +37,12 @@ export class BillingService {
     private readonly usersRepo: Repository<UserEntity>,
     private readonly config: ConfigService,
     private readonly analytics: AnalyticsService,
+    private readonly rewardsService: RewardsService,
   ) {}
+
+  private isAnnualProduct(productId: string): boolean {
+    return /(annual|year|yearly)/i.test(productId);
+  }
 
   private getPremiumEntitlementId(): string {
     return (
@@ -135,6 +141,9 @@ export class BillingService {
         const revenue = extractRevenueFromRevenueCatEvent(event);
         const productId =
           typeof event.product_id === 'string' ? event.product_id : 'unknown';
+        if (this.isAnnualProduct(productId)) {
+          await this.rewardsService.grantAnnualClassicPackIfMissing(appUserId);
+        }
         if (revenue) {
           void this.analytics.trackValidatedPurchase({
             profileId: appUserId,

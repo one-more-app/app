@@ -138,7 +138,6 @@ export class AuthService {
       where: { revokedAt: IsNull() },
       relations: { user: true },
       order: { createdAt: 'DESC' },
-      take: 50,
     });
     const match = await this.findSessionByRefreshToken(
       sessions,

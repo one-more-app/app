@@ -8,6 +8,7 @@ import { TshirtRewardStatus } from '../entities/tshirt-reward-status.enum.js';
 const sampleClaim = {
   id: 'claim-abc',
   userId: 'user-123',
+  rewardType: 'referral_limited',
   status: TshirtRewardStatus.Pending,
   size: 'M',
   fullName: 'Jean Dupont',
@@ -17,6 +18,7 @@ const sampleClaim = {
   country: 'France',
   trackingNumber: null,
   claimedAt: new Date('2026-06-25T10:00:00.000Z'),
+  createdAt: new Date('2026-06-25T09:00:00.000Z'),
   shippedAt: null,
   updatedAt: new Date('2026-06-25T10:00:00.000Z'),
 };
