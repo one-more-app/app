@@ -3,25 +3,29 @@ import { App } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { fetchUserGym } from "@/lib/gyms-api";
+import { useGymNotificationsReady } from "@/hooks/use-gym-notifications-ready";
+import { isGymLocationPromptDone } from "@/lib/storage";
+import { unlockGymAccess } from "@/lib/gym-onboarding";
 import {
   GYM_GEOFENCE_NOTIFICATION_ID,
   navigateToRoute,
-  registerGymGeofence,
+  registerGymGeofenceIfPermitted,
 } from "@/lib/gym-geofence";
-import { useAuth } from "@/hooks/use-auth";
+import { isGymOnboardingPendingFromApi } from "@/lib/gym-onboarding-route";
 
 export function useGymGeofenceSync() {
-  const auth = useAuth();
+  const notificationsReady = useGymNotificationsReady();
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
-    if (auth.status !== "authenticated") return;
+    if (!notificationsReady) return;
+    if (!isGymLocationPromptDone()) return;
 
     void (async () => {
       try {
         const gym = await fetchUserGym();
         if (!gym || !gym.geofenceEnabled) return;
-        await registerGymGeofence({
+        await registerGymGeofenceIfPermitted({
           lat: gym.lat,
           lng: gym.lng,
           radiusM: gym.radiusM,
@@ -29,10 +33,10 @@ export function useGymGeofenceSync() {
           onboardingGymPending: gym.onboardingGymPending,
         });
       } catch {
-        /* API indisponible. */
+        /* API ou permissions indisponibles. */
       }
     })();
-  }, [auth.status]);
+  }, [notificationsReady]);
 }
 
 export function useGymGeofenceNotificationTap() {
@@ -45,7 +49,17 @@ export function useGymGeofenceNotificationTap() {
         if (action.notification.id !== GYM_GEOFENCE_NOTIFICATION_ID) return;
         const route = action.notification.extra?.route;
         if (typeof route === "string" && route.length > 0) {
-          navigateToRoute(route);
+          void (async () => {
+            try {
+              const gym = await fetchUserGym();
+              if (isGymOnboardingPendingFromApi(gym)) {
+                await unlockGymAccess();
+              }
+            } catch {
+              /* API indisponible. */
+            }
+            navigateToRoute(route);
+          })();
         }
       },
     );

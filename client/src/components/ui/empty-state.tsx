@@ -37,7 +37,7 @@ export function EmptyState({
                 />
             ) : null}
             {title ? (
-                <h2 className="text-md font-medium text-foreground">{title}</h2>
+                <h2 className="text-sm font-medium text-foreground">{title}</h2>
             ) : null}
             {description ? (
                 <p

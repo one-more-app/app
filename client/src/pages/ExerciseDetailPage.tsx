@@ -23,7 +23,6 @@ import {
     useHomeExercisesData,
     usePerformanceDataRefresh,
     useTrackedDataRefresh,
-    useUserProfileData,
 } from '@/hooks/use-api-data'
 import { useCelebrationQueueActive } from '@/hooks/use-celebration-queue-active'
 import { useExercisePresence } from '@/hooks/use-exercise-presence'
@@ -44,6 +43,7 @@ import {
     getPersonalBest,
     getTrackedExerciseById,
     isOnboardingFirstExercisePending,
+    isOnboardingTourComplete,
     removeTrackedExerciseAndWait,
     setOnboardingFirstExercisePending,
     setOnboardingTourComplete,
@@ -65,7 +65,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EVENTS, Joyride, type EventData, type Step } from 'react-joyride'
-import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import useSWR from 'swr'
 
 type ExerciseDetailLocationState = {
@@ -79,19 +79,19 @@ export function ExerciseDetailPage() {
     const fromAddExercise =
         (location.state as ExerciseDetailLocationState | null)?.fromAddExercise ===
         true
-    const [searchParams, setSearchParams] = useSearchParams()
     /** Survit au replace de setSearchParams après le tour (sinon le retour ne fait rien). */
     const arrivedFromAddExerciseRef = useRef(
-        fromAddExercise || searchParams.get('from') === 'first-exercise',
+        fromAddExercise || isOnboardingFirstExercisePending(),
     )
-    if (fromAddExercise || searchParams.get('from') === 'first-exercise') {
-        arrivedFromAddExerciseRef.current = true
-    }
+    useEffect(() => {
+        if (fromAddExercise || isOnboardingFirstExercisePending()) {
+            arrivedFromAddExerciseRef.current = true
+        }
+    }, [fromAddExercise])
     const { resolvedTheme } = useTheme()
     const { data: homeExercises = [], isLoading: isLoadingTracked } = useHomeExercisesData()
     const refreshAfterTrackedChange = useTrackedDataRefresh()
     const refreshAfterPerfChange = usePerformanceDataRefresh()
-    const { data: profile } = useUserProfileData()
     const exercise = useMemo(
         () =>
             id
@@ -198,21 +198,18 @@ export function ExerciseDetailPage() {
     ])
 
     const onboardingFirstExercisePending = isOnboardingFirstExercisePending()
-    const onboardingTourActive = searchParams.get('tour') === 'onboarding'
+    const onboardingTourActive =
+        onboardingFirstExercisePending && !isOnboardingTourComplete()
     const celebrationBlocking = useCelebrationQueueActive()
     const tourReady = onboardingTourActive && !celebrationBlocking
 
     const finishOnboardingTour = useCallback(() => {
-        const next = new URLSearchParams(searchParams)
         setOnboardingTourComplete(true)
-        if (searchParams.get('from') === 'first-exercise' || onboardingFirstExercisePending) {
+        if (onboardingFirstExercisePending) {
             setOnboardingFirstExercisePending(false)
             void finalizeDeferredGymOnboarding()
         }
-        next.delete('tour')
-        next.delete('from')
-        setSearchParams(next, { replace: true })
-    }, [onboardingFirstExercisePending, searchParams, setSearchParams])
+    }, [onboardingFirstExercisePending])
 
     const handleJoyrideEvent = useCallback(
         (data: EventData) => {

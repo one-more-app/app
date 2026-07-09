@@ -1,6 +1,6 @@
 import { ExerciseBrowseNavigator } from '@/components/ExerciseBrowseNavigator'
 import { ExerciseCard } from '@/components/ExerciseCard'
-import { useReferralDrawer } from '@/hooks/use-referral-drawer'
+import { HomeTour } from '@/components/HomeTour'
 import { UserProgressBanner } from '@/components/UserProgressBanner'
 import { BrowseSectionTitle } from '@/components/exercise-browse-ui'
 import { ExerciseCardSkeletonList } from '@/components/skeletons'
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { useAccess } from '@/hooks/use-access'
+import { useUserProgressData } from '@/hooks/use-api-data'
 import {
     useLeagueBrowseLookupsData,
     usePerformanceDataRefresh,
@@ -16,6 +17,7 @@ import {
 import { useExerciseCatalogBrowse } from '@/hooks/use-exercise-catalog-browse'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useHomeData, type ExerciseWithPerf } from '@/hooks/use-home-data'
+import { useReferralDrawer } from '@/hooks/use-referral-drawer'
 import {
     sortBrowseableByLatestPerf,
     trackedToBrowseable,
@@ -32,11 +34,12 @@ import {
 import { UI } from '@/lib/translations'
 import { notifyXpGrants } from '@/lib/xp-notifications'
 import { Dumbbell, Plus, Search } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 function HomePage() {
     const { exercises, hasLoaded } = useHomeData()
+    const { data: progress } = useUserProgressData()
     const { data: performanceEntries = [] } = usePerformanceEntriesData()
     const refreshAfterPerfChange = usePerformanceDataRefresh()
     const { data: browseLookupsRaw } = useLeagueBrowseLookupsData()
@@ -195,9 +198,11 @@ function HomePage() {
         [exerciseById, renderExerciseCard],
     )
 
+    const hasTodaySection = todayExercises.length > 0
+
     const todaySection =
-        todayExercises.length > 0 ? (
-            <div>
+        hasTodaySection ? (
+            <div data-tour="home-today">
                 <BrowseSectionTitle className="mb-1.5">{UI.homeDoneToday}</BrowseSectionTitle>
                 <ul className="space-y-3">
                     {todayExercises.map((ex) => (
@@ -210,7 +215,7 @@ function HomePage() {
     return (
         <div className="min-h-screen-app bg-background">
             <main className="mx-auto max-w-2xl p-4 pt-safe-top">
-                <UserProgressBanner />
+                <UserProgressBanner dataTour="home-progress-banner" />
 
                 {hasLoaded && nonCardioExercises.length > 0 ? (
                     <div className="mb-4 flex flex-col gap-3">
@@ -240,7 +245,7 @@ function HomePage() {
                         title={UI.noTrackedExercises}
                         description={UI.noTrackedDescription}
                     >
-                        <Button className="mt-2" onClick={goToAddExercise}>
+                        <Button className="mt-2 w-full" onClick={goToAddExercise}>
                             <Plus className="mr-2 size-4" />
                             {UI.addExercise}
                         </Button>
@@ -250,25 +255,32 @@ function HomePage() {
                         {showTodaySection && todaySection ? (
                             <div className="mb-4">{todaySection}</div>
                         ) : null}
-                        <ExerciseBrowseNavigator
-                            exercises={browseableExercises}
-                            browse={browse}
-                            searchQuery={searchQuery}
-                            searchSort="latestPerf"
-                            getLatestPerfAt={getLatestPerfAt}
-                            viewAll={viewAll}
-                            onToggleViewAll={toggleViewAll}
-                            onPickZone={pickZone}
-                            onPickTarget={pickTarget}
-                            onPickEquipment={pickEquipment}
-                            onGoToStep={goToStep}
-                            leafSort="latestPerf"
-                            browseLeagueLookups={browseLeagueLookups}
-                            renderExerciseList={renderExerciseList}
-                        />
+                        <div data-tour="home-browse">
+                            <ExerciseBrowseNavigator
+                                exercises={browseableExercises}
+                                browse={browse}
+                                searchQuery={searchQuery}
+                                searchSort="latestPerf"
+                                getLatestPerfAt={getLatestPerfAt}
+                                viewAll={viewAll}
+                                onToggleViewAll={toggleViewAll}
+                                onPickZone={pickZone}
+                                onPickTarget={pickTarget}
+                                onPickEquipment={pickEquipment}
+                                onGoToStep={goToStep}
+                                leafSort="latestPerf"
+                                browseLeagueLookups={browseLeagueLookups}
+                                renderExerciseList={renderExerciseList}
+                            />
+                        </div>
                     </>
                 )}
             </main>
+            <HomeTour
+                pageReady={hasLoaded && nonCardioExercises.length > 0}
+                progressReady={progress != null}
+                hasTodaySection={hasTodaySection}
+            />
         </div>
     )
 }

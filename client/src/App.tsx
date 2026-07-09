@@ -17,7 +17,18 @@ import {
     persistAndNavigateToInvite,
     setupAppsFlyer,
 } from '@/lib/appsflyer'
-import { isOnboardingGymPending, needsOnboarding } from '@/lib/storage'
+import { isOnboardingGymDevPreview, isGymPermissionsNativeContext, isOnboardingGymFromSettings, isGymReselectOnboarding } from '@/lib/onboarding-gym-dev'
+import { useUserGymData } from '@/hooks/use-user-gym-data'
+import {
+    gymOnboardingPath,
+    isGymOnboardingPendingFromApi,
+    resolveGymOnboardingStep,
+} from '@/lib/gym-onboarding-route'
+import {
+    needsOnboarding,
+} from '@/lib/storage'
+import { fetchTshirtRewardStatus, TSHIRT_REWARD_SWR_KEY } from '@/lib/rewards-api'
+import { parseTshirtClaimRewardType, tshirtClaimPath } from '@/lib/tshirt-claim-route'
 import { scheduleSafeAreaCssSync } from '@/lib/sync-safe-area-css'
 import { routeUsesBackHeader } from '@/lib/back-header-routes'
 import { getSystemBarsStyle, IMMERSIVE_FULL_BLEED_ROUTES } from '@/lib/system-bars-style'
@@ -36,6 +47,7 @@ import InviteLandingPage from '@/pages/InviteLandingPage'
 import OnboardingPage from '@/pages/OnboardingPage'
 import ProfilePage from '@/pages/ProfilePage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { TshirtClaimPage } from '@/pages/TshirtClaimPage'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
@@ -45,7 +57,8 @@ import { PaywallProvider } from '@/hooks/use-paywall'
 import { ReferralDrawerProvider } from '@/hooks/use-referral-drawer'
 import { usePurchases } from '@/hooks/use-purchases'
 import { useEffect } from 'react'
-import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { HashRouter, Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom'
+import useSWR from 'swr'
 
 
 function StatsRedirect() {
@@ -59,6 +72,7 @@ function PurchasesSyncHost() {
 
 function AccessGate({ children }: { children: React.ReactNode }) {
     const location = useLocation()
+    const [searchParams] = useSearchParams()
     const auth = useAuth()
     usePushNotifications()
     useRestTimerLocalNotifications()
@@ -68,10 +82,113 @@ function AccessGate({ children }: { children: React.ReactNode }) {
     const isOnboardingRoute = location.pathname === '/onboarding'
     const isInviteRoute = location.pathname.startsWith('/invite/')
     const onboardingNeeded = needsOnboarding()
-    const gymPending = isOnboardingGymPending()
+    const { data: userGym, isLoading: userGymLoading } = useUserGymData()
+    const onboardingStep = searchParams.get('step')
+    const onboardingFrom = searchParams.get('from')
+    const gymReselect = isGymReselectOnboarding(onboardingStep, searchParams.get('reselect'))
+    const gymPendingApi = isGymOnboardingPendingFromApi(userGym)
+    const gymGateReady = auth.status !== 'authenticated' || !userGymLoading
+    const gymOnboardingStep = gymGateReady
+        ? resolveGymOnboardingStep(userGym ?? null, {
+              permissionsNative: isGymPermissionsNativeContext(onboardingStep),
+          })
+        : null
+    const gymDevPreview = isOnboardingGymDevPreview(onboardingStep)
+    const gymFromSettings = isOnboardingGymFromSettings(onboardingStep, onboardingFrom)
+    const gymFlowComplete =
+        gymGateReady &&
+        resolveGymOnboardingStep(userGym ?? null, {
+            permissionsNative: isGymPermissionsNativeContext(onboardingStep),
+        }) === null
+    const claimRewardType = parseTshirtClaimRewardType(location.pathname)
+    const isTshirtClaimRoute = claimRewardType != null
+    const { data: tshirtReward, isLoading: tshirtRewardLoading } = useSWR(
+        auth.status === 'authenticated' && gymGateReady && !onboardingNeeded
+            ? TSHIRT_REWARD_SWR_KEY
+            : null,
+        fetchTshirtRewardStatus,
+    )
+    const pendingTshirtReward = tshirtReward?.pendingRewards?.[0] ?? null
+    const tshirtGateReady =
+        auth.status !== 'authenticated' ||
+        onboardingNeeded ||
+        !gymGateReady ||
+        !tshirtRewardLoading
+
+    if (
+        auth.status === 'authenticated' &&
+        !onboardingNeeded &&
+        !gymGateReady
+    ) {
+        return null
+    }
+
+    if (
+        auth.status === 'authenticated' &&
+        !onboardingNeeded &&
+        gymGateReady &&
+        !tshirtGateReady
+    ) {
+        return null
+    }
+
+    if (
+        gymGateReady &&
+        tshirtGateReady &&
+        auth.status === 'authenticated' &&
+        !onboardingNeeded &&
+        pendingTshirtReward
+    ) {
+        const expectedPath = tshirtClaimPath(pendingTshirtReward)
+        if (!isTshirtClaimRoute || location.pathname !== expectedPath) {
+            return <Navigate to={expectedPath} replace />
+        }
+    }
+
+    if (
+        gymGateReady &&
+        tshirtGateReady &&
+        auth.status === 'authenticated' &&
+        isTshirtClaimRoute &&
+        claimRewardType &&
+        pendingTshirtReward !== claimRewardType &&
+        !tshirtReward?.pendingRewards?.includes(claimRewardType)
+    ) {
+        if (pendingTshirtReward) {
+            return <Navigate to={tshirtClaimPath(pendingTshirtReward)} replace />
+        }
+        return <Navigate to="/home" replace />
+    }
+
+    if (
+        auth.status === 'authenticated' &&
+        !onboardingNeeded &&
+        isOnboardingRoute &&
+        onboardingStep === 'gym' &&
+        !gymFromSettings &&
+        !gymReselect &&
+        !gymDevPreview &&
+        gymGateReady &&
+        userGym
+    ) {
+        return <Navigate to="/home" replace />
+    }
+
+    if (
+        auth.status === 'authenticated' &&
+        !onboardingNeeded &&
+        isOnboardingRoute &&
+        !gymDevPreview &&
+        !gymFromSettings &&
+        !gymReselect &&
+        gymFlowComplete
+    ) {
+        return <Navigate to="/home" replace />
+    }
 
     if (auth.status !== 'authenticated') {
-        if (onboardingNeeded) {
+        const allowOnboardingRoute = onboardingNeeded || gymDevPreview
+        if (allowOnboardingRoute) {
             if (isOnboardingRoute || isAuthRoute || isInviteRoute) return <>{children}</>
             return <Navigate to="/onboarding" replace />
         }
@@ -82,20 +199,37 @@ function AccessGate({ children }: { children: React.ReactNode }) {
         return <Navigate to={`/auth?redirect=${redirect}`} replace />
     }
 
+    if (gymGateReady && auth.status === 'authenticated' && gymPendingApi) {
+        if (
+            isOnboardingRoute &&
+            (onboardingStep === 'gym-wait' ||
+                (onboardingStep === 'gym-permissions' && onboardingNeeded) ||
+                gymDevPreview ||
+                gymFromSettings ||
+                gymReselect)
+        ) {
+            return <>{children}</>
+        }
+        return <Navigate to={gymOnboardingPath('gym-wait')} replace />
+    }
+
     if (auth.status === 'authenticated' && isAuthRoute) {
-        if (onboardingNeeded && !gymPending) {
+        if (onboardingNeeded) {
             return <Navigate to="/onboarding?step=body&bodyQ=0" replace />
         }
         return <Navigate to="/home" replace />
     }
 
     if (
+        gymGateReady &&
         auth.status === 'authenticated' &&
         onboardingNeeded &&
-        !gymPending &&
         location.pathname !== '/onboarding' &&
         !isAuthRoute
     ) {
+        if (gymOnboardingStep) {
+            return <Navigate to={gymOnboardingPath(gymOnboardingStep)} replace />
+        }
         return <Navigate to="/onboarding?step=body&bodyQ=0" replace />
     }
     return <>{children}</>
@@ -103,7 +237,16 @@ function AccessGate({ children }: { children: React.ReactNode }) {
 
 function IndexRedirect() {
     const auth = useAuth()
-    if (needsOnboarding() && !isOnboardingGymPending()) {
+    const { data: userGym, isLoading: userGymLoading } = useUserGymData()
+
+    if (auth.status === 'authenticated' && userGymLoading) {
+        return null
+    }
+
+    if (isGymOnboardingPendingFromApi(userGym)) {
+        return <Navigate to={gymOnboardingPath('gym-wait')} replace />
+    }
+    if (needsOnboarding()) {
         return <Navigate to="/onboarding" replace />
     }
     if (auth.status !== 'authenticated') return <Navigate to="/auth" replace />
@@ -256,6 +399,7 @@ function App() {
                                 <Route path="/exercises" element={<ExerciseListPage />} />
                                 <Route path="/exercise/:id" element={<ExerciseDetailPage />} />
                                 <Route path="/settings" element={<SettingsPage />} />
+                                <Route path="/rewards/tshirt/:rewardType" element={<TshirtClaimPage />} />
                                 <Route path="/invite/:code" element={<InviteLandingPage />} />
                                 <Route path="/friends" element={<FriendsPage />} />
                                 <Route path="/friends/search" element={<FriendSearchPage />} />

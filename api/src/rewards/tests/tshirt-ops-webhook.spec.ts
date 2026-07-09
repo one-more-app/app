@@ -11,6 +11,7 @@ const sampleClaim = {
   rewardType: 'referral_limited',
   status: TshirtRewardStatus.Pending,
   size: 'M',
+  gender: 'male',
   fullName: 'Jean Dupont',
   street: '1 rue Test',
   city: 'Paris',

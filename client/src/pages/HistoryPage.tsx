@@ -8,16 +8,14 @@ import {
     usePerformanceDataRefresh,
     usePerformanceEntriesData,
     useTrackedExercisesData,
-    useUserProfileData,
 } from '@/hooks/use-api-data'
+import { getExerciseImageUrl } from '@/lib/exercisedb'
 import {
     entryInsightsFromPerformances,
     groupByDayThenExercise,
     resolveTrackedExercise,
 } from '@/lib/history-entries'
-import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { notifyPerfMilestones } from '@/lib/perf-notifications'
-import { notifyXpGrants } from '@/lib/xp-notifications'
 import {
     deletePerformanceAndWait,
     getPersonalBest,
@@ -25,6 +23,7 @@ import {
     updatePerformanceAndWait,
 } from '@/lib/storage'
 import { UI } from '@/lib/translations'
+import { notifyXpGrants } from '@/lib/xp-notifications'
 import type { PerformanceEntry } from '@/types'
 import { HistoryIcon } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
@@ -36,7 +35,6 @@ export function HistoryPage() {
         usePerformanceEntriesData({ withLeagueInsights: true })
     const refreshAfterPerfChange = usePerformanceDataRefresh()
     const { data: tracked = [] } = useTrackedExercisesData()
-    const { data: profile } = useUserProfileData()
     const entries = useMemo(
         () =>
             allEntries
@@ -123,7 +121,6 @@ export function HistoryPage() {
                                 icon={HistoryIcon}
                                 title={UI.noHistoryEntriesTitle}
                                 description={UI.noHistoryEntriesDescription}
-                                contentClassName="py-8 text-sm"
                             />
                         ) : (
                             <ul className="space-y-8">

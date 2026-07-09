@@ -36,6 +36,7 @@ import { getJoyrideScrollOffset, getJoyrideShiftPadding } from '@/lib/joyride-co
 import {
     addTrackedExerciseAndWait,
     isOnboardingFirstExercisePending,
+    isOnboardingTourComplete,
     savePerformanceAndWait,
     setOnboardingFirstExercisePending,
 } from '@/lib/storage'
@@ -46,14 +47,14 @@ import type { ExerciseDBExercise } from '@/types'
 import { Plus, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EVENTS, Joyride, type EventData, type Step } from 'react-joyride'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import useSWR, { useSWRConfig } from 'swr'
 
 export function ExerciseListPage() {
     const navigate = useNavigate()
     const { resolvedTheme } = useTheme()
-    const [searchParams, setSearchParams] = useSearchParams()
     const { mutate } = useSWRConfig()
+    const [firstExerciseTourDismissed, setFirstExerciseTourDismissed] = useState(false)
     const { exercises: tracked, addExercise } = useTrackedExercises()
     const [targets, setTargets] = useState<string[]>([])
     const [equipmentOptions, setEquipmentOptions] = useState<string[]>([])
@@ -83,14 +84,13 @@ export function ExerciseListPage() {
         [canAddExercise, openReferralDrawer],
     )
     const firstExerciseTourActive =
-        searchParams.get('tour') === 'onboarding-first' &&
-        isOnboardingFirstExercisePending()
+        isOnboardingFirstExercisePending() &&
+        !isOnboardingTourComplete() &&
+        !firstExerciseTourDismissed
 
     const stopFirstExerciseTour = useCallback(() => {
-        const next = new URLSearchParams(searchParams)
-        next.delete('tour')
-        setSearchParams(next, { replace: true })
-    }, [searchParams, setSearchParams])
+        setFirstExerciseTourDismissed(true)
+    }, [])
 
     const handleFirstExerciseJoyrideEvent = useCallback(
         (data: EventData) => {
@@ -372,7 +372,7 @@ export function ExerciseListPage() {
             const shouldLaunchExerciseTour = isOnboardingFirstExercisePending()
             navigate(
                 shouldLaunchExerciseTour
-                    ? `/exercise/${trackedId}?tour=onboarding&from=first-exercise`
+                    ? `/exercise/${trackedId}`
                     : `/exercise/${trackedId}`,
                 { replace: true, state: { fromAddExercise: true } },
             )

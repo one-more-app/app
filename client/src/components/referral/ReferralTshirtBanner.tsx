@@ -10,7 +10,7 @@ const TSHIRT_IMAGES = {
 
 export function ReferralTshirtBanner({ className }: { className?: string }) {
     const { openReferralDrawer } = useReferralDrawer();
-    const src = TSHIRT_IMAGES.light;
+    const src = TSHIRT_IMAGES.dark;
 
     return (
         <button

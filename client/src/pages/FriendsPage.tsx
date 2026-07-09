@@ -1,5 +1,6 @@
 import { BackHeader } from "@/components/BackHeader";
 import { FriendsListTab } from "@/components/friends/FriendsListTab";
+import { ReferralTshirtBanner } from "@/components/referral/ReferralTshirtBanner";
 import { Button } from "@/components/ui/button";
 import { ACCESS_SWR_KEY, useAccess } from "@/hooks/use-access";
 import { CONVERSATIONS_SWR_KEY } from "@/hooks/use-realtime";
@@ -30,6 +31,7 @@ export default function FriendsPage() {
         <div className="min-h-screen-app bg-background">
             <BackHeader title={UI.friendsTitle} />
             <main className="mx-auto max-w-2xl space-y-4 p-4">
+                <ReferralTshirtBanner />
                 <Button variant="secondary" className="w-full" asChild>
                     <Link to="/friends/search">
                         <UserPlus className="size-4" />

@@ -1,8 +1,9 @@
 import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { ConfigService } from '@nestjs/config';
+import { TshirtRewardType } from '../entities/tshirt-reward-type.enum.js';
 
-await jest.unstable_mockModule('../../social/access.service.js', () => ({
+jest.unstable_mockModule('../../social/access.service.js', () => ({
   AccessService: class MockAccessService {},
 }));
 
@@ -37,13 +38,14 @@ describe('RewardsService', () => {
     accessService.getAccess.mockResolvedValue({ tshirtRewardEligible: false });
     await expect(
       service.claimTshirt('user-1', {
-        rewardType: 'referral_limited' as any,
+        rewardType: TshirtRewardType.ReferralLimited,
         fullName: 'Jean Dupont',
         street: '1 rue Test',
         city: 'Paris',
         postalCode: '75001',
         country: 'France',
         size: 'M',
+        gender: 'male',
       }),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
@@ -55,27 +57,26 @@ describe('RewardsService', () => {
       .mockResolvedValueOnce({ id: 'claim-1', status: 'pending' });
     await expect(
       service.claimTshirt('user-1', {
-        rewardType: 'referral_limited' as any,
+        rewardType: TshirtRewardType.ReferralLimited,
         fullName: 'Jean Dupont',
         street: '1 rue Test',
         city: 'Paris',
         postalCode: '75001',
         country: 'France',
         size: 'M',
+        gender: 'male',
       }),
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
   it('creates claim when eligible', async () => {
     accessService.getAccess.mockResolvedValue({ tshirtRewardEligible: true });
-    claimsRepo.findOne
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: 'claim-1',
-        userId: 'user-1',
-        rewardType: 'referral_limited',
-        status: 'claim_pending',
-      });
+    claimsRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 'claim-1',
+      userId: 'user-1',
+      rewardType: 'referral_limited',
+      status: 'claim_pending',
+    });
     const claimedAt = new Date('2026-01-01T00:00:00.000Z');
     claimsRepo.save.mockResolvedValue({
       id: 'claim-1',
@@ -83,6 +84,7 @@ describe('RewardsService', () => {
       rewardType: 'referral_limited',
       status: 'pending',
       size: 'M',
+      gender: 'male',
       fullName: 'Jean Dupont',
       street: '1 rue Test',
       city: 'Paris',
@@ -94,13 +96,14 @@ describe('RewardsService', () => {
     });
 
     const result = await service.claimTshirt('user-1', {
-      rewardType: 'referral_limited' as any,
+      rewardType: TshirtRewardType.ReferralLimited,
       fullName: 'Jean Dupont',
       street: '1 rue Test',
       city: 'Paris',
       postalCode: '75001',
       country: 'France',
       size: 'M',
+      gender: 'male',
     });
 
     expect(result.id).toBe('claim-1');

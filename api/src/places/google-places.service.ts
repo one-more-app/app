@@ -1,4 +1,8 @@
-import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 export type GymPlaceResult = {
@@ -8,6 +12,45 @@ export type GymPlaceResult = {
   lat: number;
   lng: number;
   distanceM: number | null;
+};
+
+export type AddressSuggestion = {
+  placeId: string;
+  label: string;
+};
+
+export type AddressDetails = {
+  placeId: string;
+  label: string;
+  street: string | null;
+  city: string | null;
+  postalCode: string | null;
+  country: string | null;
+};
+
+type GoogleAddressComponent = {
+  long_name?: string;
+  short_name?: string;
+  types?: string[];
+};
+
+type GoogleAutocompleteResponse = {
+  status: string;
+  predictions?: Array<{
+    place_id?: string;
+    description?: string;
+  }>;
+  error_message?: string;
+};
+
+type GooglePlaceDetailsResponse = {
+  status: string;
+  result?: {
+    place_id?: string;
+    formatted_address?: string;
+    address_components?: GoogleAddressComponent[];
+  };
+  error_message?: string;
 };
 
 type GooglePlaceLocation = { lat: number; lng: number };
@@ -42,7 +85,10 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 @Injectable()
 export class GooglePlacesService {
   private readonly logger = new Logger(GooglePlacesService.name);
-  private readonly cache = new Map<string, { expiresAt: number; value: GymPlaceResult }>();
+  private readonly cache = new Map<
+    string,
+    { expiresAt: number; value: GymPlaceResult }
+  >();
 
   constructor(private readonly config: ConfigService) {}
 
@@ -92,7 +138,9 @@ export class GooglePlacesService {
       address: item.formatted_address ?? item.vicinity ?? null,
       lat,
       lng,
-      distanceM: origin ? Math.round(this.haversineM(origin.lat, origin.lng, lat, lng)) : null,
+      distanceM: origin
+        ? Math.round(this.haversineM(origin.lat, origin.lng, lat, lng))
+        : null,
     };
   }
 
@@ -105,6 +153,134 @@ export class GooglePlacesService {
       );
     }
     return (await response.json()) as T;
+  }
+
+  private parseAddressComponents(
+    components: GoogleAddressComponent[] | undefined,
+  ): Pick<AddressDetails, 'street' | 'city' | 'postalCode' | 'country'> {
+    const get = (...types: string[]) => {
+      const match = components?.find((component) =>
+        (component.types ?? []).some((type) => types.includes(type)),
+      );
+      return match?.long_name ?? null;
+    };
+
+    const streetNumber = get('street_number');
+    const route = get('route');
+    const street =
+      [streetNumber, route]
+        .filter((part) => part && part.length > 0)
+        .join(' ') || null;
+
+    return {
+      street,
+      city:
+        get('locality') ??
+        get('postal_town') ??
+        get('administrative_area_level_2'),
+      postalCode: get('postal_code'),
+      country: get('country'),
+    };
+  }
+
+  private mapGeocodeResults(
+    results: GoogleGeocodeResponse['results'],
+  ): AddressSuggestion[] {
+    return (results ?? [])
+      .slice(0, 8)
+      .map((item) => {
+        const placeId = item.place_id;
+        const label = item.formatted_address;
+        if (!placeId || !label) return null;
+        return { placeId, label };
+      })
+      .filter((item): item is AddressSuggestion => item != null);
+  }
+
+  private async searchAddressesViaAutocomplete(
+    query: string,
+    lat: number | undefined,
+    lng: number | undefined,
+    apiKey: string,
+  ): Promise<AddressSuggestion[]> {
+    let url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&types=address&language=fr&key=${apiKey}`;
+    if (lat != null && lng != null) {
+      url += `&location=${lat},${lng}&radius=50000`;
+    }
+
+    const data = await this.fetchJson<GoogleAutocompleteResponse>(url);
+    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+      this.logger.warn(
+        `Google address autocomplete status: ${data.status} ${data.error_message ?? ''}`,
+      );
+      return [];
+    }
+
+    return (data.predictions ?? [])
+      .map((item) => {
+        const placeId = item.place_id;
+        const label = item.description;
+        if (!placeId || !label) return null;
+        return { placeId, label };
+      })
+      .filter((item): item is AddressSuggestion => item != null);
+  }
+
+  private async searchAddressesViaGeocoding(
+    query: string,
+    apiKey: string,
+  ): Promise<AddressSuggestion[]> {
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&language=fr&region=fr&key=${apiKey}`;
+    const data = await this.fetchJson<GoogleGeocodeResponse>(url);
+    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+      this.logger.warn(
+        `Google address geocode status: ${data.status} ${data.error_message ?? ''}`,
+      );
+      throw new ServiceUnavailableException(
+        "La recherche d'adresse est temporairement indisponible.",
+      );
+    }
+
+    return this.mapGeocodeResults(data.results);
+  }
+
+  async searchAddresses(params: {
+    q: string;
+    lat?: number;
+    lng?: number;
+  }): Promise<AddressSuggestion[]> {
+    const query = params.q.trim();
+    if (!query) return [];
+
+    const apiKey = this.ensureApiKey();
+    const autocomplete = await this.searchAddressesViaAutocomplete(
+      query,
+      params.lat,
+      params.lng,
+      apiKey,
+    );
+    if (autocomplete.length > 0) return autocomplete;
+
+    return await this.searchAddressesViaGeocoding(query, apiKey);
+  }
+
+  async getAddressDetails(placeId: string): Promise<AddressDetails> {
+    const apiKey = this.ensureApiKey();
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=place_id,formatted_address,address_components&language=fr&key=${apiKey}`;
+    const data = await this.fetchJson<GooglePlaceDetailsResponse>(url);
+
+    if (data.status !== 'OK' || !data.result?.place_id) {
+      throw new ServiceUnavailableException(
+        'Impossible de charger les détails de cette adresse.',
+      );
+    }
+
+    const parsed = this.parseAddressComponents(data.result.address_components);
+    return {
+      placeId: data.result.place_id,
+      label: data.result.formatted_address ?? '',
+      ...parsed,
+    };
   }
 
   async searchGyms(params: {
@@ -133,7 +309,9 @@ export class GooglePlacesService {
 
     const data = await this.fetchJson<GooglePlacesResponse>(url);
     if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-      this.logger.warn(`Google Places status: ${data.status} ${data.error_message ?? ''}`);
+      this.logger.warn(
+        `Google Places status: ${data.status} ${data.error_message ?? ''}`,
+      );
       throw new ServiceUnavailableException(
         'La recherche de salles est temporairement indisponible.',
       );

@@ -10,12 +10,13 @@ import { cn } from '@/lib/utils'
 const NAV_ITEMS: Array<{
     to: string
     label: string
+    tourId?: string
     Icon: (props: { className?: string }) => JSX.Element
 }> = [
         { to: '/home', label: 'Accueil', Icon: Home },
-        { to: '/profile', label: UI.profile, Icon: User },
-        { to: '/history', label: UI.history, Icon: History },
-        { to: '/friends', label: UI.friendsTitle, Icon: Users },
+        { to: '/profile', label: UI.profile, tourId: 'nav-profile', Icon: User },
+        { to: '/history', label: UI.history, tourId: 'nav-history', Icon: History },
+        { to: '/friends', label: UI.friendsTitle, tourId: 'nav-friends', Icon: Users },
     ]
 
 function BottomNav() {
@@ -38,6 +39,7 @@ function BottomNav() {
                         <Link
                             key={item.to}
                             to={item.to}
+                            data-tour={item.tourId}
                             onClick={() => {
                                 if (!active) hapticTab()
                             }}

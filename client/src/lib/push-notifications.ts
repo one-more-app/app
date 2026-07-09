@@ -31,12 +31,26 @@ export async function requestPushPermission(): Promise<boolean> {
   return req.receive === "granted";
 }
 
+export async function isPushPermissionGranted(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) return false;
+  const perm = await PushNotifications.checkPermissions();
+  return perm.receive === "granted";
+}
+
 export async function registerPushNotifications() {
   if (!Capacitor.isNativePlatform()) return;
 
   const granted = await requestPushPermission();
   if (!granted) return;
 
+  await registerPushIfPermitted();
+}
+
+/** Enregistre le token push sans redemander la permission (listeners requis). */
+export async function registerPushIfPermitted(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+  const perm = await PushNotifications.checkPermissions();
+  if (perm.receive !== "granted") return;
   await PushNotifications.register();
 }
 

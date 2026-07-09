@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { ConfigService } from '@nestjs/config';
 
-await jest.unstable_mockModule('../../analytics/analytics.service.js', () => ({
+jest.unstable_mockModule('../../analytics/analytics.service.js', () => ({
   AnalyticsService: class MockAnalyticsService {},
 }));
-await jest.unstable_mockModule('../../rewards/rewards.service.js', () => ({
+jest.unstable_mockModule('../../rewards/rewards.service.js', () => ({
   RewardsService: class MockRewardsService {},
 }));
 
@@ -32,6 +32,11 @@ describe('BillingService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    config.get.mockImplementation((key: string) => {
+      if (key === 'REVENUECAT_PREMIUM_ENTITLEMENT_ID') return 'premium';
+      if (key === 'REVENUECAT_API_KEY') return 'rc-test-key';
+      return undefined;
+    });
     service = new BillingService(
       usersRepo as any,
       config as unknown as ConfigService,
@@ -64,7 +69,9 @@ describe('BillingService', () => {
       productId: 'monthly',
       properties: { event_type: 'INITIAL_PURCHASE' },
     });
-    expect(rewardsService.grantAnnualClassicPackIfMissing).not.toHaveBeenCalled();
+    expect(
+      rewardsService.grantAnnualClassicPackIfMissing,
+    ).not.toHaveBeenCalled();
   });
 
   it('grants annual reward on annual purchase', async () => {
@@ -106,5 +113,63 @@ describe('BillingService', () => {
       },
     });
     expect(usersRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('grants annual reward when syncing an active annual subscription', async () => {
+    const fetchMock = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            subscriber: {
+              entitlements: {
+                premium: {
+                  expires_date: new Date(Date.now() + 86_400_000).toISOString(),
+                  product_identifier: 'start_annual',
+                },
+              },
+            },
+          }),
+      }),
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await service.syncPremiumFromRevenueCat('user-1');
+
+    expect(result).toEqual({ isPremium: true });
+    expect(usersRepo.update).toHaveBeenCalledWith(
+      { id: 'user-1' },
+      { isPremium: true },
+    );
+    expect(rewardsService.grantAnnualClassicPackIfMissing).toHaveBeenCalledWith(
+      'user-1',
+    );
+  });
+
+  it('does not grant annual reward when syncing a monthly subscription', async () => {
+    const fetchMock = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            subscriber: {
+              entitlements: {
+                premium: {
+                  expires_date: new Date(Date.now() + 86_400_000).toISOString(),
+                  product_identifier: 'start_mensual',
+                },
+              },
+            },
+          }),
+      }),
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await service.syncPremiumFromRevenueCat('user-1');
+
+    expect(result).toEqual({ isPremium: true });
+    expect(
+      rewardsService.grantAnnualClassicPackIfMissing,
+    ).not.toHaveBeenCalled();
   });
 });

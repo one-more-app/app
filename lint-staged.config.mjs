@@ -1,14 +1,18 @@
+import { existsSync } from "node:fs";
+
+const BATCH_SIZE = 25;
+
 /** @param {string} pkg @param {string[]} files */
 function eslintInPackage(pkg, files) {
-  const marker = `/${pkg}/`;
-  const paths = files
-    .map((file) => {
-      const normalized = file.replace(/\\/g, "/");
-      const idx = normalized.indexOf(marker);
-      return idx >= 0 ? normalized.slice(idx + marker.length) : normalized;
-    })
-    .join(" ");
-  return `cd ${pkg} && npx eslint --fix ${paths}`;
+  const existing = files.filter((file) => existsSync(file));
+  if (existing.length === 0) return [];
+
+  const commands = [];
+  for (let i = 0; i < existing.length; i += BATCH_SIZE) {
+    const chunk = existing.slice(i, i + BATCH_SIZE).join(" ");
+    commands.push(`node scripts/eslint-package.mjs ${pkg} ${chunk}`);
+  }
+  return commands;
 }
 
 export default {

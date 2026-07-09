@@ -1,4 +1,5 @@
 import type { TshirtRewardClaimEntity } from '../entities/tshirt-reward-claim.entity.js';
+import { TshirtRewardType } from '../entities/tshirt-reward-type.enum.js';
 
 export function isDiscordWebhookUrl(webhookUrl: string): boolean {
   try {
@@ -32,6 +33,7 @@ type GenericOpsWebhookPayload = {
   userId: string;
   status: string;
   size: string;
+  gender: string;
   fullName: string;
   street: string;
   city: string;
@@ -50,6 +52,7 @@ export function buildTshirtOpsWebhookPayload(
     userId: claim.userId,
     status: claim.status,
     size: claim.size ?? '',
+    gender: claim.gender ?? '',
     fullName: claim.fullName ?? '',
     street: claim.street ?? '',
     city: claim.city ?? '',
@@ -64,7 +67,7 @@ export function buildTshirtOpsWebhookPayload(
 
   const address = `${claim.street ?? ''}\n${claim.postalCode ?? ''} ${claim.city ?? ''}\n${claim.country ?? ''}`;
   const rewardTitle =
-    claim.rewardType === 'annual_classic_pack'
+    claim.rewardType === TshirtRewardType.AnnualClassicPack
       ? 'Pack annuel noir + blanc'
       : 'T-shirt edition limitee parrainage';
 
@@ -77,6 +80,7 @@ export function buildTshirtOpsWebhookPayload(
         fields: [
           { name: 'Nom', value: claim.fullName ?? '', inline: true },
           { name: 'Taille', value: claim.size ?? '', inline: true },
+          { name: 'Genre', value: claim.gender ?? '', inline: true },
           { name: 'Statut', value: claim.status, inline: true },
           { name: 'Adresse', value: address },
           { name: 'User ID', value: claim.userId },

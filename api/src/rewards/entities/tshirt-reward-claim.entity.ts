@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { TshirtRewardStatus } from './tshirt-reward-status.enum.js';
 import { TshirtRewardType } from './tshirt-reward-type.enum.js';
+import { TshirtGender } from './tshirt-gender.enum.js';
 
 @Entity('tshirt_reward_claims')
 @Index(['userId', 'rewardType'], { unique: true })
@@ -33,6 +34,9 @@ export class TshirtRewardClaimEntity {
 
   @Column({ type: 'varchar', length: 8, nullable: true })
   size!: string | null;
+
+  @Column({ type: 'varchar', length: 16, nullable: true })
+  gender!: TshirtGender | null;
 
   @Column({ type: 'varchar', length: 120, nullable: true })
   fullName!: string | null;

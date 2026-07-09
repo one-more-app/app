@@ -15,12 +15,14 @@ export function TshirtRewardVisual({
     highlight = false,
     className,
 }: TshirtRewardVisualProps) {
-    const src = TSHIRT_IMAGES.light;
+    const src = TSHIRT_IMAGES.dark;
 
     return (
         <div
             className={cn(
                 "flex flex-col items-center justify-center",
+                highlight &&
+                    "rounded-xl border border-accent/30 bg-accent/5 p-3",
                 className,
             )}
         >

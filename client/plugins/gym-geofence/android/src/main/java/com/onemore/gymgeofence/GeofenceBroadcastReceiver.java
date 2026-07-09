@@ -15,7 +15,10 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         if (event.hasError()) return;
 
         if (event.getGeofenceTransition() == Geofence.GEOFENCE_TRANSITION_ENTER) {
-            GymGeofencePlugin.showEnterNotification(context.getApplicationContext());
+            Context appContext = context.getApplicationContext();
+            if (!GymGeofenceCooldown.canNotify(appContext)) return;
+            GymGeofencePlugin.showEnterNotification(appContext);
+            GymGeofenceCooldown.markNotified(appContext);
         }
     }
 }

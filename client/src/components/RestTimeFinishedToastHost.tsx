@@ -1,5 +1,6 @@
 import { RestTimeFinishedToastContent } from "@/components/RestTimeFinishedToast";
 import { useAuth } from "@/hooks/use-auth";
+import { useGymNotificationsReady } from "@/hooks/use-gym-notifications-ready";
 import { useLatestGlobalPerf } from "@/hooks/use-latest-global-perf";
 import { useRestTargetMs } from "@/hooks/use-rest-target-ms";
 import {
@@ -9,6 +10,7 @@ import {
 } from "@/lib/format-rest-elapsed";
 import { cancelRestFinishedLocalNotification } from "@/lib/rest-timer-local-notifications";
 import { hapticNotificationSuccess } from "@/lib/haptics";
+import { useGymOnboardingBlocksFeatures } from "@/hooks/use-user-gym-data";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -54,6 +56,12 @@ function showRestTimeFinishedToast(params: {
  */
 export function RestTimeFinishedToastHost() {
   const auth = useAuth();
+  const notificationsReady = useGymNotificationsReady();
+  const gymOnboardingActive = useGymOnboardingBlocksFeatures();
+  const hostActive =
+    auth.status === "authenticated" &&
+    notificationsReady &&
+    !gymOnboardingActive;
   const navigate = useNavigate();
   const latestGlobalPerf = useLatestGlobalPerf();
   const { targetMs } = useRestTargetMs();
@@ -64,7 +72,7 @@ export function RestTimeFinishedToastHost() {
   const exercise = latestGlobalPerf?.exercise ?? null;
 
   useEffect(() => {
-    if (auth.status !== "authenticated" || !createdAt) return;
+    if (!hostActive || !createdAt) return;
 
     let intervalId: ReturnType<typeof setInterval> | undefined;
 
@@ -110,7 +118,7 @@ export function RestTimeFinishedToastHost() {
       stopInterval();
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [auth.status, createdAt]);
+  }, [hostActive, createdAt]);
 
   useEffect(() => {
     if (auth.status !== "authenticated" || !createdAt || !exercise?.id) return;
@@ -128,7 +136,7 @@ export function RestTimeFinishedToastHost() {
       onOpen: () => navigate(`/exercise/${exercise.id}`),
     });
     void hapticNotificationSuccess();
-  }, [auth.status, createdAt, exercise, now, navigate, targetMs]);
+  }, [hostActive, createdAt, exercise, now, navigate, targetMs]);
 
   return null;
 }

@@ -20,6 +20,7 @@ import { BillingModule } from './billing/billing.module.js';
 import { RewardsModule } from './rewards/rewards.module.js';
 import { StorageModule } from './storage/storage.module.js';
 import { GymsModule } from './gyms/gyms.module.js';
+import { AddressesModule } from './addresses/addresses.module.js';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { GymsModule } from './gyms/gyms.module.js';
     BillingModule,
     RewardsModule,
     GymsModule,
+    AddressesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,27 +1,31 @@
-import { useAuth } from "@/hooks/use-auth";
+import { useGymNotificationsReady } from "@/hooks/use-gym-notifications-ready";
 import { useLatestGlobalPerf } from "@/hooks/use-latest-global-perf";
 import { useRestTargetMs } from "@/hooks/use-rest-target-ms";
 import {
   attachRestTimerLocalNotificationListeners,
-  cancelRestFinishedLocalNotification,
-  syncRestFinishedLocalNotification,
+  setRestTimerLifecycleEnabled,
+  updateRestTimerNotificationParams,
   type RestFinishedLocalNotificationParams,
 } from "@/lib/rest-timer-local-notifications";
+import { useGymOnboardingBlocksFeatures } from "@/hooks/use-user-gym-data";
 import { Capacitor } from "@capacitor/core";
-import { App as CapacitorApp } from "@capacitor/app";
 import { useEffect, useMemo } from "react";
+
+function buildParamsKey(
+  params: RestFinishedLocalNotificationParams | null,
+): string {
+  if (!params) return "";
+  return `${params.exerciseId}:${params.createdAt}:${params.targetMs}`;
+}
 
 /**
  * Resynchronise la notif locale planifiée quand la dernière perf ou la
  * durée cible change, et écoute le tap sur la notif système.
- *
- * Planifiée dès l'enregistrement de la perf (alarme OS à createdAt + targetMs).
- * Premier plan : toast in-app ; la notif est annulée au retour foreground
- * et quand le toast se déclenche (iOS silent évite la bannière si encore active).
- * Arrière-plan : l'alarme déjà enregistrée fire à l'heure exacte.
  */
 export function useRestTimerLocalNotifications() {
-  const auth = useAuth();
+  const notificationsReady = useGymNotificationsReady();
+  const gymOnboardingActive = useGymOnboardingBlocksFeatures();
+  const lifecycleActive = notificationsReady && !gymOnboardingActive;
   const latestGlobalPerf = useLatestGlobalPerf();
   const { targetMs } = useRestTargetMs();
 
@@ -43,32 +47,25 @@ export function useRestTimerLocalNotifications() {
     targetMs,
   ]);
 
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-    if (auth.status !== "authenticated") return;
-    return attachRestTimerLocalNotificationListeners();
-  }, [auth.status]);
+  const paramsKey = buildParamsKey(notificationParams);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
-    if (auth.status !== "authenticated") return;
-    void syncRestFinishedLocalNotification(notificationParams);
-  }, [auth.status, notificationParams]);
-
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-    if (auth.status !== "authenticated") return;
-
-    const handle = CapacitorApp.addListener("appStateChange", ({ isActive }) => {
-      if (isActive) {
-        void cancelRestFinishedLocalNotification();
-        return;
-      }
-      void syncRestFinishedLocalNotification(notificationParams);
-    });
-
+    setRestTimerLifecycleEnabled(lifecycleActive);
     return () => {
-      void handle.then((h) => h.remove());
+      setRestTimerLifecycleEnabled(false);
     };
-  }, [auth.status, notificationParams]);
+  }, [lifecycleActive]);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    if (!lifecycleActive) return;
+    return attachRestTimerLocalNotificationListeners();
+  }, [lifecycleActive]);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    if (!lifecycleActive) return;
+    updateRestTimerNotificationParams(notificationParams);
+  }, [lifecycleActive, paramsKey, notificationParams]);
 }

@@ -1,0 +1,95 @@
+---
+description: Animations One More — mouvement, vitesse, dépassement (app sport)
+globs: client/src/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# Animations (One More)
+
+L'app met en avant le **mouvement** et le **dépassement**. Les animations doivent donner une sensation de **vitesse contrôlée** et d'**élan vers l'avant**, pas un effet décoratif lent ou « corporate ».
+
+## Direction et énergie
+
+| Contexte | Direction | Intention |
+|----------|-----------|-----------|
+| Entrée écran / hero / onboarding | `slide-in-from-bottom-*` ou `slide-in-from-right-*` | Avancer, prendre de l'élan |
+| Succès, record, level up | léger overshoot (`scale(1.06)` → `1`) + `translateY` négatif | Explosion contrôlée, dépassement |
+| Sortie / dismiss | `fade-out` court, parfois `slide-out-to-bottom-1` | Relâchement rapide, pas de fondu long |
+| Progression (barres XP, timer) | `ease-out` ou `ease-linear` selon le cas | Effort puis relâchement, ou régularité |
+
+Éviter : `zoom-in-95` comme animation principale, `duration-700+` sur des entrées UI, `ease-in-out` sur les apparitions (trop mou, pas assez « sprint »).
+
+## Durées cibles
+
+| Type | Durée | Easing |
+|------|-------|--------|
+| Micro-interaction (hover, toggle) | 150–200 ms | `ease-out` |
+| Entrée bloc / carte | 250–400 ms | `ease-out` |
+| Texte hero / onboarding | 350–500 ms | `ease-out` + stagger |
+| Célébration (trophée, streak) | 350–750 ms | `ease-out`, overshoot bref |
+| Barre de progression continue | 500–1000 ms | `ease-out` ou `linear` |
+
+Règle : **arrivée rapide, stabilisation nette**. On décélère à l'atterrissage, on n'accélère lentement.
+
+## Stack technique
+
+1. **Entrées standard** : `tw-animate-css` (`animate-in`, `fade-in-0`, `slide-in-from-*`, `duration-*`).
+2. **Stagger** : `[animation-delay:…ms]` + `[animation-fill-mode:both]` pour éviter le flash.
+3. **Texte hero** : mots en `inline-block` avec décalage (voir `AnimatedWords` dans [`OnboardingPage.tsx`](client/src/pages/OnboardingPage.tsx)).
+4. **Célébrations réutilisables** : keyframes dans [`index.css`](client/src/index.css) (`.streak-flame-anim`, `.celebration-count-anim`, `.league-promo-trophy-anim`).
+
+Pas de nouvelle lib d'animation (Framer Motion, etc.) sans décision explicite.
+
+## Patterns à copier
+
+```tsx
+// ✅ Entrée écran : élan vers le haut
+<div className="animate-in fade-in-0 slide-in-from-bottom-3 duration-400 [animation-fill-mode:both]">
+
+// ✅ Séquence hero : logo → mots → baseline → CTA (délais croissants)
+<h1><AnimatedWords text={UI.onboardingTitle} baseDelayMs={220} staggerMs={100} /></h1>
+<p className="animate-in fade-in-0 slide-in-from-bottom-2 duration-500 [animation-delay:520ms] [animation-fill-mode:both]">
+
+// ✅ Carte étape : une seule animation sur le conteneur (StepCard `animated`)
+<StepCard animated title={title}>…</StepCard>
+
+// ❌ Entrée molle, sans direction
+<div className="animate-in fade-in duration-700 ease-in-out">
+
+// ❌ Tout bounce / spring exagéré (hors célébration courte)
+<div className="animate-bounce duration-1000">
+```
+
+```css
+/* ✅ Célébration : overshoot + remontée (dépassement) */
+@keyframes celebration-pop {
+  0% { transform: scale(0.92) translateY(6px); opacity: 0.85; }
+  45% { transform: scale(1.08) translateY(-3px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+```
+
+## Accessibilité
+
+Toujours respecter `prefers-reduced-motion: reduce` :
+
+- Désactiver ou raccourcir les keyframes custom (voir `@media` dans `index.css`).
+- En TSX : tester `window.matchMedia('(prefers-reduced-motion: reduce)')` avant transitions longues (ex. [`RestSinceLastSetBar.tsx`](client/src/components/RestSinceLastSetBar.tsx)).
+- Si `reduce` : garder le contenu visible sans stagger ni slide.
+
+## Où animer (et où s'abstenir)
+
+| Animer | Ne pas animer |
+|--------|----------------|
+| Onboarding, auth, empty states, toasts succès | Listes longues à chaque scroll |
+| Titres hero, CTA principal, célébrations XP/PR | Chaque ligne de tableau / historique |
+| Barres XP, progression parrainage | Champs formulaire au focus |
+| Feedback sélection (border, ring, 200 ms) | Spinners (déjà `animate-spin`, suffisant) |
+
+## Checklist avant commit
+
+1. L'animation a une **direction** (pas fade seul).
+2. Durée ≤ 500 ms sauf barre de progression ou célébration.
+3. `ease-out` sur les entrées ; pas de bounce hors moment de victoire.
+4. Stagger ≤ 120 ms entre éléments.
+5. `prefers-reduced-motion` pris en compte si animation non triviale.

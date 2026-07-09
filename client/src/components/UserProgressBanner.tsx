@@ -9,7 +9,13 @@ import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 
-export function UserProgressBanner({ className }: { className?: string }) {
+export function UserProgressBanner({
+    className,
+    dataTour,
+}: {
+    className?: string
+    dataTour?: string
+}) {
     const { data: progress } = useUserProgressData();
     if (!progress) return null;
 
@@ -19,6 +25,7 @@ export function UserProgressBanner({ className }: { className?: string }) {
     return (
         <Link
             to="/profile"
+            data-tour={dataTour}
             onClick={() => {
                 void hapticImpact();
             }}

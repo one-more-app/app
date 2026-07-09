@@ -38,11 +38,18 @@ const ONBOARDING_TOUR_COMPLETE_KEY = "one-more-onboarding-tour-complete-v1";
 const ONBOARDING_POST_AUTH_REDIRECT_KEY =
   "one-more-onboarding-post-auth-redirect-v1";
 const ONBOARDING_GYM_PENDING_KEY = "one-more-onboarding-gym-pending-v1";
+const GYM_ONBOARDING_IN_ZONE_KEY = "one-more-gym-onboarding-in-zone-v1";
+const GYM_ONBOARDING_NAME_KEY = "one-more-gym-onboarding-name-v1";
+const GYM_LOCATION_PROMPT_DONE_KEY =
+  "one-more-gym-location-prompt-done-v1";
+const GYM_NOTIFICATIONS_PROMPT_DONE_KEY =
+  "one-more-gym-notifications-prompt-done-v1";
 const GYM_SETUP_DONE_KEY = "one-more-gym-setup-done-v1";
 const GYM_NOTIF_LAST_KEY = "one-more-gym-notif-last-v1";
 const THEME_PREFERENCE_KEY = "one-more-theme-preference-v1";
 const REST_TARGET_MS_KEY = "one-more-rest-target-ms-v1";
 const REST_COUNTER_TOUR_COMPLETE_KEY = "one-more-rest-counter-tour-complete-v1";
+const HOME_TOUR_COMPLETE_KEY = "one-more-home-tour-complete-v1";
 
 type LocalChangeKind =
   | "trackedExercise"
@@ -600,9 +607,6 @@ export function getOnboardingPostAuthRedirect(): string | null {
 
 export function needsOnboarding(): boolean {
   if (localStorage.getItem(ONBOARDING_V1_KEY) === "done") return false;
-  if (localStorage.getItem(ONBOARDING_GYM_PENDING_KEY) === "1") {
-    return true;
-  }
   if (localStorage.getItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY) === "1") {
     return true;
   }
@@ -623,6 +627,80 @@ export function setOnboardingGymPending(pending: boolean): void {
 
 export function clearOnboardingGymPending(): void {
   localStorage.removeItem(ONBOARDING_GYM_PENDING_KEY);
+}
+
+/** Purge l'état salle local (changement de compte). La vérité métier est côté API. */
+export function clearGymOnboardingLocalState(): void {
+  clearOnboardingGymPending();
+  clearGymOnboardingContext();
+  localStorage.removeItem(GYM_SETUP_DONE_KEY);
+}
+
+export function setGymOnboardingContext(
+  inZone: boolean,
+  gymName: string,
+): void {
+  localStorage.setItem(GYM_ONBOARDING_IN_ZONE_KEY, inZone ? "1" : "0");
+  localStorage.setItem(GYM_ONBOARDING_NAME_KEY, gymName);
+}
+
+export function getGymOnboardingContext(): {
+  inZone: boolean;
+  gymName: string;
+} | null {
+  const gymName = localStorage.getItem(GYM_ONBOARDING_NAME_KEY);
+  if (!gymName) return null;
+  return {
+    inZone: localStorage.getItem(GYM_ONBOARDING_IN_ZONE_KEY) === "1",
+    gymName,
+  };
+}
+
+export function clearGymOnboardingContext(): void {
+  localStorage.removeItem(GYM_ONBOARDING_IN_ZONE_KEY);
+  localStorage.removeItem(GYM_ONBOARDING_NAME_KEY);
+}
+
+export function isGymLocationPromptDone(): boolean {
+  if (localStorage.getItem(ONBOARDING_V1_KEY) === "done") return true;
+  return localStorage.getItem(GYM_LOCATION_PROMPT_DONE_KEY) === "1";
+}
+
+export function setGymLocationPromptDone(done: boolean): void {
+  if (done) {
+    localStorage.setItem(GYM_LOCATION_PROMPT_DONE_KEY, "1");
+  } else {
+    localStorage.removeItem(GYM_LOCATION_PROMPT_DONE_KEY);
+  }
+}
+
+export function isGymNotificationsPromptDone(): boolean {
+  if (localStorage.getItem(ONBOARDING_V1_KEY) === "done") return true;
+  return localStorage.getItem(GYM_NOTIFICATIONS_PROMPT_DONE_KEY) === "1";
+}
+
+export function setGymNotificationsPromptDone(done: boolean): void {
+  if (done) {
+    localStorage.setItem(GYM_NOTIFICATIONS_PROMPT_DONE_KEY, "1");
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("one-more:gym-notifications-prompt-done"),
+      );
+    }
+  } else {
+    localStorage.removeItem(GYM_NOTIFICATIONS_PROMPT_DONE_KEY);
+  }
+}
+
+export function setGymPermissionsPromptDone(done: boolean): void {
+  setGymNotificationsPromptDone(done);
+  setGymLocationPromptDone(done);
+}
+
+export function needsGymPermissionsPrompt(isNative: boolean): boolean {
+  if (!isGymNotificationsPromptDone()) return true;
+  if (isNative && !isGymLocationPromptDone()) return true;
+  return false;
 }
 
 export function isGymSetupDone(): boolean {
@@ -704,5 +782,21 @@ export function setRestCounterTourComplete(complete: boolean): void {
     localStorage.setItem(REST_COUNTER_TOUR_COMPLETE_KEY, "1");
   } else {
     localStorage.removeItem(REST_COUNTER_TOUR_COMPLETE_KEY);
+  }
+}
+
+export function isHomeTourComplete(): boolean {
+  try {
+    return localStorage.getItem(HOME_TOUR_COMPLETE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setHomeTourComplete(complete: boolean): void {
+  if (complete) {
+    localStorage.setItem(HOME_TOUR_COMPLETE_KEY, "1");
+  } else {
+    localStorage.removeItem(HOME_TOUR_COMPLETE_KEY);
   }
 }

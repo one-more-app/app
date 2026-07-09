@@ -14,13 +14,26 @@ export const mockGymPlace = {
   distanceM: 50,
 };
 
-export async function mockGymsApi(page: Page): Promise<void> {
-  let savedGym: typeof mockGymPlace & {
-    radiusM: number;
-    onboardingGymPending: boolean;
-    geofenceEnabled: boolean;
-    updatedAt: string;
-  } | null = null;
+export async function mockGymsApi(
+  page: Page,
+  options?: { seedGym?: { onboardingGymPending?: boolean } },
+): Promise<void> {
+  let savedGym:
+    | (typeof mockGymPlace & {
+        radiusM: number;
+        onboardingGymPending: boolean;
+        geofenceEnabled: boolean;
+        updatedAt: string;
+      })
+    | null = options?.seedGym
+    ? {
+        ...mockGymPlace,
+        radiusM: 120,
+        onboardingGymPending: options.seedGym.onboardingGymPending ?? false,
+        geofenceEnabled: true,
+        updatedAt: new Date().toISOString(),
+      }
+    : null;
 
   await page.route("**/gyms/search**", async (route) => {
     await route.fulfill({
@@ -138,7 +151,12 @@ export async function seedE2eApiOrigin(page: Page): Promise<void> {
   });
 }
 
-export async function mockCoreAuthenticatedApi(page: Page): Promise<void> {
+type MockGymsApiOptions = { seedGym?: { onboardingGymPending?: boolean } };
+
+export async function mockCoreAuthenticatedApi(
+  page: Page,
+  gymOptions?: MockGymsApiOptions,
+): Promise<void> {
   await seedE2eApiOrigin(page);
   await page.route("**/auth/refresh", async (route) => {
     await route.fulfill({
@@ -204,10 +222,25 @@ export async function mockCoreAuthenticatedApi(page: Page): Promise<void> {
     });
   });
 
-  await mockGymsApi(page);
+  await page.route("**/league/browse-lookups**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        byZone: {},
+        targetInZone: {},
+        equipmentInPath: {},
+      }),
+    });
+  });
+
+  await mockGymsApi(page, gymOptions);
 }
 
-export async function mockAuthApi(page: Page): Promise<void> {
+export async function mockAuthApi(
+  page: Page,
+  gymOptions?: MockGymsApiOptions,
+): Promise<void> {
   await page.route("**/auth/identify", async (route) => {
     await route.fulfill({
       status: 200,
@@ -244,7 +277,7 @@ export async function mockAuthApi(page: Page): Promise<void> {
     });
   });
 
-  await mockCoreAuthenticatedApi(page);
+  await mockCoreAuthenticatedApi(page, gymOptions);
 
   await page.route("**/tracked-exercises**", async (route) => {
     if (route.request().method() !== "GET") {

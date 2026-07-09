@@ -1,31 +1,47 @@
-import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker'
-import { OnboardingVideoShell } from '@/components/OnboardingVideoShell'
-import { StepCard } from '@/components/StepCard'
-import { Button } from '@/components/ui/button'
-import { useUserProfileData } from '@/hooks/use-api-data'
-import { useAuth } from '@/hooks/use-auth'
-import { OnboardingGymStep } from '@/components/onboarding/OnboardingGymStep'
-import { resolvePostAuthNavigation } from '@/lib/post-auth-navigation'
+import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker';
+import { OnboardingGymPermissionsStep } from '@/components/onboarding/OnboardingGymPermissionsStep'
+import { OnboardingGymStep } from '@/components/onboarding/OnboardingGymStep';
+import { OnboardingGymWaitStep } from '@/components/onboarding/OnboardingGymWaitStep';
+import { OnboardingIntro } from '@/components/onboarding/OnboardingIntro';
+import { onboardingEntrance, onboardingStepCardClassName, OnboardingReveal, OnboardingStepLayout } from '@/components/onboarding/onboarding-motion';
+import { OnboardingShell } from '@/components/OnboardingShell';
+import { StepCard } from '@/components/StepCard';
+import { Button } from '@/components/ui/button';
+import { useUserProfileData } from '@/hooks/use-api-data';
+import { useAuth } from '@/hooks/use-auth';
+import { useMutateUserGym, useUserGymData } from '@/hooks/use-user-gym-data';
+import { unlockGymAccess } from '@/lib/gym-onboarding';
+import { resolveGymOnboardingStep, gymOnboardingPath } from '@/lib/gym-onboarding-route';
+import { fetchUserGym } from '@/lib/gyms-api';
 import {
+    isOnboardingGymDevPreview,
+    isGymPermissionsNativeContext,
+    isOnboardingGymFromSettings,
+    isGymReselectOnboarding,
+    seedOnboardingGymDevState,
+} from '@/lib/onboarding-gym-dev';
+import { resolvePostAuthNavigation } from '@/lib/post-auth-navigation';
+import {
+    getGymOnboardingContext,
     getOnboardingPostAuthRedirect,
     getUserProfile,
     hasPersistedUserProfile,
     markOnboardingDone,
-    needsOnboarding,
+    setGymPermissionsPromptDone,
+    setOnboardingFirstExercisePending,
     setOnboardingPostAuthRedirect,
-    setGymSetupDone,
-    setUserProfile,
-} from '@/lib/storage'
-import { UI } from '@/lib/translations'
-import { cn } from '@/lib/utils'
-import { AuthPage } from '@/pages/AuthPage'
+    setUserProfile
+} from '@/lib/storage';
+import { UI } from '@/lib/translations';
+import { cn } from '@/lib/utils';
 import {
     Mars,
     Venus
-} from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useSWRConfig } from 'swr'
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSWRConfig } from 'swr';
+import { AuthPage } from '@/pages/AuthPage';
 
 const BODY_TOTAL = 3
 
@@ -45,42 +61,50 @@ function OnboardingGenderRadios({
             { id: 'female', label: UI.female, Icon: Venus },
         ]
     return (
-        <div
-            className="grid grid-cols-2 gap-3"
-            role="radiogroup"
-            aria-label={UI.gender}
-        >
-            {choices.map(({ id, label, Icon }) => {
-                const selected = value === id
-                return (
-                    <button
-                        key={id}
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        onClick={() => onChange(id)}
-                        className={cn(
-                            'flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition-all duration-200',
-                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                            selected
-                                ? 'border-accent bg-accent/15 shadow-md ring-2 ring-accent/40'
-                                : 'border-border/80 bg-muted/20 hover:bg-muted/40 hover:border-border',
-                        )}
-                    >
-                        <div
+        <OnboardingReveal delayMs={160}>
+            <div
+                className="grid grid-cols-2 gap-3"
+                role="radiogroup"
+                aria-label={UI.gender}
+            >
+                {choices.map(({ id, label, Icon }, index) => {
+                    const selected = value === id
+                    return (
+                        <button
+                            key={id}
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            onClick={() => onChange(id)}
                             className={cn(
-                                'flex size-16 items-center justify-center text-foreground/80',
+                                'flex w-full flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition-all duration-200 ease-out',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                                onboardingEntrance(
+                                    'animate-in fade-in-0 slide-in-from-left-3 duration-350',
+                                ),
+                                selected
+                                    ? 'border-accent bg-accent/15 shadow-md ring-2 ring-accent/40'
+                                    : 'border-border/80 bg-muted/20 hover:bg-muted/40 hover:border-border',
                             )}
+                            style={{
+                                animationDelay: `${200 + index * 70}ms`,
+                            }}
                         >
-                            <Icon className="size-9 stroke-[1.75]" aria-hidden />
-                        </div>
-                        <span className="text-sm font-semibold font-one-more uppercase tracking-wide">
-                            {label}
-                        </span>
-                    </button>
-                )
-            })}
-        </div>
+                            <div
+                                className={cn(
+                                    'flex size-16 items-center justify-center text-foreground/80',
+                                )}
+                            >
+                                <Icon className="size-9 stroke-[1.75]" aria-hidden />
+                            </div>
+                            <span className="text-sm font-semibold font-one-more uppercase tracking-wide">
+                                {label}
+                            </span>
+                        </button>
+                    )
+                })}
+            </div>
+        </OnboardingReveal>
     )
 }
 
@@ -88,18 +112,36 @@ function OnboardingPage() {
     const navigate = useNavigate()
     const { mutate } = useSWRConfig()
     const auth = useAuth()
+    const { data: userGym, isLoading: userGymLoading } = useUserGymData()
+    const mutateUserGym = useMutateUserGym()
     const { data: profile } = useUserProfileData()
     const [searchParams] = useSearchParams()
     const rawStep = searchParams.get('step')
+    const normalizedStep =
+        rawStep === 'gym-notifications' || rawStep === 'gym-location'
+            ? 'gym-permissions'
+            : rawStep
     const step =
-        rawStep === 'body'
+        normalizedStep === 'body'
             ? 'body'
-            : rawStep === 'account'
+            : normalizedStep === 'account'
                 ? 'account'
-                : rawStep === 'gym'
+                : normalizedStep === 'gym'
                     ? 'gym'
-                    : 'intro'
+                    : normalizedStep === 'gym-permissions'
+                        ? 'gym-permissions'
+                        : normalizedStep === 'gym-wait'
+                            ? 'gym-wait'
+                            : 'intro'
     const bodyQRaw = searchParams.get('bodyQ')
+    const fromSettings = isOnboardingGymFromSettings(
+        normalizedStep,
+        searchParams.get('from'),
+    )
+    const gymReselect = isGymReselectOnboarding(
+        normalizedStep,
+        searchParams.get('reselect'),
+    )
     const bodyQ = Math.min(
         BODY_TOTAL - 1,
         Math.max(0, Number.parseInt(bodyQRaw ?? '0', 10) || 0),
@@ -112,11 +154,7 @@ function OnboardingPage() {
     const [weightKg, setWeightKg] = useState(75)
     const [heightCm, setHeightCm] = useState(175)
     const [gender, setGender] = useState<'male' | 'female'>('male')
-    useEffect(() => {
-        if (!needsOnboarding()) {
-            navigate(auth.status === 'authenticated' ? '/home' : '/auth', { replace: true })
-        }
-    }, [auth.status, navigate, step])
+    const [unlockingGym, setUnlockingGym] = useState(false)
 
     useEffect(() => {
         if (step !== 'body') return
@@ -186,28 +224,132 @@ function OnboardingPage() {
         })
     }
 
-    const skipGymStep = async () => {
-        setGymSetupDone(true)
+    const handleGymSaved = async () => {
+        await mutateUserGym()
+        if (fromSettings) {
+            navigate('/settings', { replace: true })
+            return
+        }
+        navigate('/onboarding?step=gym-permissions', { replace: true })
+    }
+
+    const goChangeGym = () => {
+        navigate('/onboarding?step=gym&reselect=1', { replace: true })
+    }
+
+    const completeGymAfterPermissions = async () => {
+        let gym = userGym
+        if (!gym) {
+            try {
+                gym = await fetchUserGym()
+            } catch {
+                gym = null
+            }
+        }
+        if (!gym) {
+            navigate('/onboarding?step=gym', { replace: true })
+            return
+        }
+
+        if (gym.onboardingGymPending) {
+            navigate('/onboarding?step=gym-wait', { replace: true })
+            return
+        }
+
+        setOnboardingFirstExercisePending(true)
         const nextPath = getOnboardingPostAuthRedirect() ?? '/home'
         await finishOnboarding(nextPath)
     }
 
-    const completeGymAtGym = async () => {
+    const completeGymPermissions = async () => {
+        setGymPermissionsPromptDone(true)
+        await completeGymAfterPermissions()
+    }
+
+    const continueAfterGymResolved = async () => {
         const nextPath = getOnboardingPostAuthRedirect() ?? '/home'
         await finishOnboarding(nextPath)
     }
 
-    const deferGymOnboarding = (_gymName: string) => {
-        navigate('/home', { replace: true })
+    const navigateToResolvedGymStep = (
+        resolved: ReturnType<typeof resolveGymOnboardingStep>,
+    ) => {
+        if (!resolved) return false
+        navigate(gymOnboardingPath(resolved), { replace: true })
+        return true
     }
+
+    const handleGymUnlock = async () => {
+        setUnlockingGym(true)
+        try {
+            await unlockGymAccess()
+            const resolvedPath = await resolvePostAuthNavigation('/home')
+            navigate(resolvedPath, { replace: true })
+        } finally {
+            setUnlockingGym(false)
+        }
+    }
+
+    useEffect(() => {
+        if (rawStep === 'gym-notifications' || rawStep === 'gym-location') {
+            navigate('/onboarding?step=gym-permissions', { replace: true })
+        }
+    }, [navigate, rawStep])
+
+    useEffect(() => {
+        if (step !== 'gym-permissions' && step !== 'gym-wait') return
+        if (isOnboardingGymDevPreview(step)) {
+            seedOnboardingGymDevState(step)
+            return
+        }
+        if (userGymLoading) return
+        if (step === 'gym-wait') return
+        if (!userGym) {
+            navigate('/onboarding?step=gym', { replace: true })
+        }
+    }, [navigate, step, userGym, userGymLoading])
+
+    useEffect(() => {
+        if (isOnboardingGymDevPreview(step)) return
+        if ((fromSettings || gymReselect) && step === 'gym') return
+        if (auth.status !== 'authenticated') return
+        if (userGymLoading) return
+        if (
+            step === 'gym-permissions' ||
+            step === 'gym-wait' ||
+            step === 'account'
+        ) {
+            return
+        }
+        const resolved = resolveGymOnboardingStep(userGym ?? null, {
+            permissionsNative: isGymPermissionsNativeContext(step),
+        })
+        if (resolved === 'gym-wait') {
+            navigate('/onboarding?step=gym-wait', { replace: true })
+            return
+        }
+        if (resolved === 'gym-permissions') {
+            navigate('/onboarding?step=gym-permissions', { replace: true })
+            return
+        }
+        if (resolved === null && step === 'gym' && !fromSettings) {
+            void continueAfterGymResolved()
+        }
+    }, [auth.status, navigate, step, fromSettings, gymReselect, userGym, userGymLoading])
 
     useEffect(() => {
         if (step !== 'account') return
         if (auth.status !== 'authenticated') return
-        navigate('/onboarding?step=gym', { replace: true })
-        // On réagit seulement au passage en step=account + auth.
+        if (userGymLoading) return
+
+        const resolved = resolveGymOnboardingStep(userGym ?? null, {
+            permissionsNative: isGymPermissionsNativeContext('gym'),
+        })
+        if (navigateToResolvedGymStep(resolved)) return
+        void continueAfterGymResolved()
+        // On réagit au passage en step=account + auth + chargement salle API.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [step, auth.status])
+    }, [step, auth.status, userGym, userGymLoading])
 
     useEffect(() => {
         if (step !== 'account') return
@@ -224,45 +366,17 @@ function OnboardingPage() {
     }, [step, auth.status, navigate, searchParams])
 
     return (
-        <OnboardingVideoShell>
+        <OnboardingShell>
             {step === 'intro' ? (
-                <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-                    <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-10 pb-6">
-                        <div className="space-y-5 rounded-3xl bg-black/30 p-6 backdrop-blur-md animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-accent/50 bg-accent/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent">
-                                <span>One More Method</span>
-                            </div>
-                            <div className="space-y-2">
-                                <h1 className="text-4xl sm:text-5xl leading-tight font-one-more font-semibold text-white uppercase italic">
-                                    {UI.onboardingTitle}
-                                </h1>
-                                <p className="text-md text-white/80">
-                                    {UI.onboardingDescription}
-                                </p>
-                            </div>
-                        </div>
-
-                        {auth.lastError && (
-                            <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                                {auth.lastError}
-                            </div>
-                        )}
-                    </main>
-
-                    <div className="px-4 pb-4 mt-auto">
-                        <div className="mx-auto max-w-2xl space-y-3 animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
-                            <Button variant="accent" className="w-full" onClick={() => goBody(0)}>
-                                {UI.continue}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
+                <OnboardingIntro
+                    onContinue={() => goBody(0)}
+                    errorMessage={auth.lastError}
+                />
             ) : step === 'body' ? (
-                <main className="relative z-10 mx-auto w-full max-w-2xl px-4 py-8">
+                <OnboardingStepLayout>
                     <StepCard
                         key={`body-${bodyQ}`}
-                        animated
-                        className="shadow-2xl"
+                        className={onboardingStepCardClassName}
                         onBack={backBody}
                         backLabel={UI.back}
                         stepLabel={stepIndicator}
@@ -270,12 +384,12 @@ function OnboardingPage() {
                         title={bodyStepTitle}
                     >
                         {bodyQ === 0 && (
-                            <div className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-                                <div>
+                            <div className="space-y-3">
+                                <OnboardingReveal delayMs={80}>
                                     <p className="text-sm text-muted-foreground">
                                         {UI.onboardingQuestionGenderHint}
                                     </p>
-                                </div>
+                                </OnboardingReveal>
                                 <OnboardingGenderRadios
                                     value={gender}
                                     onChange={setGender}
@@ -284,43 +398,48 @@ function OnboardingPage() {
                         )}
 
                         {bodyQ === 1 && (
-                            <div className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-                                <div>
+                            <div className="space-y-3">
+                                <OnboardingReveal delayMs={80}>
                                     <p className="text-sm text-muted-foreground">
                                         {UI.onboardingQuestionWeightHint}
                                     </p>
-                                </div>
-                                <HorizontalWheelPicker
-                                    label={UI.bodyWeight}
-                                    unit=""
-                                    min={30}
-                                    max={300}
-                                    step={0.5}
-                                    value={weightKg}
-                                    onChange={setWeightKg}
-                                />
+                                </OnboardingReveal>
+                                <OnboardingReveal delayMs={160}>
+                                    <HorizontalWheelPicker
+                                        label={UI.bodyWeight}
+                                        unit=""
+                                        min={30}
+                                        max={300}
+                                        step={0.5}
+                                        value={weightKg}
+                                        onChange={setWeightKg}
+                                    />
+                                </OnboardingReveal>
                             </div>
                         )}
 
                         {bodyQ === 2 && (
-                            <div className="space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-                                <div>
+                            <div className="space-y-3">
+                                <OnboardingReveal delayMs={80}>
                                     <p className="text-sm text-muted-foreground">
                                         {UI.onboardingQuestionHeightHint}
                                     </p>
-                                </div>
-                                <HorizontalWheelPicker
-                                    label={UI.height}
-                                    unit=""
-                                    min={100}
-                                    max={250}
-                                    step={1}
-                                    value={heightCm}
-                                    onChange={setHeightCm}
-                                />
+                                </OnboardingReveal>
+                                <OnboardingReveal delayMs={160}>
+                                    <HorizontalWheelPicker
+                                        label={UI.height}
+                                        unit=""
+                                        min={100}
+                                        max={250}
+                                        step={1}
+                                        value={heightCm}
+                                        onChange={setHeightCm}
+                                    />
+                                </OnboardingReveal>
                             </div>
                         )}
 
+                        <OnboardingReveal delayMs={240}>
                         <Button
                             onClick={advanceBody}
                             className="w-full"
@@ -331,18 +450,44 @@ function OnboardingPage() {
                         >
                             {bodyQ === BODY_TOTAL - 1 ? UI.continue : UI.next}
                         </Button>
+                        </OnboardingReveal>
                     </StepCard>
-                </main>
+                </OnboardingStepLayout>
             ) : step === 'account' ? (
                 <AuthPage embedded />
             ) : step === 'gym' ? (
                 <OnboardingGymStep
-                    onCompleteAtGym={() => void completeGymAtGym()}
-                    onDeferred={deferGymOnboarding}
-                    onSkip={() => void skipGymStep()}
+                    fromSettings={fromSettings}
+                    onCancel={
+                        fromSettings
+                            ? () => navigate('/settings', { replace: true })
+                            : undefined
+                    }
+                    onGymSaved={() => void handleGymSaved()}
+                />
+            ) : step === 'gym-permissions' ? (
+                <OnboardingGymPermissionsStep
+                    gymName={
+                        isOnboardingGymDevPreview(step)
+                            ? (getGymOnboardingContext()?.gymName ?? '')
+                            : (userGym?.name ?? '')
+                    }
+                    onContinue={() => void completeGymPermissions()}
+                    onChangeGym={goChangeGym}
+                />
+            ) : step === 'gym-wait' ? (
+                <OnboardingGymWaitStep
+                    initialGymName={
+                        isOnboardingGymDevPreview(step)
+                            ? (getGymOnboardingContext()?.gymName ?? '')
+                            : (userGym?.name ?? '')
+                    }
+                    onUnlock={() => void handleGymUnlock()}
+                    onChangeGym={goChangeGym}
+                    unlocking={unlockingGym}
                 />
             ) : null}
-        </OnboardingVideoShell>
+        </OnboardingShell>
     )
 }
 

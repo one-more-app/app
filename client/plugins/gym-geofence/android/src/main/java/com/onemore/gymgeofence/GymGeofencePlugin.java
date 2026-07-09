@@ -1,5 +1,6 @@
 package com.onemore.gymgeofence;
 
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -9,17 +10,31 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 import androidx.core.app.NotificationCompat;
+import com.getcapacitor.JSObject;
+import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 
-@CapacitorPlugin(name = "GymGeofence")
+@CapacitorPlugin(
+    name = "GymGeofence",
+    permissions = {
+        @Permission(
+            strings = { Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION },
+            alias = "location"
+        ),
+        @Permission(strings = { Manifest.permission.ACCESS_BACKGROUND_LOCATION }, alias = "backgroundLocation"),
+    }
+)
 public class GymGeofencePlugin extends Plugin {
 
     private static final String PREFS = "gym_geofence_prefs";
@@ -39,6 +54,53 @@ public class GymGeofencePlugin extends Plugin {
     }
 
     @PluginMethod
+    public void checkPermissions(PluginCall call) {
+        call.resolve(buildPermissionResult());
+    }
+
+    @PluginMethod
+    public void requestPermissions(PluginCall call) {
+        if (getPermissionState("location") != PermissionState.GRANTED) {
+            requestPermissionForAlias("location", call, "permissionsCallback");
+            return;
+        }
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+            getPermissionState("backgroundLocation") != PermissionState.GRANTED
+        ) {
+            requestPermissionForAlias("backgroundLocation", call, "permissionsCallback");
+            return;
+        }
+        call.resolve(buildPermissionResult());
+    }
+
+    @PermissionCallback
+    private void permissionsCallback(PluginCall call) {
+        if (getPermissionState("location") != PermissionState.GRANTED) {
+            call.resolve(buildPermissionResult());
+            return;
+        }
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+            getPermissionState("backgroundLocation") != PermissionState.GRANTED
+        ) {
+            requestPermissionForAlias("backgroundLocation", call, "permissionsCallback");
+            return;
+        }
+        call.resolve(buildPermissionResult());
+    }
+
+    @PluginMethod
+    public void openSettings(PluginCall call) {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        Uri uri = Uri.fromParts("package", getContext().getPackageName(), null);
+        intent.setData(uri);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(intent);
+        call.resolve();
+    }
+
+    @PluginMethod
     public void register(PluginCall call) {
         Double lat = call.getDouble("lat");
         Double lng = call.getDouble("lng");
@@ -50,6 +112,12 @@ public class GymGeofencePlugin extends Plugin {
 
         if (lat == null || lng == null || radiusM == null) {
             call.reject("lat, lng et radiusM sont requis.");
+            return;
+        }
+
+        JSObject permissions = buildPermissionResult();
+        if (!permissions.getBoolean("ready", false)) {
+            call.reject("Permissions de localisation insuffisantes.", "NOT_AUTHORIZED");
             return;
         }
 
@@ -143,6 +211,23 @@ public class GymGeofencePlugin extends Plugin {
         if (manager != null) {
             manager.notify(NOTIFICATION_ID, builder.build());
         }
+    }
+
+    private JSObject buildPermissionResult() {
+        boolean locationGranted = getPermissionState("location") == PermissionState.GRANTED;
+        boolean backgroundGranted =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+            getPermissionState("backgroundLocation") == PermissionState.GRANTED;
+
+        JSObject ret = new JSObject();
+        ret.put("ready", locationGranted && backgroundGranted);
+        ret.put("location", locationGranted ? "granted" : "denied");
+        ret.put("backgroundLocation", backgroundGranted ? "granted" : "denied");
+        ret.put(
+            "needsSettings",
+            locationGranted && !backgroundGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+        );
+        return ret;
     }
 
     private void ensureNotificationChannel() {

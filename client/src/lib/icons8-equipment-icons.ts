@@ -99,10 +99,10 @@ const EQUIPMENT_ICONS: Record<string, Icons8EquipmentIconId> = {
     'ez barbell': 'ez-curl-bar',
     'trap bar': 'deadlift',
 
-    machines_lever_smith: 'gym-bench',
+    machines_lever_smith: 'bench-press',
     'smith machine': 'bench-press',
-    'leverage machine': 'gym-bench',
-    machine: 'gym-bench',
+    'leverage machine': 'bench-press',
+    machine: 'bench-press',
 
     dumbbell: 'dumbbell',
     kettlebell: 'gym-weights',

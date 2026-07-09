@@ -7,12 +7,13 @@ import {
   waitForRestCounterTourSpotlightReady,
 } from "@/lib/rest-counter-tour-spotlight";
 import {
+  isOnboardingFirstExercisePending,
+  isOnboardingTourComplete,
   isRestCounterTourComplete,
   setRestCounterTourComplete,
 } from "@/lib/storage";
 import { UI } from "@/lib/translations";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { EVENTS, type EventData, type Step } from "react-joyride";
 
 type RestCounterTourProps = {
@@ -20,9 +21,8 @@ type RestCounterTourProps = {
   barVisible: boolean;
 };
 
-function isOtherAppTourActive(searchParams: URLSearchParams): boolean {
-  const tour = searchParams.get("tour");
-  return tour === "onboarding" || tour === "onboarding-first";
+function isOtherAppTourActive(): boolean {
+  return isOnboardingFirstExercisePending() && !isOnboardingTourComplete();
 }
 
 function endTourQuickEditStep2(): void {
@@ -31,10 +31,9 @@ function endTourQuickEditStep2(): void {
 }
 
 export function RestCounterTour({ barVisible }: RestCounterTourProps) {
-  const [searchParams] = useSearchParams();
   const [domReady, setDomReady] = useState(false);
 
-  const otherTourActive = isOtherAppTourActive(searchParams);
+  const otherTourActive = isOtherAppTourActive();
   const tourEligible =
     barVisible && !isRestCounterTourComplete() && !otherTourActive;
 

@@ -1,139 +1,200 @@
+import { GymOnboardingPermissionRow } from "@/components/onboarding/GymOnboardingPermissionRow";
+import { GymChangeDialog } from "@/components/settings/GymChangeDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { subscribeAppStateChange } from "@/lib/app-state-listener";
 import {
-  deleteUserGym,
-  fetchUserGym,
-  searchGyms,
-  upsertUserGym,
-  type GymPlace,
-  type UserGym,
-} from "@/lib/gyms-api";
-import {
+  getGymGeofencePermissions,
+  openGymGeofenceSettings,
+  registerGymGeofenceIfPermitted,
   registerGymGeofence,
+  requestGymGeofencePermissions,
   unregisterGymGeofence,
+  GymGeofencePermissionError,
 } from "@/lib/gym-geofence";
+import { useMutateUserGym, useUserGymData } from "@/hooks/use-user-gym-data";
+import { deleteUserGym, upsertUserGym } from "@/lib/gyms-api";
+import { isGymPermissionsDevWebPreview } from "@/lib/onboarding-gym-dev";
+import {
+  isPushPermissionGranted,
+  registerPushIfPermitted,
+  requestPushPermission,
+} from "@/lib/push-notifications";
 import { UI } from "@/lib/translations";
 import { Capacitor } from "@capacitor/core";
-import { Geolocation } from "@capacitor/geolocation";
-import { Loader2, MapPin, Search } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Bell, Loader2, MapPin } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 export function GymSettingsCard() {
-  const [gym, setGym] = useState<UserGym | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [results, setResults] = useState<GymPlace[]>([]);
-  const [searching, setSearching] = useState(false);
+  const location = useLocation();
+  const { data: gym, isLoading: loading } = useUserGymData();
+  const mutateUserGym = useMutateUserGym();
   const isNative = Capacitor.isNativePlatform();
+  const isDevWebPreview = isGymPermissionsDevWebPreview();
 
-  const loadGym = useCallback(async () => {
-    setLoading(true);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  const [notificationsOn, setNotificationsOn] = useState(false);
+  const [locationOn, setLocationOn] = useState(false);
+  const [busyNotifications, setBusyNotifications] = useState(false);
+  const [busyLocation, setBusyLocation] = useState(false);
+  const [geofenceNeedsSettings, setGeofenceNeedsSettings] = useState(false);
+  const wasBackgroundedRef = useRef(false);
+
+  const registerGeofenceOrNotify = useCallback(async (saved: NonNullable<typeof gym>) => {
+    setGeofenceNeedsSettings(false);
     try {
-      const data = await fetchUserGym();
-      setGym(data);
-    } catch {
-      setGym(null);
-    } finally {
-      setLoading(false);
+      await registerGymGeofence({
+        lat: saved.lat,
+        lng: saved.lng,
+        radiusM: saved.radiusM,
+        gymName: saved.name,
+        onboardingGymPending: saved.onboardingGymPending,
+      });
+    } catch (err) {
+      if (err instanceof GymGeofencePermissionError) {
+        toast.error(UI.gymGeofencePermissionsDenied);
+        setGeofenceNeedsSettings(err.needsSettings);
+        return;
+      }
+      throw err;
     }
   }, []);
 
-  useEffect(() => {
-    void loadGym();
-  }, [loadGym]);
-
-  const runSearch = useCallback(async () => {
-    setSearching(true);
-    try {
-      let lat: number | undefined;
-      let lng: number | undefined;
-      if (isNative) {
-        const perm = await Geolocation.checkPermissions();
-        if (perm.location === "granted") {
-          const pos = await Geolocation.getCurrentPosition();
-          lat = pos.coords.latitude;
-          lng = pos.coords.longitude;
-        }
-      }
-      const items = await searchGyms({
-        q: searchQuery.trim() || undefined,
-        lat,
-        lng,
-      });
-      setResults(items);
-    } catch {
-      setResults([]);
-      toast.error(UI.gymOnboardingNoResults);
-    } finally {
-      setSearching(false);
-    }
-  }, [isNative, searchQuery]);
-
-  useEffect(() => {
-    if (!editing || !searchQuery.trim()) return;
-    const timer = window.setTimeout(() => {
-      void runSearch();
-    }, 300);
-    return () => window.clearTimeout(timer);
-  }, [editing, searchQuery, runSearch]);
-
-  const handleSelectGym = async (place: GymPlace) => {
-    try {
-      const saved = await upsertUserGym({
-        placeId: place.placeId,
-        name: place.name,
-        address: place.address,
-        lat: place.lat,
-        lng: place.lng,
-        radiusM: 120,
-        geofenceEnabled: gym?.geofenceEnabled ?? true,
-        onboardingGymPending: gym?.onboardingGymPending ?? false,
-      });
-      setGym(saved);
-      setEditing(false);
-      if (isNative && saved.geofenceEnabled) {
-        await registerGymGeofence({
-          lat: saved.lat,
-          lng: saved.lng,
-          radiusM: saved.radiusM,
-          gymName: saved.name,
-          onboardingGymPending: saved.onboardingGymPending,
-        });
-      }
-      toast.success(UI.gymSettingsSaved);
-    } catch {
-      toast.error("Impossible d'enregistrer la salle.");
-    }
-  };
-
-  const handleToggleGeofence = async (enabled: boolean) => {
-    if (!gym) return;
-    try {
+  const syncGeofenceEnabled = useCallback(
+    async (enabled: boolean) => {
+      if (!gym) return null;
       const saved = await upsertUserGym({
         ...gym,
         geofenceEnabled: enabled,
       });
-      setGym(saved);
-      if (isNative) {
-        if (enabled) {
-          await registerGymGeofence({
-            lat: saved.lat,
-            lng: saved.lng,
-            radiusM: saved.radiusM,
-            gymName: saved.name,
-            onboardingGymPending: saved.onboardingGymPending,
-          });
-        } else {
-          await unregisterGymGeofence();
-        }
+      await mutateUserGym();
+      if (!isNative) return saved;
+      if (enabled) {
+        await registerGeofenceOrNotify(saved);
+      } else {
+        setGeofenceNeedsSettings(false);
+        await unregisterGymGeofence();
       }
+      return saved;
+    },
+    [gym, isNative, mutateUserGym, registerGeofenceOrNotify],
+  );
+
+  const refreshPermissionState = useCallback(async () => {
+    const pushGranted = await isPushPermissionGranted();
+    if (pushGranted) {
+      await registerPushIfPermitted();
+    }
+    setNotificationsOn(pushGranted);
+
+    if (!isNative) {
+      setLocationOn(false);
+      return;
+    }
+
+    const locationStatus = await getGymGeofencePermissions();
+    const geofenceReady = locationStatus.ready && (gym?.geofenceEnabled ?? false);
+    if (geofenceReady && gym?.geofenceEnabled) {
+      await registerGymGeofenceIfPermitted({
+        lat: gym.lat,
+        lng: gym.lng,
+        radiusM: gym.radiusM,
+        gymName: gym.name,
+        onboardingGymPending: gym.onboardingGymPending,
+      });
+      setLocationOn(true);
+      setGeofenceNeedsSettings(false);
+    } else {
+      setLocationOn(false);
+    }
+  }, [gym, isNative]);
+
+  useEffect(() => {
+    if (!gym) return;
+    void refreshPermissionState();
+  }, [gym, refreshPermissionState, location.pathname]);
+
+  useEffect(() => {
+    if (!isNative) return;
+
+    return subscribeAppStateChange((isActive) => {
+      if (!isActive) {
+        wasBackgroundedRef.current = true;
+        return;
+      }
+      if (!wasBackgroundedRef.current) return;
+      void refreshPermissionState();
+    });
+  }, [isNative, refreshPermissionState]);
+
+  const openGymPicker = () => {
+    setPickerOpen(true);
+  };
+
+  const handleGymSaved = async () => {
+    await mutateUserGym();
+    toast.success(UI.gymSettingsSaved);
+  };
+
+  const handleNotificationsToggle = async (checked: boolean) => {
+    if (!checked || busyNotifications) {
+      setNotificationsOn(false);
+      return;
+    }
+    if (isDevWebPreview) {
+      setNotificationsOn(true);
+      return;
+    }
+    setBusyNotifications(true);
+    try {
+      const granted = await requestPushPermission();
+      if (granted) {
+        await registerPushIfPermitted();
+      }
+      setNotificationsOn(granted);
+    } finally {
+      setBusyNotifications(false);
+    }
+  };
+
+  const handleLocationToggle = async (checked: boolean) => {
+    if (!gym || busyLocation) return;
+    if (!checked) {
+      setLocationOn(false);
+      try {
+        await syncGeofenceEnabled(false);
+      } catch {
+        toast.error(UI.gymSettingsUpdateError);
+      }
+      return;
+    }
+    if (isDevWebPreview) {
+      setLocationOn(true);
+      return;
+    }
+    if (!isNative) {
+      setLocationOn(false);
+      return;
+    }
+    setBusyLocation(true);
+    setGeofenceNeedsSettings(false);
+    try {
+      const status = await requestGymGeofencePermissions();
+      if (!status.ready) {
+        setLocationOn(false);
+        setGeofenceNeedsSettings(status.needsSettings);
+        return;
+      }
+      await syncGeofenceEnabled(true);
+      setLocationOn(true);
     } catch {
-      toast.error("Impossible de mettre à jour le rappel.");
+      toast.error(UI.gymSettingsUpdateError);
+      setLocationOn(false);
+    } finally {
+      setBusyLocation(false);
     }
   };
 
@@ -142,12 +203,19 @@ export function GymSettingsCard() {
     try {
       await deleteUserGym();
       if (isNative) await unregisterGymGeofence();
-      setGym(null);
+      await mutateUserGym();
+      setNotificationsOn(false);
+      setLocationOn(false);
       toast.success(UI.gymSettingsRemoved);
     } catch {
-      toast.error("Impossible de retirer la salle.");
+      toast.error(UI.gymSettingsRemoveError);
     }
   };
+
+  const allRemindersActive = isNative
+    ? notificationsOn && locationOn
+    : notificationsOn;
+  const showRemindersBlock = Boolean(gym) && !allRemindersActive;
 
   if (loading) {
     return (
@@ -166,88 +234,99 @@ export function GymSettingsCard() {
     <Card id="gym-settings">
       <CardHeader>
         <CardTitle>{UI.gymSettingsTitle}</CardTitle>
+        <p className="text-sm text-muted-foreground">{UI.gymSettingsDescription}</p>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!gym && !editing ? (
+        {!gym ? (
           <p className="text-sm text-muted-foreground">{UI.gymSettingsEmpty}</p>
-        ) : null}
-
-        {gym && !editing ? (
-          <div className="space-y-3">
-            <div className="rounded-xl border border-border/60 px-3 py-3">
-              <p className="font-medium">{gym.name}</p>
-              {gym.address ? (
-                <p className="text-sm text-muted-foreground">{gym.address}</p>
-              ) : null}
-            </div>
-            {isNative ? (
-              <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 px-3 py-3">
-                <Label htmlFor="gym-geofence-toggle" className="text-sm font-normal">
-                  {UI.gymSettingsGeofenceToggle}
-                </Label>
-                <Switch
-                  id="gym-geofence-toggle"
-                  checked={gym.geofenceEnabled}
-                  onCheckedChange={(v) => void handleToggleGeofence(v)}
-                />
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-
-        {editing ? (
-          <div className="space-y-3">
-            <div className="relative">
-              <Search
-                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden
-              />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={UI.gymOnboardingSearchPlaceholder}
-                className="pl-9"
-              />
-            </div>
-            <Button
-              variant="outline"
-              className="w-full"
-              disabled={searching}
-              onClick={() => void runSearch()}
-            >
-              <MapPin className="mr-2 size-4" aria-hidden />
-              {UI.gymOnboardingSearchNearby}
-            </Button>
-            <ul className="max-h-48 space-y-2 overflow-y-auto">
-              {results.map((place) => (
-                <li key={place.placeId}>
-                  <button
-                    type="button"
-                    className="w-full rounded-xl border border-border/80 bg-muted/20 px-3 py-2 text-left text-sm hover:bg-muted/40"
-                    onClick={() => void handleSelectGym(place)}
-                  >
-                    {place.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <Button variant="ghost" className="w-full" onClick={() => setEditing(false)}>
-              {UI.back}
-            </Button>
-          </div>
         ) : (
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button variant="outline" className="flex-1" onClick={() => setEditing(true)}>
-              {gym ? UI.gymSettingsChange : UI.gymSettingsTitle}
-            </Button>
-            {gym ? (
-              <Button variant="destructive" className="flex-1" onClick={() => void handleRemove()}>
-                {UI.gymSettingsRemove}
-              </Button>
-            ) : null}
+          <div className="rounded-xl border border-border/60 px-3 py-3">
+            <p className="font-medium">{gym.name}</p>
+            {gym.address ? (
+              <p className="mt-0.5 text-sm text-muted-foreground">{gym.address}</p>
+            ) : (
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {UI.gymSettingsSearchNoAddress}
+              </p>
+            )}
           </div>
         )}
+
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button variant="outline" className="flex-1" onClick={openGymPicker}>
+            {gym ? UI.gymSettingsChange : UI.gymSettingsAdd}
+          </Button>
+          {gym ? (
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={() => void handleRemove()}
+            >
+              {UI.gymSettingsRemove}
+            </Button>
+          ) : null}
+        </div>
+
+        {showRemindersBlock ? (
+          <div className="space-y-2 border-t border-border/60 pt-4">
+            <div>
+              <p className="font-one-more text-xs font-semibold uppercase italic tracking-wide text-muted-foreground">
+                {UI.gymSettingsRemindersSection}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {UI.gymSettingsRemindersPending}
+              </p>
+            </div>
+            <div className="space-y-2">
+              {!notificationsOn ? (
+                <GymOnboardingPermissionRow
+                  icon={Bell}
+                  label={UI.gymOnboardingPermissionsNotificationsLabel}
+                  hint={UI.gymOnboardingPermissionsNotificationsHint}
+                  checked={notificationsOn}
+                  busy={busyNotifications}
+                  onCheckedChange={(checked) => void handleNotificationsToggle(checked)}
+                />
+              ) : null}
+              {(isNative || isDevWebPreview) && !locationOn ? (
+                <GymOnboardingPermissionRow
+                  icon={MapPin}
+                  label={UI.gymOnboardingPermissionsLocationLabel}
+                  hint={UI.gymOnboardingPermissionsLocationHint}
+                  checked={locationOn}
+                  busy={busyLocation}
+                  onCheckedChange={(checked) => void handleLocationToggle(checked)}
+                />
+              ) : null}
+              {geofenceNeedsSettings ? (
+                <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-3">
+                  <p className="text-sm text-muted-foreground">
+                    {UI.gymOnboardingLocationDenied}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {UI.gymOnboardingLocationSettingsHint}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => void openGymGeofenceSettings()}
+                  >
+                    {UI.gymOnboardingLocationSettingsCta}
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
       </CardContent>
+
+      <GymChangeDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        hasGym={Boolean(gym)}
+        onSaved={() => void handleGymSaved()}
+      />
     </Card>
   );
 }

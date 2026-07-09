@@ -18,11 +18,12 @@ import { ApiError } from "@/lib/api";
 import { clearPendingInviteCode, peekPendingInviteCode } from "@/lib/invite-code";
 import { upsertUserAppsFlyerAttribution } from "@/lib/attribution-api";
 import { clearProfileAvatarCache } from "@/lib/profile-avatar";
-import { resetUserProfileCache } from "@/lib/storage";
+import { resetUserProfileCache, clearGymOnboardingLocalState } from "@/lib/storage";
 import { ACCESS_SWR_KEY } from "@/lib/social-api";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { SWR_KEYS } from "@/hooks/use-api-data";
+import { USER_GYM_SWR_KEY } from "@/lib/gym-onboarding-route";
 
 type AuthState = {
   status: "anonymous" | "authenticated";
@@ -70,6 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const applySession = useCallback((session: AuthSession) => {
     resetUserProfileCache();
+    clearGymOnboardingLocalState();
     const stored: StoredAuthSession = {
       accessToken: session.accessToken,
       refreshToken: session.refreshToken,
@@ -96,6 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearStoredSession();
     clearProfileAvatarCache();
     resetUserProfileCache();
+    clearGymOnboardingLocalState();
     setState({ status: "anonymous", user: null, accessToken: null, refreshToken: null });
     void syncAppsFlyerCustomerUserId(null);
   }, []);
@@ -206,6 +209,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mutate("profile"),
       mutate("home-exercises"),
       mutate(ACCESS_SWR_KEY),
+      mutate(USER_GYM_SWR_KEY),
     ]).catch((e) => setLastError(normalizeError(e)));
   }, [state.status, state.accessToken]);
 

@@ -1,6 +1,5 @@
-import { App as CapacitorApp } from "@capacitor/app";
-import { Capacitor } from "@capacitor/core";
 import { useAuth } from "@/hooks/use-auth";
+import { subscribeAppStateChange } from "@/lib/app-state-listener";
 import { getRealtimeSocketUrl } from "@/lib/realtime-url";
 import type { Message } from "@/lib/messaging-api";
 import type { FriendPresence } from "@/types";
@@ -114,20 +113,15 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     };
     document.addEventListener("visibilitychange", onVisible);
 
-    let removeAppListener: (() => void) | undefined;
-    if (Capacitor.isNativePlatform()) {
-      void CapacitorApp.addListener("appStateChange", ({ isActive }) => {
-        socketRef.current?.emit("presence:heartbeat", {
-          status: isActive ? "online" : "offline",
-        });
-      }).then((h) => {
-        removeAppListener = () => void h.remove();
+    const removeAppListener = subscribeAppStateChange((isActive) => {
+      socketRef.current?.emit("presence:heartbeat", {
+        status: isActive ? "online" : "offline",
       });
-    }
+    });
 
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
-      removeAppListener?.();
+      removeAppListener();
     };
   }, [auth.status]);
 

@@ -103,10 +103,18 @@ export class BillingService {
     }
 
     const data = (await response.json()) as RevenueCatSubscriberResponse;
-    const isPremium = this.hasActivePremiumEntitlement(
-      data.subscriber?.entitlements,
-    );
+    const entitlements = data.subscriber?.entitlements;
+    const isPremium = this.hasActivePremiumEntitlement(entitlements);
     await this.setPremium(userId, isPremium);
+
+    if (isPremium) {
+      const productId =
+        entitlements?.[this.getPremiumEntitlementId()]?.product_identifier;
+      if (productId && this.isAnnualProduct(productId)) {
+        await this.rewardsService.grantAnnualClassicPackIfMissing(userId);
+      }
+    }
+
     return { isPremium };
   }
 

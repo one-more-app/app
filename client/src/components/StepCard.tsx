@@ -35,7 +35,7 @@ export function StepCard(props: {
             className={cn(
                 "w-full",
                 animated &&
-                "animate-in fade-in-0 slide-in-from-bottom-4 duration-300",
+                "animate-in fade-in-0 slide-in-from-bottom-3 duration-300 ease-out [animation-fill-mode:both] motion-reduce:animate-none motion-reduce:opacity-100 motion-reduce:translate-x-0 motion-reduce:translate-y-0",
                 className,
             )}
         >

@@ -1,5 +1,6 @@
 import logoTextLight from "@/assets/logo-text.png";
-import { OnboardingVideoShell } from "@/components/OnboardingVideoShell";
+import { OnboardingShell } from "@/components/OnboardingShell";
+import { onboardingEntrance, onboardingStepCardClassName } from "@/components/onboarding/onboarding-motion";
 import { StepCard } from "@/components/StepCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -218,8 +219,17 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
     const registerProgress = (current: number) => (current / registerTotal) * 100;
 
     const content = (
-        <main className="relative z-10 mx-auto w-full max-w-2xl px-4 py-6 space-y-4">
-            <div className="flex justify-center pt-2 animate-in fade-in-0 slide-in-from-top-2 duration-500">
+        <main
+            className={onboardingEntrance(
+                "relative z-10 mx-auto w-full max-w-2xl space-y-4 px-4 py-6",
+                "animate-in fade-in-0 slide-in-from-left-4 duration-400",
+            )}
+        >
+            <div
+                className={onboardingEntrance(
+                    "flex justify-center pt-2 animate-in fade-in-0 slide-in-from-left-4 duration-400",
+                )}
+            >
                 <img
                     src={logoTextLight}
                     alt="One More"
@@ -235,8 +245,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                 step === "register_referral" ? (
                 <StepCard
                     key={`register-${step}`}
-                    animated
-                    className="shadow-2xl border-border/80 bg-card/95 backdrop-blur-sm"
+                    className={onboardingStepCardClassName}
                     onBack={() => {
                         auth.clearError();
                         if (step === "register_referral") {
@@ -495,7 +504,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
             ) : (
                 <Card
                     key={`auth-${step}`}
-                    className="w-full bg-card animate-in fade-in-0 slide-in-from-bottom-4 duration-400"
+                    className={onboardingEntrance(
+                        "w-full bg-card animate-in fade-in-0 slide-in-from-left-4 duration-400",
+                    )}
                 >
                     <CardHeader>
                         <CardTitle>{UI.connectOrCreateAccount}</CardTitle>
@@ -597,7 +608,11 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                 <div className="h-px flex-1 bg-border/60" />
             </div>
 
-            <Card className="w-full bg-card animate-in fade-in-0 slide-in-from-bottom-3 duration-500 [animation-delay:120ms]">
+            <Card
+                className={onboardingEntrance(
+                    "w-full bg-card animate-in fade-in-0 slide-in-from-left-4 duration-400 [animation-delay:120ms]",
+                )}
+            >
                 <CardHeader>
                     <CardTitle>{UI.continueWith}</CardTitle>
                 </CardHeader>
@@ -701,6 +716,6 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         return content;
     }
 
-    return <OnboardingVideoShell>{content}</OnboardingVideoShell>;
+    return <OnboardingShell>{content}</OnboardingShell>;
 }
 

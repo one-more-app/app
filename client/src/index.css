@@ -435,3 +435,39 @@
   padding: 0;
   width: 100%;
 }
+
+/* Carte sélection salle (Leaflet) */
+.gym-nearby-map {
+  background: var(--muted);
+  font-family: var(--font-sans);
+}
+
+.gym-nearby-map .leaflet-control-container {
+  display: none;
+}
+
+.gym-map-marker {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  border: 2px solid #000;
+  background: var(--accent);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.28);
+  transition: transform 120ms ease;
+}
+
+.gym-map-marker-selected {
+  transform: scale(1.15);
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--accent) 45%, transparent),
+    0 6px 16px rgb(0 0 0 / 0.32);
+}
+
+.gym-map-user-dot {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 9999px;
+  border: 2px solid #fff;
+  background: #3b82f6;
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 0.35);
+}

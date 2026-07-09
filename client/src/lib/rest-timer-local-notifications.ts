@@ -2,6 +2,7 @@ import {
   getRestTargetMs,
   getTrackedExerciseById,
 } from "@/lib/storage";
+import { subscribeAppStateChange } from "@/lib/app-state-listener";
 import { UI } from "@/lib/translations";
 import {
   isRestSinceLastSetVisible,
@@ -16,6 +17,16 @@ export const REST_FINISHED_NOTIFICATION_ID = 42;
 const REST_TIMER_CHANNEL_ID = "rest-timer";
 
 let channelReady = false;
+let lastSyncedKey: string | null = null;
+let lifecycleEnabled = false;
+let currentParams: RestFinishedLocalNotificationParams | null = null;
+let unsubscribeAppState: (() => void) | null = null;
+let syncInFlight: Promise<void> | null = null;
+
+function paramsKey(params: RestFinishedLocalNotificationParams | null): string {
+  if (!params) return "";
+  return `${params.exerciseId}:${params.createdAt}:${params.targetMs}`;
+}
 
 async function ensureRestTimerChannel(): Promise<void> {
   if (channelReady || Capacitor.getPlatform() !== "android") return;
@@ -48,10 +59,12 @@ export async function ensureRestTimerNotificationPermission(): Promise<boolean> 
 
 export async function cancelRestFinishedLocalNotification(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
+  if (lastSyncedKey === "") return;
   try {
     await LocalNotifications.cancel({
       notifications: [{ id: REST_FINISHED_NOTIFICATION_ID }],
     });
+    lastSyncedKey = "";
   } catch {
     /* ignore */
   }
@@ -64,25 +77,40 @@ export type RestFinishedLocalNotificationParams = {
   exerciseName: string;
 };
 
-export async function syncRestFinishedLocalNotification(
+async function syncRestFinishedLocalNotificationInternal(
   params: RestFinishedLocalNotificationParams | null,
 ): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
+  if (!lifecycleEnabled) return;
 
-  await cancelRestFinishedLocalNotification();
-  if (!params) return;
+  const key = paramsKey(params);
+  if (key === lastSyncedKey) return;
+
+  if (!params) {
+    await cancelRestFinishedLocalNotification();
+    return;
+  }
 
   const start = new Date(params.createdAt).getTime();
-  if (Number.isNaN(start)) return;
+  if (Number.isNaN(start)) {
+    await cancelRestFinishedLocalNotification();
+    return;
+  }
 
   const fireAt = start + params.targetMs;
   const now = Date.now();
-  if (fireAt <= now) return;
-  if (!isRestSinceLastSetVisible(params.createdAt, now)) return;
+  if (fireAt <= now || !isRestSinceLastSetVisible(params.createdAt, now)) {
+    await cancelRestFinishedLocalNotification();
+    return;
+  }
 
   const granted = await ensureRestTimerNotificationPermission();
-  if (!granted) return;
+  if (!granted) {
+    await cancelRestFinishedLocalNotification();
+    return;
+  }
 
+  await cancelRestFinishedLocalNotification();
   await ensureRestTimerChannel();
 
   const route = `/exercise/${params.exerciseId}`;
@@ -99,23 +127,77 @@ export async function syncRestFinishedLocalNotification(
           at: new Date(fireAt),
           allowWhileIdle: platform === "android",
         },
-        // iOS : pas de bannière si l'app est encore au premier plan (toast in-app).
         ...(platform === "ios" ? { silent: true } : {}),
         extra: { route, exerciseId: params.exerciseId },
       },
     ],
   });
+  lastSyncedKey = key;
+}
+
+export async function syncRestFinishedLocalNotification(
+  params: RestFinishedLocalNotificationParams | null,
+): Promise<void> {
+  currentParams = params;
+  if (!lifecycleEnabled) return;
+
+  if (syncInFlight) {
+    await syncInFlight;
+  }
+
+  syncInFlight = syncRestFinishedLocalNotificationInternal(params).finally(() => {
+    syncInFlight = null;
+  });
+  await syncInFlight;
+}
+
+function attachAppStateListener(): void {
+  if (unsubscribeAppState || !Capacitor.isNativePlatform()) return;
+
+  unsubscribeAppState = subscribeAppStateChange((isActive) => {
+    if (!lifecycleEnabled) return;
+    if (isActive) {
+      void cancelRestFinishedLocalNotification();
+      return;
+    }
+    void syncRestFinishedLocalNotificationInternal(currentParams);
+  });
+}
+
+function detachAppStateListener(): void {
+  unsubscribeAppState?.();
+  unsubscribeAppState = null;
+}
+
+export function setRestTimerLifecycleEnabled(enabled: boolean): void {
+  lifecycleEnabled = enabled;
+  if (!enabled) {
+    currentParams = null;
+    detachAppStateListener();
+    void cancelRestFinishedLocalNotification();
+    return;
+  }
+  attachAppStateListener();
+  void syncRestFinishedLocalNotificationInternal(currentParams);
+}
+
+export function updateRestTimerNotificationParams(
+  params: RestFinishedLocalNotificationParams | null,
+): void {
+  currentParams = params;
+  if (!lifecycleEnabled) return;
+  void syncRestFinishedLocalNotificationInternal(params);
 }
 
 export function scheduleRestFinishedLocalNotificationForEntry(
   entry: PerformanceEntry,
 ): void {
-  if (!Capacitor.isNativePlatform()) return;
+  if (!Capacitor.isNativePlatform() || !lifecycleEnabled) return;
 
   const exercise = getTrackedExerciseById(entry.trackedExerciseId);
   if (!exercise) return;
 
-  void syncRestFinishedLocalNotification({
+  void syncRestFinishedLocalNotificationInternal({
     createdAt: entry.createdAt,
     targetMs: getRestTargetMs(),
     exerciseId: exercise.id,
@@ -144,7 +226,6 @@ export function attachRestTimerLocalNotificationListeners(): () => void {
   const receivedHandle = LocalNotifications.addListener(
     "localNotificationReceived",
     () => {
-      /* Premier plan : le toast in-app prend le relais — pas de bannière système en double. */
       void LocalNotifications.removeDeliveredNotifications({
         notifications: [
           {

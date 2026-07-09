@@ -1,5 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 import { syncPremiumStatus } from "@/lib/billing-api";
+import { TSHIRT_REWARD_SWR_KEY } from "@/lib/rewards-api";
 import { ACCESS_SWR_KEY } from "@/lib/social-api";
 import { mutate } from "swr";
 
@@ -67,12 +68,19 @@ export async function logOutPurchases(): Promise<void> {
   configuredForUserId = null;
 }
 
+async function refreshBillingCaches(): Promise<void> {
+  await Promise.all([
+    mutate(ACCESS_SWR_KEY),
+    mutate(TSHIRT_REWARD_SWR_KEY),
+  ]);
+}
+
 export async function restorePurchases(): Promise<void> {
   const purchases = await getPurchases();
   if (!purchases) return;
   await purchases.Purchases.restorePurchases();
   await syncPremiumStatus();
-  await mutate(ACCESS_SWR_KEY);
+  await refreshBillingCaches();
 }
 
 export async function getCurrentOffering(): Promise<CurrentOffering | null> {
@@ -99,7 +107,7 @@ export async function purchasePackage(
   try {
     await purchases.Purchases.purchasePackage({ aPackage });
     await syncPremiumStatus();
-    await mutate(ACCESS_SWR_KEY);
+    await refreshBillingCaches();
     return "purchased";
   } catch (error) {
     if (isUserCancelledError(error)) return "cancelled";
@@ -125,5 +133,5 @@ export async function syncPurchasesAfterLogin(userId: string): Promise<void> {
   if (!purchases) return;
   await purchases.Purchases.getCustomerInfo();
   await syncPremiumStatus();
-  await mutate(ACCESS_SWR_KEY);
+  await refreshBillingCaches();
 }

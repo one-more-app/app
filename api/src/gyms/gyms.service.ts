@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UpsertUserGymDto } from './dto/upsert-user-gym.dto.js';
 import { UserGymEntity } from './entities/user-gym.entity.js';
-import { GooglePlacesService } from './google-places.service.js';
+import { GooglePlacesService } from '../places/google-places.service.js';
 
 export type UserGymResponse = {
   placeId: string;
@@ -55,7 +55,10 @@ export class GymsService {
     return this.toResponse(entity);
   }
 
-  async upsertUserGym(userId: string, body: UpsertUserGymDto): Promise<UserGymResponse> {
+  async upsertUserGym(
+    userId: string,
+    body: UpsertUserGymDto,
+  ): Promise<UserGymResponse> {
     let entity = await this.userGyms.findOne({ where: { userId } });
     if (!entity) {
       entity = this.userGyms.create({ userId });
@@ -88,7 +91,10 @@ export class GymsService {
   }
 
   async fromLocation(userId: string, lat: number, lng: number) {
-    const candidate = await this.googlePlaces.findNearestGymFromLocation(lat, lng);
+    const candidate = await this.googlePlaces.findNearestGymFromLocation(
+      lat,
+      lng,
+    );
     return { candidate };
   }
 

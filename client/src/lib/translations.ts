@@ -87,7 +87,7 @@ export const EQUIPMENT_GROUPS: Record<
   },
   machines_lever_smith: {
     ids: ["leverage machine", "smith machine"],
-    label: "Machine à levier / Smith",
+    label: "Machine",
   },
 };
 
@@ -118,7 +118,7 @@ export const EQUIPMENT: Record<string, string> = {
   "wrist roller": "Rouleau poignet",
   machine: "Machine",
   "smith machine": "Machine Smith",
-  "leverage machine": "Machine à levier",
+  "leverage machine": "Machine",
   "sled machine": "Traîneau",
   "elliptical machine": "Vélo elliptique",
   "stationary bike": "Vélo stationnaire",
@@ -317,6 +317,24 @@ export const UI = {
   restCounterTourQuickEditTitle: "Ajuste ton repos",
   restCounterTourQuickEditContent:
     "Appuie sur le chrono pour modifier la durée entre tes séries. Essaie plus ou moins, ou choisis un raccourci.",
+  homeTourProgressTitle: "Ton niveau",
+  homeTourProgressContent:
+    "Chaque perf te rapporte de l'XP. La barre montre ta progression vers le niveau suivant. La flamme à droite, c'est ta série de jours d'entraînement.",
+  homeTourTodayTitle: "Faits aujourd'hui",
+  homeTourTodayContent:
+    "Les exercices que tu as déjà faits aujourd'hui remontent ici. Tu peux enchaîner une série ou consulter la fiche en un appui.",
+  homeTourBrowseTitle: "Parcourir tes exercices",
+  homeTourBrowseContent:
+    "Filtre par zone du corps, muscle puis matériel. Tu retrouves aussi le mode « tout voir » pour la liste complète.",
+  homeTourNavProfileTitle: "Profil",
+  homeTourNavProfileContent:
+    "Niveau, XP, stats, ligues par muscle et réglages du compte. C'est ton tableau de bord perso.",
+  homeTourNavHistoryTitle: "Historique",
+  homeTourNavHistoryContent:
+    "Retrouve toutes tes perfs jour par jour. Idéal pour revoir une séance ou corriger une entrée.",
+  homeTourNavFriendsTitle: "Amis",
+  homeTourNavFriendsContent:
+    "Ajoute des potes, vois leur activité et envoie des défis. Plus tu parraines, plus tu débloques d'exercices.",
   options: "Options",
   rename: "Renommer",
   renameExercise: "Renommer l'exercice",
@@ -501,10 +519,11 @@ export const UI = {
   paywallCgu: "CGU",
 
   tshirtClaimButton: "Réclamer mon t-shirt",
-  tshirtClaimTitle: "Réclamer ton t-shirt One More",
+  tshirtClaimTitle: "Livraison de ton t-shirt",
   tshirtClaimDescription:
     "Renseigne ton adresse de livraison. Nous te contacterons si besoin.",
-  tshirtClaimReferralRewardLabel: "Récompense: 1 t-shirt édition limitée One More",
+  tshirtClaimReferralRewardLabel:
+    "Récompense: 1 t-shirt édition limitée One More",
   tshirtClaimAnnualRewardLabel:
     "Récompense: pack annuel 2 t-shirts classiques (noir et blanc)",
   tshirtClaimFullName: "Nom complet",
@@ -513,6 +532,16 @@ export const UI = {
   tshirtClaimPostalCode: "Code postal",
   tshirtClaimCountry: "Pays",
   tshirtClaimSize: "Taille",
+  tshirtClaimGender: "Coupe du t-shirt",
+  tshirtClaimAddressSearch: "Rechercher une adresse",
+  tshirtClaimAddressSearchPlaceholder: "Numéro et rue, ville…",
+  tshirtClaimAddressSearchHint:
+    "Sélectionne une adresse pour préremplir le formulaire.",
+  tshirtClaimAddressSearchEmpty: "Aucune adresse trouvée.",
+  tshirtClaimAddressSearchUnavailable:
+    "Recherche indisponible pour l'instant. Renseigne l'adresse à la main.",
+  tshirtClaimMandatoryHint:
+    "Complète ce formulaire pour débloquer l'app et recevoir ton t-shirt.",
   tshirtClaimSubmit: "Envoyer ma demande",
   tshirtClaimSuccess: "Demande enregistrée. Ton t-shirt est en préparation.",
   tshirtClaimError: "Impossible d'enregistrer ta demande",
@@ -669,7 +698,7 @@ export const UI = {
   settingsBuildApi: "API",
 
   // Onboarding (premier lancement)
-  onboardingTitle: "Prêt à progresser ?",
+  onboardingTitle: "Rejoins le mouvement",
   onboardingDescription: "Pour ceux qui veulent faire une rep de plus.",
   onboardingBodyTitleGender: "Quel est ton genre ?",
   onboardingBodyTitleWeight: "Quel est ton poids de corps ?",
@@ -702,24 +731,101 @@ export const UI = {
   gymOnboardingSearchPlaceholder: "Nom de ta salle…",
   gymOnboardingSearchNearby: "Salles près de moi",
   gymOnboardingSearchByName: "Rechercher par nom",
+  gymOnboardingViewList: "Liste",
+  gymOnboardingViewMap: "Carte",
+  gymOnboardingMapHint: "Touche un repère pour sélectionner ta salle.",
+  gymOnboardingMapLegend: "Salles à proximité",
+  gymOnboardingMapEmpty:
+    "Lance une recherche ou utilise « Salles près de moi » pour afficher la carte.",
+  gymOnboardingMapSelectCta: "Choisir cette salle",
   gymOnboardingNoResults: "Aucune salle trouvée.",
   gymOnboardingDeferredMessage:
     "On te préviendra quand tu seras à {name} pour enregistrer ta première perf.",
-  gymOnboardingSkip: "Plus tard",
+  gymOnboardingWebSearch:
+    "Sur le web, cherche ta salle par nom pour continuer.",
+  gymOnboardingPermissionsTitle: "Reste connecté à ta salle",
+  gymOnboardingPermissionsBody:
+    "Active ces deux options pour être prévenu à l'arrivée et ne pas rater ta séance.",
+  gymOnboardingPermissionsBodyWeb:
+    "Active les notifications pour être prévenu quand tu arrives à la salle.",
+  gymOnboardingPermissionsGymHint: "Salle enregistrée : {name}.",
+  gymOnboardingPermissionsNotificationsLabel: "Notifications",
+  gymOnboardingPermissionsNotificationsHint:
+    "Alertes quand tu arrives à la salle.",
+  gymOnboardingPermissionsLocationLabel: "Position",
+  gymOnboardingPermissionsLocationHint:
+    "Détection de ta salle même quand l'app est fermée.",
+  gymOnboardingPermissionsSkip: "Passer cette étape",
+  gymOnboardingNotificationsTitle: "Rejoins le mouvement",
+  gymOnboardingNotificationsBody:
+    "Active les notifications pour être alerté dès que tu arrives à ta salle. Ne rate plus une séance, suis ta progression et fais partie de ceux qui veulent faire une rep de plus.",
+  gymOnboardingNotificationsCta: "Activer les notifications",
+  gymOnboardingNotificationsSkip: "Continuer",
+  gymOnboardingLocationTitle: "On te prévient à l'approche de ta salle",
+  gymOnboardingLocationBody:
+    "Autorise l'accès à ta position, même quand l'app est fermée. Dès que tu t'approches de ta salle, on t'envoie un rappel pour ne pas oublier ta séance.",
+  gymOnboardingLocationGymHint: "Salle enregistrée : {name}.",
+  gymOnboardingLocationCta: "Activer le rappel à la salle",
+  gymOnboardingLocationSkip: "Continuer sans",
+  gymOnboardingLocationDenied:
+    "Sans accès position, on ne peut pas détecter ton arrivée à la salle.",
+  gymOnboardingLocationSettingsCta: "Ouvrir les réglages",
+  gymOnboardingLocationSettingsHint:
+    "Dans les réglages, choisis « Toujours » pour la localisation.",
+  gymOnboardingWaitTitle: "Reviens à la salle",
+  gymOnboardingWaitBody:
+    "One More prend tout son sens quand tu t'entraînes. Reviens quand tu seras à ta salle, on te préviendra pour que tu puisses enregistrer ta première perf.",
+  gymOnboardingWaitBodyNoGym:
+    "Renseigne ta salle pour qu'on sache où t'attendre et te prévenir à l'arrivée.",
+  gymOnboardingWaitBodyReady:
+    "Tout est prêt. Dès que tu seras à {name}, on te prévient pour enregistrer ta première perf.",
+  gymOnboardingWaitBodyMissingNotifications:
+    "Active les notifications pour ne pas rater le rappel quand tu arrives à {name}.",
+  gymOnboardingWaitBodyMissingLocation:
+    "Autorise la position pour détecter ton arrivée à {name}.",
+  gymOnboardingWaitBodyMissingBoth:
+    "Active notifications et position pour être prévenu dès que tu arrives à {name}.",
+  gymOnboardingWaitGymSection: "Ta salle",
+  gymOnboardingWaitGymEmpty: "Aucune salle renseignée pour l'instant.",
+  gymOnboardingWaitGymChange: "Changer de salle",
+  gymOnboardingWaitGymSearching: "Recherche en cours…",
+  gymOnboardingWaitGymSaveError:
+    "Impossible d'enregistrer ta salle. Réessaie.",
+  gymOnboardingWaitRemindersSection: "Rappels",
+  gymOnboardingWaitRemindersReady: "Tu seras alerté dès ton arrivée à la salle.",
+  gymOnboardingWaitRemindersPending:
+    "Tu peux activer ou modifier ces options à tout moment.",
+  gymOnboardingWaitCta: "Je suis à la salle",
   gymOnboardingWebOnly:
     "La détection à la salle est disponible sur l'app mobile.",
   gymGeofenceEnterTitle: "Tu es à la salle",
   gymGeofenceEnterBody: "Tu es à {name}. Enregistre ta première perf.",
   gymGeofenceEnterBodyGeneric: "Tu es à la salle. Enregistre ta première perf.",
+  gymGeofencePermissionsDenied:
+    "Autorise la localisation « Toujours » pour recevoir le rappel à la salle.",
   gymPendingBanner: "Ta première perf t'attend à {name}.",
   gymSettingsTitle: "Ma salle",
+  gymSettingsDescription:
+    "Ta salle et les rappels pour ne rien rater à l'arrivée.",
   gymSettingsEmpty: "Aucune salle enregistrée.",
+  gymSettingsAdd: "Renseigner ma salle",
   gymSettingsGeofenceToggle: "Me rappeler à la salle",
   gymSettingsChange: "Changer de salle",
   gymSettingsRemove: "Retirer ma salle",
   gymSettingsRemoveConfirm: "Retirer ta salle enregistrée ?",
   gymSettingsSaved: "Salle mise à jour.",
   gymSettingsRemoved: "Salle retirée.",
+  gymSettingsSaveError: "Impossible d'enregistrer la salle.",
+  gymSettingsUpdateError: "Impossible de mettre à jour le rappel.",
+  gymSettingsRemoveError: "Impossible de retirer la salle.",
+  gymSettingsSearchNoAddress: "Adresse non disponible pour ce lieu.",
+  gymSettingsRemindersSection: "Rappels à l'arrivée",
+  gymSettingsRemindersReady:
+    "Notifications et position activées. On te préviendra à l'arrivée.",
+  gymSettingsRemindersPending:
+    "Active les deux options pour être alerté dès que tu entres dans ta salle.",
+  gymSettingsRemindersNeedGym:
+    "Renseigne d'abord ta salle pour activer les rappels à l'arrivée.",
   gymDistanceM: "{distance} m",
   /** Tour guidé (react-joyride) sur la fiche après la première perf */
   exerciseOnboardingTourOverviewTitle: "Ta fiche exercice",
