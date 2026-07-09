@@ -37,6 +37,9 @@ const ONBOARDING_FIRST_EXERCISE_PENDING_KEY =
 const ONBOARDING_TOUR_COMPLETE_KEY = "one-more-onboarding-tour-complete-v1";
 const ONBOARDING_POST_AUTH_REDIRECT_KEY =
   "one-more-onboarding-post-auth-redirect-v1";
+const ONBOARDING_GYM_PENDING_KEY = "one-more-onboarding-gym-pending-v1";
+const GYM_SETUP_DONE_KEY = "one-more-gym-setup-done-v1";
+const GYM_NOTIF_LAST_KEY = "one-more-gym-notif-last-v1";
 const THEME_PREFERENCE_KEY = "one-more-theme-preference-v1";
 const REST_TARGET_MS_KEY = "one-more-rest-target-ms-v1";
 const REST_COUNTER_TOUR_COMPLETE_KEY = "one-more-rest-counter-tour-complete-v1";
@@ -597,10 +600,52 @@ export function getOnboardingPostAuthRedirect(): string | null {
 
 export function needsOnboarding(): boolean {
   if (localStorage.getItem(ONBOARDING_V1_KEY) === "done") return false;
+  if (localStorage.getItem(ONBOARDING_GYM_PENDING_KEY) === "1") {
+    return true;
+  }
   if (localStorage.getItem(ONBOARDING_FIRST_EXERCISE_PENDING_KEY) === "1") {
     return true;
   }
   return localStorage.getItem(ONBOARDING_V1_KEY) !== "done";
+}
+
+export function isOnboardingGymPending(): boolean {
+  return localStorage.getItem(ONBOARDING_GYM_PENDING_KEY) === "1";
+}
+
+export function setOnboardingGymPending(pending: boolean): void {
+  if (pending) {
+    localStorage.setItem(ONBOARDING_GYM_PENDING_KEY, "1");
+  } else {
+    localStorage.removeItem(ONBOARDING_GYM_PENDING_KEY);
+  }
+}
+
+export function clearOnboardingGymPending(): void {
+  localStorage.removeItem(ONBOARDING_GYM_PENDING_KEY);
+}
+
+export function isGymSetupDone(): boolean {
+  return localStorage.getItem(GYM_SETUP_DONE_KEY) === "1";
+}
+
+export function setGymSetupDone(done: boolean): void {
+  if (done) {
+    localStorage.setItem(GYM_SETUP_DONE_KEY, "1");
+  } else {
+    localStorage.removeItem(GYM_SETUP_DONE_KEY);
+  }
+}
+
+export function getGymNotifLastAt(): number | null {
+  const raw = localStorage.getItem(GYM_NOTIF_LAST_KEY);
+  if (!raw) return null;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function setGymNotifLastAt(at: number): void {
+  localStorage.setItem(GYM_NOTIF_LAST_KEY, String(at));
 }
 
 export function markOnboardingDone(): void {

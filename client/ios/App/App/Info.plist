@@ -48,7 +48,12 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
+		<string>location</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>One More utilise ta position pour détecter quand tu es à ta salle et te rappeler d'enregistrer tes perfs.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>One More surveille l'entrée dans ta salle même quand l'app est fermée, pour te prévenir au bon moment.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

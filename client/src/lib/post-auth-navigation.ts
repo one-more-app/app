@@ -1,6 +1,7 @@
 import { fetchTrackedExercises } from "@/lib/data-api";
 import { CARDIO_EQUIPMENT } from "@/lib/exercisedb";
 import {
+  isOnboardingGymPending,
   setOnboardingFirstExercisePending,
   setOnboardingTourComplete,
 } from "@/lib/storage";
@@ -21,6 +22,10 @@ export async function resolvePostAuthNavigation(
 ): Promise<string> {
   if (nextPath !== "/home") {
     return nextPath;
+  }
+
+  if (isOnboardingGymPending()) {
+    return "/home";
   }
 
   try {

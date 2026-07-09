@@ -8,6 +8,7 @@ import { PageSection } from '@/components/analytics/PageSection'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import { useKeyboardInset } from '@/hooks/use-keyboard-inset'
 import { usePushNotifications } from '@/hooks/use-push-notifications'
+import { useGymGeofenceNotificationTap, useGymGeofenceSync } from '@/hooks/use-gym-geofence'
 import { useRestTimerLocalNotifications } from '@/hooks/use-rest-timer-local-notifications'
 import { RealtimeProvider } from '@/hooks/use-realtime'
 import { useTheme } from '@/hooks/use-theme'
@@ -16,7 +17,7 @@ import {
     persistAndNavigateToInvite,
     setupAppsFlyer,
 } from '@/lib/appsflyer'
-import { needsOnboarding } from '@/lib/storage'
+import { isOnboardingGymPending, needsOnboarding } from '@/lib/storage'
 import { scheduleSafeAreaCssSync } from '@/lib/sync-safe-area-css'
 import { routeUsesBackHeader } from '@/lib/back-header-routes'
 import { getSystemBarsStyle, IMMERSIVE_FULL_BLEED_ROUTES } from '@/lib/system-bars-style'
@@ -61,10 +62,13 @@ function AccessGate({ children }: { children: React.ReactNode }) {
     const auth = useAuth()
     usePushNotifications()
     useRestTimerLocalNotifications()
+    useGymGeofenceSync()
+    useGymGeofenceNotificationTap()
     const isAuthRoute = location.pathname === '/auth'
     const isOnboardingRoute = location.pathname === '/onboarding'
     const isInviteRoute = location.pathname.startsWith('/invite/')
     const onboardingNeeded = needsOnboarding()
+    const gymPending = isOnboardingGymPending()
 
     if (auth.status !== 'authenticated') {
         if (onboardingNeeded) {
@@ -79,13 +83,16 @@ function AccessGate({ children }: { children: React.ReactNode }) {
     }
 
     if (auth.status === 'authenticated' && isAuthRoute) {
-        if (onboardingNeeded) return <Navigate to="/onboarding?step=body&bodyQ=0" replace />
+        if (onboardingNeeded && !gymPending) {
+            return <Navigate to="/onboarding?step=body&bodyQ=0" replace />
+        }
         return <Navigate to="/home" replace />
     }
 
     if (
         auth.status === 'authenticated' &&
         onboardingNeeded &&
+        !gymPending &&
         location.pathname !== '/onboarding' &&
         !isAuthRoute
     ) {
@@ -96,7 +103,9 @@ function AccessGate({ children }: { children: React.ReactNode }) {
 
 function IndexRedirect() {
     const auth = useAuth()
-    if (needsOnboarding()) return <Navigate to="/onboarding" replace />
+    if (needsOnboarding() && !isOnboardingGymPending()) {
+        return <Navigate to="/onboarding" replace />
+    }
     if (auth.status !== 'authenticated') return <Navigate to="/auth" replace />
     return <Navigate to="/home" replace />
 }

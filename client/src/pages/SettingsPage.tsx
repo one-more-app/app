@@ -1,4 +1,5 @@
 import { BackHeader } from '@/components/BackHeader'
+import { GymSettingsCard } from '@/components/settings/GymSettingsCard'
 import { NotificationSettingsCard } from '@/components/settings/NotificationSettingsCard'
 import { RestTimeSettingsCard } from '@/components/settings/RestTimeSettingsCard'
 import { PremiumSettingsCard } from '@/components/settings/PremiumSettingsCard'
@@ -124,6 +125,8 @@ export function SettingsPage() {
                 </Card>
 
                 {auth.status === 'authenticated' ? <NotificationSettingsCard /> : null}
+
+                {auth.status === 'authenticated' ? <GymSettingsCard /> : null}
 
                 <RestTimeSettingsCard />
 

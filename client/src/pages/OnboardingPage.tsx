@@ -4,6 +4,7 @@ import { StepCard } from '@/components/StepCard'
 import { Button } from '@/components/ui/button'
 import { useUserProfileData } from '@/hooks/use-api-data'
 import { useAuth } from '@/hooks/use-auth'
+import { OnboardingGymStep } from '@/components/onboarding/OnboardingGymStep'
 import { resolvePostAuthNavigation } from '@/lib/post-auth-navigation'
 import {
     getOnboardingPostAuthRedirect,
@@ -12,6 +13,7 @@ import {
     markOnboardingDone,
     needsOnboarding,
     setOnboardingPostAuthRedirect,
+    setGymSetupDone,
     setUserProfile,
 } from '@/lib/storage'
 import { UI } from '@/lib/translations'
@@ -94,7 +96,9 @@ function OnboardingPage() {
             ? 'body'
             : rawStep === 'account'
                 ? 'account'
-                : 'intro'
+                : rawStep === 'gym'
+                    ? 'gym'
+                    : 'intro'
     const bodyQRaw = searchParams.get('bodyQ')
     const bodyQ = Math.min(
         BODY_TOTAL - 1,
@@ -182,11 +186,25 @@ function OnboardingPage() {
         })
     }
 
+    const skipGymStep = async () => {
+        setGymSetupDone(true)
+        const nextPath = getOnboardingPostAuthRedirect() ?? '/home'
+        await finishOnboarding(nextPath)
+    }
+
+    const completeGymAtGym = async () => {
+        const nextPath = getOnboardingPostAuthRedirect() ?? '/home'
+        await finishOnboarding(nextPath)
+    }
+
+    const deferGymOnboarding = (_gymName: string) => {
+        navigate('/home', { replace: true })
+    }
+
     useEffect(() => {
         if (step !== 'account') return
         if (auth.status !== 'authenticated') return
-        const nextPath = getOnboardingPostAuthRedirect() ?? '/home'
-        void finishOnboarding(nextPath)
+        navigate('/onboarding?step=gym', { replace: true })
         // On réagit seulement au passage en step=account + auth.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [step, auth.status])
@@ -317,6 +335,12 @@ function OnboardingPage() {
                 </main>
             ) : step === 'account' ? (
                 <AuthPage embedded />
+            ) : step === 'gym' ? (
+                <OnboardingGymStep
+                    onCompleteAtGym={() => void completeGymAtGym()}
+                    onDeferred={deferGymOnboarding}
+                    onSkip={() => void skipGymStep()}
+                />
             ) : null}
         </OnboardingVideoShell>
     )

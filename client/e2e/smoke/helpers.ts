@@ -2,6 +2,97 @@ import type { Page } from "@playwright/test";
 
 export const AUTH_STORAGE_KEY = "one-more-auth-v1";
 export const ONBOARDING_DONE_KEY = "one-more-onboarding-v1";
+export const ONBOARDING_GYM_PENDING_KEY = "one-more-onboarding-gym-pending-v1";
+export const GYM_SETUP_DONE_KEY = "one-more-gym-setup-done-v1";
+
+export const mockGymPlace = {
+  placeId: "e2e-gym-1",
+  name: "Basic Fit Smoke",
+  address: "1 rue Test, Paris",
+  lat: 48.8566,
+  lng: 2.3522,
+  distanceM: 50,
+};
+
+export async function mockGymsApi(page: Page): Promise<void> {
+  let savedGym: typeof mockGymPlace & {
+    radiusM: number;
+    onboardingGymPending: boolean;
+    geofenceEnabled: boolean;
+    updatedAt: string;
+  } | null = null;
+
+  await page.route("**/gyms/search**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ results: [mockGymPlace] }),
+    });
+  });
+
+  await page.route("**/gyms/places/**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ place: mockGymPlace }),
+    });
+  });
+
+  await page.route("**/gyms/me/from-location", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ candidate: mockGymPlace }),
+    });
+  });
+
+  await page.route("**/gyms/me**", async (route) => {
+    const method = route.request().method();
+    if (method === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ gym: savedGym }),
+      });
+      return;
+    }
+    if (method === "PUT") {
+      const body = route.request().postDataJSON() as Record<string, unknown>;
+      savedGym = {
+        ...mockGymPlace,
+        radiusM: (body.radiusM as number) ?? 120,
+        onboardingGymPending: Boolean(body.onboardingGymPending),
+        geofenceEnabled: body.geofenceEnabled !== false,
+        updatedAt: new Date().toISOString(),
+      };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ gym: savedGym }),
+      });
+      return;
+    }
+    if (method === "DELETE") {
+      savedGym = null;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true }),
+      });
+      return;
+    }
+    if (method === "POST" && route.request().url().includes("clear-onboarding-pending")) {
+      if (savedGym) savedGym.onboardingGymPending = false;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+}
 
 export const mockSession = {
   accessToken: "smoke-access-token",
@@ -112,6 +203,8 @@ export async function mockCoreAuthenticatedApi(page: Page): Promise<void> {
       }),
     });
   });
+
+  await mockGymsApi(page);
 }
 
 export async function mockAuthApi(page: Page): Promise<void> {

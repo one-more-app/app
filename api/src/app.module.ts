@@ -19,6 +19,7 @@ import { AnalyticsModule } from './analytics/analytics.module.js';
 import { BillingModule } from './billing/billing.module.js';
 import { RewardsModule } from './rewards/rewards.module.js';
 import { StorageModule } from './storage/storage.module.js';
+import { GymsModule } from './gyms/gyms.module.js';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { StorageModule } from './storage/storage.module.js';
     AnalyticsModule,
     BillingModule,
     RewardsModule,
+    GymsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

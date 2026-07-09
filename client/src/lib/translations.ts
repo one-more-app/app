@@ -689,6 +689,38 @@ export const UI = {
   onboardingSkipFirstExercise: "Passer pour l’instant",
   onboardingCreateAccountDescription:
     "Crée ton compte maintenant pour sauvegarder et envoyer les données de ton onboarding.",
+
+  // Salle de sport (onboarding post-compte)
+  gymOnboardingTitle: "Tu es à la salle en ce moment ?",
+  gymOnboardingHint:
+    "On te préviendra quand tu seras à la salle pour enregistrer tes perfs.",
+  gymOnboardingYes: "Oui, je suis à la salle",
+  gymOnboardingNo: "Pas maintenant",
+  gymOnboardingLocationWhy:
+    "On a besoin de ta position pour te prévenir quand tu reviens à la salle.",
+  gymOnboardingConfirmTitle: "C'est bien ta salle ?",
+  gymOnboardingSearchPlaceholder: "Nom de ta salle…",
+  gymOnboardingSearchNearby: "Salles près de moi",
+  gymOnboardingSearchByName: "Rechercher par nom",
+  gymOnboardingNoResults: "Aucune salle trouvée.",
+  gymOnboardingDeferredMessage:
+    "On te préviendra quand tu seras à {name} pour enregistrer ta première perf.",
+  gymOnboardingSkip: "Plus tard",
+  gymOnboardingWebOnly:
+    "La détection à la salle est disponible sur l'app mobile.",
+  gymGeofenceEnterTitle: "Tu es à la salle",
+  gymGeofenceEnterBody: "Tu es à {name}. Enregistre ta première perf.",
+  gymGeofenceEnterBodyGeneric: "Tu es à la salle. Enregistre ta première perf.",
+  gymPendingBanner: "Ta première perf t'attend à {name}.",
+  gymSettingsTitle: "Ma salle",
+  gymSettingsEmpty: "Aucune salle enregistrée.",
+  gymSettingsGeofenceToggle: "Me rappeler à la salle",
+  gymSettingsChange: "Changer de salle",
+  gymSettingsRemove: "Retirer ma salle",
+  gymSettingsRemoveConfirm: "Retirer ta salle enregistrée ?",
+  gymSettingsSaved: "Salle mise à jour.",
+  gymSettingsRemoved: "Salle retirée.",
+  gymDistanceM: "{distance} m",
   /** Tour guidé (react-joyride) sur la fiche après la première perf */
   exerciseOnboardingTourOverviewTitle: "Ta fiche exercice",
   exerciseOnboardingTourOverviewContent:

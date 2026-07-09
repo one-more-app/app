@@ -51,6 +51,7 @@ import {
 } from '@/lib/storage'
 import { isDumbbellExercise } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
+import { finalizeDeferredGymOnboarding } from '@/lib/gym-onboarding'
 import { notifyXpGrants } from '@/lib/xp-notifications'
 import type { PerformanceEntry } from '@/types'
 import {
@@ -206,6 +207,7 @@ export function ExerciseDetailPage() {
         setOnboardingTourComplete(true)
         if (searchParams.get('from') === 'first-exercise' || onboardingFirstExercisePending) {
             setOnboardingFirstExercisePending(false)
+            void finalizeDeferredGymOnboarding()
         }
         next.delete('tour')
         next.delete('from')
