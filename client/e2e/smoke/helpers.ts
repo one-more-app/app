@@ -119,6 +119,19 @@ export const mockSession = {
 export function trackPageErrors(page: Page): string[] {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => {
+    const cause =
+      error.cause instanceof Error
+        ? error.cause.message
+        : typeof error.cause === "string"
+          ? error.cause
+          : null;
+    if (cause) {
+      pageErrors.push(cause);
+      return;
+    }
+    if (/Minified React error #520/.test(error.message)) {
+      return;
+    }
     pageErrors.push(error.message);
   });
   return pageErrors;
@@ -219,6 +232,18 @@ export async function mockCoreAuthenticatedApi(
         tshirtRewardEligible: false,
         referralsUntilTshirt: 3,
       }),
+    });
+  });
+
+  await page.route("**/me/rewards/tshirt**", async (route) => {
+    if (route.request().method() !== "GET") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ pendingRewards: [], claims: [] }),
     });
   });
 

@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty false",
     "typecheck:gate": "tsc -p tsconfig.gate.json --noEmit --pretty false",
-    "test:smoke": "playwright test e2e/smoke --reporter=line",
+    "test:smoke": "playwright install chromium && playwright test e2e/smoke --reporter=line",
     "build:mobile:dev": "env-cmd -f .env.dev.capacitor vite build",
     "build:mobile:preprod": "env-cmd -f .env.preprod.capacitor vite build",
     "build:mobile:prod": "env-cmd -f .env.prod.capacitor vite build",
