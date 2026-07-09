@@ -483,14 +483,22 @@ export const UI = {
   paywallFirstYear: "Première année",
   paywallPerMonthLabel: "Par mois",
   paywallCta: "Je rejoins",
-  paywallBilledYearly: "Facturé {price} par année.",
-  paywallBilledMonthly: "Facturé {price} par mois.",
+  paywallBilledYearlyIos:
+    "Abonnement 1 an à {price}, renouvellement automatique. Annulable à tout moment dans les réglages de ton compte App Store.",
+  paywallBilledMonthlyIos:
+    "Abonnement 1 mois à {price}, renouvellement automatique. Annulable à tout moment dans les réglages de ton compte App Store.",
+  paywallBilledYearlyAndroid:
+    "Abonnement 1 an à {price}, renouvellement automatique. Annulable à tout moment dans tes abonnements Google Play.",
+  paywallBilledMonthlyAndroid:
+    "Abonnement 1 mois à {price}, renouvellement automatique. Annulable à tout moment dans tes abonnements Google Play.",
   paywallLoading: "Chargement de l'offre...",
   paywallError: "Impossible de charger l'offre. Réessaie.",
+  paywallOfferPending:
+    "Offre en cours d'activation, réessaie dans quelques instants.",
   paywallClose: "Fermer",
   paywallSupport: "Support",
-  paywallPrivacy: "Politique de confidentialité",
-  paywallTerms: "CGV",
+  paywallCgv: "CGV",
+  paywallCgu: "CGU",
 
   tshirtClaimButton: "Réclamer mon t-shirt",
   tshirtClaimTitle: "Réclamer ton t-shirt One More",

@@ -22,19 +22,19 @@ type PurchasesPackage =
 type SelectedKey = "annual" | "monthly";
 
 const SUPPORT_URL = "mailto:admin@one-more.app";
-const PRIVACY_URL = "https://one-more.app/privacy";
-const TERMS_URL = "https://one-more.app/terms";
+const CGV_URL = "https://site.one-more.app/cgv";
+const CGU_URL = "https://site.one-more.app/cgu";
 
-const FALLBACK_ANNUAL_OLD_PRICE = "59,99€";
-
-function pickString(
-    metadata: Record<string, unknown> | null | undefined,
-    key: string,
-): string | null {
-    if (!metadata) return null;
-    const value = metadata[key];
-    return typeof value === "string" && value.length > 0 ? value : null;
-}
+// TODO: retirer après validation Apple des products `start_annual` /
+// `start_mensual`. En attendant, on force l'affichage des prix EUR Apple
+// dans le paywall — RC renvoie les prix TEST_STORE en USD ($49.99, $8.99...)
+// tant que les produits ne sont pas approuvés, ce qu'Apple review ne peut
+// pas valider. L'achat utilise toujours le package RC réel côté StoreKit.
+const HARDCODED_ANNUAL_OLD_PRICE = "59,99€";
+const HARDCODED_ANNUAL_PRICE = "29,99€";
+const HARDCODED_ANNUAL_PER_MONTH = "2,99€";
+const HARDCODED_MONTHLY_PRICE = "9,99€";
+const HARDCODED_MONTHLY_PER_MONTH = "9,99€";
 
 function pickBoolean(
     metadata: Record<string, unknown> | null | undefined,
@@ -49,22 +49,6 @@ function pickBoolean(
         if (/^(false|0|no)$/i.test(value)) return false;
     }
     return fallback;
-}
-
-function formatPricePerMonth(pkg: PurchasesPackage): string {
-    const product = pkg.product;
-    if (typeof product.pricePerMonthString === "string") {
-        return product.pricePerMonthString;
-    }
-    if (typeof product.pricePerMonth === "number") {
-        return new Intl.NumberFormat("fr-FR", {
-            style: "currency",
-            currency: product.currencyCode ?? "EUR",
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        }).format(product.pricePerMonth);
-    }
-    return product.priceString;
 }
 
 // Sépare le préfixe/suffixe de devise du nombre pour appliquer uniformément
@@ -127,16 +111,17 @@ export function CustomPaywallDrawer() {
     const { open, source, resolvePaywall } = usePaywall();
     const { track } = useAnalytics();
 
-    const [offering, setOffering] = useState<CurrentOffering | null>(null);
-    const [hasError, setHasError] = useState(false);
+    // `undefined` = pas encore fetché (loading), `null` = fetch terminé sans
+    // offering exploitable (on tombera sur le fallback en dur pour Apple review),
+    // `CurrentOffering` = offering réel RC.
+    const [offering, setOffering] = useState<CurrentOffering | null | undefined>(
+        undefined,
+    );
     const [selected, setSelected] = useState<SelectedKey>("annual");
     const [purchasing, setPurchasing] = useState(false);
 
-    const status: "loading" | "error" | "ready" = hasError
-        ? "error"
-        : offering
-          ? "ready"
-          : "loading";
+    const status: "loading" | "ready" =
+        offering === undefined ? "loading" : "ready";
 
     useEffect(() => {
         if (!open) return;
@@ -145,25 +130,31 @@ export function CustomPaywallDrawer() {
             try {
                 const result = await getCurrentOffering();
                 if (cancelled) return;
-                if (!result) {
-                    setHasError(true);
-                    return;
-                }
                 setOffering(result);
-                track(AnalyticsEvents.PAYWALL_VIEWED, {
-                    paywall_type: "custom",
-                    source: source ?? "unknown",
-                    offering: result.offering.identifier,
-                });
+                if (result) {
+                    track(AnalyticsEvents.PAYWALL_VIEWED, {
+                        paywall_type: "custom",
+                        source: source ?? "unknown",
+                        offering: result.offering.identifier,
+                    });
+                } else {
+                    track(AnalyticsEvents.PAYWALL_VIEWED, {
+                        paywall_type: "custom_fallback",
+                        source: source ?? "unknown",
+                    });
+                }
             } catch {
                 if (cancelled) return;
-                setHasError(true);
+                setOffering(null);
+                track(AnalyticsEvents.PAYWALL_VIEWED, {
+                    paywall_type: "custom_fallback",
+                    source: source ?? "unknown",
+                });
             }
         })();
         return () => {
             cancelled = true;
-            setOffering(null);
-            setHasError(false);
+            setOffering(undefined);
             setSelected("annual");
         };
     }, [open, source, track]);
@@ -172,8 +163,6 @@ export function CustomPaywallDrawer() {
         | Record<string, unknown>
         | null;
 
-    const annualOldPrice =
-        pickString(metadata, "annualOldPrice") ?? FALLBACK_ANNUAL_OLD_PRICE;
     const showTshirtsSection = pickBoolean(
         metadata,
         "showTshirtsSection",
@@ -197,32 +186,58 @@ export function CustomPaywallDrawer() {
     };
 
     const handleSelect = (key: SelectedKey) => {
-        if (!packages[key]) return;
         setSelected(key);
     };
 
     const handlePurchase = async () => {
-        if (!selectedPackage || purchasing) return;
+        if (purchasing) return;
         setPurchasing(true);
+
+        // En mode fallback (produits pas encore fetchables), on tente une
+        // dernière fois de charger l'offering — si Apple review arrive à
+        // fetcher les produits en sandbox, on convertit le fallback en achat
+        // réel. Sinon on notifie l'utilisateur et on stoppe.
+        let pkgToBuy: PurchasesPackage | null = selectedPackage;
+        if (!pkgToBuy) {
+            try {
+                const result = await getCurrentOffering();
+                if (result) {
+                    setOffering(result);
+                    pkgToBuy =
+                        (selected === "annual" ? result.annual : result.monthly) ??
+                        null;
+                }
+            } catch {
+                // fallback géré ci-dessous
+            }
+        }
+
+        if (!pkgToBuy) {
+            toast.error(UI.paywallOfferPending);
+            setPurchasing(false);
+            return;
+        }
+
         track(AnalyticsEvents.PURCHASE_STARTED, {
             source: source ?? "unknown",
-            package: selectedPackage.identifier,
-            package_type: selectedPackage.packageType,
+            package: pkgToBuy.identifier,
+            package_type: pkgToBuy.packageType,
         });
+
         try {
-            const outcome = await purchasePackage(selectedPackage);
+            const outcome = await purchasePackage(pkgToBuy);
             if (outcome === "purchased") {
                 track(AnalyticsEvents.PURCHASE_VALIDATED, {
                     source: source ?? "unknown",
-                    package: selectedPackage.identifier,
-                    package_type: selectedPackage.packageType,
+                    package: pkgToBuy.identifier,
+                    package_type: pkgToBuy.packageType,
                 });
                 toast.success(UI.premiumSubscribeSuccess);
                 resolvePaywall(true);
             } else if (outcome === "error") {
                 track(AnalyticsEvents.PURCHASE_FAILED, {
                     source: source ?? "unknown",
-                    package: selectedPackage.identifier,
+                    package: pkgToBuy.identifier,
                 });
                 toast.error(UI.premiumSubscribeError);
             }
@@ -267,20 +282,14 @@ export function CustomPaywallDrawer() {
                 <div className="flex-1 overflow-y-auto">
                     {status === "loading" ? (
                         <PaywallLoading />
-                    ) : status === "error" || !offering ? (
-                        <PaywallError onRetry={handleClose} />
                     ) : (
                         <PaywallBody
-                            annual={packages.annual}
-                            monthly={packages.monthly}
                             selected={selected}
                             onSelect={handleSelect}
-                            annualOldPrice={annualOldPrice}
                             showTshirtsSection={showTshirtsSection}
                             isAnnualSelected={isAnnualSelected}
                             onPurchase={handlePurchase}
                             purchasing={purchasing}
-                            selectedPackage={selectedPackage}
                         />
                     )}
                 </div>
@@ -298,45 +307,22 @@ function PaywallLoading() {
     );
 }
 
-function PaywallError({ onRetry }: { onRetry: () => void }) {
-    return (
-        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-8 text-center text-white/80">
-            <p className="text-sm">{UI.paywallError}</p>
-            <Button
-                variant="outline"
-                onClick={onRetry}
-                className="bg-transparent text-white"
-            >
-                {UI.paywallClose}
-            </Button>
-        </div>
-    );
-}
-
 type PaywallBodyProps = {
-    annual: PurchasesPackage | null;
-    monthly: PurchasesPackage | null;
     selected: SelectedKey;
     onSelect: (key: SelectedKey) => void;
-    annualOldPrice: string;
     showTshirtsSection: boolean;
     isAnnualSelected: boolean;
     onPurchase: () => void;
     purchasing: boolean;
-    selectedPackage: PurchasesPackage | null;
 };
 
 function PaywallBody({
-    annual,
-    monthly,
     selected,
     onSelect,
-    annualOldPrice,
     showTshirtsSection,
     isAnnualSelected,
     onPurchase,
     purchasing,
-    selectedPackage,
 }: PaywallBodyProps) {
     return (
         <div className="flex flex-col">
@@ -374,50 +360,42 @@ function PaywallBody({
                 ) : null}
 
                 <section className="relative flex flex-col gap-2.5">
-                    {annual ? (
-                        <PackageCard
-                            label={UI.paywallAnnualLabel}
-                            perMonth={
-                                <>
-                                    1 mois{" "}
-                                    <Price
-                                        value={formatPricePerMonth(annual)}
-                                    />
-                                </>
-                            }
-                            oldPrice={annualOldPrice}
-                            price={annual.product.priceString}
-                            trailingLabel={UI.paywallFirstYear}
-                            badge={UI.paywallGiftBadge}
-                            selected={selected === "annual"}
-                            onSelect={() => onSelect("annual")}
-                        />
-                    ) : null}
+                    <PackageCard
+                        label={UI.paywallAnnualLabel}
+                        perMonth={
+                            <>
+                                1 mois{" "}
+                                <Price value={HARDCODED_ANNUAL_PER_MONTH} />
+                            </>
+                        }
+                        oldPrice={HARDCODED_ANNUAL_OLD_PRICE}
+                        price={HARDCODED_ANNUAL_PRICE}
+                        trailingLabel={UI.paywallFirstYear}
+                        badge={UI.paywallGiftBadge}
+                        selected={selected === "annual"}
+                        onSelect={() => onSelect("annual")}
+                    />
 
-                    {monthly ? (
-                        <PackageCard
-                            label={UI.paywallMonthlyLabel}
-                            perMonth={
-                                <>
-                                    1 mois{" "}
-                                    <Price
-                                        value={monthly.product.priceString}
-                                    />
-                                </>
-                            }
-                            price={monthly.product.priceString}
-                            trailingLabel={UI.paywallPerMonthLabel}
-                            selected={selected === "monthly"}
-                            onSelect={() => onSelect("monthly")}
-                        />
-                    ) : null}
+                    <PackageCard
+                        label={UI.paywallMonthlyLabel}
+                        perMonth={
+                            <>
+                                1 mois{" "}
+                                <Price value={HARDCODED_MONTHLY_PER_MONTH} />
+                            </>
+                        }
+                        price={HARDCODED_MONTHLY_PRICE}
+                        trailingLabel={UI.paywallPerMonthLabel}
+                        selected={selected === "monthly"}
+                        onSelect={() => onSelect("monthly")}
+                    />
                 </section>
 
                 <Button
                     variant="accent"
                     size="lg"
                     className="w-full text-base"
-                    disabled={purchasing || !selectedPackage}
+                    disabled={purchasing}
                     onClick={onPurchase}
                 >
                     {purchasing ? (
@@ -427,13 +405,15 @@ function PaywallBody({
                     )}
                 </Button>
 
-                <p className="text-center text-xs text-white/70">
-                    {selectedPackage ? (
-                        <BilledLine
-                            selectedPackage={selectedPackage}
-                            annual={isAnnualSelected}
-                        />
-                    ) : null}
+                <p className="text-center text-[11px] leading-snug text-white/60">
+                    <BilledLine
+                        priceString={
+                            isAnnualSelected
+                                ? HARDCODED_ANNUAL_PRICE
+                                : HARDCODED_MONTHLY_PRICE
+                        }
+                        annual={isAnnualSelected}
+                    />
                 </p>
 
                 <PaywallFooterLinks />
@@ -443,20 +423,25 @@ function PaywallBody({
 }
 
 function BilledLine({
-    selectedPackage,
+    priceString,
     annual,
 }: {
-    selectedPackage: PurchasesPackage;
+    priceString: string;
     annual: boolean;
 }) {
+    const isAndroid = Capacitor.getPlatform() === "android";
     const template = annual
-        ? UI.paywallBilledYearly
-        : UI.paywallBilledMonthly;
+        ? isAndroid
+            ? UI.paywallBilledYearlyAndroid
+            : UI.paywallBilledYearlyIos
+        : isAndroid
+          ? UI.paywallBilledMonthlyAndroid
+          : UI.paywallBilledMonthlyIos;
     const [before, after] = template.split("{price}");
     return (
         <span>
             {before}
-            <Price value={selectedPackage.product.priceString} />
+            <Price value={priceString} />
             {after}
         </span>
     );
@@ -605,18 +590,18 @@ function PaywallFooterLinks() {
             <span className="text-white/30">·</span>
             <button
                 type="button"
-                onClick={() => void openExternal(PRIVACY_URL)}
+                onClick={() => void openExternal(CGV_URL)}
                 className="transition hover:text-white"
             >
-                {UI.paywallPrivacy}
+                {UI.paywallCgv}
             </button>
             <span className="text-white/30">·</span>
             <button
                 type="button"
-                onClick={() => void openExternal(TERMS_URL)}
+                onClick={() => void openExternal(CGU_URL)}
                 className="transition hover:text-white"
             >
-                {UI.paywallTerms}
+                {UI.paywallCgu}
             </button>
         </div>
     );
