@@ -33,7 +33,7 @@ const config: CapacitorConfig = {
     },
     LocalNotifications: {
       smallIcon: 'ic_stat_notification',
-      iconColor: '#DFFF5E',
+      iconColor: '#dfff5e',
     },
     // ⚠️ Cette section n'affecte QUE iOS (le champ `resize` est iOS-only per plugin docs).
     // - iOS : `KeyboardResize.None` = WebView pleine hauteur, aucun resize auto.

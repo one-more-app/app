@@ -1,3 +1,4 @@
+import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallback";
 import { PresenceBadge } from "@/components/friends/PresenceBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -81,9 +82,10 @@ function AcceptedFriendRow({
                                 className="size-10 rounded-full object-cover"
                             />
                         ) : (
-                            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                                {initials}
-                            </div>
+                            <ProfileAvatarFallback
+                                initials={initials}
+                                className="size-10 rounded-full text-sm"
+                            />
                         )}
                     </div>
                     <div className="min-w-0">
@@ -145,9 +147,10 @@ function PendingFriendRow({
                                 className="size-10 rounded-full object-cover"
                             />
                         ) : (
-                            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                                {initials}
-                            </div>
+                            <ProfileAvatarFallback
+                                initials={initials}
+                                className="size-10 rounded-full text-sm"
+                            />
                         )}
                     </div>
                     <div className="min-w-0 flex-1">

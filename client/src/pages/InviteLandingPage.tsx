@@ -1,3 +1,4 @@
+import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallback";
 import { BackHeader } from "@/components/BackHeader";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -86,9 +87,10 @@ export default function InviteLandingPage() {
                   className="size-20 rounded-full object-cover"
                 />
               ) : (
-                <div className="flex size-20 items-center justify-center rounded-full bg-primary/10 text-2xl font-semibold text-primary">
-                  {inviterName.charAt(0).toUpperCase()}
-                </div>
+                <ProfileAvatarFallback
+                  initials={inviterName.charAt(0).toUpperCase()}
+                  className="size-20 rounded-full text-2xl"
+                />
               )}
               <div>
                 <h1 className="text-xl font-semibold">{UI.inviteLandingHeading}</h1>

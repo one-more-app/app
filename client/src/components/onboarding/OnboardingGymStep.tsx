@@ -1,9 +1,9 @@
+import { GymSearchPicker } from '@/components/gyms/GymSearchPicker'
 import {
-    onboardingStepCardClassName,
     OnboardingReveal,
+    onboardingStepCardClassName,
     OnboardingStepLayout,
 } from '@/components/onboarding/onboarding-motion'
-import { GymSearchPicker } from '@/components/gyms/GymSearchPicker'
 import { StepCard } from '@/components/StepCard'
 import { Button } from '@/components/ui/button'
 import { useMutateUserGym } from '@/hooks/use-user-gym-data'
@@ -12,8 +12,8 @@ import {
     requestGymLocationPermission,
 } from '@/lib/gym-geolocation'
 import {
-    findGymFromLocation,
     fetchUserGym,
+    findGymFromLocation,
     isWithinGymRadius,
     upsertUserGym,
     type GymPlace,
@@ -30,6 +30,8 @@ type GymSearchView = 'list' | 'map'
 type OnboardingGymStepProps = {
     onGymSaved: () => void | Promise<void>
     fromSettings?: boolean
+    startAtSearch?: boolean
+    onSearchBack?: () => void
     embedded?: boolean
     settingsPickerTitle?: string
     onCancel?: () => void
@@ -65,6 +67,8 @@ function GymStepShell({
 export function OnboardingGymStep({
     onGymSaved,
     fromSettings = false,
+    startAtSearch = false,
+    onSearchBack,
     embedded = false,
     settingsPickerTitle,
     onCancel,
@@ -72,7 +76,7 @@ export function OnboardingGymStep({
     const mutateUserGym = useMutateUserGym()
     const isNative = Capacitor.isNativePlatform()
     const [subStep, setSubStep] = useState<GymSubStep>(
-        fromSettings ? 'search' : 'question',
+        fromSettings || startAtSearch ? 'search' : 'question',
     )
     const [candidate, setCandidate] = useState<GymPlace | null>(null)
     const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(
@@ -92,10 +96,10 @@ export function OnboardingGymStep({
                 const inZone =
                     coords != null
                         ? isWithinGymRadius(coords.lat, coords.lng, {
-                              lat: place.lat,
-                              lng: place.lng,
-                              radiusM: 120,
-                          })
+                            lat: place.lat,
+                            lng: place.lng,
+                            radiusM: 120,
+                        })
                         : false
 
                 await upsertUserGym({
@@ -161,31 +165,31 @@ export function OnboardingGymStep({
                     backLabel={UI.back}
                 >
                     <OnboardingReveal delayMs={80}>
-                    <p className="text-sm text-muted-foreground">
-                        {UI.gymOnboardingHint}
-                    </p>
+                        <p className="text-sm text-muted-foreground">
+                            {UI.gymOnboardingHint}
+                        </p>
                     </OnboardingReveal>
                     {error && (
                         <OnboardingReveal delayMs={120}>
-                        <p className="text-sm text-destructive">{error}</p>
+                            <p className="text-sm text-destructive">{error}</p>
                         </OnboardingReveal>
                     )}
                     <OnboardingReveal delayMs={160}>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <Button variant="accent" className="w-full" onClick={() => void handleAtGym()}>
-                            {UI.gymOnboardingYes}
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => {
-                                setSubStep('search')
-                                setError(null)
-                            }}
-                        >
-                            {UI.gymOnboardingNo}
-                        </Button>
-                    </div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <Button variant="accent" className="w-full" onClick={() => void handleAtGym()}>
+                                {UI.gymOnboardingYes}
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => {
+                                    setSubStep('search')
+                                    setError(null)
+                                }}
+                            >
+                                {UI.gymOnboardingNo}
+                            </Button>
+                        </div>
                     </OnboardingReveal>
                 </StepCard>
             </GymStepShell>
@@ -196,12 +200,12 @@ export function OnboardingGymStep({
         return (
             <GymStepShell embedded={embedded} centered>
                 <OnboardingReveal>
-                <Loader2 className="size-8 animate-spin text-accent" aria-hidden />
+                    <Loader2 className="size-8 animate-spin text-accent" aria-hidden />
                 </OnboardingReveal>
                 <OnboardingReveal delayMs={120}>
-                <p className="text-sm text-muted-foreground">
-                    {UI.gymOnboardingLocationWhy}
-                </p>
+                    <p className="text-sm text-muted-foreground">
+                        {UI.gymOnboardingLocationWhy}
+                    </p>
                 </OnboardingReveal>
             </GymStepShell>
         )
@@ -215,43 +219,43 @@ export function OnboardingGymStep({
                     title={UI.gymOnboardingConfirmTitle}
                 >
                     <OnboardingReveal delayMs={80}>
-                    <div className="rounded-2xl border border-border/80 bg-muted/20 p-4">
-                        <p className="font-semibold">{candidate.name}</p>
-                        {candidate.address && (
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                {candidate.address}
-                            </p>
-                        )}
-                    </div>
+                        <div className="rounded-2xl border border-border/80 bg-muted/20 p-4">
+                            <p className="font-semibold">{candidate.name}</p>
+                            {candidate.address && (
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    {candidate.address}
+                                </p>
+                            )}
+                        </div>
                     </OnboardingReveal>
                     {error && (
                         <OnboardingReveal delayMs={120}>
-                        <p className="text-sm text-destructive">{error}</p>
+                            <p className="text-sm text-destructive">{error}</p>
                         </OnboardingReveal>
                     )}
                     <OnboardingReveal delayMs={200}>
-                    <Button
-                        variant="accent"
-                        className="w-full"
-                        onClick={() => void saveGym(candidate, userCoords)}
-                    >
-                        {UI.continue}
-                    </Button>
+                        <Button
+                            variant="accent"
+                            className="w-full"
+                            onClick={() => void saveGym(candidate, userCoords)}
+                        >
+                            {UI.continue}
+                        </Button>
                     </OnboardingReveal>
                     <OnboardingReveal delayMs={280}>
-                    <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => {
-                            setSearchQuery(candidate.name)
-                            setSearchView('map')
-                            setSelectedPlaceId(candidate.placeId)
-                            setSearchPickerKey((key) => key + 1)
-                            setSubStep('search')
-                        }}
-                    >
-                        {UI.gymSettingsChange}
-                    </Button>
+                        <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                                setSearchQuery(candidate.name)
+                                setSearchView('map')
+                                setSelectedPlaceId(candidate.placeId)
+                                setSearchPickerKey((key) => key + 1)
+                                setSubStep('search')
+                            }}
+                        >
+                            {UI.gymSettingsChange}
+                        </Button>
                     </OnboardingReveal>
                 </StepCard>
             </GymStepShell>
@@ -265,9 +269,8 @@ export function OnboardingGymStep({
                 title={
                     fromSettings
                         ? (settingsPickerTitle ?? UI.gymSettingsChange)
-                        : UI.gymOnboardingNo
+                        : UI.gymOnboardingSearch
                 }
-                onBack={fromSettings ? onCancel : () => setSubStep('question')}
                 backLabel={UI.back}
             >
                 <GymSearchPicker

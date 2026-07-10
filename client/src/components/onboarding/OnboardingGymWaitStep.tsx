@@ -1,22 +1,22 @@
 import { GymOnboardingPermissionRow } from '@/components/onboarding/GymOnboardingPermissionRow'
 import {
-    onboardingStepCardClassName,
     OnboardingReveal,
+    onboardingStepCardClassName,
     OnboardingStepLayout,
 } from '@/components/onboarding/onboarding-motion'
 import { StepCard } from '@/components/StepCard'
 import { Button } from '@/components/ui/button'
 import { subscribeAppStateChange } from '@/lib/app-state-listener'
 import {
-    resolveGymWaitBodyCopy,
-    resolveGymWaitRemindersHint,
-} from '@/lib/gym-onboarding-wait-copy'
-import {
     getGymGeofencePermissions,
     openGymGeofenceSettings,
     registerGymGeofenceIfPermitted,
     requestGymGeofencePermissions,
 } from '@/lib/gym-geofence'
+import {
+    isGymWaitPermissionsReady,
+    resolveGymWaitMonitoringBody,
+} from '@/lib/gym-onboarding-wait-copy'
 import { fetchUserGym } from '@/lib/gyms-api'
 import {
     isGymPermissionsDevWebPreview,
@@ -28,19 +28,86 @@ import {
     requestPushPermission,
 } from '@/lib/push-notifications'
 import { UI } from '@/lib/translations'
+import { cn } from '@/lib/utils'
 import { Capacitor } from '@capacitor/core'
-import { Bell, Dumbbell, MapPin } from 'lucide-react'
+import { Bell, Check, MapPin } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 type OnboardingGymWaitStepProps = {
     initialGymName: string
+    initialGymAddress?: string | null
     onUnlock: () => void
     onChangeGym: () => void
     unlocking?: boolean
 }
 
+function GymWaitMonitoringCard({
+    gymName,
+    isNative,
+    showLocationRow,
+}: {
+    gymName: string
+    isNative: boolean
+    showLocationRow: boolean
+}) {
+    const monitoringBody = resolveGymWaitMonitoringBody({ gymName, isNative })
+
+    return (
+        <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4">
+            <div className="flex items-start gap-3">
+                <div className="relative mt-0.5 flex size-3 shrink-0 items-center justify-center">
+                    <span
+                        className="absolute inline-flex size-full animate-ping rounded-full bg-accent/40"
+                        aria-hidden
+                    />
+                    <span className="relative inline-flex size-2.5 rounded-full bg-accent" />
+                </div>
+                <div className="min-w-0 flex-1 space-y-1">
+                    <p className="font-one-more text-xs font-semibold uppercase italic leading-tight">{UI.gymOnboardingWaitMonitoringTitle}</p>
+                    <p className="text-sm text-muted-foreground">{monitoringBody}</p>
+                </div>
+            </div>
+            <ul className="mt-4 space-y-2">
+                <li className="flex items-center gap-2 text-sm">
+                    <Check className="size-4 shrink-0 text-accent" aria-hidden />
+                    <span>{UI.gymOnboardingWaitMonitoringNotifications}</span>
+                </li>
+                {showLocationRow ? (
+                    <li className="flex items-center gap-2 text-sm">
+                        <Check className="size-4 shrink-0 text-accent" aria-hidden />
+                        <span>{UI.gymOnboardingWaitMonitoringLocation}</span>
+                    </li>
+                ) : null}
+            </ul>
+        </div>
+    )
+}
+
+function GymWaitChoiceBlock() {
+    return (
+        <div className="space-y-2 rounded-2xl border border-border/80 bg-muted/20 p-4">
+            <p className="text-sm font-medium">{UI.gymOnboardingWaitChoiceIntro}</p>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex gap-2">
+                    <span className="shrink-0 text-foreground" aria-hidden>
+                        1.
+                    </span>
+                    <span>{UI.gymOnboardingWaitChoiceWait}</span>
+                </li>
+                <li className="flex gap-2">
+                    <span className="shrink-0 text-foreground" aria-hidden>
+                        2.
+                    </span>
+                    <span>{UI.gymOnboardingWaitChoiceNow}</span>
+                </li>
+            </ul>
+        </div>
+    )
+}
+
 export function OnboardingGymWaitStep({
     initialGymName,
+    initialGymAddress = null,
     onUnlock,
     onChangeGym,
     unlocking = false,
@@ -50,6 +117,7 @@ export function OnboardingGymWaitStep({
     const showLocationRow = isGymPermissionsNativeContext('gym-wait')
 
     const [gymName, setGymName] = useState(initialGymName)
+    const [gymAddress, setGymAddress] = useState(initialGymAddress)
 
     const [notificationsOn, setNotificationsOn] = useState(false)
     const [locationOn, setLocationOn] = useState(false)
@@ -96,6 +164,7 @@ export function OnboardingGymWaitStep({
             const gym = await fetchUserGym()
             if (!gym?.name) return
             setGymName(gym.name)
+            setGymAddress(gym.address)
         } catch {
             /* API indisponible. */
         }
@@ -169,15 +238,8 @@ export function OnboardingGymWaitStep({
         }
     }
 
-    const bodyCopy = resolveGymWaitBodyCopy({
+    const permissionsReady = isGymWaitPermissionsReady({
         hasGym,
-        gymName,
-        notificationsOn,
-        locationOn,
-        isNative,
-    })
-
-    const remindersHint = resolveGymWaitRemindersHint({
         notificationsOn,
         locationOn,
         isNative,
@@ -188,30 +250,27 @@ export function OnboardingGymWaitStep({
             <StepCard
                 className={onboardingStepCardClassName}
                 title={UI.gymOnboardingWaitTitle}
+                headerClassName="space-y-3"
+                contentClassName="space-y-5"
             >
-                <OnboardingReveal delayMs={80}>
-                    <div className="flex justify-center">
-                        <div className="flex size-16 items-center justify-center rounded-full bg-accent/15 text-accent">
-                            <Dumbbell className="size-8" aria-hidden />
-                        </div>
-                    </div>
+                <OnboardingReveal delayMs={120}>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                        {UI.gymOnboardingWaitValueProp}
+                    </p>
                 </OnboardingReveal>
 
-                <OnboardingReveal delayMs={140}>
-                    <p className="text-sm text-muted-foreground">{bodyCopy}</p>
-                </OnboardingReveal>
-
-                <OnboardingReveal delayMs={200}>
+                <OnboardingReveal delayMs={180}>
                     <div className="space-y-2">
-                        <p className="font-one-more text-xs font-semibold uppercase italic tracking-wide text-muted-foreground">
-                            {UI.gymOnboardingWaitGymSection}
-                        </p>
+                        <p className="text-sm font-medium">{UI.gymOnboardingWaitGymSection}</p>
                         {hasGym ? (
                             <div className="rounded-2xl border border-border/80 bg-muted/20 p-4">
                                 <p className="font-semibold">{gymName}</p>
+                                {gymAddress ? (
+                                    <p className="mt-1 text-sm text-muted-foreground">{gymAddress}</p>
+                                ) : null}
                                 <Button
                                     type="button"
-                                    variant="outline"
+                                    variant="secondary"
                                     size="sm"
                                     className="mt-3 w-full"
                                     onClick={onChangeGym}
@@ -226,7 +285,7 @@ export function OnboardingGymWaitStep({
                                 </p>
                                 <Button
                                     type="button"
-                                    variant="outline"
+                                    variant="secondary"
                                     className="w-full"
                                     onClick={onChangeGym}
                                 >
@@ -237,47 +296,59 @@ export function OnboardingGymWaitStep({
                     </div>
                 </OnboardingReveal>
 
-                <OnboardingReveal delayMs={280}>
-                    <div className="space-y-2">
-                        <div>
-                            <p className="font-one-more text-xs font-semibold uppercase italic tracking-wide text-muted-foreground">
-                                {UI.gymOnboardingWaitRemindersSection}
-                            </p>
-                            <p className="mt-1 text-xs text-muted-foreground">{remindersHint}</p>
-                        </div>
+                {permissionsReady ? (
+                    <OnboardingReveal delayMs={240}>
+                        <GymWaitMonitoringCard
+                            gymName={gymName}
+                            isNative={isNative}
+                            showLocationRow={showLocationRow}
+                        />
+                    </OnboardingReveal>
+                ) : (
+                    <OnboardingReveal delayMs={240}>
                         <div className="space-y-2">
-                            <GymOnboardingPermissionRow
-                                icon={Bell}
-                                label={UI.gymOnboardingPermissionsNotificationsLabel}
-                                hint={UI.gymOnboardingPermissionsNotificationsHint}
-                                checked={notificationsOn}
-                                busy={busyNotifications}
-                                onCheckedChange={(checked) =>
-                                    void handleNotificationsToggle(checked)
-                                }
-                            />
-                            {showLocationRow ? (
+                            <div>
+                                <p className="text-sm font-medium">
+                                    {UI.gymOnboardingWaitRemindersSection}
+                                </p>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    {UI.gymOnboardingWaitRemindersPending}
+                                </p>
+                            </div>
+                            <div className="space-y-2">
                                 <GymOnboardingPermissionRow
-                                    icon={MapPin}
-                                    label={UI.gymOnboardingPermissionsLocationLabel}
-                                    hint={UI.gymOnboardingPermissionsLocationHint}
-                                    checked={locationOn}
-                                    busy={busyLocation}
+                                    icon={Bell}
+                                    label={UI.gymOnboardingPermissionsNotificationsLabel}
+                                    hint={UI.gymOnboardingPermissionsNotificationsHint}
+                                    checked={notificationsOn}
+                                    busy={busyNotifications}
                                     onCheckedChange={(checked) =>
-                                        void handleLocationToggle(checked)
+                                        void handleNotificationsToggle(checked)
                                     }
                                 />
-                            ) : (
-                                <p className="text-xs text-muted-foreground">
-                                    {UI.gymOnboardingWebOnly}
-                                </p>
-                            )}
+                                {showLocationRow ? (
+                                    <GymOnboardingPermissionRow
+                                        icon={MapPin}
+                                        label={UI.gymOnboardingPermissionsLocationLabel}
+                                        hint={UI.gymOnboardingPermissionsLocationHint}
+                                        checked={locationOn}
+                                        busy={busyLocation}
+                                        onCheckedChange={(checked) =>
+                                            void handleLocationToggle(checked)
+                                        }
+                                    />
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">
+                                        {UI.gymOnboardingWebOnly}
+                                    </p>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                </OnboardingReveal>
+                    </OnboardingReveal>
+                )}
 
                 {showLocationSettings ? (
-                    <OnboardingReveal delayMs={340}>
+                    <OnboardingReveal delayMs={300}>
                         <div className="space-y-2 rounded-2xl border border-border/80 bg-muted/20 px-4 py-3">
                             <p className="text-sm text-muted-foreground">
                                 {UI.gymOnboardingLocationDenied}
@@ -286,7 +357,7 @@ export function OnboardingGymWaitStep({
                                 {UI.gymOnboardingLocationSettingsHint}
                             </p>
                             <Button
-                                variant="outline"
+                                variant="secondary"
                                 className="w-full"
                                 onClick={() => void openGymGeofenceSettings()}
                             >
@@ -296,10 +367,14 @@ export function OnboardingGymWaitStep({
                     </OnboardingReveal>
                 ) : null}
 
-                <OnboardingReveal delayMs={400}>
+                <OnboardingReveal delayMs={360}>
+                    <GymWaitChoiceBlock />
+                </OnboardingReveal>
+
+                <OnboardingReveal delayMs={420}>
                     <Button
                         variant="accent"
-                        className="w-full"
+                        className={cn('w-full', permissionsReady && 'mt-1')}
                         disabled={unlocking || busyNotifications || busyLocation}
                         onClick={onUnlock}
                     >

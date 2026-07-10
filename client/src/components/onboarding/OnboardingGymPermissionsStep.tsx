@@ -30,12 +30,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 type OnboardingGymPermissionsStepProps = {
     gymName: string
+    gymAddress: string | null
     onContinue: () => void
     onChangeGym: () => void
 }
 
 export function OnboardingGymPermissionsStep({
     gymName,
+    gymAddress,
     onContinue,
     onChangeGym,
 }: OnboardingGymPermissionsStepProps) {
@@ -47,10 +49,10 @@ export function OnboardingGymPermissionsStep({
     const [busyNotifications, setBusyNotifications] = useState(false)
     const [busyLocation, setBusyLocation] = useState(false)
     const [showLocationSettings, setShowLocationSettings] = useState(false)
+    const [displayName, setDisplayName] = useState(gymName)
+    const [displayAddress, setDisplayAddress] = useState(gymAddress)
     const continuingRef = useRef(false)
     const wasBackgroundedRef = useRef(false)
-
-    const gymHint = UI.gymOnboardingPermissionsGymHint.replace('{name}', gymName)
 
     const registerGeofenceFromApi = useCallback(async () => {
         const gym = await fetchUserGym()
@@ -83,11 +85,28 @@ export function OnboardingGymPermissionsStep({
         }
     }, [isNative, registerGeofenceFromApi])
 
+    const loadGymFromApi = useCallback(async () => {
+        try {
+            const gym = await fetchUserGym()
+            if (!gym) return
+            setDisplayName(gym.name)
+            setDisplayAddress(gym.address)
+        } catch {
+            /* API indisponible. */
+        }
+    }, [])
+
+    useEffect(() => {
+        setDisplayName(gymName)
+        setDisplayAddress(gymAddress)
+    }, [gymName, gymAddress])
+
     useEffect(() => {
         continuingRef.current = false
         wasBackgroundedRef.current = false
+        void loadGymFromApi()
         void refreshPermissionState()
-    }, [refreshPermissionState])
+    }, [loadGymFromApi, refreshPermissionState])
 
     useEffect(() => {
         if (!isNative) return
@@ -102,7 +121,16 @@ export function OnboardingGymPermissionsStep({
         })
     }, [isNative, refreshPermissionState])
 
+    const canContinue =
+        notificationsOn && (!showLocationRow || locationOn)
+
     const handleContinue = () => {
+        if (!canContinue || continuingRef.current) return
+        continuingRef.current = true
+        onContinue()
+    }
+
+    const handleSkip = () => {
         if (continuingRef.current) return
         continuingRef.current = true
         onContinue()
@@ -174,9 +202,24 @@ export function OnboardingGymPermissionsStep({
                     </p>
                 </OnboardingReveal>
                 <OnboardingReveal delayMs={140}>
-                    <p className="rounded-2xl border border-border/80 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
-                        {gymHint}
-                    </p>
+                    {displayName.trim() ? (
+                        <div className="rounded-xl border border-border/80 bg-muted/20 px-4 py-3">
+                            <p className="font-semibold">{displayName}</p>
+                            {displayAddress ? (
+                                <p className="mt-1 text-sm text-muted-foreground">{displayAddress}</p>
+                            ) : null}
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                className="mt-3 w-full"
+                                disabled={busyNotifications || busyLocation}
+                                onClick={onChangeGym}
+                            >
+                                {UI.gymOnboardingWaitGymChange}
+                            </Button>
+                        </div>
+                    ) : null}
                 </OnboardingReveal>
 
                 <div className="space-y-3">
@@ -229,37 +272,28 @@ export function OnboardingGymPermissionsStep({
                         </div>
                     </OnboardingReveal>
                 ) : null}
-
-                <OnboardingReveal delayMs={400}>
-                    <Button
-                        variant="accent"
-                        className="w-full"
-                        disabled={busyNotifications || busyLocation}
-                        onClick={handleContinue}
-                    >
-                        {UI.continue}
-                    </Button>
-                </OnboardingReveal>
-                <OnboardingReveal delayMs={480}>
-                    <Button
-                        variant="outline"
-                        className="w-full"
-                        disabled={busyNotifications || busyLocation}
-                        onClick={handleContinue}
-                    >
-                        {UI.gymOnboardingPermissionsSkip}
-                    </Button>
-                </OnboardingReveal>
-                <OnboardingReveal delayMs={560}>
-                    <Button
-                        variant="ghost"
-                        className="w-full"
-                        disabled={busyNotifications || busyLocation}
-                        onClick={onChangeGym}
-                    >
-                        {UI.gymOnboardingWaitGymChange}
-                    </Button>
-                </OnboardingReveal>
+                <div className="space-y-2">
+                    <OnboardingReveal delayMs={400}>
+                        <Button
+                            variant="accent"
+                            className="w-full"
+                            disabled={!canContinue || busyNotifications || busyLocation}
+                            onClick={handleContinue}
+                        >
+                            {UI.continue}
+                        </Button>
+                    </OnboardingReveal>
+                    <OnboardingReveal delayMs={480}>
+                        <Button
+                            variant="secondary"
+                            className="w-full"
+                            disabled={busyNotifications || busyLocation}
+                            onClick={handleSkip}
+                        >
+                            {UI.gymOnboardingPermissionsSkip}
+                        </Button>
+                    </OnboardingReveal>
+                </div>
             </StepCard>
         </OnboardingStepLayout>
     )

@@ -722,9 +722,10 @@ export const UI = {
   // Salle de sport (onboarding post-compte)
   gymOnboardingTitle: "Tu es à la salle en ce moment ?",
   gymOnboardingHint:
-    "On te préviendra quand tu seras à la salle pour enregistrer tes perfs.",
-  gymOnboardingYes: "Oui, je suis à la salle",
+    "Renseigne ta salle pour qu'on te prévienne à l'arrivée et que tu puisses enregistrer tes perfs.",
+  gymOnboardingYes: "Je suis à la salle",
   gymOnboardingNo: "Pas maintenant",
+  gymOnboardingSearch: "Chercher ma salle",
   gymOnboardingLocationWhy:
     "On a besoin de ta position pour te prévenir quand tu reviens à la salle.",
   gymOnboardingConfirmTitle: "C'est bien ta salle ?",
@@ -772,35 +773,38 @@ export const UI = {
   gymOnboardingLocationSettingsCta: "Ouvrir les réglages",
   gymOnboardingLocationSettingsHint:
     "Dans les réglages, choisis « Toujours » pour la localisation.",
-  gymOnboardingWaitTitle: "Reviens à la salle",
-  gymOnboardingWaitBody:
-    "One More prend tout son sens quand tu t'entraînes. Reviens quand tu seras à ta salle, on te préviendra pour que tu puisses enregistrer ta première perf.",
-  gymOnboardingWaitBodyNoGym:
-    "Renseigne ta salle pour qu'on sache où t'attendre et te prévenir à l'arrivée.",
-  gymOnboardingWaitBodyReady:
-    "Tout est prêt. Dès que tu seras à {name}, on te prévient pour enregistrer ta première perf.",
-  gymOnboardingWaitBodyMissingNotifications:
-    "Active les notifications pour ne pas rater le rappel quand tu arrives à {name}.",
-  gymOnboardingWaitBodyMissingLocation:
-    "Autorise la position pour détecter ton arrivée à {name}.",
-  gymOnboardingWaitBodyMissingBoth:
-    "Active notifications et position pour être prévenu dès que tu arrives à {name}.",
+  gymOnboardingWaitTitle: "Tout est prêt",
+  gymOnboardingWaitHeadlineReady: "Réouvre l'app quand tu seras à {name}",
+  gymOnboardingWaitHeadlineNoGym: "Ajoute ta salle pour activer les alertes",
+  gymOnboardingWaitHeadlineMissingPerms: "Active les alertes pour {name}",
+  gymOnboardingWaitValueProp:
+    "One More sert à suivre tes perfs à la salle. On a enregistré ta salle et tes alertes pour te prévenir à chaque visite.",
+  gymOnboardingWaitMonitoringTitle: "Détection en cours",
+  gymOnboardingWaitMonitoringBodyNative:
+    "On surveille en continu ton arrivée à {name}, même si l'app est fermée.",
+  gymOnboardingWaitMonitoringBodyWeb:
+    "On te préviendra quand tu seras à la salle",
+  gymOnboardingWaitMonitoringNotifications: "Notifications activées",
+  gymOnboardingWaitMonitoringLocation: "Position en arrière-plan",
+  gymOnboardingWaitChoiceIntro: "Tu as le choix :",
+  gymOnboardingWaitChoiceWait:
+    "Ferme l'app. On t'envoie une notification à ta prochaine visite.",
+  gymOnboardingWaitChoiceNow:
+    "Ou appuie ci-dessous si tu es déjà à la salle pour commencer tout de suite.",
   gymOnboardingWaitGymSection: "Ta salle",
   gymOnboardingWaitGymEmpty: "Aucune salle renseignée pour l'instant.",
   gymOnboardingWaitGymChange: "Changer de salle",
   gymOnboardingWaitGymSearching: "Recherche en cours…",
-  gymOnboardingWaitGymSaveError:
-    "Impossible d'enregistrer ta salle. Réessaie.",
-  gymOnboardingWaitRemindersSection: "Rappels",
-  gymOnboardingWaitRemindersReady: "Tu seras alerté dès ton arrivée à la salle.",
+  gymOnboardingWaitGymSaveError: "Impossible d'enregistrer ta salle. Réessaie.",
+  gymOnboardingWaitRemindersSection: "Complète tes alertes",
   gymOnboardingWaitRemindersPending:
-    "Tu peux activer ou modifier ces options à tout moment.",
+    "Active ces options pour être prévenu dès ton arrivée à la salle.",
   gymOnboardingWaitCta: "Je suis à la salle",
   gymOnboardingWebOnly:
     "La détection à la salle est disponible sur l'app mobile.",
   gymGeofenceEnterTitle: "Tu es à la salle",
-  gymGeofenceEnterBody: "Tu es à {name}. Enregistre ta première perf.",
-  gymGeofenceEnterBodyGeneric: "Tu es à la salle. Enregistre ta première perf.",
+  gymGeofenceEnterBody:
+    "Il est temps de t'entraîner. Enregistre ta perf.",
   gymGeofencePermissionsDenied:
     "Autorise la localisation « Toujours » pour recevoir le rappel à la salle.",
   gymPendingBanner: "Ta première perf t'attend à {name}.",

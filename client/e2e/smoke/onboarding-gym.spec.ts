@@ -59,17 +59,34 @@ test("onboarding gym step blocks until gym saved and wait unlock", async ({
   ).toBeVisible();
 
   await page
-    .getByRole("button", {
-      name: UI.gymOnboardingPermissionsSkip,
+    .getByRole("switch", {
+      name: UI.gymOnboardingPermissionsNotificationsLabel,
       exact: true,
     })
     .click();
+
+  await page
+    .getByRole("switch", {
+      name: UI.gymOnboardingPermissionsLocationLabel,
+      exact: true,
+    })
+    .click();
+
+  await page.getByRole("button", { name: UI.continue, exact: true }).click();
 
   await expect(page).toHaveURL(/#\/onboarding\?step=gym-wait$/);
 
   await expect(
     page.getByText(UI.gymOnboardingWaitTitle, { exact: true }),
   ).toBeVisible();
+
+  await expect(
+    page.getByText(UI.gymOnboardingWaitMonitoringTitle, { exact: true }),
+  ).toBeVisible();
+
+  await expect(
+    page.getByText(UI.gymOnboardingWaitRemindersSection, { exact: true }),
+  ).toHaveCount(0);
 
   await page.goto("/#/home");
   await expect(page).toHaveURL(/#\/onboarding\?step=gym-wait$/);

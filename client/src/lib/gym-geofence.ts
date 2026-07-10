@@ -37,14 +37,11 @@ const deniedPermissions: GymGeofencePermissionResult = {
   needsSettings: false,
 };
 
-function buildNotificationBody(
-  gymName: string,
-  onboardingGymPending: boolean,
-): string {
-  if (onboardingGymPending) {
-    return UI.gymGeofenceEnterBody.replace("{name}", gymName);
-  }
-  return UI.gymGeofenceEnterBodyGeneric;
+export const GYM_GEOFENCE_DEEP_LINK_PARAM = "gymGeofence";
+
+export function buildGymGeofenceDeepLinkRoute(baseRoute: string): string {
+  const separator = baseRoute.includes("?") ? "&" : "?";
+  return `${baseRoute}${separator}${GYM_GEOFENCE_DEEP_LINK_PARAM}=1`;
 }
 
 export async function getGymGeofencePermissions(): Promise<GymGeofencePermissionResult> {
@@ -77,9 +74,7 @@ export async function openGymGeofenceSettings(): Promise<void> {
 async function registerGymGeofenceNative(
   options: GymGeofenceRegisterOptions,
 ): Promise<void> {
-  const deepLinkRoute = options.onboardingGymPending
-    ? "/exercises"
-    : "/home";
+  const baseRoute = options.onboardingGymPending ? "/exercises" : "/home";
 
   await GymGeofence.register({
     lat: options.lat,
@@ -87,11 +82,8 @@ async function registerGymGeofenceNative(
     radiusM: options.radiusM,
     identifier: "one-more-home-gym",
     notificationTitle: UI.gymGeofenceEnterTitle,
-    notificationBody: buildNotificationBody(
-      options.gymName,
-      options.onboardingGymPending ?? false,
-    ),
-    deepLinkRoute,
+    notificationBody: UI.gymGeofenceEnterBody,
+    deepLinkRoute: buildGymGeofenceDeepLinkRoute(baseRoute),
   });
 }
 

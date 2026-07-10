@@ -458,6 +458,12 @@ function OnboardingPage() {
             ) : step === 'gym' ? (
                 <OnboardingGymStep
                     fromSettings={fromSettings}
+                    startAtSearch={gymReselect}
+                    onSearchBack={
+                        gymReselect
+                            ? () => navigate('/onboarding?step=gym-permissions', { replace: true })
+                            : undefined
+                    }
                     onCancel={
                         fromSettings
                             ? () => navigate('/settings', { replace: true })
@@ -472,6 +478,9 @@ function OnboardingPage() {
                             ? (getGymOnboardingContext()?.gymName ?? '')
                             : (userGym?.name ?? '')
                     }
+                    gymAddress={
+                        isOnboardingGymDevPreview(step) ? null : (userGym?.address ?? null)
+                    }
                     onContinue={() => void completeGymPermissions()}
                     onChangeGym={goChangeGym}
                 />
@@ -481,6 +490,9 @@ function OnboardingPage() {
                         isOnboardingGymDevPreview(step)
                             ? (getGymOnboardingContext()?.gymName ?? '')
                             : (userGym?.name ?? '')
+                    }
+                    initialGymAddress={
+                        isOnboardingGymDevPreview(step) ? null : (userGym?.address ?? null)
                     }
                     onUnlock={() => void handleGymUnlock()}
                     onChangeGym={goChangeGym}

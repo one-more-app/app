@@ -1,3 +1,4 @@
+import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallback";
 import { BackHeader } from "@/components/BackHeader";
 import { ProfileNameDisplay } from "@/components/profile/ProfileNameDisplay";
 import { Button } from "@/components/ui/button";
@@ -105,9 +106,10 @@ export default function UserPreviewPage() {
                             className="size-20 rounded-full object-cover"
                         />
                     ) : (
-                        <div className="flex size-20 items-center justify-center rounded-full bg-primary/10 text-2xl font-semibold text-primary">
-                            {initials}
-                        </div>
+                        <ProfileAvatarFallback
+                            initials={initials}
+                            className="size-20 rounded-full text-2xl"
+                        />
                     )}
                     <ProfileNameDisplay
                         profile={{

@@ -1,6 +1,21 @@
 import { UI } from '@/lib/translations'
 
-export function resolveGymWaitBodyCopy({
+export function isGymWaitPermissionsReady({
+    hasGym,
+    notificationsOn,
+    locationOn,
+    isNative,
+}: {
+    hasGym: boolean
+    notificationsOn: boolean
+    locationOn: boolean
+    isNative: boolean
+}): boolean {
+    if (!hasGym || !notificationsOn) return false
+    return !isNative || locationOn
+}
+
+export function resolveGymWaitHeadline({
     hasGym,
     gymName,
     notificationsOn,
@@ -14,34 +29,32 @@ export function resolveGymWaitBodyCopy({
     isNative: boolean
 }): string {
     if (!hasGym) {
-        return UI.gymOnboardingWaitBodyNoGym
+        return UI.gymOnboardingWaitHeadlineNoGym
     }
 
-    const locationReady = !isNative || locationOn
-    if (notificationsOn && locationReady) {
-        return UI.gymOnboardingWaitBodyReady.replace('{name}', gymName)
+    if (
+        isGymWaitPermissionsReady({
+            hasGym,
+            notificationsOn,
+            locationOn,
+            isNative,
+        })
+    ) {
+        return UI.gymOnboardingWaitHeadlineReady.replace('{name}', gymName)
     }
-    if (!notificationsOn && !locationReady && isNative) {
-        return UI.gymOnboardingWaitBodyMissingBoth.replace('{name}', gymName)
-    }
-    if (!notificationsOn) {
-        return UI.gymOnboardingWaitBodyMissingNotifications.replace('{name}', gymName)
-    }
-    return UI.gymOnboardingWaitBodyMissingLocation.replace('{name}', gymName)
+
+    return UI.gymOnboardingWaitHeadlineMissingPerms.replace('{name}', gymName)
 }
 
-export function resolveGymWaitRemindersHint({
-    notificationsOn,
-    locationOn,
+export function resolveGymWaitMonitoringBody({
+    gymName,
     isNative,
 }: {
-    notificationsOn: boolean
-    locationOn: boolean
+    gymName: string
     isNative: boolean
 }): string {
-    const locationReady = !isNative || locationOn
-    if (notificationsOn && locationReady) {
-        return UI.gymOnboardingWaitRemindersReady
+    if (isNative) {
+        return UI.gymOnboardingWaitMonitoringBodyNative.replace('{name}', gymName)
     }
-    return UI.gymOnboardingWaitRemindersPending
+    return UI.gymOnboardingWaitMonitoringBodyWeb
 }

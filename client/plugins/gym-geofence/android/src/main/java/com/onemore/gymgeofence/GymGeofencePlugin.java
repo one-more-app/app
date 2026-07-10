@@ -198,8 +198,10 @@ public class GymGeofencePlugin extends Plugin {
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        int smallIcon = resolveNotificationIcon(context);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(smallIcon)
             .setContentTitle(title)
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -232,6 +234,16 @@ public class GymGeofencePlugin extends Plugin {
 
     private void ensureNotificationChannel() {
         ensureStaticNotificationChannel(getContext());
+    }
+
+    private static int resolveNotificationIcon(Context context) {
+        int resId = context
+            .getResources()
+            .getIdentifier("ic_stat_notification", "drawable", context.getPackageName());
+        if (resId != 0) {
+            return resId;
+        }
+        return android.R.drawable.ic_dialog_info;
     }
 
     private static void ensureStaticNotificationChannel(Context context) {

@@ -86,7 +86,7 @@ export class PushNotificationService implements OnModuleInit {
       android: {
         notification: {
           icon: 'ic_stat_notification',
-          color: '#DFFF00',
+          color: '#dfff5e',
         },
       },
       apns: {

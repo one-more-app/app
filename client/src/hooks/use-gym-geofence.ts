@@ -7,11 +7,52 @@ import { useGymNotificationsReady } from "@/hooks/use-gym-notifications-ready";
 import { isGymLocationPromptDone } from "@/lib/storage";
 import { unlockGymAccess } from "@/lib/gym-onboarding";
 import {
+  GYM_GEOFENCE_DEEP_LINK_PARAM,
   GYM_GEOFENCE_NOTIFICATION_ID,
   navigateToRoute,
   registerGymGeofenceIfPermitted,
 } from "@/lib/gym-geofence";
 import { isGymOnboardingPendingFromApi } from "@/lib/gym-onboarding-route";
+
+function parseGymGeofenceOpenUrl(url: string): {
+  route: string;
+  fromGymGeofence: boolean;
+} | null {
+  try {
+    const parsed = new URL(url);
+    const hash = parsed.hash.replace(/^#/, "");
+    if (!hash.startsWith("/")) return null;
+
+    const queryIndex = hash.indexOf("?");
+    const path = queryIndex >= 0 ? hash.slice(0, queryIndex) : hash;
+    const query = queryIndex >= 0 ? hash.slice(queryIndex + 1) : "";
+    const params = new URLSearchParams(query);
+    const fromGymGeofence = params.get(GYM_GEOFENCE_DEEP_LINK_PARAM) === "1";
+
+    return { route: path, fromGymGeofence };
+  } catch {
+    return null;
+  }
+}
+
+async function handleGymGeofenceOpenUrl(url: string): Promise<boolean> {
+  const parsed = parseGymGeofenceOpenUrl(url);
+  if (!parsed) return false;
+
+  if (parsed.fromGymGeofence) {
+    try {
+      const gym = await fetchUserGym();
+      if (isGymOnboardingPendingFromApi(gym)) {
+        await unlockGymAccess();
+      }
+    } catch {
+      /* API indisponible. */
+    }
+  }
+
+  navigateToRoute(parsed.route);
+  return true;
+}
 
 export function useGymGeofenceSync() {
   const notificationsReady = useGymNotificationsReady();
@@ -43,6 +84,11 @@ export function useGymGeofenceNotificationTap() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
+    void App.getLaunchUrl().then((result) => {
+      if (!result?.url) return;
+      void handleGymGeofenceOpenUrl(result.url);
+    });
+
     const localHandle = LocalNotifications.addListener(
       "localNotificationActionPerformed",
       (action) => {
@@ -65,15 +111,7 @@ export function useGymGeofenceNotificationTap() {
     );
 
     const appUrlHandle = App.addListener("appUrlOpen", (event) => {
-      try {
-        const url = new URL(event.url);
-        const hash = url.hash.replace(/^#/, "");
-        if (hash.startsWith("/")) {
-          navigateToRoute(hash);
-        }
-      } catch {
-        /* URL invalide. */
-      }
+      void handleGymGeofenceOpenUrl(event.url);
     });
 
     return () => {

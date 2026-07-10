@@ -246,6 +246,7 @@
    *   100 : .sticky-top-safe                  (headers / rest counter)
    *   130 : RestTargetQuickEdit (popover imbriqué au-dessus du header)
    *   200 : Drawer / Dialog (overlay + content, voir components/ui/{drawer,dialog}.tsx)
+   *   210 : Select / Popover portés (components/ui/{select,popover}.tsx), au-dessus des modales
    * Un overlay modal (drawer, dialog) DOIT rester au-dessus des .sticky-top-safe,
    * sinon un header sticky (ex. RestSinceLastSetBar) passe par-dessus l'overlay
    * une fois qu'il s'ouvre au niveau du header.

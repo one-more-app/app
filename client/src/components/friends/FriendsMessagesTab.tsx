@@ -1,3 +1,4 @@
+import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallback";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   useConversationUnreadActions,
@@ -47,9 +48,10 @@ function ConversationRow({
               className="size-10 shrink-0 rounded-full object-cover"
             />
           ) : (
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-              {initials}
-            </div>
+            <ProfileAvatarFallback
+              initials={initials}
+              className="size-10 rounded-full text-sm"
+            />
           )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">

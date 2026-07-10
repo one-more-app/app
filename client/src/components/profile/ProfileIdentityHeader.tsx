@@ -169,7 +169,7 @@ export function ProfileIdentityHeader({
     />
   ) : (
     <span
-      className="flex size-full items-center justify-center text-sm font-semibold text-primary"
+      className="flex size-full items-center justify-center text-sm font-semibold text-secondary-foreground"
       aria-hidden
     >
       {initials}
