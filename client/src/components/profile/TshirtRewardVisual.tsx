@@ -1,3 +1,4 @@
+import type { TshirtRewardType } from "@/lib/rewards-api";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 
@@ -7,15 +8,19 @@ const TSHIRT_IMAGES = {
 } as const;
 
 type TshirtRewardVisualProps = {
+    rewardType?: TshirtRewardType;
     highlight?: boolean;
+    showSlogan?: boolean;
     className?: string;
 };
 
 export function TshirtRewardVisual({
+    rewardType = "referral_limited",
     highlight = false,
+    showSlogan = true,
     className,
 }: TshirtRewardVisualProps) {
-    const src = TSHIRT_IMAGES.dark;
+    const showBoth = rewardType === "annual_classic_pack";
 
     return (
         <div
@@ -28,21 +33,43 @@ export function TshirtRewardVisual({
         >
             <div
                 className={cn(
-                    "relative flex h-28 w-full items-center justify-center sm:h-32",
+                    "relative flex w-full items-center justify-center",
+                    showBoth
+                        ? "h-32 gap-3 sm:h-36"
+                        : "h-28 sm:h-32",
                 )}
             >
-                <img
-                    src={src}
-                    alt={UI.referralTshirtImageAlt}
-                    className="max-h-full max-w-[min(100%,220px)] object-contain"
-                />
+                {showBoth ? (
+                    <>
+                        <img
+                            src={TSHIRT_IMAGES.dark}
+                            alt={UI.referralTshirtImageAlt}
+                            className="max-h-full max-w-[min(48%,140px)] object-contain drop-shadow-sm"
+                        />
+                        <img
+                            src={TSHIRT_IMAGES.light}
+                            alt={UI.referralTshirtImageAlt}
+                            className="max-h-full max-w-[min(48%,140px)] object-contain drop-shadow-sm"
+                        />
+                    </>
+                ) : (
+                    <img
+                        src={TSHIRT_IMAGES.dark}
+                        alt={UI.referralTshirtImageAlt}
+                        className="max-h-full max-w-[min(100%,220px)] object-contain drop-shadow-sm"
+                    />
+                )}
             </div>
-            <p className="mt-1 text-center text-[10px] font-one-more uppercase italic tracking-[0.25em] text-muted-foreground">
-                {UI.referralTshirtSloganOutline}
-            </p>
-            <p className="text-center text-sm font-one-more uppercase italic tracking-wide text-foreground">
-                {UI.referralTshirtSloganBold}
-            </p>
+            {showSlogan ? (
+                <>
+                    <p className="mt-1 text-center text-[10px] font-one-more uppercase italic tracking-[0.25em] text-muted-foreground">
+                        {UI.referralTshirtSloganOutline}
+                    </p>
+                    <p className="text-center text-sm font-one-more uppercase italic tracking-wide text-foreground">
+                        {UI.referralTshirtSloganBold}
+                    </p>
+                </>
+            ) : null}
         </div>
     );
 }

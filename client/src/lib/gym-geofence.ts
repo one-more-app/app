@@ -51,7 +51,58 @@ export async function getGymGeofencePermissions(): Promise<GymGeofencePermission
 
 export async function requestGymGeofencePermissions(): Promise<GymGeofencePermissionResult> {
   if (!Capacitor.isNativePlatform()) return deniedPermissions;
+  const current = await getGymGeofencePermissions();
+  if (current.ready || current.needsSettings) return current;
   return GymGeofence.requestPermissions();
+}
+
+const GYM_GEOFENCE_PERMISSION_REQUEST_TIMEOUT_MS = 45_000;
+
+export async function requestGymGeofencePermissionsWithTimeout(): Promise<GymGeofencePermissionResult> {
+  if (!Capacitor.isNativePlatform()) return deniedPermissions;
+
+  const current = await getGymGeofencePermissions();
+  if (current.ready || current.needsSettings) return current;
+
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      requestGymGeofencePermissions(),
+      new Promise<GymGeofencePermissionResult>((resolve) => {
+        timeoutId = setTimeout(() => {
+          void getGymGeofencePermissions().then(resolve);
+        }, GYM_GEOFENCE_PERMISSION_REQUEST_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+  }
+}
+
+export type GymGeofenceLocationPromptResult = {
+  status: GymGeofencePermissionResult;
+  openedSettings: boolean;
+};
+
+export async function promptGymGeofenceLocationAccess(options?: {
+  preferSettings?: boolean;
+}): Promise<GymGeofenceLocationPromptResult> {
+  if (!Capacitor.isNativePlatform()) {
+    return { status: deniedPermissions, openedSettings: false };
+  }
+
+  if (options?.preferSettings) {
+    await openGymGeofenceSettings();
+    return {
+      status: await getGymGeofencePermissions(),
+      openedSettings: true,
+    };
+  }
+
+  const status = await requestGymGeofencePermissionsWithTimeout();
+  return { status, openedSettings: false };
 }
 
 export async function ensureGymGeofencePermissions(): Promise<void> {

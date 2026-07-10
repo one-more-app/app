@@ -10,8 +10,8 @@ import { subscribeAppStateChange } from '@/lib/app-state-listener'
 import {
     getGymGeofencePermissions,
     openGymGeofenceSettings,
+    promptGymGeofenceLocationAccess,
     registerGymGeofenceIfPermitted,
-    requestGymGeofencePermissions,
 } from '@/lib/gym-geofence'
 import { fetchUserGym } from '@/lib/gyms-api'
 import {
@@ -67,6 +67,7 @@ export function OnboardingGymPermissionsStep({
     }, [])
 
     const refreshPermissionState = useCallback(async () => {
+        setBusyLocation(false)
         const pushGranted = await isPushPermissionGranted()
         if (pushGranted) {
             await registerPushIfPermitted()
@@ -82,6 +83,7 @@ export function OnboardingGymPermissionsStep({
             setShowLocationSettings(false)
         } else {
             setLocationOn(false)
+            setShowLocationSettings(locationStatus.needsSettings)
         }
     }, [isNative, registerGeofenceFromApi])
 
@@ -173,10 +175,13 @@ export function OnboardingGymPermissionsStep({
         setBusyLocation(true)
         setShowLocationSettings(false)
         try {
-            const status = await requestGymGeofencePermissions()
+            const { status } = await promptGymGeofenceLocationAccess({
+                preferSettings: showLocationSettings,
+            })
             if (status.ready) {
                 await registerGeofenceFromApi()
                 setLocationOn(true)
+                setShowLocationSettings(false)
                 return
             }
             setLocationOn(false)

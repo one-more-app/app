@@ -46,11 +46,18 @@ public class GymGeofencePlugin extends Plugin {
     private static final String CHANNEL_ID = "gym-reminder";
 
     private GeofencingClient geofencingClient;
+    private PluginCall pendingPermissionCall;
 
     @Override
     public void load() {
         geofencingClient = LocationServices.getGeofencingClient(getContext());
         ensureNotificationChannel();
+    }
+
+    @Override
+    protected void handleOnResume() {
+        super.handleOnResume();
+        resolvePendingPermissionCall();
     }
 
     @PluginMethod
@@ -60,6 +67,21 @@ public class GymGeofencePlugin extends Plugin {
 
     @PluginMethod
     public void requestPermissions(PluginCall call) {
+        JSObject current = buildPermissionResult();
+        if (current.getBoolean("ready", false)) {
+            call.resolve(current);
+            return;
+        }
+        if (current.getBoolean("needsSettings", false)) {
+            call.resolve(current);
+            return;
+        }
+        if (pendingPermissionCall != null) {
+            call.resolve(buildPermissionResult());
+            return;
+        }
+
+        pendingPermissionCall = call;
         if (getPermissionState("location") != PermissionState.GRANTED) {
             requestPermissionForAlias("location", call, "permissionsCallback");
             return;
@@ -71,11 +93,12 @@ public class GymGeofencePlugin extends Plugin {
             requestPermissionForAlias("backgroundLocation", call, "permissionsCallback");
             return;
         }
-        call.resolve(buildPermissionResult());
+        resolvePendingPermissionCall();
     }
 
     @PermissionCallback
     private void permissionsCallback(PluginCall call) {
+        pendingPermissionCall = null;
         if (getPermissionState("location") != PermissionState.GRANTED) {
             call.resolve(buildPermissionResult());
             return;
@@ -84,20 +107,59 @@ public class GymGeofencePlugin extends Plugin {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
             getPermissionState("backgroundLocation") != PermissionState.GRANTED
         ) {
+            pendingPermissionCall = call;
             requestPermissionForAlias("backgroundLocation", call, "permissionsCallback");
             return;
         }
         call.resolve(buildPermissionResult());
     }
 
+    private void resolvePendingPermissionCall() {
+        if (pendingPermissionCall == null) {
+            return;
+        }
+        PluginCall call = pendingPermissionCall;
+        pendingPermissionCall = null;
+        call.resolve(buildPermissionResult());
+    }
+
     @PluginMethod
     public void openSettings(PluginCall call) {
+        if (tryOpenBackgroundLocationPermissionFlow(call, "openSettingsCallback")) {
+            return;
+        }
+        openApplicationDetailsSettings();
+        call.resolve();
+    }
+
+    @PermissionCallback
+    private void openSettingsCallback(PluginCall call) {
+        call.resolve();
+    }
+
+    private boolean tryOpenBackgroundLocationPermissionFlow(PluginCall call, String callbackName) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return false;
+        }
+        if (getPermissionState("location") != PermissionState.GRANTED) {
+            return false;
+        }
+        if (getPermissionState("backgroundLocation") == PermissionState.GRANTED) {
+            return false;
+        }
+        if (getPermissionState("backgroundLocation") != PermissionState.PROMPT) {
+            return false;
+        }
+        requestPermissionForAlias("backgroundLocation", call, callbackName);
+        return true;
+    }
+
+    private void openApplicationDetailsSettings() {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         Uri uri = Uri.fromParts("package", getContext().getPackageName(), null);
         intent.setData(uri);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         getContext().startActivity(intent);
-        call.resolve();
     }
 
     @PluginMethod
@@ -216,20 +278,41 @@ public class GymGeofencePlugin extends Plugin {
     }
 
     private JSObject buildPermissionResult() {
-        boolean locationGranted = getPermissionState("location") == PermissionState.GRANTED;
+        PermissionState locationState = getPermissionState("location");
+        boolean locationGranted = locationState == PermissionState.GRANTED;
+        PermissionState backgroundState =
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+                ? getPermissionState("backgroundLocation")
+                : PermissionState.GRANTED;
         boolean backgroundGranted =
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
-            getPermissionState("backgroundLocation") == PermissionState.GRANTED;
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || backgroundState == PermissionState.GRANTED;
+
+        boolean needsSettings = false;
+        if (!locationGranted) {
+            needsSettings = locationState != PermissionState.PROMPT;
+        } else if (!backgroundGranted) {
+            needsSettings = backgroundState != PermissionState.PROMPT;
+        }
 
         JSObject ret = new JSObject();
         ret.put("ready", locationGranted && backgroundGranted);
-        ret.put("location", locationGranted ? "granted" : "denied");
-        ret.put("backgroundLocation", backgroundGranted ? "granted" : "denied");
+        ret.put("location", permissionStateToString(locationState, locationGranted));
         ret.put(
-            "needsSettings",
-            locationGranted && !backgroundGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+            "backgroundLocation",
+            permissionStateToString(backgroundState, backgroundGranted)
         );
+        ret.put("needsSettings", needsSettings);
         return ret;
+    }
+
+    private String permissionStateToString(PermissionState state, boolean granted) {
+        if (granted) {
+            return "granted";
+        }
+        if (state == PermissionState.PROMPT) {
+            return "prompt";
+        }
+        return "denied";
     }
 
     private void ensureNotificationChannel() {

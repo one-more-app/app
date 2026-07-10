@@ -22,6 +22,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -41,6 +42,7 @@ export type GymSearchPickerProps = {
   initialSelectedPlaceId?: string | null;
   initialSearchView?: GymSearchView;
   showHint?: boolean;
+  autoSearchNearby?: boolean;
   className?: string;
 };
 
@@ -70,10 +72,12 @@ export function GymSearchPicker({
   initialSelectedPlaceId = null,
   initialSearchView = "list",
   showHint = true,
+  autoSearchNearby = true,
   className,
 }: GymSearchPickerProps) {
   const mutateUserGym = useMutateUserGym();
   const isNative = Capacitor.isNativePlatform();
+  const autoNearbySearchDoneRef = useRef(false);
 
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [results, setResults] = useState<GymPlace[]>([]);
@@ -186,8 +190,12 @@ export function GymSearchPicker({
   }, [searchQuery, runSearch]);
 
   useEffect(() => {
-    void ensureUserCoords().catch(() => null);
-  }, [ensureUserCoords]);
+    if (!autoSearchNearby || autoNearbySearchDoneRef.current) return;
+    if (initialSearchQuery.trim()) return;
+
+    autoNearbySearchDoneRef.current = true;
+    void runSearch({ preferMapView: true });
+  }, [autoSearchNearby, initialSearchQuery, runSearch]);
 
   const selectedPlace =
     results.find((place) => place.placeId === selectedPlaceId) ?? null;

@@ -28,11 +28,35 @@ public class GymGeofencePlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerDe
         locationManager.pausesLocationUpdatesAutomatically = false
     }
 
+    public override func handleOnResume() {
+        resolvePendingPermissionCall()
+    }
+
+    private func resolvePendingPermissionCall() {
+        guard let call = pendingPermissionCall else { return }
+        pendingPermissionCall = nil
+        call.resolve(buildPermissionResult())
+    }
+
     @objc func checkPermissions(_ call: CAPPluginCall) {
         call.resolve(buildPermissionResult())
     }
 
     @objc func requestPermissions(_ call: CAPPluginCall) {
+        let current = buildPermissionResult()
+        if current["ready"] as? Bool == true {
+            call.resolve(current)
+            return
+        }
+        if current["needsSettings"] as? Bool == true {
+            call.resolve(current)
+            return
+        }
+        if pendingPermissionCall != nil {
+            call.resolve(buildPermissionResult())
+            return
+        }
+
         pendingPermissionCall = call
         let status = locationManager.authorizationStatus
         switch status {
@@ -41,8 +65,8 @@ public class GymGeofencePlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerDe
         case .authorizedWhenInUse:
             locationManager.requestAlwaysAuthorization()
         default:
-            call.resolve(buildPermissionResult())
             pendingPermissionCall = nil
+            call.resolve(buildPermissionResult())
         }
     }
 

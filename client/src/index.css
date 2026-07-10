@@ -216,6 +216,18 @@
     padding-bottom: var(--safe-bottom);
   }
 
+  /* Vidéo onboarding : masque l’UI native (icône play Android WebView, contrôles Safari). */
+  .onboarding-bg-video::-webkit-media-controls,
+  .onboarding-bg-video::-webkit-media-controls-enclosure,
+  .onboarding-bg-video::-webkit-media-controls-panel,
+  .onboarding-bg-video::-webkit-media-controls-play-button,
+  .onboarding-bg-video::-webkit-media-controls-start-playback-button {
+    display: none !important;
+    -webkit-appearance: none;
+    opacity: 0;
+    pointer-events: none;
+  }
+
   .pb-bottom-nav-host {
     padding-bottom: var(--bottom-nav-height);
   }

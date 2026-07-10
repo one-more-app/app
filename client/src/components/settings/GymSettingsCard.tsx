@@ -8,9 +8,9 @@ import {
     getGymGeofencePermissions,
     GymGeofencePermissionError,
     openGymGeofenceSettings,
+    promptGymGeofenceLocationAccess,
     registerGymGeofence,
     registerGymGeofenceIfPermitted,
-    requestGymGeofencePermissions,
     unregisterGymGeofence,
 } from "@/lib/gym-geofence";
 import { deleteUserGym, upsertUserGym } from "@/lib/gyms-api";
@@ -84,6 +84,7 @@ export function GymSettingsCard() {
     );
 
     const refreshPermissionState = useCallback(async () => {
+        setBusyLocation(false);
         const pushGranted = await isPushPermissionGranted();
         if (pushGranted) {
             await registerPushIfPermitted();
@@ -109,6 +110,7 @@ export function GymSettingsCard() {
             setGeofenceNeedsSettings(false);
         } else {
             setLocationOn(false);
+            setGeofenceNeedsSettings(locationStatus.needsSettings);
         }
     }, [gym, isNative]);
 
@@ -182,7 +184,9 @@ export function GymSettingsCard() {
         setBusyLocation(true);
         setGeofenceNeedsSettings(false);
         try {
-            const status = await requestGymGeofencePermissions();
+            const { status } = await promptGymGeofenceLocationAccess({
+                preferSettings: geofenceNeedsSettings,
+            });
             if (!status.ready) {
                 setLocationOn(false);
                 setGeofenceNeedsSettings(status.needsSettings);
@@ -190,6 +194,7 @@ export function GymSettingsCard() {
             }
             await syncGeofenceEnabled(true);
             setLocationOn(true);
+            setGeofenceNeedsSettings(false);
         } catch {
             toast.error(UI.gymSettingsUpdateError);
             setLocationOn(false);

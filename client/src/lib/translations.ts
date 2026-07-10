@@ -526,6 +526,7 @@ export const UI = {
     "Récompense: 1 t-shirt édition limitée One More",
   tshirtClaimAnnualRewardLabel:
     "Récompense: pack annuel 2 t-shirts classiques (noir et blanc)",
+  tshirtClaimDeliveryFormTitle: "Adresse de livraison",
   tshirtClaimFullName: "Nom complet",
   tshirtClaimStreet: "Adresse",
   tshirtClaimCity: "Ville",

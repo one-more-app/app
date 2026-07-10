@@ -1,8 +1,7 @@
 import { AddressSearchPicker } from "@/components/addresses/AddressSearchPicker";
-import { BackHeader } from "@/components/BackHeader";
 import { TshirtRewardVisual } from "@/components/profile/TshirtRewardVisual";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useAccess } from "@/hooks/use-access";
@@ -64,7 +63,7 @@ function GenderChoice({
               className={cn(
                 "flex w-full flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition-all",
                 selected
-                  ? "border-accent bg-accent/10 text-foreground"
+                  ? "border-primary bg-primary/10 text-foreground"
                   : "border-border bg-muted/20 text-muted-foreground",
               )}
             >
@@ -212,24 +211,39 @@ export function TshirtClaimPage() {
 
   return (
     <div className="min-h-screen-app bg-background">
-      <BackHeader
-        title={UI.tshirtClaimTitle}
-        description={UI.tshirtClaimDescription}
-      />
+      <header className="sticky-top-safe z-100 border-b border-border bg-background px-4 py-4">
+        <div className="mx-auto max-w-lg space-y-1">
+          <h1 className="text-md font-one-more uppercase italic">
+            {UI.tshirtClaimTitle}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {UI.tshirtClaimDescription}
+          </p>
+        </div>
+      </header>
 
-      <main className="mx-auto flex w-full max-w-lg flex-col gap-4 px-4 py-4 pb-10">
-        <TshirtRewardVisual highlight />
+      <main className="mx-auto flex w-full max-w-lg flex-col gap-5 px-4 py-5 pb-10">
+        <section className="flex flex-col items-center gap-3 rounded-2xl border border-border/70 bg-card px-4 py-5">
+          <TshirtRewardVisual
+            rewardType={rewardType}
+            showSlogan={false}
+          />
+          <p className="text-center text-sm text-muted-foreground">
+            {rewardLabel}
+          </p>
+        </section>
 
-        <p className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-foreground">
+        <p className="text-sm text-muted-foreground">
           {UI.tshirtClaimMandatoryHint}
         </p>
 
         <Card>
-          <CardContent className="space-y-4 pt-6">
-            <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-              {rewardLabel}
-            </p>
-
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-medium">
+              {UI.tshirtClaimDeliveryFormTitle}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <Input
               id="tshirt-full-name"
               label={UI.tshirtClaimFullName}
@@ -277,8 +291,6 @@ export function TshirtClaimPage() {
         </Card>
 
         <Button
-          variant="accent"
-          size="lg"
           className="w-full"
           disabled={busy || !canSubmit}
           onClick={handleSubmit}
