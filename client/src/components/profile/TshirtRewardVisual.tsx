@@ -27,7 +27,7 @@ export function TshirtRewardVisual({
             className={cn(
                 "flex flex-col items-center justify-center",
                 highlight &&
-                    "rounded-xl border border-accent/30 bg-accent/5 p-3",
+                "rounded-xl p-3",
                 className,
             )}
         >

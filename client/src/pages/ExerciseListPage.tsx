@@ -30,16 +30,19 @@ import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useTheme } from '@/hooks/use-theme'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
 import { fetchExercisesCatalog, fetchExercisesMeta } from '@/lib/data-api'
+import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { filterCatalogExercises } from '@/lib/exercise-catalog-browse'
 import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
 import { getJoyrideScrollOffset, getJoyrideShiftPadding } from '@/lib/joyride-config'
 import {
     addTrackedExerciseAndWait,
+    getPersonalBest,
     isOnboardingFirstExercisePending,
     isOnboardingTourComplete,
     savePerformanceAndWait,
     setOnboardingFirstExercisePending,
 } from '@/lib/storage'
+import { notifyPerfMilestones } from '@/lib/perf-notifications'
 import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import { translateBodyPart, translateTarget, UI } from '@/lib/translations'
 import { notifyXpGrants } from '@/lib/xp-notifications'
@@ -361,6 +364,17 @@ export function ExerciseListPage() {
                 perfReps,
             )
             notifyXpGrants(xp)
+            notifyPerfMilestones({
+                exerciseName: ex.name,
+                prevPB: null,
+                nextPB: getPersonalBest(trackedId) ?? null,
+                savedWeight: perfWeight,
+                savedReps: perfReps,
+                league: xp?.league,
+                exerciseImageUrl: getExerciseImageUrl(ex.gifUrl) || undefined,
+                bodyPart: ex.bodyPart,
+                target: ex.target,
+            })
             await Promise.all([
                 mutate(SWR_KEYS.trackedExercises),
                 mutate(SWR_KEYS.performanceEntries),

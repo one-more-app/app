@@ -7,4 +7,5 @@ export enum NotificationType {
   FriendPr = 'friend_pr',
   WeeklyRecap = 'weekly_recap',
   ReferralUsed = 'referral_used',
+  TshirtRewardUnlocked = 'tshirt_reward_unlocked',
 }

@@ -7,6 +7,11 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 const notifyFriendAccepted = jest.fn();
 const notifyReferralUsed = jest.fn();
+const notifyTshirtRewardUnlocked = jest.fn();
+
+jest.unstable_mockModule('../access.service.js', () => ({
+  AccessService: class AccessService {},
+}));
 
 const { ReferralService } = await import('../referral.service.js');
 
@@ -22,9 +27,13 @@ describe('ReferralService', () => {
   const invitesService = {
     findInviterProfileByCode: jest.fn(),
   };
+  const accessService = {
+    hasJustUnlockedTshirtReward: jest.fn(),
+  };
   const notifications = {
     notifyFriendAccepted,
     notifyReferralUsed,
+    notifyTshirtRewardUnlocked,
   };
 
   let service: InstanceType<typeof ReferralService>;
@@ -35,6 +44,7 @@ describe('ReferralService', () => {
       profilesRepo as any,
       friendshipsRepo as any,
       invitesService as any,
+      accessService as any,
       notifications as any,
     );
   });
@@ -52,6 +62,7 @@ describe('ReferralService', () => {
       id: 'friendship-1',
       status: 'accepted',
     });
+    accessService.hasJustUnlockedTshirtReward.mockResolvedValue(false);
 
     const result = await service.applyReferralCode('user-1', 'abc12345');
     expect(result).toEqual({ ok: true, referrerUserId: 'referrer-1' });
@@ -67,6 +78,29 @@ describe('ReferralService', () => {
     expect(notifyReferralUsed).toHaveBeenCalledWith({
       referrerId: 'referrer-1',
       referredUserId: 'user-1',
+    });
+    expect(notifyTshirtRewardUnlocked).not.toHaveBeenCalled();
+  });
+
+  it('notifies t-shirt unlock on 5th referral', async () => {
+    invitesService.findInviterProfileByCode.mockResolvedValue({
+      userId: 'referrer-1',
+    });
+    profilesRepo.findOne.mockResolvedValue({
+      userId: 'user-1',
+      referredByUserId: null,
+    });
+    friendshipsRepo.findOne.mockResolvedValue(null);
+    friendshipsRepo.save.mockResolvedValue({
+      id: 'friendship-1',
+      status: 'accepted',
+    });
+    accessService.hasJustUnlockedTshirtReward.mockResolvedValue(true);
+
+    await service.applyReferralCode('user-1', 'abc12345');
+
+    expect(notifyTshirtRewardUnlocked).toHaveBeenCalledWith({
+      userId: 'referrer-1',
     });
   });
 

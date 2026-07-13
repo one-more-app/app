@@ -5,7 +5,7 @@ const EXERCISE_LIMIT_BASE = 10;
 const EXERCISE_BONUS_PER_REFERRAL = 10;
 const EXERCISE_BONUS_FOR_USING_REFERRAL = 10;
 
-await jest.unstable_mockModule('../../shared/access-config.js', () => ({
+jest.unstable_mockModule('../../shared/access-config.js', () => ({
   EXERCISE_LIMIT_BASE,
   EXERCISE_BONUS_PER_REFERRAL,
   EXERCISE_BONUS_FOR_USING_REFERRAL,
@@ -130,6 +130,18 @@ describe('AccessService', () => {
     const access = await service.getAccess('user-1');
     expect(access.tshirtRewardEligible).toBe(true);
     expect(access.referralsUntilTshirt).toBe(0);
+  });
+
+  it('detects first t-shirt unlock at 5 referrals', async () => {
+    profilesRepo.count.mockResolvedValueOnce(5);
+    await expect(service.hasJustUnlockedTshirtReward('user-1')).resolves.toBe(
+      true,
+    );
+
+    profilesRepo.count.mockResolvedValueOnce(6);
+    await expect(service.hasJustUnlockedTshirtReward('user-1')).resolves.toBe(
+      false,
+    );
   });
 
   it('allows premium user above exercise limit', async () => {

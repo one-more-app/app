@@ -84,6 +84,14 @@ export class AccessService {
     });
   }
 
+  async hasJustUnlockedTshirtReward(userId: string): Promise<boolean> {
+    const referralCount = await this.countReferrals(userId);
+    return (
+      computeTshirtRewardEligible({ referralCount }) &&
+      !computeTshirtRewardEligible({ referralCount: referralCount - 1 })
+    );
+  }
+
   async assertCanAddExercise(userId: string): Promise<void> {
     const access = await this.getAccess(userId);
     if (!access.canAddExercise) {

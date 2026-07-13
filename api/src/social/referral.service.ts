@@ -12,6 +12,7 @@ import { Repository } from 'typeorm';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { FriendshipEntity } from './entities/friendship.entity.js';
 import { FriendshipStatus } from './entities/friendship-status.enum.js';
+import { AccessService } from './access.service.js';
 import { InvitesService } from './invites.service.js';
 
 @Injectable()
@@ -22,6 +23,7 @@ export class ReferralService {
     @InjectRepository(FriendshipEntity)
     private readonly friendshipsRepo: Repository<FriendshipEntity>,
     private readonly invitesService: InvitesService,
+    private readonly access: AccessService,
     @Inject(forwardRef(() => NotificationDispatchService))
     private readonly notifications: NotificationDispatchService,
   ) {}
@@ -58,6 +60,12 @@ export class ReferralService {
       referrerId: inviterProfile.userId,
       referredUserId: userId,
     });
+
+    if (await this.access.hasJustUnlockedTshirtReward(inviterProfile.userId)) {
+      void this.notifications.notifyTshirtRewardUnlocked({
+        userId: inviterProfile.userId,
+      });
+    }
 
     return { ok: true, referrerUserId: inviterProfile.userId };
   }

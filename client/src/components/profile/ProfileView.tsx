@@ -119,7 +119,7 @@ export function ProfileView({
                         title={UI.profileEmptyTitle}
                         description={UI.profileEmptyDescription}
                     >
-                        <Button asChild>
+                        <Button asChild className="w-full">
                             <Link to="/exercises">{UI.addExercise}</Link>
                         </Button>
                     </EmptyState>

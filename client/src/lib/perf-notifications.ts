@@ -6,7 +6,6 @@ import { maybeRequestAppReview } from "@/lib/app-review"
 import { enqueueCelebration } from "@/lib/celebration-queue"
 import type { LeagueChangeDto } from "@/lib/league-types"
 import type { LeagueInfo } from "@/lib/strength-standards"
-import { getRankIndex } from "@/lib/strength-standards"
 import type { PerformanceEntry } from "@/types"
 
 type PB = Pick<PerformanceEntry, "weight" | "reps"> | null
@@ -75,16 +74,18 @@ export function notifyPerfMilestones(params: {
 
   const prevLeague = league?.before ?? null
   const nextLeague = league?.after ?? null
-  const isRecord = isNewPersonalBest(prevPB, nextPB)
+  const effectiveNextPB =
+    nextPB ?? ({ weight: savedWeight, reps: savedReps } as const)
+  const isFirstPerf = !prevPB && !!effectiveNextPB
+  const isRecord = isNewPersonalBest(prevPB, effectiveNextPB)
   const leagueChanged =
-    league?.promoted ??
-    (nextLeague &&
-      prevLeague &&
-      getRankIndex(nextLeague.rankId) > getRankIndex(prevLeague.rankId))
+    league?.promoted ?? didLeagueChange(prevLeague, nextLeague)
+  const showLeagueCelebration =
+    !!nextLeague && (leagueChanged || isFirstPerf)
 
-  if (!isRecord && !leagueChanged) return
+  if (!isRecord && !showLeagueCelebration) return
 
-  if (leagueChanged && nextLeague) {
+  if (showLeagueCelebration) {
     trackLeaguePromoted({
       exerciseName,
       weight: savedWeight,

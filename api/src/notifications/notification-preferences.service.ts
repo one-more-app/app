@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import type { NotificationPreferencesDto } from './dto/notification-preferences.dto.js';
 import type { UpdateNotificationPreferencesDto } from './dto/update-preferences.dto.js';
 import { NotificationPreferencesEntity } from './entities/notification-preferences.entity.js';
-import type { NotificationType } from './entities/notification-type.enum.js';
+import { NotificationType } from './entities/notification-type.enum.js';
 
 @Injectable()
 export class NotificationPreferencesService {
@@ -58,21 +58,23 @@ export class NotificationPreferencesService {
   async isEnabled(userId: string, type: NotificationType): Promise<boolean> {
     const prefs = await this.getOrCreate(userId);
     switch (type) {
-      case 'streak_at_risk':
+      case NotificationType.StreakAtRisk:
         return prefs.streakReminders;
-      case 'friend_request':
+      case NotificationType.FriendRequest:
         return prefs.friendRequests;
-      case 'friend_accepted':
+      case NotificationType.FriendAccepted:
         return prefs.friendAccepted;
-      case 'message_new':
+      case NotificationType.MessageNew:
         return prefs.messages;
-      case 'friend_training':
+      case NotificationType.FriendTraining:
         return prefs.friendTraining;
-      case 'friend_pr':
+      case NotificationType.FriendPr:
         return prefs.friendRecords;
-      case 'weekly_recap':
+      case NotificationType.WeeklyRecap:
         return prefs.weeklyRecap;
-      case 'referral_used':
+      case NotificationType.ReferralUsed:
+        return prefs.friendAccepted;
+      case NotificationType.TshirtRewardUnlocked:
         return prefs.friendAccepted;
       default:
         return false;

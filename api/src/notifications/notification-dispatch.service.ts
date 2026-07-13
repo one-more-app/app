@@ -101,6 +101,24 @@ export class NotificationDispatchService {
     });
   }
 
+  async notifyTshirtRewardUnlocked(params: { userId: string }) {
+    if (
+      !(await this.prefs.isEnabled(
+        params.userId,
+        NotificationType.TshirtRewardUnlocked,
+      ))
+    ) {
+      return;
+    }
+    await this.push.sendToUser(params.userId, {
+      type: NotificationType.TshirtRewardUnlocked,
+      title: 'T-shirt débloqué',
+      body: 'Bravo ! Tu as débloqué ton t-shirt One More grâce à tes parrainages.',
+      route: '/rewards/tshirt/referral_limited',
+      dedupKey: 'tshirt:referral_limited',
+    });
+  }
+
   async notifyReferralUsed(params: {
     referrerId: string;
     referredUserId: string;
