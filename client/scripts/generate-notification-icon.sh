@@ -9,14 +9,12 @@ LOGO="$ROOT/assets/logo.png"
 RES="$ROOT/android/app/src/main/res"
 TMP="${TMPDIR:-/tmp}/one-more-notif-icon"
 
-# Couleur primaire app (alignée sur client/src/index.css)
-PRIMARY="#1a1a1a"
 ACCENT="#dfff5e"
 
 # Logo : ~90 % du canvas (padding léger).
 LOGO_RATIO_PERCENT=90
 # Décalage visuel vers la droite.
-OFFSET_X_RATIO_PERCENT=3
+OFFSET_X_RATIO_PERCENT=6
 
 if ! command -v convert >/dev/null 2>&1; then
   echo "ImageMagick (convert) requis." >&2
@@ -34,7 +32,6 @@ convert "$LOGO" -colorspace sRGB \
   -fuzz 35% -transparent "#DFFF00" \
   -fuzz 35% -transparent "$ACCENT" \
   \( +clone -alpha extract -write mpr:alpha +delete \) \
-  -fill "$PRIMARY" -colorize 100% \
   mpr:alpha -alpha off -compose CopyOpacity -composite \
   -background none -type TrueColorAlpha \
   -trim +repage \

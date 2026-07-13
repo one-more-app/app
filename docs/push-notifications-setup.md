@@ -37,7 +37,7 @@ cd api && npm run typeorm:migrate
 
 - `google-services.json` présent → le plugin Gradle s'applique automatiquement
 - Rebuild : `cd client && npm run android:build:prod`
-- **Icône notification** : silhouette noire du logo sur fond transparent (`res/drawable-*/ic_stat_notification.png`). Le fond accent (`#dfff5e`) est appliqué par Android via `AndroidManifest.xml` + payload FCM (`notification_accent` / `iconColor`). Régénérer après changement de logo :
+- **Icône notification** : silhouette blanche du logo sur fond transparent (`res/drawable-*/ic_stat_notification.png`). La teinte accent (`#dfff5e`) est appliquée par Android via `AndroidManifest.xml` + payload FCM (`notification_accent` / `iconColor`). Régénérer après changement de logo :
   ```bash
   cd client && bash scripts/generate-notification-icon.sh
   ```
