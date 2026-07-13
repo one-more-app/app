@@ -36,6 +36,7 @@ type GymSearchView = "list" | "map";
 
 export type GymSearchPickerProps = {
   onGymSaved: () => void | Promise<void>;
+  claimedAtGym?: boolean;
   fromSettings?: boolean;
   animated?: boolean;
   initialSearchQuery?: string;
@@ -66,6 +67,7 @@ function Reveal({
 
 export function GymSearchPicker({
   onGymSaved,
+  claimedAtGym = false,
   fromSettings = false,
   animated = false,
   initialSearchQuery = "",
@@ -125,7 +127,9 @@ export function GymSearchPicker({
           radiusM: 120,
           onboardingGymPending: fromSettings
             ? (existing?.onboardingGymPending ?? false)
-            : !inZone,
+            : claimedAtGym
+              ? false
+              : !inZone,
           geofenceEnabled: existing?.geofenceEnabled ?? true,
         });
 
@@ -137,7 +141,7 @@ export function GymSearchPicker({
         setSaving(false);
       }
     },
-    [fromSettings, mutateUserGym, onGymSaved],
+    [claimedAtGym, fromSettings, mutateUserGym, onGymSaved],
   );
 
   const runSearch = useCallback(

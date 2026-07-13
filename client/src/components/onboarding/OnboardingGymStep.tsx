@@ -87,6 +87,7 @@ export function OnboardingGymStep({
     const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [searchPickerKey, setSearchPickerKey] = useState(0)
+    const [claimedAtGym, setClaimedAtGym] = useState(false)
 
     const saveGym = useCallback(
         async (place: GymPlace, coords: { lat: number; lng: number } | null) => {
@@ -111,7 +112,9 @@ export function OnboardingGymStep({
                     radiusM: 120,
                     onboardingGymPending: fromSettings
                         ? (existing?.onboardingGymPending ?? false)
-                        : !inZone,
+                        : claimedAtGym
+                            ? false
+                            : !inZone,
                     geofenceEnabled: existing?.geofenceEnabled ?? true,
                 })
 
@@ -121,7 +124,7 @@ export function OnboardingGymStep({
                 setError(UI.gymSettingsSaveError)
             }
         },
-        [fromSettings, mutateUserGym, onGymSaved],
+        [claimedAtGym, fromSettings, mutateUserGym, onGymSaved],
     )
 
     const handleAtGym = async () => {
@@ -176,13 +179,21 @@ export function OnboardingGymStep({
                     )}
                     <OnboardingReveal delayMs={160}>
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <Button variant="accent" className="w-full" onClick={() => void handleAtGym()}>
+                            <Button
+                                variant="accent"
+                                className="w-full"
+                                onClick={() => {
+                                    setClaimedAtGym(true)
+                                    void handleAtGym()
+                                }}
+                            >
                                 {UI.gymOnboardingYes}
                             </Button>
                             <Button
                                 variant="outline"
                                 className="w-full"
                                 onClick={() => {
+                                    setClaimedAtGym(false)
                                     setSubStep('search')
                                     setError(null)
                                 }}
@@ -271,11 +282,13 @@ export function OnboardingGymStep({
                         ? (settingsPickerTitle ?? UI.gymSettingsChange)
                         : UI.gymOnboardingSearch
                 }
+                onBack={fromSettings ? onCancel : onSearchBack}
                 backLabel={UI.back}
             >
                 <GymSearchPicker
                     key={searchPickerKey}
                     animated
+                    claimedAtGym={claimedAtGym}
                     fromSettings={fromSettings}
                     initialSearchQuery={searchQuery}
                     initialSelectedPlaceId={selectedPlaceId}

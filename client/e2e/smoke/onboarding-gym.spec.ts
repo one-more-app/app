@@ -107,3 +107,82 @@ test("onboarding gym step blocks until gym saved and wait unlock", async ({
   await expect(page).toHaveURL(/#\/exercises$/);
   expect(pageErrors).toEqual([]);
 });
+
+test("onboarding gym skips wait when user claims to be at gym", async ({
+  page,
+}) => {
+  const pageErrors = trackPageErrors(page);
+  await seedE2eApiOrigin(page);
+  await mockAuthApi(page);
+
+  await page.addInitScript(() => {
+    localStorage.removeItem("one-more-onboarding-v1");
+    localStorage.removeItem("one-more-gym-setup-done-v1");
+    localStorage.removeItem("one-more-onboarding-gym-pending-v1");
+    localStorage.removeItem("one-more-gym-onboarding-in-zone-v1");
+    localStorage.removeItem("one-more-gym-onboarding-name-v1");
+    localStorage.removeItem("one-more-gym-notifications-prompt-done-v1");
+    localStorage.removeItem("one-more-gym-location-prompt-done-v1");
+  });
+
+  await page.goto("/#/onboarding?step=gym");
+
+  await page.evaluate(
+    ({ authKey, session }) => {
+      localStorage.setItem(authKey, JSON.stringify(session));
+    },
+    { authKey: AUTH_STORAGE_KEY, session: mockSession },
+  );
+
+  await page.reload();
+
+  await expect(
+    page.getByText(UI.gymOnboardingTitle, { exact: true }),
+  ).toBeVisible();
+
+  await page
+    .getByRole("button", { name: UI.gymOnboardingYes, exact: true })
+    .click();
+
+  await expect(
+    page.getByText(UI.gymOnboardingSearch, { exact: true }),
+  ).toBeVisible();
+
+  await page
+    .getByRole("radio", { name: UI.gymOnboardingViewList, exact: true })
+    .click();
+
+  await page
+    .getByPlaceholder(UI.gymOnboardingSearchPlaceholder, { exact: true })
+    .fill("Basic");
+
+  await page.waitForResponse(
+    (response) =>
+      response.url().includes("/gyms/search") &&
+      response.ok() &&
+      response.request().method() === "GET",
+  );
+
+  const gymResult = page.getByRole("button", {
+    name: mockGymPlace.name,
+    exact: true,
+  });
+  await expect(gymResult).toBeVisible({ timeout: 10_000 });
+  await gymResult.click();
+
+  await expect(
+    page.getByText(UI.gymOnboardingPermissionsTitle, { exact: true }),
+  ).toBeVisible();
+
+  await page
+    .getByRole("button", { name: UI.gymOnboardingPermissionsSkip, exact: true })
+    .click();
+
+  await expect(page).not.toHaveURL(/gym-wait/);
+  await expect(page).toHaveURL(/#\/exercises$/);
+
+  await page.goto("/#/home");
+  await expect(page).not.toHaveURL(/gym-wait/);
+
+  expect(pageErrors).toEqual([]);
+});

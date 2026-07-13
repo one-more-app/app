@@ -238,13 +238,11 @@ function OnboardingPage() {
     }
 
     const completeGymAfterPermissions = async () => {
-        let gym = userGym
-        if (!gym) {
-            try {
-                gym = await fetchUserGym()
-            } catch {
-                gym = null
-            }
+        let gym: Awaited<ReturnType<typeof fetchUserGym>> | null = null
+        try {
+            gym = await fetchUserGym()
+        } catch {
+            gym = userGym ?? null
         }
         if (!gym) {
             navigate('/onboarding?step=gym', { replace: true })
@@ -335,6 +333,8 @@ function OnboardingPage() {
         if (resolved === null && step === 'gym' && !fromSettings) {
             void continueAfterGymResolved()
         }
+        // Redir auto quand la salle est déjà résolue ; évite re-trigger sur continueAfterGymResolved.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [auth.status, navigate, step, fromSettings, gymReselect, userGym, userGymLoading])
 
     useEffect(() => {
