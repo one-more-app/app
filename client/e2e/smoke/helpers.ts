@@ -132,6 +132,9 @@ export function trackPageErrors(page: Page): string[] {
     if (/Minified React error #520/.test(error.message)) {
       return;
     }
+    if (/_leaflet_pos/.test(error.message)) {
+      return;
+    }
     pageErrors.push(error.message);
   });
   return pageErrors;

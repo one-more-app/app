@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { UI } from "../../src/lib/translations";
 import {
   mockAuthApi,
+  mockGymPlace,
   mockSession,
   seedE2eApiOrigin,
   trackPageErrors,
@@ -46,33 +47,41 @@ test("onboarding gym step blocks until gym saved and wait unlock", async ({
     .getByRole("button", { name: UI.gymOnboardingNo, exact: true })
     .click();
 
+  await page.waitForResponse(
+    (response) =>
+      response.url().includes("/gyms/search") && response.ok(),
+  );
+
+  await page
+    .getByRole("radio", { name: UI.gymOnboardingViewList, exact: true })
+    .click();
+
   await page
     .getByPlaceholder(UI.gymOnboardingSearchPlaceholder, { exact: true })
     .fill("Basic");
 
-  await page
-    .getByRole("button", { name: /Basic Fit Smoke/ })
-    .click();
+  await page.waitForResponse(
+    (response) =>
+      response.url().includes("/gyms/search") &&
+      response.ok() &&
+      response.request().method() === "GET",
+  );
+
+  const gymResult = page.getByRole("button", {
+    name: mockGymPlace.name,
+    exact: true,
+  });
+  await expect(gymResult).toBeVisible({ timeout: 10_000 });
+  await gymResult.click();
 
   await expect(
     page.getByText(UI.gymOnboardingPermissionsTitle, { exact: true }),
   ).toBeVisible();
 
+  // Web preview : pas de push ni géoloc native → on passe l'étape permissions.
   await page
-    .getByRole("switch", {
-      name: UI.gymOnboardingPermissionsNotificationsLabel,
-      exact: true,
-    })
+    .getByRole("button", { name: UI.gymOnboardingPermissionsSkip, exact: true })
     .click();
-
-  await page
-    .getByRole("switch", {
-      name: UI.gymOnboardingPermissionsLocationLabel,
-      exact: true,
-    })
-    .click();
-
-  await page.getByRole("button", { name: UI.continue, exact: true }).click();
 
   await expect(page).toHaveURL(/#\/onboarding\?step=gym-wait$/);
 
@@ -81,12 +90,12 @@ test("onboarding gym step blocks until gym saved and wait unlock", async ({
   ).toBeVisible();
 
   await expect(
-    page.getByText(UI.gymOnboardingWaitMonitoringTitle, { exact: true }),
+    page.getByText(mockGymPlace.name, { exact: true }),
   ).toBeVisible();
 
   await expect(
     page.getByText(UI.gymOnboardingWaitRemindersSection, { exact: true }),
-  ).toHaveCount(0);
+  ).toBeVisible();
 
   await page.goto("/#/home");
   await expect(page).toHaveURL(/#\/onboarding\?step=gym-wait$/);
