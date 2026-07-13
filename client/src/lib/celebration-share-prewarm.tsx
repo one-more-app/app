@@ -76,6 +76,17 @@ async function preloadCelebrationShareAssets(
   await Promise.all(tasks)
 }
 
+async function waitForShareCardRoot(host: HTMLElement): Promise<HTMLElement> {
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    const el = host.querySelector('[data-share-card-root]') as HTMLElement | null
+    if (el) return el
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve()),
+    )
+  }
+  throw new Error('CelebrationShareCard introuvable')
+}
+
 async function generateBlob(
   open: CelebrationShareOpen,
   isDark: boolean,
@@ -83,8 +94,7 @@ async function generateBlob(
 ): Promise<Blob> {
   await preloadCelebrationShareAssets(open)
   const host = ensureRenderHost(open, isDark, key)
-  const el = host.querySelector('[data-share-card-root]') as HTMLElement | null
-  if (!el) throw new Error('CelebrationShareCard introuvable')
+  const el = await waitForShareCardRoot(host)
   return captureShareElement(el, isDark)
 }
 
