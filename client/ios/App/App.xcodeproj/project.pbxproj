@@ -21,6 +21,10 @@
 		FE7AD26B2FD8020A00DEC54F /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = FE7AD26A2FD8020A00DEC54F /* FirebaseMessaging */; };
 		FE7AD26D2FD8020A00DEC54F /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = FE7AD26C2FD8020A00DEC54F /* FirebaseCore */; };
 		FED841512FF7F6CC001573E5 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FED841502FF7F6CC001573E5 /* StoreKit.framework */; };
+		RTMR1001A1B2C3D4E5F60001 /* OneMoreRestTimer.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = RTMR1000A1B2C3D4E5F60001 /* OneMoreRestTimer.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		RTMR1002A1B2C3D4E5F60002 /* OneMoreRestTimerBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = RTMR1000A1B2C3D4E5F60002 /* OneMoreRestTimerBundle.swift */; };
+		RTMR1002A1B2C3D4E5F60003 /* OneMoreRestTimerLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = RTMR1000A1B2C3D4E5F60003 /* OneMoreRestTimerLiveActivity.swift */; };
+		RTMR1002A1B2C3D4E5F60004 /* RestTimerAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = RTMR1000A1B2C3D4E5F60004 /* RestTimerAttributes.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,7 +44,26 @@
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 		FED8414F2FF7E657001573E5 /* test_storekit.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = test_storekit.storekit; sourceTree = "<group>"; };
 		FED841502FF7F6CC001573E5 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		RTMR1000A1B2C3D4E5F60001 /* OneMoreRestTimer.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OneMoreRestTimer.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		RTMR1000A1B2C3D4E5F60002 /* OneMoreRestTimerBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OneMoreRestTimerBundle.swift; sourceTree = "<group>"; };
+		RTMR1000A1B2C3D4E5F60003 /* OneMoreRestTimerLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OneMoreRestTimerLiveActivity.swift; sourceTree = "<group>"; };
+		RTMR1000A1B2C3D4E5F60004 /* RestTimerAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerAttributes.swift; sourceTree = "<group>"; };
+		RTMR1000A1B2C3D4E5F60005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		RTMR1003A1B2C3D4E5F60001 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				RTMR1001A1B2C3D4E5F60001 /* OneMoreRestTimer.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		504EC3011FED79650016851F /* Frameworks */ = {
@@ -53,6 +76,13 @@
 				FED841512FF7F6CC001573E5 /* StoreKit.framework in Frameworks */,
 				A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */,
 				FE7AD2692FD8020A00DEC54F /* FirebaseInAppMessaging-Beta in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		RTMR1004A1B2C3D4E5F60001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,6 +104,7 @@
 				FED8414F2FF7E657001573E5 /* test_storekit.storekit */,
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
+				RTMR1005A1B2C3D4E5F60001 /* OneMoreRestTimer */,
 				504EC3051FED79650016851F /* Products */,
 				7F8756D8B27F46E3366F6CEA /* Pods */,
 				27E2DDA53C4D2A4D1A88CE4A /* Frameworks */,
@@ -84,8 +115,20 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				RTMR1000A1B2C3D4E5F60001 /* OneMoreRestTimer.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		RTMR1005A1B2C3D4E5F60001 /* OneMoreRestTimer */ = {
+			isa = PBXGroup;
+			children = (
+				RTMR1000A1B2C3D4E5F60002 /* OneMoreRestTimerBundle.swift */,
+				RTMR1000A1B2C3D4E5F60003 /* OneMoreRestTimerLiveActivity.swift */,
+				RTMR1000A1B2C3D4E5F60004 /* RestTimerAttributes.swift */,
+				RTMR1000A1B2C3D4E5F60005 /* Info.plist */,
+			);
+			path = OneMoreRestTimer;
 			sourceTree = "<group>";
 		};
 		504EC3061FED79650016851F /* App */ = {
@@ -126,15 +169,34 @@
 				504EC3021FED79650016851F /* Resources */,
 				9592DBEFFC6D2A0C8D5DEB22 /* [CP] Embed Pods Frameworks */,
 				52DB114DFDCB59D3BCA3D64F /* [CP] Copy Pods Resources */,
+				RTMR1003A1B2C3D4E5F60001 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				RTMR1006A1B2C3D4E5F60001 /* PBXTargetDependency */,
 			);
 			name = App;
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
+		};
+		RTMR1007A1B2C3D4E5F60001 /* OneMoreRestTimer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = RTMR1008A1B2C3D4E5F60001 /* Build configuration list for PBXNativeTarget "OneMoreRestTimer" */;
+			buildPhases = (
+				RTMR1009A1B2C3D4E5F60001 /* Sources */,
+				RTMR1004A1B2C3D4E5F60001 /* Frameworks */,
+				RTMR100AA1B2C3D4E5F60001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = OneMoreRestTimer;
+			productName = OneMoreRestTimer;
+			productReference = RTMR1000A1B2C3D4E5F60001 /* OneMoreRestTimer.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -148,6 +210,10 @@
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1100;
+						ProvisioningStyle = Automatic;
+					};
+					RTMR1007A1B2C3D4E5F60001 = {
+						CreatedOnToolsVersion = 15.0;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -169,6 +235,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				RTMR1007A1B2C3D4E5F60001 /* OneMoreRestTimer */,
 			);
 		};
 /* End PBXProject section */
@@ -189,6 +256,47 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		RTMR1009A1B2C3D4E5F60001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				RTMR1002A1B2C3D4E5F60002 /* OneMoreRestTimerBundle.swift in Sources */,
+				RTMR1002A1B2C3D4E5F60003 /* OneMoreRestTimerLiveActivity.swift in Sources */,
+				RTMR1002A1B2C3D4E5F60004 /* RestTimerAttributes.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXResourcesBuildPhase section */
+		RTMR100AA1B2C3D4E5F60001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		RTMR1006A1B2C3D4E5F60001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = RTMR1007A1B2C3D4E5F60001 /* OneMoreRestTimer */;
+			targetProxy = RTMR100BA1B2C3D4E5F60001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXContainerItemProxy section */
+		RTMR100BA1B2C3D4E5F60001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = RTMR1007A1B2C3D4E5F60001;
+			remoteInfo = OneMoreRestTimer;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXShellScriptBuildPhase section */
 		52DB114DFDCB59D3BCA3D64F /* [CP] Copy Pods Resources */ = {
@@ -442,6 +550,52 @@
 			};
 			name = Release;
 		};
+		RTMR100CA1B2C3D4E5F60001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7N362A27Z4;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OneMoreRestTimer/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.one-more.app.OneMoreRestTimer";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		RTMR100CA1B2C3D4E5F60002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7N362A27Z4;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OneMoreRestTimer/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.one-more.app.OneMoreRestTimer";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -459,6 +613,15 @@
 			buildConfigurations = (
 				504EC3171FED79650016851F /* Debug */,
 				504EC3181FED79650016851F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		RTMR1008A1B2C3D4E5F60001 /* Build configuration list for PBXNativeTarget "OneMoreRestTimer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				RTMR100CA1B2C3D4E5F60001 /* Debug */,
+				RTMR100CA1B2C3D4E5F60002 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

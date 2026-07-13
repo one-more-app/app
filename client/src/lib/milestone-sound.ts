@@ -2,7 +2,7 @@
  * Sons de célébration — synthèse Web Audio, une variante par type d’événement.
  */
 
-export type CelebrationSoundKind = "record" | "league" | "levelup" | "streak"
+export type CelebrationSoundKind = "record" | "league" | "levelup" | "streak" | "rest"
 
 let audioContext: AudioContext | null = null
 
@@ -276,6 +276,32 @@ function playStreakVariant(bus: SoundBus): void {
   })
 }
 
+/** Temps de repos terminé — double chime doux, distinct des célébrations. */
+function playRestFinishedVariant(bus: SoundBus): void {
+  const { t } = bus
+  scheduleTone(bus, t, {
+    type: "sine",
+    freqStart: 659,
+    freqEnd: 784,
+    duration: 0.14,
+    peakGain: 0.2,
+  })
+  scheduleTone(bus, t + 0.1, {
+    type: "sine",
+    freqStart: 784,
+    freqEnd: 988,
+    duration: 0.18,
+    peakGain: 0.24,
+  })
+  scheduleTone(bus, t + 0.2, {
+    type: "triangle",
+    freqStart: 988,
+    freqEnd: 1175,
+    duration: 0.1,
+    peakGain: 0.12,
+  })
+}
+
 /** Multiplicateur global appliqué aux modales de célébration. */
 const MASTER_VOLUME = 1.5
 
@@ -284,6 +310,7 @@ const MASTER_BY_KIND: Record<CelebrationSoundKind, number> = {
   league: 0.48,
   levelup: 0.4,
   streak: 0.38,
+  rest: 0.34,
 }
 
 const VARIANT_BY_KIND: Record<CelebrationSoundKind, (bus: SoundBus) => void> = {
@@ -291,6 +318,7 @@ const VARIANT_BY_KIND: Record<CelebrationSoundKind, (bus: SoundBus) => void> = {
   league: playLeagueVariant,
   levelup: playLevelUpVariant,
   streak: playStreakVariant,
+  rest: playRestFinishedVariant,
 }
 
 async function playSyntheticCelebrationSound(
@@ -320,4 +348,9 @@ async function playSyntheticCelebrationSound(
  */
 export function playMilestoneSound(kind: CelebrationSoundKind = "record"): void {
   void playSyntheticCelebrationSound(kind)
+}
+
+/** Son court quand le temps de repos est terminé (hors modale célébration). */
+export function playRestFinishedSound(): void {
+  playMilestoneSound("rest")
 }

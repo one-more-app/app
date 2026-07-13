@@ -10,6 +10,7 @@ import {
 } from "@/lib/format-rest-elapsed";
 import { cancelRestFinishedLocalNotification } from "@/lib/rest-timer-local-notifications";
 import { hapticNotificationSuccess } from "@/lib/haptics";
+import { playRestFinishedSound } from "@/lib/milestone-sound";
 import { useGymOnboardingBlocksFeatures } from "@/hooks/use-user-gym-data";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
@@ -121,7 +122,7 @@ export function RestTimeFinishedToastHost() {
   }, [hostActive, createdAt]);
 
   useEffect(() => {
-    if (auth.status !== "authenticated" || !createdAt || !exercise?.id) return;
+    if (!hostActive || !createdAt || !exercise?.id) return;
 
     const elapsedMs = getRestElapsedMs(createdAt, now);
     if (elapsedMs == null) return;
@@ -135,6 +136,7 @@ export function RestTimeFinishedToastHost() {
       exerciseName: exercise.name,
       onOpen: () => navigate(`/exercise/${exercise.id}`),
     });
+    playRestFinishedSound();
     void hapticNotificationSuccess();
   }, [hostActive, createdAt, exercise, now, navigate, targetMs]);
 

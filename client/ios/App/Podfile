@@ -23,6 +23,7 @@ def capacitor_pods
   pod 'RevenuecatPurchasesCapacitor', :path => '../../node_modules/@revenuecat/purchases-capacitor'
   pod 'AppsflyerCapacitorPlugin', :path => '../../node_modules/appsflyer-capacitor-plugin'
   pod 'GymGeofence', :path => '../../plugins/gym-geofence'
+  pod 'RestTimer', :path => '../../plugins/rest-timer'
 end
 
 target 'App' do

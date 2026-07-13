@@ -46,3 +46,6 @@ project(':appsflyer-capacitor-plugin').projectDir = new File('../node_modules/ap
 
 include ':gym-geofence'
 project(':gym-geofence').projectDir = new File('../plugins/gym-geofence/android')
+
+include ':rest-timer'
+project(':rest-timer').projectDir = new File('../plugins/rest-timer/android')

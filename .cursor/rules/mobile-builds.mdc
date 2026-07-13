@@ -114,6 +114,7 @@ Le client iOS Google Console doit correspondre au bundle iOS réel.
 - Ne pas réintroduire Swift Package Manager / `CapApp-SPM` dans le projet Xcode (CocoaPods uniquement).
 - Ne pas ajouter de scripts `patch-ios-spm` ou hacks workspace.
 - Après ajout d'un plugin Capacitor natif : `npx cap sync ios` puis `cd ios/App && pod install`.
+- Plugin local **`rest-timer`** (`client/plugins/rest-timer`) : timer de repos natif. Android = notif ongoing ; iOS = Live Activity via l'extension **`OneMoreRestTimer`** (cible Xcode, iOS 16.2+). `NSSupportsLiveActivities` dans `App/Info.plist`. Tests sur appareil physique obligatoires.
 - Ne pas committer de secrets dans `.env.*.capacitor` (IDs Google/Apple bundle = publics ; jamais de `.p8` côté client).
 
 ## Voir aussi

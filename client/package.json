@@ -68,6 +68,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "gym-geofence": "file:./plugins/gym-geofence",
+    "rest-timer": "file:./plugins/rest-timer",
     "html-to-image": "^1.11.13",
     "idb": "^8.0.3",
     "leaflet": "^1.9.4",

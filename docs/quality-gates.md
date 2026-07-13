@@ -65,3 +65,18 @@ Pour générer un test à partir d'une description : skill [`.cursor/skills/e2e-
 | Session non effacée au logout | pre-push (Playwright) |
 | Ajout exercice / perf ne navigue pas | pre-push (Playwright) |
 | `setBrokenImageIds` ou erreur JS catalogue | pre-push (Playwright) |
+
+## Timer de repos (tests manuels mobile)
+
+Non couvert par Playwright. À valider sur **appareil physique** après changement du plugin [`rest-timer`](../client/plugins/rest-timer/) :
+
+| Scénario | Android | iOS (16.2+) |
+|----------|---------|-------------|
+| Perf enregistrée | Notif ongoing avec chrono + progression | Live Activity visible |
+| Écran verrouillé jusqu'à la fin | Fin à ±1 s, son natif | Live Activity « terminé » |
+| App au premier plan | Toast + son Web Audio, pas de notif système | Live Activity masquée |
+| Changement cible (+/- 15 s) | Notif resynchronisée | Live Activity mise à jour |
+| Nouvelle perf | Ancien timer annulé | Idem |
+| Tap notif / Live Activity | Ouvre `/exercise/{id}` | Idem |
+
+Build iOS : ouvrir `App.xcworkspace`, cible `OneMoreRestTimer` incluse. `pod install` après `cap sync`.

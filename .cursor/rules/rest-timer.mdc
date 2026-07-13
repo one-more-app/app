@@ -26,7 +26,8 @@ Barre fine qui se lance **automatiquement** dès qu'une performance est enregist
 | Analytics | `trackRestTimerDismissed` dans [`client/src/lib/analytics/performance-tracking.ts`](../../client/src/lib/analytics/performance-tracking.ts) |
 | Point de montage | Header sticky de [`client/src/pages/ExerciseDetailPage.tsx`](../../client/src/pages/ExerciseDetailPage.tsx) |
 | **Toast fin de repos (global)** | [`client/src/components/RestTimeFinishedToastHost.tsx`](../../client/src/components/RestTimeFinishedToastHost.tsx) + [`client/src/components/RestTimeFinishedToast.tsx`](../../client/src/components/RestTimeFinishedToast.tsx) |
-| **Notif système repos (background)** | [`client/src/lib/rest-timer-local-notifications.ts`](../../client/src/lib/rest-timer-local-notifications.ts) + [`client/src/hooks/use-rest-timer-local-notifications.ts`](../../client/src/hooks/use-rest-timer-local-notifications.ts) |
+| **Notif système repos (background)** | Plugin natif [`client/plugins/rest-timer`](../../client/plugins/rest-timer) via [`client/src/lib/rest-timer-local-notifications.ts`](../../client/src/lib/rest-timer-local-notifications.ts) + [`client/src/hooks/use-rest-timer-local-notifications.ts`](../../client/src/hooks/use-rest-timer-local-notifications.ts) |
+| **Son fin de repos in-app** | [`playRestFinishedSound()`](../../client/src/lib/milestone-sound.ts) dans `RestTimeFinishedToastHost` |
 
 ## Règles de comportement
 
@@ -37,9 +38,11 @@ Barre fine qui se lance **automatiquement** dès qu'une performance est enregist
 5. **Durée max d'affichage** — Masquée automatiquement après `REST_SINCE_LAST_SET_MAX_MS` (10 min). Distinct de la **durée cible** (`DEFAULT_REST_TARGET_MS` = 1:30 par défaut) qui pilote uniquement la barre de progression.
 6. **Durée cible personnalisable** — Stockée en localStorage via `getRestTargetMs` / `setRestTargetMs` (clé `one-more-rest-target-ms-v1`). Bornes : `REST_TARGET_MIN_MS` (30 s) → `REST_TARGET_MAX_MS` (5 min). Réglage dans Paramètres (`RestTimeSettingsCard`, minutes + secondes par pas de 15 s). Le hook `useRestTargetMs` écoute l'événement `one-more:rest-target-changed` pour propager le changement sans reload.
 7. **Barre de progression** — `getRestProgress01(elapsedMs, targetMs)` : remplissage sur la durée cible, plafonné à 100 %. Au-delà, la barre reste pleine ; le compteur `m:ss` **continue** sans reset.
-8. **Fin de repos** — Double canal :
-    - **In-app (premier plan)** — toast global via `RestTimeFinishedToastHost` + `showRestTimeFinishedToast` (cliquable → fiche exo). Annule la notif locale planifiée pour éviter le doublon.
-    - **Système (arrière-plan / app fermée)** — `@capacitor/local-notifications` via [`client/src/lib/rest-timer-local-notifications.ts`](../../client/src/lib/rest-timer-local-notifications.ts). Planifiée **dès l'enregistrement de la perf** à `createdAt + targetMs` (ne pas attendre le passage background : sinon retard de 5–10 s). Premier plan : toast in-app ; `silent: true` (iOS) + annulation au retour foreground et quand le toast se déclenche. Android : `USE_EXACT_ALARM` + `allowWhileIdle` sur le schedule. Resync via `useRestTimerLocalNotifications` si la cible change ou au passage background (ré-arme après annulation foreground). Tap notif → `/exercise/{id}`. ID fixe `REST_FINISHED_NOTIFICATION_ID = 42`.
+8. **Fin de repos** — Triple canal :
+    - **In-app (premier plan)** — toast global via `RestTimeFinishedToastHost` + `showRestTimeFinishedToast` (cliquable → fiche exo) + `playRestFinishedSound()` + haptique. Annule le timer natif pour éviter le doublon.
+    - **Android (arrière-plan / écran verrouillé)** — plugin `rest-timer` : notif **ongoing** dès la sauvegarde perf (chronomètre système countdown + barre de progression, ID `42`). Alarme exacte à `createdAt + targetMs` pour la notif de fin (son `rest_timer_done`). Masquée au premier plan via `setForegroundVisible(false)`, ré-affichée au background. Tap → `/exercise/{id}`.
+    - **iOS (arrière-plan / écran verrouillé)** — Live Activity (`OneMoreRestTimer` widget extension, iOS 16.2+) + notif locale de secours à la fin. Masquée au premier plan comme Android. Tap Live Activity → deep link exercice.
+    - Resync via `useRestTimerLocalNotifications` si la cible change. Ne pas utiliser `@capacitor/local-notifications` pour le repos.
 9. **Édition rapide inline (`RestTargetQuickEdit`)** — Popover autonome (state `open` **interne**, jamais remonté dans `RestSinceLastSetBar`). Pill ±15 s + presets 1:00–3:00. `stopPropagation` sur le trigger et le panneau pour ne pas déclencher la nav exo. Persiste via `setRestTargetMs` (même storage que Paramètres).
 10. **Dismiss manuel** — Le bouton croix cache la barre localement (state React) et **doit** `event.stopPropagation()` sinon le tap remonte au bouton parent et rouvre l'exo. Le dismiss se réinitialise dès qu'une nouvelle perf change le `key={createdAt}`. Ne pas persister le dismiss dans le storage.
 11. **Onglet caché** — Le ticker s'arrête sur `visibilitychange` puis resynchronise `now = Date.now()` au retour. Ne pas remplacer par un `setInterval` non-conditionnel (coût batterie / drift iOS).
@@ -94,7 +97,8 @@ Si la barre doit apparaître sur une autre page (ex. Home, History) :
 - Ne pas bloquer les interactions sur l'étape 2 du tour (`blockTargetInteraction: false`, `disableFocusTrap: true`).
 - Ne pas extraire le trigger du popover dans un sous-composant sans `forwardRef` sous `<PopoverTrigger asChild>`.
 - Ne pas coupler le tour au state `open` du parent — module `rest-counter-tour-quick-edit.ts` seulement.
-- Ne pas planifier la notif repos seulement au passage background (retard OS). Planifier à la sauvegarde perf, annuler au foreground / toast.
+- Ne pas planifier la notif repos seulement au passage background (retard OS). Démarrer le timer natif à la sauvegarde perf, masquer au foreground / toast.
+- Ne pas réintroduire `@capacitor/local-notifications` pour le timer de repos (utiliser le plugin `rest-timer`).
 
 ## Voir aussi
 

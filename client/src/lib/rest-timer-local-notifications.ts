@@ -4,19 +4,15 @@ import {
 } from "@/lib/storage";
 import { subscribeAppStateChange } from "@/lib/app-state-listener";
 import { UI } from "@/lib/translations";
-import {
-  isRestSinceLastSetVisible,
-} from "@/lib/format-rest-elapsed";
+import { isRestSinceLastSetVisible } from "@/lib/format-rest-elapsed";
 import type { PerformanceEntry } from "@/types";
 import { Capacitor } from "@capacitor/core";
-import { LocalNotifications } from "@capacitor/local-notifications";
+import { App as CapacitorApp } from "@capacitor/app";
+import { RestTimer } from "rest-timer";
 
-/** ID fixe — une seule notif repos planifiée à la fois. */
+/** ID fixe — une seule notif repos à la fois (aligné natif Android). */
 export const REST_FINISHED_NOTIFICATION_ID = 42;
 
-const REST_TIMER_CHANNEL_ID = "rest-timer";
-
-let channelReady = false;
 let lastSyncedKey: string | null = null;
 let lifecycleEnabled = false;
 let currentParams: RestFinishedLocalNotificationParams | null = null;
@@ -28,30 +24,13 @@ function paramsKey(params: RestFinishedLocalNotificationParams | null): string {
   return `${params.exerciseId}:${params.createdAt}:${params.targetMs}`;
 }
 
-async function ensureRestTimerChannel(): Promise<void> {
-  if (channelReady || Capacitor.getPlatform() !== "android") return;
-  try {
-    await LocalNotifications.createChannel({
-      id: REST_TIMER_CHANNEL_ID,
-      name: UI.restTimeSettingsTitle,
-      description: UI.restTimeFinished,
-      importance: 4,
-      visibility: 1,
-      vibration: true,
-    });
-    channelReady = true;
-  } catch {
-    /* Canal déjà créé ou plugin indisponible. */
-  }
-}
-
 export async function ensureRestTimerNotificationPermission(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
   try {
-    const current = await LocalNotifications.checkPermissions();
-    if (current.display === "granted") return true;
-    const requested = await LocalNotifications.requestPermissions();
-    return requested.display === "granted";
+    const current = await RestTimer.checkPermissions();
+    if (current.granted) return true;
+    const requested = await RestTimer.requestPermissions();
+    return requested.granted;
   } catch {
     return false;
   }
@@ -61,9 +40,7 @@ export async function cancelRestFinishedLocalNotification(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
   if (lastSyncedKey === "") return;
   try {
-    await LocalNotifications.cancel({
-      notifications: [{ id: REST_FINISHED_NOTIFICATION_ID }],
-    });
+    await RestTimer.cancel();
     lastSyncedKey = "";
   } catch {
     /* ignore */
@@ -76,6 +53,27 @@ export type RestFinishedLocalNotificationParams = {
   exerciseId: string;
   exerciseName: string;
 };
+
+function capitalizeExerciseName(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return trimmed;
+  return trimmed.charAt(0).toLocaleUpperCase("fr-FR") + trimmed.slice(1);
+}
+
+function buildStartPayload(
+  params: RestFinishedLocalNotificationParams,
+): Parameters<typeof RestTimer.start>[0] {
+  const route = `/exercise/${params.exerciseId}`;
+  return {
+    createdAt: params.createdAt,
+    targetMs: params.targetMs,
+    exerciseId: params.exerciseId,
+    exerciseName: capitalizeExerciseName(params.exerciseName),
+    title: UI.restSinceLastSet,
+    finishedTitle: UI.restTimeFinished,
+    deepLinkRoute: route,
+  };
+}
 
 async function syncRestFinishedLocalNotificationInternal(
   params: RestFinishedLocalNotificationParams | null,
@@ -111,27 +109,14 @@ async function syncRestFinishedLocalNotificationInternal(
   }
 
   await cancelRestFinishedLocalNotification();
-  await ensureRestTimerChannel();
 
-  const route = `/exercise/${params.exerciseId}`;
-  const platform = Capacitor.getPlatform();
-
-  await LocalNotifications.schedule({
-    notifications: [
-      {
-        id: REST_FINISHED_NOTIFICATION_ID,
-        title: UI.restTimeFinished,
-        body: params.exerciseName,
-        channelId: REST_TIMER_CHANNEL_ID,
-        schedule: {
-          at: new Date(fireAt),
-          allowWhileIdle: platform === "android",
-        },
-        ...(platform === "ios" ? { silent: true } : {}),
-        extra: { route, exerciseId: params.exerciseId },
-      },
-    ],
-  });
+  await RestTimer.start(buildStartPayload(params));
+  try {
+    const { isActive } = await CapacitorApp.getState();
+    await RestTimer.setForegroundVisible({ visible: !isActive });
+  } catch {
+    /* ignore */
+  }
   lastSyncedKey = key;
 }
 
@@ -156,11 +141,10 @@ function attachAppStateListener(): void {
 
   unsubscribeAppState = subscribeAppStateChange((isActive) => {
     if (!lifecycleEnabled) return;
-    if (isActive) {
-      void cancelRestFinishedLocalNotification();
-      return;
+    void RestTimer.setForegroundVisible({ visible: !isActive });
+    if (!isActive) {
+      void syncRestFinishedLocalNotificationInternal(currentParams);
     }
-    void syncRestFinishedLocalNotificationInternal(currentParams);
   });
 }
 
@@ -186,7 +170,38 @@ export function updateRestTimerNotificationParams(
 ): void {
   currentParams = params;
   if (!lifecycleEnabled) return;
-  void syncRestFinishedLocalNotificationInternal(params);
+
+  if (!params) {
+    void cancelRestFinishedLocalNotification();
+    return;
+  }
+
+  const key = paramsKey(params);
+  if (key === lastSyncedKey) return;
+
+  void (async () => {
+    const start = new Date(params.createdAt).getTime();
+    if (Number.isNaN(start)) return;
+
+    const fireAt = start + params.targetMs;
+    const now = Date.now();
+    if (fireAt <= now || !isRestSinceLastSetVisible(params.createdAt, now)) {
+      await cancelRestFinishedLocalNotification();
+      return;
+    }
+
+    if (lastSyncedKey && lastSyncedKey.split(":")[0] === params.exerciseId) {
+      try {
+        await RestTimer.update({ targetMs: params.targetMs });
+        lastSyncedKey = key;
+        return;
+      } catch {
+        /* Repart sur un start complet. */
+      }
+    }
+
+    await syncRestFinishedLocalNotificationInternal(params);
+  })();
 }
 
 export function scheduleRestFinishedLocalNotificationForEntry(
@@ -206,40 +221,5 @@ export function scheduleRestFinishedLocalNotificationForEntry(
 }
 
 export function attachRestTimerLocalNotificationListeners(): () => void {
-  if (!Capacitor.isNativePlatform()) return () => {};
-
-  const navigateToRoute = (route: string) => {
-    const normalized = route.startsWith("/") ? route : `/${route}`;
-    window.location.hash = `#${normalized}`;
-  };
-
-  const actionHandle = LocalNotifications.addListener(
-    "localNotificationActionPerformed",
-    (event) => {
-      const route = event.notification.extra?.route;
-      if (typeof route === "string" && route.length > 0) {
-        navigateToRoute(route);
-      }
-    },
-  );
-
-  const receivedHandle = LocalNotifications.addListener(
-    "localNotificationReceived",
-    () => {
-      void LocalNotifications.removeDeliveredNotifications({
-        notifications: [
-          {
-            id: REST_FINISHED_NOTIFICATION_ID,
-            title: "",
-            body: "",
-          },
-        ],
-      });
-    },
-  );
-
-  return () => {
-    void actionHandle.then((handle) => handle.remove());
-    void receivedHandle.then((handle) => handle.remove());
-  };
+  return () => {};
 }

@@ -1,7 +1,10 @@
 import { getRestTargetMs, setRestTargetMs } from "@/lib/storage";
 import { useCallback, useEffect, useState } from "react";
 
-export function useRestTargetMs(): number {
+export function useRestTargetMs(): {
+  targetMs: number;
+  setTargetMs: (ms: number) => void;
+} {
   const [targetMs, setTargetMs] = useState(() => getRestTargetMs());
 
   useEffect(() => {
