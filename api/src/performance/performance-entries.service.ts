@@ -10,6 +10,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LeagueService } from '../league/league.service.js';
 import { ProgressService } from '../progress/progress.service.js';
+import { RealtimeBroadcaster } from '../realtime/realtime-broadcaster.service.js';
+import { getAcceptedFriendIds } from '../social/lib/accepted-friend-ids.js';
+import { FriendshipEntity } from '../social/entities/friendship.entity.js';
 import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
 import { PerformanceEntryEntity } from './performance-entry.entity.js';
 import type {
@@ -29,10 +32,13 @@ export class PerformanceEntriesService {
     private readonly perfRepo: Repository<PerformanceEntryEntity>,
     @InjectRepository(TrackedExerciseEntity)
     private readonly trackedRepo: Repository<TrackedExerciseEntity>,
+    @InjectRepository(FriendshipEntity)
+    private readonly friendshipsRepo: Repository<FriendshipEntity>,
     private readonly progressService: ProgressService,
     private readonly leagueService: LeagueService,
     @Inject(forwardRef(() => NotificationDispatchService))
     private readonly notifications: NotificationDispatchService,
+    private readonly realtime: RealtimeBroadcaster,
   ) {}
 
   async list(
@@ -141,7 +147,7 @@ export class PerformanceEntriesService {
       });
     }
 
-    return {
+    const result = {
       id: entity.clientId,
       trackedExerciseId: entity.trackedExercise.clientId,
       date: entity.date,
@@ -152,6 +158,17 @@ export class PerformanceEntriesService {
       deletedAt: entity.deletedAt ? entity.deletedAt.toISOString() : null,
       xp,
     };
+
+    const friendIds = await getAcceptedFriendIds(this.friendshipsRepo, userId);
+    if (friendIds.length > 0) {
+      this.realtime.emitSessionPerf(friendIds, {
+        ownerUserId: userId,
+        date: entity.date,
+        entry: result,
+      });
+    }
+
+    return result;
   }
 
   async update(

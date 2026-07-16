@@ -25,12 +25,21 @@ import {
 import { UI } from '@/lib/translations'
 import { notifyXpGrants } from '@/lib/xp-notifications'
 import type { PerformanceEntry } from '@/types'
+import { readStoredSession } from '@/lib/auth'
 import { HistoryIcon } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/hooks/use-auth'
 
 const MAX_SHOWN = 150
 
 export function HistoryPage() {
+    const auth = useAuth()
+    const navigate = useNavigate()
+    const ownerUserId = useMemo(() => {
+        if (auth.status === 'authenticated' && auth.user?.id) return auth.user.id
+        return readStoredSession()?.user.id
+    }, [auth.status, auth.user?.id])
     const { data: allEntries = [], isLoading: isLoadingEntries } =
         usePerformanceEntriesData({ withLeagueInsights: true })
     const refreshAfterPerfChange = usePerformanceDataRefresh()
@@ -129,6 +138,7 @@ export function HistoryPage() {
                                         key={dayKey}
                                         dayKey={dayKey}
                                         exercises={exercises}
+                                        dayEntries={exercises.flatMap(({ items }) => items)}
                                         resolveExercise={resolveTrackedExercise}
                                         isTrackedActive={(id) =>
                                             tracked.some((exercise) => exercise.id === id && !exercise.deletedAt)
@@ -138,6 +148,14 @@ export function HistoryPage() {
                                         onDeleteEntry={handleDeleteEntry}
                                         onAddEntry={(trackedExerciseId, dayKey) =>
                                             setAddPerf({ trackedExerciseId, date: dayKey })
+                                        }
+                                        onDayClick={
+                                            ownerUserId
+                                                ? (dayKey) =>
+                                                      navigate(
+                                                          `/session/${ownerUserId}/${dayKey}`,
+                                                      )
+                                                : undefined
                                         }
                                     />
                                 ))}

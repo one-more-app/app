@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import {
   buildTrackedExercise,
   e2eCatalogExercise,
+  e2eTrackedId,
 } from "../fixtures/exercises";
 import { mockCoreAuthenticatedApi } from "./helpers";
 
@@ -63,12 +64,27 @@ function attachPerformance(tracked: TrackedRow, entries: PerfRow[]) {
 
 export async function mockExerciseWorkflowApi(
   page: Page,
-  options?: { seedTrackedExercise?: boolean },
+  options?: { seedTrackedExercise?: boolean; seedPerformance?: boolean },
 ): Promise<void> {
   const trackedExercises: TrackedRow[] = options?.seedTrackedExercise
     ? [buildTrackedExercise()]
     : [];
   const performanceEntries: PerfRow[] = [];
+
+  if (options?.seedPerformance && options?.seedTrackedExercise) {
+    const now = new Date().toISOString();
+    const today = now.slice(0, 10);
+    performanceEntries.push({
+      id: "e2e-perf-1",
+      trackedExerciseId: e2eTrackedId,
+      date: today,
+      weight: 60,
+      reps: 8,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    });
+  }
 
   await mockCoreAuthenticatedApi(page);
 
@@ -122,7 +138,7 @@ export async function mockExerciseWorkflowApi(
     });
   });
 
-  await page.route(/\/tracked-exercises/, async (route) => {
+  await page.route("**/tracked-exercises**", async (route) => {
     const url = route.request().url();
     const method = route.request().method();
 
@@ -189,7 +205,7 @@ export async function mockExerciseWorkflowApi(
     await route.fallback();
   });
 
-  await page.route(/\/performance-entries/, async (route) => {
+  await page.route("**/performance-entries**", async (route) => {
     const method = route.request().method();
     const url = route.request().url();
 
@@ -206,12 +222,10 @@ export async function mockExerciseWorkflowApi(
         ? rows.map((entry) => ({
             ...entry,
             leagueInsight: {
-              rankId: "bronze",
-              tier: 1,
-              subRank: 1,
-              label: "Bronze",
-              isPromotion: false,
               isRecord: false,
+              leagueUp: false,
+              prevLeague: null,
+              nextLeague: null,
             },
           }))
         : rows;

@@ -19,6 +19,7 @@ import {
     type FriendsListResponse,
 } from "@/lib/social-api";
 import { UI } from "@/lib/translations";
+import { getLocalDateKey } from "@/lib/local-date";
 import { MessageCircle, UserPlus, Users } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -96,7 +97,17 @@ function AcceptedFriendRow({
                     </div>
                 </Link>
                 <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-                    <PresenceBadge presence={presence} />
+                    {presence?.status === "training" ? (
+                        <Link
+                            to={`/session/${item.userId}/${getLocalDateKey()}`}
+                            onClick={(event) => event.stopPropagation()}
+                            className="shrink-0"
+                        >
+                            <PresenceBadge presence={presence} />
+                        </Link>
+                    ) : (
+                        <PresenceBadge presence={presence} />
+                    )}
                     <MessageCircle className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                 </div>
             </CardContent>

@@ -34,7 +34,7 @@ import {
 } from "@one-more/shared/access-config";
 import { ChevronDown, Crown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import useSWR from "swr";
 
@@ -91,6 +91,7 @@ export function ReferralDrawerHost() {
     const auth = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { open, source, closeReferralDrawer, openReferralDrawer } =
         useReferralDrawer();
     const { track } = useAnalytics();
@@ -146,6 +147,14 @@ export function ReferralDrawerHost() {
             `${location.pathname}${location.search}`,
         );
     }, [location.hash, location.pathname, location.search, openReferralDrawer]);
+
+    useEffect(() => {
+        if (searchParams.get("focus") !== "referral") return;
+        openReferralDrawer("invite");
+        const next = new URLSearchParams(searchParams);
+        next.delete("focus");
+        setSearchParams(next, { replace: true });
+    }, [searchParams, openReferralDrawer, setSearchParams]);
 
     useEffect(() => {
         if (!open) return;

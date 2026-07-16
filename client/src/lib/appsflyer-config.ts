@@ -38,13 +38,19 @@ export function isAppsFlyerConfigured(): boolean {
   return Boolean(getAppsFlyerDevKey());
 }
 
+/** Défauts prod si les `VITE_*` manquent (ex. `vite` web sans `.env.*.capacitor`). */
+const DEFAULT_ONELINK_DOMAIN = "one-more.onelink.me";
+const DEFAULT_ONELINK_ID = "XFST";
+
 export function buildOneLinkInviteUrl(code: string): string | null {
-  const domain = getAppsFlyerOneLinkDomain();
-  const templateId = getAppsFlyerOneLinkId();
-  if (!domain || !templateId) return null;
+  const normalized = code.trim().toLowerCase();
+  if (!normalized) return null;
+
+  const domain = getAppsFlyerOneLinkDomain() ?? DEFAULT_ONELINK_DOMAIN;
+  const templateId = getAppsFlyerOneLinkId() ?? DEFAULT_ONELINK_ID;
 
   const params = new URLSearchParams({
-    deep_link_value: code.trim().toLowerCase(),
+    deep_link_value: normalized,
     pid: "friend_invite",
   });
   return `https://${domain}/${templateId}?${params.toString()}`;

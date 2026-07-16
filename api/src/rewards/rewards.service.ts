@@ -12,7 +12,6 @@ import { ClaimTshirtDto } from './dto/claim-tshirt.dto.js';
 import { TshirtRewardClaimEntity } from './entities/tshirt-reward-claim.entity.js';
 import { TshirtRewardStatus } from './entities/tshirt-reward-status.enum.js';
 import { TshirtRewardType } from './entities/tshirt-reward-type.enum.js';
-import { TshirtGender } from './entities/tshirt-gender.enum.js';
 import { buildTshirtOpsWebhookPayload } from './lib/tshirt-ops-webhook.js';
 
 export type TshirtRewardClaimDto = {
@@ -20,7 +19,6 @@ export type TshirtRewardClaimDto = {
   rewardType: TshirtRewardType;
   status: TshirtRewardStatus;
   size: string | null;
-  gender: TshirtGender | null;
   fullName: string | null;
   street: string | null;
   city: string | null;
@@ -53,7 +51,6 @@ export class RewardsService {
       rewardType: claim.rewardType,
       status: claim.status,
       size: claim.size,
-      gender: claim.gender,
       fullName: claim.fullName,
       street: claim.street,
       city: claim.city,
@@ -134,7 +131,7 @@ export class RewardsService {
       throw new ConflictException('Tu as déjà réclamé cette récompense');
     }
     reward.size = dto.size;
-    reward.gender = dto.gender as TshirtGender;
+    reward.gender = null;
     reward.fullName = dto.fullName.trim();
     reward.street = dto.street.trim();
     reward.city = dto.city.trim();

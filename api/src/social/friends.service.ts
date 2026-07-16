@@ -16,6 +16,7 @@ import { ProgressService } from '../progress/progress.service.js';
 import { TrackedExercisesService } from '../tracked-exercises/tracked-exercises.service.js';
 import { FriendshipEntity } from './entities/friendship.entity.js';
 import { FriendshipStatus } from './entities/friendship-status.enum.js';
+import { getAcceptedFriendIds as listAcceptedFriendIds } from './lib/accepted-friend-ids.js';
 
 type FriendListItem = {
   friendshipId: string;
@@ -127,15 +128,7 @@ export class FriendsService {
   }
 
   async getAcceptedFriendIds(userId: string): Promise<string[]> {
-    const friendships = await this.friendshipsRepo.find({
-      where: [
-        { requesterId: userId, status: FriendshipStatus.ACCEPTED },
-        { addresseeId: userId, status: FriendshipStatus.ACCEPTED },
-      ],
-    });
-    return friendships.map((f) =>
-      f.requesterId === userId ? f.addresseeId : f.requesterId,
-    );
+    return await listAcceptedFriendIds(this.friendshipsRepo, userId);
   }
 
   async requestFriend(requesterId: string, targetUserId: string) {

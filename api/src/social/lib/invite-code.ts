@@ -29,13 +29,7 @@ export function buildAppsFlyerInviteUrl(code: string): string | null {
   return `https://${domain}/${templateId}?${params.toString()}`;
 }
 
-export function buildInviteUrl(code: string, baseUrl?: string): string {
-  const oneLink = buildAppsFlyerInviteUrl(code);
-  if (oneLink) return oneLink;
-
-  const origin =
-    baseUrl?.replace(/\/+$/, '') ??
-    process.env.PUBLIC_APP_URL?.replace(/\/+$/, '') ??
-    'https://one-more.app';
-  return `${origin}/#/invite/${code}`;
+/** OneLink uniquement. Retourne `null` si `APPSFLYER_ONELINK_*` absents. */
+export function buildInviteUrl(code: string): string | null {
+  return buildAppsFlyerInviteUrl(code);
 }

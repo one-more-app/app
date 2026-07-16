@@ -102,6 +102,7 @@
       ".ts"
     ],
     "moduleNameMapper": {
+      "^(?:\\.\\./)+shared/(.*)\\.js$": "<rootDir>/../dist/shared/$1.js",
       "^(\\.{1,2}/.*)\\.js$": "$1"
     },
     "transform": {

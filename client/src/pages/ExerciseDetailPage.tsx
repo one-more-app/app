@@ -227,7 +227,7 @@ export function ExerciseDetailPage() {
     >({ mode: 'closed' })
 
     useExercisePresence(
-        sessionDrawer.mode !== 'closed',
+        Boolean(exercise),
         exercise?.name,
         id ?? undefined,
     )

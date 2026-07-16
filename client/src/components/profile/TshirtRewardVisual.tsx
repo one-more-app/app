@@ -3,8 +3,8 @@ import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 
 const TSHIRT_IMAGES = {
-    dark: "/images/rewards/tshirt-black.png",
-    light: "/images/rewards/tshirt-white.png",
+    referral: "/images/rewards/tshirt-black.png",
+    annual: "/images/abonnement mensual t shirts.png",
 } as const;
 
 type TshirtRewardVisualProps = {
@@ -20,7 +20,8 @@ export function TshirtRewardVisual({
     showSlogan = true,
     className,
 }: TshirtRewardVisualProps) {
-    const showBoth = rewardType === "annual_classic_pack";
+    const isAnnual = rewardType === "annual_classic_pack";
+    const imageSrc = isAnnual ? TSHIRT_IMAGES.annual : TSHIRT_IMAGES.referral;
 
     return (
         <div
@@ -34,31 +35,19 @@ export function TshirtRewardVisual({
             <div
                 className={cn(
                     "relative flex w-full items-center justify-center",
-                    showBoth
-                        ? "h-32 gap-3 sm:h-36"
-                        : "h-28 sm:h-32",
+                    isAnnual ? "h-36 sm:h-40" : "h-28 sm:h-32",
                 )}
             >
-                {showBoth ? (
-                    <>
-                        <img
-                            src={TSHIRT_IMAGES.dark}
-                            alt={UI.referralTshirtImageAlt}
-                            className="max-h-full max-w-[min(48%,140px)] object-contain drop-shadow-sm"
-                        />
-                        <img
-                            src={TSHIRT_IMAGES.light}
-                            alt={UI.referralTshirtImageAlt}
-                            className="max-h-full max-w-[min(48%,140px)] object-contain drop-shadow-sm"
-                        />
-                    </>
-                ) : (
-                    <img
-                        src={TSHIRT_IMAGES.dark}
-                        alt={UI.referralTshirtImageAlt}
-                        className="max-h-full max-w-[min(100%,220px)] object-contain drop-shadow-sm"
-                    />
-                )}
+                <img
+                    src={imageSrc}
+                    alt={UI.referralTshirtImageAlt}
+                    className={cn(
+                        "max-h-full object-contain drop-shadow-sm",
+                        isAnnual
+                            ? "max-w-[min(100%,280px)]"
+                            : "max-w-[min(100%,220px)]",
+                    )}
+                />
             </div>
             {showSlogan ? (
                 <>

@@ -23,6 +23,7 @@ import { NotificationDeliveryEntity } from '../notifications/entities/notificati
 import { FriendTrainingAlertEntity } from '../notifications/entities/friend-training-alert.entity.js';
 import { TshirtRewardClaimEntity } from '../rewards/entities/tshirt-reward-claim.entity.js';
 import { UserGymEntity } from '../gyms/entities/user-gym.entity.js';
+import { SessionCommentEntity } from '../workout-sessions/entities/session-comment.entity.js';
 
 export const TYPEORM_ENTITIES = [
   UserEntity,
@@ -44,6 +45,7 @@ export const TYPEORM_ENTITIES = [
   FriendTrainingAlertEntity,
   TshirtRewardClaimEntity,
   UserGymEntity,
+  SessionCommentEntity,
 ] as const;
 
 const getDatabaseUrl = (config: ConfigService): string => {

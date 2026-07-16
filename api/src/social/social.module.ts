@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { NotificationsModule } from '../notifications/notifications.module.js';
+import { RealtimeModule } from '../realtime/realtime.module.js';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PerformanceEntriesModule } from '../performance/performance-entries.module.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
@@ -25,6 +26,7 @@ import { UsernameService } from './username.service.js';
     TrackedExercisesModule,
     PerformanceEntriesModule,
     forwardRef(() => NotificationsModule),
+    forwardRef(() => RealtimeModule),
   ],
   controllers: [SocialController],
   providers: [

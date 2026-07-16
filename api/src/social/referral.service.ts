@@ -7,6 +7,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { NotificationDispatchService } from '../notifications/notification-dispatch.service.js';
+import { RealtimeBroadcaster } from '../realtime/realtime-broadcaster.service.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
@@ -26,6 +27,7 @@ export class ReferralService {
     private readonly access: AccessService,
     @Inject(forwardRef(() => NotificationDispatchService))
     private readonly notifications: NotificationDispatchService,
+    private readonly realtime: RealtimeBroadcaster,
   ) {}
 
   async applyReferralCode(
@@ -56,12 +58,21 @@ export class ReferralService {
 
     await this.ensureAcceptedFriendship(inviterProfile.userId, userId);
 
+    const tshirtUnlocked = await this.access.hasJustUnlockedTshirtReward(
+      inviterProfile.userId,
+    );
+
+    this.realtime.emitAccessUpdated(inviterProfile.userId, {
+      reason: 'referral_used',
+      tshirtUnlocked,
+    });
+
     void this.notifications.notifyReferralUsed({
       referrerId: inviterProfile.userId,
       referredUserId: userId,
     });
 
-    if (await this.access.hasJustUnlockedTshirtReward(inviterProfile.userId)) {
+    if (tshirtUnlocked) {
       void this.notifications.notifyTshirtRewardUnlocked({
         userId: inviterProfile.userId,
       });
@@ -122,11 +133,6 @@ export class ReferralService {
       if (existing.status === FriendshipStatus.PENDING) {
         existing.status = FriendshipStatus.ACCEPTED;
         await this.friendshipsRepo.save(existing);
-        void this.notifications.notifyFriendAccepted({
-          requesterId,
-          addresseeId,
-          friendshipId: existing.id,
-        });
       }
       return { friendshipId: existing.id, status: existing.status };
     }
@@ -135,11 +141,6 @@ export class ReferralService {
       requesterId,
       addresseeId,
       status: FriendshipStatus.ACCEPTED,
-    });
-    void this.notifications.notifyFriendAccepted({
-      requesterId,
-      addresseeId,
-      friendshipId: created.id,
     });
     return { friendshipId: created.id, status: created.status };
   }

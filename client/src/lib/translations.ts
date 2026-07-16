@@ -398,16 +398,14 @@ export const UI = {
   profileShareError: "Impossible de partager la fiche",
   inviteCodeCopied: "Code copié",
   inviteCodeShared: "Code partagé",
-  inviteShareError: "Impossible de partager le code",
+  inviteShareError: "Impossible de partager l'invitation",
   inviteShareTitle: "One More",
   inviteCodeShareMessage:
     "Rejoins-moi sur One More pour suivre ta muscu ensemble ! Utilise mon code de parrainage : {code}. On gagne des exos supplémentaires tous les deux.",
   inviteShareDialogTitle: "Inviter un pote",
   inviteCodeLabel: "Mon code de parrainage",
-  /** @deprecated */
-  inviteLinkCopied: "Code copié",
-  /** @deprecated */
-  inviteLinkShared: "Code partagé",
+  inviteLinkCopied: "Lien copié",
+  inviteLinkShared: "Invitation partagée",
   exerciseLimitTitle: "Limite d'exercices atteinte",
   exerciseLimitDescription:
     "Tu suis {count}/{limit} exercices. Parraine un pote avec ton code pour gagner {bonus} exercices supplémentaires.",
@@ -531,14 +529,11 @@ export const UI = {
   tshirtClaimPostalCode: "Code postal",
   tshirtClaimCountry: "Pays",
   tshirtClaimSize: "Taille",
-  tshirtClaimGender: "Coupe du t-shirt",
-  tshirtClaimAddressSearch: "Rechercher une adresse",
+  tshirtClaimUnisexHint: "Coupe unisexe",
   tshirtClaimAddressSearchPlaceholder: "Numéro et rue, ville…",
-  tshirtClaimAddressSearchHint:
-    "Sélectionne une adresse pour préremplir le formulaire.",
   tshirtClaimAddressSearchEmpty: "Aucune adresse trouvée.",
   tshirtClaimAddressSearchUnavailable:
-    "Recherche indisponible pour l'instant. Renseigne l'adresse à la main.",
+    "Suggestions indisponibles. Tu peux remplir le code postal et la ville à la main.",
   tshirtClaimMandatoryHint:
     "Complète ce formulaire pour débloquer l'app et recevoir ton t-shirt.",
   tshirtClaimSubmit: "Envoyer ma demande",
@@ -773,9 +768,6 @@ export const UI = {
   gymOnboardingLocationSettingsHint:
     "Dans les réglages, choisis « Toujours » pour la localisation.",
   gymOnboardingWaitTitle: "Tout est prêt",
-  gymOnboardingWaitHeadlineReady: "Réouvre l'app quand tu seras à {name}",
-  gymOnboardingWaitHeadlineNoGym: "Ajoute ta salle pour activer les alertes",
-  gymOnboardingWaitHeadlineMissingPerms: "Active les alertes pour {name}",
   gymOnboardingWaitValueProp:
     "One More sert à suivre tes perfs à la salle. On a enregistré ta salle et tes alertes pour te prévenir à chaque visite.",
   gymOnboardingWaitMonitoringTitle: "Détection en cours",
@@ -795,9 +787,6 @@ export const UI = {
   gymOnboardingWaitGymChange: "Changer de salle",
   gymOnboardingWaitGymSearching: "Recherche en cours…",
   gymOnboardingWaitGymSaveError: "Impossible d'enregistrer ta salle. Réessaie.",
-  gymOnboardingWaitRemindersSection: "Complète tes alertes",
-  gymOnboardingWaitRemindersPending:
-    "Active ces options pour être prévenu dès ton arrivée à la salle.",
   gymOnboardingWaitCta: "Je suis à la salle",
   gymOnboardingWebOnly:
     "La détection à la salle est disponible sur l'app mobile.",
@@ -912,6 +901,7 @@ export const UI = {
   notificationsNativeOnly:
     "Les notifications push sont disponibles sur l'app mobile.",
   notificationDefaultTitle: "One More",
+  notificationSeeAction: "Voir",
   notifPrefStreak: "Rappels de série",
   notifPrefFriendRequests: "Demandes d'ami",
   notifPrefFriendAccepted: "Demandes acceptées",
@@ -928,4 +918,29 @@ export const UI = {
     "Active « Séances d'amis » dans Paramètres pour utiliser la cloche",
   streakGraceDayHint: "Dernier jour pour garder ta série",
   streakGraceDayAria: "Série de {days} jours, dernier jour de grâce",
+
+  // Séance partagée
+  sessionTitle: "Séance",
+  sessionTitleMine: "Ma séance",
+  sessionTitleFriend: "Séance de {name}",
+  sessionLiveBadge: "En direct",
+  sessionSummary: "{exercises} exercices · {records} record(s)",
+  sessionInProgress: "En cours",
+  sessionDurationMinutes: "{count} min",
+  sessionDurationHours: "{hours} h {minutes}",
+  sessionDurationHoursNoMinutes: "{hours} h",
+  sessionInProgressWithDuration: "En cours · {duration}",
+  sessionEmpty: "Aucune série enregistrée ce jour-là.",
+  sessionUnavailable: "Séance introuvable ou inaccessible.",
+  sessionCommentsTitle: "Commentaires",
+  sessionCommentsEmpty: "Aucun commentaire",
+  sessionCommentsEmptyHint: "Sois le premier à commenter cette séance.",
+  sessionCommentPlaceholder: "Écris un message…",
+  sessionCommentReplyPlaceholder: "Ta réponse…",
+  sessionCommentSend: "Envoyer",
+  sessionCommentReply: "Répondre",
+  sessionCommentDelete: "Supprimer",
+  sessionCommentDeleteConfirm: "Supprimer ce commentaire ?",
+  sessionCommentError: "Impossible d'envoyer le commentaire.",
+  sessionViewDay: "Voir la séance",
 };

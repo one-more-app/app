@@ -1,8 +1,9 @@
 import { chronologicalPerfOrder } from '@/lib/performance-order'
 import type { HistoryEntryLeagueInsight } from '@/lib/league-types'
+import type { PerformanceEntryWithLeagueInsight } from '@/lib/data-api'
 import { getRankIndex, type LeagueInfo } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
-import type { PerformanceEntry, PerformanceEntryWithLeagueInsight, TrackedExercise } from '@/types'
+import type { PerformanceEntry, TrackedExercise } from '@/types'
 import {
     getTrackedExerciseById,
     getAllTrackedExercises,

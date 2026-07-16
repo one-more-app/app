@@ -32,6 +32,7 @@ type OnboardingGymPermissionsStepProps = {
     gymName: string
     gymAddress: string | null
     onContinue: () => void
+    onSkip: () => void
     onChangeGym: () => void
 }
 
@@ -39,6 +40,7 @@ export function OnboardingGymPermissionsStep({
     gymName,
     gymAddress,
     onContinue,
+    onSkip,
     onChangeGym,
 }: OnboardingGymPermissionsStepProps) {
     const isNative = Capacitor.isNativePlatform()
@@ -135,7 +137,7 @@ export function OnboardingGymPermissionsStep({
     const handleSkip = () => {
         if (continuingRef.current) return
         continuingRef.current = true
-        onContinue()
+        onSkip()
     }
 
     const handleNotificationsToggle = async (checked: boolean) => {

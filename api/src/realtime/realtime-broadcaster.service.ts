@@ -44,4 +44,25 @@ export class RealtimeBroadcaster {
   emitFriendshipUpdated(userId: string, payload: unknown) {
     this.emitToUser(userId, 'friendship:updated', payload);
   }
+
+  emitAccessUpdated(
+    userId: string,
+    payload: { reason: 'referral_used'; tshirtUnlocked: boolean },
+  ) {
+    this.emitToUser(userId, 'access:updated', payload);
+  }
+
+  emitSessionPerf(
+    friendIds: string[],
+    payload: { ownerUserId: string; date: string; entry: unknown },
+  ) {
+    this.emitToUsers(friendIds, 'session:perf', payload);
+  }
+
+  emitSessionComment(ownerUserId: string, date: string, comment: unknown) {
+    if (!this.server) return;
+    this.server
+      .to(`session:${ownerUserId}:${date}`)
+      .emit('session:comment', { ownerUserId, date, comment });
+  }
 }

@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 const notifyFriendAccepted = jest.fn();
 const notifyReferralUsed = jest.fn();
 const notifyTshirtRewardUnlocked = jest.fn();
+const emitAccessUpdated = jest.fn();
 
 jest.unstable_mockModule('../access.service.js', () => ({
   AccessService: class AccessService {},
@@ -35,6 +36,9 @@ describe('ReferralService', () => {
     notifyReferralUsed,
     notifyTshirtRewardUnlocked,
   };
+  const realtime = {
+    emitAccessUpdated,
+  };
 
   let service: InstanceType<typeof ReferralService>;
 
@@ -46,6 +50,7 @@ describe('ReferralService', () => {
       invitesService as any,
       accessService as any,
       notifications as any,
+      realtime as any,
     );
   });
 
@@ -75,10 +80,15 @@ describe('ReferralService', () => {
       addresseeId: 'user-1',
       status: 'accepted',
     });
+    expect(emitAccessUpdated).toHaveBeenCalledWith('referrer-1', {
+      reason: 'referral_used',
+      tshirtUnlocked: false,
+    });
     expect(notifyReferralUsed).toHaveBeenCalledWith({
       referrerId: 'referrer-1',
       referredUserId: 'user-1',
     });
+    expect(notifyFriendAccepted).not.toHaveBeenCalled();
     expect(notifyTshirtRewardUnlocked).not.toHaveBeenCalled();
   });
 
@@ -99,6 +109,10 @@ describe('ReferralService', () => {
 
     await service.applyReferralCode('user-1', 'abc12345');
 
+    expect(emitAccessUpdated).toHaveBeenCalledWith('referrer-1', {
+      reason: 'referral_used',
+      tshirtUnlocked: true,
+    });
     expect(notifyTshirtRewardUnlocked).toHaveBeenCalledWith({
       userId: 'referrer-1',
     });

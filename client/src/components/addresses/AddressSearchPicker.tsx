@@ -7,10 +7,12 @@ import {
   type AddressSuggestion,
 } from "@/lib/addresses-api";
 import { UI } from "@/lib/translations";
-import { Loader2, Search } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type AddressSearchPickerProps = {
+  value: string;
+  onChange: (value: string) => void;
   onAddressSelected: (details: AddressDetails) => void;
   className?: string;
 };
@@ -26,17 +28,19 @@ function addressSearchErrorMessage(error: unknown): string {
 }
 
 export function AddressSearchPicker({
+  value,
+  onChange,
   onAddressSelected,
   className,
 }: AddressSearchPickerProps) {
-  const [query, setQuery] = useState("");
   const [results, setResults] = useState<AddressSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const skipNextSearchRef = useRef(false);
 
-  const runSearch = useCallback(async (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) {
+  const runSearch = useCallback(async (query: string) => {
+    const trimmed = query.trim();
+    if (trimmed.length < 3) {
       setResults([]);
       setError(null);
       return;
@@ -59,16 +63,24 @@ export function AddressSearchPicker({
   }, []);
 
   useEffect(() => {
-    if (!query.trim()) return;
+    if (skipNextSearchRef.current) {
+      skipNextSearchRef.current = false;
+      return;
+    }
+    if (!value.trim()) {
+      setResults([]);
+      setError(null);
+      return;
+    }
     const timer = window.setTimeout(() => {
-      void runSearch(query);
+      void runSearch(value);
     }, 300);
     return () => window.clearTimeout(timer);
-  }, [query, runSearch]);
+  }, [value, runSearch]);
 
-  const handleQueryChange = (value: string) => {
-    setQuery(value);
-    if (!value.trim()) {
+  const handleChange = (next: string) => {
+    onChange(next);
+    if (!next.trim()) {
       setResults([]);
       setError(null);
     }
@@ -80,7 +92,7 @@ export function AddressSearchPicker({
       setError(null);
       try {
         const details = await getAddressDetails(suggestion.placeId);
-        setQuery(details.label);
+        skipNextSearchRef.current = true;
         setResults([]);
         onAddressSelected(details);
       } catch (err) {
@@ -93,26 +105,14 @@ export function AddressSearchPicker({
 
   return (
     <div className={className}>
-      <p className="text-sm font-medium text-foreground">
-        {UI.tshirtClaimAddressSearch}
-      </p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        {UI.tshirtClaimAddressSearchHint}
-      </p>
-      <div className="relative mt-2">
-        <Search
-          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-          aria-hidden
-        />
-        <Input
-          id="tshirt-address-search"
-          value={query}
-          onChange={(e) => handleQueryChange(e.target.value)}
-          placeholder={UI.tshirtClaimAddressSearchPlaceholder}
-          className="pl-9"
-          autoComplete="off"
-        />
-      </div>
+      <Input
+        id="tshirt-street"
+        label={UI.tshirtClaimStreet}
+        value={value}
+        onChange={(e) => handleChange(e.target.value)}
+        placeholder={UI.tshirtClaimAddressSearchPlaceholder}
+        autoComplete="street-address"
+      />
       {searching ? (
         <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="size-3.5 animate-spin" aria-hidden />

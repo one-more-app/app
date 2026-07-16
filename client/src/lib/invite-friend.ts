@@ -1,48 +1,94 @@
-import {
-  fetchInviteCode,
-  shareInviteCode,
-  shareInviteMessage,
-} from "@/lib/social-api";
+import { Capacitor } from "@capacitor/core";
+import { buildOneLinkInviteUrl } from "@/lib/appsflyer-config";
+import { fetchInviteCode } from "@/lib/social-api";
 import { UI } from "@/lib/translations";
 import { toast } from "sonner";
 
-const PLAY_STORE_URL =
-  "https://play.google.com/store/apps/details?id=com.one_more.app";
+function isShareCancelled(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /cancel/i.test(message);
+}
 
-function getAppleStoreUrl(): string {
-  const appStoreId = String(import.meta.env.VITE_APPSFLYER_APP_ID ?? "").trim();
-  if (/^\d+$/.test(appStoreId)) {
-    return `https://apps.apple.com/app/id${appStoreId}`;
+async function resolveInviteCode(code?: string): Promise<string> {
+  const fromArg = code?.trim().toLowerCase();
+  if (fromArg) return fromArg;
+  const { code: fetched } = await fetchInviteCode();
+  return fetched.trim().toLowerCase();
+}
+
+async function copyText(text: string): Promise<void> {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const { Clipboard } = await import("@capacitor/clipboard");
+      await Clipboard.write({ string: text });
+      return;
+    } catch {
+      // fallback web API
+    }
   }
-  return "https://apps.apple.com/app";
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  throw new Error("Copie impossible");
 }
 
-function buildReferralShareMessage(code: string): string {
-  const base = UI.inviteCodeShareMessage.replace("{code}", code.trim().toLowerCase());
-  return `${base}\n\nApp Store (iOS): ${getAppleStoreUrl()}\nGoogle Play (Android): ${PLAY_STORE_URL}`;
+function buildShareMessage(inviteCode: string, url: string): string {
+  return `${UI.inviteCodeShareMessage.replace("{code}", inviteCode)}\n\n${url}`;
 }
 
-export async function inviteFriend(): Promise<boolean> {
+/**
+ * Partager mon invitation : message + OneLink via Capacitor Share.
+ * Si le sheet échoue → copie le même texte (stable).
+ */
+export async function inviteFriend(code?: string): Promise<boolean> {
   try {
-    const { code } = await fetchInviteCode();
-    const message = buildReferralShareMessage(code);
-    const result = await shareInviteMessage(message);
-    if (result === "dismissed") return false;
-    toast.success(
-      result === "copied" ? UI.inviteLinkCopied : UI.inviteLinkShared,
-    );
-    return true;
+    const inviteCode = await resolveInviteCode(code);
+    const url = buildOneLinkInviteUrl(inviteCode);
+    if (!url) {
+      toast.error(UI.inviteShareError);
+      return false;
+    }
+
+    const message = buildShareMessage(inviteCode, url);
+
+    try {
+      if (Capacitor.isNativePlatform()) {
+        const { Share } = await import("@capacitor/share");
+        await Share.share({
+          title: UI.inviteShareTitle,
+          text: message,
+          dialogTitle: UI.inviteShareDialogTitle,
+        });
+      } else if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({
+          title: UI.inviteShareTitle,
+          text: message,
+        });
+      } else {
+        await copyText(message);
+        toast.success(UI.inviteLinkCopied);
+        return true;
+      }
+      toast.success(UI.inviteLinkShared);
+      return true;
+    } catch (error) {
+      if (isShareCancelled(error)) return false;
+      await copyText(message);
+      toast.success(UI.inviteLinkCopied);
+      return true;
+    }
   } catch {
     toast.error(UI.inviteShareError);
     return false;
   }
 }
 
-export async function copyInviteCode(): Promise<boolean> {
+/** Copier : uniquement le code de parrainage. */
+export async function copyInviteCode(code?: string): Promise<boolean> {
   try {
-    const { code } = await fetchInviteCode();
-    const result = await shareInviteCode(code);
-    if (result === "dismissed") return false;
+    const inviteCode = await resolveInviteCode(code);
+    await copyText(inviteCode);
     toast.success(UI.inviteCodeCopied);
     return true;
   } catch {

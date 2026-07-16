@@ -6,13 +6,9 @@ import {
   MinLength,
 } from 'class-validator';
 import { TshirtRewardType } from '../entities/tshirt-reward-type.enum.js';
-import { TshirtGender } from '../entities/tshirt-gender.enum.js';
 
 export const TSHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
 export type TshirtSize = (typeof TSHIRT_SIZES)[number];
-
-export const TSHIRT_GENDERS = Object.values(TshirtGender);
-export type TshirtGenderValue = `${TshirtGender}`;
 
 export class ClaimTshirtDto {
   @IsIn(Object.values(TshirtRewardType))
@@ -46,7 +42,4 @@ export class ClaimTshirtDto {
 
   @IsIn(TSHIRT_SIZES)
   size!: TshirtSize;
-
-  @IsIn(TSHIRT_GENDERS)
-  gender!: TshirtGenderValue;
 }

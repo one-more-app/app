@@ -6,10 +6,12 @@ import {
   useUserProfileData,
   useUserProgressData,
 } from "@/hooks/use-api-data";
+import { useAuth } from "@/hooks/use-auth";
 import { useHomeData } from "@/hooks/use-home-data";
 import { UI } from "@/lib/translations";
 
 export default function ProfilePage() {
+  const auth = useAuth();
   const { exercises, hasLoaded } = useHomeData();
   const { data: profile } = useUserProfileData();
   const { data: progress } = useUserProgressData();
@@ -29,6 +31,9 @@ export default function ProfilePage() {
         isLoading: !hasLoaded,
       }}
       headerActions={<ReferralTshirtBanner />}
+      sessionOwnerUserId={
+        auth.status === "authenticated" ? auth.user?.id : undefined
+      }
     />
   );
 }

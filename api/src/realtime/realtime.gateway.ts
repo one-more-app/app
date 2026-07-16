@@ -19,6 +19,11 @@ import { PresenceStatus } from '../presence/entities/presence-status.enum.js';
 import { PresenceService } from '../presence/presence.service.js';
 import { NotificationDispatchService } from '../notifications/notification-dispatch.service.js';
 import { RealtimeBroadcaster } from './realtime-broadcaster.service.js';
+import {
+  getSocketUser,
+  requireSocketUser,
+  setSocketUser,
+} from './socket-data.js';
 import { WsJwtGuard } from './ws-jwt.guard.js';
 
 @WebSocketGateway({
@@ -53,7 +58,7 @@ export class RealtimeGateway
   async handleConnection(client: Socket) {
     try {
       const user = this.wsJwtGuard.authenticateSocket(client);
-      client.data.user = user;
+      setSocketUser(client, user);
       await client.join(`user:${user.sub}`);
       const presence = await this.presenceService.updateHeartbeat(user.sub, {
         status: PresenceStatus.ONLINE,
@@ -68,7 +73,7 @@ export class RealtimeGateway
   }
 
   async handleDisconnect(client: Socket) {
-    const userId = client.data.user?.sub as string | undefined;
+    const userId = getSocketUser(client)?.sub;
     if (!userId) return;
     try {
       const presence = await this.presenceService.updateHeartbeat(userId, {
@@ -87,7 +92,7 @@ export class RealtimeGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() body: PresenceHeartbeatDto,
   ) {
-    const userId = client.data.user.sub as string;
+    const userId = requireSocketUser(client).sub;
     const prev = await this.presenceService.getPresence(userId);
     const presence = await this.presenceService.updateHeartbeat(userId, body);
     const friendIds = await this.friendsService.getAcceptedFriendIds(userId);
@@ -110,7 +115,7 @@ export class RealtimeGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() body: { conversationId: string },
   ) {
-    const userId = client.data.user.sub as string;
+    const userId = requireSocketUser(client).sub;
     const conversation = await this.conversationsRepo.findOne({
       where: { id: body.conversationId },
     });
@@ -122,6 +127,33 @@ export class RealtimeGateway
       return { ok: false };
     }
     await client.join(`conversation:${body.conversationId}`);
+    return { ok: true };
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('session:join')
+  async onSessionJoin(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { ownerUserId: string; date: string },
+  ) {
+    const userId = requireSocketUser(client).sub;
+    if (!body.ownerUserId || !body.date) return { ok: false };
+    if (body.ownerUserId !== userId) {
+      const friendIds = await this.friendsService.getAcceptedFriendIds(userId);
+      if (!friendIds.includes(body.ownerUserId)) return { ok: false };
+    }
+    await client.join(`session:${body.ownerUserId}:${body.date}`);
+    return { ok: true };
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('session:leave')
+  async onSessionLeave(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { ownerUserId: string; date: string },
+  ) {
+    if (!body.ownerUserId || !body.date) return { ok: false };
+    await client.leave(`session:${body.ownerUserId}:${body.date}`);
     return { ok: true };
   }
 }

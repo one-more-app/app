@@ -30,7 +30,7 @@ export function useConversationsList() {
 export function useUnreadMessagesCount(): number {
   const { data } = useConversationsList();
   return (
-    data?.conversations.reduce((total, conversation) => {
+    data?.conversations?.reduce((total, conversation) => {
       return total + conversation.unreadCount;
     }, 0) ?? 0
   );

@@ -28,15 +28,18 @@ import {
   updatePerformanceAndWait,
 } from "@/lib/storage";
 import { UI } from "@/lib/translations";
+import { getLocalDateKey } from "@/lib/local-date";
 import type { PerformanceEntry, TrackedExercise, UserProfile } from "@/types";
 import { useCallback, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 type ProfileRecentHistoryProps = {
   entries?: PerformanceEntry[];
   tracked?: TrackedExercise[];
   profile?: UserProfile;
   readOnly?: boolean;
+  sessionOwnerUserId?: string;
+  isFriendPresenceTraining?: boolean;
 };
 
 export function ProfileRecentHistory({
@@ -44,6 +47,8 @@ export function ProfileRecentHistory({
   tracked: trackedProp,
   profile: profileProp,
   readOnly = false,
+  sessionOwnerUserId,
+  isFriendPresenceTraining = false,
 }: ProfileRecentHistoryProps = {}) {
   const { data: allEntriesFromHook = [] } = usePerformanceEntriesData({
     withLeagueInsights: true,
@@ -51,6 +56,7 @@ export function ProfileRecentHistory({
   const { data: trackedFromHook = [] } = useTrackedExercisesData();
   const { data: profileFromHook } = useUserProfileData();
   const refreshAfterPerfChange = usePerformanceDataRefresh();
+  const navigate = useNavigate();
 
   const allEntries = entriesProp ?? allEntriesFromHook;
   const tracked = trackedProp ?? trackedFromHook;
@@ -171,6 +177,10 @@ export function ProfileRecentHistory({
               dayKey={dayKey}
               surface="profile"
               exercises={exercises}
+              dayEntries={exercises.flatMap(({ items }) => items)}
+              isPresenceTraining={
+                isFriendPresenceTraining && dayKey === getLocalDateKey()
+              }
               resolveExercise={resolveExercise}
               isTrackedActive={(id) =>
                 tracked.some(
@@ -186,6 +196,12 @@ export function ProfileRecentHistory({
                   ? undefined
                   : (trackedExerciseId, day) =>
                       setAddPerf({ trackedExerciseId, date: day })
+              }
+              onDayClick={
+                sessionOwnerUserId
+                  ? (dayKey) =>
+                        navigate(`/session/${sessionOwnerUserId}/${dayKey}`)
+                  : undefined
               }
             />
           ))}

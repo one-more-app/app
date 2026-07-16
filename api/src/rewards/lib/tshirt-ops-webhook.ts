@@ -33,7 +33,6 @@ type GenericOpsWebhookPayload = {
   userId: string;
   status: string;
   size: string;
-  gender: string;
   fullName: string;
   street: string;
   city: string;
@@ -52,7 +51,6 @@ export function buildTshirtOpsWebhookPayload(
     userId: claim.userId,
     status: claim.status,
     size: claim.size ?? '',
-    gender: claim.gender ?? '',
     fullName: claim.fullName ?? '',
     street: claim.street ?? '',
     city: claim.city ?? '',
@@ -80,7 +78,6 @@ export function buildTshirtOpsWebhookPayload(
         fields: [
           { name: 'Nom', value: claim.fullName ?? '', inline: true },
           { name: 'Taille', value: claim.size ?? '', inline: true },
-          { name: 'Genre', value: claim.gender ?? '', inline: true },
           { name: 'Statut', value: claim.status, inline: true },
           { name: 'Adresse', value: address },
           { name: 'User ID', value: claim.userId },

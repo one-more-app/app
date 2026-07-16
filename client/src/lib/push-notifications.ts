@@ -89,7 +89,19 @@ export function attachPushNotificationListeners() {
     (notification: PushNotificationSchema) => {
       const title = notification.title ?? UI.notificationDefaultTitle;
       const body = notification.body ?? "";
-      if (body) toast(title, { description: body });
+      const route = notification.data?.route;
+      if (!body) return;
+      toast(title, {
+        description: body,
+        ...(typeof route === "string" && route.length > 0
+          ? {
+              action: {
+                label: UI.notificationSeeAction,
+                onClick: () => navigateToRoute(route),
+              },
+            }
+          : {}),
+      });
     },
   );
 

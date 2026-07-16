@@ -7,9 +7,10 @@ import {
   seedE2eApiOrigin,
   trackPageErrors,
   AUTH_STORAGE_KEY,
+  ONBOARDING_DONE_KEY,
 } from "./helpers";
 
-test("onboarding gym step blocks until gym saved and wait unlock", async ({
+test("onboarding gym skip permissions unlocks app without wait", async ({
   page,
 }) => {
   const pageErrors = trackPageErrors(page);
@@ -43,14 +44,14 @@ test("onboarding gym step blocks until gym saved and wait unlock", async ({
 
   await expect(page.getByText("Plus tard", { exact: true })).toHaveCount(0);
 
-  await page
-    .getByRole("button", { name: UI.gymOnboardingNo, exact: true })
-    .click();
-
-  await page.waitForResponse(
+  const initialSearch = page.waitForResponse(
     (response) =>
       response.url().includes("/gyms/search") && response.ok(),
   );
+  await page
+    .getByRole("button", { name: UI.gymOnboardingNo, exact: true })
+    .click();
+  await initialSearch;
 
   await page
     .getByRole("radio", { name: UI.gymOnboardingViewList, exact: true })
@@ -83,7 +84,40 @@ test("onboarding gym step blocks until gym saved and wait unlock", async ({
     .getByRole("button", { name: UI.gymOnboardingPermissionsSkip, exact: true })
     .click();
 
-  await expect(page).toHaveURL(/#\/onboarding\?step=gym-wait$/);
+  await expect(page).not.toHaveURL(/gym-wait/);
+  await expect(page).toHaveURL(/#\/exercises$/);
+
+  await page.goto("/#/home");
+  await expect(page).not.toHaveURL(/gym-wait/);
+
+  expect(pageErrors).toEqual([]);
+});
+
+test("gym-wait unlocks to exercises without permissions reminders", async ({
+  page,
+}) => {
+  const pageErrors = trackPageErrors(page);
+  await seedE2eApiOrigin(page);
+  await mockAuthApi(page, { seedGym: { onboardingGymPending: true } });
+
+  await page.addInitScript(
+    ({ authKey, onboardingKey, session }) => {
+      localStorage.setItem(onboardingKey, "done");
+      localStorage.setItem("one-more-gym-notifications-prompt-done-v1", "1");
+      localStorage.setItem("one-more-gym-location-prompt-done-v1", "1");
+      localStorage.setItem(authKey, JSON.stringify(session));
+    },
+    {
+      authKey: AUTH_STORAGE_KEY,
+      onboardingKey: ONBOARDING_DONE_KEY,
+      session: mockSession,
+    },
+  );
+
+  await page.goto("/#/home");
+  await expect(page).toHaveURL(/#\/onboarding\?step=gym-wait$/, {
+    timeout: 15_000,
+  });
 
   await expect(
     page.getByText(UI.gymOnboardingWaitTitle, { exact: true }),
@@ -94,11 +128,8 @@ test("onboarding gym step blocks until gym saved and wait unlock", async ({
   ).toBeVisible();
 
   await expect(
-    page.getByText(UI.gymOnboardingWaitRemindersSection, { exact: true }),
+    page.getByText(UI.gymOnboardingWaitMonitoringTitle, { exact: true }),
   ).toBeVisible();
-
-  await page.goto("/#/home");
-  await expect(page).toHaveURL(/#\/onboarding\?step=gym-wait$/);
 
   await page
     .getByRole("button", { name: UI.gymOnboardingWaitCta, exact: true })

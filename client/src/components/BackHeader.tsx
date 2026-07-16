@@ -43,7 +43,7 @@ export function BackHeader({
             </Button>
             <div className="min-w-0 flex-1 flex flex-col">
                 <h1 className={cn('truncate text-md font-one-more uppercase italic', titleClassName)}>{title}</h1>
-                {description && <p className="text-sm text-muted-foreground">{description}</p>}
+                {description && <p className="text-xs text-muted-foreground">{description}</p>}
             </div>
             {right != null ? <div className="shrink-0">{right}</div> : null}
         </div>

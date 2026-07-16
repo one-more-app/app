@@ -2,6 +2,7 @@ export * from "./access-config.js";
 export * from "./exercise-zone.js";
 export * from "./league-aggregate.js";
 export * from "./personal-best.js";
+export * from "./session-timing.js";
 export * from "./streak-dates.js";
 export * from "./streak-xp-multiplier.js";
 export * from "./strength-standards.js";

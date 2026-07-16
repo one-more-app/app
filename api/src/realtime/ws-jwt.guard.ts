@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { Socket } from 'socket.io';
 import type { JwtPayload } from '../auth/jwt.types.js';
+import { setSocketUser } from './socket-data.js';
 
 @Injectable()
 export class WsJwtGuard implements CanActivate {
@@ -19,7 +20,7 @@ export class WsJwtGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const client = context.switchToWs().getClient<Socket>();
     const user = this.authenticateSocket(client);
-    client.data.user = user;
+    setSocketUser(client, user);
     return true;
   }
 

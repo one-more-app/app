@@ -49,7 +49,7 @@ APPSFLYER_ONELINK_DOMAIN="one-more.onelink.me"
 APPSFLYER_ONELINK_ID="H5hv"
 ```
 
-Si `APPSFLYER_ONELINK_*` est défini, `GET /social/invite-link` renvoie une URL OneLink (web + partage sans SDK).
+`GET /social/invite-link` renvoie uniquement une URL OneLink. Sans `APPSFLYER_ONELINK_*` → 503 (pas de fallback web `#/invite/...`).
 
 ## 4. Android — App Links
 

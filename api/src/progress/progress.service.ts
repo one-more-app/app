@@ -184,7 +184,7 @@ export class ProgressService {
         params.userId,
       );
       const levelBefore = levelProgressFromTotalXp(progress.totalXp).level;
-      const grants: { sourceType: string; amount: number }[] = [];
+      const grants: XpGrantResultDto['grants'] = [];
 
       const hadPerfToday = await perfRepo
         .createQueryBuilder('p')

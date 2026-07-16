@@ -136,7 +136,7 @@ export class NotificationDispatchService {
       type: NotificationType.ReferralUsed,
       title: 'Nouveau parrainage',
       body: `${name} a utilisé ton code de parrainage`,
-      route: '/settings',
+      route: '/settings?focus=referral',
       dedupKey: `referral:${params.referredUserId}`,
     });
   }
@@ -221,7 +221,7 @@ export class NotificationDispatchService {
         type: NotificationType.FriendTraining,
         title: 'Séance en cours',
         body: `${name} s'entraîne sur ${exercise}`,
-        route: `/friends/${params.trainingUserId}`,
+        route: `/session/${params.trainingUserId}/${today}`,
         dedupKey: `training:${params.trainingUserId}:${today}`,
       });
     }
@@ -247,7 +247,7 @@ export class NotificationDispatchService {
         type: NotificationType.FriendPr,
         title: 'Nouveau record',
         body: `${name} : ${params.exerciseName} : ${params.weight} kg × ${params.reps}`,
-        route: `/friends/${params.athleteUserId}`,
+        route: `/session/${params.athleteUserId}/${today}`,
         dedupKey: `pr:${params.athleteUserId}:${today}:${Date.now()}`,
       });
     }

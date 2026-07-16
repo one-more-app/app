@@ -1,9 +1,10 @@
+import type { LeagueChangeDto } from '../../league/dto/league-response.dto.js';
+import type { XpSourceType } from '../entities/xp-source-type.enum.js';
+
 export type XpGrantItemDto = {
-  sourceType: string;
+  sourceType: XpSourceType;
   amount: number;
 };
-
-import type { LeagueChangeDto } from '../../league/dto/league-response.dto.js';
 
 export type StreakXpBonusDto = {
   bonusPercent: number;

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -49,7 +50,13 @@ export class InvitesService {
   /** @deprecated Utiliser getInviteCode — conservé pour compatibilité. */
   async getInviteLink(userId: string) {
     const code = await this.ensureInviteCode(userId);
-    return { code, url: buildInviteUrl(code) };
+    const url = buildInviteUrl(code);
+    if (!url) {
+      throw new ServiceUnavailableException(
+        'Lien d’invitation indisponible (OneLink non configuré)',
+      );
+    }
+    return { code, url };
   }
 
   async getInvitePreview(code: string) {

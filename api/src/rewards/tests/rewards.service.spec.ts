@@ -45,7 +45,6 @@ describe('RewardsService', () => {
         postalCode: '75001',
         country: 'France',
         size: 'M',
-        gender: 'male',
       }),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
@@ -64,7 +63,6 @@ describe('RewardsService', () => {
         postalCode: '75001',
         country: 'France',
         size: 'M',
-        gender: 'male',
       }),
     ).rejects.toBeInstanceOf(ConflictException);
   });
@@ -84,7 +82,7 @@ describe('RewardsService', () => {
       rewardType: 'referral_limited',
       status: 'pending',
       size: 'M',
-      gender: 'male',
+      gender: null,
       fullName: 'Jean Dupont',
       street: '1 rue Test',
       city: 'Paris',
@@ -103,7 +101,6 @@ describe('RewardsService', () => {
       postalCode: '75001',
       country: 'France',
       size: 'M',
-      gender: 'male',
     });
 
     expect(result.id).toBe('claim-1');

@@ -9,49 +9,32 @@ type ReferralShareHeroProps = {
     referralCount: number;
 };
 
-export function ReferralShareHero({
-    inviteCode,
-    referralCount,
-}: ReferralShareHeroProps) {
+export function ReferralShareHero({ inviteCode }: ReferralShareHeroProps) {
     const [busy, setBusy] = useState(false);
 
     const handleShare = () => {
-        void (async () => {
-            setBusy(true);
-            try {
-                await inviteFriend();
-            } finally {
-                setBusy(false);
-            }
-        })();
+        if (!inviteCode || busy) return;
+        setBusy(true);
+        void inviteFriend(inviteCode).finally(() => setBusy(false));
     };
 
     const handleCopy = () => {
-        void (async () => {
-            setBusy(true);
-            try {
-                await copyInviteCode();
-            } finally {
-                setBusy(false);
-            }
-        })();
+        if (!inviteCode || busy) return;
+        setBusy(true);
+        void copyInviteCode(inviteCode).finally(() => setBusy(false));
     };
+
     return (
         <div className="space-y-3 rounded-xl bg-card p-3">
             {inviteCode ? (
-                <button
-                    type="button"
-                    onClick={() => void handleCopy()}
-                    disabled={busy}
-                    className="flex w-full items-center justify-between rounded-md bg-secondary px-3 py-2 text-left transition-colors hover:bg-muted/50"
-                >
+                <div className="flex w-full items-center justify-between rounded-md bg-secondary px-3 py-2">
                     <span className="text-xs text-muted-foreground">
                         {UI.referralYourCodeLabel}
                     </span>
                     <span className="font-one-more uppercase italic text-sm tracking-widest">
                         {inviteCode}
                     </span>
-                </button>
+                </div>
             ) : null}
 
             <div className="flex gap-2">

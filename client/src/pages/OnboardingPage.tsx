@@ -264,6 +264,14 @@ function OnboardingPage() {
         await completeGymAfterPermissions()
     }
 
+    const skipGymPermissions = async () => {
+        setGymPermissionsPromptDone(true)
+        await unlockGymAccess()
+        setOnboardingFirstExercisePending(true)
+        const nextPath = getOnboardingPostAuthRedirect() ?? '/home'
+        await finishOnboarding(nextPath)
+    }
+
     const continueAfterGymResolved = async () => {
         const nextPath = getOnboardingPostAuthRedirect() ?? '/home'
         await finishOnboarding(nextPath)
@@ -482,6 +490,7 @@ function OnboardingPage() {
                         isOnboardingGymDevPreview(step) ? null : (userGym?.address ?? null)
                     }
                     onContinue={() => void completeGymPermissions()}
+                    onSkip={() => void skipGymPermissions()}
                     onChangeGym={goChangeGym}
                 />
             ) : step === 'gym-wait' ? (

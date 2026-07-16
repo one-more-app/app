@@ -4,14 +4,11 @@ export type TshirtRewardType = "referral_limited" | "annual_classic_pack";
 export type TshirtRewardStatus = "pending" | "shipped" | "delivered";
 export type TshirtRewardClaimStatus = "claim_pending" | TshirtRewardStatus;
 
-export type TshirtGender = "male" | "female";
-
 export type TshirtRewardClaim = {
   id: string;
   rewardType: TshirtRewardType;
   status: TshirtRewardClaimStatus;
   size: string | null;
-  gender: TshirtGender | null;
   fullName: string | null;
   street: string | null;
   city: string | null;
@@ -40,7 +37,6 @@ export type ClaimTshirtPayload = {
   postalCode: string;
   country: string;
   size: TshirtSize;
-  gender: TshirtGender;
 };
 
 export async function fetchTshirtRewardStatus(): Promise<TshirtRewardStatusResponse> {

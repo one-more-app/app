@@ -10,8 +10,9 @@ import {
 } from "@/lib/social-api";
 import { getProfileDisplayName } from "@/lib/profile-display";
 import { UI } from "@/lib/translations";
+import { getLocalDateKey } from "@/lib/local-date";
 import { MessageCircle, UserMinus } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import useSWR from "swr";
 
@@ -57,12 +58,15 @@ export default function FriendProfilePage() {
   const headerActions = userId ? (
     <div className="flex flex-col gap-2 px-4 pb-2">
       {presence?.status === "training" ? (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">
+        <Link
+          to={`/session/${userId}/${getLocalDateKey()}`}
+          className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 block"
+        >
           <PresenceBadge presence={presence} />
           <p className="mt-1 text-xs text-muted-foreground">
             {UI.friendTrainingNowBanner}
           </p>
-        </div>
+        </Link>
       ) : null}
       <div className="flex gap-2">
         <FriendTrainingBell friendId={userId} />
@@ -93,6 +97,8 @@ export default function FriendProfilePage() {
         isLoading,
         error: Boolean(error),
       }}
+      sessionOwnerUserId={userId}
+      isFriendPresenceTraining={presence?.status === "training"}
     />
   );
 }
