@@ -9,7 +9,7 @@ import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import { useKeyboardInset } from '@/hooks/use-keyboard-inset'
 import { usePushNotifications } from '@/hooks/use-push-notifications'
 import { useGymGeofenceNotificationTap, useGymGeofenceSync } from '@/hooks/use-gym-geofence'
-import { useRestTimerLocalNotifications } from '@/hooks/use-rest-timer-local-notifications'
+import { useRestTimerLocalNotifications, useRestTimerNotificationTap } from '@/hooks/use-rest-timer-local-notifications'
 import { RealtimeProvider } from '@/hooks/use-realtime'
 import { useTheme } from '@/hooks/use-theme'
 import {
@@ -76,6 +76,7 @@ function AccessGate({ children }: { children: React.ReactNode }) {
     const auth = useAuth()
     usePushNotifications()
     useRestTimerLocalNotifications()
+    useRestTimerNotificationTap()
     useGymGeofenceSync()
     useGymGeofenceNotificationTap()
     const isAuthRoute = location.pathname === '/auth'

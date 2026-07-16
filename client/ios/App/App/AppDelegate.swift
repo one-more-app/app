@@ -26,10 +26,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
     ) {
         let route = response.notification.request.content.userInfo["route"] as? String
         if let route = route, route.hasPrefix("/") {
+            if response.notification.request.identifier == "rest-timer-finished-42",
+               let exerciseId = Self.extractExerciseId(from: route) {
+                UserDefaults.standard.set(exerciseId, forKey: "rest_timer_suppress_toast_exercise_id")
+            }
             let url = URL(string: "one-more://localhost/#\(route)")!
             NotificationCenter.default.post(name: .capacitorOpenURL, object: url)
         }
         completionHandler()
+    }
+
+    private static func extractExerciseId(from route: String) -> String? {
+        let path = route.split(separator: "?", maxSplits: 1).first.map(String.init) ?? route
+        let prefix = "/exercise/"
+        guard path.hasPrefix(prefix) else { return nil }
+        let exerciseId = String(path.dropFirst(prefix.count))
+        return exerciseId.isEmpty ? nil : exerciseId
     }
 
     func userNotificationCenter(
@@ -37,6 +49,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
+        if notification.request.identifier == "rest-timer-finished-42",
+           UIApplication.shared.applicationState == .active {
+            completionHandler([])
+            return
+        }
         completionHandler([.banner, .sound])
     }
 

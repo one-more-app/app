@@ -2,6 +2,12 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:../../../../../Downloads/BasicFit_Vitrolles.gpx">
+   </FileRef>
+   <FileRef
+      location = "group:../../../../../Downloads/BasicFit_Vitrolles.gpx">
+   </FileRef>
+   <FileRef
       location = "group:App.xcodeproj">
    </FileRef>
    <FileRef

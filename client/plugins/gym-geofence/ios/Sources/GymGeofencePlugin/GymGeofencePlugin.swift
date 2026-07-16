@@ -26,9 +26,15 @@ public class GymGeofencePlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerDe
         locationManager.delegate = self
         locationManager.allowsBackgroundLocationUpdates = true
         locationManager.pausesLocationUpdatesAutomatically = false
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(onAppDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
     }
 
-    public override func handleOnResume() {
+    @objc private func onAppDidBecomeActive() {
         resolvePendingPermissionCall()
     }
 
@@ -38,11 +44,11 @@ public class GymGeofencePlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerDe
         call.resolve(buildPermissionResult())
     }
 
-    @objc func checkPermissions(_ call: CAPPluginCall) {
+    @objc public override func checkPermissions(_ call: CAPPluginCall) {
         call.resolve(buildPermissionResult())
     }
 
-    @objc func requestPermissions(_ call: CAPPluginCall) {
+    @objc public override func requestPermissions(_ call: CAPPluginCall) {
         let current = buildPermissionResult()
         if current["ready"] as? Bool == true {
             call.resolve(current)

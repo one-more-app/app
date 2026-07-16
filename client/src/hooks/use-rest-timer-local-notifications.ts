@@ -2,9 +2,9 @@ import { useGymNotificationsReady } from "@/hooks/use-gym-notifications-ready";
 import { useLatestGlobalPerf } from "@/hooks/use-latest-global-perf";
 import { useRestTargetMs } from "@/hooks/use-rest-target-ms";
 import {
-  attachRestTimerLocalNotificationListeners,
   setRestTimerLifecycleEnabled,
   updateRestTimerNotificationParams,
+  attachRestTimerLocalNotificationListeners,
   type RestFinishedLocalNotificationParams,
 } from "@/lib/rest-timer-local-notifications";
 import { useGymOnboardingBlocksFeatures } from "@/hooks/use-user-gym-data";
@@ -60,12 +60,14 @@ export function useRestTimerLocalNotifications() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     if (!lifecycleActive) return;
-    return attachRestTimerLocalNotificationListeners();
-  }, [lifecycleActive]);
-
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-    if (!lifecycleActive) return;
     updateRestTimerNotificationParams(notificationParams);
   }, [lifecycleActive, paramsKey, notificationParams]);
+}
+
+/** Écoute le tap sur la notif repos fini (toujours actif sur natif). */
+export function useRestTimerNotificationTap() {
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    return attachRestTimerLocalNotificationListeners();
+  }, []);
 }

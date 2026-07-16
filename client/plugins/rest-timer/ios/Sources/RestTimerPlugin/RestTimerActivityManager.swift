@@ -3,21 +3,13 @@ import Foundation
 
 @available(iOS 16.2, *)
 enum RestTimerActivityManager {
-    private static let activityKind = "rest-timer"
-
     static func isSupported() -> Bool {
         ActivityAuthorizationInfo().areActivitiesEnabled
     }
 
-    @discardableResult
-    static func start(state: RestTimerPersistedState) throws -> String? {
-        let group = DispatchGroup()
-        group.enter()
-        Task {
-            await endAll(dismissalPolicy: .immediate)
-            group.leave()
-        }
-        group.wait()
+    static func start(state: RestTimerPersistedState) async throws -> String? {
+        guard isSupported() else { return nil }
+        await endAll(dismissalPolicy: .immediate)
 
         let attributes = RestTimerAttributes(
             exerciseName: state.exerciseName,
@@ -43,11 +35,32 @@ enum RestTimerActivityManager {
         return activity.id
     }
 
+    static func startForBackground(state: RestTimerPersistedState) async -> String? {
+        guard let activityId = try? await start(state: state) else { return nil }
+        guard let activity = currentActivity() else { return activityId }
+        await scheduleAutomaticDismiss(for: activity, endDate: state.endDate)
+        return activityId
+    }
+
+    static func syncForBackground(state: RestTimerPersistedState) async {
+        if let activity = currentActivity(), activity.activityState == .active {
+            await update(state: state)
+            await scheduleAutomaticDismiss(for: activity, endDate: state.endDate)
+            return
+        }
+        await startForBackground(state: state)
+    }
+
     static func update(state: RestTimerPersistedState) async {
         guard let activity = currentActivity() else { return }
         let now = Date()
         if now >= state.endDate {
-            await finish(state: state, playAlert: false)
+            await endAll(dismissalPolicy: .immediate)
+            return
+        }
+
+        if activity.activityState != .active {
+            await startForBackground(state: state)
             return
         }
 
@@ -62,30 +75,30 @@ enum RestTimerActivityManager {
 
     static func setForegroundVisible(_ visible: Bool, state: RestTimerPersistedState) async {
         if visible {
-            if currentActivity() == nil {
-                _ = try? start(state: state)
-            } else {
-                await update(state: state)
-            }
+            await syncForBackground(state: state)
             return
         }
         await endAll(dismissalPolicy: .immediate)
     }
 
-    static func finish(state: RestTimerPersistedState, playAlert: Bool) async {
-        guard let activity = currentActivity() else { return }
+    static func finish(state: RestTimerPersistedState) async {
+        await endAll(dismissalPolicy: .immediate)
+    }
 
-        let contentState = RestTimerAttributes.ContentState(
-            endDate: state.endDate,
-            progress: 1,
-            isFinished: true
-        )
-
-        let content = ActivityContent(state: contentState, staleDate: nil)
-        if playAlert {
-            await activity.end(content, dismissalPolicy: .default)
-        } else {
-            await activity.end(content, dismissalPolicy: .immediate)
+    /// Programme la fermeture système à `endDate` sans retirer tout de suite l'Island.
+    /// Nécessaire quand l'app est suspendue et que le Timer natif ne se déclenche pas.
+    private static func scheduleAutomaticDismiss(
+        for activity: Activity<RestTimerAttributes>,
+        endDate: Date
+    ) async {
+        guard endDate > Date() else {
+            await endAll(dismissalPolicy: .immediate)
+            return
+        }
+        if #available(iOS 16.2, *) {
+            try? await Task.sleep(for: .milliseconds(500))
+            guard activity.activityState == .active else { return }
+            await activity.end(nil, dismissalPolicy: .after(endDate))
         }
     }
 

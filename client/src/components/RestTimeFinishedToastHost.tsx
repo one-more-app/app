@@ -1,6 +1,5 @@
 import { RestTimeFinishedToastContent } from "@/components/RestTimeFinishedToast";
 import { useAuth } from "@/hooks/use-auth";
-import { useGymNotificationsReady } from "@/hooks/use-gym-notifications-ready";
 import { useLatestGlobalPerf } from "@/hooks/use-latest-global-perf";
 import { useRestTargetMs } from "@/hooks/use-rest-target-ms";
 import {
@@ -8,7 +7,10 @@ import {
   isRestSinceLastSetVisible,
   isRestTargetComplete,
 } from "@/lib/format-rest-elapsed";
-import { cancelRestFinishedLocalNotification } from "@/lib/rest-timer-local-notifications";
+import {
+  cancelRestFinishedLocalNotification,
+  shouldSkipRestFinishedToast,
+} from "@/lib/rest-timer-local-notifications";
 import { hapticNotificationSuccess } from "@/lib/haptics";
 import { playRestFinishedSound } from "@/lib/milestone-sound";
 import { useGymOnboardingBlocksFeatures } from "@/hooks/use-user-gym-data";
@@ -57,12 +59,9 @@ function showRestTimeFinishedToast(params: {
  */
 export function RestTimeFinishedToastHost() {
   const auth = useAuth();
-  const notificationsReady = useGymNotificationsReady();
   const gymOnboardingActive = useGymOnboardingBlocksFeatures();
   const hostActive =
-    auth.status === "authenticated" &&
-    notificationsReady &&
-    !gymOnboardingActive;
+    auth.status === "authenticated" && !gymOnboardingActive;
   const navigate = useNavigate();
   const latestGlobalPerf = useLatestGlobalPerf();
   const { targetMs } = useRestTargetMs();
@@ -129,6 +128,7 @@ export function RestTimeFinishedToastHost() {
     if (!isRestSinceLastSetVisible(createdAt, now)) return;
     if (!isRestTargetComplete(elapsedMs, targetMs)) return;
     if (notifiedForCreatedAtRef.current === createdAt) return;
+    if (shouldSkipRestFinishedToast(exercise.id)) return;
 
     notifiedForCreatedAtRef.current = createdAt;
     void cancelRestFinishedLocalNotification();

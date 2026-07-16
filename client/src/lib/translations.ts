@@ -493,7 +493,7 @@ export const UI = {
   paywallAnnualSpecialTitle: "Offre spéciale pour l'annuel",
   paywallAnnualTshirts: "2 T-shirts One More offerts (valeur totale 30€)",
   paywallAnnualTshirtsFineprint:
-    "Livraison sous 1 à 2 mois selon les stocks disponibles. Consulte les CGV.",
+    "Livraison sous 1 à 2 semaines selon les stocks disponibles. Consulte les CGV.",
   paywallGiftBadge: "30€ de cadeaux",
   paywallAnnualLabel: "Annuel",
   paywallMonthlyLabel: "Mensuel",
@@ -511,8 +511,6 @@ export const UI = {
     "Abonnement 1 mois à {price}, renouvellement automatique. Annulable à tout moment dans tes abonnements Google Play.",
   paywallLoading: "Chargement de l'offre...",
   paywallError: "Impossible de charger l'offre. Réessaie.",
-  paywallOfferPending:
-    "Offre en cours d'activation, réessaie dans quelques instants.",
   paywallClose: "Fermer",
   paywallSupport: "Support",
   paywallCgv: "CGV",

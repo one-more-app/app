@@ -161,6 +161,13 @@ public class RestTimerPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void consumeSuppressToastExerciseId(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("exerciseId", null);
+        call.resolve(ret);
+    }
+
+    @PluginMethod
     public void checkPermissions(PluginCall call) {
         call.resolve(buildPermissionResult());
     }

@@ -1,5 +1,6 @@
 import Capacitor
 import Foundation
+import UIKit
 import UserNotifications
 
 @objc(RestTimerPlugin)
@@ -11,6 +12,7 @@ public class RestTimerPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "update", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setForegroundVisible", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "cancel", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "consumeSuppressToastExerciseId", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "checkPermissions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "requestPermissions", returnType: CAPPluginReturnPromise),
     ]
@@ -40,6 +42,7 @@ public class RestTimerPlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
 
+        let appInForeground = UIApplication.shared.applicationState == .active
         let state = RestTimerPersistedState(
             createdAtMs: createdAtMs,
             targetMs: max(0, targetMs),
@@ -48,7 +51,7 @@ public class RestTimerPlugin: CAPPlugin, CAPBridgedPlugin {
             title: title,
             finishedTitle: finishedTitle,
             deepLinkRoute: deepLinkRoute,
-            foregroundVisible: true,
+            foregroundVisible: !appInForeground,
             activityId: nil
         )
 
@@ -103,11 +106,16 @@ public class RestTimerPlugin: CAPPlugin, CAPBridgedPlugin {
 
         RestTimerPersistence.save(state)
         if #available(iOS 16.2, *) {
-            Task {
+            Task { @MainActor in
                 await RestTimerActivityManager.setForegroundVisible(visible, state: state)
             }
         }
         scheduleCompletionTimer(for: state)
+        if visible {
+            scheduleFinishedBackupNotification(for: state)
+        } else {
+            cancelFinishedBackupNotification()
+        }
         call.resolve()
     }
 
@@ -116,49 +124,72 @@ public class RestTimerPlugin: CAPPlugin, CAPBridgedPlugin {
         call.resolve()
     }
 
-    @objc func checkPermissions(_ call: CAPPluginCall) {
-        if #available(iOS 16.2, *) {
-            let granted = RestTimerActivityManager.isSupported()
-            call.resolve(["granted": granted])
-            return
+    @objc func consumeSuppressToastExerciseId(_ call: CAPPluginCall) {
+        let key = "rest_timer_suppress_toast_exercise_id"
+        let exerciseId = UserDefaults.standard.string(forKey: key)
+        if exerciseId != nil {
+            UserDefaults.standard.removeObject(forKey: key)
         }
-        call.resolve(["granted": false])
+        call.resolve(["exerciseId": exerciseId ?? NSNull()])
     }
 
-    @objc func requestPermissions(_ call: CAPPluginCall) {
+    @objc public override func checkPermissions(_ call: CAPPluginCall) {
+        Self.resolvePermissionGranted { granted in
+            call.resolve(["granted": granted])
+        }
+    }
+
+    @objc public override func requestPermissions(_ call: CAPPluginCall) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in
-            DispatchQueue.main.async {
-                self.checkPermissions(call)
+            Self.resolvePermissionGranted { granted in
+                call.resolve(["granted": granted])
             }
         }
     }
 
     private func applyStart(state: RestTimerPersistedState, call: CAPPluginCall) {
-        var next = state
-        if #available(iOS 16.2, *) {
-            do {
-                next.activityId = try RestTimerActivityManager.start(state: state)
-            } catch {
-                call.reject("Impossible de démarrer la Live Activity: \(error.localizedDescription)")
-                return
-            }
+        let finishStart = { (saved: RestTimerPersistedState) in
+            self.saveAndSchedule(saved)
+            call.resolve()
         }
 
-        RestTimerPersistence.save(next)
-        scheduleCompletionTimer(for: next)
-        scheduleFinishedBackupNotification(for: next)
-        call.resolve()
+        if #available(iOS 16.2, *), state.foregroundVisible {
+            Task { @MainActor in
+                var saved = state
+                if RestTimerActivityManager.isSupported() {
+                    saved.activityId = await RestTimerActivityManager.startForBackground(state: state)
+                }
+                finishStart(saved)
+            }
+            return
+        }
+
+        finishStart(state)
+    }
+
+    private func saveAndSchedule(_ state: RestTimerPersistedState) {
+        RestTimerPersistence.save(state)
+        scheduleCompletionTimer(for: state)
+        if state.foregroundVisible {
+            scheduleFinishedBackupNotification(for: state)
+        } else {
+            cancelFinishedBackupNotification()
+        }
     }
 
     private func persistAndSync(state: RestTimerPersistedState) {
         RestTimerPersistence.save(state)
         if #available(iOS 16.2, *) {
-            Task {
-                await RestTimerActivityManager.update(state: state)
+            Task { @MainActor in
+                if state.foregroundVisible {
+                    await RestTimerActivityManager.syncForBackground(state: state)
+                }
             }
         }
         scheduleCompletionTimer(for: state)
-        scheduleFinishedBackupNotification(for: state)
+        if state.foregroundVisible {
+            scheduleFinishedBackupNotification(for: state)
+        }
     }
 
     private func cancelInternal() {
@@ -168,12 +199,7 @@ public class RestTimerPlugin: CAPPlugin, CAPBridgedPlugin {
         if #available(iOS 16.2, *) {
             RestTimerActivityManager.endAllImmediately()
         }
-        UNUserNotificationCenter.current().removePendingNotificationRequests(
-            withIdentifiers: [Self.finishedNotificationId]
-        )
-        UNUserNotificationCenter.current().removeDeliveredNotifications(
-            withIdentifiers: [Self.finishedNotificationId]
-        )
+        cancelFinishedBackupNotification()
     }
 
     private func scheduleCompletionTimer(for state: RestTimerPersistedState) {
@@ -191,24 +217,36 @@ public class RestTimerPlugin: CAPPlugin, CAPBridgedPlugin {
 
     private func handleCompletion(state: RestTimerPersistedState) {
         if #available(iOS 16.2, *) {
-            Task {
-                await RestTimerActivityManager.finish(state: state, playAlert: !state.foregroundVisible)
+            Task { @MainActor in
+                await RestTimerActivityManager.finish(state: state)
             }
         }
-        if !state.foregroundVisible {
+        if state.foregroundVisible {
             scheduleFinishedBackupNotification(for: state, fireImmediately: true)
         }
         RestTimerPersistence.save(nil)
     }
 
     private func resumePersistedTimerIfNeeded() {
-        guard let state = RestTimerPersistence.load(), state.isActive() else {
+        guard var state = RestTimerPersistence.load(), state.isActive() else {
             cancelInternal()
             return
         }
+
+        let appInForeground = UIApplication.shared.applicationState == .active
+        state.foregroundVisible = !appInForeground
+        RestTimerPersistence.save(state)
+
         scheduleCompletionTimer(for: state)
-        if state.foregroundVisible, #available(iOS 16.2, *) {
-            _ = try? RestTimerActivityManager.start(state: state)
+        if state.foregroundVisible {
+            scheduleFinishedBackupNotification(for: state)
+            if #available(iOS 16.2, *) {
+                Task { @MainActor in
+                    _ = await RestTimerActivityManager.startForBackground(state: state)
+                }
+            }
+        } else {
+            cancelFinishedBackupNotification()
         }
     }
 
@@ -216,29 +254,65 @@ public class RestTimerPlugin: CAPPlugin, CAPBridgedPlugin {
         for state: RestTimerPersistedState,
         fireImmediately: Bool = false
     ) {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            guard Self.notificationAuthorizationGranted(settings.authorizationStatus) else { return }
+
+            DispatchQueue.main.async {
+                let center = UNUserNotificationCenter.current()
+                center.removePendingNotificationRequests(withIdentifiers: [Self.finishedNotificationId])
+
+                let content = UNMutableNotificationContent()
+                content.title = state.finishedTitle
+                content.body = state.exerciseName
+                content.sound = .default
+                content.userInfo = ["route": state.deepLinkRoute]
+
+                let trigger: UNNotificationTrigger?
+                if fireImmediately {
+                    trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.2, repeats: false)
+                } else {
+                    let interval = max(1, state.endDate.timeIntervalSinceNow)
+                    trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
+                }
+
+                let request = UNNotificationRequest(
+                    identifier: Self.finishedNotificationId,
+                    content: content,
+                    trigger: trigger
+                )
+                center.add(request)
+            }
+        }
+    }
+
+    private func cancelFinishedBackupNotification() {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: [Self.finishedNotificationId])
+        center.removeDeliveredNotifications(withIdentifiers: [Self.finishedNotificationId])
+    }
 
-        let content = UNMutableNotificationContent()
-        content.title = state.finishedTitle
-        content.body = state.exerciseName
-        content.sound = .default
-        content.userInfo = ["route": state.deepLinkRoute]
-
-        let trigger: UNNotificationTrigger?
-        if fireImmediately {
-            trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.2, repeats: false)
-        } else {
-            let interval = max(1, state.endDate.timeIntervalSinceNow)
-            trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
+    private static func notificationAuthorizationGranted(_ status: UNAuthorizationStatus) -> Bool {
+        switch status {
+        case .authorized, .provisional, .ephemeral:
+            return true
+        default:
+            return false
         }
+    }
 
-        let request = UNNotificationRequest(
-            identifier: Self.finishedNotificationId,
-            content: content,
-            trigger: trigger
-        )
-        center.add(request)
+    private static func resolvePermissionGranted(completion: @escaping (Bool) -> Void) {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            let notificationsGranted = notificationAuthorizationGranted(settings.authorizationStatus)
+            let granted: Bool
+            if #available(iOS 16.2, *) {
+                granted = notificationsGranted || RestTimerActivityManager.isSupported()
+            } else {
+                granted = notificationsGranted
+            }
+            DispatchQueue.main.async {
+                completion(granted)
+            }
+        }
     }
 
     private static let finishedNotificationId = "rest-timer-finished-42"

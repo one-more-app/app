@@ -17,6 +17,7 @@ export interface RestTimerPlugin {
   update(params: { targetMs: number }): Promise<void>;
   setForegroundVisible(params: { visible: boolean }): Promise<void>;
   cancel(): Promise<void>;
+  consumeSuppressToastExerciseId(): Promise<{ exerciseId: string | null }>;
   checkPermissions(): Promise<RestTimerPermissionResult>;
   requestPermissions(): Promise<RestTimerPermissionResult>;
 }

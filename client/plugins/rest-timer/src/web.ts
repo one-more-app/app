@@ -22,6 +22,10 @@ export class RestTimerWeb implements RestTimerPlugin {
     /* Web: timer natif non supporté. */
   }
 
+  async consumeSuppressToastExerciseId(): Promise<{ exerciseId: string | null }> {
+    return { exerciseId: null };
+  }
+
   async checkPermissions(): Promise<RestTimerPermissionResult> {
     return denied;
   }
