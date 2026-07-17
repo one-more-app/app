@@ -29,6 +29,30 @@
 		RTMR1002A1B2C3D4E5F60007 /* RestTimerWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = RTMR1000A1B2C3D4E5F60008 /* RestTimerWidgetBundle.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		RTMR100BA1B2C3D4E5F60001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = RTMR1007A1B2C3D4E5F60001;
+			remoteInfo = OneMoreRestTimer;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		RTMR1003A1B2C3D4E5F60001 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				RTMR1001A1B2C3D4E5F60001 /* OneMoreRestTimer.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
@@ -54,20 +78,6 @@
 		RTMR1000A1B2C3D4E5F60006 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		RTMR1000A1B2C3D4E5F60008 /* RestTimerWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerWidgetBundle.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		RTMR1003A1B2C3D4E5F60001 /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				RTMR1001A1B2C3D4E5F60001 /* OneMoreRestTimer.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		504EC3011FED79650016851F /* Frameworks */ = {
@@ -124,19 +134,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		RTMR1005A1B2C3D4E5F60001 /* OneMoreRestTimer */ = {
-			isa = PBXGroup;
-			children = (
-				RTMR1000A1B2C3D4E5F60002 /* OneMoreRestTimerBundle.swift */,
-				RTMR1000A1B2C3D4E5F60003 /* OneMoreRestTimerLiveActivity.swift */,
-				RTMR1000A1B2C3D4E5F60004 /* RestTimerAttributes.swift */,
-				RTMR1000A1B2C3D4E5F60008 /* RestTimerWidgetBundle.swift */,
-				RTMR1000A1B2C3D4E5F60006 /* Assets.xcassets */,
-				RTMR1000A1B2C3D4E5F60005 /* Info.plist */,
-			);
-			path = OneMoreRestTimer;
-			sourceTree = "<group>";
-		};
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
@@ -160,6 +157,19 @@
 				AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */,
 			);
 			name = Pods;
+			sourceTree = "<group>";
+		};
+		RTMR1005A1B2C3D4E5F60001 /* OneMoreRestTimer */ = {
+			isa = PBXGroup;
+			children = (
+				RTMR1000A1B2C3D4E5F60002 /* OneMoreRestTimerBundle.swift */,
+				RTMR1000A1B2C3D4E5F60003 /* OneMoreRestTimerLiveActivity.swift */,
+				RTMR1000A1B2C3D4E5F60004 /* RestTimerAttributes.swift */,
+				RTMR1000A1B2C3D4E5F60008 /* RestTimerWidgetBundle.swift */,
+				RTMR1000A1B2C3D4E5F60006 /* Assets.xcassets */,
+				RTMR1000A1B2C3D4E5F60005 /* Info.plist */,
+			);
+			path = OneMoreRestTimer;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -261,23 +271,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-/* End PBXResourcesBuildPhase section */
-
-/* Begin PBXSourcesBuildPhase section */
-		RTMR1009A1B2C3D4E5F60001 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				RTMR1002A1B2C3D4E5F60002 /* OneMoreRestTimerBundle.swift in Sources */,
-				RTMR1002A1B2C3D4E5F60003 /* OneMoreRestTimerLiveActivity.swift in Sources */,
-				RTMR1002A1B2C3D4E5F60004 /* RestTimerAttributes.swift in Sources */,
-				RTMR1002A1B2C3D4E5F60007 /* RestTimerWidgetBundle.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXSourcesBuildPhase section */
-
-/* Begin PBXResourcesBuildPhase section */
 		RTMR100AA1B2C3D4E5F60001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -287,24 +280,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		RTMR1006A1B2C3D4E5F60001 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = RTMR1007A1B2C3D4E5F60001 /* OneMoreRestTimer */;
-			targetProxy = RTMR100BA1B2C3D4E5F60001 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
-/* Begin PBXContainerItemProxy section */
-		RTMR100BA1B2C3D4E5F60001 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = RTMR1007A1B2C3D4E5F60001;
-			remoteInfo = OneMoreRestTimer;
-		};
-/* End PBXContainerItemProxy section */
 
 /* Begin PBXShellScriptBuildPhase section */
 		52DB114DFDCB59D3BCA3D64F /* [CP] Copy Pods Resources */ = {
@@ -366,7 +341,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		RTMR1009A1B2C3D4E5F60001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				RTMR1002A1B2C3D4E5F60002 /* OneMoreRestTimerBundle.swift in Sources */,
+				RTMR1002A1B2C3D4E5F60003 /* OneMoreRestTimerLiveActivity.swift in Sources */,
+				RTMR1002A1B2C3D4E5F60004 /* RestTimerAttributes.swift in Sources */,
+				RTMR1002A1B2C3D4E5F60007 /* RestTimerWidgetBundle.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		RTMR1006A1B2C3D4E5F60001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = RTMR1007A1B2C3D4E5F60001 /* OneMoreRestTimer */;
+			targetProxy = RTMR100BA1B2C3D4E5F60001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -514,7 +508,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.1.1;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.one-more.app";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -545,7 +539,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.one-more.app";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

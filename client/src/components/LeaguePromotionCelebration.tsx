@@ -23,7 +23,6 @@ import { shareCelebrationPng } from '@/lib/celebration-share'
 import {
     invalidateCelebrationShareCache,
     isCelebrationShareReady,
-    prewarmCelebrationShare,
 } from '@/lib/celebration-share-prewarm'
 import {
     leagueCelebrationRadialBackground,
@@ -323,10 +322,8 @@ export function LeaguePromotionCelebrationHost() {
     useEffect(() => {
         if (!open) {
             invalidateCelebrationShareCache()
-            return
         }
-        prewarmCelebrationShare(open, isDark)
-    }, [open, isDark])
+    }, [open])
 
     const handleShare = async () => {
         if (!open || shareBusy) return
