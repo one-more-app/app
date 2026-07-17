@@ -220,8 +220,8 @@
 		504EC2FC1FED79650016851F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 0920;
-				LastUpgradeCheck = 0920;
+				LastSwiftUpdateCheck = 920;
+				LastUpgradeCheck = 920;
 				TargetAttributes = {
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
@@ -257,20 +257,6 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		504EC3021FED79650016851F /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */,
-				50B271D11FEDC1A000F3C39B /* public in Resources */,
-				504EC30F1FED79650016851F /* Assets.xcassets in Resources */,
-				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
-				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
-				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
-				A1B2C3D41FED79650016851F /* GoogleService-Info.plist in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		RTMR100AA1B2C3D4E5F60001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -280,6 +266,35 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		504EC3001FED79650016851F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		RTMR1006A1B2C3D4E5F60001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = RTMR1007A1B2C3D4E5F60001 /* OneMoreRestTimer */;
+			targetProxy = RTMR100BA1B2C3D4E5F60001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXContainerItemProxy section */
+		RTMR100BA1B2C3D4E5F60001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = RTMR1007A1B2C3D4E5F60001;
+			remoteInfo = OneMoreRestTimer;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXShellScriptBuildPhase section */
 		52DB114DFDCB59D3BCA3D64F /* [CP] Copy Pods Resources */ = {
@@ -331,36 +346,6 @@
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
-
-/* Begin PBXSourcesBuildPhase section */
-		504EC3001FED79650016851F /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		RTMR1009A1B2C3D4E5F60001 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				RTMR1002A1B2C3D4E5F60002 /* OneMoreRestTimerBundle.swift in Sources */,
-				RTMR1002A1B2C3D4E5F60003 /* OneMoreRestTimerLiveActivity.swift in Sources */,
-				RTMR1002A1B2C3D4E5F60004 /* RestTimerAttributes.swift in Sources */,
-				RTMR1002A1B2C3D4E5F60007 /* RestTimerWidgetBundle.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		RTMR1006A1B2C3D4E5F60001 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = RTMR1007A1B2C3D4E5F60001 /* OneMoreRestTimer */;
-			targetProxy = RTMR100BA1B2C3D4E5F60001 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
