@@ -908,7 +908,7 @@ export const UI = {
   notifPrefFriendRequests: "Demandes d'ami",
   notifPrefFriendAccepted: "Demandes acceptées",
   notifPrefMessages: "Messages",
-  notifPrefFriendTraining: "Séances d'amis (cloche par profil)",
+  notifPrefFriendTraining: "Séances d'amis",
   notifPrefFriendRecords: "Records d'amis",
   notifPrefWeeklyRecap: "Récap hebdomadaire",
   notifPrefSaveError: "Impossible de sauvegarder les préférences",

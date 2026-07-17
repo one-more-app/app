@@ -64,11 +64,12 @@ export async function updateNotificationPreferences(
   });
 }
 
-export async function fetchTrainingAlertFriendIds(): Promise<string[]> {
-  const res = await apiFetch<{ friendIds: string[] }>(
+/** Friend IDs for which training alerts are muted (opt-out). Default: all friends notified. */
+export async function fetchMutedTrainingAlertFriendIds(): Promise<string[]> {
+  const res = await apiFetch<{ mutedFriendIds: string[] }>(
     "/notifications/training-alerts",
   );
-  return res.friendIds;
+  return res.mutedFriendIds;
 }
 
 export async function enableTrainingAlert(friendId: string) {

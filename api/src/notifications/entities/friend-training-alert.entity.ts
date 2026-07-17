@@ -1,5 +1,4 @@
 import {
-  Column,
   CreateDateColumn,
   Entity,
   JoinColumn,
@@ -9,6 +8,7 @@ import {
 import type { Relation } from 'typeorm';
 import { UserEntity } from '../../auth/entities/user.entity.js';
 
+/** Mute opt-out : une ligne = le subscriber ne veut pas être notifié des séances de friend. */
 @Entity({ name: 'friend_training_alerts' })
 export class FriendTrainingAlertEntity {
   @PrimaryColumn({ type: 'uuid' })

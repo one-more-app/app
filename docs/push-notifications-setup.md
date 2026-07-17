@@ -48,4 +48,6 @@ Paramètres → section **Notifications** : 7 toggles indépendants.
 
 ## Cloche séance ami
 
-Sur le profil d'un ami → icône cloche → abonnement `friend_training_alerts` en base.
+Par défaut, tous les amis acceptés reçoivent une notif quand tu t'entraînes (si leur préférence « Séances d'amis » est active).
+
+Sur le profil d'un ami → icône cloche → mute opt-out dans `friend_training_alerts` (désactive les notifs pour cet ami uniquement).

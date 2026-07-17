@@ -39,11 +39,20 @@ export function SessionCommentComposer({
             <div className="flex gap-2">
                 <Input
                     value={draft}
-                    className="text-sm bg-card"
+                    className="bg-card"
                     onChange={(event) => setDraft(event.target.value)}
                     placeholder={placeholder}
                     maxLength={500}
                     autoFocus={autoFocus}
+                    enterKeyHint="send"
+                    autoComplete="off"
+                    onFocus={(event) => {
+                        // iOS KeyboardResize.None : ramener le champ au-dessus du clavier.
+                        event.currentTarget.scrollIntoView({
+                            block: "nearest",
+                            behavior: "smooth",
+                        });
+                    }}
                     onKeyDown={(event) => {
                         if (event.key === "Enter" && !event.shiftKey) {
                             event.preventDefault();

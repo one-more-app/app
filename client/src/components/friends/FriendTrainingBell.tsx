@@ -2,8 +2,8 @@ import { Button } from "@/components/ui/button";
 import {
   disableTrainingAlert,
   enableTrainingAlert,
+  fetchMutedTrainingAlertFriendIds,
   fetchNotificationPreferences,
-  fetchTrainingAlertFriendIds,
 } from "@/lib/notifications-api";
 import { UI } from "@/lib/translations";
 import { Bell, BellOff } from "lucide-react";
@@ -16,9 +16,9 @@ type FriendTrainingBellProps = {
 };
 
 export function FriendTrainingBell({ friendId }: FriendTrainingBellProps) {
-  const { data: friendIds, mutate } = useSWR(
-    "training-alert-friends",
-    fetchTrainingAlertFriendIds,
+  const { data: mutedFriendIds, mutate } = useSWR(
+    "training-alert-mutes",
+    fetchMutedTrainingAlertFriendIds,
   );
   const { data: prefs } = useSWR(
     "notification-preferences",
@@ -26,7 +26,8 @@ export function FriendTrainingBell({ friendId }: FriendTrainingBellProps) {
   );
   const [busy, setBusy] = useState(false);
 
-  const subscribed = friendIds?.includes(friendId) ?? false;
+  const muted = mutedFriendIds?.includes(friendId) ?? false;
+  const subscribed = !muted;
   const masterEnabled = prefs?.friendTraining ?? true;
   const disabled = !masterEnabled || busy;
 
@@ -40,14 +41,14 @@ export function FriendTrainingBell({ friendId }: FriendTrainingBellProps) {
       try {
         if (subscribed) {
           await disableTrainingAlert(friendId);
-          await mutate(
-            (friendIds ?? []).filter((id) => id !== friendId),
-            false,
-          );
+          await mutate([...(mutedFriendIds ?? []), friendId], false);
           toast.success(UI.notifFriendTrainingOff);
         } else {
           await enableTrainingAlert(friendId);
-          await mutate([...(friendIds ?? []), friendId], false);
+          await mutate(
+            (mutedFriendIds ?? []).filter((id) => id !== friendId),
+            false,
+          );
           toast.success(UI.notifFriendTrainingOn);
         }
       } catch {

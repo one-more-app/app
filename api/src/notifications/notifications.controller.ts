@@ -58,8 +58,10 @@ export class NotificationsController {
 
   @Get('training-alerts')
   async listTrainingAlerts(@Req() req: { user: { sub: string } }) {
-    const friendIds = await this.trainingAlerts.listFriendIds(req.user.sub);
-    return { friendIds };
+    const mutedFriendIds = await this.trainingAlerts.listMutedFriendIds(
+      req.user.sub,
+    );
+    return { mutedFriendIds };
   }
 
   @Put('training-alerts/:friendId')

@@ -250,12 +250,14 @@
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
     scroll-padding-top: calc(var(--safe-top) + var(--back-header-height) + 0.5rem);
+    /* iOS : `--keyboard-inset` > 0 ; Android : reste à 0 (IME déjà géré nativement). */
+    scroll-padding-bottom: calc(var(--keyboard-inset, 0px) + 5rem);
   }
 
   /*
    * Scale d'empilement (z-index) — respecter cette hiérarchie :
    *   99  : .safe-area-top-scrim              (fond fixe sous la barre de statut)
-   *   100 : .sticky-top-safe                  (headers / rest counter)
+   *   100 : .sticky-top-safe / .sticky-bottom-safe (headers / composers)
    *   130 : RestTargetQuickEdit (popover imbriqué au-dessus du header)
    *   200 : Drawer / Dialog (overlay + content, voir components/ui/{drawer,dialog}.tsx)
    *   210 : Select / Popover portés (components/ui/{select,popover}.tsx), au-dessus des modales
@@ -269,6 +271,19 @@
     z-index: 100;
     /* Repousse titre/boutons sous la barre de statut ; le fond couvre le scroll derrière. */
     padding-top: var(--safe-top);
+  }
+
+  /*
+   * Composer / barre collée en bas, au-dessus du clavier iOS.
+   * `--keyboard-inset` est alimenté uniquement sur iOS (et web via visualViewport) ;
+   * sur Android la valeur reste 0px → pas de double décalage avec l'IME natif.
+   * `max(..., safe-bottom)` : au-dessus de l’indicateur d’accueil quand le clavier
+   * est fermé ; dès que le clavier dépasse la safe area, on suit uniquement l’inset.
+   */
+  .sticky-bottom-safe {
+    position: sticky;
+    bottom: max(var(--keyboard-inset, 0px), var(--safe-bottom));
+    z-index: 100;
   }
 
   .safe-area-top-scrim {

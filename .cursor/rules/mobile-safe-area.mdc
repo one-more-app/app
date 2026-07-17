@@ -65,6 +65,14 @@ Usage côté composant (ex. drawer Vaul dans [`drawer.tsx`](client/src/component
 />
 ```
 
+Composer / input collé en bas de page (chat, commentaires séance) : classe `.sticky-bottom-safe` dans [`index.css`](client/src/index.css) (`bottom: max(var(--keyboard-inset, 0px), var(--safe-bottom))`).
+
+### Inputs (anti-zoom iOS)
+
+- Garder `text-base` mobile sur les champs (`Input` le fait déjà ; `md:text-sm` ok).
+- **Ne jamais** surcharger avec `text-sm` / `text-xs` sur un `Input` / `textarea` (zoom auto iOS si &lt; 16px).
+- `enterKeyHint` adapté (`send`, `done`, …) quand pertinent.
+
 - Le fallback `var(--keyboard-inset, 0px)` rend le CSS **inoffensif** sur Android/web.
 - Le champ `resize` du plugin `@capacitor/keyboard` est **iOS-only** (voir docs) → n'essaie pas de le régler pour Android, ça ne fait rien.
 - Si tu ajoutes un fix clavier futur, gate-le sur `Capacitor.getPlatform()` (`'ios' | 'android' | 'web'`) ou via un sélecteur CSS `html[data-platform="native"]` — jamais un fix universel.

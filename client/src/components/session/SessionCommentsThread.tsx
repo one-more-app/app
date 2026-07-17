@@ -69,8 +69,6 @@ export function SessionCommentsThread({
     <section className="space-y-4">
       <h2 className="text-sm font-semibold">{UI.sessionCommentsTitle}</h2>
 
-      <SessionCommentComposer onSubmit={(body) => handleCreate(body)} />
-
       {isLoading ? (
         <p className="text-sm text-muted-foreground">{UI.loading}</p>
       ) : items.length === 0 ? (
@@ -91,6 +89,10 @@ export function SessionCommentsThread({
           ))}
         </ul>
       )}
+
+      <div className="sticky-bottom-safe -mx-4 border-t border-border bg-background px-4 pt-3">
+        <SessionCommentComposer onSubmit={(body) => handleCreate(body)} />
+      </div>
     </section>
   );
 }
