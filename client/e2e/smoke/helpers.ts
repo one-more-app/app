@@ -274,6 +274,22 @@ export async function mockCoreAuthenticatedApi(
     });
   });
 
+  await page.route("**/social/friends**", async (route) => {
+    if (route.request().method() !== "GET") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        friends: [],
+        pendingIncoming: [],
+        pendingOutgoing: [],
+      }),
+    });
+  });
+
   await mockGymsApi(page, gymOptions);
 }
 
@@ -320,6 +336,18 @@ export async function mockAuthApi(
   await mockCoreAuthenticatedApi(page, gymOptions);
 
   await page.route("**/tracked-exercises**", async (route) => {
+    if (route.request().method() !== "GET") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify([]),
+    });
+  });
+
+  await page.route("**/performance-entries**", async (route) => {
     if (route.request().method() !== "GET") {
       await route.fallback();
       return;
