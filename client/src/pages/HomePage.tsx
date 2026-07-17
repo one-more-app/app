@@ -1,29 +1,32 @@
+import { BrowsePageTitle, BrowseSectionTitle } from '@/components/exercise-browse-ui'
 import { ExerciseBrowseNavigator } from '@/components/ExerciseBrowseNavigator'
 import { ExerciseCard } from '@/components/ExerciseCard'
 import { HomeTour } from '@/components/HomeTour'
-import { UserProgressBanner } from '@/components/UserProgressBanner'
-import { BrowsePageTitle, BrowseSectionTitle } from '@/components/exercise-browse-ui'
+import { SessionTimingLabel } from '@/components/session/SessionTimingLabel'
 import { ExerciseCardSkeletonList } from '@/components/skeletons'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
+import { UserProgressBanner } from '@/components/UserProgressBanner'
 import { useAccess } from '@/hooks/use-access'
-import { useUserProgressData } from '@/hooks/use-api-data'
 import {
     useLeagueBrowseLookupsData,
     usePerformanceDataRefresh,
-    usePerformanceEntriesData,
+    usePerformanceEntriesData, useUserProgressData
 } from '@/hooks/use-api-data'
+import { useAuth } from '@/hooks/use-auth'
 import { useExerciseCatalogBrowse } from '@/hooks/use-exercise-catalog-browse'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useHomeData, type ExerciseWithPerf } from '@/hooks/use-home-data'
 import { useReferralDrawer } from '@/hooks/use-referral-drawer'
+import { readStoredSession } from '@/lib/auth'
 import {
     sortBrowseableByLatestPerf,
     trackedToBrowseable,
 } from '@/lib/exercise-catalog-browse'
 import { CARDIO_EQUIPMENT, getExerciseImageUrl } from '@/lib/exercisedb'
 import { filterExercisesDoneToday } from '@/lib/home-today-exercises'
+import { getLocalDateKey, isPerformanceOnLocalDay } from '@/lib/local-date'
 import { browseLookupsToMaps } from '@/lib/muscle-league-stats'
 import { notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
@@ -33,11 +36,12 @@ import {
 } from '@/lib/storage'
 import { UI } from '@/lib/translations'
 import { notifyXpGrants } from '@/lib/xp-notifications'
-import { Dumbbell, Plus, Search } from 'lucide-react'
+import { ChevronRight, Dumbbell, Plus, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 function HomePage() {
+    const auth = useAuth()
     const { exercises, hasLoaded } = useHomeData()
     const { data: progress } = useUserProgressData()
     const { data: performanceEntries = [] } = usePerformanceEntriesData()
@@ -47,6 +51,21 @@ function HomePage() {
     const navigate = useNavigate()
     const { openReferralDrawer } = useReferralDrawer()
     const location = useLocation()
+
+    const ownerUserId = useMemo(() => {
+        if (auth.status === 'authenticated' && auth.user?.id) return auth.user.id
+        return readStoredSession()?.user.id
+    }, [auth.status, auth.user?.id])
+
+    const todayKey = getLocalDateKey()
+
+    const todayEntries = useMemo(
+        () =>
+            performanceEntries.filter(
+                (entry) => !entry.deletedAt && isPerformanceOnLocalDay(entry, todayKey),
+            ),
+        [performanceEntries, todayKey],
+    )
 
     const addExerciseLinkSearch = useMemo(() => {
         const q = new URLSearchParams(location.search).get('q')
@@ -203,10 +222,35 @@ function HomePage() {
     const todaySection =
         hasTodaySection ? (
             <div data-tour="home-today">
-                <BrowsePageTitle className="mb-0.5">{UI.homeDoneToday}</BrowsePageTitle>
-                <BrowseSectionTitle className="mb-1.5">
-                    {UI.homeDoneTodaySubtitle}
-                </BrowseSectionTitle>
+                <div className="mb-1.5 flex items-start justify-between gap-2">
+                    <div className="flex flex-row items-center gap-1">
+                        <div className="flex flex-col">
+                            <BrowsePageTitle className="mb-0.5">{UI.homeDoneToday}</BrowsePageTitle>
+                            <BrowseSectionTitle className="mb-1.5">
+                                {UI.homeDoneTodaySubtitle}
+                            </BrowseSectionTitle>
+                        </div>
+                        <div className="text-xs text-muted-foreground font-one-more">
+                            /
+                        </div>
+                        <SessionTimingLabel
+                            entries={todayEntries}
+                            dayKey={todayKey}
+                        />
+                    </div>
+                    {ownerUserId ? (
+                        <button
+                            type="button"
+                            onClick={() =>
+                                navigate(`/session/${ownerUserId}/${todayKey}`)
+                            }
+                            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground"
+                        >
+                            {UI.sessionViewDay}
+                            <ChevronRight className="size-3.5" aria-hidden />
+                        </button>
+                    ) : null}
+                </div>
                 <ul className="space-y-3">
                     {todayExercises.map((ex) => (
                         <li key={ex.id}>{renderExerciseCard(ex)}</li>
