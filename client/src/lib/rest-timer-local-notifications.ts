@@ -166,6 +166,16 @@ export async function cancelRestFinishedLocalNotification(): Promise<void> {
   }
 }
 
+export async function resetRestTimerLocalState(): Promise<void> {
+  currentParams = null;
+  lastSyncedKey = null;
+  suppressedRestFinishedToastExerciseId = null;
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.removeItem(REST_FINISHED_TOAST_SUPPRESS_KEY);
+  }
+  await cancelRestFinishedLocalNotification();
+}
+
 export type RestFinishedLocalNotificationParams = {
   createdAt: string;
   targetMs: number;

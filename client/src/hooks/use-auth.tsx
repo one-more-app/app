@@ -17,13 +17,9 @@ import {
 import { ApiError } from "@/lib/api";
 import { clearPendingInviteCode, peekPendingInviteCode } from "@/lib/invite-code";
 import { upsertUserAppsFlyerAttribution } from "@/lib/attribution-api";
-import { clearProfileAvatarCache } from "@/lib/profile-avatar";
-import { resetUserProfileCache, clearGymOnboardingLocalState } from "@/lib/storage";
-import { ACCESS_SWR_KEY } from "@/lib/social-api";
+import { purgeUserScopedClientState } from "@/lib/purge-user-scoped-state";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
-import { SWR_KEYS } from "@/hooks/use-api-data";
-import { USER_GYM_SWR_KEY } from "@/lib/gym-onboarding-route";
 
 type AuthState = {
   status: "anonymous" | "authenticated";
@@ -62,7 +58,7 @@ function sessionToState(session: StoredAuthSession): AuthState {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { mutate } = useSWRConfig();
+  const { cache } = useSWRConfig();
   const [state, setState] = useState<AuthState>(() => {
     const stored = readStoredSession();
     return stored ? sessionToState(stored) : { status: "anonymous", user: null, accessToken: null, refreshToken: null };
@@ -70,8 +66,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [lastError, setLastError] = useState<string | null>(null);
 
   const applySession = useCallback((session: AuthSession) => {
-    resetUserProfileCache();
-    clearGymOnboardingLocalState();
+    const switchingUser =
+      state.status === "anonymous" ||
+      (state.user?.id != null && state.user.id !== session.user.id);
+    if (switchingUser) {
+      purgeUserScopedClientState(cache);
+    }
     const stored: StoredAuthSession = {
       accessToken: session.accessToken,
       refreshToken: session.refreshToken,
@@ -92,16 +92,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Best effort: ne bloque pas l’app si l’endpoint est indisponible.
       }
     })();
-  }, []);
+  }, [cache, state.status, state.user]);
 
   const clearSession = useCallback(() => {
+    purgeUserScopedClientState(cache);
     clearStoredSession();
-    clearProfileAvatarCache();
-    resetUserProfileCache();
-    clearGymOnboardingLocalState();
     setState({ status: "anonymous", user: null, accessToken: null, refreshToken: null });
     void syncAppsFlyerCustomerUserId(null);
-  }, []);
+  }, [cache]);
 
   const clearError = useCallback(() => setLastError(null), []);
   const setError = useCallback((message: string) => setLastError(message), []);
@@ -199,19 +197,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (state.status !== "authenticated") return;
-    void Promise.all([
-      mutate("tracked-exercises"),
-      mutate("performance-entries"),
-      mutate(SWR_KEYS.performanceEntriesWithInsights),
-      mutate("profile"),
-      mutate("home-exercises"),
-      mutate(ACCESS_SWR_KEY),
-      mutate(USER_GYM_SWR_KEY),
-    ]).catch((e) => setLastError(normalizeError(e)));
-  }, [state.status, state.accessToken]);
 
   const value = useMemo<AuthContextValue>(() => {
     return {

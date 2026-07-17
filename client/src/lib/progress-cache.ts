@@ -41,3 +41,8 @@ export function applyXpGrantResult(xp: XpGrantResult): void {
   };
   notifyProgressChanged();
 }
+
+export function resetProgressCache(): void {
+  progressCache = { ...DEFAULT_PROGRESS };
+  notifyProgressChanged();
+}

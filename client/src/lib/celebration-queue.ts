@@ -147,6 +147,12 @@ export function advanceCelebrationQueue(): void {
   notifyListeners();
 }
 
+export function clearCelebrationQueue(): void {
+  queue.length = 0;
+  syncCachedSnapshot();
+  notifyListeners();
+}
+
 export function getCelebrationServerSnapshot(): CelebrationQueueSnapshot {
   return emptySnapshot;
 }

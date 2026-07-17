@@ -27,7 +27,7 @@ export async function waitForShareCaptureReady(
   }
 
   await new Promise<void>((resolve) =>
-    requestAnimationFrame(() => requestAnimationFrame(resolve)),
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
   )
 }
 
@@ -40,7 +40,7 @@ export async function captureShareElement(
   const blob = await toBlob(el, {
     pixelRatio: 1,
     cacheBust: false,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: isDark ? '#0a0a0a' : '#ffffff',
   })
   if (!blob) throw new Error('toBlob')
   return blob

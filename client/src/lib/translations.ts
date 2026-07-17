@@ -717,8 +717,8 @@ export const UI = {
   gymOnboardingTitle: "Tu es à la salle en ce moment ?",
   gymOnboardingHint:
     "Renseigne ta salle pour qu'on te prévienne à l'arrivée et que tu puisses enregistrer tes perfs.",
-  gymOnboardingYes: "Je suis à la salle",
-  gymOnboardingNo: "Pas maintenant",
+  gymOnboardingYes: "Oui",
+  gymOnboardingNo: "Non",
   gymOnboardingSearch: "Chercher ma salle",
   gymOnboardingLocationWhy:
     "On a besoin de ta position pour te prévenir quand tu reviens à la salle.",

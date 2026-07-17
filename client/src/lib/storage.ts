@@ -501,6 +501,13 @@ export function resetUserProfileCache(): void {
   notifyLocalDataChanged("profile");
 }
 
+export function resetLocalExerciseCaches(): void {
+  updateTrackedCache([]);
+  updatePerformanceCache([]);
+  notifyLocalDataChanged("trackedExercise");
+  notifyLocalDataChanged("performance");
+}
+
 export function hasPersistedUserProfile(): boolean {
   return hasProfilePersistedCache;
 }
