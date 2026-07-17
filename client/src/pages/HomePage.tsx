@@ -2,7 +2,7 @@ import { ExerciseBrowseNavigator } from '@/components/ExerciseBrowseNavigator'
 import { ExerciseCard } from '@/components/ExerciseCard'
 import { HomeTour } from '@/components/HomeTour'
 import { UserProgressBanner } from '@/components/UserProgressBanner'
-import { BrowseSectionTitle } from '@/components/exercise-browse-ui'
+import { BrowsePageTitle, BrowseSectionTitle } from '@/components/exercise-browse-ui'
 import { ExerciseCardSkeletonList } from '@/components/skeletons'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -203,7 +203,10 @@ function HomePage() {
     const todaySection =
         hasTodaySection ? (
             <div data-tour="home-today">
-                <BrowseSectionTitle className="mb-1.5">{UI.homeDoneToday}</BrowseSectionTitle>
+                <BrowsePageTitle className="mb-0.5">{UI.homeDoneToday}</BrowsePageTitle>
+                <BrowseSectionTitle className="mb-1.5">
+                    {UI.homeDoneTodaySubtitle}
+                </BrowseSectionTitle>
                 <ul className="space-y-3">
                     {todayExercises.map((ex) => (
                         <li key={ex.id}>{renderExerciseCard(ex)}</li>

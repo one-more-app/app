@@ -34,7 +34,7 @@ export function BrowsePageTitle({
     return (
         <h2
             className={cn(
-                'font-one-more text-base font-semibold uppercase italic text-foreground',
+                'font-one-more text-xs uppercase italic text-foreground',
                 className,
             )}
             {...props}
@@ -56,7 +56,7 @@ export function BrowseSectionTitle({
     return (
         <h2
             className={cn(
-                'mb-2  text-sm tracking-normal text-muted-foreground',
+                'mb-2 text-[11px] tracking-normal text-muted-foreground',
                 className,
             )}
             {...props}

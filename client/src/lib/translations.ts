@@ -366,6 +366,7 @@ export const UI = {
   browseBreadcrumbLabel: "Parcours de sélection",
   browseSearchResults: "Résultats de recherche",
   homeDoneToday: "Faits aujourd'hui",
+  homeDoneTodaySubtitle: "Ta séance du jour",
   homeExercisesTitle: "Tes exercices",
   loading: "Chargement...",
   secondaryMuscles: "Muscles secondaires",
