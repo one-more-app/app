@@ -223,20 +223,11 @@ function HomePage() {
         hasTodaySection ? (
             <div data-tour="home-today">
                 <div className="mb-1.5 flex items-start justify-between gap-2">
-                    <div className="flex flex-row items-center gap-1">
-                        <div className="flex flex-col">
-                            <BrowsePageTitle className="mb-0.5">{UI.homeDoneToday}</BrowsePageTitle>
-                            <BrowseSectionTitle className="mb-1.5">
-                                {UI.homeDoneTodaySubtitle}
-                            </BrowseSectionTitle>
-                        </div>
-                        <div className="text-xs text-muted-foreground font-one-more">
-                            /
-                        </div>
-                        <SessionTimingLabel
-                            entries={todayEntries}
-                            dayKey={todayKey}
-                        />
+                    <div className="flex flex-col">
+                        <BrowsePageTitle className="mb-0.5">{UI.homeDoneToday}</BrowsePageTitle>
+                        <BrowseSectionTitle className="mb-0">
+                            {UI.homeDoneTodaySubtitle}
+                        </BrowseSectionTitle>
                     </div>
                     {ownerUserId ? (
                         <button
@@ -244,12 +235,25 @@ function HomePage() {
                             onClick={() =>
                                 navigate(`/session/${ownerUserId}/${todayKey}`)
                             }
-                            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground"
+                            className="flex shrink-0 flex-col items-end gap-0.5 text-right"
                         >
-                            {UI.sessionViewDay}
-                            <ChevronRight className="size-3.5" aria-hidden />
+                            <SessionTimingLabel
+                                entries={todayEntries}
+                                dayKey={todayKey}
+                                className="text-[11px]"
+                            />
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                                {UI.sessionViewDay}
+                                <ChevronRight className="size-3.5" aria-hidden />
+                            </span>
                         </button>
-                    ) : null}
+                    ) : (
+                        <SessionTimingLabel
+                            entries={todayEntries}
+                            dayKey={todayKey}
+                            className="text-[11px]"
+                        />
+                    )}
                 </div>
                 <ul className="space-y-3">
                     {todayExercises.map((ex) => (
