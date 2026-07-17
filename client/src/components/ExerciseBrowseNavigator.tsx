@@ -4,6 +4,7 @@ import {
 } from '@/components/body-part-health-icon'
 import { EquipmentIcon } from '@/components/equipment-icon'
 import {
+    BrowsePageTitle,
     BrowseSectionTitle,
     BrowseTile,
     CatalogBreadcrumb,
@@ -54,6 +55,8 @@ export interface ExerciseBrowseNavigatorProps<T extends BrowseableExercise> {
     onGoToStep: (step: CatalogBrowseStep) => void
     renderExerciseList: (exercises: T[]) => ReactNode
     beforeZoneStep?: ReactNode
+    /** Titre principal au-dessus du sous-titre d'étape (ex. accueil, étape zone). */
+    pageTitle?: string
     leafSort?: 'popularity' | 'latestPerf' | 'none'
     /** Paliers médians par étape du parcours (accueil uniquement). */
     browseLeagueLookups?: BrowseLeagueLookups
@@ -75,6 +78,7 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
     onGoToStep,
     renderExerciseList,
     beforeZoneStep,
+    pageTitle,
     leafSort = 'popularity',
     browseLeagueLookups,
 }: ExerciseBrowseNavigatorProps<T>) {
@@ -209,6 +213,9 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
                 <div className="mb-3">{beforeZoneStep}</div>
             ) : null}
             <CatalogBreadcrumb browse={browse} onGoTo={onGoToStep} />
+            {pageTitle && browse.step === 'zone' && !showingViewAll ? (
+                <BrowsePageTitle className="mb-0.5">{pageTitle}</BrowsePageTitle>
+            ) : null}
             <div className="mb-2 flex flex-wrap items-center justify-between align-center gap-x-2 gap-y-1">
                 <BrowseSectionTitle
                     className="mb-0"

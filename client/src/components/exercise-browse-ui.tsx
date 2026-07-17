@@ -22,6 +22,28 @@ const browseCrumbCurrent =
 const browseCrumbLink =
     'bg-card text-muted-foreground hover:bg-muted/50 hover:text-foreground'
 
+/** Titre principal d'une section parcours (accueil). */
+export function BrowsePageTitle({
+    children,
+    className,
+    ...props
+}: {
+    children: ReactNode
+    className?: string
+} & ComponentPropsWithoutRef<'h2'>) {
+    return (
+        <h2
+            className={cn(
+                'font-one-more text-base font-semibold uppercase italic text-foreground',
+                className,
+            )}
+            {...props}
+        >
+            {children}
+        </h2>
+    )
+}
+
 /** Titre de section aligné sur la DA (titres onboarding / filtres). */
 export function BrowseSectionTitle({
     children,

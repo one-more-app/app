@@ -259,6 +259,7 @@ function HomePage() {
                             <ExerciseBrowseNavigator
                                 exercises={browseableExercises}
                                 browse={browse}
+                                pageTitle={UI.homeExercisesTitle}
                                 searchQuery={searchQuery}
                                 searchSort="latestPerf"
                                 getLatestPerfAt={getLatestPerfAt}
