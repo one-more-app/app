@@ -177,7 +177,7 @@ export default function SessionPage() {
                 description={dateLabel}
                 right={
                     session?.isLive ? (
-                        <Badge variant="secondary" className="gap-1 border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                        <Badge variant="secondary" className="gap-1 border-accent/30 bg-accent/10 text-accent">
                             <Radio className="size-3" aria-hidden />
                             {UI.sessionLiveBadge}
                         </Badge>

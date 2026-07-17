@@ -7,6 +7,7 @@ export function routeUsesBackHeader(pathname: string): boolean {
         pathname === '/settings' ||
         pathname === '/exercises' ||
         pathname.startsWith('/exercise/') ||
+        pathname.startsWith('/session/') ||
         pathname.startsWith('/friends/chat/') ||
         pathname.startsWith('/friends/preview/') ||
         (pathname.startsWith('/friends/') && pathname !== '/friends') ||
