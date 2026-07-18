@@ -22,6 +22,7 @@ import { StorageModule } from './storage/storage.module.js';
 import { GymsModule } from './gyms/gyms.module.js';
 import { AddressesModule } from './addresses/addresses.module.js';
 import { WorkoutSessionsModule } from './workout-sessions/workout-sessions.module.js';
+import { PublicStatsModule } from './public-stats/public-stats.module.js';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { WorkoutSessionsModule } from './workout-sessions/workout-sessions.modul
     GymsModule,
     AddressesModule,
     WorkoutSessionsModule,
+    PublicStatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
