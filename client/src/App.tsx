@@ -336,6 +336,13 @@ function App() {
 
         void setupAppsFlyer()
 
+        void CapacitorApp.getLaunchUrl().then((result) => {
+            if (!result?.url) return
+            const inviteCode = extractInviteCodeFromUrl(result.url)
+            if (!inviteCode) return
+            persistAndNavigateToInvite(inviteCode)
+        })
+
         const handlerPromise = CapacitorApp.addListener('appUrlOpen', (event) => {
             const inviteCode = extractInviteCodeFromUrl(event.url)
             if (!inviteCode) return

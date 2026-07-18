@@ -37,6 +37,16 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="localhost" />
             </intent-filter>
+            <!-- AppsFlyer OneLink App Links (invitations amis) -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="one-more.onelink.me"
+                    android:pathPrefix="/XFST" />
+            </intent-filter>
         </activity>
 
         <provider
