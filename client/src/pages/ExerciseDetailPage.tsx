@@ -89,6 +89,9 @@ export function ExerciseDetailPage() {
         }
     }, [fromAddExercise])
     const { resolvedTheme } = useTheme()
+    /** Bloque Joyride + contenu lourd (Recharts, fetches) pendant hold/célébrations. */
+    const celebrationBlocking = useCelebrationQueueActive()
+    const detailHeavyReady = !celebrationBlocking
     const { data: homeExercises = [], isLoading: isLoadingTracked } = useHomeExercisesData()
     const refreshAfterTrackedChange = useTrackedDataRefresh()
     const refreshAfterPerfChange = usePerformanceDataRefresh()
@@ -124,11 +127,13 @@ export function ExerciseDetailPage() {
     const leagueInfo =
         exercise && 'league' in exercise ? exercise.league ?? null : null
     const { data: allTiers } = useSWR(
-        id && exercise && !exercise.isCustom ? ['exercise-tiers', id] : null,
+        detailHeavyReady && id && exercise && !exercise.isCustom
+            ? ['exercise-tiers', id]
+            : null,
         () => fetchExerciseTierLadder(id!),
     )
     const { data: insightEntries } = useSWR(
-        id ? ['perf-insights', id] : null,
+        detailHeavyReady && id ? ['perf-insights', id] : null,
         () =>
             fetchPerformanceEntries({
                 trackedExerciseId: id!,
@@ -200,7 +205,6 @@ export function ExerciseDetailPage() {
     const onboardingFirstExercisePending = isOnboardingFirstExercisePending()
     const onboardingTourActive =
         onboardingFirstExercisePending && !isOnboardingTourComplete()
-    const celebrationBlocking = useCelebrationQueueActive()
     const tourReady = onboardingTourActive && !celebrationBlocking
 
     const finishOnboardingTour = useCallback(() => {
@@ -468,12 +472,14 @@ export function ExerciseDetailPage() {
                         </Button>
                     }
                 />
-                <RestSinceLastSetBar
-                    key={latestGlobalPerf?.entry.createdAt ?? 'none'}
-                    createdAt={latestGlobalPerf?.entry.createdAt ?? null}
-                    sourceExercise={latestGlobalPerf?.exercise ?? null}
-                    currentExerciseId={id ?? null}
-                />
+                {detailHeavyReady ? (
+                    <RestSinceLastSetBar
+                        key={latestGlobalPerf?.entry.createdAt ?? 'none'}
+                        createdAt={latestGlobalPerf?.entry.createdAt ?? null}
+                        sourceExercise={latestGlobalPerf?.exercise ?? null}
+                        currentExerciseId={id ?? null}
+                    />
+                ) : null}
             </div>
 
             <main className="mx-auto max-w-2xl px-4 py-4 space-y-4">
@@ -604,7 +610,7 @@ export function ExerciseDetailPage() {
                     </Card>
                 )}
 
-                {entries.length > 0 && (
+                {detailHeavyReady && entries.length > 0 && (
                     <Card data-tour="exercise-history">
                         <CardHeader>
                             <CardTitle>{UI.history} (poids)</CardTitle>

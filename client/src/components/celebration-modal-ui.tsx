@@ -74,5 +74,6 @@ export function formatPerfBadge(weight: number, reps: number): string {
 }
 
 export function leagueIconDropShadow(leagueColor: string): string {
-    return `drop-shadow(0 8px 24px color-mix(in srgb, ${leagueColor} 55%, transparent))`
+    // Pas de color-mix() dans filter — jank Safari/WKWebView au premier paint.
+    return `drop-shadow(0 6px 14px ${leagueColor}99)`
 }

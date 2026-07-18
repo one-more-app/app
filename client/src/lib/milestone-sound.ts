@@ -345,9 +345,13 @@ async function playSyntheticCelebrationSound(
 
 /**
  * Son joué à chaque célébration — variante selon le type.
+ * Différé d’un tick pour ne pas bloquer le paint de la modale (AudioContext iOS).
  */
 export function playMilestoneSound(kind: CelebrationSoundKind = "record"): void {
-  void playSyntheticCelebrationSound(kind)
+  if (typeof window === "undefined") return
+  window.setTimeout(() => {
+    void playSyntheticCelebrationSound(kind)
+  }, 0)
 }
 
 /** Son court quand le temps de repos est terminé (hors modale célébration). */

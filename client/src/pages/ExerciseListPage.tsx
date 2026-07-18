@@ -23,15 +23,15 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAccess } from '@/hooks/use-access'
-import { SWR_KEYS } from '@/hooks/use-api-data'
+import { usePerformanceDataRefresh } from '@/hooks/use-api-data'
 import { useBack } from '@/hooks/use-back'
 import { useExerciseCatalogBrowse } from '@/hooks/use-exercise-catalog-browse'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useTheme } from '@/hooks/use-theme'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
 import { fetchExercisesCatalog, fetchExercisesMeta } from '@/lib/data-api'
-import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { filterCatalogExercises } from '@/lib/exercise-catalog-browse'
+import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
 import { getJoyrideScrollOffset, getJoyrideShiftPadding } from '@/lib/joyride-config'
 import {
@@ -42,7 +42,13 @@ import {
     savePerformanceAndWait,
     setOnboardingFirstExercisePending,
 } from '@/lib/storage'
+import {
+    afterUiOverlaySettle,
+    setCelebrationUiHold,
+    whenCelebrationQueueIdle,
+} from '@/lib/celebration-queue'
 import { notifyPerfMilestones } from '@/lib/perf-notifications'
+import { scheduleRestFinishedLocalNotificationForEntry } from '@/lib/rest-timer-local-notifications'
 import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import { translateBodyPart, translateTarget, UI } from '@/lib/translations'
 import { notifyXpGrants } from '@/lib/xp-notifications'
@@ -51,12 +57,12 @@ import { Plus, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EVENTS, Joyride, type EventData, type Step } from 'react-joyride'
 import { useNavigate } from 'react-router-dom'
-import useSWR, { useSWRConfig } from 'swr'
+import useSWR from 'swr'
 
 export function ExerciseListPage() {
     const navigate = useNavigate()
     const { resolvedTheme } = useTheme()
-    const { mutate } = useSWRConfig()
+    const refreshAfterPerfChange = usePerformanceDataRefresh()
     const [firstExerciseTourDismissed, setFirstExerciseTourDismissed] = useState(false)
     const { exercises: tracked, addExercise } = useTrackedExercises()
     const [targets, setTargets] = useState<string[]>([])
@@ -73,6 +79,7 @@ export function ExerciseListPage() {
     const [selectedExercise, setSelectedExercise] = useState<ExerciseDBExercise | null>(null)
     const [perfWeight, setPerfWeight] = useState(0)
     const [perfReps, setPerfReps] = useState(1)
+    const [isSubmittingFirstPerf, setIsSubmittingFirstPerf] = useState(false)
     const { openReferralDrawer } = useReferralDrawer()
     const { canAddExercise } = useAccess()
 
@@ -343,9 +350,14 @@ export function ExerciseListPage() {
     }
 
     const handleAddWithPerfSubmit = async () => {
-        if (!addWithPerfExercise || perfReps <= 0) return
+        if (!addWithPerfExercise || perfReps <= 0 || isSubmittingFirstPerf) return
         const ex = addWithPerfExercise
         const trackedId = `api-${ex.id}`
+        const weight = perfWeight
+        const reps = perfReps
+        const t0 = Date.now()
+        console.log('[first-perf-debug] submit start', { trackedId, t: t0 })
+        setIsSubmittingFirstPerf(true)
         try {
             await addTrackedExerciseAndWait({
                 id: trackedId,
@@ -358,41 +370,60 @@ export function ExerciseListPage() {
                 gifUrl: ex.gifUrl,
                 isCustom: false,
             })
-            const { xp } = await savePerformanceAndWait(
+            console.log('[first-perf-debug] addTrackedExercise done', {
+                elapsedMs: Date.now() - t0,
+                t: Date.now(),
+            })
+            // Hold avant save : bloque Joyride + RestTimer dès le notifyLocalDataChanged.
+            setCelebrationUiHold(true)
+            const { xp, entry } = await savePerformanceAndWait(
                 trackedId,
-                perfWeight,
-                perfReps,
+                weight,
+                reps,
+                { skipRestTimer: true },
             )
+            console.log('[first-perf-debug] savePerformance done', {
+                elapsedMs: Date.now() - t0,
+                hasLeague: !!xp?.league,
+                t: Date.now(),
+            })
+            setAddWithPerfExercise(null)
+            stopFirstExerciseTour()
+            setIsSubmittingFirstPerf(false)
+            console.log('[first-perf-debug] navigate, wait page painted, then celebrate', {
+                elapsedMs: Date.now() - t0,
+            })
+            navigate(`/exercise/${trackedId}`, {
+                replace: true,
+                state: { fromAddExercise: true },
+            })
+            // La page exo (carte + ligue) se peint ; Recharts/repos/fetches attendent
+            // la fin des célébrations (detailHeavyReady sur ExerciseDetailPage).
+            await afterUiOverlaySettle(400)
+            console.log('[first-perf-debug] enqueue celebrations after navigate', {
+                elapsedMs: Date.now() - t0,
+            })
             notifyXpGrants(xp)
             notifyPerfMilestones({
                 exerciseName: ex.name,
                 prevPB: null,
                 nextPB: getPersonalBest(trackedId) ?? null,
-                savedWeight: perfWeight,
-                savedReps: perfReps,
+                savedWeight: weight,
+                savedReps: reps,
                 league: xp?.league,
                 exerciseImageUrl: getExerciseImageUrl(ex.gifUrl) || undefined,
                 bodyPart: ex.bodyPart,
                 target: ex.target,
             })
-            await Promise.all([
-                mutate(SWR_KEYS.trackedExercises),
-                mutate(SWR_KEYS.performanceEntries),
-                mutate(SWR_KEYS.performanceEntriesWithInsights),
-                mutate(SWR_KEYS.homeExercises),
-                mutate(SWR_KEYS.progress),
-            ])
-            setAddWithPerfExercise(null)
-            const shouldLaunchExerciseTour = isOnboardingFirstExercisePending()
-            navigate(
-                shouldLaunchExerciseTour
-                    ? `/exercise/${trackedId}`
-                    : `/exercise/${trackedId}`,
-                { replace: true, state: { fromAddExercise: true } },
-            )
+            whenCelebrationQueueIdle(() => {
+                setCelebrationUiHold(false)
+                scheduleRestFinishedLocalNotificationForEntry(entry)
+                void refreshAfterPerfChange()
+            })
         } catch {
-            // Si la création remote échoue, on garde le drawer ouvert et on affiche l'erreur.
-            // L'utilisateur peut corriger/retry sans perdre ses valeurs.
+            // Drawer reste ouvert pour retry.
+            setCelebrationUiHold(false)
+            setIsSubmittingFirstPerf(false)
         }
     }
 
@@ -564,7 +595,7 @@ export function ExerciseListPage() {
                                     <Button
                                         type="submit"
                                         className="w-full"
-                                        disabled={perfReps <= 0}
+                                        disabled={perfReps <= 0 || isSubmittingFirstPerf}
                                     >
                                         {UI.save}
                                     </Button>

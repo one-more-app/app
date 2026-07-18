@@ -328,7 +328,7 @@ export function updateRestTimerNotificationParams(
       }
     }
 
-    await syncRestFinishedLocalNotificationInternal(params);
+    await syncRestFinishedLocalNotification(params);
   })();
 }
 
@@ -340,7 +340,9 @@ export function scheduleRestFinishedLocalNotificationForEntry(
   const exercise = getTrackedExerciseById(entry.trackedExerciseId);
   if (!exercise) return;
 
-  void syncRestFinishedLocalNotificationInternal({
+  // Passer par le mutex (`syncInFlight`) pour éviter un double RestTimer.start
+  // (savePerformance + effect React) qui pile sur le bridge Capacitor.
+  void syncRestFinishedLocalNotification({
     createdAt: entry.createdAt,
     targetMs: getRestTargetMs(),
     exerciseId: exercise.id,

@@ -50,6 +50,8 @@ interface ExerciseCardProps {
     imageSize?: 'sm' | 'md'
     /** Accueil : masque dernier record / record max, garde en-tête + tags + plus */
     compact?: boolean
+    /** Suspend le GIF derrière une modale (évite freeze iOS). */
+    suspendMedia?: boolean
 }
 
 const imageSizes = { sm: 'size-12', md: 'size-14' } as const
@@ -63,6 +65,7 @@ export function ExerciseCard({
     onClick,
     imageSize = 'md',
     compact = false,
+    suspendMedia = false,
 }: ExerciseCardProps) {
     const sizeClass = imageSizes[imageSize]
     const [drawerOpen, setDrawerOpen] = useState(false)
@@ -111,6 +114,7 @@ export function ExerciseCard({
                                 gifUrl={exercise.gifUrl}
                                 bodyPart={exercise.bodyPart}
                                 target={exercise.target}
+                                suspendMedia={suspendMedia}
                                 className="size-full"
                                 imgClassName="size-full object-cover"
                                 fallbackIconClassName="size-7 text-muted-foreground"
@@ -123,6 +127,7 @@ export function ExerciseCard({
                                 isCustom={exercise.isCustom}
                                 bodyPart={exercise.bodyPart}
                                 target={exercise.target}
+                                suspendMedia={suspendMedia}
                                 className="size-full"
                                 fallbackIconClassName="size-7 text-muted-foreground"
                             />
@@ -247,6 +252,7 @@ export function ExerciseCard({
                                 gifUrl={exercise.gifUrl}
                                 bodyPart={exercise.bodyPart}
                                 target={exercise.target}
+                                suspendMedia={suspendMedia}
                                 className="mx-auto max-h-[min(70vh,480px)] w-full"
                                 imgClassName="mx-auto max-h-[min(70vh,480px)] w-full object-contain"
                                 fallbackIconClassName="size-24 text-muted-foreground"

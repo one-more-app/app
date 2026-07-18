@@ -32,7 +32,8 @@ export function useAnimatedCounter(
         setTimeout(() => {
           const next = from + i;
           setValue(next);
-          void hapticImpact();
+          // Un haptic par step sature le bridge Capacitor sur iOS (jank).
+          if (i === steps || i % 3 === 0) void hapticImpact();
         }, stepMs * i),
       );
     }

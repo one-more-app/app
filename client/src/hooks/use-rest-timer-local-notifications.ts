@@ -2,6 +2,10 @@ import { useGymNotificationsReady } from "@/hooks/use-gym-notifications-ready";
 import { useLatestGlobalPerf } from "@/hooks/use-latest-global-perf";
 import { useRestTargetMs } from "@/hooks/use-rest-target-ms";
 import {
+  isCelebrationUiBusy,
+  whenCelebrationUiIdle,
+} from "@/lib/celebration-queue";
+import {
   setRestTimerLifecycleEnabled,
   updateRestTimerNotificationParams,
   attachRestTimerLocalNotificationListeners,
@@ -60,6 +64,13 @@ export function useRestTimerLocalNotifications() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     if (!lifecycleActive) return;
+    // First-perf : pas de RestTimer pendant hold/célébration (freeze Continuer iOS).
+    if (isCelebrationUiBusy()) {
+      whenCelebrationUiIdle(() => {
+        updateRestTimerNotificationParams(notificationParams);
+      });
+      return;
+    }
     updateRestTimerNotificationParams(notificationParams);
   }, [lifecycleActive, paramsKey, notificationParams]);
 }

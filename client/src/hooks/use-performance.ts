@@ -1,3 +1,4 @@
+import { mergePerformanceEntriesById } from "@/lib/activity-from-performances";
 import { getLatestPerformanceEntry } from "@/lib/performance-order";
 import {
   deletePerformanceAndWait as deleteFromStorageAndWait,
@@ -8,12 +9,22 @@ import {
   usePerformanceDataRefresh,
   usePerformanceEntriesData,
 } from "@/hooks/use-api-data";
+import { useLocalPerformanceEntries } from "@/hooks/use-local-data-store";
 import type { PerformanceEntry } from "@/types";
 import { useCallback, useMemo } from "react";
 
 export function usePerformance(trackedExerciseId: string | null) {
-  const { data: allEntries = [] } = usePerformanceEntriesData();
+  const { data: remoteEntries } = usePerformanceEntriesData();
+  const localEntries = useLocalPerformanceEntries();
   const refreshAfterPerfChange = usePerformanceDataRefresh();
+
+  const allEntries = useMemo(
+    () =>
+      remoteEntries
+        ? mergePerformanceEntriesById(remoteEntries, localEntries)
+        : localEntries,
+    [remoteEntries, localEntries],
+  );
 
   const entries = useMemo<PerformanceEntry[]>(() => {
     if (!trackedExerciseId) return [];

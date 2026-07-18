@@ -1,11 +1,13 @@
 import { CelebrationShareCard } from '@/components/share/CelebrationShareCard'
 import type { CelebrationShareOpen } from '@/components/share/CelebrationShareCard'
 import { captureShareElement } from '@/lib/celebration-share-capture'
+import { registerCelebrationShareCacheInvalidator } from '@/lib/celebration-share-cache-control'
 import {
-  getShareableExerciseImageUrl,
   preloadShareImage,
   resolvePublicAssetUrl,
+  resolveShareImageAsDataUrl,
 } from '@/lib/exercise-share-media'
+import { yieldToMain } from '@/lib/yield-to-main'
 import { createRoot, type Root } from 'react-dom/client'
 
 type CacheEntry = {
@@ -58,22 +60,22 @@ function ensureRenderHost(
   return host
 }
 
-async function preloadCelebrationShareAssets(
+async function embedExerciseImageForCapture(
   open: CelebrationShareOpen,
-): Promise<void> {
-  const tasks: Promise<void>[] = [
-    preloadShareImage(resolvePublicAssetUrl('logo-white-text.png')),
-  ]
-
-  if (open.kind === 'league' || open.kind === 'record') {
-    const url = getShareableExerciseImageUrl(
-      open.payload.exerciseImageUrl,
-      'square',
-    )
-    if (url) tasks.push(preloadShareImage(url))
+): Promise<CelebrationShareOpen> {
+  if (open.kind !== 'league' && open.kind !== 'record') return open
+  const dataUrl = await resolveShareImageAsDataUrl(
+    open.payload.exerciseImageUrl,
+    'square',
+  )
+  if (!dataUrl) return open
+  return {
+    ...open,
+    payload: {
+      ...open.payload,
+      exerciseImageUrl: dataUrl,
+    },
   }
-
-  await Promise.all(tasks)
 }
 
 async function waitForShareCardRoot(host: HTMLElement): Promise<HTMLElement> {
@@ -92,9 +94,20 @@ async function generateBlob(
   isDark: boolean,
   key: string,
 ): Promise<Blob> {
-  await preloadCelebrationShareAssets(open)
-  const host = ensureRenderHost(open, isDark, key)
+  // UNIQUEMENT au tap Partager (jamais à l’open modale).
+  // yieldToMain entre étapes pour ne pas geler Continuer si l’UI est encore visible.
+  await yieldToMain()
+  const openForCapture = await embedExerciseImageForCapture(open)
+  await yieldToMain()
+  await preloadShareImage(resolvePublicAssetUrl('logo-white-text.png'))
+  await yieldToMain()
+  const host = ensureRenderHost(openForCapture, isDark, key)
   const el = await waitForShareCardRoot(host)
+  await yieldToMain()
+  await new Promise<void>((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+  )
+  await yieldToMain()
   return captureShareElement(el, isDark)
 }
 
@@ -144,3 +157,5 @@ export function invalidateCelebrationShareCache(): void {
   cache = null
   teardownRenderHost()
 }
+
+registerCelebrationShareCacheInvalidator(invalidateCelebrationShareCache)

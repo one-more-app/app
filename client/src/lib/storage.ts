@@ -330,7 +330,7 @@ export async function savePerformanceAndWait(
   trackedExerciseId: string,
   weight: number,
   reps: number,
-  opts?: { date?: string },
+  opts?: { date?: string; skipRestTimer?: boolean },
 ): Promise<{ entry: PerformanceEntry; xp?: XpGrantResult }> {
   const today = getLocalDateKey();
   const day =
@@ -362,7 +362,10 @@ export async function savePerformanceAndWait(
       date: day,
       source: "save_performance_and_wait",
     });
-    scheduleRestFinishedLocalNotificationForEntry(remote);
+    // First-perf + célébration : différer RestTimer (bridge natif sous la modale = freeze).
+    if (!opts?.skipRestTimer) {
+      scheduleRestFinishedLocalNotificationForEntry(remote);
+    }
     return { entry: remote, xp };
   } catch (error) {
     notifyRemoteWriteError();

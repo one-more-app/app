@@ -21,10 +21,61 @@ public class RestTimerPlugin: CAPPlugin, CAPBridgedPlugin {
 
     public override func load() {
         super.load()
-        resumePersistedTimerIfNeeded()
+        // Plugin load can run off-main; UIKit + Timer need the main run loop.
+        runOnMain { [weak self] in
+            self?.resumePersistedTimerIfNeeded()
+        }
     }
 
     @objc func start(_ call: CAPPluginCall) {
+        runOnMain { [weak self] in
+            self?.startOnMain(call)
+        }
+    }
+
+    @objc func update(_ call: CAPPluginCall) {
+        runOnMain { [weak self] in
+            self?.updateOnMain(call)
+        }
+    }
+
+    @objc func setForegroundVisible(_ call: CAPPluginCall) {
+        runOnMain { [weak self] in
+            self?.setForegroundVisibleOnMain(call)
+        }
+    }
+
+    @objc func cancel(_ call: CAPPluginCall) {
+        runOnMain { [weak self] in
+            self?.cancelInternal()
+            call.resolve()
+        }
+    }
+
+    @objc func consumeSuppressToastExerciseId(_ call: CAPPluginCall) {
+        let key = "rest_timer_suppress_toast_exercise_id"
+        let exerciseId = UserDefaults.standard.string(forKey: key)
+        if exerciseId != nil {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+        call.resolve(["exerciseId": exerciseId ?? NSNull()])
+    }
+
+    @objc public override func checkPermissions(_ call: CAPPluginCall) {
+        Self.resolvePermissionGranted { granted in
+            call.resolve(["granted": granted])
+        }
+    }
+
+    @objc public override func requestPermissions(_ call: CAPPluginCall) {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in
+            Self.resolvePermissionGranted { granted in
+                call.resolve(["granted": granted])
+            }
+        }
+    }
+
+    private func startOnMain(_ call: CAPPluginCall) {
         guard let createdAt = call.getString("createdAt"),
               let targetMs = call.getDouble("targetMs") else {
             call.reject("createdAt et targetMs sont requis.")
@@ -64,7 +115,7 @@ public class RestTimerPlugin: CAPPlugin, CAPBridgedPlugin {
         applyStart(state: state, call: call)
     }
 
-    @objc func update(_ call: CAPPluginCall) {
+    private func updateOnMain(_ call: CAPPluginCall) {
         guard let targetMs = call.getDouble("targetMs") else {
             call.reject("targetMs est requis.")
             return
@@ -86,7 +137,7 @@ public class RestTimerPlugin: CAPPlugin, CAPBridgedPlugin {
         call.resolve()
     }
 
-    @objc func setForegroundVisible(_ call: CAPPluginCall) {
+    private func setForegroundVisibleOnMain(_ call: CAPPluginCall) {
         guard let visible = call.getBool("visible") else {
             call.reject("visible est requis.")
             return
@@ -117,34 +168,6 @@ public class RestTimerPlugin: CAPPlugin, CAPBridgedPlugin {
             cancelFinishedBackupNotification()
         }
         call.resolve()
-    }
-
-    @objc func cancel(_ call: CAPPluginCall) {
-        cancelInternal()
-        call.resolve()
-    }
-
-    @objc func consumeSuppressToastExerciseId(_ call: CAPPluginCall) {
-        let key = "rest_timer_suppress_toast_exercise_id"
-        let exerciseId = UserDefaults.standard.string(forKey: key)
-        if exerciseId != nil {
-            UserDefaults.standard.removeObject(forKey: key)
-        }
-        call.resolve(["exerciseId": exerciseId ?? NSNull()])
-    }
-
-    @objc public override func checkPermissions(_ call: CAPPluginCall) {
-        Self.resolvePermissionGranted { granted in
-            call.resolve(["granted": granted])
-        }
-    }
-
-    @objc public override func requestPermissions(_ call: CAPPluginCall) {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in
-            Self.resolvePermissionGranted { granted in
-                call.resolve(["granted": granted])
-            }
-        }
     }
 
     private func applyStart(state: RestTimerPersistedState, call: CAPPluginCall) {
@@ -202,6 +225,7 @@ public class RestTimerPlugin: CAPPlugin, CAPBridgedPlugin {
         cancelFinishedBackupNotification()
     }
 
+    /// Must run on the main run loop — `Timer.scheduledTimer` attaches to the current thread's run loop.
     private func scheduleCompletionTimer(for state: RestTimerPersistedState) {
         completionTimer?.invalidate()
         let interval = state.endDate.timeIntervalSinceNow
@@ -289,6 +313,14 @@ public class RestTimerPlugin: CAPPlugin, CAPBridgedPlugin {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: [Self.finishedNotificationId])
         center.removeDeliveredNotifications(withIdentifiers: [Self.finishedNotificationId])
+    }
+
+    private func runOnMain(_ block: @escaping () -> Void) {
+        if Thread.isMainThread {
+            block()
+        } else {
+            DispatchQueue.main.async(execute: block)
+        }
     }
 
     private static func notificationAuthorizationGranted(_ status: UNAuthorizationStatus) -> Bool {

@@ -1,5 +1,7 @@
 /**
- * URLs d’assets pour capture (html-to-image / canvas) avec CORS correct.
+ * URLs d’assets pour capture (html-to-image / canvas).
+ * Les images externes doivent être embarquées en data-URL avant capture —
+ * sinon html-to-image laisse un carré vide (CORS / WKWebView).
  */
 
 export type ShareImageAspect = 'square' | 'landscape'
@@ -18,9 +20,8 @@ function looksLikeGifUrl(href: string): boolean {
 }
 
 /**
- * URL pour `<img crossOrigin="anonymous">` : proxy CORS si hébergeur externe (ex. ExerciseDB).
- * `square` : PNG 1080×1080 pour capture rapide en carte 1:1.
- * `landscape` : format historique paysage.
+ * URL proxy CORS pour affichage / fetch.
+ * `square` : PNG compact pour la vignette story (pas besoin de 1080).
  */
 export function getShareableExerciseImageUrl(
   raw: string | undefined,
@@ -29,6 +30,7 @@ export function getShareableExerciseImageUrl(
   const u = raw?.trim()
   if (!u) return undefined
   if (/^data:/i.test(u)) return u
+  if (/^blob:/i.test(u)) return u
   if (typeof window === 'undefined') return u
 
   try {
@@ -39,7 +41,8 @@ export function getShareableExerciseImageUrl(
     if (new URL(abs).origin === window.location.origin) return abs
 
     if (aspect === 'square') {
-      return `https://wsrv.nl/?url=${encodeURIComponent(abs)}&w=1080&h=1080&fit=cover&output=png`
+      // 512 suffit pour size-56 sur carte 1080 — plus rapide au Partager.
+      return `https://wsrv.nl/?url=${encodeURIComponent(abs)}&w=512&h=512&fit=cover&output=png`
     }
 
     if (looksLikeGifUrl(abs)) {
@@ -51,14 +54,100 @@ export function getShareableExerciseImageUrl(
   }
 }
 
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') resolve(reader.result)
+      else reject(new Error('readAsDataURL'))
+    }
+    reader.onerror = () => reject(reader.error ?? new Error('readAsDataURL'))
+    reader.readAsDataURL(blob)
+  })
+}
+
+function loadImageAsDataUrl(src: string): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.decoding = 'async'
+    const timer = window.setTimeout(() => resolve(undefined), 12_000)
+    img.onload = () => {
+      clearTimeout(timer)
+      if (img.naturalWidth <= 0) {
+        resolve(undefined)
+        return
+      }
+      try {
+        const canvas = document.createElement('canvas')
+        canvas.width = img.naturalWidth
+        canvas.height = img.naturalHeight
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(undefined)
+          return
+        }
+        ctx.drawImage(img, 0, 0)
+        resolve(canvas.toDataURL('image/png'))
+      } catch {
+        resolve(undefined)
+      }
+    }
+    img.onerror = () => {
+      clearTimeout(timer)
+      resolve(undefined)
+    }
+    img.src = src
+  })
+}
+
+/**
+ * Embarque l’image exo en data-URL pour html-to-image (appelé au tap Partager uniquement).
+ */
+export async function resolveShareImageAsDataUrl(
+  raw: string | undefined,
+  aspect: ShareImageAspect = 'square',
+): Promise<string | undefined> {
+  const url = getShareableExerciseImageUrl(raw, aspect)
+  if (!url) return undefined
+  if (/^data:/i.test(url)) return url
+
+  try {
+    const res = await fetch(url, { mode: 'cors', credentials: 'omit' })
+    if (res.ok) {
+      const blob = await res.blob()
+      if (blob.size > 0) return await blobToDataUrl(blob)
+    }
+  } catch {
+    /* fallback canvas */
+  }
+
+  return loadImageAsDataUrl(url)
+}
+
 export function preloadShareImage(src: string): Promise<void> {
   return new Promise((resolve) => {
     const img = new Image()
     img.crossOrigin = 'anonymous'
     img.decoding = 'async'
     const done = () => resolve()
-    img.addEventListener('load', done, { once: true })
-    img.addEventListener('error', done, { once: true })
+    const timer = window.setTimeout(done, 10_000)
+    img.addEventListener(
+      'load',
+      () => {
+        clearTimeout(timer)
+        done()
+      },
+      { once: true },
+    )
+    img.addEventListener(
+      'error',
+      () => {
+        clearTimeout(timer)
+        done()
+      },
+      { once: true },
+    )
     img.src = src
   })
 }

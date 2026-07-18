@@ -18,12 +18,12 @@ import {
 import { useAnimatedCounter } from '@/hooks/use-animated-counter'
 import { useCelebrationQueueSnapshot } from '@/hooks/use-celebration-queue-active'
 import { useTheme } from '@/hooks/use-theme'
-import { advanceCelebrationQueue } from '@/lib/celebration-queue'
-import { shareCelebrationPng } from '@/lib/celebration-share'
 import {
-    invalidateCelebrationShareCache,
-    isCelebrationShareReady,
-} from '@/lib/celebration-share-prewarm'
+    advanceCelebrationQueue,
+    playCelebrationFeedback,
+    trackCelebrationViewed,
+} from '@/lib/celebration-queue'
+import { invalidateCelebrationShareCacheIfLoaded } from '@/lib/celebration-share-cache-control'
 import {
     leagueCelebrationRadialBackground,
     levelCelebrationRadialBackground,
@@ -185,7 +185,7 @@ function LevelUpCelebrationContent({
                     )}
                 >
                     <Sparkles
-                        className="size-16 text-accent [filter:drop-shadow(0_8px_24px_color-mix(in_srgb,var(--accent)_55%,transparent))]"
+                        className="size-16 text-accent drop-shadow-lg"
                         strokeWidth={1.5}
                         aria-hidden
                     />
@@ -263,7 +263,7 @@ function StreakCelebrationContent({ payload }: { payload: StreakCelebrationPaylo
                     aria-label={title}
                 >
                     <Flame
-                        className="size-16 text-orange-500 [filter:drop-shadow(0_8px_24px_color-mix(in_srgb,#f97316_55%,transparent))]"
+                        className="size-16 text-orange-500 drop-shadow-lg"
                         strokeWidth={1.5}
                         aria-hidden
                     />
@@ -321,12 +321,37 @@ export function LeaguePromotionCelebrationHost() {
 
     useEffect(() => {
         if (!open) {
-            invalidateCelebrationShareCache()
+            // Ne charge pas html-to-image : no-op si le chunk share n’a pas été ouvert.
+            invalidateCelebrationShareCacheIfLoaded()
+            return
+        }
+        console.log('[first-perf-debug] celebration dialog painted', {
+            kind: open.kind,
+            t: Date.now(),
+        })
+        // Son/haptics/analytics APRÈS paint — pas au moment de l’enqueue
+        // (évite AudioContext + bridge Capacitor pendant le premier layout iOS).
+        const item = open
+        let cancelled = false
+        // Son/haptics/analytics bien après l’anim Dialog — pas pendant le layout Recharts.
+        const feedbackTimer = window.setTimeout(() => {
+            if (cancelled) return
+            playCelebrationFeedback(item)
+            trackCelebrationViewed(item)
+        }, 450)
+        return () => {
+            cancelled = true
+            clearTimeout(feedbackTimer)
         }
     }, [open])
 
     const handleShare = async () => {
         if (!open || shareBusy) return
+        const [{ isCelebrationShareReady }, { shareCelebrationPng }] =
+            await Promise.all([
+                import('@/lib/celebration-share-prewarm'),
+                import('@/lib/celebration-share'),
+            ])
         const needsWait = !isCelebrationShareReady(open, isDark)
         if (needsWait) setShareBusy(true)
         try {
@@ -349,6 +374,7 @@ export function LeaguePromotionCelebrationHost() {
         >
             <DialogContent
                 showCloseButton
+                data-openpanel-replay-block
                 className="flex flex-col gap-0 overflow-hidden border-2 border-border bg-card p-0 duration-300 sm:max-w-md sm:w-full"
             >
                 {open?.kind === 'league' ? (

@@ -35,6 +35,8 @@ export interface ExerciseImageProps {
     fallbackIconClassName?: string
     fit?: 'cover' | 'contain'
     onImageError?: () => void
+    /** Ne pas décoder le GIF (ex. pendant une modale de célébration sur iOS). */
+    suspendMedia?: boolean
 }
 
 export function ExerciseImage({
@@ -47,9 +49,11 @@ export function ExerciseImage({
     fallbackIconClassName = 'size-8 text-muted-foreground',
     fit = 'cover',
     onImageError,
+    suspendMedia = false,
 }: ExerciseImageProps) {
     const [broken, setBroken] = useState(false)
-    const showGif = !isCustom && !!gifUrl?.trim() && !broken
+    const showGif =
+        !suspendMedia && !isCustom && !!gifUrl?.trim() && !broken
 
     useEffect(() => {
         setBroken(false)

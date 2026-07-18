@@ -1,14 +1,28 @@
 import { toBlob } from 'html-to-image'
+import { yieldToMain } from '@/lib/yield-to-main'
 
-const IMAGE_FALLBACK_MS = 150
+/** Timeout max par image (réseau / wsrv) — trop bas → vignette exo vide dans le PNG. */
+const IMAGE_TIMEOUT_MS = 10_000
 
-function waitForImage(img: HTMLImageElement): Promise<void> {
-  if (img.complete && img.naturalWidth > 0) return Promise.resolve()
-  return new Promise((resolve) => {
-    const done = () => resolve()
-    img.addEventListener('load', done, { once: true })
-    img.addEventListener('error', done, { once: true })
-  })
+async function waitForImage(img: HTMLImageElement): Promise<void> {
+  if (!img.complete) {
+    await new Promise<void>((resolve) => {
+      const done = () => {
+        clearTimeout(timer)
+        resolve()
+      }
+      const timer = window.setTimeout(done, IMAGE_TIMEOUT_MS)
+      img.addEventListener('load', done, { once: true })
+      img.addEventListener('error', done, { once: true })
+    })
+  }
+  if (img.naturalWidth > 0 && typeof img.decode === 'function') {
+    try {
+      await img.decode()
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 export async function waitForShareCaptureReady(
@@ -18,12 +32,7 @@ export async function waitForShareCaptureReady(
 
   const imgs = [...container.querySelectorAll('img')]
   if (imgs.length > 0) {
-    await Promise.race([
-      Promise.all(imgs.map((img) => waitForImage(img))),
-      new Promise<void>((resolve) =>
-        setTimeout(resolve, IMAGE_FALLBACK_MS * imgs.length),
-      ),
-    ])
+    await Promise.all(imgs.map((img) => waitForImage(img)))
   }
 
   await new Promise<void>((resolve) =>
@@ -36,6 +45,7 @@ export async function captureShareElement(
   isDark: boolean,
 ): Promise<Blob> {
   await waitForShareCaptureReady(el)
+  await yieldToMain()
 
   const blob = await toBlob(el, {
     pixelRatio: 1,

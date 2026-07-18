@@ -165,13 +165,23 @@ function ShareStoryExerciseThumb({
     }, [exerciseImageUrl])
 
     if (src && !broken) {
+        const isEmbedded = /^data:/i.test(src)
         return (
             <img
                 src={src}
                 alt=""
-                crossOrigin="anonymous"
-                decoding="async"
+                // data-URL : pas de CORS ; sinon anonymous pour tenter le paint
+                {...(isEmbedded
+                    ? { decoding: 'sync' as const }
+                    : {
+                          crossOrigin: 'anonymous' as const,
+                          decoding: 'async' as const,
+                          referrerPolicy: 'no-referrer' as const,
+                      })}
                 className="size-56 shrink-0 rounded-3xl object-cover ring-2 ring-white/25 shadow-lg"
+                onLoad={(e) => {
+                    if (e.currentTarget.naturalWidth === 0) setBroken(true)
+                }}
                 onError={() => setBroken(true)}
             />
         )

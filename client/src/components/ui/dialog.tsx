@@ -51,6 +51,7 @@ function DialogOverlay({
     return (
         <DialogPrimitive.Overlay
             data-slot="dialog-overlay"
+            data-openpanel-replay-block
             className={cn(
                 // z-[200] : au-dessus de `.sticky-top-safe` (z-100). Voir `drawer.tsx`
                 // pour l'explication de la scale d'empilement.

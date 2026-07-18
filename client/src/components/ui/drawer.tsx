@@ -49,6 +49,7 @@ function DrawerOverlay({
     return (
         <DrawerPrimitive.Overlay
             data-slot="drawer-overlay"
+            data-openpanel-replay-block
             className={cn(
                 // z-[200] : au-dessus de `.sticky-top-safe` (z-100) et de tout ce qui est
                 // "page-level" (headers sticky, scrim safe-area, popovers). Sinon un header
