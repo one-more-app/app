@@ -319,9 +319,12 @@ export function LeaguePromotionCelebrationHost() {
 
     const isDark = resolvedTheme === 'dark'
 
+    /** First perf : ligue initiale sans palier précédent — Partager freeze iOS. */
+    const hideShareButton =
+        open?.kind === 'league' && open.payload.prevLeague == null
+
     useEffect(() => {
         if (!open) {
-            // Ne charge pas html-to-image : no-op si le chunk share n’a pas été ouvert.
             invalidateCelebrationShareCacheIfLoaded()
             return
         }
@@ -329,11 +332,8 @@ export function LeaguePromotionCelebrationHost() {
             kind: open.kind,
             t: Date.now(),
         })
-        // Son/haptics/analytics APRÈS paint — pas au moment de l’enqueue
-        // (évite AudioContext + bridge Capacitor pendant le premier layout iOS).
         const item = open
         let cancelled = false
-        // Son/haptics/analytics bien après l’anim Dialog — pas pendant le layout Recharts.
         const feedbackTimer = window.setTimeout(() => {
             if (cancelled) return
             playCelebrationFeedback(item)
@@ -346,7 +346,7 @@ export function LeaguePromotionCelebrationHost() {
     }, [open])
 
     const handleShare = async () => {
-        if (!open || shareBusy) return
+        if (!open || shareBusy || hideShareButton) return
         const [{ isCelebrationShareReady }, { shareCelebrationPng }] =
             await Promise.all([
                 import('@/lib/celebration-share-prewarm'),
@@ -407,15 +407,17 @@ export function LeaguePromotionCelebrationHost() {
                     </div>
                 ) : null}
                 <DialogFooter className="mt-0 flex w-full shrink-0 flex-col gap-3 border-t border-border bg-card/95 px-4 py-4 backdrop-blur-sm sm:flex-row sm:justify-center">
-                    <Button
-                        className="w-full min-w-[12rem] sm:w-auto"
-                        variant="secondary"
-                        disabled={!open || shareBusy}
-                        onClick={handleShare}
-                    >
-                        <Share2 className="mr-2 size-4" aria-hidden />
-                        {shareBusy ? UI.sharePreparing : UI.share}
-                    </Button>
+                    {!hideShareButton ? (
+                        <Button
+                            className="w-full min-w-[12rem] sm:w-auto"
+                            variant="secondary"
+                            disabled={!open || shareBusy}
+                            onClick={handleShare}
+                        >
+                            <Share2 className="mr-2 size-4" aria-hidden />
+                            {shareBusy ? UI.sharePreparing : UI.share}
+                        </Button>
+                    ) : null}
                     <Button
                         className="w-full min-w-[12rem] sm:w-auto"
                         onClick={dismiss}

@@ -1,6 +1,7 @@
 import { CelebrationShareCard } from '@/components/share/CelebrationShareCard'
 import type { CelebrationShareOpen } from '@/components/share/CelebrationShareCard'
 import { captureShareElement } from '@/lib/celebration-share-capture'
+import { createShareTrace, type ShareTrace } from '@/lib/celebration-share-debug'
 import { registerCelebrationShareCacheInvalidator } from '@/lib/celebration-share-cache-control'
 import {
   preloadShareImage,
@@ -62,13 +63,26 @@ function ensureRenderHost(
 
 async function embedExerciseImageForCapture(
   open: CelebrationShareOpen,
+  trace: ShareTrace,
 ): Promise<CelebrationShareOpen> {
-  if (open.kind !== 'league' && open.kind !== 'record') return open
+  if (open.kind !== 'league' && open.kind !== 'record') {
+    trace.log('embedExerciseImage:skip', { kind: open.kind })
+    return open
+  }
+  trace.log('embedExerciseImage:begin', {
+    kind: open.kind,
+    hasExerciseImageUrl: !!open.payload.exerciseImageUrl,
+  })
   const dataUrl = await resolveShareImageAsDataUrl(
     open.payload.exerciseImageUrl,
     'square',
+    trace,
   )
-  if (!dataUrl) return open
+  if (!dataUrl) {
+    trace.log('embedExerciseImage:no-data-url')
+    return open
+  }
+  trace.log('embedExerciseImage:embedded', { dataUrlChars: dataUrl.length })
   return {
     ...open,
     payload: {
@@ -93,43 +107,85 @@ async function generateBlob(
   open: CelebrationShareOpen,
   isDark: boolean,
   key: string,
+  trace: ShareTrace,
 ): Promise<Blob> {
+  trace.log('generateBlob:begin', { kind: open.kind, isDark, cacheKeyLen: key.length })
   // UNIQUEMENT au tap Partager (jamais à l’open modale).
   // yieldToMain entre étapes pour ne pas geler Continuer si l’UI est encore visible.
   await yieldToMain()
-  const openForCapture = await embedExerciseImageForCapture(open)
+  trace.log('generateBlob:after-yield-1')
+  const openForCapture = await embedExerciseImageForCapture(open, trace)
   await yieldToMain()
-  await preloadShareImage(resolvePublicAssetUrl('logo-white-text.png'))
+  trace.log('generateBlob:after-yield-2')
+  const logoUrl = resolvePublicAssetUrl('logo-white-text.png')
+  trace.log('generateBlob:preload-logo-start', { logoUrl })
+  const logoT0 = Date.now()
+  await preloadShareImage(logoUrl)
+  trace.log('generateBlob:preload-logo-done', { logoMs: Date.now() - logoT0 })
   await yieldToMain()
+  trace.log('generateBlob:after-yield-3')
   const host = ensureRenderHost(openForCapture, isDark, key)
+  trace.log('generateBlob:render-host-mounted')
+  const rootT0 = Date.now()
   const el = await waitForShareCardRoot(host)
+  trace.log('generateBlob:share-card-root-ready', {
+    rootWaitMs: Date.now() - rootT0,
+    cardSize: `${el.offsetWidth}x${el.offsetHeight}`,
+  })
   await yieldToMain()
   await new Promise<void>((resolve) =>
     requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
   )
   await yieldToMain()
-  return captureShareElement(el, isDark)
+  trace.log('generateBlob:capture-start')
+  const captureT0 = Date.now()
+  const blob = await captureShareElement(el, isDark, trace)
+  // Retirer la carte 1080 offscreen AVANT Share.share — sinon session replay
+  // + gros DOM bloquent le main thread / la présentation iOS.
+  teardownRenderHost()
+  trace.log('generateBlob:render-host-teardown')
+  trace.log('generateBlob:capture-done', {
+    captureMs: Date.now() - captureT0,
+    blobBytes: blob.size,
+    blobType: blob.type,
+  })
+  return blob
 }
 
 export function prewarmCelebrationShare(
   open: CelebrationShareOpen,
   isDark: boolean,
+  trace?: ShareTrace,
 ): void {
   const key = celebrationShareCacheKey(open, isDark)
-  if (cache?.key === key && cache.blob) return
-  if (cache?.key === key) return
+  if (cache?.key === key && cache.blob) {
+    trace?.log('prewarm:cache-hit-blob')
+    return
+  }
+  if (cache?.key === key) {
+    trace?.log('prewarm:cache-hit-promise')
+    return
+  }
 
-  const promise = generateBlob(open, isDark, key)
+  const activeTrace =
+    trace ?? createShareTrace('generateBlob', { kind: open.kind, isDark })
+
+  const promise = generateBlob(open, isDark, key, activeTrace)
     .then((blob) => {
+      activeTrace.log('generateBlob:success', { blobBytes: blob.size })
       if (cache?.key === key) cache.blob = blob
       return blob
     })
     .catch((error) => {
+      activeTrace.log('generateBlob:error', {
+        error: error instanceof Error ? error.message : String(error),
+      })
       if (cache?.key === key) cache = null
       throw error
     })
 
   cache = { key, blob: null, promise }
+  activeTrace.log('prewarm:started')
 }
 
 export function isCelebrationShareReady(
@@ -143,12 +199,19 @@ export function isCelebrationShareReady(
 export async function getCelebrationShareBlob(
   open: CelebrationShareOpen,
   isDark: boolean,
+  trace?: ShareTrace,
 ): Promise<Blob> {
   const key = celebrationShareCacheKey(open, isDark)
-  if (cache?.key === key && cache.blob) return cache.blob
-  if (cache?.key === key) return cache.promise
+  if (cache?.key === key && cache.blob) {
+    trace?.log('getBlob:cache-hit-blob', { blobBytes: cache.blob.size })
+    return cache.blob
+  }
+  if (cache?.key === key) {
+    trace?.log('getBlob:cache-hit-promise')
+    return cache.promise
+  }
 
-  prewarmCelebrationShare(open, isDark)
+  prewarmCelebrationShare(open, isDark, trace)
   if (!cache) throw new Error('Échec du préchargement partage')
   return cache.promise
 }
@@ -156,6 +219,26 @@ export async function getCelebrationShareBlob(
 export function invalidateCelebrationShareCache(): void {
   cache = null
   teardownRenderHost()
+}
+
+/** Nettoie le DOM offscreen (ex. avant Share.share si blob déjà en cache). */
+export function releaseCelebrationShareRenderHost(): void {
+  teardownRenderHost()
+}
+
+/** Précharge blob + plugins natifs (useEffect différé sur modale célébration). */
+export async function warmCelebrationShareAmbient(
+  open: CelebrationShareOpen,
+  isDark: boolean,
+): Promise<void> {
+  prewarmCelebrationShare(open, isDark)
+  const { Capacitor } = await import('@capacitor/core')
+  if (Capacitor.isNativePlatform()) {
+    await Promise.all([
+      import('@capacitor/filesystem'),
+      import('@capacitor/share'),
+    ])
+  }
 }
 
 registerCelebrationShareCacheInvalidator(invalidateCelebrationShareCache)

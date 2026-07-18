@@ -20,7 +20,7 @@
     "build:dev": "npm run build:mobile:dev && npx cap sync",
     "build:preprod": "npm run build:mobile:preprod && npx cap sync",
     "build:prod": "npm run build:mobile:prod && npx cap sync",
-    "postinstall": "node scripts/patch-capgo-google-idtoken.mjs",
+    "postinstall": "node scripts/patch-capgo-google-idtoken.mjs && node scripts/patch-capacitor-share-ios.mjs",
     "ios:build:dev": "npm run build:mobile:dev && dotenv -e .env.dev.capacitor -- npx cap sync ios",
     "ios:build:preprod": "npm run build:mobile:preprod && dotenv -e .env.preprod.capacitor -- npx cap sync ios",
     "ios:build:prod": "npm run build:mobile:prod && dotenv -e .env.prod.capacitor -- npx cap sync ios",

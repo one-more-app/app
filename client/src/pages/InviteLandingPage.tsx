@@ -12,6 +12,7 @@ import {
   setPendingInviteCode,
 } from "@/lib/invite-code";
 import { UI } from "@/lib/translations";
+import { needsOnboarding } from "@/lib/storage";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -100,7 +101,15 @@ export default function InviteLandingPage() {
               </div>
             </div>
             <Button asChild className="w-full">
-              <Link to="/auth">{UI.inviteLandingCta}</Link>
+              <Link
+                to={
+                  needsOnboarding()
+                    ? "/onboarding"
+                    : `/auth?redirect=${encodeURIComponent(`/invite/${code}`)}`
+                }
+              >
+                {UI.inviteLandingCta}
+              </Link>
             </Button>
           </>
         )}

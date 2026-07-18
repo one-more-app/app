@@ -27,6 +27,7 @@ import {
 import {
     needsOnboarding,
 } from '@/lib/storage'
+import { peekPendingInviteCode } from '@/lib/invite-code'
 import { fetchTshirtRewardStatus, TSHIRT_REWARD_SWR_KEY } from '@/lib/rewards-api'
 import { parseTshirtClaimRewardType, tshirtClaimPath } from '@/lib/tshirt-claim-route'
 import { scheduleSafeAreaCssSync } from '@/lib/sync-safe-area-css'
@@ -191,6 +192,9 @@ function AccessGate({ children }: { children: React.ReactNode }) {
     if (auth.status !== 'authenticated') {
         const allowOnboardingRoute = onboardingNeeded || gymDevPreview
         if (allowOnboardingRoute) {
+            if (isAuthRoute && peekPendingInviteCode()) {
+                return <Navigate to="/onboarding" replace />
+            }
             if (isOnboardingRoute || isAuthRoute || isInviteRoute) return <>{children}</>
             return <Navigate to="/onboarding" replace />
         }

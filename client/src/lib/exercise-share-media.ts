@@ -4,6 +4,8 @@
  * sinon html-to-image laisse un carré vide (CORS / WKWebView).
  */
 
+import type { ShareTrace } from '@/lib/celebration-share-debug'
+
 export type ShareImageAspect = 'square' | 'landscape'
 
 export function resolvePublicAssetUrl(file: string): string {
@@ -107,22 +109,71 @@ function loadImageAsDataUrl(src: string): Promise<string | undefined> {
 export async function resolveShareImageAsDataUrl(
   raw: string | undefined,
   aspect: ShareImageAspect = 'square',
+  trace?: ShareTrace,
 ): Promise<string | undefined> {
   const url = getShareableExerciseImageUrl(raw, aspect)
+  trace?.log('resolveShareImage:begin', {
+    hasRaw: !!raw,
+    aspect,
+    urlKind: url
+      ? /^data:/i.test(url)
+        ? 'data'
+        : url.includes('wsrv.nl')
+          ? 'wsrv'
+          : 'other'
+      : 'none',
+  })
   if (!url) return undefined
-  if (/^data:/i.test(url)) return url
+  if (/^data:/i.test(url)) {
+    trace?.log('resolveShareImage:already-data-url', {
+      dataUrlChars: url.length,
+    })
+    return url
+  }
 
   try {
+    trace?.log('resolveShareImage:fetch-start', { url: url.slice(0, 120) })
+    const fetchT0 = Date.now()
     const res = await fetch(url, { mode: 'cors', credentials: 'omit' })
+    trace?.log('resolveShareImage:fetch-response', {
+      fetchMs: Date.now() - fetchT0,
+      ok: res.ok,
+      status: res.status,
+    })
     if (res.ok) {
+      const blobT0 = Date.now()
       const blob = await res.blob()
-      if (blob.size > 0) return await blobToDataUrl(blob)
+      trace?.log('resolveShareImage:blob-ready', {
+        blobMs: Date.now() - blobT0,
+        blobBytes: blob.size,
+        blobType: blob.type,
+      })
+      if (blob.size > 0) {
+        const dataT0 = Date.now()
+        const dataUrl = await blobToDataUrl(blob)
+        trace?.log('resolveShareImage:blob-to-dataurl-done', {
+          dataUrlMs: Date.now() - dataT0,
+          dataUrlChars: dataUrl.length,
+        })
+        return dataUrl
+      }
     }
-  } catch {
+  } catch (error) {
+    trace?.log('resolveShareImage:fetch-error', {
+      error: error instanceof Error ? error.message : String(error),
+    })
     /* fallback canvas */
   }
 
-  return loadImageAsDataUrl(url)
+  trace?.log('resolveShareImage:canvas-fallback-start')
+  const fallbackT0 = Date.now()
+  const fallback = await loadImageAsDataUrl(url)
+  trace?.log('resolveShareImage:canvas-fallback-done', {
+    fallbackMs: Date.now() - fallbackT0,
+    ok: !!fallback,
+    dataUrlChars: fallback?.length ?? 0,
+  })
+  return fallback
 }
 
 export function preloadShareImage(src: string): Promise<void> {

@@ -499,3 +499,10 @@
   background: #3b82f6;
   box-shadow: 0 0 0 2px rgb(59 130 246 / 0.35);
 }
+
+/* Capacitor Share : masquer les Dialog Radix le temps du sheet iOS natif. */
+html[data-native-share-active] [data-slot='dialog-overlay'],
+html[data-native-share-active] [data-slot='dialog-content'] {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
