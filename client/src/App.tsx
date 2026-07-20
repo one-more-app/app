@@ -50,6 +50,8 @@ import OnboardingPage from '@/pages/OnboardingPage'
 import ProfilePage from '@/pages/ProfilePage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { TshirtClaimPage } from '@/pages/TshirtClaimPage'
+import { EventAdminPage } from '@/pages/event/EventAdminPage'
+import { EventLeaderboardPage } from '@/pages/event/EventLeaderboardPage'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
@@ -84,6 +86,7 @@ function AccessGate({ children }: { children: React.ReactNode }) {
     const isAuthRoute = location.pathname === '/auth'
     const isOnboardingRoute = location.pathname === '/onboarding'
     const isInviteRoute = location.pathname.startsWith('/invite/')
+    const isEventRoute = location.pathname.startsWith('/event/')
     const onboardingNeeded = needsOnboarding()
     const { data: userGym, isLoading: userGymLoading } = useUserGymData()
     const onboardingStep = searchParams.get('step')
@@ -117,6 +120,8 @@ function AccessGate({ children }: { children: React.ReactNode }) {
         onboardingNeeded ||
         !gymGateReady ||
         !tshirtRewardLoading
+
+    if (isEventRoute) return <>{children}</>
 
     if (
         auth.status === 'authenticated' &&
@@ -285,6 +290,7 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
 function SafeAreaTopScrim() {
     const { pathname } = useLocation()
     if (IMMERSIVE_FULL_BLEED_ROUTES.has(pathname)) return null
+    if (pathname.startsWith('/event/')) return null
     const usesBackHeader = routeUsesBackHeader(pathname)
     return (
         <div
@@ -420,6 +426,8 @@ function App() {
                                 <Route path="/friends/chat/:conversationId" element={<ChatPage />} />
                                 <Route path="/friends/preview/:userId" element={<UserPreviewPage />} />
                                 <Route path="/friends/:userId" element={<FriendProfilePage />} />
+                                <Route path="/event/leaderboard" element={<EventLeaderboardPage />} />
+                                <Route path="/event/admin" element={<EventAdminPage />} />
 
                             </Routes>
                             </PageSection>

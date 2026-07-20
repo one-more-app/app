@@ -23,6 +23,7 @@ import { GymsModule } from './gyms/gyms.module.js';
 import { AddressesModule } from './addresses/addresses.module.js';
 import { WorkoutSessionsModule } from './workout-sessions/workout-sessions.module.js';
 import { PublicStatsModule } from './public-stats/public-stats.module.js';
+import { EventModule } from './event/event.module.js';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { PublicStatsModule } from './public-stats/public-stats.module.js';
     AddressesModule,
     WorkoutSessionsModule,
     PublicStatsModule,
+    EventModule,
   ],
   controllers: [AppController],
   providers: [AppService],

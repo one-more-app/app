@@ -420,13 +420,28 @@
   animation: streak-count-pop 0.35s ease-out both;
 }
 
+@keyframes event-leaderboard-ticker {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+.event-leaderboard-ticker {
+  animation: event-leaderboard-ticker linear infinite;
+  will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .streak-flame-anim,
   .streak-count-anim,
   .celebration-hero-anim,
   .celebration-count-anim,
   .level-up-hero-anim,
-  .level-up-count-anim {
+  .level-up-count-anim,
+  .event-leaderboard-ticker {
     animation: none;
   }
 }

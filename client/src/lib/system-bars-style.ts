@@ -2,7 +2,7 @@ import { SystemBarsStyle } from '@capacitor/core'
 import type { ResolvedTheme } from '@/hooks/use-theme'
 
 /** Routes plein écran edge-to-edge : pas de scrim ni padding html. */
-export const IMMERSIVE_FULL_BLEED_ROUTES = new Set(['/onboarding', '/auth'])
+export const IMMERSIVE_FULL_BLEED_ROUTES = new Set(['/onboarding', '/auth', '/event/leaderboard'])
 
 /** Routes immersives fond sombre : icônes et texte de barre système clairs. */
 const IMMERSIVE_DARK_ROUTES = IMMERSIVE_FULL_BLEED_ROUTES
