@@ -2,38 +2,38 @@ import { onboardingEntrance } from "@/components/onboarding/onboarding-motion";
 
 /** Entrée écran / header : élan depuis la gauche (comme onboarding). */
 export const eventScreenEntrance = (...classes: (string | false | undefined)[]) =>
-  onboardingEntrance(
-    classes,
-    "animate-in fade-in-0 slide-in-from-left-4 duration-400",
-  );
+    onboardingEntrance(
+        classes,
+        "animate-in fade-in-0 slide-in-from-left-4 duration-400",
+    );
 
 /** Carte classement : glisse de gauche à droite, stagger par colonne. */
 export const eventCardEntrance = (...classes: (string | false | undefined)[]) =>
-  onboardingEntrance(
-    classes,
-    "animate-in fade-in-0 slide-in-from-left-4 duration-400",
-  );
+    onboardingEntrance(
+        classes,
+        "animate-in fade-in-0 slide-in-from-left-4 duration-400",
+    );
 
 /** Segment rang (premier élément de la ligne). */
 export const eventRecordRankEntrance = (...classes: (string | false | undefined)[]) =>
-  onboardingEntrance(
-    classes,
-    "inline-flex animate-in fade-in-0 slide-in-from-left-4 duration-400",
-  );
+    onboardingEntrance(
+        classes,
+        "inline-flex animate-in fade-in-0 slide-in-from-left-4 duration-400",
+    );
 
 /** Segment nom / reps (suite du mouvement gauche → droite). */
 export const eventRecordFieldEntrance = (...classes: (string | false | undefined)[]) =>
-  onboardingEntrance(
-    classes,
-    "inline-block min-w-0 animate-in fade-in-0 slide-in-from-left-3 duration-350",
-  );
+    onboardingEntrance(
+        classes,
+        "inline-block min-w-0 animate-in fade-in-0 slide-in-from-left-3 duration-350",
+    );
 
 /** GIF / chip exercice. */
 export const eventChipEntrance = (...classes: (string | false | undefined)[]) =>
-  onboardingEntrance(
-    classes,
-    "animate-in fade-in-0 slide-in-from-left-3 duration-350",
-  );
+    onboardingEntrance(
+        classes,
+        "animate-in fade-in-0 slide-in-from-left-3 duration-350",
+    );
 
 /** Délai entre rang, prénom et reps sur une même ligne (comme AnimatedWords). */
 export const EVENT_RECORD_SEGMENT_STAGGER_MS = 55;
@@ -49,10 +49,25 @@ export const EVENT_RECORD_POP_DELAY_MS = 400;
 
 /** Entrée overlay célébration (élan vers le haut, court). */
 export const eventCelebrationEntrance = (...classes: (string | false | undefined)[]) =>
-  onboardingEntrance(
-    classes,
-    "animate-in fade-in-0 slide-in-from-bottom-3 duration-350",
-  );
+    onboardingEntrance(
+        classes,
+        "animate-in fade-in-0 slide-in-from-bottom-3 duration-350",
+    );
 
 /** Délai entre blocs de l’overlay record / t-shirt. */
 export const EVENT_CELEBRATION_STAGGER_MS = 80;
+
+/** Pop compteur live (même timing que level-up / streak). */
+export const eventLiveCountPop = (...classes: (string | false | undefined)[]) =>
+  onboardingEntrance(
+    classes,
+    "level-up-count-anim inline-block",
+  );
+
+/** Palier live qui change (glisse depuis la gauche, comme une ligne de classement). */
+export const eventLiveRankEntrance = (...classes: (string | false | undefined)[]) =>
+  eventRecordRankEntrance(classes);
+
+/** Texte secondaire live (reps, rang affiché). */
+export const eventLiveFieldEntrance = (...classes: (string | false | undefined)[]) =>
+  eventRecordFieldEntrance(classes);

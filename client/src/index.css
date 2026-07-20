@@ -420,6 +420,67 @@
   animation: streak-count-pop 0.35s ease-out both;
 }
 
+@keyframes event-live-count-bump {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.55;
+  }
+  35% {
+    transform: scale(1.14);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(0.96);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes event-live-count-glow {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+@keyframes event-live-rank-rise {
+  0% {
+    transform: translateY(18px) scale(0.82);
+    opacity: 0;
+  }
+  55% {
+    transform: translateY(-4px) scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.event-live-count-bump {
+  animation: event-live-count-bump 0.48s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  transform-origin: center center;
+}
+
+.event-live-count-glow {
+  animation: event-live-count-glow 0.55s ease-out both;
+  transform-origin: center center;
+}
+
+.event-live-rank-rise {
+  animation: event-live-rank-rise 0.55s cubic-bezier(0.34, 1.25, 0.64, 1) both;
+}
+
 @keyframes event-leaderboard-ticker {
   from {
     transform: translateY(0);
@@ -441,6 +502,9 @@
   .celebration-count-anim,
   .level-up-hero-anim,
   .level-up-count-anim,
+  .event-live-count-bump,
+  .event-live-count-glow,
+  .event-live-rank-rise,
   .event-leaderboard-ticker {
     animation: none;
   }

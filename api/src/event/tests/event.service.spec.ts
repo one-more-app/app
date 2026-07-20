@@ -14,11 +14,28 @@ describe('EventService', () => {
     createQueryBuilder: jest.fn(),
   };
 
+  const attemptRepo = {
+    findOne: jest.fn(),
+    save: jest.fn(),
+    create: jest.fn((data) => data),
+    clear: jest.fn(),
+    count: jest.fn(),
+  };
+
+  const catalogRepo = {
+    find: jest.fn(),
+  };
+
   let service: InstanceType<typeof EventService>;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new EventService(entriesRepo as any, { find: jest.fn() } as any);
+    catalogRepo.find.mockResolvedValue([]);
+    service = new EventService(
+      entriesRepo as any,
+      attemptRepo as any,
+      catalogRepo as any,
+    );
   });
 
   it('awards t-shirt when first entry for exercise and gender', async () => {
@@ -103,5 +120,27 @@ describe('EventService', () => {
     expect(result.tshirtAwarded).toBe(false);
     expect(result.celebrationPending).toBe(false);
     expect(result.rank).toBe(2);
+  });
+
+  it('soft-deletes all entries and clears active attempt', async () => {
+    entriesRepo.update.mockResolvedValue({ affected: 4 });
+    attemptRepo.count.mockResolvedValue(1);
+    attemptRepo.clear.mockResolvedValue(undefined);
+
+    const result = await service.softDeleteAllEventData();
+
+    expect(result).toEqual({ deletedEntries: 4, clearedAttempt: true });
+    expect(entriesRepo.update).toHaveBeenCalled();
+    expect(attemptRepo.clear).toHaveBeenCalled();
+  });
+
+  it('soft-deletes entries without attempt when none is active', async () => {
+    entriesRepo.update.mockResolvedValue({ affected: 2 });
+    attemptRepo.count.mockResolvedValue(0);
+
+    const result = await service.softDeleteAllEventData();
+
+    expect(result).toEqual({ deletedEntries: 2, clearedAttempt: false });
+    expect(attemptRepo.clear).not.toHaveBeenCalled();
   });
 });

@@ -1,10 +1,12 @@
 import logo from "@/assets/logo-white.png";
 import { EventAppDownloadEncart } from "@/components/event/EventAppDownloadEncart";
+import { EventAttemptResultOverlay } from "@/components/event/EventAttemptResultOverlay";
 import { EventExerciseColumn } from "@/components/event/EventExerciseColumn";
 import {
   EventGenderBadge,
   EventGenderProgress,
 } from "@/components/event/EventGenderBadge";
+import { EventLiveAttemptOverlay } from "@/components/event/EventLiveAttemptOverlay";
 import { EventTshirtCelebrationOverlay } from "@/components/event/EventTshirtCelebrationOverlay";
 import { EventWebOnlyGate } from "@/components/event/EventWebOnlyGate";
 import { eventScreenEntrance } from "@/components/event/event-motion";
@@ -16,9 +18,12 @@ import {
   eventLeaderboardDemoGender,
   isEventLeaderboardDemoMode,
 } from "@/lib/event-demo-data";
+import { getEventRecordToBeat } from "@/lib/event-record";
 import {
   fetchEventLeaderboard,
+  type EventActiveAttempt,
   type EventActiveCelebration,
+  type EventAttemptResult,
   type EventExerciseMedia,
   type EventLeaderboardBoard,
 } from "@/lib/event-api";
@@ -26,7 +31,9 @@ import {
   EVENT_EXERCISES,
   EVENT_GENDER_ROTATION_MS,
   EVENT_LEADERBOARD_POLL_MS,
+  EVENT_LIVE_ATTEMPT_POLL_MS,
   type EventExerciseSlug,
+  type EventGenderSlug,
 } from "@/lib/event-constants";
 import { UI } from "@/lib/translations";
 import { useEffect, useMemo, useState } from "react";
@@ -49,8 +56,17 @@ function EventLeaderboardContent() {
   > | null>(demoMode ? buildEventDemoExerciseMedia() : null);
   const [activeCelebration, setActiveCelebration] =
     useState<EventActiveCelebration | null>(null);
+  const [activeAttempt, setActiveAttempt] = useState<EventActiveAttempt | null>(null);
+  const [recentResult, setRecentResult] = useState<EventAttemptResult | null>(null);
   const { gender, progress } = useGenderRotation(EVENT_GENDER_ROTATION_MS);
-  const displayGender = demoGender ?? gender;
+
+  const displayGender: EventGenderSlug =
+    activeAttempt?.gender ?? demoGender ?? gender;
+
+  const showResultOverlay = !activeAttempt && recentResult != null;
+
+  const showCelebrationOverlay =
+    !activeAttempt && !showResultOverlay && activeCelebration != null;
 
   useEffect(() => {
     document.documentElement.classList.add("dark");
@@ -63,14 +79,21 @@ function EventLeaderboardContent() {
     if (demoMode) {
       setBoard(buildEventDemoBoard());
       setActiveCelebration(null);
+      setActiveAttempt(null);
+      setRecentResult(null);
       setExerciseMedia(buildEventDemoExerciseMedia());
     }
   }, [demoMode]);
+
+  const hasActiveAttempt = activeAttempt != null;
 
   useEffect(() => {
     if (demoMode) return undefined;
 
     let cancelled = false;
+    const pollMs = hasActiveAttempt
+      ? EVENT_LIVE_ATTEMPT_POLL_MS
+      : EVENT_LEADERBOARD_POLL_MS;
 
     const load = async () => {
       try {
@@ -79,6 +102,8 @@ function EventLeaderboardContent() {
         setExerciseMedia(response.exerciseMedia);
         setBoard(response.board);
         setActiveCelebration(response.activeCelebration);
+        setActiveAttempt(response.activeAttempt);
+        setRecentResult(response.recentResult);
       } catch {
         /* ignore polling errors on TV */
       }
@@ -88,13 +113,13 @@ function EventLeaderboardContent() {
     const interval = window.setInterval(() => {
       if (document.visibilityState === "hidden") return;
       void load();
-    }, EVENT_LEADERBOARD_POLL_MS);
+    }, pollMs);
 
     return () => {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [demoMode]);
+  }, [demoMode, hasActiveAttempt]);
 
   useEffect(() => {
     if (!demoMode) return undefined;
@@ -118,10 +143,25 @@ function EventLeaderboardContent() {
     };
   }, [demoMode]);
 
+  const attemptGif = useMemo(() => {
+    if (activeAttempt == null) return null;
+    return exerciseMedia?.[activeAttempt.exercise]?.gifUrl ?? null;
+  }, [activeAttempt, exerciseMedia]);
+
+  const resultGif = useMemo(() => {
+    if (recentResult == null) return null;
+    return exerciseMedia?.[recentResult.exercise]?.gifUrl ?? null;
+  }, [recentResult, exerciseMedia]);
+
   const celebrationGif = useMemo(() => {
     if (activeCelebration == null) return null;
     return exerciseMedia?.[activeCelebration.exercise]?.gifUrl ?? null;
   }, [activeCelebration, exerciseMedia]);
+
+  const liveRecordToBeat = useMemo(() => {
+    if (!activeAttempt) return null;
+    return getEventRecordToBeat(board, activeAttempt.exercise, activeAttempt.gender);
+  }, [activeAttempt, board]);
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background">
@@ -149,7 +189,9 @@ function EventLeaderboardContent() {
           </div>
           <div className="flex flex-col items-end gap-2">
             <EventGenderBadge gender={displayGender} />
-            <EventGenderProgress progress={demoMode ? 0.65 : progress} />
+            <EventGenderProgress
+              progress={activeAttempt || demoMode ? 0.65 : progress}
+            />
           </div>
         </header>
 
@@ -177,7 +219,19 @@ function EventLeaderboardContent() {
         </div>
       </div>
 
-      {!demoMode && activeCelebration ? (
+      {!demoMode && activeAttempt ? (
+        <EventLiveAttemptOverlay
+          attempt={activeAttempt}
+          gifUrl={attemptGif}
+          recordToBeat={liveRecordToBeat}
+        />
+      ) : null}
+
+      {!demoMode && showResultOverlay && recentResult ? (
+        <EventAttemptResultOverlay result={recentResult} gifUrl={resultGif} />
+      ) : null}
+
+      {!demoMode && showCelebrationOverlay && activeCelebration ? (
         <EventTshirtCelebrationOverlay
           celebration={activeCelebration}
           gifUrl={celebrationGif}

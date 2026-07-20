@@ -2,15 +2,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Index,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { EventExercise } from './event-exercise.enum.js';
 import { EventGender } from './event-gender.enum.js';
 
-@Entity('event_entries')
-@Index(['exercise', 'gender', 'reps', 'createdAt'])
-export class EventEntryEntity {
+@Entity('event_active_attempts')
+export class EventActiveAttemptEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
@@ -29,27 +27,12 @@ export class EventEntryEntity {
   @Column({ type: 'enum', enum: EventExercise })
   exercise!: EventExercise;
 
-  @Column({ type: 'integer' })
-  reps!: number;
-
   @Column({ type: 'varchar', length: 500, nullable: true })
   notes!: string | null;
 
-  @Column({ type: 'boolean', default: false })
-  beatPreviousLeader!: boolean;
-
-  @Column({ type: 'boolean', default: false })
-  tshirtAwarded!: boolean;
-
-  @Column({ type: 'boolean', default: false })
-  celebrationPending!: boolean;
-
-  @Column({ type: 'boolean', default: false })
-  resultDisplayPending!: boolean;
-
-  @Column({ type: 'timestamptz', nullable: true })
-  deletedAt!: Date | null;
+  @Column({ type: 'integer', default: 0 })
+  reps!: number;
 
   @CreateDateColumn({ type: 'timestamptz' })
-  createdAt!: Date;
+  startedAt!: Date;
 }
