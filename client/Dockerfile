@@ -6,9 +6,9 @@
 FROM node:22-bookworm-slim AS build
 WORKDIR /app/client
 
-# Dépendances du client
+# Dépendances du client (postinstall = patches Capacitor mobile, inutiles pour le web)
 COPY client/package.json client/package-lock.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 # Sources nécessaires au build Vite (client + shared)
 COPY client /app/client
