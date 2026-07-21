@@ -39,7 +39,9 @@ export function EventExerciseColumn({
           <img
             src={gifUrl}
             alt=""
-            className={eventChipEntrance("size-12 rounded-lg object-cover opacity-90")}
+            className={eventChipEntrance(
+              "size-12 rounded-lg object-contain p-1 opacity-90 brightness-0 invert",
+            )}
             style={{ animationDelay: `${columnIndex * EVENT_COLUMN_STAGGER_MS}ms` }}
           />
         ) : (

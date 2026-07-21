@@ -946,11 +946,13 @@ export const UI = {
   sessionViewDay: "Voir la séance",
 
   // Stand événement (leaderboard web)
-  eventStandTitle: "Défi stand",
-  eventStandSubtitle: "Bats le record, gagne un t-shirt",
+  eventStandTitle: "Bats le record,",
+  eventStandTitleAccent: "gagne un t-shirt",
+  eventStandSubtitle:
+    "Chaque tentative te tire au sort pour un t-shirt en fin de journée.",
   eventStandDemoBanner: "Mode démo · fausses données",
-  eventStandMen: "Hommes",
-  eventStandWomen: "Femmes",
+  eventStandMen: "Classement Hommes",
+  eventStandWomen: "Classement Femmes",
   eventStandExercisePullUp: "Tractions",
   eventStandExerciseDips: "Dips",
   eventStandExercisePushUp: "Pompes",

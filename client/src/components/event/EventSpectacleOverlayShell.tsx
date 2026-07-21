@@ -65,7 +65,7 @@ export function EventSpectacleOverlayShell({
               <img
                 src={gifUrl}
                 alt=""
-                className="size-16 rounded-xl object-cover ring-1 ring-border/60 lg:size-20"
+                className="size-16 rounded-xl object-contain p-1.5 brightness-0 invert ring-1 ring-border/60 lg:size-20"
               />
             ) : null}
 
