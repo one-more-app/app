@@ -1,4 +1,4 @@
-import logo from "@/assets/logo-white.png";
+import { OneMoreLogoMark } from "@/components/OneMoreLogoMark";
 import { EventAppDownloadEncart } from "@/components/event/EventAppDownloadEncart";
 import { EventAttemptResultOverlay } from "@/components/event/EventAttemptResultOverlay";
 import { EventExerciseColumn } from "@/components/event/EventExerciseColumn";
@@ -144,7 +144,11 @@ function EventLeaderboardContent() {
                     )}
                 >
                     <OnboardingReveal delayMs={0}>
-                        <img src={logo} alt="One More" className="h-8 w-auto md:h-10" />
+                        <OneMoreLogoMark
+                            key={titleAnimKey}
+                            variant="light"
+                            className="h-8 w-auto md:h-10"
+                        />
                     </OnboardingReveal>
                     <div className="ml-auto flex items-center gap-4">
                         <div>

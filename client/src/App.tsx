@@ -1,4 +1,5 @@
 import { BottomNav } from '@/components/BottomNav'
+import { ConnectivityGate } from '@/components/ConnectivityGate'
 import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCelebration'
 import { ProfileUsernameSetupHost } from '@/components/profile/ProfileUsernameSetupHost'
 import { RestTimeFinishedToastHost } from '@/components/RestTimeFinishedToastHost'
@@ -6,6 +7,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider'
 import { PageSection } from '@/components/analytics/PageSection'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
+import { ConnectivityProvider } from '@/hooks/use-connectivity'
 import { useKeyboardInset } from '@/hooks/use-keyboard-inset'
 import { usePushNotifications } from '@/hooks/use-push-notifications'
 import { useGymGeofenceNotificationTap, useGymGeofenceSync } from '@/hooks/use-gym-geofence'
@@ -373,6 +375,7 @@ function App() {
                 <Toaster />
                 <LeaguePromotionCelebrationHost />
                 <AuthProvider>
+                    <ConnectivityProvider>
                     <RestTimeFinishedToastHost />
                     <PaywallProvider>
                     <ReferralDrawerProvider>
@@ -381,6 +384,7 @@ function App() {
                     <ReferralDrawerHost />
                     <AnalyticsProvider>
                     <RealtimeProvider>
+                    <ConnectivityGate>
                     <ProfileUsernameSetupHost />
                     <AccessGate>
                         <BottomNavHost>
@@ -416,10 +420,12 @@ function App() {
                             </PageSection>
                         </BottomNavHost>
                     </AccessGate>
+                    </ConnectivityGate>
                     </RealtimeProvider>
                     </AnalyticsProvider>
                     </ReferralDrawerProvider>
                     </PaywallProvider>
+                    </ConnectivityProvider>
                 </AuthProvider>
             </div>
         </HashRouter>

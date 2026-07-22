@@ -141,12 +141,14 @@ export function trackPageErrors(page: Page): string[] {
 }
 
 export async function seedOnboardingDone(page: Page): Promise<void> {
+  await seedE2eApiOrigin(page);
   await page.addInitScript((key) => {
     localStorage.setItem(key, "done");
   }, ONBOARDING_DONE_KEY);
 }
 
 export async function seedAuthenticatedSession(page: Page): Promise<void> {
+  await seedE2eApiOrigin(page);
   await page.addInitScript(
     ({ authKey, onboardingKey, session }) => {
       localStorage.setItem(onboardingKey, "done");
@@ -164,6 +166,21 @@ export async function seedAuthenticatedSession(page: Page): Promise<void> {
 export async function seedE2eApiOrigin(page: Page): Promise<void> {
   await page.addInitScript(() => {
     window.__ONE_MORE_API_URL__ = window.location.origin;
+  });
+  await mockHealthApi(page);
+}
+
+export async function mockHealthApi(page: Page): Promise<void> {
+  await page.route("**/health", async (route) => {
+    if (route.request().method() !== "GET") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ status: "ok" }),
+    });
   });
 }
 

@@ -24,7 +24,7 @@ declare global {
   }
 }
 
-function getApiBaseUrl(): string {
+export function getApiBaseUrl(): string {
   const runtime =
     typeof window !== "undefined" && typeof window.__ONE_MORE_API_URL__ === "string"
       ? window.__ONE_MORE_API_URL__
@@ -37,10 +37,28 @@ function getApiBaseUrl(): string {
   return "http://localhost:3000";
 }
 
+type ApiUnreachableListener = () => void;
+
+let onApiUnreachable: ApiUnreachableListener | null = null;
+
+export function setOnApiUnreachable(listener: ApiUnreachableListener | null): void {
+  onApiUnreachable = listener;
+}
+
+function notifyApiUnreachable(): void {
+  if (typeof navigator !== "undefined" && !navigator.onLine) return;
+  onApiUnreachable?.();
+}
+
 type StoredSessionShape = {
   accessToken: string;
   refreshToken: string;
   user: { id: string; email: string | null };
+};
+
+type StoredSessionUser = {
+  id?: unknown;
+  email?: unknown;
 };
 
 function readStoredSession(): StoredSessionShape | null {
@@ -54,20 +72,22 @@ function readStoredSession(): StoredSessionShape | null {
       typeof parsed.accessToken !== "string" ||
       typeof parsed.refreshToken !== "string" ||
       !parsed.user ||
-      typeof parsed.user !== "object" ||
-      typeof (parsed.user as any).id !== "string"
+      typeof parsed.user !== "object"
     ) {
+      return null;
+    }
+    const user = parsed.user as StoredSessionUser;
+    if (typeof user.id !== "string") {
       return null;
     }
     return {
       accessToken: parsed.accessToken,
       refreshToken: parsed.refreshToken,
       user: {
-        id: String((parsed.user as any).id),
+        id: user.id,
         email:
-          (parsed.user as any).email === null ||
-          typeof (parsed.user as any).email === "string"
-            ? ((parsed.user as any).email as string | null)
+          typeof user.email === "string" || user.email === null
+            ? user.email
             : null,
       },
     };
@@ -158,6 +178,7 @@ export async function apiFetch<T>(
       },
     });
   } catch (error) {
+    notifyApiUnreachable();
     const reason = error instanceof Error ? error.message : String(error);
     throw new ApiError(
       `Impossible de joindre l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}. ${reason}`,
@@ -237,6 +258,7 @@ export async function apiFetchFormData<T>(
       headers: buildHeaders(tokenToUse),
     });
   } catch (error) {
+    notifyApiUnreachable();
     const reason = error instanceof Error ? error.message : String(error);
     throw new ApiError(
       `Impossible de joindre l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}. ${reason}`,

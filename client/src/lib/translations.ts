@@ -369,6 +369,11 @@ export const UI = {
   homeDoneTodaySubtitle: "Ta séance du jour",
   homeExercisesTitle: "Tes exercices",
   loading: "Chargement...",
+  offlineTitle: "Pas de connexion",
+  offlineHint: "Vérifie ton réseau puis réessaie.",
+  maintenanceTitle: "One More est en maintenance",
+  maintenanceHint: "On revient vite. Réessaie dans un instant.",
+  connectivityRetry: "Réessayer",
   secondaryMuscles: "Muscles secondaires",
   instructions: "Instructions",
 
