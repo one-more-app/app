@@ -80,7 +80,19 @@ export function ExerciseListPage() {
     const [selectedExercise, setSelectedExercise] = useState<ExerciseDBExercise | null>(null)
     const [perfWeight, setPerfWeight] = useState(0)
     const [perfReps, setPerfReps] = useState(1)
+    const [perfFieldStep, setPerfFieldStep] = useState<'weight' | 'reps'>('weight')
     const [isSubmittingFirstPerf, setIsSubmittingFirstPerf] = useState(false)
+    const perfWeightRef = useRef(perfWeight)
+    const perfRepsRef = useRef(perfReps)
+    const addWithPerfFormRef = useRef<HTMLFormElement>(null)
+    const updatePerfWeight = (v: number) => {
+        perfWeightRef.current = v
+        setPerfWeight(v)
+    }
+    const updatePerfReps = (v: number) => {
+        perfRepsRef.current = v
+        setPerfReps(v)
+    }
     const { openReferralDrawer } = useReferralDrawer()
     const { canAddExercise } = useAccess()
 
@@ -360,17 +372,20 @@ export function ExerciseListPage() {
         if (trackedIds.has(`api-${ex.id}`)) return
         guardAddExercise(() => {
             setAddWithPerfExercise(ex)
+            perfWeightRef.current = 0
+            perfRepsRef.current = 1
             setPerfWeight(0)
             setPerfReps(1)
+            setPerfFieldStep('weight')
         })
     }
 
     const handleAddWithPerfSubmit = async () => {
-        if (!addWithPerfExercise || perfReps <= 0 || isSubmittingFirstPerf) return
+        const weight = perfWeightRef.current
+        const reps = perfRepsRef.current
+        if (!addWithPerfExercise || reps <= 0 || isSubmittingFirstPerf) return
         const ex = addWithPerfExercise
         const trackedId = `api-${ex.id}`
-        const weight = perfWeight
-        const reps = perfReps
         const t0 = Date.now()
         console.log('[first-perf-debug] submit start', { trackedId, t: t0 })
         setIsSubmittingFirstPerf(true)
@@ -573,7 +588,15 @@ export function ExerciseListPage() {
                     />
                 )}
 
-                <Drawer open={!!addWithPerfExercise} onOpenChange={(open) => !open && setAddWithPerfExercise(null)}>
+                <Drawer
+                    open={!!addWithPerfExercise}
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setAddWithPerfExercise(null)
+                            setPerfFieldStep('weight')
+                        }
+                    }}
+                >
                     <DrawerContent>
                         <div className="w-full p-4">
                             <DrawerHeader>
@@ -581,6 +604,7 @@ export function ExerciseListPage() {
                             </DrawerHeader>
                             {addWithPerfExercise && (
                                 <form
+                                    ref={addWithPerfFormRef}
                                     className="space-y-6 pt-4"
                                     onSubmit={(e) => {
                                         e.preventDefault()
@@ -591,21 +615,27 @@ export function ExerciseListPage() {
                                         <HorizontalWheelPicker
                                             className="w-full"
                                             value={perfWeight}
-                                            onChange={setPerfWeight}
+                                            onChange={updatePerfWeight}
                                             min={0}
                                             max={500}
                                             step={0.5}
                                             label={getWeightLabel(addWithPerfExercise)}
                                             unit="kg"
+                                            autoFocus={perfFieldStep === 'weight'}
+                                            enterKeyHint="next"
+                                            onEnter={() => setPerfFieldStep('reps')}
                                         />
                                         <HorizontalWheelPicker
                                             className="w-full"
                                             value={perfReps}
-                                            onChange={setPerfReps}
+                                            onChange={updatePerfReps}
                                             min={1}
                                             max={100}
                                             step={1}
                                             label={UI.reps}
+                                            autoFocus={perfFieldStep === 'reps'}
+                                            enterKeyHint="done"
+                                            onEnter={() => addWithPerfFormRef.current?.requestSubmit()}
                                         />
                                     </div>
                                     <Button
