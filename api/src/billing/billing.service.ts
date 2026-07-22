@@ -6,6 +6,11 @@ import { AnalyticsService } from '../analytics/analytics.service.js';
 import { UserEntity } from '../auth/entities/user.entity.js';
 import { RewardsService } from '../rewards/rewards.service.js';
 import { extractRevenueFromRevenueCatEvent } from './lib/revenuecat-event-revenue.js';
+import {
+  buildRevenueCatSubscriberAttributes,
+  type RevenueCatSubscriberSnapshot,
+} from './lib/revenuecat-subscriber-attributes.js';
+import { UserProfileEntity } from '../profile/user-profile.entity.js';
 
 const PREMIUM_ACTIVE_EVENTS = new Set([
   'INITIAL_PURCHASE',
@@ -35,6 +40,8 @@ export class BillingService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly usersRepo: Repository<UserEntity>,
+    @InjectRepository(UserProfileEntity)
+    private readonly profilesRepo: Repository<UserProfileEntity>,
     private readonly config: ConfigService,
     private readonly analytics: AnalyticsService,
     private readonly rewardsService: RewardsService,
@@ -67,6 +74,65 @@ export class BillingService {
 
   async setPremium(userId: string, isPremium: boolean): Promise<void> {
     await this.usersRepo.update({ id: userId }, { isPremium });
+    void this.syncSubscriberAttributes(userId);
+  }
+
+  private toSubscriberSnapshot(
+    user: Pick<UserEntity, 'id' | 'email' | 'isPremium'>,
+    profile: UserProfileEntity | null,
+  ): RevenueCatSubscriberSnapshot {
+    return {
+      userId: user.id,
+      email: user.email,
+      firstName: profile?.firstName ?? null,
+      lastName: profile?.lastName ?? null,
+      username: profile?.username ?? null,
+      gender: profile?.gender ?? null,
+      weightKg: profile?.weightKg ?? null,
+      heightCm: profile?.heightCm ?? null,
+      isPremium: user.isPremium,
+      mediaSource: profile?.afMediaSource ?? null,
+      campaign: profile?.afCampaign ?? null,
+      adset: profile?.afAdset ?? null,
+      adgroup: profile?.afAdgroup ?? null,
+      keywords: profile?.afKeywords ?? null,
+      sub1: profile?.afSub1 ?? null,
+    };
+  }
+
+  async syncSubscriberAttributes(userId: string): Promise<void> {
+    const apiKey = this.config.get<string>('REVENUECAT_API_KEY');
+    if (!apiKey?.trim()) return;
+
+    const user = await this.usersRepo.findOne({
+      where: { id: userId },
+      select: ['id', 'email', 'isPremium'],
+    });
+    if (!user) return;
+
+    const profile = await this.profilesRepo.findOne({ where: { userId } });
+    const attributes = buildRevenueCatSubscriberAttributes(
+      this.toSubscriberSnapshot(user, profile),
+    );
+    if (Object.keys(attributes).length === 0) return;
+
+    const response = await fetch(
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(userId)}/attributes`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ attributes }),
+      },
+    );
+
+    if (!response.ok) {
+      this.logger.warn(
+        `RevenueCat attribute sync failed for ${userId}: ${response.status}`,
+      );
+    }
   }
 
   async syncPremiumFromRevenueCat(

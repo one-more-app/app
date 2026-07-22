@@ -11,6 +11,7 @@ import {
   normalizeUsername,
   suggestUsernameFromProfile,
 } from '../social/lib/username.js';
+import { BillingService } from '../billing/billing.service.js';
 import { UsernameService } from '../social/username.service.js';
 import { ObjectStorageService } from '../storage/object-storage.service.js';
 import { UserProfileEntity } from './user-profile.entity.js';
@@ -30,6 +31,7 @@ export class ProfileService {
     private readonly profilesRepo: Repository<UserProfileEntity>,
     private readonly usernameService: UsernameService,
     private readonly objectStorage: ObjectStorageService,
+    private readonly billingService: BillingService,
   ) {}
 
   async getProfile(userId: string) {
@@ -109,6 +111,7 @@ export class ProfileService {
 
     profile.username = username;
     await this.profilesRepo.save(profile);
+    void this.billingService.syncSubscriberAttributes(userId);
     return this.toProfileDto(profile);
   }
 
@@ -140,6 +143,7 @@ export class ProfileService {
     const profile = await this.profilesRepo.findOneOrFail({
       where: { userId },
     });
+    void this.billingService.syncSubscriberAttributes(userId);
     return this.toProfileDto(profile);
   }
 
@@ -154,7 +158,9 @@ export class ProfileService {
     if (profile.attributionRecordedAt) return { ok: true };
 
     const now = new Date();
-    profile.afMediaSource = body.mediaSource?.trim() ? body.mediaSource.trim() : null;
+    profile.afMediaSource = body.mediaSource?.trim()
+      ? body.mediaSource.trim()
+      : null;
     profile.afCampaign = body.campaign?.trim() ? body.campaign.trim() : null;
     profile.afAdset = body.adset?.trim() ? body.adset.trim() : null;
     profile.afAdgroup = body.adgroup?.trim() ? body.adgroup.trim() : null;
@@ -162,10 +168,13 @@ export class ProfileService {
     profile.afIsRetargeting =
       typeof body.isRetargeting === 'boolean' ? body.isRetargeting : null;
     profile.afSub1 = body.afSub1?.trim() ? body.afSub1.trim() : null;
-    profile.afDeepLinkValue = body.deepLinkValue?.trim() ? body.deepLinkValue.trim() : null;
+    profile.afDeepLinkValue = body.deepLinkValue?.trim()
+      ? body.deepLinkValue.trim()
+      : null;
     profile.attributionRecordedAt = now;
 
     await this.profilesRepo.save(profile);
+    void this.billingService.syncSubscriberAttributes(userId);
     return { ok: true };
   }
 
@@ -211,6 +220,7 @@ export class ProfileService {
 
     await this.profilesRepo.upsert({ userId, avatarUrl }, ['userId']);
     const saved = await this.profilesRepo.findOneOrFail({ where: { userId } });
+    void this.billingService.syncSubscriberAttributes(userId);
     return this.toProfileDto(saved);
   }
 }

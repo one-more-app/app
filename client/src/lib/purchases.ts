@@ -1,5 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 import { syncPremiumStatus } from "@/lib/billing-api";
+import { resolveProfileName } from "@/lib/profile-display";
 import { TSHIRT_REWARD_SWR_KEY } from "@/lib/rewards-api";
 import { ACCESS_SWR_KEY } from "@/lib/social-api";
 import { mutate } from "swr";
@@ -12,6 +13,23 @@ type PurchasesOffering =
 
 export type PurchaseOutcome = "purchased" | "cancelled" | "error";
 
+export type RevenueCatSubscriberInfo = {
+  userId: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  username?: string | null;
+  gender?: string | null;
+  weightKg?: number | null;
+  heightCm?: number | null;
+  mediaSource?: string | null;
+  campaign?: string | null;
+  adset?: string | null;
+  adgroup?: string | null;
+  keywords?: string | null;
+  sub1?: string | null;
+};
+
 export type CurrentOffering = {
   offering: PurchasesOffering;
   annual: PurchasesPackage | null;
@@ -20,6 +38,91 @@ export type CurrentOffering = {
 
 let purchasesModule: PurchasesModule | null = null;
 let configuredForUserId: string | null = null;
+let lastSyncedSubscriberFingerprint: string | null = null;
+
+function trimOrNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function buildSubscriberFingerprint(info: RevenueCatSubscriberInfo): string {
+  return JSON.stringify(info);
+}
+
+export async function syncRevenueCatSubscriberInfo(
+  info: RevenueCatSubscriberInfo,
+): Promise<void> {
+  const purchases = await getPurchases();
+  if (!purchases) return;
+
+  const fingerprint = buildSubscriberFingerprint(info);
+  if (fingerprint === lastSyncedSubscriberFingerprint) return;
+  lastSyncedSubscriberFingerprint = fingerprint;
+
+  const { Purchases } = purchases;
+  const resolvedName = resolveProfileName(
+    {
+      firstName: info.firstName ?? undefined,
+      lastName: info.lastName ?? undefined,
+      username: info.username ?? undefined,
+    },
+    { id: info.userId, email: info.email ?? null },
+  );
+  const displayName = resolvedName.fullName;
+
+  const tasks: Promise<void>[] = [];
+
+  if (info.email !== undefined) {
+    tasks.push(Purchases.setEmail({ email: trimOrNull(info.email) }));
+  }
+  tasks.push(Purchases.setDisplayName({ displayName }));
+
+  const customAttributes: Record<string, string | null> = {
+    first_name: trimOrNull(info.firstName ?? null),
+    last_name: trimOrNull(info.lastName ?? null),
+    username: trimOrNull(info.username ?? null),
+    gender: trimOrNull(info.gender ?? null),
+    user_id: info.userId,
+  };
+
+  if (info.weightKg != null) {
+    customAttributes.weight_kg = String(info.weightKg);
+  }
+  if (info.heightCm != null) {
+    customAttributes.height_cm = String(info.heightCm);
+  }
+  if (info.adset != null) {
+    customAttributes.adset = trimOrNull(info.adset);
+  }
+  if (info.sub1 != null) {
+    customAttributes.af_sub1 = trimOrNull(info.sub1);
+  }
+
+  tasks.push(Purchases.setAttributes(customAttributes));
+
+  if (info.mediaSource !== undefined) {
+    tasks.push(
+      Purchases.setMediaSource({ mediaSource: trimOrNull(info.mediaSource) }),
+    );
+  }
+  if (info.campaign !== undefined) {
+    tasks.push(Purchases.setCampaign({ campaign: trimOrNull(info.campaign) }));
+  }
+  if (info.adgroup !== undefined) {
+    tasks.push(Purchases.setAdGroup({ adGroup: trimOrNull(info.adgroup) }));
+  }
+  if (info.keywords !== undefined) {
+    tasks.push(Purchases.setKeyword({ keyword: trimOrNull(info.keywords) }));
+  }
+
+  tasks.push(Purchases.collectDeviceIdentifiers());
+
+  try {
+    await Promise.all(tasks);
+  } catch {
+    lastSyncedSubscriberFingerprint = null;
+  }
+}
 
 function getRevenueCatApiKey(): string | null {
   const platform = Capacitor.getPlatform();
@@ -66,6 +169,7 @@ export async function logOutPurchases(): Promise<void> {
     // ignore if not configured
   }
   configuredForUserId = null;
+  lastSyncedSubscriberFingerprint = null;
 }
 
 async function refreshBillingCaches(): Promise<void> {
@@ -126,11 +230,17 @@ function isUserCancelledError(error: unknown): boolean {
   return false;
 }
 
-export async function syncPurchasesAfterLogin(userId: string): Promise<void> {
+export async function syncPurchasesAfterLogin(
+  userId: string,
+  subscriber?: RevenueCatSubscriberInfo,
+): Promise<void> {
   if (!isPurchasesAvailable()) return;
   await configurePurchases(userId);
   const purchases = await getPurchases();
   if (!purchases) return;
+  if (subscriber) {
+    await syncRevenueCatSubscriberInfo(subscriber);
+  }
   await purchases.Purchases.getCustomerInfo();
   await syncPremiumStatus();
   await refreshBillingCaches();

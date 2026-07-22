@@ -15,6 +15,9 @@ describe('BillingService', () => {
     findOne: jest.fn(),
     update: jest.fn(),
   };
+  const profilesRepo = {
+    findOne: jest.fn(),
+  };
   const analytics = {
     trackValidatedPurchase: jest.fn(),
   };
@@ -39,6 +42,7 @@ describe('BillingService', () => {
     });
     service = new BillingService(
       usersRepo as any,
+      profilesRepo as any,
       config as unknown as ConfigService,
       analytics as any,
       rewardsService as any,
@@ -171,5 +175,55 @@ describe('BillingService', () => {
     expect(
       rewardsService.grantAnnualClassicPackIfMissing,
     ).not.toHaveBeenCalled();
+  });
+
+  it('syncs subscriber attributes to RevenueCat', async () => {
+    usersRepo.findOne.mockResolvedValue({
+      id: 'user-1',
+      email: 'alex@example.com',
+      isPremium: false,
+    });
+    profilesRepo.findOne.mockResolvedValue({
+      userId: 'user-1',
+      firstName: 'Alex',
+      lastName: 'Martin',
+      username: 'alexm',
+      gender: 'male',
+      weightKg: 80,
+      heightCm: 180,
+      afMediaSource: null,
+      afCampaign: null,
+      afAdset: null,
+      afAdgroup: null,
+      afKeywords: null,
+      afSub1: null,
+    });
+
+    const fetchMock = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({}),
+      }),
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    await service.syncSubscriberAttributes('user-1');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.revenuecat.com/v1/subscribers/user-1/attributes',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer rc-test-key',
+        }),
+      }),
+    );
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string,
+    ) as {
+      attributes: Record<string, { value: string }>;
+    };
+    expect(body.attributes.$email).toEqual({ value: 'alex@example.com' });
+    expect(body.attributes.$displayName).toEqual({ value: 'Alex Martin' });
   });
 });

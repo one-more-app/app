@@ -25,6 +25,9 @@ describe('ProfileService', () => {
     isManagedPublicUrl: jest.fn(() => false),
     normalizePublicObjectUrl: jest.fn((url: string | null) => url),
   };
+  const billingService = {
+    syncSubscriberAttributes: jest.fn(),
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -32,6 +35,7 @@ describe('ProfileService', () => {
       profilesRepo as any,
       usernameService as any,
       objectStorage as any,
+      billingService as any,
     );
   });
 
@@ -68,7 +72,7 @@ describe('ProfileService', () => {
     };
     profilesRepo.findOne.mockResolvedValue(existing);
     usernameService.assertAvailable.mockResolvedValue('my_pseudo');
-    profilesRepo.save.mockImplementation(async (profile) => profile);
+    profilesRepo.save.mockImplementation((profile) => Promise.resolve(profile));
 
     const profile = await service.updateUsername('user-1', 'my_pseudo');
 
