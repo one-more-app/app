@@ -11,6 +11,7 @@ import { FriendshipEntity } from '../social/entities/friendship.entity.js';
 import { FriendshipStatus } from '../social/entities/friendship-status.enum.js';
 import { applyStreakExpiry } from '../progress/lib/streak-dates.js';
 import { isStreakAtRisk } from '../progress/lib/streak-dates.js';
+import { DeviceTokensService } from './device-tokens.service.js';
 import { FriendTrainingAlertsService } from './friend-training-alerts.service.js';
 import { formatUserDisplayName } from './lib/display-name.js';
 import { localDateKey, localWeekKey } from './lib/timezone.js';
@@ -34,6 +35,7 @@ export class NotificationDispatchService {
     private readonly xpRepo: Repository<XpEventEntity>,
     private readonly prefs: NotificationPreferencesService,
     private readonly push: PushNotificationService,
+    private readonly deviceTokens: DeviceTokensService,
     private readonly trainingAlerts: FriendTrainingAlertsService,
     @InjectRepository(FriendshipEntity)
     private readonly friendshipsRepo: Repository<FriendshipEntity>,
@@ -198,7 +200,14 @@ export class NotificationDispatchService {
   async notifyFriendTraining(params: {
     trainingUserId: string;
     exerciseName: string | null;
+    sessionDate: string;
   }) {
+    const timezone = await this.deviceTokens.getTimezoneForUser(
+      params.trainingUserId,
+    );
+    const today = localDateKey(timezone);
+    if (params.sessionDate !== today) return;
+
     const subscribers = await this.trainingAlerts.listSubscribersForFriend(
       params.trainingUserId,
     );
@@ -206,7 +215,6 @@ export class NotificationDispatchService {
 
     const name = await this.profileName(params.trainingUserId);
     const exercise = params.exerciseName?.trim() || 'un exercice';
-    const today = localDateKey('UTC');
 
     for (const subscriberId of subscribers) {
       if (
@@ -221,8 +229,8 @@ export class NotificationDispatchService {
         type: NotificationType.FriendTraining,
         title: 'Séance en cours',
         body: `${name} s'entraîne sur ${exercise}`,
-        route: `/session/${params.trainingUserId}/${today}`,
-        dedupKey: `training:${params.trainingUserId}:${today}`,
+        route: `/session/${params.trainingUserId}/${params.sessionDate}`,
+        dedupKey: `training:${params.trainingUserId}:${params.sessionDate}`,
       });
     }
   }

@@ -39,6 +39,15 @@ export class DeviceTokensService {
     return await this.repo.find({ where: { userId } });
   }
 
+  async getTimezoneForUser(userId: string): Promise<string> {
+    const row = await this.repo.findOne({
+      where: { userId },
+      order: { lastSeenAt: 'DESC' },
+      select: ['timezone'],
+    });
+    return row?.timezone ?? 'UTC';
+  }
+
   async listDistinctTimezones(): Promise<string[]> {
     const rows = await this.repo
       .createQueryBuilder('d')

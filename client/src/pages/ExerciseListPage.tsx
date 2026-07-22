@@ -28,6 +28,7 @@ import { useBack } from '@/hooks/use-back'
 import { useExerciseCatalogBrowse } from '@/hooks/use-exercise-catalog-browse'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useTheme } from '@/hooks/use-theme'
+import { useTourDomReady } from '@/hooks/use-tour-dom-ready'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
 import { fetchExercisesCatalog, fetchExercisesMeta } from '@/lib/data-api'
 import { filterCatalogExercises } from '@/lib/exercise-catalog-browse'
@@ -156,6 +157,8 @@ export function ExerciseListPage() {
         return filterCatalogExercises(catalogData?.items ?? [])
     }, [catalogData?.items])
 
+    const catalogContentReady = !isLoadingCatalog || catalogData != null
+
     const isSearchMode = searchQuery.trim().length > 0
     const prevSearchQueryRef = useRef(searchQuery)
 
@@ -244,7 +247,20 @@ export function ExerciseListPage() {
             })
         }
         return steps
-    }, [isSearchMode, browse.step, catalogExercises.length, firstExerciseTourActive])
+    }, [isSearchMode, browse.step, catalogExercises.length])
+
+    const firstExerciseTourTargets = useMemo(
+        () => firstExerciseOnboardingSteps.map((step) => step.target as string),
+        [firstExerciseOnboardingSteps],
+    )
+    const firstExerciseTourDomReady = useTourDomReady(
+        firstExerciseTourActive && catalogContentReady,
+        firstExerciseTourTargets,
+    )
+    const firstExerciseTourRun =
+        firstExerciseTourActive &&
+        catalogContentReady &&
+        firstExerciseTourDomReady
 
     const firstExerciseJoyrideOptions = useMemo(
         () => ({
@@ -264,7 +280,7 @@ export function ExerciseListPage() {
             scrollOffset: getJoyrideScrollOffset(),
             buttons: ['back', 'close', 'primary', 'skip'] as const,
         }),
-        [resolvedTheme, firstExerciseTourActive],
+        [resolvedTheme],
     )
 
     const firstExerciseJoyrideStyles = useMemo(
@@ -657,7 +673,7 @@ export function ExerciseListPage() {
                     </DialogContent>
                 </Dialog>
 
-                {firstExerciseTourActive ? (
+                {firstExerciseTourRun ? (
                     <Joyride
                         key="first-exercise-tour"
                         steps={firstExerciseOnboardingSteps}

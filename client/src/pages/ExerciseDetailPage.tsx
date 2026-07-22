@@ -29,6 +29,7 @@ import { useExercisePresence } from '@/hooks/use-exercise-presence'
 import { useLatestGlobalPerf } from '@/hooks/use-latest-global-perf'
 import { usePerformance } from '@/hooks/use-performance'
 import { useTheme } from '@/hooks/use-theme'
+import { useTourDomReady } from '@/hooks/use-tour-dom-ready'
 import { fetchExercisesMeta, fetchExerciseTierLadder, fetchPerformanceEntries } from '@/lib/data-api'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
 import {
@@ -306,6 +307,13 @@ export function ExerciseDetailPage() {
         return steps
     }, [entries.length, leagueInfo, tourReady])
 
+    const exerciseTourTargets = useMemo(
+        () => exerciseOnboardingSteps.map((step) => step.target as string),
+        [exerciseOnboardingSteps],
+    )
+    const exerciseTourDomReady = useTourDomReady(tourReady, exerciseTourTargets)
+    const exerciseTourRun = tourReady && exerciseTourDomReady
+
     const exerciseJoyrideOptions = useMemo(
         () => ({
             arrowColor: 'var(--card)',
@@ -324,7 +332,7 @@ export function ExerciseDetailPage() {
             scrollOffset: getJoyrideScrollOffset(),
             buttons: ['back', 'close', 'primary', 'skip'] as const,
         }),
-        [resolvedTheme, tourReady],
+        [resolvedTheme],
     )
 
     const exerciseJoyrideStyles = useMemo(
@@ -766,11 +774,11 @@ export function ExerciseDetailPage() {
                     </DialogContent>
                 </Dialog>
 
-                {tourReady ? (
+                {exerciseTourRun ? (
                     <Joyride
                         key={id}
                         steps={exerciseOnboardingSteps}
-                        run={tourReady}
+                        run
                         continuous
                         options={exerciseJoyrideOptions}
                         styles={exerciseJoyrideStyles}

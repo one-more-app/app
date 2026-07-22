@@ -7,7 +7,7 @@ import {
 import { NotificationDispatchService } from '../notifications/notification-dispatch.service.js';
 import { XpSourceType } from '../progress/entities/xp-source-type.enum.js';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { LeagueService } from '../league/league.service.js';
 import { ProgressService } from '../progress/progress.service.js';
 import { RealtimeBroadcaster } from '../realtime/realtime-broadcaster.service.js';
@@ -108,12 +108,18 @@ export class PerformanceEntriesService {
     });
     if (!tracked) throw new NotFoundException('Exercice suivi introuvable');
 
+    const activityDate = parseIsoDate(body.date).toISOString().slice(0, 10);
+    const isFirstPerfOfDay =
+      (await this.perfRepo.count({
+        where: { userId, date: activityDate, deletedAt: IsNull() },
+      })) === 0;
+
     await this.perfRepo.upsert(
       {
         userId,
         clientId: body.id,
         trackedExerciseId: tracked.id,
-        date: parseIsoDate(body.date).toISOString().slice(0, 10),
+        date: activityDate,
         weight: body.weight,
         reps: Math.round(body.reps),
         deletedAt: null,
@@ -125,15 +131,22 @@ export class PerformanceEntriesService {
       relations: { trackedExercise: true },
     });
 
-    const activityDate = entity.date;
     const xp = await this.progressService.processPerformanceAdded({
       userId,
       perfClientId: body.id,
       trackedExerciseClientId: body.trackedExerciseId,
-      activityDate,
+      activityDate: entity.date,
       weight: entity.weight,
       reps: entity.reps,
     });
+
+    if (isFirstPerfOfDay) {
+      void this.notifications.notifyFriendTraining({
+        trainingUserId: userId,
+        exerciseName: entity.trackedExercise.name,
+        sessionDate: entity.date,
+      });
+    }
 
     const hasPr = xp.grants.some(
       (g) => g.sourceType === XpSourceType.PersonalRecord,

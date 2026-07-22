@@ -1,4 +1,5 @@
 import { AppTour } from "@/components/AppTour";
+import { useTourDomReady } from "@/hooks/use-tour-dom-ready";
 import { getJoyrideScrollOffset, getJoyrideShiftPadding } from "@/lib/joyride-config";
 import {
   isHomeTourComplete,
@@ -7,7 +8,7 @@ import {
   setHomeTourComplete,
 } from "@/lib/storage";
 import { UI } from "@/lib/translations";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import type { Step } from "react-joyride";
 
 type HomeTourProps = {
@@ -20,32 +21,19 @@ function isOtherAppTourActive(): boolean {
   return isOnboardingFirstExercisePending() && !isOnboardingTourComplete();
 }
 
-const HOME_TOUR_TARGETS = [
-  '[data-tour="home-progress-banner"]',
-  '[data-tour="home-today"]',
-  '[data-tour="home-browse"]',
-  '[data-tour="nav-profile"]',
-  '[data-tour="nav-history"]',
-  '[data-tour="nav-friends"]',
-] as const;
-
 export function HomeTour({
   pageReady,
   progressReady,
   hasTodaySection,
 }: HomeTourProps) {
-  const [domReady, setDomReady] = useState(false);
-
-  const otherTourActive = isOtherAppTourActive();
   const tourEligible =
     pageReady &&
     progressReady &&
     !isHomeTourComplete() &&
-    !otherTourActive;
+    !isOtherAppTourActive();
 
   const dismissTour = useCallback(() => {
     setHomeTourComplete(true);
-    setDomReady(false);
   }, []);
 
   const steps = useMemo<Step[]>(() => {
@@ -116,36 +104,25 @@ export function HomeTour({
     return nextSteps;
   }, [hasTodaySection]);
 
-  useEffect(() => {
-    if (!tourEligible) return undefined;
-
-    const timer = window.setTimeout(() => {
-      const requiredTargets = hasTodaySection
-        ? HOME_TOUR_TARGETS
-        : HOME_TOUR_TARGETS.filter((selector) => selector !== '[data-tour="home-today"]');
-      if (requiredTargets.every((selector) => document.querySelector(selector))) {
-        setDomReady(true);
-      }
-    }, 500);
-
-    return () => {
-      window.clearTimeout(timer);
-      setDomReady(false);
-    };
-  }, [tourEligible, hasTodaySection]);
+  const targets = useMemo(
+    () => steps.map((step) => step.target as string),
+    [steps],
+  );
+  const domReady = useTourDomReady(tourEligible, targets);
+  const run = tourEligible && domReady;
 
   useEffect(() => {
-    if (!tourEligible || !domReady) return;
+    if (!run) return;
     const viewport = document.querySelector(".app-scroll-viewport");
     if (viewport instanceof HTMLElement) {
       viewport.scrollTop = 0;
     }
-  }, [tourEligible, domReady]);
+  }, [run]);
 
   return (
     <AppTour
       steps={steps}
-      run={tourEligible && domReady}
+      run={run}
       continuous
       onFinish={dismissTour}
       onDismiss={dismissTour}

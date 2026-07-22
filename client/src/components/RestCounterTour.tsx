@@ -1,4 +1,5 @@
 import { AppTour } from "@/components/AppTour";
+import { useTourDomReady } from "@/hooks/use-tour-dom-ready";
 import { getJoyrideShiftPadding } from "@/lib/joyride-config";
 import { setRestCounterTourQuickEditStep2Active } from "@/lib/rest-counter-tour-quick-edit";
 import {
@@ -13,7 +14,7 @@ import {
   setRestCounterTourComplete,
 } from "@/lib/storage";
 import { UI } from "@/lib/translations";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { EVENTS, type EventData, type Step } from "react-joyride";
 
 type RestCounterTourProps = {
@@ -30,17 +31,19 @@ function endTourQuickEditStep2(): void {
   setRestCounterTourQuickEditStep2Active(false);
 }
 
-export function RestCounterTour({ barVisible }: RestCounterTourProps) {
-  const [domReady, setDomReady] = useState(false);
+const REST_COUNTER_TOUR_TARGETS = [
+  '[data-tour="rest-counter"]',
+  '[data-tour="rest-counter-target"]',
+] as const;
 
-  const otherTourActive = isOtherAppTourActive();
+export function RestCounterTour({ barVisible }: RestCounterTourProps) {
   const tourEligible =
-    barVisible && !isRestCounterTourComplete() && !otherTourActive;
+    barVisible && !isRestCounterTourComplete() && !isOtherAppTourActive();
+  const domReady = useTourDomReady(tourEligible, REST_COUNTER_TOUR_TARGETS);
 
   const dismissTour = useCallback(() => {
     endTourQuickEditStep2();
     setRestCounterTourComplete(true);
-    setDomReady(false);
   }, []);
 
   const steps = useMemo<Step[]>(
@@ -95,24 +98,6 @@ export function RestCounterTour({ barVisible }: RestCounterTourProps) {
       startRestCounterTourSpotlightSync();
     }
   }, []);
-
-  useEffect(() => {
-    if (!tourEligible) return undefined;
-
-    const timer = window.setTimeout(() => {
-      if (
-        document.querySelector('[data-tour="rest-counter"]') &&
-        document.querySelector('[data-tour="rest-counter-target"]')
-      ) {
-        setDomReady(true);
-      }
-    }, 500);
-
-    return () => {
-      window.clearTimeout(timer);
-      setDomReady(false);
-    };
-  }, [tourEligible]);
 
   useEffect(() => {
     return () => {
