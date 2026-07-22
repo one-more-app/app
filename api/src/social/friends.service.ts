@@ -84,8 +84,17 @@ export class FriendsService {
       };
     });
 
+    // Défense : une seule entrée accepted par userId (doublons A↔B historiques).
+    const seenAccepted = new Set<string>();
+    const friends = items.filter((i) => {
+      if (i.status !== FriendshipStatus.ACCEPTED) return false;
+      if (seenAccepted.has(i.userId)) return false;
+      seenAccepted.add(i.userId);
+      return true;
+    });
+
     return {
-      friends: items.filter((i) => i.status === FriendshipStatus.ACCEPTED),
+      friends,
       pendingIncoming: items.filter(
         (i) =>
           i.status === FriendshipStatus.PENDING && i.direction === 'incoming',
@@ -249,14 +258,16 @@ export class FriendsService {
   }
 
   async remove(userId: string, otherUserId: string) {
-    const friendship = await this.friendshipsRepo.findOne({
+    const friendships = await this.friendshipsRepo.find({
       where: [
         { requesterId: userId, addresseeId: otherUserId },
         { requesterId: otherUserId, addresseeId: userId },
       ],
     });
-    if (!friendship) throw new NotFoundException('Relation introuvable');
-    await this.friendshipsRepo.remove(friendship);
+    if (friendships.length === 0) {
+      throw new NotFoundException('Relation introuvable');
+    }
+    await this.friendshipsRepo.remove(friendships);
     return { ok: true };
   }
 

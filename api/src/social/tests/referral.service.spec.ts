@@ -156,4 +156,64 @@ describe('ReferralService', () => {
       }),
     ).resolves.toBeUndefined();
   });
+
+  it('reuses reverse accepted friendship instead of creating a duplicate', async () => {
+    invitesService.findInviterProfileByCode.mockResolvedValue({
+      userId: 'referrer-1',
+    });
+    profilesRepo.findOne.mockResolvedValue({
+      userId: 'user-1',
+      referredByUserId: null,
+    });
+    friendshipsRepo.findOne.mockResolvedValue({
+      id: 'friendship-reverse',
+      requesterId: 'user-1',
+      addresseeId: 'referrer-1',
+      status: 'accepted',
+    });
+    accessService.hasJustUnlockedTshirtReward.mockResolvedValue(false);
+
+    await service.applyReferralCode('user-1', 'abc12345');
+
+    expect(friendshipsRepo.save).not.toHaveBeenCalled();
+    expect(profilesRepo.update).toHaveBeenCalledWith(
+      { userId: 'user-1' },
+      { referredByUserId: 'referrer-1' },
+    );
+  });
+
+  it('upgrades reverse pending friendship to accepted', async () => {
+    invitesService.findInviterProfileByCode.mockResolvedValue({
+      userId: 'referrer-1',
+    });
+    profilesRepo.findOne.mockResolvedValue({
+      userId: 'user-1',
+      referredByUserId: null,
+    });
+    const existing = {
+      id: 'friendship-reverse',
+      requesterId: 'user-1',
+      addresseeId: 'referrer-1',
+      status: 'pending',
+    };
+    friendshipsRepo.findOne.mockResolvedValue(existing);
+    friendshipsRepo.save.mockResolvedValue({
+      ...existing,
+      status: 'accepted',
+    });
+    accessService.hasJustUnlockedTshirtReward.mockResolvedValue(false);
+
+    await service.applyReferralCode('user-1', 'abc12345');
+
+    expect(friendshipsRepo.save).toHaveBeenCalledWith({
+      ...existing,
+      status: 'accepted',
+    });
+    expect(friendshipsRepo.save).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        requesterId: 'referrer-1',
+        addresseeId: 'user-1',
+      }),
+    );
+  });
 });

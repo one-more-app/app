@@ -65,9 +65,10 @@ export class NotificationDispatchService {
         { addresseeId: userId, status: FriendshipStatus.ACCEPTED },
       ],
     });
-    return friendships.map((f) =>
+    const friendIds = friendships.map((f) =>
       f.requesterId === userId ? f.addresseeId : f.requesterId,
     );
+    return [...new Set(friendIds)];
   }
 
   private truncate(text: string, max = 80): string {

@@ -12,7 +12,8 @@ export async function getAcceptedFriendIds(
       { addresseeId: userId, status: FriendshipStatus.ACCEPTED },
     ],
   });
-  return friendships.map((f) =>
+  const friendIds = friendships.map((f) =>
     f.requesterId === userId ? f.addresseeId : f.requesterId,
   );
+  return [...new Set(friendIds)];
 }

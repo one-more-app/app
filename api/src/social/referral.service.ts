@@ -83,12 +83,7 @@ export class ReferralService {
 
   async requestFromInvite(userId: string, inviteCode: string) {
     const { referrerUserId } = await this.applyReferralCode(userId, inviteCode);
-    const friendship = await this.friendshipsRepo.findOne({
-      where: {
-        requesterId: referrerUserId,
-        addresseeId: userId,
-      },
-    });
+    const friendship = await this.findFriendshipBetween(referrerUserId, userId);
     if (!friendship) {
       throw new NotFoundException('Relation introuvable');
     }
@@ -115,6 +110,15 @@ export class ReferralService {
     }
   }
 
+  private async findFriendshipBetween(userId: string, otherUserId: string) {
+    return await this.friendshipsRepo.findOne({
+      where: [
+        { requesterId: userId, addresseeId: otherUserId },
+        { requesterId: otherUserId, addresseeId: userId },
+      ],
+    });
+  }
+
   private async ensureAcceptedFriendship(
     requesterId: string,
     addresseeId: string,
@@ -123,14 +127,14 @@ export class ReferralService {
       throw new BadRequestException('Tu ne peux pas t’inviter toi-même');
     }
 
-    const existing = await this.friendshipsRepo.findOne({
-      where: {
-        requesterId,
-        addresseeId,
-      },
-    });
+    // Lookup bidirectionnel : une amitié inverse (filleul → parrain) ne doit
+    // pas créer une 2e row (parrain → filleul).
+    const existing = await this.findFriendshipBetween(requesterId, addresseeId);
     if (existing) {
-      if (existing.status === FriendshipStatus.PENDING) {
+      if (
+        existing.status === FriendshipStatus.PENDING ||
+        existing.status === FriendshipStatus.DECLINED
+      ) {
         existing.status = FriendshipStatus.ACCEPTED;
         await this.friendshipsRepo.save(existing);
       }
