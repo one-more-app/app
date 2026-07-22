@@ -24,14 +24,15 @@ export function readStoredSession(): StoredAuthSession | null {
     const raw = localStorage.getItem(AUTH_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<StoredAuthSession>;
+    const user = parsed.user as Partial<AuthUser> | null | undefined;
     if (
       !parsed ||
       typeof parsed !== "object" ||
       typeof parsed.accessToken !== "string" ||
       typeof parsed.refreshToken !== "string" ||
-      !parsed.user ||
-      typeof parsed.user !== "object" ||
-      typeof (parsed.user as any).id !== "string"
+      !user ||
+      typeof user !== "object" ||
+      typeof user.id !== "string"
     ) {
       return null;
     }
@@ -39,11 +40,10 @@ export function readStoredSession(): StoredAuthSession | null {
       accessToken: parsed.accessToken,
       refreshToken: parsed.refreshToken,
       user: {
-        id: String((parsed.user as any).id),
+        id: user.id,
         email:
-          (parsed.user as any).email === null ||
-          typeof (parsed.user as any).email === "string"
-            ? ((parsed.user as any).email as string | null)
+          user.email === null || typeof user.email === "string"
+            ? user.email
             : null,
       },
     };
@@ -95,6 +95,9 @@ export async function registerWithEmail(params: {
   inviteCode?: string;
   firstName?: string;
   lastName?: string;
+  weightKg?: number;
+  heightCm?: number;
+  gender?: "male" | "female";
 }): Promise<AuthSession> {
   return await apiFetch<AuthSession>("/auth/register", {
     method: "POST",

@@ -17,8 +17,11 @@ import {
 import { notifyPerfMilestones } from "@/lib/perf-notifications";
 import { getProfileDisplayName } from "@/lib/profile-display";
 import {
+    applySessionReactionTarget,
     fetchSession,
     sessionSwrKey,
+    toggleSessionReaction,
+    type SessionReactionTargetType,
 } from "@/lib/session-api";
 import {
     deletePerformanceAndWait,
@@ -29,6 +32,7 @@ import {
 import { UI } from "@/lib/translations";
 import { notifyXpGrants } from "@/lib/xp-notifications";
 import type { PerformanceEntry } from "@/types";
+import { toast } from "sonner";
 import { Radio } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -159,6 +163,32 @@ export default function SessionPage() {
         await mutate(sessionSwrKey(ownerUserId, date));
     }, [ownerUserId, date, mutate]);
 
+    const handleToggleReaction = useCallback(
+        async (
+            emoji: string,
+            targetType: SessionReactionTargetType,
+            trackedExerciseId?: string,
+        ) => {
+            if (!ownerUserId || !date) return;
+            try {
+                const { target } = await toggleSessionReaction(ownerUserId, date, {
+                    emoji,
+                    targetType,
+                    trackedExerciseId,
+                });
+                void mutate(
+                    sessionSwrKey(ownerUserId, date),
+                    (current) =>
+                        current ? applySessionReactionTarget(current, target) : current,
+                    { revalidate: false },
+                );
+            } catch {
+                toast.error(UI.sessionReactionError);
+            }
+        },
+        [ownerUserId, date, mutate],
+    );
+
     if (!ownerUserId || !date) {
         return (
             <div className="min-h-screen-app bg-background">
@@ -214,6 +244,17 @@ export default function SessionPage() {
                                         }
                                         entryInsights={entryInsights}
                                         readOnly={!isOwner}
+                                        reactionsEnabled
+                                        reactionsByExerciseId={
+                                            session?.reactionsByExerciseId ?? {}
+                                        }
+                                        onToggleExerciseReaction={(trackedExerciseId, emoji) =>
+                                            void handleToggleReaction(
+                                                emoji,
+                                                "exercise",
+                                                trackedExerciseId,
+                                            )
+                                        }
                                         onEditEntry={isOwner ? setEditEntry : () => { }}
                                         onDeleteEntry={
                                             isOwner

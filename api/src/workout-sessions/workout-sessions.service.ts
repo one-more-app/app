@@ -15,6 +15,11 @@ import { FriendsService } from '../social/friends.service.js';
 import { TrackedExercisesService } from '../tracked-exercises/tracked-exercises.service.js';
 import { SESSION_ACTIVE_IDLE_MS } from '../shared/session-timing.js';
 import { SessionCommentEntity } from './entities/session-comment.entity.js';
+import {
+  SESSION_REACTION_EMOJIS,
+  SessionReactionEntity,
+  type SessionReactionTargetType,
+} from './entities/session-reaction.entity.js';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -35,11 +40,25 @@ export type SessionCommentDto = {
   replies: SessionCommentDto[];
 };
 
+export type ReactionBubbleDto = {
+  emoji: string;
+  count: number;
+  reactedByMe: boolean;
+};
+
+export type SessionReactionTargetDto = {
+  targetType: SessionReactionTargetType;
+  trackedExerciseId: string | null;
+  reactions: ReactionBubbleDto[];
+};
+
 @Injectable()
 export class WorkoutSessionsService {
   constructor(
     @InjectRepository(SessionCommentEntity)
     private readonly commentsRepo: Repository<SessionCommentEntity>,
+    @InjectRepository(SessionReactionEntity)
+    private readonly reactionsRepo: Repository<SessionReactionEntity>,
     @InjectRepository(UserProfileEntity)
     private readonly profilesRepo: Repository<UserProfileEntity>,
     private readonly friendsService: FriendsService,
@@ -134,6 +153,12 @@ export class WorkoutSessionsService {
       },
     });
 
+    const { reactions, reactionsByExerciseId } = await this.aggregateReactions(
+      viewerId,
+      ownerUserId,
+      date,
+    );
+
     return {
       owner: {
         userId: ownerUserId,
@@ -150,6 +175,163 @@ export class WorkoutSessionsService {
       commentCount,
       exerciseCount: exercises.length,
       setCount: entries.length,
+      reactions,
+      reactionsByExerciseId,
+    };
+  }
+
+  private aggregateReactionRows(
+    rows: SessionReactionEntity[],
+    viewerId: string,
+  ): ReactionBubbleDto[] {
+    const byEmoji = new Map<string, { count: number; reactedByMe: boolean }>();
+    for (const row of rows) {
+      const current = byEmoji.get(row.emoji) ?? {
+        count: 0,
+        reactedByMe: false,
+      };
+      current.count += 1;
+      if (row.authorUserId === viewerId) current.reactedByMe = true;
+      byEmoji.set(row.emoji, current);
+    }
+    return [...byEmoji.entries()]
+      .map(([emoji, value]) => ({
+        emoji,
+        count: value.count,
+        reactedByMe: value.reactedByMe,
+      }))
+      .sort((a, b) => b.count - a.count || a.emoji.localeCompare(b.emoji));
+  }
+
+  private async aggregateReactions(
+    viewerId: string,
+    ownerUserId: string,
+    date: string,
+  ): Promise<{
+    reactions: ReactionBubbleDto[];
+    reactionsByExerciseId: Record<string, ReactionBubbleDto[]>;
+  }> {
+    const rows = await this.reactionsRepo.find({
+      where: { ownerUserId, sessionDate: date },
+      order: { createdAt: 'ASC' },
+    });
+
+    const sessionRows = rows.filter((row) => row.targetType === 'session');
+    const reactions = this.aggregateReactionRows(sessionRows, viewerId);
+
+    const reactionsByExerciseId: Record<string, ReactionBubbleDto[]> = {};
+    const exerciseRows = rows.filter(
+      (row) => row.targetType === 'exercise' && row.trackedExerciseId,
+    );
+    const byExercise = new Map<string, SessionReactionEntity[]>();
+    for (const row of exerciseRows) {
+      const key = row.trackedExerciseId!;
+      const list = byExercise.get(key) ?? [];
+      list.push(row);
+      byExercise.set(key, list);
+    }
+    for (const [trackedExerciseId, list] of byExercise) {
+      reactionsByExerciseId[trackedExerciseId] = this.aggregateReactionRows(
+        list,
+        viewerId,
+      );
+    }
+
+    return { reactions, reactionsByExerciseId };
+  }
+
+  private assertReactionTarget(
+    targetType: SessionReactionTargetType,
+    trackedExerciseId?: string | null,
+  ): string | null {
+    if (targetType === 'session') {
+      if (trackedExerciseId) {
+        throw new BadRequestException(
+          'trackedExerciseId interdit pour une réaction de séance',
+        );
+      }
+      return null;
+    }
+    if (!trackedExerciseId) {
+      throw new BadRequestException(
+        'trackedExerciseId requis pour une réaction d’exercice',
+      );
+    }
+    return trackedExerciseId;
+  }
+
+  private assertAllowedEmoji(emoji: string) {
+    if (!(SESSION_REACTION_EMOJIS as readonly string[]).includes(emoji)) {
+      throw new BadRequestException('Emoji non autorisé');
+    }
+  }
+
+  async toggleReaction(
+    viewerId: string,
+    ownerUserId: string,
+    date: string,
+    emoji: string,
+    targetType: SessionReactionTargetType,
+    trackedExerciseId?: string,
+  ): Promise<{
+    target: SessionReactionTargetDto;
+    added: boolean;
+  }> {
+    this.assertValidDate(date);
+    await this.assertCanViewSession(viewerId, ownerUserId);
+    this.assertAllowedEmoji(emoji);
+    const resolvedTrackedId = this.assertReactionTarget(
+      targetType,
+      trackedExerciseId,
+    );
+
+    const existing = await this.reactionsRepo.findOne({
+      where: {
+        ownerUserId,
+        sessionDate: date,
+        authorUserId: viewerId,
+        emoji,
+        targetType,
+        trackedExerciseId:
+          resolvedTrackedId === null ? IsNull() : resolvedTrackedId,
+      },
+    });
+
+    let added = false;
+    if (existing) {
+      await this.reactionsRepo.remove(existing);
+    } else {
+      await this.reactionsRepo.save(
+        this.reactionsRepo.create({
+          ownerUserId,
+          sessionDate: date,
+          authorUserId: viewerId,
+          emoji,
+          targetType,
+          trackedExerciseId: resolvedTrackedId,
+        }),
+      );
+      added = true;
+    }
+
+    const targetRows = await this.reactionsRepo.find({
+      where: {
+        ownerUserId,
+        sessionDate: date,
+        targetType,
+        trackedExerciseId:
+          resolvedTrackedId === null ? IsNull() : resolvedTrackedId,
+      },
+      order: { createdAt: 'ASC' },
+    });
+
+    return {
+      added,
+      target: {
+        targetType,
+        trackedExerciseId: resolvedTrackedId,
+        reactions: this.aggregateReactionRows(targetRows, viewerId),
+      },
     };
   }
 

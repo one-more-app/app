@@ -31,7 +31,16 @@ type IdTokenClaims = {
   name?: string;
 };
 
-async function postForm(url: string, data: Record<string, string>) {
+type OAuthTokenResponse = {
+  id_token?: string;
+  error?: string;
+  error_description?: string;
+};
+
+async function postForm(
+  url: string,
+  data: Record<string, string>,
+): Promise<OAuthTokenResponse> {
   const body = new URLSearchParams(data);
   const res = await fetch(url, {
     method: 'POST',
@@ -39,9 +48,9 @@ async function postForm(url: string, data: Record<string, string>) {
     body,
   });
   const text = await res.text();
-  let json: any = null;
+  let json: OAuthTokenResponse | null = null;
   try {
-    json = JSON.parse(text);
+    json = JSON.parse(text) as OAuthTokenResponse;
   } catch {
     // ignore
   }
@@ -50,7 +59,7 @@ async function postForm(url: string, data: Record<string, string>) {
       json?.error_description ?? json?.error ?? 'OAuth échoué',
     );
   }
-  return json;
+  return json ?? {};
 }
 
 function toOAuthProvider(provider: Provider): OAuthProvider {
@@ -147,6 +156,9 @@ export class OAuthService {
       state: string;
       deviceId?: string;
       inviteCode?: string;
+      weightKg?: number;
+      heightCm?: number;
+      gender?: 'male' | 'female';
     },
   ) {
     const pending = consumeOAuthState(params.state);
@@ -171,6 +183,9 @@ export class OAuthService {
       email,
       deviceId: params.deviceId,
       inviteCode: params.inviteCode,
+      weightKg: params.weightKg,
+      heightCm: params.heightCm,
+      gender: params.gender,
     });
   }
 
@@ -181,6 +196,9 @@ export class OAuthService {
     inviteCode?: string;
     firstName?: string;
     lastName?: string;
+    weightKg?: number;
+    heightCm?: number;
+    gender?: 'male' | 'female';
   }) {
     const audience = this.googleIdTokenAudience(params.platform);
     const {
@@ -197,6 +215,9 @@ export class OAuthService {
       inviteCode: params.inviteCode,
       firstName: tokenFirstName ?? this.normalizeName(params.firstName),
       lastName: tokenLastName ?? this.normalizeName(params.lastName),
+      weightKg: params.weightKg,
+      heightCm: params.heightCm,
+      gender: params.gender,
     });
   }
 
@@ -207,6 +228,9 @@ export class OAuthService {
     inviteCode?: string;
     firstName?: string;
     lastName?: string;
+    weightKg?: number;
+    heightCm?: number;
+    gender?: 'male' | 'female';
   }) {
     const audience = this.appleIdTokenAudience(params.platform);
     const {
@@ -223,6 +247,9 @@ export class OAuthService {
       inviteCode: params.inviteCode,
       firstName: tokenFirstName ?? this.normalizeName(params.firstName),
       lastName: tokenLastName ?? this.normalizeName(params.lastName),
+      weightKg: params.weightKg,
+      heightCm: params.heightCm,
+      gender: params.gender,
     });
   }
 
@@ -234,6 +261,9 @@ export class OAuthService {
     inviteCode?: string;
     firstName?: string | null;
     lastName?: string | null;
+    weightKg?: number;
+    heightCm?: number;
+    gender?: 'male' | 'female';
   }) {
     const oauthProvider = toOAuthProvider(params.provider);
     const linked = await this.oauthAccountsRepo.findOne({
@@ -273,6 +303,9 @@ export class OAuthService {
           email: normalizedEmail,
           firstName: normalizedFirstName,
           lastName: normalizedLastName,
+          weightKg: params.weightKg,
+          heightCm: params.heightCm,
+          gender: params.gender,
         });
         await this.referrals.applyReferralCodeOnSignup({
           newUserId: created.id,
@@ -451,7 +484,10 @@ export class OAuthService {
 
     const nextFirstName = profile.firstName ?? params.firstName;
     const nextLastName = profile.lastName ?? params.lastName;
-    if (nextFirstName === profile.firstName && nextLastName === profile.lastName) {
+    if (
+      nextFirstName === profile.firstName &&
+      nextLastName === profile.lastName
+    ) {
       return;
     }
 

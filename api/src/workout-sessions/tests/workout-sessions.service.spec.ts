@@ -38,6 +38,13 @@ describe('WorkoutSessionsService', () => {
     create: jest.fn((value) => value),
     save: jest.fn(),
   };
+  const reactionsRepo = {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    create: jest.fn((value) => value),
+    save: jest.fn(),
+    remove: jest.fn(),
+  };
   const profilesRepo = {
     findOne: jest.fn(),
     find: jest.fn(),
@@ -59,8 +66,10 @@ describe('WorkoutSessionsService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    reactionsRepo.find.mockResolvedValue([]);
     service = new WorkoutSessionsService(
       commentsRepo as any,
+      reactionsRepo as any,
       profilesRepo as any,
       friendsService as any,
       performanceEntriesService as any,
@@ -105,6 +114,8 @@ describe('WorkoutSessionsService', () => {
     const result = await service.getSession('owner-1', 'owner-1', '2026-07-13');
 
     expect(result.isLive).toBe(true);
+    expect(result.reactions).toEqual([]);
+    expect(result.reactionsByExerciseId).toEqual({});
   });
 
   it('signale isLive si dernière série < 25 min sans présence', async () => {
@@ -328,5 +339,157 @@ describe('WorkoutSessionsService', () => {
         'missing-parent',
       ),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('ajoute une réaction séance et agrège le compteur', async () => {
+    friendsService.getAcceptedFriendIds.mockResolvedValue(['owner-1']);
+    reactionsRepo.findOne.mockResolvedValue(null);
+    reactionsRepo.save.mockResolvedValue({
+      id: 'reaction-1',
+      emoji: '🔥',
+    });
+    reactionsRepo.find.mockResolvedValue([
+      {
+        id: 'reaction-1',
+        authorUserId: 'viewer-1',
+        emoji: '🔥',
+        targetType: 'session',
+        trackedExerciseId: null,
+        createdAt: new Date('2026-07-13T10:00:00Z'),
+      },
+      {
+        id: 'reaction-2',
+        authorUserId: 'owner-1',
+        emoji: '🔥',
+        targetType: 'session',
+        trackedExerciseId: null,
+        createdAt: new Date('2026-07-13T10:01:00Z'),
+      },
+    ]);
+
+    const result = await service.toggleReaction(
+      'viewer-1',
+      'owner-1',
+      '2026-07-13',
+      '🔥',
+      'session',
+    );
+
+    expect(result.added).toBe(true);
+    expect(result.target.reactions).toEqual([
+      { emoji: '🔥', count: 2, reactedByMe: true },
+    ]);
+  });
+
+  it('retire une réaction au re-toggle', async () => {
+    friendsService.getAcceptedFriendIds.mockResolvedValue(['owner-1']);
+    reactionsRepo.findOne.mockResolvedValue({
+      id: 'reaction-1',
+      authorUserId: 'viewer-1',
+      emoji: '💪',
+      targetType: 'session',
+      trackedExerciseId: null,
+    });
+    reactionsRepo.find.mockResolvedValue([]);
+
+    const result = await service.toggleReaction(
+      'viewer-1',
+      'owner-1',
+      '2026-07-13',
+      '💪',
+      'session',
+    );
+
+    expect(result.added).toBe(false);
+    expect(reactionsRepo.remove).toHaveBeenCalled();
+    expect(result.target.reactions).toEqual([]);
+  });
+
+  it('refuse un emoji non autorisé', async () => {
+    friendsService.getAcceptedFriendIds.mockResolvedValue(['owner-1']);
+
+    await expect(
+      service.toggleReaction(
+        'viewer-1',
+        'owner-1',
+        '2026-07-13',
+        '🍕',
+        'session',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('exige trackedExerciseId pour une réaction exercice', async () => {
+    friendsService.getAcceptedFriendIds.mockResolvedValue(['owner-1']);
+
+    await expect(
+      service.toggleReaction(
+        'viewer-1',
+        'owner-1',
+        '2026-07-13',
+        '🔥',
+        'exercise',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('refuse la réaction d un non-ami', async () => {
+    friendsService.getAcceptedFriendIds.mockResolvedValue([]);
+
+    await expect(
+      service.toggleReaction(
+        'viewer-1',
+        'owner-2',
+        '2026-07-13',
+        '🔥',
+        'session',
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('agrège les réactions par exercice dans getSession', async () => {
+    friendsService.getAcceptedFriendIds.mockResolvedValue(['owner-1']);
+    profilesRepo.findOne.mockResolvedValue({
+      userId: 'owner-1',
+      firstName: 'Bob',
+      lastName: null,
+      username: 'bob',
+      avatarUrl: null,
+    });
+    performanceEntriesService.list.mockResolvedValue([]);
+    trackedExercisesService.listWithPerformance.mockResolvedValue([]);
+    presenceService.getPresence.mockResolvedValue({ status: 'offline' });
+    commentsRepo.count.mockResolvedValue(0);
+    reactionsRepo.find.mockResolvedValue([
+      {
+        id: 'r1',
+        authorUserId: 'viewer-1',
+        emoji: '🔥',
+        targetType: 'session',
+        trackedExerciseId: null,
+        createdAt: new Date('2026-07-13T10:00:00Z'),
+      },
+      {
+        id: 'r2',
+        authorUserId: 'owner-1',
+        emoji: '💪',
+        targetType: 'exercise',
+        trackedExerciseId: 'te-1',
+        createdAt: new Date('2026-07-13T10:01:00Z'),
+      },
+    ]);
+
+    const result = await service.getSession(
+      'viewer-1',
+      'owner-1',
+      '2026-07-13',
+    );
+
+    expect(result.reactions).toEqual([
+      { emoji: '🔥', count: 1, reactedByMe: true },
+    ]);
+    expect(result.reactionsByExerciseId['te-1']).toEqual([
+      { emoji: '💪', count: 1, reactedByMe: false },
+    ]);
   });
 });

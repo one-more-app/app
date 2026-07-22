@@ -94,6 +94,26 @@ test("historique vers page séance", async ({ page }) => {
           commentCount: 0,
           exerciseCount: 1,
           setCount: 1,
+          reactions: [],
+          reactionsByExerciseId: {
+            [tracked.id]: [{ emoji: "💪", count: 1, reactedByMe: false }],
+          },
+        }),
+      });
+      return;
+    }
+
+    if (method === "POST" && url.includes("/reactions")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          added: true,
+          target: {
+            targetType: "exercise",
+            trackedExerciseId: tracked.id,
+            reactions: [{ emoji: "💪", count: 2, reactedByMe: true }],
+          },
         }),
       });
       return;
@@ -119,7 +139,8 @@ test("historique vers page séance", async ({ page }) => {
     (response) =>
       response.url().includes("/sessions/") &&
       response.request().method() === "GET" &&
-      !response.url().includes("/comments"),
+      !response.url().includes("/comments") &&
+      !response.url().includes("/reactions"),
   );
 
   await expect(page.getByText(UI.sessionTitleMine)).toBeVisible({
@@ -134,6 +155,11 @@ test("historique vers page séance", async ({ page }) => {
     page.getByText(
       `${UI.sessionSummary.replace("{exercises}", "1").replace("{records}", "0")} · ${UI.sessionDurationMinutes.replace("{count}", "1")}`,
     ),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", {
+      name: UI.sessionReactionToggleAdd.replace("{emoji}", "💪"),
+    }),
   ).toBeVisible();
 
   expect(pageErrors).toEqual([]);

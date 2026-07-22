@@ -18,6 +18,10 @@ import { ApiError } from "@/lib/api";
 import { clearPendingInviteCode, peekPendingInviteCode } from "@/lib/invite-code";
 import { upsertUserAppsFlyerAttribution } from "@/lib/attribution-api";
 import { purgeUserScopedClientState } from "@/lib/purge-user-scoped-state";
+import {
+  clearPendingOnboardingProfile,
+  peekPendingOnboardingProfile,
+} from "@/lib/storage";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 
@@ -132,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           inviteCodeParam?.trim() ||
           peekPendingInviteCode() ||
           undefined;
+        const bodyProfile = peekPendingOnboardingProfile();
         const session = await registerWithEmail({
           email,
           password,
@@ -139,9 +144,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           inviteCode,
           firstName: firstName?.trim() || undefined,
           lastName: lastName?.trim() || undefined,
+          weightKg: bodyProfile?.weightKg,
+          heightCm: bodyProfile?.heightCm,
+          gender: bodyProfile?.gender,
         });
         applySession(session);
         clearPendingInviteCode();
+        clearPendingOnboardingProfile();
         track(AnalyticsEvents.USER_REGISTERED, { method: "email" });
       } catch (e) {
         setLastError(normalizeError(e));

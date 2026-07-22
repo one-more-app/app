@@ -4,7 +4,7 @@ import { subscribeAppStateChange } from "@/lib/app-state-listener";
 import { getRealtimeSocketUrl } from "@/lib/realtime-url";
 import type { Message } from "@/lib/messaging-api";
 import { TSHIRT_REWARD_SWR_KEY } from "@/lib/rewards-api";
-import type { SessionComment } from "@/lib/session-api";
+import type { SessionComment, SessionReactionTarget } from "@/lib/session-api";
 import { ACCESS_SWR_KEY } from "@/lib/social-api";
 import { tshirtClaimPath } from "@/lib/tshirt-claim-route";
 import type { FriendPresence } from "@/types";
@@ -134,6 +134,19 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       }) => {
         window.dispatchEvent(
           new CustomEvent("one-more:session-comment", { detail: payload }),
+        );
+      },
+    );
+
+    socket.on(
+      "session:reaction",
+      (payload: {
+        ownerUserId: string;
+        date: string;
+        target: SessionReactionTarget;
+      }) => {
+        window.dispatchEvent(
+          new CustomEvent("one-more:session-reaction", { detail: payload }),
         );
       },
     );

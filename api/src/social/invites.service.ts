@@ -15,6 +15,9 @@ export type CreateProfileParams = {
   lastName?: string | null;
   username?: string | null;
   email?: string | null;
+  weightKg?: number;
+  heightCm?: number;
+  gender?: 'male' | 'female';
 };
 
 @Injectable()
@@ -91,9 +94,9 @@ export class InvitesService {
 
     return await this.profilesRepo.save({
       userId,
-      weightKg: 75,
-      heightCm: 175,
-      gender: 'male',
+      weightKg: params?.weightKg ?? 75,
+      heightCm: params?.heightCm ?? 175,
+      gender: params?.gender ?? 'male',
       inviteCode,
       username,
       searchableByName: true,

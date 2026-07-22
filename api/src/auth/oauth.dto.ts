@@ -1,4 +1,11 @@
-import { IsIn, IsOptional, IsString } from 'class-validator';
+import {
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class OAuthStartDto {
   @IsOptional()
@@ -36,6 +43,22 @@ export class OAuthCallbackDto {
   @IsOptional()
   @IsString()
   inviteCode?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(30)
+  @Max(300)
+  weightKg?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(100)
+  @Max(250)
+  heightCm?: number;
+
+  @IsOptional()
+  @IsIn(['male', 'female'])
+  gender?: 'male' | 'female';
 }
 
 export class GoogleIdTokenDto {
@@ -60,6 +83,22 @@ export class GoogleIdTokenDto {
   @IsOptional()
   @IsString()
   lastName?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(30)
+  @Max(300)
+  weightKg?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(100)
+  @Max(250)
+  heightCm?: number;
+
+  @IsOptional()
+  @IsIn(['male', 'female'])
+  gender?: 'male' | 'female';
 }
 
 export class AppleIdTokenDto {
@@ -84,4 +123,20 @@ export class AppleIdTokenDto {
   @IsOptional()
   @IsString()
   lastName?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(30)
+  @Max(300)
+  weightKg?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(100)
+  @Max(250)
+  heightCm?: number;
+
+  @IsOptional()
+  @IsIn(['male', 'female'])
+  gender?: 'male' | 'female';
 }

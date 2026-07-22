@@ -13,6 +13,7 @@ import { JwtAuthGuard } from '../auth/jwt.guard.js';
 import { NotificationDispatchService } from '../notifications/notification-dispatch.service.js';
 import { RealtimeBroadcaster } from '../realtime/realtime-broadcaster.service.js';
 import { CreateSessionCommentDto } from './dto/create-session-comment.dto.js';
+import { ToggleSessionReactionDto } from './dto/toggle-session-reaction.dto.js';
 import { WorkoutSessionsService } from './workout-sessions.service.js';
 
 @Controller('sessions')
@@ -90,5 +91,33 @@ export class WorkoutSessionsController {
       date,
       commentId,
     );
+  }
+
+  @Post(':ownerUserId/:date/reactions')
+  async toggleReaction(
+    @Req() req: { user: { sub: string } },
+    @Param('ownerUserId', ParseUUIDPipe) ownerUserId: string,
+    @Param('date') date: string,
+    @Body() body: ToggleSessionReactionDto,
+  ) {
+    const { target, added } = await this.sessionsService.toggleReaction(
+      req.user.sub,
+      ownerUserId,
+      date,
+      body.emoji,
+      body.targetType,
+      body.trackedExerciseId,
+    );
+    this.realtime.emitSessionReaction(ownerUserId, date, target);
+    if (added) {
+      void this.notifications.notifySessionReaction({
+        ownerUserId,
+        sessionDate: date,
+        authorUserId: req.user.sub,
+        emoji: body.emoji,
+        targetType: body.targetType,
+      });
+    }
+    return { target, added };
   }
 }

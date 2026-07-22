@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as argon2 from 'argon2';
 import { randomUUID } from 'crypto';
@@ -39,12 +39,13 @@ export class AuthService {
 
   private async signAccessToken(user: AuthUser): Promise<string> {
     const secret = this.config.get<string>('JWT_SECRET') ?? 'dev-secret';
-    const expiresIn = this.config.get<string>('JWT_EXPIRES_IN') ?? '15m';
+    const expiresIn = (this.config.get<string>('JWT_EXPIRES_IN') ??
+      '15m') as JwtSignOptions['expiresIn'];
     return await this.jwt.signAsync(
       { sub: user.id, email: user.email },
       {
         secret,
-        expiresIn: expiresIn as any,
+        expiresIn,
       },
     );
   }
@@ -83,6 +84,9 @@ export class AuthService {
     firstName?: string;
     lastName?: string;
     username: string;
+    weightKg?: number;
+    heightCm?: number;
+    gender?: 'male' | 'female';
   }): Promise<AuthSession> {
     const email = params.email.trim().toLowerCase();
     const existing = await this.usersRepo.findOne({ where: { email } });
@@ -98,6 +102,9 @@ export class AuthService {
       lastName: params.lastName?.trim() || null,
       username: params.username,
       email: user.email,
+      weightKg: params.weightKg,
+      heightCm: params.heightCm,
+      gender: params.gender,
     });
     await this.referrals.applyReferralCodeOnSignup({
       newUserId: user.id,
@@ -179,7 +186,7 @@ export class AuthService {
   >(sessions: T[], refreshToken: string): Promise<T | null> {
     // On ne peut pas indexer un hash argon2; on compare sur un nombre réduit de sessions.
     // MVP: OK. Plus tard: refresh token "selector" + hash pour lookup O(1).
-    for (const s of sessions as any[]) {
+    for (const s of sessions) {
       try {
         const ok = await argon2.verify(s.refreshTokenHash, refreshToken);
         if (ok) return s;

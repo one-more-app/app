@@ -30,7 +30,8 @@ import {
     setGymPermissionsPromptDone,
     setOnboardingFirstExercisePending,
     setOnboardingPostAuthRedirect,
-    setUserProfile
+    setPendingOnboardingProfile,
+    setUserProfile,
 } from '@/lib/storage';
 import { UI } from '@/lib/translations';
 import { cn } from '@/lib/utils';
@@ -170,11 +171,19 @@ function OnboardingPage() {
 
     const finishBodyAndContinue = async () => {
         if (!canAdvanceHeight) return
-        setUserProfile({
+        const body = {
             weightKg,
             heightCm,
             gender,
-        })
+        }
+        if (auth.status === 'authenticated') {
+            setUserProfile(body)
+        } else {
+            // Anonyme: le PUT échoue sans JWT, et applySession purge le cache.
+            // On persiste le draft pour le rejouer après inscription / login.
+            setPendingOnboardingProfile(body)
+            setUserProfile(body, { silent: true })
+        }
         void mutate('profile')
         await finishOnboarding('/home')
     }

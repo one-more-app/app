@@ -186,25 +186,63 @@ export async function mockCoreAuthenticatedApi(
     await route.fulfill({ status: 200, body: "" });
   });
 
+  let savedProfile = {
+    weightKg: 75,
+    heightCm: 175,
+    gender: "male" as "male" | "female",
+    firstName: "Smoke",
+    lastName: "Test",
+    avatarUrl: null as string | null,
+    username: "smoke_user",
+  };
+
   await page.route("**/profile", async (route) => {
-    if (route.request().method() === "GET") {
+    const method = route.request().method();
+    if (method === "GET") {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          weightKg: 75,
-          heightCm: 175,
-          gender: "male",
-          firstName: "Smoke",
-          lastName: "Test",
-          avatarUrl: null,
-          username: "smoke_user",
+          ...savedProfile,
           updatedAt: new Date().toISOString(),
         }),
       });
       return;
     }
-    await route.continue();
+    if (method === "PUT") {
+      const body = route.request().postDataJSON() as {
+        weightKg?: number;
+        heightCm?: number;
+        gender?: "male" | "female";
+        firstName?: string;
+        lastName?: string;
+        avatarUrl?: string | null;
+        username?: string | null;
+      };
+      savedProfile = {
+        weightKg: body.weightKg ?? savedProfile.weightKg,
+        heightCm: body.heightCm ?? savedProfile.heightCm,
+        gender: body.gender ?? savedProfile.gender,
+        firstName: body.firstName ?? savedProfile.firstName,
+        lastName: body.lastName ?? savedProfile.lastName,
+        avatarUrl:
+          body.avatarUrl !== undefined ? body.avatarUrl : savedProfile.avatarUrl,
+        username:
+          body.username !== undefined && body.username !== null
+            ? body.username
+            : savedProfile.username,
+      };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ...savedProfile,
+          updatedAt: new Date().toISOString(),
+        }),
+      });
+      return;
+    }
+    await route.fallback();
   });
 
   await page.route("**/progress**", async (route) => {

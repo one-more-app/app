@@ -1,9 +1,13 @@
 import {
   IsEmail,
+  IsIn,
+  IsNumber,
   IsOptional,
   IsString,
   Matches,
+  Max,
   MaxLength,
+  Min,
   MinLength,
 } from 'class-validator';
 
@@ -44,6 +48,22 @@ export class RegisterDto {
       'Le pseudo doit contenir 3 à 20 caractères (lettres minuscules, chiffres, underscore).',
   })
   username!: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(30)
+  @Max(300)
+  weightKg?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(100)
+  @Max(250)
+  heightCm?: number;
+
+  @IsOptional()
+  @IsIn(['male', 'female'])
+  gender?: 'male' | 'female';
 }
 
 export class LoginDto {

@@ -14,12 +14,13 @@ Pour un typecheck complet du client (hors scope du hook) : `npm run typecheck --
 
 ## Avant chaque push (`pre-push`)
 
-- 5 smoke tests Playwright sur les parcours critiques :
+- Smoke Playwright sur les parcours critiques :
   - chargement de `/auth`
   - inscription complète (API mockée)
   - déconnexion (session effacée)
   - ajout d'un exercice depuis le catalogue (perf incluse)
   - enregistrement d'une performance sur la fiche exercice
+  - onboarding body (genre) inclus dans `POST /auth/register`
 
 Durée typique : 30 à 60 secondes (build Vite + preview inclus).
 

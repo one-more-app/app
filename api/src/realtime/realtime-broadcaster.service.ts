@@ -65,4 +65,11 @@ export class RealtimeBroadcaster {
       .to(`session:${ownerUserId}:${date}`)
       .emit('session:comment', { ownerUserId, date, comment });
   }
+
+  emitSessionReaction(ownerUserId: string, date: string, target: unknown) {
+    if (!this.server) return;
+    this.server
+      .to(`session:${ownerUserId}:${date}`)
+      .emit('session:reaction', { ownerUserId, date, target });
+  }
 }

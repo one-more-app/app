@@ -37,6 +37,9 @@ const ONBOARDING_FIRST_EXERCISE_PENDING_KEY =
 const ONBOARDING_TOUR_COMPLETE_KEY = "one-more-onboarding-tour-complete-v1";
 const ONBOARDING_POST_AUTH_REDIRECT_KEY =
   "one-more-onboarding-post-auth-redirect-v1";
+/** Draft morpho (genre/poids/taille) saisi avant auth, survit à la purge de session. */
+const PENDING_ONBOARDING_PROFILE_KEY =
+  "one-more-pending-onboarding-profile-v1";
 const ONBOARDING_GYM_PENDING_KEY = "one-more-onboarding-gym-pending-v1";
 const GYM_ONBOARDING_IN_ZONE_KEY = "one-more-gym-onboarding-in-zone-v1";
 const GYM_ONBOARDING_NAME_KEY = "one-more-gym-onboarding-name-v1";
@@ -513,6 +516,61 @@ export function resetLocalExerciseCaches(): void {
 
 export function hasPersistedUserProfile(): boolean {
   return hasProfilePersistedCache;
+}
+
+export type PendingOnboardingBodyProfile = Pick<
+  UserProfile,
+  "weightKg" | "heightCm" | "gender"
+>;
+
+function isPendingOnboardingBodyProfile(
+  value: unknown,
+): value is PendingOnboardingBodyProfile {
+  if (!value || typeof value !== "object") return false;
+  const draft = value as Record<string, unknown>;
+  return (
+    typeof draft.weightKg === "number" &&
+    Number.isFinite(draft.weightKg) &&
+    typeof draft.heightCm === "number" &&
+    Number.isFinite(draft.heightCm) &&
+    (draft.gender === "male" || draft.gender === "female")
+  );
+}
+
+export function peekPendingOnboardingProfile(): PendingOnboardingBodyProfile | null {
+  try {
+    const raw = localStorage.getItem(PENDING_ONBOARDING_PROFILE_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    return isPendingOnboardingBodyProfile(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setPendingOnboardingProfile(
+  profile: PendingOnboardingBodyProfile,
+): void {
+  try {
+    localStorage.setItem(
+      PENDING_ONBOARDING_PROFILE_KEY,
+      JSON.stringify({
+        weightKg: profile.weightKg,
+        heightCm: profile.heightCm,
+        gender: profile.gender,
+      }),
+    );
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+export function clearPendingOnboardingProfile(): void {
+  try {
+    localStorage.removeItem(PENDING_ONBOARDING_PROFILE_KEY);
+  } catch {
+    // ignore
+  }
 }
 
 export function setUserProfile(

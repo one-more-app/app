@@ -2,6 +2,30 @@ import { apiFetch } from "@/lib/api";
 import type { TrackedExerciseWithPerformance } from "@/lib/data-api";
 import type { PerformanceEntryWithLeagueInsight } from "@/lib/data-api";
 
+export const SESSION_REACTION_EMOJIS = [
+  "🔥",
+  "💪",
+  "👏",
+  "😮",
+  "❤️",
+] as const;
+
+export type SessionReactionEmoji = (typeof SESSION_REACTION_EMOJIS)[number];
+
+export type SessionReactionTargetType = "session" | "exercise";
+
+export type ReactionBubble = {
+  emoji: string;
+  count: number;
+  reactedByMe: boolean;
+};
+
+export type SessionReactionTarget = {
+  targetType: SessionReactionTargetType;
+  trackedExerciseId: string | null;
+  reactions: ReactionBubble[];
+};
+
 export type SessionOwner = {
   userId: string;
   firstName: string | null;
@@ -25,6 +49,8 @@ export type WorkoutSession = {
   commentCount: number;
   exerciseCount: number;
   setCount: number;
+  reactions: ReactionBubble[];
+  reactionsByExerciseId: Record<string, ReactionBubble[]>;
 };
 
 export type SessionCommentAuthor = {
@@ -73,6 +99,23 @@ export function mergeSessionComment(
   return { items: nextItems, added };
 }
 
+export function applySessionReactionTarget(
+  session: WorkoutSession,
+  target: SessionReactionTarget,
+): WorkoutSession {
+  if (target.targetType === "session") {
+    return { ...session, reactions: target.reactions };
+  }
+  if (!target.trackedExerciseId) return session;
+  return {
+    ...session,
+    reactionsByExerciseId: {
+      ...session.reactionsByExerciseId,
+      [target.trackedExerciseId]: target.reactions,
+    },
+  };
+}
+
 export function sessionSwrKey(ownerUserId: string, date: string) {
   return ["session", ownerUserId, date] as const;
 }
@@ -119,5 +162,34 @@ export async function deleteSessionComment(
   return await apiFetch(
     `/sessions/${ownerUserId}/${encodeURIComponent(date)}/comments/${commentId}`,
     { method: "DELETE" },
+  );
+}
+
+export async function toggleSessionReaction(
+  ownerUserId: string,
+  date: string,
+  payload: {
+    emoji: string;
+    targetType: SessionReactionTargetType;
+    trackedExerciseId?: string;
+  },
+): Promise<{ target: SessionReactionTarget; added: boolean }> {
+  const body: {
+    emoji: string;
+    targetType: SessionReactionTargetType;
+    trackedExerciseId?: string;
+  } = {
+    emoji: payload.emoji,
+    targetType: payload.targetType,
+  };
+  if (payload.targetType === "exercise" && payload.trackedExerciseId) {
+    body.trackedExerciseId = payload.trackedExerciseId;
+  }
+  return await apiFetch(
+    `/sessions/${ownerUserId}/${encodeURIComponent(date)}/reactions`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
   );
 }

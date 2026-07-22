@@ -87,13 +87,14 @@ test("description du parcours", async ({ page }) => {
 | Nom exercice fiche | `locator('h1').filter({ hasText: name })` (évite strict mode) |
 | Dernière perf | `getByText('Dernier')` |
 
-## Parcours smoke actuels (5)
+## Parcours smoke actuels (6)
 
 1. `auth-loads` : page `/auth` sans erreur JS
 2. `register-no-crash` : inscription complète mockée
 3. `logout-clears-session` : session localStorage purgée
 4. `add-exercise` : catalogue → Ajouter → perf → fiche exercice
 5. `log-performance` : fiche exercice → Nouvelle performance → Dernier visible
+6. `onboarding-body-profile` : body onboarding (genre) → inscription → champs dans `POST /auth/register`
 
 ## Déboguer un échec
 

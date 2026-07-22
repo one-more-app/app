@@ -4,6 +4,7 @@ import {
   sessionCommentsSwrKey,
   sessionSwrKey,
   type SessionComment,
+  type SessionReactionTarget,
 } from "@/lib/session-api";
 import { useEffect } from "react";
 import { useSWRConfig } from "swr";
@@ -58,11 +59,24 @@ export function useSessionLive(ownerUserId: string | undefined, date: string | u
       }
     };
 
+    const onReaction = (event: Event) => {
+      const detail = (event as CustomEvent<{
+        ownerUserId: string;
+        date: string;
+        target: SessionReactionTarget;
+      }>).detail;
+      if (detail.ownerUserId !== ownerUserId || detail.date !== date) return;
+      // Revalidate : reactedByMe dans le payload est relatif à l'auteur du toggle.
+      void mutate(sessionSwrKey(ownerUserId, date));
+    };
+
     window.addEventListener("one-more:session-perf", onPerf);
     window.addEventListener("one-more:session-comment", onComment);
+    window.addEventListener("one-more:session-reaction", onReaction);
     return () => {
       window.removeEventListener("one-more:session-perf", onPerf);
       window.removeEventListener("one-more:session-comment", onComment);
+      window.removeEventListener("one-more:session-reaction", onReaction);
     };
   }, [ownerUserId, date, mutate]);
 }

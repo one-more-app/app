@@ -257,6 +257,36 @@ export class NotificationDispatchService {
     }
   }
 
+  async notifySessionReaction(params: {
+    ownerUserId: string;
+    sessionDate: string;
+    authorUserId: string;
+    emoji: string;
+    targetType: 'session' | 'exercise';
+  }) {
+    if (params.ownerUserId === params.authorUserId) return;
+    if (
+      !(await this.prefs.isEnabled(
+        params.ownerUserId,
+        NotificationType.SessionComment,
+      ))
+    ) {
+      return;
+    }
+    if (await this.isUserOnline(params.ownerUserId)) return;
+
+    const name = await this.profileName(params.authorUserId);
+    const scope =
+      params.targetType === 'exercise' ? 'un exercice' : 'ta séance';
+    await this.push.sendToUser(params.ownerUserId, {
+      type: NotificationType.SessionComment,
+      title: 'Réaction sur ta séance',
+      body: `${name} a réagi ${params.emoji} sur ${scope}`,
+      route: `/session/${params.ownerUserId}/${params.sessionDate}`,
+      dedupKey: `session-reaction:${params.ownerUserId}:${params.sessionDate}:${params.authorUserId}:${params.emoji}:${params.targetType}:${Date.now()}`,
+    });
+  }
+
   async notifyFriendTraining(params: {
     trainingUserId: string;
     exerciseName: string | null;

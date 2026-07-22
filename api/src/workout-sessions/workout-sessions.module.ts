@@ -8,12 +8,17 @@ import { RealtimeModule } from '../realtime/realtime.module.js';
 import { SocialModule } from '../social/social.module.js';
 import { TrackedExercisesModule } from '../tracked-exercises/tracked-exercises.module.js';
 import { SessionCommentEntity } from './entities/session-comment.entity.js';
+import { SessionReactionEntity } from './entities/session-reaction.entity.js';
 import { WorkoutSessionsController } from './workout-sessions.controller.js';
 import { WorkoutSessionsService } from './workout-sessions.service.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SessionCommentEntity, UserProfileEntity]),
+    TypeOrmModule.forFeature([
+      SessionCommentEntity,
+      SessionReactionEntity,
+      UserProfileEntity,
+    ]),
     SocialModule,
     PerformanceEntriesModule,
     TrackedExercisesModule,

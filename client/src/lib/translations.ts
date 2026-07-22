@@ -619,7 +619,7 @@ export const UI = {
   profileGlobalLeague: "Ligue globale",
   profileRankedExercises: "Exercices classés",
   profileRecordsThisMonth: "Records ce mois",
-  profileActiveDaysThisMonth: "Jours actifs",
+  profileActiveDaysThisMonth: "Jours actifs ce mois",
   profileTopExercisesTitle: "Top exercices",
   profileSeeMore: "Voir plus ({count})",
   profileSeeLess: "Voir moins",
@@ -944,6 +944,11 @@ export const UI = {
   sessionCommentDelete: "Supprimer",
   sessionCommentDeleteConfirm: "Supprimer ce commentaire ?",
   sessionCommentError: "Impossible d'envoyer le commentaire.",
+  sessionReactionAdd: "Ajouter une réaction",
+  sessionReactionPick: "Choisir une réaction",
+  sessionReactionToggleMine: "Retirer ta réaction {emoji}",
+  sessionReactionToggleAdd: "Réagir avec {emoji}",
+  sessionReactionError: "Impossible d'envoyer la réaction.",
   sessionViewDay: "Voir la séance",
 
   // Stand événement (leaderboard web)

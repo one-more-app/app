@@ -5,12 +5,30 @@ import {
   loginWithAppleNative,
   loginWithGoogleNative,
 } from "@/lib/oauth-native";
+import {
+  clearPendingOnboardingProfile,
+  peekPendingOnboardingProfile,
+} from "@/lib/storage";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { Capacitor } from "@capacitor/core";
 
 type Provider = "google" | "apple";
 type Platform = "android" | "ios";
+
+function pendingBodyProfilePayload(): {
+  weightKg?: number;
+  heightCm?: number;
+  gender?: "male" | "female";
+} {
+  const pending = peekPendingOnboardingProfile();
+  if (!pending) return {};
+  return {
+    weightKg: pending.weightKg,
+    heightCm: pending.heightCm,
+    gender: pending.gender,
+  };
+}
 
 function base64UrlEncode(bytes: Uint8Array): string {
   let str = "";
@@ -59,9 +77,11 @@ export async function signInWithGoogle(): Promise<AuthSession> {
       inviteCode,
       firstName: firstName ?? undefined,
       lastName: lastName ?? undefined,
+      ...pendingBodyProfilePayload(),
     }),
   });
   clearPendingInviteCode();
+  clearPendingOnboardingProfile();
   return session;
 }
 
@@ -81,9 +101,11 @@ export async function signInWithApple(): Promise<AuthSession> {
       inviteCode,
       firstName: firstName ?? undefined,
       lastName: lastName ?? undefined,
+      ...pendingBodyProfilePayload(),
     }),
   });
   clearPendingInviteCode();
+  clearPendingOnboardingProfile();
   return session;
 }
 
@@ -172,8 +194,10 @@ export async function signInWithOAuth(provider: Provider): Promise<AuthSession> 
       codeVerifier,
       state,
       inviteCode: peekPendingInviteCode() ?? undefined,
+      ...pendingBodyProfilePayload(),
     }),
   });
   clearPendingInviteCode();
+  clearPendingOnboardingProfile();
   return session;
 }
