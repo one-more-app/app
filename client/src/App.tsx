@@ -108,8 +108,9 @@ function AccessGate({ children }: { children: React.ReactNode }) {
         }) === null
     const claimRewardType = parseTshirtClaimRewardType(location.pathname)
     const isTshirtClaimRoute = claimRewardType != null
+    // T-shirt en parallèle du gym : redirect correctif une fois connu, pas de hold global.
     const { data: tshirtReward, isLoading: tshirtRewardLoading } = useSWR(
-        auth.status === 'authenticated' && gymGateReady && !onboardingNeeded
+        auth.status === 'authenticated' && !onboardingNeeded
             ? TSHIRT_REWARD_SWR_KEY
             : null,
         fetchTshirtRewardStatus,
@@ -118,27 +119,9 @@ function AccessGate({ children }: { children: React.ReactNode }) {
     const tshirtGateReady =
         auth.status !== 'authenticated' ||
         onboardingNeeded ||
-        !gymGateReady ||
         !tshirtRewardLoading
 
     if (isEventRoute) return <>{children}</>
-
-    if (
-        auth.status === 'authenticated' &&
-        !onboardingNeeded &&
-        !gymGateReady
-    ) {
-        return null
-    }
-
-    if (
-        auth.status === 'authenticated' &&
-        !onboardingNeeded &&
-        gymGateReady &&
-        !tshirtGateReady
-    ) {
-        return null
-    }
 
     if (
         gymGateReady &&
@@ -250,17 +233,17 @@ function IndexRedirect() {
     const auth = useAuth()
     const { data: userGym, isLoading: userGymLoading } = useUserGymData()
 
-    if (auth.status === 'authenticated' && userGymLoading) {
-        return null
-    }
-
-    if (isGymOnboardingPendingFromApi(userGym)) {
-        return <Navigate to={gymOnboardingPath('gym-wait')} replace />
-    }
     if (needsOnboarding()) {
         return <Navigate to="/onboarding" replace />
     }
     if (auth.status !== 'authenticated') return <Navigate to="/auth" replace />
+    // /home optimiste pendant le load gym ; AccessGate corrige vers gym-wait si besoin.
+    if (userGymLoading) {
+        return <Navigate to="/home" replace />
+    }
+    if (isGymOnboardingPendingFromApi(userGym)) {
+        return <Navigate to={gymOnboardingPath('gym-wait')} replace />
+    }
     return <Navigate to="/home" replace />
 }
 
