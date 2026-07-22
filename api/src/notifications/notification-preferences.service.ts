@@ -21,6 +21,7 @@ export class NotificationPreferencesService {
       friendRequests: entity.friendRequests,
       friendAccepted: entity.friendAccepted,
       messages: entity.messages,
+      sessionComments: entity.sessionComments,
       friendTraining: entity.friendTraining,
       friendRecords: entity.friendRecords,
       weeklyRecap: entity.weeklyRecap,
@@ -66,6 +67,8 @@ export class NotificationPreferencesService {
         return prefs.friendAccepted;
       case NotificationType.MessageNew:
         return prefs.messages;
+      case NotificationType.SessionComment:
+        return prefs.sessionComments;
       case NotificationType.FriendTraining:
         return prefs.friendTraining;
       case NotificationType.FriendPr:

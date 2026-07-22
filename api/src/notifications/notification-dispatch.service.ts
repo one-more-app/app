@@ -197,6 +197,65 @@ export class NotificationDispatchService {
     });
   }
 
+  async notifySessionComment(params: {
+    ownerUserId: string;
+    sessionDate: string;
+    commentId: string;
+    authorUserId: string;
+    body: string;
+    parentAuthorUserId: string | null;
+  }) {
+    const recipientIds = new Set<string>();
+    if (params.ownerUserId !== params.authorUserId) {
+      recipientIds.add(params.ownerUserId);
+    }
+    if (
+      params.parentAuthorUserId &&
+      params.parentAuthorUserId !== params.authorUserId
+    ) {
+      recipientIds.add(params.parentAuthorUserId);
+    }
+    if (recipientIds.size === 0) return;
+
+    const name = await this.profileName(params.authorUserId);
+    const excerpt = this.truncate(params.body);
+
+    for (const recipientId of recipientIds) {
+      if (
+        !(await this.prefs.isEnabled(
+          recipientId,
+          NotificationType.SessionComment,
+        ))
+      ) {
+        continue;
+      }
+      if (await this.isUserOnline(recipientId)) continue;
+
+      const isReplyToRecipient =
+        params.parentAuthorUserId === recipientId &&
+        recipientId !== params.ownerUserId;
+      const isOwnerRecipient = recipientId === params.ownerUserId;
+
+      let title = name;
+      let body = excerpt;
+      if (isReplyToRecipient) {
+        title = 'Réponse à ton commentaire';
+        body = `${name} · ${excerpt}`;
+      } else if (isOwnerRecipient) {
+        title = 'Commentaire sur ta séance';
+        body = `${name} · ${excerpt}`;
+      }
+
+      await this.push.sendToUser(recipientId, {
+        type: NotificationType.SessionComment,
+        title,
+        body,
+        route: `/session/${params.ownerUserId}/${params.sessionDate}`,
+        dedupKey: `session-comment:${params.commentId}:${recipientId}`,
+      });
+    }
+  }
+
   async notifyFriendTraining(params: {
     trainingUserId: string;
     exerciseName: string | null;
@@ -245,7 +304,10 @@ export class NotificationDispatchService {
     if (friendIds.length === 0) return;
 
     const name = await this.profileName(params.athleteUserId);
-    const today = localDateKey('UTC');
+    const timezone = await this.deviceTokens.getTimezoneForUser(
+      params.athleteUserId,
+    );
+    const today = localDateKey(timezone);
 
     for (const friendId of friendIds) {
       if (!(await this.prefs.isEnabled(friendId, NotificationType.FriendPr))) {

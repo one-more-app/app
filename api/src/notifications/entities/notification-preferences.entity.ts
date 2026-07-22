@@ -31,6 +31,9 @@ export class NotificationPreferencesEntity {
   messages!: boolean;
 
   @Column({ type: 'boolean', default: true })
+  sessionComments!: boolean;
+
+  @Column({ type: 'boolean', default: true })
   friendTraining!: boolean;
 
   @Column({ type: 'boolean', default: true })

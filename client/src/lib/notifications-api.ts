@@ -5,6 +5,7 @@ export type NotificationPreferences = {
   friendRequests: boolean;
   friendAccepted: boolean;
   messages: boolean;
+  sessionComments: boolean;
   friendTraining: boolean;
   friendRecords: boolean;
   weeklyRecap: boolean;
@@ -15,6 +16,7 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   friendRequests: true,
   friendAccepted: true,
   messages: true,
+  sessionComments: true,
   friendTraining: true,
   friendRecords: true,
   weeklyRecap: true,

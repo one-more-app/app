@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard.js';
+import { NotificationDispatchService } from '../notifications/notification-dispatch.service.js';
 import { RealtimeBroadcaster } from '../realtime/realtime-broadcaster.service.js';
 import { CreateSessionCommentDto } from './dto/create-session-comment.dto.js';
 import { WorkoutSessionsService } from './workout-sessions.service.js';
@@ -20,6 +21,7 @@ export class WorkoutSessionsController {
   constructor(
     private readonly sessionsService: WorkoutSessionsService,
     private readonly realtime: RealtimeBroadcaster,
+    private readonly notifications: NotificationDispatchService,
   ) {}
 
   @Get(':ownerUserId/:date')
@@ -55,14 +57,23 @@ export class WorkoutSessionsController {
     @Param('date') date: string,
     @Body() body: CreateSessionCommentDto,
   ) {
-    const comment = await this.sessionsService.createComment(
-      req.user.sub,
-      ownerUserId,
-      date,
-      body.body,
-      body.parentId,
-    );
+    const { comment, parentAuthorUserId } =
+      await this.sessionsService.createComment(
+        req.user.sub,
+        ownerUserId,
+        date,
+        body.body,
+        body.parentId,
+      );
     this.realtime.emitSessionComment(ownerUserId, date, comment);
+    void this.notifications.notifySessionComment({
+      ownerUserId,
+      sessionDate: date,
+      commentId: comment.id,
+      authorUserId: req.user.sub,
+      body: body.body,
+      parentAuthorUserId,
+    });
     return { comment };
   }
 

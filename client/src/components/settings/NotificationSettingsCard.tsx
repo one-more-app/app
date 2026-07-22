@@ -23,6 +23,7 @@ const TOGGLE_ITEMS: Array<{ key: PrefKey; label: string }> = [
     { key: "friendRequests", label: UI.notifPrefFriendRequests },
     { key: "friendAccepted", label: UI.notifPrefFriendAccepted },
     { key: "messages", label: UI.notifPrefMessages },
+    { key: "sessionComments", label: UI.notifPrefSessionComments },
     { key: "friendTraining", label: UI.notifPrefFriendTraining },
     { key: "friendRecords", label: UI.notifPrefFriendRecords },
     { key: "weeklyRecap", label: UI.notifPrefWeeklyRecap },

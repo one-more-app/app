@@ -3,6 +3,7 @@ export enum NotificationType {
   FriendRequest = 'friend_request',
   FriendAccepted = 'friend_accepted',
   MessageNew = 'message_new',
+  SessionComment = 'session_comment',
   FriendTraining = 'friend_training',
   FriendPr = 'friend_pr',
   WeeklyRecap = 'weekly_recap',

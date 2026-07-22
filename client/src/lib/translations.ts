@@ -907,6 +907,7 @@ export const UI = {
   notifPrefFriendRequests: "Demandes d'ami",
   notifPrefFriendAccepted: "Demandes acceptées",
   notifPrefMessages: "Messages",
+  notifPrefSessionComments: "Commentaires de séance",
   notifPrefFriendTraining: "Séances d'amis",
   notifPrefFriendRecords: "Records d'amis",
   notifPrefWeeklyRecap: "Récap hebdomadaire",

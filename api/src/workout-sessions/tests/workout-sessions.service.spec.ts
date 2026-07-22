@@ -239,8 +239,9 @@ describe('WorkoutSessionsService', () => {
       'Bravo',
     );
 
-    expect(result.body).toBe('Bravo');
-    expect(result.parentId).toBeNull();
+    expect(result.comment.body).toBe('Bravo');
+    expect(result.comment.parentId).toBeNull();
+    expect(result.parentAuthorUserId).toBeNull();
   });
 
   it('refuse la suppression d un commentaire d un autre auteur', async () => {

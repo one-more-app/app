@@ -231,13 +231,17 @@ export class WorkoutSessionsService {
     date: string,
     body: string,
     parentId?: string,
-  ): Promise<SessionCommentDto> {
+  ): Promise<{
+    comment: SessionCommentDto;
+    parentAuthorUserId: string | null;
+  }> {
     this.assertValidDate(date);
     await this.assertCanViewSession(viewerId, ownerUserId);
 
     const trimmed = body.trim();
     if (!trimmed) throw new BadRequestException('Message vide');
 
+    let parentAuthorUserId: string | null = null;
     if (parentId) {
       const parent = await this.commentsRepo.findOne({
         where: {
@@ -252,6 +256,7 @@ export class WorkoutSessionsService {
       if (parent.parentId) {
         throw new BadRequestException('Réponse à une réponse interdite');
       }
+      parentAuthorUserId = parent.authorUserId;
     }
 
     const entity = await this.commentsRepo.save(
@@ -265,7 +270,10 @@ export class WorkoutSessionsService {
     );
 
     const authors = await this.loadAuthors([viewerId]);
-    return this.toCommentDto(entity, authors);
+    return {
+      comment: this.toCommentDto(entity, authors),
+      parentAuthorUserId,
+    };
   }
 
   async deleteComment(

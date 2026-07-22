@@ -19,6 +19,10 @@ export class UpdateNotificationPreferencesDto {
 
   @IsOptional()
   @IsBoolean()
+  sessionComments?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   friendTraining?: boolean;
 
   @IsOptional()

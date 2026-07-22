@@ -3,6 +3,7 @@ export type NotificationPreferencesDto = {
   friendRequests: boolean;
   friendAccepted: boolean;
   messages: boolean;
+  sessionComments: boolean;
   friendTraining: boolean;
   friendRecords: boolean;
   weeklyRecap: boolean;
