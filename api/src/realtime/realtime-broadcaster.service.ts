@@ -3,12 +3,34 @@ import type { Server } from 'socket.io';
 import type { PresenceDto } from '../presence/presence.service.js';
 import type { MessageDto } from '../messaging/messaging.service.js';
 
+export const EVENT_LEADERBOARD_ROOM = 'event:leaderboard';
+
 @Injectable()
 export class RealtimeBroadcaster {
   private server: Server | null = null;
+  private eventServer: Server | null = null;
 
   attachServer(server: Server) {
     this.server = server;
+  }
+
+  /** Namespace public `/event` (TV / stand, sans JWT). */
+  attachEventServer(server: Server) {
+    this.eventServer = server;
+  }
+
+  emitEventLeaderboardUpdate(payload: unknown) {
+    if (!this.eventServer) return;
+    this.eventServer
+      .to(EVENT_LEADERBOARD_ROOM)
+      .emit('event:leaderboard', payload);
+  }
+
+  emitEventAttemptUpdate(attempt: unknown) {
+    if (!this.eventServer) return;
+    this.eventServer
+      .to(EVENT_LEADERBOARD_ROOM)
+      .emit('event:attempt', { attempt });
   }
 
   emitToUser(userId: string, event: string, payload: unknown) {

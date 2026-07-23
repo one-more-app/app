@@ -26,6 +26,11 @@ describe('EventService', () => {
     find: jest.fn(),
   };
 
+  const realtime = {
+    emitEventLeaderboardUpdate: jest.fn(),
+    emitEventAttemptUpdate: jest.fn(),
+  };
+
   let service: InstanceType<typeof EventService>;
 
   beforeEach(() => {
@@ -35,7 +40,11 @@ describe('EventService', () => {
       entriesRepo as any,
       attemptRepo as any,
       catalogRepo as any,
+      realtime as any,
     );
+    jest
+      .spyOn(service as any, 'publishLeaderboard')
+      .mockResolvedValue(undefined);
   });
 
   it('awards t-shirt when first entry for exercise and gender', async () => {

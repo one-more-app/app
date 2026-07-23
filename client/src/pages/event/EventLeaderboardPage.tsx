@@ -11,6 +11,7 @@ import { EventTshirtCelebrationOverlay } from "@/components/event/EventTshirtCel
 import { EventWebOnlyGate } from "@/components/event/EventWebOnlyGate";
 import { eventScreenEntrance } from "@/components/event/event-motion";
 import { AnimatedWords, OnboardingReveal } from "@/components/onboarding/onboarding-motion";
+import { useEventLeaderboardRealtime } from "@/hooks/use-event-leaderboard-realtime";
 import { useGenderRotation } from "@/hooks/use-gender-rotation";
 import {
     fetchEventLeaderboard,
@@ -18,12 +19,14 @@ import {
     type EventActiveCelebration,
     type EventAttemptResult,
     type EventLeaderboardBoard,
+    type EventLeaderboardResponse,
 } from "@/lib/event-api";
 import {
     EVENT_EXERCISE_ICONS,
     EVENT_EXERCISES,
     EVENT_GENDER_ROTATION_MS,
     EVENT_LEADERBOARD_POLL_MS,
+    EVENT_LEADERBOARD_WS_FALLBACK_POLL_MS,
     EVENT_LIVE_ATTEMPT_POLL_MS,
     EVENT_TITLE_REPLAY_MS,
     type EventGenderSlug,
@@ -35,7 +38,7 @@ import {
 } from "@/lib/event-demo-data";
 import { getEventRecordToBeat } from "@/lib/event-record";
 import { UI } from "@/lib/translations";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 const TITLE_BASE_DELAY_MS = 80;
@@ -58,6 +61,19 @@ function EventLeaderboardContent() {
     const [recentResult, setRecentResult] = useState<EventAttemptResult | null>(null);
     const [titleAnimKey, setTitleAnimKey] = useState(0);
     const { gender, progress } = useGenderRotation(EVENT_GENDER_ROTATION_MS);
+
+    const applyLeaderboard = useCallback((response: EventLeaderboardResponse) => {
+        setBoard(response.board);
+        setActiveCelebration(response.activeCelebration);
+        setActiveAttempt(response.activeAttempt);
+        setRecentResult(response.recentResult);
+    }, []);
+
+    const { connected: realtimeConnected } = useEventLeaderboardRealtime({
+        enabled: !demoMode,
+        onLeaderboard: applyLeaderboard,
+        onAttempt: setActiveAttempt,
+    });
 
     const displayGender: EventGenderSlug =
         activeAttempt?.gender ?? demoGender ?? gender;
@@ -101,18 +117,17 @@ function EventLeaderboardContent() {
         if (demoMode) return undefined;
 
         let cancelled = false;
-        const pollMs = hasActiveAttempt
-            ? EVENT_LIVE_ATTEMPT_POLL_MS
-            : EVENT_LEADERBOARD_POLL_MS;
+        const pollMs = realtimeConnected
+            ? EVENT_LEADERBOARD_WS_FALLBACK_POLL_MS
+            : hasActiveAttempt
+              ? EVENT_LIVE_ATTEMPT_POLL_MS
+              : EVENT_LEADERBOARD_POLL_MS;
 
         const load = async () => {
             try {
                 const response = await fetchEventLeaderboard();
                 if (cancelled) return;
-                setBoard(response.board);
-                setActiveCelebration(response.activeCelebration);
-                setActiveAttempt(response.activeAttempt);
-                setRecentResult(response.recentResult);
+                applyLeaderboard(response);
             } catch {
                 /* ignore polling errors on TV */
             }
@@ -128,7 +143,7 @@ function EventLeaderboardContent() {
             cancelled = true;
             window.clearInterval(interval);
         };
-    }, [demoMode, hasActiveAttempt]);
+    }, [demoMode, hasActiveAttempt, realtimeConnected, applyLeaderboard]);
 
     const liveRecordToBeat = useMemo(() => {
         if (!activeAttempt) return null;

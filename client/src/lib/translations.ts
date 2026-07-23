@@ -978,6 +978,7 @@ export const UI = {
   eventStandCongratsTitle: "Félicitations",
   eventStandCongratsRecord: "Nouveau record",
   eventStandCongratsTshirt: "Tu gagnes un t-shirt One More",
+  eventStandWonBadge: "Tu as gagné",
   eventStandCongratsReps: "{reps} reps",
   eventStandLiveAttemptLabel: "Tentative en cours",
   eventStandLiveAttemptReps: "reps",
@@ -985,6 +986,12 @@ export const UI = {
   eventStandLiveNewRecord: "Nouveau record",
   eventStandAttemptResultTitle: "Score enregistré",
   eventStandAttemptResultRank: "Rang #{rank}",
+  eventStandInstagramLeadRetry: "Retente ta chance",
+  eventStandInstagramLeadWon: "Gagne encore plus",
+  eventStandInstagramGiveawayCta:
+    "Suis-nous sur instagram pour participer au tirage et gagner un t-shirt.",
+  eventStandInstagramHandle: "@one_more.app",
+  eventStandInstagramQrAlt: "QR code Instagram One More",
   eventStandWebOnly:
     "Cette page est disponible uniquement sur le navigateur web.",
   eventStandWebOnlyHint: "Ouvre l'URL depuis un ordinateur ou une tablette.",

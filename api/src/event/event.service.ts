@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
 import { ExerciseCatalogEntity } from '../exercises/exercise-catalog.entity.js';
+import { RealtimeBroadcaster } from '../realtime/realtime-broadcaster.service.js';
 import {
   EVENT_CATALOG_EXERCISE_NAMES,
   type EventExerciseMediaMap,
@@ -114,6 +115,7 @@ export class EventService {
     private readonly attemptRepo: Repository<EventActiveAttemptEntity>,
     @InjectRepository(ExerciseCatalogEntity)
     private readonly catalogRepo: Repository<ExerciseCatalogEntity>,
+    private readonly realtime: RealtimeBroadcaster,
   ) {}
 
   async getLeaderboardPayload(limit = EVENT_LEADERBOARD_LIMIT): Promise<{
@@ -139,6 +141,11 @@ export class EventService {
     };
   }
 
+  private async publishLeaderboard(): Promise<void> {
+    const payload = await this.getLeaderboardPayload();
+    this.realtime.emitEventLeaderboardUpdate(payload);
+  }
+
   async softDeleteAllEventData(): Promise<{
     deletedEntries: number;
     clearedAttempt: boolean;
@@ -155,10 +162,12 @@ export class EventService {
     if (attemptCount > 0) {
       await this.attemptRepo.clear();
     }
-    return {
+    const response = {
       deletedEntries: result.affected ?? 0,
       clearedAttempt: attemptCount > 0,
     };
+    await this.publishLeaderboard();
+    return response;
   }
 
   async getActiveCelebration(): Promise<EventActiveCelebration | null> {
@@ -187,7 +196,11 @@ export class EventService {
       { celebrationPending: true, deletedAt: IsNull() },
       { celebrationPending: false },
     );
-    return { dismissed: (result.affected ?? 0) > 0 };
+    const response = { dismissed: (result.affected ?? 0) > 0 };
+    if (response.dismissed) {
+      await this.publishLeaderboard();
+    }
+    return response;
   }
 
   async dismissRecentAttemptResult(): Promise<{ dismissed: boolean }> {
@@ -195,21 +208,35 @@ export class EventService {
       { resultDisplayPending: true, deletedAt: IsNull() },
       { resultDisplayPending: false },
     );
-    return { dismissed: (result.affected ?? 0) > 0 };
+    const response = { dismissed: (result.affected ?? 0) > 0 };
+    if (response.dismissed) {
+      await this.publishLeaderboard();
+    }
+    return response;
   }
 
   async dismissTvDisplay(): Promise<{
     dismissedResult: boolean;
     dismissedCelebration: boolean;
   }> {
-    const [result, celebration] = await Promise.all([
-      this.dismissRecentAttemptResult(),
-      this.dismissActiveCelebration(),
+    const [resultUpdate, celebrationUpdate] = await Promise.all([
+      this.entriesRepo.update(
+        { resultDisplayPending: true, deletedAt: IsNull() },
+        { resultDisplayPending: false },
+      ),
+      this.entriesRepo.update(
+        { celebrationPending: true, deletedAt: IsNull() },
+        { celebrationPending: false },
+      ),
     ]);
-    return {
-      dismissedResult: result.dismissed,
-      dismissedCelebration: celebration.dismissed,
+    const response = {
+      dismissedResult: (resultUpdate.affected ?? 0) > 0,
+      dismissedCelebration: (celebrationUpdate.affected ?? 0) > 0,
     };
+    if (response.dismissedResult || response.dismissedCelebration) {
+      await this.publishLeaderboard();
+    }
+    return response;
   }
 
   async getActiveAttempt(): Promise<EventActiveAttempt | null> {
@@ -238,14 +265,18 @@ export class EventService {
       }),
     );
 
-    return this.toActiveAttempt(saved);
+    const active = this.toActiveAttempt(saved);
+    await this.publishLeaderboard();
+    return active;
   }
 
   async patchAttemptReps(reps: number): Promise<EventActiveAttempt> {
     const attempt = await this.requireActiveAttempt();
     attempt.reps = reps;
     const saved = await this.attemptRepo.save(attempt);
-    return this.toActiveAttempt(saved);
+    const active = this.toActiveAttempt(saved);
+    this.realtime.emitEventAttemptUpdate(active);
+    return active;
   }
 
   async finalizeAttempt(): Promise<{
@@ -257,15 +288,18 @@ export class EventService {
       throw new BadRequestException('At least one rep is required to finalize');
     }
 
-    const entry = await this.createEntry({
-      firstName: attempt.firstName,
-      lastName: attempt.lastName,
-      email: attempt.email,
-      gender: attempt.gender,
-      exercise: attempt.exercise,
-      reps: attempt.reps,
-      notes: attempt.notes ?? undefined,
-    });
+    const entry = await this.createEntry(
+      {
+        firstName: attempt.firstName,
+        lastName: attempt.lastName,
+        email: attempt.email,
+        gender: attempt.gender,
+        exercise: attempt.exercise,
+        reps: attempt.reps,
+        notes: attempt.notes ?? undefined,
+      },
+      { publish: false },
+    );
 
     const attemptResult: EventAttemptResult = {
       entryId: entry.id,
@@ -283,6 +317,7 @@ export class EventService {
     };
 
     await this.attemptRepo.clear();
+    await this.publishLeaderboard();
 
     return { entry, attemptResult };
   }
@@ -293,6 +328,7 @@ export class EventService {
       return { cancelled: false };
     }
     await this.attemptRepo.clear();
+    await this.publishLeaderboard();
     return { cancelled: true };
   }
 
@@ -423,7 +459,10 @@ export class EventService {
     );
   }
 
-  async createEntry(dto: CreateEventEntryDto): Promise<CreateEventEntryResult> {
+  async createEntry(
+    dto: CreateEventEntryDto,
+    options?: { publish?: boolean },
+  ): Promise<CreateEventEntryResult> {
     const previousTop = await this.getTopEntry(dto.exercise, dto.gender);
     const beatPreviousLeader =
       previousTop == null || dto.reps > previousTop.reps;
@@ -461,7 +500,7 @@ export class EventService {
 
     const rank = await this.getRankForEntry(saved);
 
-    return {
+    const result = {
       id: saved.id,
       firstName: saved.firstName,
       gender: saved.gender,
@@ -473,6 +512,12 @@ export class EventService {
       rank,
       createdAt: saved.createdAt.toISOString(),
     };
+
+    if (options?.publish !== false) {
+      await this.publishLeaderboard();
+    }
+
+    return result;
   }
 
   private async getTopEntry(

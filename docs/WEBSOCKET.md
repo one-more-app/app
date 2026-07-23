@@ -2,7 +2,9 @@
 
 L'app mobile et web se connecte au namespace Socket.IO `/realtime` sur la même origine que l'API REST (`VITE_API_URL` → `wss://api.one-more.app/realtime`).
 
-Socket.IO expose le transport sur le chemin **`/socket.io/`** (le namespace applicatif reste `/realtime`).
+Le stand event (TV + admin) utilise un namespace **public** `/event` (sans JWT) pour le leaderboard et les reps live.
+
+Socket.IO expose le transport sur le chemin **`/socket.io/`** (les namespaces applicatifs restent `/realtime` et `/event`).
 
 ## Fichiers de config (dépôt)
 
@@ -57,7 +59,16 @@ curl -i "https://api.one-more.app/socket.io/?EIO=4&transport=polling"
 
 ## Auth
 
-Le client envoie le JWT access token dans `auth.token` au handshake. Pas de cookie requis.
+Le client envoie le JWT access token dans `auth.token` au handshake pour `/realtime`. Pas de cookie requis.
+
+Le namespace `/event` est anonyme (lecture seule). Les écritures stand restent sur REST `/public/event`.
+
+Events stand :
+
+| Event | Payload |
+|-------|---------|
+| `event:leaderboard` | Snapshot `getLeaderboardPayload()` |
+| `event:attempt` | `{ attempt }` (reps live, léger) |
 
 ## Multi-instances (plus tard)
 

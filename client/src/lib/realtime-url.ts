@@ -21,3 +21,15 @@ export function getRealtimeSocketUrl(): string {
   }
   return `${base}/realtime`;
 }
+
+/** Namespace public stand event (TV / admin), sans JWT. */
+export function getEventRealtimeSocketUrl(): string {
+  const base = getApiBaseUrl();
+  if (base.startsWith("https://")) {
+    return `${base.replace(/^https:/, "wss:")}/event`;
+  }
+  if (base.startsWith("http://")) {
+    return `${base.replace(/^http:/, "ws:")}/event`;
+  }
+  return `${base}/event`;
+}

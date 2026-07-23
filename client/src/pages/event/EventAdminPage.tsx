@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useEventLeaderboardRealtime } from "@/hooks/use-event-leaderboard-realtime";
 import {
   cancelEventAttempt,
   dismissEventTvDisplay,
@@ -24,6 +25,7 @@ import {
   type EventActiveCelebration,
   type EventAttemptResult,
   type EventLeaderboardBoard,
+  type EventLeaderboardResponse,
   type EventRecentEntry,
 } from "@/lib/event-api";
 import { getEventLeagueForPerf } from "@/lib/event-league";
@@ -32,6 +34,7 @@ import {
   EVENT_EXERCISES,
   EVENT_EXERCISE_META,
   EVENT_LEADERBOARD_POLL_MS,
+  EVENT_LEADERBOARD_WS_FALLBACK_POLL_MS,
   type EventExerciseSlug,
   type EventGenderSlug,
 } from "@/lib/event-constants";
@@ -113,10 +116,8 @@ function EventAdminForm() {
     }
   }, []);
 
-  const pollLeaderboard = useCallback(async () => {
-    try {
-      const response = await fetchEventLeaderboard();
-
+  const applyLeaderboardSync = useCallback(
+    (response: EventLeaderboardResponse) => {
       setLeaderboardBoard(response.board);
       setServerTvState({
         attempt: response.activeAttempt,
@@ -159,10 +160,31 @@ function EventAdminForm() {
           setStep("info");
         }
       }
+    },
+    [restoreAttemptForm, resolveCelebrationForDisplay, step],
+  );
+
+  const pollLeaderboard = useCallback(async () => {
+    try {
+      const response = await fetchEventLeaderboard();
+      applyLeaderboardSync(response);
     } catch {
       /* ignore */
     }
-  }, [restoreAttemptForm, resolveCelebrationForDisplay, step]);
+  }, [applyLeaderboardSync]);
+
+  const { connected: realtimeConnected } = useEventLeaderboardRealtime({
+    onLeaderboard: applyLeaderboardSync,
+    onAttempt: (attempt) => {
+      setServerTvState((prev) => ({ ...prev, attempt }));
+      if (attempt) {
+        restoreAttemptForm(attempt);
+        setLiveAttempt(attempt);
+        setLastResult(null);
+        setStep("counting");
+      }
+    },
+  });
 
   const loadInitialState = useCallback(async () => {
     try {
@@ -204,11 +226,14 @@ function EventAdminForm() {
 
   useEffect(() => {
     void loadInitialState();
+    const pollMs = realtimeConnected
+      ? EVENT_LEADERBOARD_WS_FALLBACK_POLL_MS
+      : EVENT_LEADERBOARD_POLL_MS;
     const interval = window.setInterval(() => {
       void pollLeaderboard();
-    }, EVENT_LEADERBOARD_POLL_MS);
+    }, pollMs);
     return () => window.clearInterval(interval);
-  }, [loadInitialState, pollLeaderboard]);
+  }, [loadInitialState, pollLeaderboard, realtimeConnected]);
 
   const resetInfoForm = () => {
     setFirstName("");

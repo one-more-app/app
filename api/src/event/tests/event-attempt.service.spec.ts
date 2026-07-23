@@ -28,6 +28,11 @@ describe('EventService active attempt', () => {
     find: jest.fn(),
   };
 
+  const realtime = {
+    emitEventLeaderboardUpdate: jest.fn(),
+    emitEventAttemptUpdate: jest.fn(),
+  };
+
   let service: InstanceType<typeof EventService>;
   let pendingResultEntry: Record<string, unknown> | null = null;
 
@@ -66,7 +71,11 @@ describe('EventService active attempt', () => {
       entriesRepo as any,
       attemptRepo as any,
       catalogRepo as any,
+      realtime as any,
     );
+    jest
+      .spyOn(service as any, 'publishLeaderboard')
+      .mockResolvedValue(undefined);
   });
 
   it('starts attempt with reps at zero', async () => {

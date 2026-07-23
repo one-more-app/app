@@ -1,8 +1,12 @@
 export const EVENT_GENDER_ROTATION_MS = 15_000;
 
+/** Fallback HTTP si le WebSocket event est déconnecté (ms). */
 export const EVENT_LEADERBOARD_POLL_MS = 2_000;
 
-/** Polling TV pendant une tentative live (ms). */
+/** Polling de secours même avec WS connecté (ms). */
+export const EVENT_LEADERBOARD_WS_FALLBACK_POLL_MS = 15_000;
+
+/** Polling TV pendant une tentative live si WS down (ms). */
 export const EVENT_LIVE_ATTEMPT_POLL_MS = 500;
 
 /** Durée pour défiler d'une ligne dans le ticker (ms). */
