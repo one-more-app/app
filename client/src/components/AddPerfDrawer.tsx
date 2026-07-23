@@ -10,7 +10,7 @@ import { trackPerfDrawerOpened } from '@/lib/analytics'
 import { hapticImpact, hapticImpactMedium } from '@/lib/haptics'
 import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export interface AddPerfDrawerExercise {
     id: string
@@ -45,27 +45,11 @@ export function AddPerfDrawer({
 }: AddPerfDrawerProps) {
     const [weight, setWeight] = useState(initialWeight)
     const [reps, setReps] = useState(initialReps)
-    const [fieldStep, setFieldStep] = useState<'weight' | 'reps'>('weight')
-    const weightRef = useRef(weight)
-    const repsRef = useRef(reps)
-    const formRef = useRef<HTMLFormElement>(null)
-
-    const updateWeight = (v: number) => {
-        weightRef.current = v
-        setWeight(v)
-    }
-    const updateReps = (v: number) => {
-        repsRef.current = v
-        setReps(v)
-    }
 
     useEffect(() => {
         if (open) {
-            weightRef.current = initialWeight
-            repsRef.current = initialReps
             setWeight(initialWeight)
             setReps(initialReps)
-            setFieldStep('weight')
             void hapticImpactMedium()
             trackPerfDrawerOpened({
                 mode: entryId && onUpdate ? 'edit' : 'add',
@@ -90,11 +74,8 @@ export function AddPerfDrawer({
 
     const handleOpenChange = (o: boolean) => {
         if (!o) {
-            weightRef.current = initialWeight
-            repsRef.current = initialReps
             setWeight(initialWeight)
             setReps(initialReps)
-            setFieldStep('weight')
         }
         onOpenChange(o)
     }
@@ -102,13 +83,11 @@ export function AddPerfDrawer({
     const isEditMode = !!entryId && !!onUpdate
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        const w = weightRef.current
-        const r = repsRef.current
-        if (w < 0 || r <= 0) return
+        if (weight < 0 || reps <= 0) return
         if (isEditMode && entryId) {
-            onUpdate(entryId, w, r)
+            onUpdate(entryId, weight, reps)
         } else if (onSave) {
-            onSave(w, r)
+            onSave(weight, reps)
         }
         void hapticImpact()
         handleOpenChange(false)
@@ -128,7 +107,6 @@ export function AddPerfDrawer({
                         </DrawerTitle>
                     </DrawerHeader>
                     <form
-                        ref={formRef}
                         key={exercise.id}
                         className="space-y-6 pt-4"
                         onSubmit={handleSubmit}
@@ -137,27 +115,21 @@ export function AddPerfDrawer({
                             <HorizontalWheelPicker
                                 className="w-full"
                                 value={weight}
-                                onChange={updateWeight}
+                                onChange={setWeight}
                                 min={0}
                                 max={500}
                                 step={0.5}
                                 label={weightLabel}
                                 unit="kg"
-                                autoFocus={open && fieldStep === 'weight'}
-                                enterKeyHint="next"
-                                onEnter={() => setFieldStep('reps')}
                             />
                             <HorizontalWheelPicker
                                 className="w-full"
                                 value={reps}
-                                onChange={updateReps}
+                                onChange={setReps}
                                 min={1}
                                 max={100}
                                 step={1}
                                 label={UI.reps}
-                                autoFocus={open && fieldStep === 'reps'}
-                                enterKeyHint="done"
-                                onEnter={() => formRef.current?.requestSubmit()}
                             />
                         </div>
                         <Button

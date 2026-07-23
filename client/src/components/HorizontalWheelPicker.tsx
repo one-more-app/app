@@ -18,12 +18,6 @@ interface HorizontalWheelPickerProps {
     label: string
     unit?: string
     className?: string
-    /** Focus the numeric input when true (e.g. after drawer open). */
-    autoFocus?: boolean
-    /** Mobile keyboard Enter hint. */
-    enterKeyHint?: 'next' | 'done'
-    /** Called after committing the typed value on Enter. */
-    onEnter?: () => void
 }
 
 function buildOptions(min: number, max: number, step: number) {
@@ -58,9 +52,6 @@ export function HorizontalWheelPicker({
     label,
     unit = '',
     className,
-    autoFocus = false,
-    enterKeyHint,
-    onEnter,
 }: HorizontalWheelPickerProps) {
     const options = useMemo(() => buildOptions(min, max, step), [min, max, step])
 
@@ -117,7 +108,7 @@ export function HorizontalWheelPicker({
         [min, max, step, value]
     )
 
-    const commitInputSync = useCallback(() => {
+    const commitInput = useCallback(() => {
         if (inputText === null) return
         const newValue = parseAndClamp(inputText)
         setInputText(null)
@@ -127,23 +118,14 @@ export function HorizontalWheelPicker({
         }
     }, [inputText, parseAndClamp, value, emitChange])
 
-    const commitInput = useCallback(() => {
-        commitInputSync()
-    }, [commitInputSync])
-
     const handleInputKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
             if (e.key === 'Enter') {
                 e.preventDefault()
-                commitInputSync()
-                if (onEnter) {
-                    onEnter()
-                } else {
-                    inputRef.current?.blur()
-                }
+                inputRef.current?.blur()
             }
         },
-        [commitInputSync, onEnter]
+        []
     )
 
     const handleInputFocus = useCallback(() => {
@@ -151,15 +133,6 @@ export function HorizontalWheelPicker({
         setInputText(str)
         requestAnimationFrame(() => inputRef.current?.select())
     }, [value, step])
-
-    useEffect(() => {
-        if (!autoFocus) return
-        // Délai court : laisser le drawer Vaul s'ouvrir avant de focus (sinon iOS refuse souvent le clavier).
-        const t = window.setTimeout(() => {
-            inputRef.current?.focus()
-        }, 80)
-        return () => window.clearTimeout(t)
-    }, [autoFocus])
 
     const syncToValue = useCallback(() => {
         if (!isDragging) scrollToIndex(clampedIndex)
@@ -267,7 +240,6 @@ export function HorizontalWheelPicker({
                             ref={inputRef}
                             type="text"
                             inputMode="decimal"
-                            enterKeyHint={enterKeyHint}
                             className={cn(
                                 'absolute left-1/2 top-0 z-20 h-14 -translate-x-1/2 px-0 py-0 text-center text-xl font-semibold tabular-nums leading-[3.5rem]',
                                 'border-0 bg-transparent shadow-none focus-visible:border focus-visible:bg-background focus-visible:ring-2'
