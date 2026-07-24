@@ -61,7 +61,7 @@ curl -i "https://api.one-more.app/socket.io/?EIO=4&transport=polling"
 
 Le client envoie le JWT access token dans `auth.token` au handshake pour `/realtime`. Pas de cookie requis.
 
-Le namespace `/event` est anonyme (lecture seule). Les écritures stand restent sur REST `/public/event`.
+Le namespace `/event` est anonyme (lecture seule). Les écritures stand restent sur REST `/public/event` (header `X-Event-Admin-Password`, env `EVENT_ADMIN_PASSWORD`).
 
 Events stand :
 

@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api";
+import { ApiError, apiFetch } from "@/lib/api";
 import type { EventExerciseSlug, EventGenderSlug } from "@/lib/event-constants";
 
 export type EventLeaderboardRow = {
@@ -103,6 +103,52 @@ export type FinalizeEventAttemptResponse = {
   attemptResult: EventAttemptResult;
 };
 
+const EVENT_ADMIN_PASSWORD_STORAGE_KEY = "one-more:event-admin-password";
+export const EVENT_ADMIN_PASSWORD_HEADER = "X-Event-Admin-Password";
+
+export function getEventAdminPassword(): string | null {
+  try {
+    const value = sessionStorage.getItem(EVENT_ADMIN_PASSWORD_STORAGE_KEY);
+    return value?.trim() ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setEventAdminPassword(password: string): void {
+  sessionStorage.setItem(EVENT_ADMIN_PASSWORD_STORAGE_KEY, password);
+}
+
+export function clearEventAdminPassword(): void {
+  try {
+    sessionStorage.removeItem(EVENT_ADMIN_PASSWORD_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function eventAdminHeaders(password?: string): HeadersInit {
+  const value = password ?? getEventAdminPassword();
+  if (!value) return {};
+  return { [EVENT_ADMIN_PASSWORD_HEADER]: value };
+}
+
+export async function verifyEventAdminPassword(password: string): Promise<boolean> {
+  try {
+    await apiFetch<{ ok: true }>("/public/event/admin/auth", {
+      method: "POST",
+      headers: eventAdminHeaders(password),
+    });
+    setEventAdminPassword(password);
+    return true;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      return false;
+    }
+    throw error;
+  }
+}
+
 export async function fetchEventLeaderboard(): Promise<EventLeaderboardResponse> {
   return apiFetch<EventLeaderboardResponse>("/public/event/leaderboard");
 }
@@ -110,6 +156,7 @@ export async function fetchEventLeaderboard(): Promise<EventLeaderboardResponse>
 export async function dismissEventAttemptResult(): Promise<{ dismissed: boolean }> {
   return apiFetch<{ dismissed: boolean }>("/public/event/attempt/result/dismiss", {
     method: "POST",
+    headers: eventAdminHeaders(),
   });
 }
 
@@ -122,17 +169,21 @@ export async function dismissEventTvDisplay(): Promise<{
     dismissedCelebration: boolean;
   }>("/public/event/display/dismiss", {
     method: "POST",
+    headers: eventAdminHeaders(),
   });
 }
 
 export async function dismissEventCelebration(): Promise<{ dismissed: boolean }> {
   return apiFetch<{ dismissed: boolean }>("/public/event/celebration/dismiss", {
     method: "POST",
+    headers: eventAdminHeaders(),
   });
 }
 
 export async function fetchEventRecentEntries(): Promise<{ entries: EventRecentEntry[] }> {
-  return apiFetch<{ entries: EventRecentEntry[] }>("/public/event/entries/recent");
+  return apiFetch<{ entries: EventRecentEntry[] }>("/public/event/entries/recent", {
+    headers: eventAdminHeaders(),
+  });
 }
 
 export async function startEventAttempt(
@@ -141,6 +192,7 @@ export async function startEventAttempt(
   return apiFetch<{ attempt: EventActiveAttempt }>("/public/event/attempt/start", {
     method: "POST",
     body: JSON.stringify(payload),
+    headers: eventAdminHeaders(),
   });
 }
 
@@ -150,18 +202,21 @@ export async function patchEventAttemptReps(
   return apiFetch<{ attempt: EventActiveAttempt }>("/public/event/attempt/reps", {
     method: "PATCH",
     body: JSON.stringify({ reps }),
+    headers: eventAdminHeaders(),
   });
 }
 
 export async function finalizeEventAttempt(): Promise<FinalizeEventAttemptResponse> {
   return apiFetch<FinalizeEventAttemptResponse>("/public/event/attempt/finalize", {
     method: "POST",
+    headers: eventAdminHeaders(),
   });
 }
 
 export async function cancelEventAttempt(): Promise<{ cancelled: boolean }> {
   return apiFetch<{ cancelled: boolean }>("/public/event/attempt/cancel", {
     method: "POST",
+    headers: eventAdminHeaders(),
   });
 }
 
@@ -171,6 +226,6 @@ export async function softDeleteAllEventEntries(): Promise<{
 }> {
   return apiFetch<{ deletedEntries: number; clearedAttempt: boolean }>(
     "/public/event/entries/reset",
-    { method: "POST" },
+    { method: "POST", headers: eventAdminHeaders() },
   );
 }

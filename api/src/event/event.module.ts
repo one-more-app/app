@@ -6,6 +6,7 @@ import { EventActiveAttemptEntity } from './entities/event-active-attempt.entity
 import { EventEntryEntity } from './entities/event-entry.entity.js';
 import { EventRealtimeGateway } from './event-realtime.gateway.js';
 import { EventPublicController } from './event-public.controller.js';
+import { EventAdminPasswordGuard } from './guards/event-admin-password.guard.js';
 import { EventService } from './event.service.js';
 
 @Module({
@@ -18,6 +19,6 @@ import { EventService } from './event.service.js';
     RealtimeModule,
   ],
   controllers: [EventPublicController],
-  providers: [EventService, EventRealtimeGateway],
+  providers: [EventService, EventRealtimeGateway, EventAdminPasswordGuard],
 })
 export class EventModule {}

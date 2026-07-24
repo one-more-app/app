@@ -14,13 +14,16 @@ import {
 import { useEventLeaderboardRealtime } from "@/hooks/use-event-leaderboard-realtime";
 import {
   cancelEventAttempt,
+  clearEventAdminPassword,
   dismissEventTvDisplay,
   fetchEventLeaderboard,
   fetchEventRecentEntries,
   finalizeEventAttempt,
+  getEventAdminPassword,
   patchEventAttemptReps,
   softDeleteAllEventEntries,
   startEventAttempt,
+  verifyEventAdminPassword,
   type EventActiveAttempt,
   type EventActiveCelebration,
   type EventAttemptResult,
@@ -41,7 +44,7 @@ import {
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { Minus, Plus } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 
 type AdminStep = "info" | "counting" | "result";
@@ -745,10 +748,108 @@ function EventAdminForm() {
   );
 }
 
+function EventAdminPasswordGate({ children }: { children: ReactNode }) {
+  const [unlocked, setUnlocked] = useState(false);
+  const [checking, setChecking] = useState(() => Boolean(getEventAdminPassword()));
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const stored = getEventAdminPassword();
+    if (!stored) {
+      setChecking(false);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const ok = await verifyEventAdminPassword(stored);
+        if (cancelled) return;
+        if (ok) {
+          setUnlocked(true);
+        } else {
+          clearEventAdminPassword();
+        }
+      } catch {
+        if (!cancelled) clearEventAdminPassword();
+      } finally {
+        if (!cancelled) setChecking(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    const trimmed = password.trim();
+    if (!trimmed || submitting) return;
+    setSubmitting(true);
+    try {
+      const ok = await verifyEventAdminPassword(trimmed);
+      if (!ok) {
+        clearEventAdminPassword();
+        toast.error(UI.eventAdminPasswordInvalid);
+        return;
+      }
+      setUnlocked(true);
+    } catch {
+      toast.error(UI.eventAdminPasswordError);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (checking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-6">
+        <p className="text-sm text-muted-foreground">{UI.eventAdminPasswordSubmitting}</p>
+      </div>
+    );
+  }
+
+  if (unlocked) {
+    return <>{children}</>;
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-6">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>{UI.eventAdminPasswordTitle}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="space-y-2">
+              <label htmlFor="event-admin-password" className="text-sm font-medium">
+                {UI.eventAdminPasswordLabel}
+              </label>
+              <Input
+                id="event-admin-password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={submitting}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={submitting || !password.trim()}>
+              {submitting ? UI.eventAdminPasswordSubmitting : UI.eventAdminPasswordSubmit}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export function EventAdminPage() {
   return (
     <EventWebOnlyGate>
-      <EventAdminForm />
+      <EventAdminPasswordGate>
+        <EventAdminForm />
+      </EventAdminPasswordGate>
     </EventWebOnlyGate>
   );
 }
