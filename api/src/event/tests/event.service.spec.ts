@@ -33,9 +33,37 @@ describe('EventService', () => {
 
   let service: InstanceType<typeof EventService>;
 
+  function mockRank(count: number) {
+    entriesRepo.createQueryBuilder.mockReturnValue({
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getCount: jest.fn().mockResolvedValue(count),
+    });
+  }
+
+  /** findOne: email lookup first, then board top (no email in where). */
+  function mockFindOne({
+    existingBest,
+    previousTop,
+  }: {
+    existingBest: Record<string, unknown> | null;
+    previousTop: Record<string, unknown> | null;
+  }) {
+    entriesRepo.findOne.mockImplementation(
+      (options?: { where?: Record<string, unknown> }) => {
+        const where = options?.where ?? {};
+        if (where.email != null) {
+          return existingBest;
+        }
+        return previousTop;
+      },
+    );
+  }
+
   beforeEach(() => {
     jest.clearAllMocks();
     catalogRepo.find.mockResolvedValue([]);
+    entriesRepo.update.mockResolvedValue({ affected: 0 });
     service = new EventService(
       entriesRepo as any,
       attemptRepo as any,
@@ -48,18 +76,13 @@ describe('EventService', () => {
   });
 
   it('awards t-shirt when first entry for exercise and gender', async () => {
-    entriesRepo.findOne.mockResolvedValue(null);
-    entriesRepo.update.mockResolvedValue({ affected: 0 });
+    mockFindOne({ existingBest: null, previousTop: null });
     entriesRepo.save.mockImplementation((entry) => ({
       ...entry,
       id: 'entry-1',
       createdAt: new Date('2026-07-20T10:00:00.000Z'),
     }));
-    entriesRepo.createQueryBuilder.mockReturnValue({
-      where: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      getCount: jest.fn().mockResolvedValue(0),
-    });
+    mockRank(0);
 
     const result = await service.createEntry({
       firstName: 'Alex',
@@ -74,21 +97,21 @@ describe('EventService', () => {
     expect(result.tshirtAwarded).toBe(true);
     expect(result.celebrationPending).toBe(true);
     expect(result.rank).toBe(1);
+    expect(entriesRepo.create).toHaveBeenCalled();
   });
 
   it('awards t-shirt when beating previous leader', async () => {
-    entriesRepo.findOne.mockResolvedValue({ id: 'old-1', reps: 10 });
+    mockFindOne({
+      existingBest: null,
+      previousTop: { id: 'old-1', reps: 10 },
+    });
     entriesRepo.update.mockResolvedValue({ affected: 1 });
     entriesRepo.save.mockImplementation((entry) => ({
       ...entry,
       id: 'entry-2',
       createdAt: new Date('2026-07-20T11:00:00.000Z'),
     }));
-    entriesRepo.createQueryBuilder.mockReturnValue({
-      where: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      getCount: jest.fn().mockResolvedValue(0),
-    });
+    mockRank(0);
 
     const result = await service.createEntry({
       firstName: 'Léa',
@@ -104,17 +127,16 @@ describe('EventService', () => {
   });
 
   it('does not award t-shirt when tying previous leader', async () => {
-    entriesRepo.findOne.mockResolvedValue({ id: 'old-1', reps: 20 });
+    mockFindOne({
+      existingBest: null,
+      previousTop: { id: 'old-1', reps: 20 },
+    });
     entriesRepo.save.mockImplementation((entry) => ({
       ...entry,
       id: 'entry-3',
       createdAt: new Date('2026-07-20T12:00:00.000Z'),
     }));
-    entriesRepo.createQueryBuilder.mockReturnValue({
-      where: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      getCount: jest.fn().mockResolvedValue(1),
-    });
+    mockRank(1);
 
     const result = await service.createEntry({
       firstName: 'Tom',
@@ -129,6 +151,142 @@ describe('EventService', () => {
     expect(result.tshirtAwarded).toBe(false);
     expect(result.celebrationPending).toBe(false);
     expect(result.rank).toBe(2);
+  });
+
+  it('updates existing entry when same email beats personal best', async () => {
+    const existing = {
+      id: 'entry-alex',
+      firstName: 'Alex',
+      lastName: 'Martin',
+      email: 'alex@example.com',
+      gender: EventGender.Male,
+      exercise: EventExercise.PullUp,
+      reps: 10,
+      notes: null,
+      beatPreviousLeader: false,
+      tshirtAwarded: false,
+      celebrationPending: false,
+      resultDisplayPending: false,
+      deletedAt: null,
+      createdAt: new Date('2026-07-20T09:00:00.000Z'),
+    };
+    mockFindOne({
+      existingBest: existing,
+      previousTop: { id: 'entry-bob', reps: 12 },
+    });
+    entriesRepo.save.mockImplementation((entry) => entry);
+    mockRank(0);
+
+    const result = await service.createEntry({
+      firstName: 'Alexandre',
+      lastName: 'Martin',
+      email: 'Alex@example.com',
+      gender: EventGender.Male,
+      exercise: EventExercise.PullUp,
+      reps: 14,
+    });
+
+    expect(result.id).toBe('entry-alex');
+    expect(result.reps).toBe(14);
+    expect(result.firstName).toBe('Alexandre');
+    expect(result.beatPreviousLeader).toBe(true);
+    expect(result.tshirtAwarded).toBe(true);
+    expect(entriesRepo.create).not.toHaveBeenCalled();
+    expect(entriesRepo.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'alex@example.com',
+        exercise: EventExercise.PullUp,
+        gender: EventGender.Male,
+      }),
+      expect.objectContaining({
+        celebrationPending: false,
+        resultDisplayPending: false,
+      }),
+    );
+  });
+
+  it('keeps existing best when same email scores lower', async () => {
+    const existing = {
+      id: 'entry-alex',
+      firstName: 'Alex',
+      lastName: 'Martin',
+      email: 'alex@example.com',
+      gender: EventGender.Male,
+      exercise: EventExercise.PullUp,
+      reps: 15,
+      beatPreviousLeader: true,
+      tshirtAwarded: true,
+      celebrationPending: false,
+      resultDisplayPending: false,
+      deletedAt: null,
+      createdAt: new Date('2026-07-20T09:00:00.000Z'),
+    };
+    mockFindOne({
+      existingBest: existing,
+      previousTop: existing,
+    });
+    entriesRepo.save.mockImplementation((entry) => entry);
+    mockRank(0);
+
+    const result = await service.createEntry({
+      firstName: 'Alex',
+      lastName: 'Martin',
+      email: 'alex@example.com',
+      gender: EventGender.Male,
+      exercise: EventExercise.PullUp,
+      reps: 12,
+    });
+
+    expect(result.id).toBe('entry-alex');
+    expect(result.reps).toBe(15);
+    expect(result.beatPreviousLeader).toBe(false);
+    expect(result.tshirtAwarded).toBe(false);
+    expect(result.celebrationPending).toBe(false);
+    expect(entriesRepo.create).not.toHaveBeenCalled();
+    expect(entriesRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'entry-alex',
+        reps: 15,
+        resultDisplayPending: true,
+      }),
+    );
+  });
+
+  it('keeps existing best when same email ties personal best', async () => {
+    const existing = {
+      id: 'entry-alex',
+      firstName: 'Alex',
+      lastName: 'Martin',
+      email: 'alex@example.com',
+      gender: EventGender.Male,
+      exercise: EventExercise.PullUp,
+      reps: 12,
+      beatPreviousLeader: false,
+      tshirtAwarded: false,
+      celebrationPending: false,
+      resultDisplayPending: false,
+      deletedAt: null,
+      createdAt: new Date('2026-07-20T09:00:00.000Z'),
+    };
+    mockFindOne({
+      existingBest: existing,
+      previousTop: existing,
+    });
+    entriesRepo.save.mockImplementation((entry) => entry);
+    mockRank(0);
+
+    const result = await service.createEntry({
+      firstName: 'Alex',
+      lastName: 'Martin',
+      email: 'alex@example.com',
+      gender: EventGender.Male,
+      exercise: EventExercise.PullUp,
+      reps: 12,
+    });
+
+    expect(result.reps).toBe(12);
+    expect(result.beatPreviousLeader).toBe(false);
+    expect(entriesRepo.create).not.toHaveBeenCalled();
   });
 
   it('soft-deletes all entries and clears active attempt', async () => {

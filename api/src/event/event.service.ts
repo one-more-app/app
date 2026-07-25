@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Repository } from 'typeorm';
+import { In, IsNull, Not, Repository } from 'typeorm';
 import { ExerciseCatalogEntity } from '../exercises/exercise-catalog.entity.js';
 import { RealtimeBroadcaster } from '../realtime/realtime-broadcaster.service.js';
 import {
@@ -463,11 +463,53 @@ export class EventService {
     dto: CreateEventEntryDto,
     options?: { publish?: boolean },
   ): Promise<CreateEventEntryResult> {
+    const email = dto.email.trim().toLowerCase();
+    const firstName = dto.firstName.trim();
+    const lastName = dto.lastName.trim();
+    const notes = dto.notes?.trim() ? dto.notes.trim() : null;
+
+    const existingBest = await this.findBestEntryForEmail(
+      email,
+      dto.exercise,
+      dto.gender,
+    );
+
+    // Keep the personal best on the board: worse/equal scores still finalize
+    // the attempt UX but do not replace the stored entry.
+    if (existingBest && dto.reps <= existingBest.reps) {
+      await this.entriesRepo.update(
+        { resultDisplayPending: true, deletedAt: IsNull() },
+        { resultDisplayPending: false },
+      );
+
+      existingBest.resultDisplayPending = true;
+      existingBest.celebrationPending = false;
+      const kept = await this.entriesRepo.save(existingBest);
+      const rank = await this.getRankForEntry(kept);
+
+      const result = {
+        id: kept.id,
+        firstName: kept.firstName,
+        gender: kept.gender,
+        exercise: kept.exercise,
+        reps: kept.reps,
+        beatPreviousLeader: false,
+        tshirtAwarded: false,
+        celebrationPending: false,
+        rank,
+        createdAt: kept.createdAt.toISOString(),
+      };
+
+      if (options?.publish !== false) {
+        await this.publishLeaderboard();
+      }
+
+      return result;
+    }
+
     const previousTop = await this.getTopEntry(dto.exercise, dto.gender);
     const beatPreviousLeader =
       previousTop == null || dto.reps > previousTop.reps;
-
-    const notes = dto.notes?.trim() ? dto.notes.trim() : null;
 
     if (beatPreviousLeader) {
       await this.entriesRepo.update(
@@ -481,22 +523,45 @@ export class EventService {
       { resultDisplayPending: false },
     );
 
-    const saved = await this.entriesRepo.save(
-      this.entriesRepo.create({
-        firstName: dto.firstName.trim(),
-        lastName: dto.lastName.trim(),
-        email: dto.email.trim().toLowerCase(),
-        gender: dto.gender,
-        exercise: dto.exercise,
-        reps: dto.reps,
-        notes,
-        beatPreviousLeader,
-        tshirtAwarded: beatPreviousLeader,
-        celebrationPending: beatPreviousLeader,
-        resultDisplayPending: true,
-        deletedAt: null,
-      }),
-    );
+    let saved: EventEntryEntity;
+
+    if (existingBest) {
+      existingBest.firstName = firstName;
+      existingBest.lastName = lastName;
+      existingBest.reps = dto.reps;
+      existingBest.notes = notes;
+      existingBest.beatPreviousLeader = beatPreviousLeader;
+      existingBest.tshirtAwarded =
+        existingBest.tshirtAwarded || beatPreviousLeader;
+      existingBest.celebrationPending = beatPreviousLeader;
+      existingBest.resultDisplayPending = true;
+      existingBest.createdAt = new Date();
+      saved = await this.entriesRepo.save(existingBest);
+
+      await this.softDeleteOtherEntriesForEmail(
+        email,
+        dto.exercise,
+        dto.gender,
+        saved.id,
+      );
+    } else {
+      saved = await this.entriesRepo.save(
+        this.entriesRepo.create({
+          firstName,
+          lastName,
+          email,
+          gender: dto.gender,
+          exercise: dto.exercise,
+          reps: dto.reps,
+          notes,
+          beatPreviousLeader,
+          tshirtAwarded: beatPreviousLeader,
+          celebrationPending: beatPreviousLeader,
+          resultDisplayPending: true,
+          deletedAt: null,
+        }),
+      );
+    }
 
     const rank = await this.getRankForEntry(saved);
 
@@ -518,6 +583,39 @@ export class EventService {
     }
 
     return result;
+  }
+
+  private async findBestEntryForEmail(
+    email: string,
+    exercise: EventExercise,
+    gender: EventGender,
+  ): Promise<EventEntryEntity | null> {
+    return await this.entriesRepo.findOne({
+      where: { email, exercise, gender, deletedAt: IsNull() },
+      order: { reps: 'DESC', createdAt: 'ASC' },
+    });
+  }
+
+  private async softDeleteOtherEntriesForEmail(
+    email: string,
+    exercise: EventExercise,
+    gender: EventGender,
+    keepId: string,
+  ): Promise<void> {
+    await this.entriesRepo.update(
+      {
+        email,
+        exercise,
+        gender,
+        deletedAt: IsNull(),
+        id: Not(keepId),
+      },
+      {
+        deletedAt: new Date(),
+        celebrationPending: false,
+        resultDisplayPending: false,
+      },
+    );
   }
 
   private async getTopEntry(

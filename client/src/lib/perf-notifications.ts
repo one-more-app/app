@@ -31,9 +31,9 @@ export type NewRecordCelebrationPayload = {
   target?: string
 }
 
+/** True only when an existing PB is beaten. First perf is a baseline, not a record. */
 export function isNewPersonalBest(prevPB: PB, nextPB: PB): boolean {
-  if (!nextPB) return false
-  if (!prevPB) return true
+  if (!nextPB || !prevPB) return false
   return (
     nextPB.weight > prevPB.weight ||
     (nextPB.weight === prevPB.weight && nextPB.reps > prevPB.reps)

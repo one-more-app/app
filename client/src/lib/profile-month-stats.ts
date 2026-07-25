@@ -10,7 +10,7 @@ function isInMonth(dayKey: string, monthKey: string): boolean {
   return dayKey.startsWith(`${monthKey}-`);
 }
 
-/** Nombre de performances qui ont battu le record personnel sur le mois. */
+/** Nombre de perfs du mois qui ont battu un PB existant (1ʳᵉ perf exclue). */
 export function countPersonalRecordsInMonth(
   entries: PerformanceEntry[],
   monthKey: string,

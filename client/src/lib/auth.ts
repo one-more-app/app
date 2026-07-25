@@ -1,6 +1,10 @@
-import { apiFetch } from "@/lib/api";
-
-const AUTH_STORAGE_KEY = "one-more-auth-v1";
+import { apiFetch, refreshAccessToken } from "@/lib/api";
+import {
+  clearStoredSession,
+  readStoredSession,
+  writeStoredSession,
+  type StoredAuthSession,
+} from "@/lib/auth-storage";
 
 export type AuthUser = {
   id: string;
@@ -13,52 +17,8 @@ export type AuthSession = {
   user: AuthUser;
 };
 
-export type StoredAuthSession = {
-  accessToken: string;
-  refreshToken: string;
-  user: AuthUser;
-};
-
-export function readStoredSession(): StoredAuthSession | null {
-  try {
-    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<StoredAuthSession>;
-    const user = parsed.user as Partial<AuthUser> | null | undefined;
-    if (
-      !parsed ||
-      typeof parsed !== "object" ||
-      typeof parsed.accessToken !== "string" ||
-      typeof parsed.refreshToken !== "string" ||
-      !user ||
-      typeof user !== "object" ||
-      typeof user.id !== "string"
-    ) {
-      return null;
-    }
-    return {
-      accessToken: parsed.accessToken,
-      refreshToken: parsed.refreshToken,
-      user: {
-        id: user.id,
-        email:
-          user.email === null || typeof user.email === "string"
-            ? user.email
-            : null,
-      },
-    };
-  } catch {
-    return null;
-  }
-}
-
-export function writeStoredSession(session: StoredAuthSession): void {
-  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
-}
-
-export function clearStoredSession(): void {
-  localStorage.removeItem(AUTH_STORAGE_KEY);
-}
+export type { StoredAuthSession };
+export { clearStoredSession, readStoredSession, writeStoredSession };
 
 export type UsernameCheckResult = {
   available: boolean;
@@ -125,14 +85,9 @@ export async function identifyEmail(params: {
   });
 }
 
-export async function refreshSession(params: {
-  refreshToken: string;
-  deviceId?: string;
-}): Promise<AuthSession> {
-  return await apiFetch<AuthSession>("/auth/refresh", {
-    method: "POST",
-    body: JSON.stringify(params),
-  });
+/** Refresh via the shared single-flight path (storage as source of truth). */
+export async function refreshSession(): Promise<AuthSession> {
+  return await refreshAccessToken();
 }
 
 export async function logoutSession(params: {
@@ -144,4 +99,3 @@ export async function logoutSession(params: {
     body: JSON.stringify(params),
   });
 }
-

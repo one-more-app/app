@@ -41,6 +41,10 @@ describe('personal-best', () => {
     ).toBe(false);
   });
 
+  it('isNewPersonalBest treats first perf as baseline, not a record', () => {
+    expect(isNewPersonalBest(null, { weight: 50, reps: 5 })).toBe(false);
+  });
+
   it('getPersonalBestFromEntries', () => {
     expect(
       getPersonalBestFromEntries([

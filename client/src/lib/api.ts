@@ -1,3 +1,10 @@
+import {
+  clearStoredSession,
+  readStoredSession,
+  writeStoredSession,
+  type StoredAuthSession,
+} from "@/lib/auth-storage";
+
 export type ApiErrorPayload = {
   message?: string;
   error?: string;
@@ -15,8 +22,6 @@ export class ApiError extends Error {
     this.payload = payload;
   }
 }
-
-const AUTH_STORAGE_KEY = "one-more-auth-v1";
 
 declare global {
   interface Window {
@@ -50,73 +55,48 @@ function notifyApiUnreachable(): void {
   onApiUnreachable?.();
 }
 
-type StoredSessionShape = {
-  accessToken: string;
-  refreshToken: string;
-  user: { id: string; email: string | null };
+export type AuthSessionListener = {
+  onRefreshed: (session: StoredAuthSession) => void;
+  onCleared: () => void;
 };
 
-type StoredSessionUser = {
-  id?: unknown;
-  email?: unknown;
-};
+let authSessionListener: AuthSessionListener | null = null;
 
-function readStoredSession(): StoredSessionShape | null {
-  try {
-    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<StoredSessionShape>;
-    if (
-      !parsed ||
-      typeof parsed !== "object" ||
-      typeof parsed.accessToken !== "string" ||
-      typeof parsed.refreshToken !== "string" ||
-      !parsed.user ||
-      typeof parsed.user !== "object"
-    ) {
-      return null;
+/** Sync React auth state when the shared refresh path writes/clears storage. */
+export function setAuthSessionListener(listener: AuthSessionListener | null): void {
+  authSessionListener = listener;
+}
+
+let refreshInFlight: Promise<StoredAuthSession> | null = null;
+
+/**
+ * Single-flight refresh: mount + 401 interceptor share the same promise so a
+ * rotated refresh token is never reused concurrently.
+ */
+export async function refreshAccessToken(): Promise<StoredAuthSession> {
+  if (refreshInFlight) return refreshInFlight;
+
+  const pending = (async () => {
+    const stored = readStoredSession();
+    if (!stored) throw new ApiError("Session absente", 401, null);
+
+    const baseUrl = getApiBaseUrl();
+    let res: Response;
+    try {
+      res = await fetch(`${baseUrl}/auth/refresh`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ refreshToken: stored.refreshToken }),
+      });
+    } catch (error) {
+      notifyApiUnreachable();
+      const reason = error instanceof Error ? error.message : String(error);
+      throw new ApiError(
+        `Impossible de joindre l'API (${baseUrl}). Vérifie le déploiement backend et la route /auth/refresh. ${reason}`,
+        0,
+        null,
+      );
     }
-    const user = parsed.user as StoredSessionUser;
-    if (typeof user.id !== "string") {
-      return null;
-    }
-    return {
-      accessToken: parsed.accessToken,
-      refreshToken: parsed.refreshToken,
-      user: {
-        id: user.id,
-        email:
-          typeof user.email === "string" || user.email === null
-            ? user.email
-            : null,
-      },
-    };
-  } catch {
-    return null;
-  }
-}
-
-function writeStoredSession(session: StoredSessionShape): void {
-  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
-}
-
-function clearStoredSession(): void {
-  localStorage.removeItem(AUTH_STORAGE_KEY);
-}
-
-let refreshInFlight: Promise<unknown> | null = null;
-
-async function refreshAccessToken(baseUrl: string): Promise<StoredSessionShape> {
-  const stored = readStoredSession();
-  if (!stored) throw new ApiError("Session absente", 401, null);
-  if (refreshInFlight) return (await refreshInFlight) as StoredSessionShape;
-
-  refreshInFlight = (async () => {
-    const res = await fetch(`${baseUrl}/auth/refresh`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ refreshToken: stored.refreshToken }),
-    });
 
     const contentType = res.headers.get("content-type") ?? "";
     const isJson = contentType.includes("application/json");
@@ -126,15 +106,19 @@ async function refreshAccessToken(baseUrl: string): Promise<StoredSessionShape> 
       // On purge localement uniquement si le refresh token est réellement rejeté.
       if (res.status === 401 || res.status === 403) {
         clearStoredSession();
+        authSessionListener?.onCleared();
       }
       const msg =
         payload && typeof payload === "object" && (payload.message || payload.error)
-          ? String(payload.message || payload.error)
+          ? String(
+              (payload as { message?: unknown; error?: unknown }).message ||
+                (payload as { message?: unknown; error?: unknown }).error,
+            )
           : `Refresh échoué (${res.status})`;
       throw new ApiError(msg, res.status, payload);
     }
 
-    const session = payload as StoredSessionShape;
+    const session = payload as StoredAuthSession;
     if (
       !session ||
       typeof session.accessToken !== "string" ||
@@ -145,14 +129,30 @@ async function refreshAccessToken(baseUrl: string): Promise<StoredSessionShape> 
       throw new ApiError("Réponse refresh invalide", 500, payload);
     }
 
-    writeStoredSession(session);
-    return session;
+    const next: StoredAuthSession = {
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+      user: {
+        id: session.user.id,
+        email:
+          typeof session.user.email === "string" || session.user.email === null
+            ? session.user.email
+            : null,
+      },
+    };
+
+    writeStoredSession(next);
+    authSessionListener?.onRefreshed(next);
+    return next;
   })();
 
+  refreshInFlight = pending;
   try {
-    return (await refreshInFlight) as StoredSessionShape;
+    return await pending;
   } finally {
-    refreshInFlight = null;
+    if (refreshInFlight === pending) {
+      refreshInFlight = null;
+    }
   }
 }
 
@@ -195,7 +195,7 @@ export async function apiFetch<T>(
     const isAuthPath = typeof path === "string" && path.startsWith("/auth/");
     if (res.status === 401 && !skipAuthRefresh && !isAuthPath && tokenToUse) {
       // Si l'`accessToken` expire, on tente un refresh puis on retente une fois.
-      const refreshed = await refreshAccessToken(baseUrl);
+      const refreshed = await refreshAccessToken();
       const retryRes = await fetch(url, {
         ...rest,
         headers: {
@@ -274,7 +274,7 @@ export async function apiFetchFormData<T>(
   if (!res.ok) {
     const isAuthPath = typeof path === "string" && path.startsWith("/auth/");
     if (res.status === 401 && !skipAuthRefresh && !isAuthPath && tokenToUse) {
-      const refreshed = await refreshAccessToken(baseUrl);
+      const refreshed = await refreshAccessToken();
       const retryRes = await fetch(url, {
         ...rest,
         method: rest.method ?? "POST",
@@ -304,4 +304,3 @@ export async function apiFetchFormData<T>(
   }
   return payload as T;
 }
-

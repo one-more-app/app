@@ -23,7 +23,7 @@ function chronologicalPerfOrder(
   return a.id.localeCompare(b.id);
 }
 
-/** Nombre total de performances qui ont battu le record personnel. */
+/** Nombre total de perfs qui ont battu un PB existant (1ʳᵉ perf exclue). */
 export function countPersonalRecords(entries: PersonalRecordEntry[]): number {
   const byTracked = new Map<string, PersonalRecordEntry[]>();
 

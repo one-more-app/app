@@ -14,7 +14,7 @@ import {
   peekPendingAttribution,
   clearPendingAttribution,
 } from "@/lib/appsflyer-attribution";
-import { ApiError } from "@/lib/api";
+import { ApiError, setAuthSessionListener } from "@/lib/api";
 import { clearPendingInviteCode, peekPendingInviteCode } from "@/lib/invite-code";
 import { upsertUserAppsFlyerAttribution } from "@/lib/attribution-api";
 import { purgeUserScopedClientState } from "@/lib/purge-user-scoped-state";
@@ -22,7 +22,7 @@ import {
   clearPendingOnboardingProfile,
   peekPendingOnboardingProfile,
 } from "@/lib/storage";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 
 type AuthState = {
@@ -68,11 +68,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return stored ? sessionToState(stored) : { status: "anonymous", user: null, accessToken: null, refreshToken: null };
   });
   const [lastError, setLastError] = useState<string | null>(null);
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   const applySession = useCallback((session: AuthSession) => {
+    const current = stateRef.current;
     const switchingUser =
-      state.status === "anonymous" ||
-      (state.user?.id != null && state.user.id !== session.user.id);
+      current.status === "anonymous" ||
+      (current.user?.id != null && current.user.id !== session.user.id);
     if (switchingUser) {
       purgeUserScopedClientState(cache);
     }
@@ -82,7 +87,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user: session.user,
     };
     writeStoredSession(stored);
-    setState(sessionToState(stored));
+    const next = sessionToState(stored);
+    stateRef.current = next;
+    setState(next);
     void syncAppsFlyerCustomerUserId(session.user.id);
 
     // Sauvegarde en une fois (si dispo) l’attribution marketing reçue avant l’auth.
@@ -96,12 +103,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Best effort: ne bloque pas l’app si l’endpoint est indisponible.
       }
     })();
-  }, [cache, state.status, state.user]);
+  }, [cache]);
 
   const clearSession = useCallback(() => {
     purgeUserScopedClientState(cache);
     clearStoredSession();
-    setState({ status: "anonymous", user: null, accessToken: null, refreshToken: null });
+    const next: AuthState = {
+      status: "anonymous",
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+    };
+    stateRef.current = next;
+    setState(next);
     void syncAppsFlyerCustomerUserId(null);
   }, [cache]);
 
@@ -173,35 +187,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [applySession, clearError]);
 
   const refresh = useCallback(async (): Promise<boolean> => {
-    if (!state.refreshToken) return false;
+    if (!readStoredSession()?.refreshToken) return false;
     try {
-      const session = await refreshSession({ refreshToken: state.refreshToken });
+      const session = await refreshSession();
       applySession(session);
       return true;
     } catch (error) {
       // Évite une déconnexion forcée sur panne réseau/serveur temporaire.
+      // 401/403: clearSession déjà fait via setAuthSessionListener / refreshAccessToken.
       if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
-        clearSession();
+        if (stateRef.current.status === "authenticated") {
+          clearSession();
+        }
       }
       return false;
     }
-  }, [applySession, clearSession, state.refreshToken]);
+  }, [applySession, clearSession]);
 
   const logout = useCallback(async () => {
     clearError();
     try {
-      if (state.refreshToken) {
-        await logoutSession({ refreshToken: state.refreshToken });
+      const refreshToken = stateRef.current.refreshToken;
+      if (refreshToken) {
+        await logoutSession({ refreshToken });
       }
     } catch {
       // si le backend est indisponible, on supprime quand même localement
     } finally {
       clearSession();
     }
-  }, [clearError, clearSession, state.refreshToken]);
+  }, [clearError, clearSession]);
 
   useEffect(() => {
-    // refresh "best effort" au démarrage si on a une session.
+    setAuthSessionListener({
+      onRefreshed: (session) => {
+        // Storage déjà à jour; aligne le state React (évite tokens stale / zombie).
+        const next = sessionToState(session);
+        stateRef.current = next;
+        setState(next);
+        void syncAppsFlyerCustomerUserId(session.user.id);
+      },
+      onCleared: () => {
+        if (stateRef.current.status === "authenticated") {
+          clearSession();
+        }
+      },
+    });
+    return () => setAuthSessionListener(null);
+  }, [clearSession]);
+
+  useEffect(() => {
+    // refresh "best effort" au démarrage si on a une session (single-flight partagé).
     if (state.status !== "authenticated") return;
     void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -231,4 +267,3 @@ export function useAuth(): AuthContextValue {
   }
   return ctx;
 }
-
