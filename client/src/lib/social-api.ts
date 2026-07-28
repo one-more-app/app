@@ -163,6 +163,26 @@ export async function searchUsers(q: string): Promise<{ results: UserSearchResul
   return await apiFetch(`/social/users/search?${params.toString()}`);
 }
 
+export type FriendSuggestionReason = "mutual_friends" | "same_gym";
+
+export type FriendSuggestion = {
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+  reasons: FriendSuggestionReason[];
+  mutualFriendsCount: number;
+};
+
+export const FRIEND_SUGGESTIONS_SWR_KEY = "friend-suggestions";
+
+export async function fetchFriendSuggestions(): Promise<{
+  suggestions: FriendSuggestion[];
+}> {
+  return await apiFetch("/social/friends/suggestions");
+}
+
 export async function fetchUserPreview(userId: string): Promise<UserPreview> {
   return await apiFetch<UserPreview>(`/social/users/${userId}/preview`);
 }

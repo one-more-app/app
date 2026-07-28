@@ -590,6 +590,10 @@ export const UI = {
   friendsSearchMinChars:
     "Saisis au moins 2 caractères (ou @ + 1 caractère pour un pseudo).",
   friendsSearchNoResults: "Aucun résultat.",
+  friendSuggestionsTitle: "Suggestions",
+  friendSuggestionSameGym: "Même salle",
+  friendSuggestionMutualOne: "1 ami en commun",
+  friendSuggestionMutualMany: "{count} amis en commun",
   friendsTrainingNow: "En ce moment",
   friendsTrainingGeneric: "En séance",
   messagesTitle: "Discussion",

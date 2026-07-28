@@ -1,8 +1,10 @@
 import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallback";
+import { FriendSuggestionsSection } from "@/components/friends/FriendSuggestionsSection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
+  FRIEND_SUGGESTIONS_SWR_KEY,
   isFriendSearchReady,
   requestFriend,
   searchUsers,
@@ -17,6 +19,7 @@ import { Search } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { useSWRConfig } from "swr";
 
 function SearchResultRow({
   item,
@@ -101,6 +104,7 @@ export function FriendsSearchTab({
   onRefreshFriends: () => void;
   autoFocus?: boolean;
 }) {
+  const { mutate } = useSWRConfig();
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [results, setResults] = useState<UserSearchResult[]>([]);
@@ -140,6 +144,7 @@ export function FriendsSearchTab({
         await requestFriend(userId);
         toast.success(UI.friendRequestSent);
         onRefreshFriends();
+        await mutate(FRIEND_SUGGESTIONS_SWR_KEY);
         const { results: found } = await searchUsers(debounced);
         setResults(found);
       } catch {
@@ -166,7 +171,10 @@ export function FriendsSearchTab({
       {loading ? (
         <p className="text-sm text-muted-foreground">{UI.loading}</p>
       ) : debounced.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{UI.friendsSearchEmpty}</p>
+        <FriendSuggestionsSection
+          showSearchHint
+          onRefreshFriends={onRefreshFriends}
+        />
       ) : !searchReady ? (
         <p className="text-sm text-muted-foreground">{UI.friendsSearchMinChars}</p>
       ) : results.length === 0 ? (

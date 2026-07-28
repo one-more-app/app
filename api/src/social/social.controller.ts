@@ -13,6 +13,7 @@ import { JwtAuthGuard } from '../auth/jwt.guard.js';
 import { AccessService } from './access.service.js';
 import { RequestFriendDto } from './dto/request-friend.dto.js';
 import { SearchUsersQueryDto } from './dto/search-users-query.dto.js';
+import { FriendSuggestionsService } from './friend-suggestions.service.js';
 import { FriendsService } from './friends.service.js';
 import { InvitesService } from './invites.service.js';
 import { ReferralService } from './referral.service.js';
@@ -26,6 +27,7 @@ export class SocialController {
     private readonly invitesService: InvitesService,
     private readonly referralService: ReferralService,
     private readonly friendsService: FriendsService,
+    private readonly friendSuggestionsService: FriendSuggestionsService,
     private readonly userSearchService: UserSearchService,
   ) {}
 
@@ -120,6 +122,15 @@ export class SocialController {
   @Get('/social/friends')
   async listFriends(@Req() req: { user: { sub: string } }) {
     return await this.friendsService.listFriends(req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/social/friends/suggestions')
+  async listFriendSuggestions(@Req() req: { user: { sub: string } }) {
+    const suggestions = await this.friendSuggestionsService.suggest(
+      req.user.sub,
+    );
+    return { suggestions };
   }
 
   @UseGuards(JwtAuthGuard)

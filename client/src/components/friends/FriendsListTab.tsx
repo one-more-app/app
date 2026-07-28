@@ -1,4 +1,5 @@
 import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallback";
+import { FriendSuggestionsSection } from "@/components/friends/FriendSuggestionsSection";
 import { PresenceBadge } from "@/components/friends/PresenceBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +16,7 @@ import {
     acceptFriendRequest,
     cancelFriendRequest,
     declineFriendRequest,
+    FRIEND_SUGGESTIONS_SWR_KEY,
     type FriendListItem,
     type FriendsListResponse,
 } from "@/lib/social-api";
@@ -23,6 +25,7 @@ import { getLocalDateKey } from "@/lib/local-date";
 import { MessageCircle, UserPlus, Users } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useSWRConfig } from "swr";
 
 function AcceptedFriendRow({
     item,
@@ -218,15 +221,23 @@ export function FriendsListTab({
     isLoading: boolean;
     onRefresh: () => Promise<void>;
 }) {
+    const { mutate } = useSWRConfig();
     const { byUserId } = useFriendsPresence();
     const { openReferralDrawer } = useReferralDrawer();
+
+    const refreshAll = async () => {
+        await Promise.all([
+            onRefresh(),
+            mutate(FRIEND_SUGGESTIONS_SWR_KEY),
+        ]);
+    };
 
     const handleAccept = (friendshipId: string) => {
         void (async () => {
             try {
                 await acceptFriendRequest(friendshipId);
                 toast.success(UI.friendAccepted);
-                await onRefresh();
+                await refreshAll();
             } catch {
                 toast.error(UI.friendActionError);
             }
@@ -237,7 +248,7 @@ export function FriendsListTab({
         void (async () => {
             try {
                 await declineFriendRequest(friendshipId);
-                await onRefresh();
+                await refreshAll();
             } catch {
                 toast.error(UI.friendActionError);
             }
@@ -248,7 +259,7 @@ export function FriendsListTab({
         void (async () => {
             try {
                 await cancelFriendRequest(friendshipId);
-                await onRefresh();
+                await refreshAll();
             } catch {
                 toast.error(UI.friendActionError);
             }
@@ -313,6 +324,8 @@ export function FriendsListTab({
                     ))
                 )}
             </section>
+
+            <FriendSuggestionsSection onRefreshFriends={() => void refreshAll()} />
         </div>
     );
 }

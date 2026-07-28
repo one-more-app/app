@@ -8,19 +8,26 @@ import { LeagueModule } from '../league/league.module.js';
 import { ProgressModule } from '../progress/progress.module.js';
 import { TrackedExercisesModule } from '../tracked-exercises/tracked-exercises.module.js';
 import { AccessModule } from './access.module.js';
+import { FriendSuggestionsService } from './friend-suggestions.service.js';
 import { FriendsService } from './friends.service.js';
 import { InvitesService } from './invites.service.js';
 import { ReferralService } from './referral.service.js';
 import { UserSearchService } from './user-search.service.js';
 import { UserEntity } from '../auth/entities/user.entity.js';
 import { FriendshipEntity } from './entities/friendship.entity.js';
+import { UserGymEntity } from '../gyms/entities/user-gym.entity.js';
 import { SocialController } from './social.controller.js';
 import { UsernameService } from './username.service.js';
 
 @Module({
   imports: [
     AccessModule,
-    TypeOrmModule.forFeature([FriendshipEntity, UserProfileEntity, UserEntity]),
+    TypeOrmModule.forFeature([
+      FriendshipEntity,
+      UserProfileEntity,
+      UserEntity,
+      UserGymEntity,
+    ]),
     ProgressModule,
     LeagueModule,
     TrackedExercisesModule,
@@ -32,6 +39,7 @@ import { UsernameService } from './username.service.js';
   providers: [
     InvitesService,
     FriendsService,
+    FriendSuggestionsService,
     ReferralService,
     UserSearchService,
     UsernameService,
