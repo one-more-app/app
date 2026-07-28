@@ -84,9 +84,13 @@ export class PushNotificationService implements OnModuleInit {
         route: payload.route,
       },
       android: {
+        priority: 'high' as const,
         notification: {
           icon: 'ic_stat_notification',
           color: '#dfff5e',
+          sound: 'default',
+          channelId: 'one-more-push',
+          defaultSound: true,
         },
       },
       apns: {

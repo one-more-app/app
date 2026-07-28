@@ -918,6 +918,8 @@ export const UI = {
     "Les notifications push sont disponibles sur l'app mobile.",
   notificationDefaultTitle: "One More",
   notificationSeeAction: "Voir",
+  notificationPushChannelName: "Notifications",
+  notificationPushChannelDescription: "Alertes amis, séries, messages et récaps",
   notifPrefStreak: "Rappels de série",
   notifPrefFriendRequests: "Demandes d'ami",
   notifPrefFriendAccepted: "Demandes acceptées",

@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.media.AudioAttributes;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
@@ -43,7 +45,7 @@ public class GymGeofencePlugin extends Plugin {
     private static final String KEY_ROUTE = "deep_link_route";
     private static final String KEY_IDENTIFIER = "geofence_identifier";
     private static final int NOTIFICATION_ID = 43;
-    private static final String CHANNEL_ID = "gym-reminder";
+    private static final String CHANNEL_ID = "gym-reminder-v2";
 
     private GeofencingClient geofencingClient;
     private PluginCall pendingPermissionCall;
@@ -269,7 +271,8 @@ public class GymGeofencePlugin extends Plugin {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(contentIntent)
-            .setColor(Color.parseColor("#DFFF5E"));
+            .setColor(Color.parseColor("#DFFF5E"))
+            .setDefaults(NotificationCompat.DEFAULT_SOUND | NotificationCompat.DEFAULT_VIBRATE);
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager != null) {
@@ -339,6 +342,14 @@ public class GymGeofencePlugin extends Plugin {
             NotificationManager.IMPORTANCE_HIGH
         );
         channel.setDescription("Notification quand tu arrives à ta salle.");
+        channel.enableVibration(true);
+        channel.setSound(
+            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
+            new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+        );
         manager.createNotificationChannel(channel);
     }
 }

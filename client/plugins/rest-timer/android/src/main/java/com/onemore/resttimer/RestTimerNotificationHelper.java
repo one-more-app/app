@@ -7,6 +7,8 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.media.AudioAttributes;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import androidx.core.app.NotificationCompat;
@@ -17,7 +19,8 @@ final class RestTimerNotificationHelper {
     static final int NOTIFICATION_ID = 42;
     /** v2 : visible écran verrouillé (IMPORTANCE_DEFAULT), sans son. */
     static final String CHANNEL_ID = "rest-timer-ongoing-v2";
-    static final String CHANNEL_FINISHED_ID = "rest-timer-finished";
+    /** v2 : son système par défaut (le Builder.setSound est ignoré sur Android 8+). */
+    static final String CHANNEL_FINISHED_ID = "rest-timer-finished-v2";
 
     private RestTimerNotificationHelper() {}
 
@@ -49,6 +52,13 @@ final class RestTimerNotificationHelper {
         );
         finished.setDescription("Alerte quand le temps de repos est terminé");
         finished.enableVibration(true);
+        finished.setSound(
+            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
+            new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+        );
         manager.createNotificationChannel(finished);
     }
 
@@ -108,7 +118,7 @@ final class RestTimerNotificationHelper {
     static NotificationCompat.Builder buildFinished(Context context, RestTimerState state) {
         int smallIcon = resolveNotificationIcon(context);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_FINISHED_ID)
+        return new NotificationCompat.Builder(context, CHANNEL_FINISHED_ID)
             .setSmallIcon(smallIcon)
             .setContentTitle(state.finishedTitle)
             .setContentText(formatExerciseName(state.exerciseName))
@@ -120,20 +130,7 @@ final class RestTimerNotificationHelper {
             .setContentIntent(buildContentIntent(context, state.deepLinkRoute))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setDefaults(NotificationCompat.DEFAULT_VIBRATE);
-
-        int soundRes = context
-            .getResources()
-            .getIdentifier("rest_timer_done", "raw", context.getPackageName());
-        if (soundRes != 0) {
-            builder.setSound(
-                Uri.parse("android.resource://" + context.getPackageName() + "/" + soundRes)
-            );
-        } else {
-            builder.setDefaults(NotificationCompat.DEFAULT_SOUND | NotificationCompat.DEFAULT_VIBRATE);
-        }
-
-        return builder;
+            .setDefaults(NotificationCompat.DEFAULT_SOUND | NotificationCompat.DEFAULT_VIBRATE);
     }
 
     private static PendingIntent buildContentIntent(Context context, String route) {

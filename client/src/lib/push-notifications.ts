@@ -8,6 +8,9 @@ import { registerNotificationDevice } from "@/lib/notifications-api";
 import { UI } from "@/lib/translations";
 import { toast } from "sonner";
 
+/** Doit correspondre à `android.notification.channelId` côté API + meta Manifest. */
+export const ANDROID_PUSH_CHANNEL_ID = "one-more-push";
+
 let registeredToken: string | null = null;
 
 function devicePlatform(): "ios" | "android" {
@@ -17,6 +20,21 @@ function devicePlatform(): "ios" | "android" {
 function navigateToRoute(route: string) {
   const normalized = route.startsWith("/") ? route : `/${route}`;
   window.location.hash = `#${normalized}`;
+}
+
+/** Canal Android avec son / vibration système (importance HIGH). */
+export async function ensureAndroidPushChannel(): Promise<void> {
+  if (Capacitor.getPlatform() !== "android") return;
+  await PushNotifications.createChannel({
+    id: ANDROID_PUSH_CHANNEL_ID,
+    name: UI.notificationPushChannelName,
+    description: UI.notificationPushChannelDescription,
+    importance: 5,
+    visibility: 1,
+    vibration: true,
+    lights: true,
+    lightColor: "#dfff5e",
+  });
 }
 
 export function getPushToken() {
@@ -51,6 +69,7 @@ export async function registerPushIfPermitted(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
   const perm = await PushNotifications.checkPermissions();
   if (perm.receive !== "granted") return;
+  await ensureAndroidPushChannel();
   await PushNotifications.register();
 }
 
@@ -67,6 +86,10 @@ export async function syncPushTokenWithApi(token: string) {
 
 export function attachPushNotificationListeners() {
   if (!Capacitor.isNativePlatform()) return () => {};
+
+  void ensureAndroidPushChannel().catch(() => {
+    /* Canal optionnel au boot ; réessaie à l'enregistrement. */
+  });
 
   const regHandle = PushNotifications.addListener(
     "registration",
