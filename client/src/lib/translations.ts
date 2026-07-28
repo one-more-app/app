@@ -219,12 +219,13 @@ export const UI = {
   record: "Record",
   reps: "Reps",
   weight: "Poids",
-  addedWeight: "Poids lesté (kg)",
-  weightPerDumbbell: "Poids par haltère (kg)",
+  addedWeight: "Poids lesté",
+  weightPerDumbbell: "Poids par haltère",
   totalLoadHint: "Charge totale (corps + lest)",
   dumbbellWeightHint: "Poids d'un seul haltère",
   bodyWeightOnly: "Poids du corps",
   bodyWeightAbbr: "PDC",
+  wheelPickerTapHint: "Tape pour saisir",
   save: "Enregistrer",
   delete: "Supprimer",
   history: "Historique",
@@ -723,10 +724,13 @@ export const UI = {
   // Salle de sport (onboarding post-compte)
   gymOnboardingTitle: "Tu es à la salle en ce moment ?",
   gymOnboardingHint:
-    "Renseigne ta salle pour qu'on te prévienne à l'arrivée et que tu puisses enregistrer tes perfs.",
+    "Renseigne ta salle pour qu'on te prévienne à l'arrivée. Tu pourras aussi le faire plus tard dans Réglages.",
   gymOnboardingYes: "Oui",
   gymOnboardingNo: "Non",
   gymOnboardingSearch: "Chercher ma salle",
+  gymOnboardingSkipLater: "Plus tard",
+  gymOnboardingSkipNoGym: "Continuer sans salle",
+  gymOnboardingSkipToast: "Tu pourras renseigner ta salle dans Réglages.",
   gymOnboardingLocationWhy:
     "On a besoin de ta position pour te prévenir quand tu reviens à la salle.",
   gymOnboardingConfirmTitle: "C'est bien ta salle ?",
@@ -741,6 +745,12 @@ export const UI = {
     "Lance une recherche ou utilise « Salles près de moi » pour afficher la carte.",
   gymOnboardingMapSelectCta: "Choisir cette salle",
   gymOnboardingNoResults: "Aucune salle trouvée.",
+  gymOnboardingNoResultsNearby:
+    "Aucune salle trouvée à proximité. Essaye par nom.",
+  gymOnboardingLocationPermissionDenied:
+    "Autorise la localisation pour voir les salles près de toi.",
+  gymOnboardingLocationUnavailable:
+    "Impossible d'obtenir ta position. Cherche par nom.",
   gymOnboardingDeferredMessage:
     "On te préviendra quand tu seras à {name} pour enregistrer ta première perf.",
   gymOnboardingWebSearch:
@@ -945,9 +955,9 @@ export const UI = {
   sessionCommentPlaceholder: "Écris un message…",
   sessionCommentReplyPlaceholder: "Ta réponse…",
   sessionCommentSend: "Envoyer",
+  sessionCommentSave: "Enregistrer",
   sessionCommentReply: "Répondre",
-  sessionCommentDelete: "Supprimer",
-  sessionCommentDeleteConfirm: "Supprimer ce commentaire ?",
+  sessionCommentEdit: "Modifier",
   sessionCommentError: "Impossible d'envoyer le commentaire.",
   sessionReactionAdd: "Ajouter une réaction",
   sessionReactionPick: "Choisir une réaction",

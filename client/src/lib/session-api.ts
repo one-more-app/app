@@ -74,8 +74,32 @@ export function mergeSessionComment(
   items: SessionComment[],
   incoming: SessionComment,
 ): { items: SessionComment[]; added: boolean } {
-  if (items.some((item) => item.id === incoming.id)) {
-    return { items, added: false };
+  const applyUpdate = (
+    list: SessionComment[],
+  ): { items: SessionComment[]; found: boolean } => {
+    let found = false;
+    const next = list.map((item) => {
+      if (item.id === incoming.id) {
+        found = true;
+        return {
+          ...item,
+          body: incoming.body,
+          createdAt: incoming.createdAt,
+          parentId: incoming.parentId,
+        };
+      }
+      if (item.replies.length === 0) return item;
+      const nested = applyUpdate(item.replies);
+      if (!nested.found) return item;
+      found = true;
+      return { ...item, replies: nested.items };
+    });
+    return { items: next, found };
+  };
+
+  const updated = applyUpdate(items);
+  if (updated.found) {
+    return { items: updated.items, added: false };
   }
 
   if (!incoming.parentId) {
@@ -154,14 +178,18 @@ export async function postSessionComment(
   });
 }
 
-export async function deleteSessionComment(
+export async function updateSessionComment(
   ownerUserId: string,
   date: string,
   commentId: string,
-): Promise<{ ok: boolean }> {
+  body: string,
+): Promise<{ comment: SessionComment }> {
   return await apiFetch(
     `/sessions/${ownerUserId}/${encodeURIComponent(date)}/comments/${commentId}`,
-    { method: "DELETE" },
+    {
+      method: "PATCH",
+      body: JSON.stringify({ body }),
+    },
   );
 }
 

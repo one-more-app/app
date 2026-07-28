@@ -424,6 +424,7 @@ export class WorkoutSessionsService {
     if (!trimmed) throw new BadRequestException('Message vide');
 
     let parentAuthorUserId: string | null = null;
+    let effectiveParentId: string | null = parentId ?? null;
     if (parentId) {
       const parent = await this.commentsRepo.findOne({
         where: {
@@ -435,8 +436,9 @@ export class WorkoutSessionsService {
       });
       if (!parent)
         throw new NotFoundException('Commentaire parent introuvable');
+      // Réponse à une réponse : même niveau (sous la racine), pas de profondeur +1.
       if (parent.parentId) {
-        throw new BadRequestException('Réponse à une réponse interdite');
+        effectiveParentId = parent.parentId;
       }
       parentAuthorUserId = parent.authorUserId;
     }
@@ -446,7 +448,7 @@ export class WorkoutSessionsService {
         ownerUserId,
         sessionDate: date,
         authorUserId: viewerId,
-        parentId: parentId ?? null,
+        parentId: effectiveParentId,
         body: trimmed,
       }),
     );
@@ -456,6 +458,38 @@ export class WorkoutSessionsService {
       comment: this.toCommentDto(entity, authors),
       parentAuthorUserId,
     };
+  }
+
+  async updateComment(
+    viewerId: string,
+    ownerUserId: string,
+    date: string,
+    commentId: string,
+    body: string,
+  ): Promise<SessionCommentDto> {
+    this.assertValidDate(date);
+    await this.assertCanViewSession(viewerId, ownerUserId);
+
+    const trimmed = body.trim();
+    if (!trimmed) throw new BadRequestException('Message vide');
+
+    const comment = await this.commentsRepo.findOne({
+      where: {
+        id: commentId,
+        ownerUserId,
+        sessionDate: date,
+        deletedAt: IsNull(),
+      },
+    });
+    if (!comment) throw new NotFoundException('Commentaire introuvable');
+    if (comment.authorUserId !== viewerId) {
+      throw new ForbiddenException('Modification non autorisée');
+    }
+
+    comment.body = trimmed;
+    const entity = await this.commentsRepo.save(comment);
+    const authors = await this.loadAuthors([viewerId]);
+    return this.toCommentDto(entity, authors);
   }
 
   async deleteComment(

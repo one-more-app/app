@@ -9,7 +9,7 @@ import {
   serializeMuscleSelection,
   type MuscleSelection,
 } from "@/lib/muscle-filter";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 export type ExerciseSortMode = "default" | "perfAdded";
@@ -76,7 +76,13 @@ export function useExerciseFilters(options: UseExerciseFiltersOptions = {}) {
   );
 
   const qParam = searchParams.get("q") || "";
+  /** Dernière valeur `q` poussée par ce hook (évite de réécrire l'input mid-typing). */
+  const lastPushedQRef = useRef(qParam);
+
   useEffect(() => {
+    if (qParam === lastPushedQRef.current) return;
+    // Navigation externe (back/forward, lien, clear ailleurs)
+    lastPushedQRef.current = qParam;
     setSearchInput(qParam);
     setSearchQuery(qParam);
   }, [qParam]);
@@ -103,6 +109,7 @@ export function useExerciseFilters(options: UseExerciseFiltersOptions = {}) {
     const next = new URLSearchParams(searchParams);
     const currentQ = next.get("q") || "";
     if (currentQ !== searchQuery) {
+      lastPushedQRef.current = searchQuery;
       if (searchQuery) next.set("q", searchQuery);
       else next.delete("q");
       if (options.includePage) next.delete("page");

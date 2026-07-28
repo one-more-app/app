@@ -68,6 +68,7 @@
     "appsflyer-capacitor-plugin": "^6.18.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "fuzzysort": "^3.1.0",
     "gym-geofence": "file:./plugins/gym-geofence",
     "html-to-image": "^1.11.13",
     "idb": "^8.0.3",

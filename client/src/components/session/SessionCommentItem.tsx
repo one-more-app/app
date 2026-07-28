@@ -14,7 +14,7 @@ type SessionCommentItemProps = {
   currentUserId: string | null;
   depth?: number;
   onReply: (parentId: string, body: string) => Promise<void>;
-  onDelete: (commentId: string) => Promise<void>;
+  onEdit: (commentId: string, body: string) => Promise<void>;
 };
 
 function formatCommentTime(createdAt: string) {
@@ -31,9 +31,10 @@ export function SessionCommentItem({
   currentUserId,
   depth = 0,
   onReply,
-  onDelete,
+  onEdit,
 }: SessionCommentItemProps) {
   const [replyOpen, setReplyOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const profile = {
     firstName: comment.author.firstName ?? undefined,
     lastName: comment.author.lastName ?? undefined,
@@ -42,7 +43,11 @@ export function SessionCommentItem({
   const name = getProfileDisplayName(profile, null);
   const initials = getProfileInitials(profile, null);
   const isAuthor = currentUserId === comment.author.userId;
-  const canReply = depth === 0;
+  // Même niveau d'imbrication : on peut répondre à une réponse (aplatissement côté API).
+  const replyMention =
+    depth > 0
+      ? `@${comment.author.username?.trim() || name} `
+      : undefined;
 
   return (
     <div className={cn(depth > 0 && "ml-10")}>
@@ -70,35 +75,55 @@ export function SessionCommentItem({
               {formatCommentTime(comment.createdAt)}
             </time>
           </p>
-          <p className="mt-1 whitespace-pre-wrap text-sm">{comment.body}</p>
-          <div className="mt-1.5 flex gap-3">
-            {canReply ? (
+          {editOpen ? (
+            <div className="mt-1">
+              <SessionCommentComposer
+                key={`${comment.id}-edit`}
+                autoFocus
+                initialValue={comment.body}
+                submitLabel={UI.sessionCommentSave}
+                onCancel={() => setEditOpen(false)}
+                onSubmit={async (body) => {
+                  await onEdit(comment.id, body);
+                  setEditOpen(false);
+                }}
+              />
+            </div>
+          ) : (
+            <p className="mt-1 whitespace-pre-wrap text-sm">{comment.body}</p>
+          )}
+          {!editOpen ? (
+            <div className="mt-1.5 flex gap-3">
               <button
                 type="button"
                 className="text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => setReplyOpen((open) => !open)}
+                onClick={() => {
+                  setEditOpen(false);
+                  setReplyOpen((open) => !open);
+                }}
               >
                 {UI.sessionCommentReply}
               </button>
-            ) : null}
-            {isAuthor ? (
-              <button
-                type="button"
-                className="text-xs text-muted-foreground hover:text-destructive"
-                onClick={() => {
-                  if (window.confirm(UI.sessionCommentDeleteConfirm)) {
-                    void onDelete(comment.id);
-                  }
-                }}
-              >
-                {UI.sessionCommentDelete}
-              </button>
-            ) : null}
-          </div>
-          {replyOpen ? (
+              {isAuthor ? (
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setReplyOpen(false);
+                    setEditOpen(true);
+                  }}
+                >
+                  {UI.sessionCommentEdit}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+          {replyOpen && !editOpen ? (
             <div className="mt-3">
               <SessionCommentComposer
+                key={`${comment.id}-reply`}
                 autoFocus
+                initialValue={replyMention}
                 placeholder={UI.sessionCommentReplyPlaceholder}
                 onCancel={() => setReplyOpen(false)}
                 onSubmit={async (body) => {
@@ -117,7 +142,7 @@ export function SessionCommentItem({
             currentUserId={currentUserId}
             depth={depth + 1}
             onReply={onReply}
-            onDelete={onDelete}
+            onEdit={onEdit}
           />
         </div>
       ))}

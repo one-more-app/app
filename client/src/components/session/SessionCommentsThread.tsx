@@ -1,11 +1,11 @@
 import { SessionCommentComposer } from "@/components/session/SessionCommentComposer";
 import { SessionCommentItem } from "@/components/session/SessionCommentItem";
 import {
-  deleteSessionComment,
   fetchSessionComments,
   mergeSessionComment,
   postSessionComment,
   sessionCommentsSwrKey,
+  updateSessionComment,
   type SessionComment,
 } from "@/lib/session-api";
 import { UI } from "@/lib/translations";
@@ -31,10 +31,6 @@ export function SessionCommentsThread({
 
   const items = data?.items ?? [];
 
-  const refreshComments = async () => {
-    await mutate(commentsKey);
-  };
-
   const handleCreate = async (body: string, parentId?: string) => {
     try {
       const { comment } = await postSessionComment(
@@ -56,12 +52,25 @@ export function SessionCommentsThread({
     }
   };
 
-  const handleDelete = async (commentId: string) => {
+  const handleEdit = async (commentId: string, body: string) => {
     try {
-      await deleteSessionComment(ownerUserId, date, commentId);
-      await refreshComments();
-    } catch {
+      const { comment } = await updateSessionComment(
+        ownerUserId,
+        date,
+        commentId,
+        body,
+      );
+      await mutate(
+        commentsKey,
+        (current: { items: SessionComment[] } | undefined) => {
+          const { items } = mergeSessionComment(current?.items ?? [], comment);
+          return { items };
+        },
+        { revalidate: false },
+      );
+    } catch (error) {
       toast.error(UI.sessionCommentError);
+      throw error;
     }
   };
 
@@ -83,7 +92,7 @@ export function SessionCommentsThread({
                 comment={comment}
                 currentUserId={currentUserId}
                 onReply={(parentId, body) => handleCreate(body, parentId)}
-                onDelete={handleDelete}
+                onEdit={handleEdit}
               />
             </li>
           ))}

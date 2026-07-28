@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AnalyticsEvents, track } from '@/lib/analytics'
 import { hapticImpact, hapticSelectionChanged } from '@/lib/haptics'
+import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import { Minus, Plus } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -93,6 +94,7 @@ export function HorizontalWheelPicker({
     }, [options.length])
 
     const [isDragging, setIsDragging] = useState(false)
+    const [isInputFocused, setIsInputFocused] = useState(false)
     const [inputText, setInputText] = useState<string | null>(null)
     const inputRef = useRef<HTMLInputElement>(null)
 
@@ -129,10 +131,16 @@ export function HorizontalWheelPicker({
     )
 
     const handleInputFocus = useCallback(() => {
+        setIsInputFocused(true)
         const str = step < 1 ? value.toFixed(1) : String(Math.round(value))
         setInputText(str)
         requestAnimationFrame(() => inputRef.current?.select())
     }, [value, step])
+
+    const handleInputBlur = useCallback(() => {
+        setIsInputFocused(false)
+        commitInput()
+    }, [commitInput])
 
     const syncToValue = useCallback(() => {
         if (!isDragging) scrollToIndex(clampedIndex)
@@ -195,7 +203,9 @@ export function HorizontalWheelPicker({
 
     return (
         <div className={cn('flex flex-col items-center gap-2', className)}>
-            <span className="text-sm font-medium text-muted-foreground">{label}</span>
+            <span className="text-sm font-medium text-muted-foreground">
+                {unit ? `${label} (${unit})` : label}
+            </span>
             <div className="flex w-full flex-col items-center gap-1">
                 <div className="flex w-full items-center gap-2">
                     <Button
@@ -211,7 +221,10 @@ export function HorizontalWheelPicker({
                     <div className="relative min-w-0 flex-1 font-one-more">
                         <div
                             ref={scrollRef}
-                            className="flex h-14 w-full overflow-x-auto overflow-y-hidden [scrollbar-width:none] [mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)] [&::-webkit-scrollbar]:hidden"
+                            className={cn(
+                                'flex h-14 w-full overflow-x-auto overflow-y-hidden [scrollbar-width:none] [mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)] [&::-webkit-scrollbar]:hidden',
+                                isInputFocused && 'pointer-events-none opacity-40',
+                            )}
                             style={{
                                 scrollSnapType: 'x mandatory',
                                 WebkitOverflowScrolling: 'touch',
@@ -236,22 +249,27 @@ export function HorizontalWheelPicker({
                             ))}
                             <div className="shrink-0" style={{ width: PADDING }} />
                         </div>
-                        <Input
-                            ref={inputRef}
-                            type="text"
-                            inputMode="decimal"
-                            className={cn(
-                                'absolute left-1/2 top-0 z-20 h-14 -translate-x-1/2 px-0 py-0 text-center text-xl font-semibold tabular-nums leading-[3.5rem]',
-                                'border-0 bg-transparent shadow-none focus-visible:border focus-visible:bg-background focus-visible:ring-2'
-                            )}
-                            style={{ width: ITEM_WIDTH }}
-                            value={inputText ?? (step < 1 ? value.toFixed(1) : String(Math.round(value)))}
-                            onChange={(e) => setInputText(e.target.value)}
-                            onBlur={commitInput}
-                            onFocus={handleInputFocus}
-                            onKeyDown={handleInputKeyDown}
-                            aria-label={label}
-                        />
+                        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+                            <Input
+                                ref={inputRef}
+                                type="text"
+                                inputMode="decimal"
+                                enterKeyHint="done"
+                                className={cn(
+                                    'pointer-events-auto h-12 w-20 shrink-0 px-1 py-0 text-center text-xl font-semibold tabular-nums md:text-xl',
+                                    'cursor-text caret-primary rounded-xl border border-border/70 bg-secondary shadow-sm',
+                                    'transition-[color,box-shadow,background-color,border-color]',
+                                    'hover:border-ring/60 hover:bg-secondary/90',
+                                    'focus-visible:border-ring focus-visible:bg-background focus-visible:ring-ring/40 focus-visible:ring-[3px]',
+                                )}
+                                value={inputText ?? (step < 1 ? value.toFixed(1) : String(Math.round(value)))}
+                                onChange={(e) => setInputText(e.target.value)}
+                                onBlur={handleInputBlur}
+                                onFocus={handleInputFocus}
+                                onKeyDown={handleInputKeyDown}
+                                aria-label={unit ? `${label} (${unit}). ${UI.wheelPickerTapHint}` : `${label}. ${UI.wheelPickerTapHint}`}
+                            />
+                        </div>
                     </div>
                     <Button
                         type="button"
@@ -264,7 +282,9 @@ export function HorizontalWheelPicker({
                         <Plus className="size-4 sm:size-5" />
                     </Button>
                 </div>
-                {unit && <span className="text-xs text-muted-foreground">{unit}</span>}
+                {!isInputFocused && (
+                    <span className="text-xs text-muted-foreground/70">{UI.wheelPickerTapHint}</span>
+                )}
             </div>
         </div>
     )

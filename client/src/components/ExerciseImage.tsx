@@ -65,6 +65,7 @@ export function ExerciseImage({
                 src={getExerciseImageUrl(gifUrl)}
                 alt=""
                 className={cn(
+                    'block max-w-full',
                     fit === 'cover' ? 'object-cover' : 'object-contain',
                     imgClassName ?? className,
                 )}

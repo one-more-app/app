@@ -246,15 +246,15 @@ export function ExerciseCard({
 
             {!exercise.isCustom && exercise.gifUrl ? (
                 <Dialog open={imagePreviewOpen} onOpenChange={setImagePreviewOpen}>
-                    <DialogContent className="max-w-lg gap-0 overflow-hidden p-0 sm:max-w-lg">
-                        <div className="bg-muted">
+                    <DialogContent className="gap-0 overflow-hidden p-0">
+                        <div className="flex min-h-0 min-w-0 w-full items-center justify-center overflow-hidden bg-muted">
                             <ExerciseImage
                                 gifUrl={exercise.gifUrl}
                                 bodyPart={exercise.bodyPart}
                                 target={exercise.target}
                                 suspendMedia={suspendMedia}
-                                className="mx-auto max-h-[min(70vh,480px)] w-full"
-                                imgClassName="mx-auto max-h-[min(70vh,480px)] w-full object-contain"
+                                className="max-h-[min(70vh,480px)] w-full"
+                                imgClassName="max-h-[min(70vh,480px)] w-full max-w-full object-contain"
                                 fallbackIconClassName="size-24 text-muted-foreground"
                                 fit="contain"
                             />

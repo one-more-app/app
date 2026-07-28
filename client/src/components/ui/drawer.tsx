@@ -11,11 +11,16 @@ type DrawerProps = React.ComponentProps<typeof DrawerPrimitive.Root> & {
 function Drawer({
     onOpenChange,
     "data-analytics-label": analyticsLabel,
+    repositionInputs = false,
     ...props
 }: DrawerProps) {
     return (
         <DrawerPrimitive.Root
             data-slot="drawer"
+            // Désactivé par défaut : Vaul écrit sinon des `bottom`/`height` inline au
+            // focus clavier, qui entrent en conflit avec `--keyboard-inset` (voir
+            // DrawerContent) et peuvent faire passer le drawer sous la BottomNav au blur.
+            repositionInputs={repositionInputs}
             onOpenChange={(open) =>
                 trackDrawerOpenChange(open, analyticsLabel, onOpenChange)
             }

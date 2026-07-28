@@ -6,17 +6,21 @@ import { useState } from "react";
 type SessionCommentComposerProps = {
     onSubmit: (body: string) => Promise<void>;
     placeholder?: string;
+    submitLabel?: string;
     autoFocus?: boolean;
+    initialValue?: string;
     onCancel?: () => void;
 };
 
 export function SessionCommentComposer({
     onSubmit,
     placeholder = UI.sessionCommentPlaceholder,
+    submitLabel = UI.sessionCommentSend,
     autoFocus = false,
+    initialValue = "",
     onCancel,
 }: SessionCommentComposerProps) {
-    const [draft, setDraft] = useState("");
+    const [draft, setDraft] = useState(initialValue);
     const [sending, setSending] = useState(false);
 
     const handleSubmit = () => {
@@ -65,7 +69,7 @@ export function SessionCommentComposer({
                     onClick={handleSubmit}
                     disabled={sending || !draft.trim()}
                 >
-                    {UI.sessionCommentSend}
+                    {submitLabel}
                 </Button>
             </div>
             {onCancel ? (

@@ -41,6 +41,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useSWRConfig } from 'swr';
 import { AuthPage } from '@/pages/AuthPage';
 
@@ -281,6 +282,13 @@ function OnboardingPage() {
         await finishOnboarding(nextPath)
     }
 
+    const skipGymStep = async () => {
+        toast.message(UI.gymOnboardingSkipToast)
+        setOnboardingFirstExercisePending(true)
+        const nextPath = getOnboardingPostAuthRedirect() ?? '/home'
+        await finishOnboarding(nextPath)
+    }
+
     const continueAfterGymResolved = async () => {
         const nextPath = getOnboardingPostAuthRedirect() ?? '/home'
         await finishOnboarding(nextPath)
@@ -487,6 +495,7 @@ function OnboardingPage() {
                             : undefined
                     }
                     onGymSaved={() => void handleGymSaved()}
+                    onSkip={fromSettings ? undefined : () => void skipGymStep()}
                 />
             ) : step === 'gym-permissions' ? (
                 <OnboardingGymPermissionsStep

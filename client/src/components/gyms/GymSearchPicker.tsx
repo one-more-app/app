@@ -5,8 +5,12 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useMutateUserGym } from "@/hooks/use-user-gym-data";
 import {
   getCurrentGymCoords,
+  GymLocationError,
+  isGymLocationError,
+  isGymLocationPermissionGranted,
   requestGymLocationPermission,
 } from "@/lib/gym-geolocation";
+import { openGymGeofenceSettings } from "@/lib/gym-geofence";
 import {
   fetchUserGym,
   isWithinGymRadius,
@@ -80,12 +84,18 @@ export function GymSearchPicker({
   const mutateUserGym = useMutateUserGym();
   const isNative = Capacitor.isNativePlatform();
   const autoNearbySearchDoneRef = useRef(false);
+  const coordsPromiseRef = useRef<Promise<{ lat: number; lng: number }> | null>(
+    null,
+  );
 
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [results, setResults] = useState<GymPlace[]>([]);
   const [searching, setSearching] = useState(false);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [searchView, setSearchView] = useState<GymSearchView>(initialSearchView);
+  const [searchView, setSearchView] = useState<GymSearchView>(
+    initialSearchView === "map" ? "list" : initialSearchView,
+  );
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(
     initialSelectedPlaceId,
   );
@@ -93,15 +103,48 @@ export function GymSearchPicker({
     null,
   );
   const [error, setError] = useState<string | null>(null);
+  const [showLocationSettings, setShowLocationSettings] = useState(false);
 
   const ensureUserCoords = useCallback(async () => {
     if (userCoords) return userCoords;
-    const granted = await requestGymLocationPermission();
-    if (!granted) return null;
-    const coords = await getCurrentGymCoords();
-    setUserCoords(coords);
-    return coords;
+    if (coordsPromiseRef.current) return coordsPromiseRef.current;
+
+    const pending = (async () => {
+      const granted = await requestGymLocationPermission();
+      if (!granted) {
+        throw new GymLocationError("permission_denied");
+      }
+      const coords = await getCurrentGymCoords({ preferFast: true });
+      setUserCoords(coords);
+      return coords;
+    })();
+
+    coordsPromiseRef.current = pending;
+    try {
+      return await pending;
+    } catch (error) {
+      coordsPromiseRef.current = null;
+      throw error;
+    }
   }, [userCoords]);
+
+  // Précharge la position (natif, permission déjà OK) pour un nearby immédiat au clic.
+  useEffect(() => {
+    if (!isNative) return;
+    let cancelled = false;
+    void (async () => {
+      const granted = await isGymLocationPermissionGranted();
+      if (!granted || cancelled) return;
+      try {
+        await ensureUserCoords();
+      } catch {
+        /* silencieux : le clic nearby gérera l'erreur */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [ensureUserCoords, isNative]);
 
   const saveGym = useCallback(
     async (place: GymPlace, coords: { lat: number; lng: number } | null) => {
@@ -144,21 +187,34 @@ export function GymSearchPicker({
     [claimedAtGym, fromSettings, mutateUserGym, onGymSaved],
   );
 
-  const runSearch = useCallback(
-    async (options?: { preferMapView?: boolean }) => {
+  const runNameSearch = useCallback(
+    async (query: string) => {
+      const trimmed = query.trim();
+      if (!trimmed) {
+        setResults([]);
+        setSelectedPlaceId(null);
+        setError(null);
+        return;
+      }
+
       setSearching(true);
       setError(null);
+      setShowLocationSettings(false);
       try {
         let coords = userCoords;
         if (!coords) {
           try {
-            coords = await ensureUserCoords();
+            const granted = await isGymLocationPermissionGranted();
+            if (granted) {
+              coords = await getCurrentGymCoords({ preferFast: true });
+              setUserCoords(coords);
+            }
           } catch {
             coords = null;
           }
         }
         const items = await searchGyms({
-          q: searchQuery.trim() || undefined,
+          q: trimmed,
           lat: coords?.lat,
           lng: coords?.lng,
         });
@@ -171,8 +227,6 @@ export function GymSearchPicker({
         });
         if (items.length === 0) {
           setError(UI.gymOnboardingNoResults);
-        } else if (options?.preferMapView) {
-          setSearchView("map");
         }
       } catch {
         setError(UI.gymOnboardingNoResults);
@@ -182,24 +236,85 @@ export function GymSearchPicker({
         setSearching(false);
       }
     },
-    [ensureUserCoords, searchQuery, userCoords],
+    [userCoords],
   );
+
+  const runNearbySearch = useCallback(async () => {
+    setNearbyLoading(true);
+    setSearching(true);
+    setError(null);
+    setShowLocationSettings(false);
+    setSearchQuery("");
+    setSearchView("list");
+
+    try {
+      let coords = userCoords;
+      if (!coords) {
+        try {
+          coords = await ensureUserCoords();
+        } catch (err) {
+          setResults([]);
+          setSelectedPlaceId(null);
+          if (isGymLocationError(err) && err.kind === "permission_denied") {
+            setError(UI.gymOnboardingLocationPermissionDenied);
+            setShowLocationSettings(isNative);
+          } else {
+            setError(UI.gymOnboardingLocationUnavailable);
+          }
+          return;
+        }
+      }
+
+      const items = await searchGyms({
+        lat: coords.lat,
+        lng: coords.lng,
+      });
+      setResults(items);
+      setSelectedPlaceId((current) => {
+        if (current && items.some((item) => item.placeId === current)) {
+          return current;
+        }
+        return null;
+      });
+      if (items.length === 0) {
+        setError(UI.gymOnboardingNoResultsNearby);
+      }
+    } catch (err) {
+      setResults([]);
+      setSelectedPlaceId(null);
+      if (isGymLocationError(err) && err.kind === "permission_denied") {
+        setError(UI.gymOnboardingLocationPermissionDenied);
+        setShowLocationSettings(isNative);
+      } else if (isGymLocationError(err)) {
+        setError(UI.gymOnboardingLocationUnavailable);
+      } else {
+        setError(UI.gymOnboardingNoResultsNearby);
+      }
+    } finally {
+      setNearbyLoading(false);
+      setSearching(false);
+    }
+  }, [ensureUserCoords, isNative, userCoords]);
 
   useEffect(() => {
     if (!searchQuery.trim()) return;
     const timer = window.setTimeout(() => {
-      void runSearch();
+      void runNameSearch(searchQuery);
     }, 300);
     return () => window.clearTimeout(timer);
-  }, [searchQuery, runSearch]);
+  }, [searchQuery, runNameSearch]);
 
   useEffect(() => {
     if (!autoSearchNearby || autoNearbySearchDoneRef.current) return;
     if (initialSearchQuery.trim()) return;
 
     autoNearbySearchDoneRef.current = true;
-    void runSearch({ preferMapView: true });
-  }, [autoSearchNearby, initialSearchQuery, runSearch]);
+    void (async () => {
+      const granted = await isGymLocationPermissionGranted();
+      if (!granted) return;
+      await runNearbySearch();
+    })();
+  }, [autoSearchNearby, initialSearchQuery, runNearbySearch]);
 
   const selectedPlace =
     results.find((place) => place.placeId === selectedPlaceId) ?? null;
@@ -244,10 +359,14 @@ export function GymSearchPicker({
         <Button
           variant="outline"
           className="w-full"
-          disabled={searching}
-          onClick={() => void runSearch({ preferMapView: true })}
+          disabled={searching || nearbyLoading}
+          onClick={() => void runNearbySearch()}
         >
-          <MapPin className="mr-2 size-4" aria-hidden />
+          {nearbyLoading ? (
+            <Loader2 className="mr-2 size-4 animate-spin" aria-hidden />
+          ) : (
+            <MapPin className="mr-2 size-4" aria-hidden />
+          )}
           {UI.gymOnboardingSearchNearby}
         </Button>
       </Reveal>
@@ -286,6 +405,18 @@ export function GymSearchPicker({
       {error ? (
         <Reveal animated={animated} delayMs={340}>
           <p className="text-sm text-destructive">{error}</p>
+        </Reveal>
+      ) : null}
+
+      {showLocationSettings ? (
+        <Reveal animated={animated} delayMs={360}>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => void openGymGeofenceSettings()}
+          >
+            {UI.gymOnboardingLocationSettingsCta}
+          </Button>
         </Reveal>
       ) : null}
 

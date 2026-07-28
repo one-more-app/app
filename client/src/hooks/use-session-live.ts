@@ -43,7 +43,7 @@ export function useSessionLive(ownerUserId: string | undefined, date: string | u
           if (!current) return current;
           const merged = mergeSessionComment(current.items, detail.comment);
           commentAdded = merged.added;
-          return merged.added ? { items: merged.items } : current;
+          return { items: merged.items };
         },
         { revalidate: false },
       );

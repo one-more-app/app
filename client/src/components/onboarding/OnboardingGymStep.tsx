@@ -29,6 +29,7 @@ type GymSearchView = 'list' | 'map'
 
 type OnboardingGymStepProps = {
     onGymSaved: () => void | Promise<void>
+    onSkip?: () => void | Promise<void>
     fromSettings?: boolean
     startAtSearch?: boolean
     onSearchBack?: () => void
@@ -66,6 +67,7 @@ function GymStepShell({
 
 export function OnboardingGymStep({
     onGymSaved,
+    onSkip,
     fromSettings = false,
     startAtSearch = false,
     onSearchBack,
@@ -75,6 +77,7 @@ export function OnboardingGymStep({
 }: OnboardingGymStepProps) {
     const mutateUserGym = useMutateUserGym()
     const isNative = Capacitor.isNativePlatform()
+    const canSkip = Boolean(onSkip) && !fromSettings && !embedded
     const [subStep, setSubStep] = useState<GymSubStep>(
         fromSettings || startAtSearch ? 'search' : 'question',
     )
@@ -259,7 +262,7 @@ export function OnboardingGymStep({
                             className="w-full"
                             onClick={() => {
                                 setSearchQuery(candidate.name)
-                                setSearchView('map')
+                                setSearchView('list')
                                 setSelectedPlaceId(candidate.placeId)
                                 setSearchPickerKey((key) => key + 1)
                                 setSubStep('search')
@@ -285,16 +288,29 @@ export function OnboardingGymStep({
                 onBack={fromSettings ? onCancel : onSearchBack}
                 backLabel={UI.back}
             >
-                <GymSearchPicker
-                    key={searchPickerKey}
-                    animated
-                    claimedAtGym={claimedAtGym}
-                    fromSettings={fromSettings}
-                    initialSearchQuery={searchQuery}
-                    initialSelectedPlaceId={selectedPlaceId}
-                    initialSearchView={searchView}
-                    onGymSaved={onGymSaved}
-                />
+                <div className="space-y-1">
+                    <GymSearchPicker
+                        key={searchPickerKey}
+                        animated
+                        claimedAtGym={claimedAtGym}
+                        fromSettings={fromSettings}
+                        initialSearchQuery={searchQuery}
+                        initialSelectedPlaceId={selectedPlaceId}
+                        initialSearchView={searchView}
+                        onGymSaved={onGymSaved}
+                    />
+                    {canSkip ? (
+                        <OnboardingReveal delayMs={200}>
+                            <Button
+                                variant="ghost"
+                                className="w-full text-muted-foreground"
+                                onClick={() => void onSkip?.()}
+                            >
+                                {UI.gymOnboardingSkipNoGym}
+                            </Button>
+                        </OnboardingReveal>
+                    ) : null}
+                </div>
             </StepCard>
         </GymStepShell>
     )

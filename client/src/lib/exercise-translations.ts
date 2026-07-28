@@ -203,7 +203,18 @@ const EXERCISE_TERMS_FR_TO_EN: Record<string, string> = {
   gainage: "plank",
   couché: "bench",
   couche: "bench",
+  pompe: "push",
   pompes: "push",
+  roumain: "romanian",
+  bulgare: "bulgarian",
+  militaire: "military",
+  pupitre: "preacher",
+  oiseau: "fly",
+  ischio: "hamstring",
+  fessier: "glute",
+  abdos: "abs",
+  crunch: "crunch",
+  planche: "plank",
 };
 
 /**

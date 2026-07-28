@@ -1,5 +1,5 @@
-import { CARDIO_EQUIPMENT, sortExercisesByPopularity } from "@/lib/exercisedb";
-import { translateSearchQueryToEnglish } from "@/lib/exercise-translations";
+import { CARDIO_EQUIPMENT } from "@/lib/exercisedb";
+import { searchBrowseableExercises } from "@/lib/exercise-search";
 import { inferBodyPartFromTarget } from "@/lib/infer-body-part-from-target";
 import {
   buildTargetsByBodyPart,
@@ -92,35 +92,21 @@ export function sortBrowseableByLatestPerf<T extends BrowseableExercise>(
 
 export type BrowseSearchSort = "popularity" | "latestPerf";
 
-/** Filtre par nom (FR/EN) pour le mode recherche globale. */
+/** Filtre par nom (FR/EN/aliases, fuzzy) pour le mode recherche globale. */
 export function filterBrowseableBySearch<T extends BrowseableExercise>(
   exercises: T[],
   searchQuery: string,
   sort: BrowseSearchSort = "popularity",
   getLatestAt?: (id: string) => number | null,
 ): T[] {
-  const trimmed = searchQuery.trim();
-  if (!trimmed) return [];
-
-  const apiQuery = translateSearchQueryToEnglish(trimmed).toLowerCase();
-  const searchRaw = trimmed.toLowerCase();
-
-  const matched = exercises.filter((ex) => {
-    const name = ex.name.toLowerCase();
-    const orig = (ex.originalName ?? ex.name).toLowerCase();
-    const matchEn =
-      (apiQuery && name.includes(apiQuery)) ||
-      (apiQuery && orig.includes(apiQuery));
-    const matchFr =
-      (searchRaw && name.includes(searchRaw)) ||
-      (searchRaw && orig.includes(searchRaw));
-    return matchEn || matchFr;
-  });
+  const matched = searchBrowseableExercises(exercises, searchQuery);
+  if (matched.length === 0) return [];
 
   if (sort === "latestPerf" && getLatestAt) {
     return sortBrowseableByLatestPerf(matched, getLatestAt);
   }
-  return sortExercisesByPopularity(matched as ExerciseDBExercise[]) as T[];
+  // Ordre déjà pertinent (score fuzzy + boost popularité)
+  return matched;
 }
 
 /** @deprecated Utiliser filterBrowseableBySearch */

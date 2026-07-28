@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -14,6 +15,7 @@ import { NotificationDispatchService } from '../notifications/notification-dispa
 import { RealtimeBroadcaster } from '../realtime/realtime-broadcaster.service.js';
 import { CreateSessionCommentDto } from './dto/create-session-comment.dto.js';
 import { ToggleSessionReactionDto } from './dto/toggle-session-reaction.dto.js';
+import { UpdateSessionCommentDto } from './dto/update-session-comment.dto.js';
 import { WorkoutSessionsService } from './workout-sessions.service.js';
 
 @Controller('sessions')
@@ -75,6 +77,25 @@ export class WorkoutSessionsController {
       body: body.body,
       parentAuthorUserId,
     });
+    return { comment };
+  }
+
+  @Patch(':ownerUserId/:date/comments/:commentId')
+  async updateComment(
+    @Req() req: { user: { sub: string } },
+    @Param('ownerUserId', ParseUUIDPipe) ownerUserId: string,
+    @Param('date') date: string,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
+    @Body() body: UpdateSessionCommentDto,
+  ) {
+    const comment = await this.sessionsService.updateComment(
+      req.user.sub,
+      ownerUserId,
+      date,
+      commentId,
+      body.body,
+    );
+    this.realtime.emitSessionComment(ownerUserId, date, comment);
     return { comment };
   }
 

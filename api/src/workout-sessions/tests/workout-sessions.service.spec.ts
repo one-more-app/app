@@ -201,25 +201,48 @@ describe('WorkoutSessionsService', () => {
     expect(result.entries).toEqual([]);
   });
 
-  it('refuse une réponse à une réponse', async () => {
+  it('aplatit une réponse à une réponse sous la racine', async () => {
     friendsService.getAcceptedFriendIds.mockResolvedValue(['owner-1']);
     commentsRepo.findOne.mockResolvedValue({
       id: 'parent-1',
       ownerUserId: 'owner-1',
       sessionDate: '2026-07-13',
+      authorUserId: 'alice-1',
       parentId: 'root-1',
       deletedAt: null,
     });
+    commentsRepo.save.mockResolvedValue({
+      id: 'comment-2',
+      ownerUserId: 'owner-1',
+      sessionDate: '2026-07-13',
+      authorUserId: 'viewer-1',
+      parentId: 'root-1',
+      body: 'Salut',
+      createdAt: new Date('2026-07-13T10:00:00Z'),
+    });
+    profilesRepo.find.mockResolvedValue([
+      {
+        userId: 'viewer-1',
+        firstName: 'Bob',
+        lastName: null,
+        username: 'bob',
+        avatarUrl: null,
+      },
+    ]);
 
-    await expect(
-      service.createComment(
-        'viewer-1',
-        'owner-1',
-        '2026-07-13',
-        'Salut',
-        'parent-1',
-      ),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    const result = await service.createComment(
+      'viewer-1',
+      'owner-1',
+      '2026-07-13',
+      'Salut',
+      'parent-1',
+    );
+
+    expect(commentsRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ parentId: 'root-1' }),
+    );
+    expect(result.comment.parentId).toBe('root-1');
+    expect(result.parentAuthorUserId).toBe('alice-1');
   });
 
   it('crée un commentaire racine', async () => {
@@ -255,7 +278,7 @@ describe('WorkoutSessionsService', () => {
     expect(result.parentAuthorUserId).toBeNull();
   });
 
-  it('refuse la suppression d un commentaire d un autre auteur', async () => {
+  it('refuse la modification d un commentaire d un autre auteur', async () => {
     friendsService.getAcceptedFriendIds.mockResolvedValue(['owner-1']);
     commentsRepo.findOne.mockResolvedValue({
       id: 'comment-1',
@@ -263,11 +286,53 @@ describe('WorkoutSessionsService', () => {
       sessionDate: '2026-07-13',
       authorUserId: 'owner-1',
       deletedAt: null,
+      body: 'Original',
     });
 
     await expect(
-      service.deleteComment('viewer-1', 'owner-1', '2026-07-13', 'comment-1'),
+      service.updateComment(
+        'viewer-1',
+        'owner-1',
+        '2026-07-13',
+        'comment-1',
+        'Hack',
+      ),
     ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('modifie son propre commentaire', async () => {
+    friendsService.getAcceptedFriendIds.mockResolvedValue(['owner-1']);
+    commentsRepo.findOne.mockResolvedValue({
+      id: 'comment-1',
+      ownerUserId: 'owner-1',
+      sessionDate: '2026-07-13',
+      authorUserId: 'viewer-1',
+      parentId: null,
+      deletedAt: null,
+      body: 'Original',
+      createdAt: new Date('2026-07-13T10:00:00Z'),
+    });
+    commentsRepo.save.mockImplementation((value) => Promise.resolve(value));
+    profilesRepo.find.mockResolvedValue([
+      {
+        userId: 'viewer-1',
+        firstName: 'Alice',
+        lastName: null,
+        username: 'alice',
+        avatarUrl: null,
+      },
+    ]);
+
+    const result = await service.updateComment(
+      'viewer-1',
+      'owner-1',
+      '2026-07-13',
+      'comment-1',
+      'Corrigé',
+    );
+
+    expect(result.body).toBe('Corrigé');
+    expect(result.id).toBe('comment-1');
   });
 
   it('retourne un arbre de commentaires', async () => {

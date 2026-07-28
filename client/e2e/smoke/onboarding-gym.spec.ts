@@ -42,20 +42,17 @@ test("onboarding gym skip permissions unlocks app without wait", async ({
     page.getByText(UI.gymOnboardingTitle, { exact: true }),
   ).toBeVisible();
 
-  await expect(page.getByText("Plus tard", { exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: UI.gymOnboardingSkipLater, exact: true }),
+  ).toHaveCount(0);
 
-  const initialSearch = page.waitForResponse(
-    (response) =>
-      response.url().includes("/gyms/search") && response.ok(),
-  );
   await page
     .getByRole("button", { name: UI.gymOnboardingNo, exact: true })
     .click();
-  await initialSearch;
 
-  await page
-    .getByRole("radio", { name: UI.gymOnboardingViewList, exact: true })
-    .click();
+  await expect(
+    page.getByRole("button", { name: UI.gymOnboardingSkipNoGym, exact: true }),
+  ).toBeVisible();
 
   await page
     .getByPlaceholder(UI.gymOnboardingSearchPlaceholder, { exact: true })
@@ -89,6 +86,52 @@ test("onboarding gym skip permissions unlocks app without wait", async ({
 
   await page.goto("/#/home");
   await expect(page).not.toHaveURL(/gym-wait/);
+
+  expect(pageErrors).toEqual([]);
+});
+
+test("onboarding gym skip without selecting a gym goes to exercises", async ({
+  page,
+}) => {
+  const pageErrors = trackPageErrors(page);
+  await seedE2eApiOrigin(page);
+  await mockAuthApi(page);
+
+  await page.addInitScript(() => {
+    localStorage.removeItem("one-more-onboarding-v1");
+    localStorage.removeItem("one-more-gym-setup-done-v1");
+    localStorage.removeItem("one-more-onboarding-gym-pending-v1");
+    localStorage.removeItem("one-more-gym-onboarding-in-zone-v1");
+    localStorage.removeItem("one-more-gym-onboarding-name-v1");
+    localStorage.removeItem("one-more-gym-notifications-prompt-done-v1");
+    localStorage.removeItem("one-more-gym-location-prompt-done-v1");
+  });
+
+  await page.goto("/#/onboarding?step=gym");
+
+  await page.evaluate(
+    ({ authKey, session }) => {
+      localStorage.setItem(authKey, JSON.stringify(session));
+    },
+    { authKey: AUTH_STORAGE_KEY, session: mockSession },
+  );
+
+  await page.reload();
+
+  await expect(
+    page.getByText(UI.gymOnboardingTitle, { exact: true }),
+  ).toBeVisible();
+
+  await page
+    .getByRole("button", { name: UI.gymOnboardingNo, exact: true })
+    .click();
+
+  await page
+    .getByRole("button", { name: UI.gymOnboardingSkipNoGym, exact: true })
+    .click();
+
+  await expect(page).toHaveURL(/#\/exercises$/, { timeout: 10_000 });
+  await expect(page).not.toHaveURL(/gym/);
 
   expect(pageErrors).toEqual([]);
 });
@@ -178,10 +221,6 @@ test("onboarding gym skips wait when user claims to be at gym", async ({
   await expect(
     page.getByText(UI.gymOnboardingSearch, { exact: true }),
   ).toBeVisible();
-
-  await page
-    .getByRole("radio", { name: UI.gymOnboardingViewList, exact: true })
-    .click();
 
   await page
     .getByPlaceholder(UI.gymOnboardingSearchPlaceholder, { exact: true })
