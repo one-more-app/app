@@ -2,19 +2,19 @@ import { hapticTab } from "@/lib/haptics";
 import { profileNestedClass } from "@/lib/profile-section";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
-import { MessageCircle, Search, Users } from "lucide-react";
+import { UnreadCountBadge } from "@/components/ui/unread-count-badge";
+import { MessageCircle, Users } from "lucide-react";
 
-export type FriendsTab = "friends" | "search" | "messages";
+export type FriendsTab = "friends" | "messages";
 
 const TAB_ITEMS: {
     id: FriendsTab;
     label: string;
     Icon: typeof Users;
 }[] = [
-        { id: "friends", label: UI.friendsTabList, Icon: Users },
-        { id: "search", label: UI.friendsTabSearch, Icon: Search },
-        { id: "messages", label: UI.friendsTabMessages, Icon: MessageCircle },
-    ];
+    { id: "friends", label: UI.friendsTabList, Icon: Users },
+    { id: "messages", label: UI.friendsTabMessages, Icon: MessageCircle },
+];
 
 type FriendsTabToggleProps = {
     value: FriendsTab;
@@ -61,16 +61,10 @@ export function FriendsTabToggle({
                         <Icon className="size-4 shrink-0" aria-hidden />
                         <span className="truncate">{label}</span>
                         {showBadge ? (
-                            <span
-                                className={cn(
-                                    "flex min-h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-none",
-                                    active
-                                        ? "bg-accent-foreground text-accent"
-                                        : "bg-primary text-primary-foreground",
-                                )}
-                            >
-                                {messagesUnread > 9 ? "9+" : messagesUnread}
-                            </span>
+                            <UnreadCountBadge
+                                count={messagesUnread}
+                                variant={active ? "onAccent" : "primary"}
+                            />
                         ) : null}
                     </button>
                 );

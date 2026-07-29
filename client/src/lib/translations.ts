@@ -565,6 +565,7 @@ export const UI = {
   tshirtDeliveryStepDelivered: "Livré",
   tshirtDeliveryTrackingLabel: "Suivi",
 
+  navFriendsBadgeAria: "{label}, {count} notification(s)",
   friendsTitle: "Amis",
   friendsAddTitle: "Ajouter des amis",
   friendsListTitle: "Mes potes",

@@ -4,6 +4,7 @@ import { PresenceBadge } from "@/components/friends/PresenceBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { UnreadCountBadge } from "@/components/ui/unread-count-badge";
 import { useFriendsPresence } from "@/hooks/use-friends-presence";
 import { useReferralDrawer } from "@/hooks/use-referral-drawer";
 import { hapticImpact } from "@/lib/haptics";
@@ -22,14 +23,21 @@ import {
 } from "@/lib/social-api";
 import { UI } from "@/lib/translations";
 import { getLocalDateKey } from "@/lib/local-date";
+import { cn } from "@/lib/utils";
 import { MessageCircle, UserPlus, Users } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useMemo } from "react";
 import { useSWRConfig } from "swr";
+import {
+    useUnreadByUserId,
+    type UnreadByUserEntry,
+} from "@/hooks/use-mark-conversation-read";
 
 function AcceptedFriendRow({
     item,
     presence,
+    unread,
 }: {
     item: FriendListItem;
     presence?: ReturnType<typeof useFriendsPresence>["byUserId"] extends Map<
@@ -38,6 +46,7 @@ function AcceptedFriendRow({
     >
     ? V
     : never;
+    unread?: UnreadByUserEntry;
 }) {
     const profile = {
         firstName: item.firstName ?? undefined,
@@ -48,6 +57,7 @@ function AcceptedFriendRow({
     const initials = getProfileInitials(profile, null);
     const showUsername =
         item.username && (item.firstName || item.lastName);
+    const hasUnread = (unread?.unreadCount ?? 0) > 0;
     const navigate = useNavigate();
 
     const openConversation = () => {
@@ -86,7 +96,11 @@ function AcceptedFriendRow({
                     }}
                 >
                     <p className="truncate font-medium">{name}</p>
-                    {showUsername ? (
+                    {hasUnread && unread?.lastMessageBody ? (
+                        <p className="truncate text-xs text-muted-foreground">
+                            {unread.lastMessageBody}
+                        </p>
+                    ) : showUsername ? (
                         <p className="truncate text-xs text-muted-foreground">@{item.username}</p>
                     ) : null}
                 </Link>
@@ -102,7 +116,21 @@ function AcceptedFriendRow({
                     ) : (
                         <PresenceBadge presence={presence} />
                     )}
-                    <MessageCircle className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                    <span className="relative shrink-0">
+                        <MessageCircle
+                            className={cn(
+                                "size-4",
+                                hasUnread ? "text-primary" : "text-muted-foreground",
+                            )}
+                            aria-hidden
+                        />
+                        {hasUnread ? (
+                            <UnreadCountBadge
+                                count={unread!.unreadCount}
+                                className="absolute -right-1.5 -top-1.5"
+                            />
+                        ) : null}
+                    </span>
                 </div>
             </CardContent>
         </Card>
@@ -205,6 +233,35 @@ export function FriendsListTab({
     const { mutate } = useSWRConfig();
     const { byUserId } = useFriendsPresence();
     const { openReferralDrawer } = useReferralDrawer();
+    const unreadByUserId = useUnreadByUserId();
+
+    const sortedFriends = useMemo(() => {
+        const friends = data?.friends ?? [];
+        return [...friends].sort((a, b) => {
+            const aUnread = unreadByUserId.get(a.userId)?.unreadCount ?? 0;
+            const bUnread = unreadByUserId.get(b.userId)?.unreadCount ?? 0;
+            if (aUnread > 0 && bUnread === 0) return -1;
+            if (aUnread === 0 && bUnread > 0) return 1;
+            return getProfileDisplayName(
+                {
+                    firstName: a.firstName ?? undefined,
+                    lastName: a.lastName ?? undefined,
+                    username: a.username ?? undefined,
+                },
+                null,
+            ).localeCompare(
+                getProfileDisplayName(
+                    {
+                        firstName: b.firstName ?? undefined,
+                        lastName: b.lastName ?? undefined,
+                        username: b.username ?? undefined,
+                    },
+                    null,
+                ),
+                "fr",
+            );
+        });
+    }, [data?.friends, unreadByUserId]);
 
     const refreshAll = async () => {
         await Promise.all([
@@ -296,11 +353,12 @@ export function FriendsListTab({
                         </Button>
                     </EmptyState>
                 ) : (
-                    data!.friends.map((item) => (
+                    sortedFriends.map((item) => (
                         <AcceptedFriendRow
                             key={item.friendshipId}
                             item={item}
                             presence={byUserId.get(item.userId)}
+                            unread={unreadByUserId.get(item.userId)}
                         />
                     ))
                 )}

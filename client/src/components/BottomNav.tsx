@@ -6,6 +6,7 @@ import { useFriendsBadgeCount } from '@/hooks/use-friends-badge-count'
 import { hapticTab } from '@/lib/haptics'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
+import { UnreadCountBadge } from '@/components/ui/unread-count-badge'
 
 const NAV_ITEMS: Array<{
     to: string
@@ -46,7 +47,9 @@ function BottomNav() {
                             aria-current={active ? 'page' : undefined}
                             aria-label={
                                 showUnreadBadge
-                                    ? `${item.label}, ${friendsBadge} notification${friendsBadge > 1 ? 's' : ''}`
+                                    ? UI.navFriendsBadgeAria
+                                        .replace('{label}', item.label)
+                                        .replace('{count}', String(friendsBadge))
                                     : item.label
                             }
                             className={cn(
@@ -62,9 +65,11 @@ function BottomNav() {
                                     )}
                                 />
                                 {showUnreadBadge ? (
-                                    <span className="absolute right-1 top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground">
-                                        {friendsBadge > 9 ? '9+' : friendsBadge}
-                                    </span>
+                                    <UnreadCountBadge
+                                        count={friendsBadge}
+                                        size="md"
+                                        className="absolute right-1 top-1"
+                                    />
                                 ) : null}
                             </div>
                         </Link>

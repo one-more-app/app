@@ -4,7 +4,7 @@ import {
   markConversationRead,
   type ConversationListItem,
 } from "@/lib/messaging-api";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import useSWR from "swr";
 
 export type ConversationsCache = {
@@ -34,6 +34,30 @@ export function useUnreadMessagesCount(): number {
       return total + conversation.unreadCount;
     }, 0) ?? 0
   );
+}
+
+export type UnreadByUserEntry = {
+  unreadCount: number;
+  lastMessageBody: string | null;
+  conversationId: string;
+};
+
+export function useUnreadByUserId(): Map<string, UnreadByUserEntry> {
+  const { data } = useConversationsList();
+
+  return useMemo(() => {
+    const map = new Map<string, UnreadByUserEntry>();
+
+    for (const conversation of data?.conversations ?? []) {
+      map.set(conversation.otherUser.userId, {
+        unreadCount: conversation.unreadCount,
+        lastMessageBody: conversation.lastMessage?.body ?? null,
+        conversationId: conversation.id,
+      });
+    }
+
+    return map;
+  }, [data?.conversations]);
 }
 
 /** Marque toute la conversation comme lue et synchronise le cache SWR partagé. */

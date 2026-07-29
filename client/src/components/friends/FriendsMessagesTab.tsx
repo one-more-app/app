@@ -1,5 +1,6 @@
 import { ProfileAvatarLink } from "@/components/profile/ProfileAvatarLink";
 import { Card, CardContent } from "@/components/ui/card";
+import { UnreadCountBadge } from "@/components/ui/unread-count-badge";
 import {
   useConversationUnreadActions,
   useConversationsList,
@@ -51,9 +52,7 @@ function ConversationRow({
           <div className="flex items-center justify-between gap-2">
             <p className="min-w-0 truncate font-medium">{name}</p>
             {item.unreadCount > 0 ? (
-              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
-                {item.unreadCount > 9 ? "9+" : item.unreadCount}
-              </span>
+              <UnreadCountBadge count={item.unreadCount} />
             ) : null}
           </div>
           <p className="truncate text-xs text-muted-foreground">
