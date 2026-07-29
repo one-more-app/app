@@ -1,3 +1,4 @@
+import { ProBadge } from "@/components/profile/ProBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAccess } from "@/hooks/use-access";
@@ -14,7 +15,10 @@ export function PremiumSettingsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{UI.premiumSettingsTitle}</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          {UI.premiumSettingsTitle}
+          <ProBadge />
+        </CardTitle>
         <p className="text-sm text-muted-foreground">
           {isPremium
             ? UI.premiumActiveDescription
@@ -23,7 +27,7 @@ export function PremiumSettingsCard() {
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         {isPremium ? (
-          <p className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-center text-sm font-medium text-foreground">
+          <p className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-center text-sm font-medium text-foreground">
             {UI.premiumActiveBadge}
           </p>
         ) : (
