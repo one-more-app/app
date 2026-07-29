@@ -1,3 +1,4 @@
+import { NotificationFeedControl } from "@/components/notifications/NotificationFeedDrawer";
 import { useUserProgressData } from "@/hooks/use-api-data";
 import { StreakFlameCount } from "@/components/StreakFlameCount";
 import { XpProgressBlock } from "@/components/XpProgressBlock";
@@ -23,37 +24,39 @@ export function UserProgressBanner({
     const streakXpBonus = resolveStreakXpBonus(progress);
 
     return (
-        <Link
-            to="/profile"
+        <Card
             data-tour={dataTour}
-            onClick={() => {
-                void hapticImpact();
-            }}
-            className={cn(
-                "mb-4 block outline-none transition-colors",
-                "hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring",
-                className,
-            )}
-            aria-label={UI.xpBannerGoToProfile}
+            className={cn("mb-4 py-3", className)}
         >
-            <Card className="py-3">
-                <CardContent className="pt-0">
+            <CardContent className="relative pt-0">
+                <Link
+                    to="/profile"
+                    onClick={() => {
+                        void hapticImpact();
+                    }}
+                    className="absolute inset-0 z-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={UI.xpBannerGoToProfile}
+                />
+                <div className="relative z-10 pointer-events-none">
                     <XpProgressBlock
                         level={progress.level}
                         xpIntoLevel={progress.xpIntoLevel}
                         xpForNextLevel={progress.xpForNextLevel}
                         rightSlot={
-                            <StreakFlameCount
-                                count={currentStreak}
-                                bonusPercent={streakXpBonus.bonusPercent}
-                                size="sm"
-                                iconClassName="size-4"
-                                textClassName="text-sm font-semibold tabular-nums"
-                            />
+                            <div className="pointer-events-auto flex items-center gap-1.5">
+                                <StreakFlameCount
+                                    count={currentStreak}
+                                    bonusPercent={streakXpBonus.bonusPercent}
+                                    size="sm"
+                                    iconClassName="size-4"
+                                    textClassName="text-sm font-semibold tabular-nums"
+                                />
+                                <NotificationFeedControl />
+                            </div>
                         }
                     />
-                </CardContent>
-            </Card>
-        </Link>
+                </div>
+            </CardContent>
+        </Card>
     );
 }

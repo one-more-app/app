@@ -1,4 +1,6 @@
 import { ProfileAvatarLink } from "@/components/profile/ProfileAvatarLink";
+import { ProBadge } from "@/components/profile/ProBadge";
+import { UsernameLine } from "@/components/profile/UsernameLine";
 import { Card, CardContent } from "@/components/ui/card";
 import { UnreadCountBadge } from "@/components/ui/unread-count-badge";
 import {
@@ -30,6 +32,9 @@ function ConversationRow({
   };
   const name = getProfileDisplayName(profile, null);
   const initials = getProfileInitials(profile, null);
+  const showUsername =
+    item.otherUser.username &&
+    (item.otherUser.firstName || item.otherUser.lastName);
 
   return (
     <Card className="py-0 transition-colors hover:bg-card/90">
@@ -50,11 +55,20 @@ function ConversationRow({
           }}
         >
           <div className="flex items-center justify-between gap-2">
-            <p className="min-w-0 truncate font-medium">{name}</p>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <p className="min-w-0 truncate font-medium">{name}</p>
+              {item.otherUser.isPremium && !showUsername ? <ProBadge /> : null}
+            </div>
             {item.unreadCount > 0 ? (
               <UnreadCountBadge count={item.unreadCount} />
             ) : null}
           </div>
+          {showUsername && item.otherUser.username ? (
+            <UsernameLine
+              username={item.otherUser.username}
+              isPremium={item.otherUser.isPremium}
+            />
+          ) : null}
           <p className="truncate text-xs text-muted-foreground">
             {item.lastMessage?.body ?? UI.messagesEmptyPreview}
           </p>

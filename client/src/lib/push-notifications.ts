@@ -4,9 +4,13 @@ import {
   type PushNotificationSchema,
   type Token,
 } from "@capacitor/push-notifications";
-import { registerNotificationDevice } from "@/lib/notifications-api";
+import {
+  NOTIFICATION_FEED_SWR_KEY,
+  registerNotificationDevice,
+} from "@/lib/notifications-api";
 import { UI } from "@/lib/translations";
 import { toast } from "sonner";
+import { mutate } from "swr";
 
 /** Doit correspondre à `android.notification.channelId` côté API + meta Manifest. */
 export const ANDROID_PUSH_CHANNEL_ID = "one-more-push";
@@ -110,6 +114,7 @@ export function attachPushNotificationListeners() {
   const receivedHandle = PushNotifications.addListener(
     "pushNotificationReceived",
     (notification: PushNotificationSchema) => {
+      void mutate(NOTIFICATION_FEED_SWR_KEY);
       const title = notification.title ?? UI.notificationDefaultTitle;
       const body = notification.body ?? "";
       const route = notification.data?.route;

@@ -1,4 +1,6 @@
 import { ProfileAvatarLink } from "@/components/profile/ProfileAvatarLink";
+import { ProBadge } from "@/components/profile/ProBadge";
+import { UsernameLine } from "@/components/profile/UsernameLine";
 import { FriendSuggestionsSection } from "@/components/friends/FriendSuggestionsSection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,6 +49,8 @@ function SearchResultRow({
     },
     null,
   );
+  const showUsername =
+    item.username && (item.firstName || item.lastName);
 
   let action: ReactNode = (
     <Button size="sm" onClick={onRequest} disabled={busy}>
@@ -89,9 +93,12 @@ function SearchResultRow({
         className="min-w-0 flex-1"
       >
         <div className="min-w-0">
-          <p className="truncate font-medium">{name}</p>
-          {item.username ? (
-            <p className="truncate text-xs text-muted-foreground">@{item.username}</p>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <p className="min-w-0 truncate font-medium">{name}</p>
+            {item.isPremium && !showUsername ? <ProBadge /> : null}
+          </div>
+          {showUsername && item.username ? (
+            <UsernameLine username={item.username} isPremium={item.isPremium} />
           ) : null}
         </div>
       </Link>

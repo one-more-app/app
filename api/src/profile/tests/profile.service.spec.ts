@@ -9,6 +9,9 @@ describe('ProfileService', () => {
     save: jest.fn(),
     upsert: jest.fn(),
   };
+  const usersRepo = {
+    findOne: jest.fn(),
+  };
   const usernameService = {
     ensureUsername: jest.fn(),
     isAvailable: jest.fn(),
@@ -33,10 +36,12 @@ describe('ProfileService', () => {
     jest.clearAllMocks();
     service = new ProfileService(
       profilesRepo as any,
+      usersRepo as any,
       usernameService as any,
       objectStorage as any,
       billingService as any,
     );
+    usersRepo.findOne.mockResolvedValue({ isPremium: false });
   });
 
   it('getProfile returns username as stored without auto-generation', async () => {

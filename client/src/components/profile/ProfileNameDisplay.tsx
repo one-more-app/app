@@ -5,11 +5,13 @@ import {
     resolveProfileName,
     type ProfileNameSource,
 } from "@/lib/profile-display";
+import { ProBadge } from "@/components/profile/ProBadge";
 import { cn } from "@/lib/utils";
 
 type ProfileNameDisplayProps = {
     profile?: ProfileNameSource;
     authUser?: AuthUser | null;
+    isPremium?: boolean;
     size?: "default" | "lg";
     align?: "left" | "center";
     className?: string;
@@ -18,6 +20,7 @@ type ProfileNameDisplayProps = {
 export function ProfileNameDisplay({
     profile,
     authUser = null,
+    isPremium = false,
     size = "default",
     align = "left",
     className,
@@ -25,6 +28,7 @@ export function ProfileNameDisplay({
     const resolved = resolveProfileName(profile, authUser);
     const primary = getProfilePrimaryLabel(resolved);
     const username = getProfileUsernameLabel(resolved);
+    const showProOnPrimary = isPremium && !username;
 
     return (
         <div
@@ -36,18 +40,34 @@ export function ProfileNameDisplay({
         >
             <span
                 className={cn(
-                    "block truncate text-xs font-one-more font-semibold uppercase italic tracking-tight",
+                    "flex min-w-0 items-center gap-1.5",
+                    align === "center" && "justify-center",
                 )}
             >
-                {primary}
+                <span
+                    className={cn(
+                        "min-w-0 truncate text-xs font-one-more font-semibold uppercase italic tracking-tight",
+                    )}
+                >
+                    {primary}
+                </span>
+                {showProOnPrimary ? <ProBadge /> : null}
             </span>
             {username ? (
                 <span
                     className={cn(
-                        "block truncate text-sm text-muted-foreground",
+                        "flex min-w-0 items-center gap-1.5",
+                        align === "center" && "justify-center",
                     )}
                 >
-                    {username}
+                    <span
+                        className={cn(
+                            "min-w-0 truncate text-sm text-muted-foreground",
+                        )}
+                    >
+                        {username}
+                    </span>
+                    {isPremium ? <ProBadge /> : null}
                 </span>
             ) : null}
         </div>

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserEntity } from '../auth/entities/user.entity.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { NotificationsModule } from '../notifications/notifications.module.js';
 import { RealtimeModule } from '../realtime/realtime.module.js';
@@ -15,6 +16,7 @@ import { MessagingService } from './messaging.service.js';
       ConversationEntity,
       MessageEntity,
       UserProfileEntity,
+      UserEntity,
     ]),
     SocialModule,
     RealtimeModule,

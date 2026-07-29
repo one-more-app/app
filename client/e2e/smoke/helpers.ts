@@ -267,11 +267,43 @@ export async function mockCoreAuthenticatedApi(
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        xp: 0,
+        totalXp: 0,
         level: 1,
+        xpIntoLevel: 0,
+        xpForNextLevel: 100,
         streak: { current: 0, longest: 0 },
+        streakXpBonus: {
+          bonusPercent: 0,
+          multiplier: 1,
+          daysToMax: 7,
+          isMax: false,
+          progressToMax: 0,
+        },
+        lastActiveDate: null,
+        recentGrants: [],
       }),
     });
+  });
+
+  await page.route("**/notifications/feed**", async (route) => {
+    const method = route.request().method();
+    if (method === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ items: [], unreadCount: 0 }),
+      });
+      return;
+    }
+    if (method === "POST" && route.request().url().includes("/read")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ unreadCount: 0 }),
+      });
+      return;
+    }
+    await route.fallback();
   });
 
   await page.route("**/me/access**", async (route) => {

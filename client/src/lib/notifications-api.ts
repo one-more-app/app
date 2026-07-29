@@ -87,3 +87,33 @@ export async function disableTrainingAlert(friendId: string) {
     { method: "DELETE" },
   );
 }
+
+export type NotificationFeedItem = {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  route: string | null;
+  sentAt: string;
+  readAt: string | null;
+};
+
+export type NotificationFeedResponse = {
+  items: NotificationFeedItem[];
+  unreadCount: number;
+};
+
+export const NOTIFICATION_FEED_SWR_KEY = "notification-feed";
+
+export async function fetchNotificationFeed(): Promise<NotificationFeedResponse> {
+  return apiFetch<NotificationFeedResponse>("/notifications/feed");
+}
+
+export async function markNotificationsRead(
+  ids?: string[],
+): Promise<{ unreadCount: number }> {
+  return apiFetch<{ unreadCount: number }>("/notifications/feed/read", {
+    method: "POST",
+    body: JSON.stringify(ids ? { ids } : {}),
+  });
+}

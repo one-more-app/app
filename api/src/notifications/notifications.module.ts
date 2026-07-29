@@ -15,6 +15,7 @@ import { NotificationDeliveryEntity } from './entities/notification-delivery.ent
 import { NotificationPreferencesEntity } from './entities/notification-preferences.entity.js';
 import { FriendTrainingAlertsService } from './friend-training-alerts.service.js';
 import { NotificationDispatchService } from './notification-dispatch.service.js';
+import { NotificationFeedService } from './notification-feed.service.js';
 import { NotificationPreferencesService } from './notification-preferences.service.js';
 import { NotificationsController } from './notifications.controller.js';
 import { PushNotificationService } from './push-notification.service.js';
@@ -42,6 +43,7 @@ import { WeeklyRecapCron } from './weekly-recap.cron.js';
   providers: [
     DeviceTokensService,
     NotificationPreferencesService,
+    NotificationFeedService,
     PushNotificationService,
     FriendTrainingAlertsService,
     NotificationDispatchService,

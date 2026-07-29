@@ -9,6 +9,7 @@ import {
 } from "@/lib/profile-avatar";
 import { ProfileNameDisplay } from "@/components/profile/ProfileNameDisplay";
 import { getProfileInitials } from "@/lib/profile-display";
+import { useAccess } from "@/hooks/use-access";
 import { setUserProfile } from "@/lib/storage";
 import { Card, CardContent } from "@/components/ui/card";
 import { profileNestedClass } from "@/lib/profile-section";
@@ -40,7 +41,11 @@ export function ProfileIdentityHeader({
   const auth = useAuth();
   const { mutate } = useSWRConfig();
   const { data: profileFromHook } = useUserProfileData();
+  const { isPremium: accessIsPremium } = useAccess();
   const profile = profileProp ?? profileFromHook;
+  const isPremium = readOnly
+    ? (profile?.isPremium ?? false)
+    : accessIsPremium;
   const userId = auth.user?.id ?? null;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cropObjectUrlRef = useRef<string | null>(null);
@@ -214,6 +219,7 @@ export function ProfileIdentityHeader({
             <ProfileNameDisplay
               profile={profile}
               authUser={readOnly ? null : auth.user}
+              isPremium={isPremium}
             />
           </h1>
           {!readOnly ? (

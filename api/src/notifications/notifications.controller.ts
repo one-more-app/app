@@ -12,10 +12,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard.js';
+import { MarkNotificationsReadBodyDto } from './dto/mark-notifications-read.dto.js';
 import { RegisterDeviceDto } from './dto/register-device.dto.js';
 import { UpdateNotificationPreferencesDto } from './dto/update-preferences.dto.js';
 import { DeviceTokensService } from './device-tokens.service.js';
 import { FriendTrainingAlertsService } from './friend-training-alerts.service.js';
+import { NotificationFeedService } from './notification-feed.service.js';
 import { NotificationPreferencesService } from './notification-preferences.service.js';
 
 @Controller('notifications')
@@ -25,6 +27,7 @@ export class NotificationsController {
     private readonly deviceTokens: DeviceTokensService,
     private readonly preferences: NotificationPreferencesService,
     private readonly trainingAlerts: FriendTrainingAlertsService,
+    private readonly feed: NotificationFeedService,
   ) {}
 
   @Post('devices')
@@ -54,6 +57,19 @@ export class NotificationsController {
     @Body() body: UpdateNotificationPreferencesDto,
   ) {
     return await this.preferences.update(req.user.sub, body);
+  }
+
+  @Get('feed')
+  async getFeed(@Req() req: { user: { sub: string } }) {
+    return await this.feed.list(req.user.sub);
+  }
+
+  @Post('feed/read')
+  async markFeedRead(
+    @Req() req: { user: { sub: string } },
+    @Body() body: MarkNotificationsReadBodyDto,
+  ) {
+    return await this.feed.markRead(req.user.sub, body.ids);
   }
 
   @Get('training-alerts')

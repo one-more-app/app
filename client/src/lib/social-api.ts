@@ -38,6 +38,7 @@ export type FriendListItem = {
   lastName: string | null;
   username: string | null;
   avatarUrl: string | null;
+  isPremium: boolean;
   status: "pending" | "accepted" | "declined" | "blocked";
   direction: "incoming" | "outgoing" | "friend";
 };
@@ -131,6 +132,7 @@ export type UserSearchResult = {
   lastName: string | null;
   username: string | null;
   avatarUrl: string | null;
+  isPremium: boolean;
   friendshipStatus: FriendListItem["status"] | null;
   friendshipId: string | null;
   friendshipDirection: "incoming" | "outgoing" | null;
@@ -171,6 +173,7 @@ export type FriendSuggestion = {
   lastName: string | null;
   username: string | null;
   avatarUrl: string | null;
+  isPremium: boolean;
   reasons: FriendSuggestionReason[];
   mutualFriendsCount: number;
 };

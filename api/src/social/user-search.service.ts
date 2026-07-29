@@ -2,12 +2,14 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
+import { UserEntity } from '../auth/entities/user.entity.js';
 import { FriendshipEntity } from './entities/friendship.entity.js';
 import { FriendshipStatus } from './entities/friendship-status.enum.js';
 import {
   parseSearchInput,
   toIlikeContainsPattern,
 } from './lib/user-search-query.js';
+import { loadPremiumByUserIds } from './lib/premium-by-user-id.js';
 
 export type UserSearchResult = {
   userId: string;
@@ -15,6 +17,7 @@ export type UserSearchResult = {
   lastName: string | null;
   username: string | null;
   avatarUrl: string | null;
+  isPremium: boolean;
   friendshipStatus: FriendshipStatus | null;
   friendshipId: string | null;
   friendshipDirection: 'incoming' | 'outgoing' | null;
@@ -27,6 +30,8 @@ export class UserSearchService {
     private readonly profilesRepo: Repository<UserProfileEntity>,
     @InjectRepository(FriendshipEntity)
     private readonly friendshipsRepo: Repository<FriendshipEntity>,
+    @InjectRepository(UserEntity)
+    private readonly usersRepo: Repository<UserEntity>,
   ) {}
 
   async search(
@@ -117,6 +122,7 @@ export class UserSearchService {
     if (profiles.length === 0) return [];
 
     const userIds = profiles.map((p) => p.userId);
+    const premiumByUserId = await loadPremiumByUserIds(this.usersRepo, userIds);
     const friendships = await this.friendshipsRepo
       .createQueryBuilder('f')
       .where(
@@ -152,6 +158,7 @@ export class UserSearchService {
           lastName: p.lastName,
           username: p.username,
           avatarUrl: p.avatarUrl,
+          isPremium: premiumByUserId.get(p.userId) ?? false,
           friendshipStatus: rel?.friendship.status ?? null,
           friendshipId: rel?.friendship.id ?? null,
           friendshipDirection: rel?.direction ?? null,

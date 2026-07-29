@@ -12,6 +12,7 @@ import {
   suggestUsernameFromProfile,
 } from '../social/lib/username.js';
 import { BillingService } from '../billing/billing.service.js';
+import { UserEntity } from '../auth/entities/user.entity.js';
 import { UsernameService } from '../social/username.service.js';
 import { ObjectStorageService } from '../storage/object-storage.service.js';
 import { UserProfileEntity } from './user-profile.entity.js';
@@ -29,15 +30,20 @@ export class ProfileService {
   constructor(
     @InjectRepository(UserProfileEntity)
     private readonly profilesRepo: Repository<UserProfileEntity>,
+    @InjectRepository(UserEntity)
+    private readonly usersRepo: Repository<UserEntity>,
     private readonly usernameService: UsernameService,
     private readonly objectStorage: ObjectStorageService,
     private readonly billingService: BillingService,
   ) {}
 
   async getProfile(userId: string) {
-    const profile = await this.profilesRepo.findOne({ where: { userId } });
+    const profile = await this.profilesRepo.findOne({
+      where: { userId },
+      relations: ['user'],
+    });
     if (!profile) return null;
-    return this.toProfileDto(profile);
+    return await this.toProfileDto(profile);
   }
 
   async checkUsernameAvailability(username: string, excludeUserId?: string) {
@@ -83,7 +89,17 @@ export class ProfileService {
     return { suggested, available };
   }
 
-  private toProfileDto(profile: UserProfileEntity) {
+  private async toProfileDto(profile: UserProfileEntity) {
+    const isPremium =
+      profile.user?.isPremium ??
+      (
+        await this.usersRepo.findOne({
+          where: { id: profile.userId },
+          select: ['isPremium'],
+        })
+      )?.isPremium ??
+      false;
+
     return {
       weightKg: profile.weightKg,
       heightCm: profile.heightCm,
@@ -92,6 +108,7 @@ export class ProfileService {
       lastName: profile.lastName,
       avatarUrl: this.objectStorage.normalizePublicObjectUrl(profile.avatarUrl),
       username: profile.username,
+      isPremium,
       updatedAt: profile.updatedAt.toISOString(),
     };
   }
@@ -106,13 +123,13 @@ export class ProfileService {
     );
 
     if (profile.username === username) {
-      return this.toProfileDto(profile);
+      return await this.toProfileDto(profile);
     }
 
     profile.username = username;
     await this.profilesRepo.save(profile);
     void this.billingService.syncSubscriberAttributes(userId);
-    return this.toProfileDto(profile);
+    return await this.toProfileDto(profile);
   }
 
   async upsertProfile(userId: string, body: UpsertProfileDto) {
@@ -144,7 +161,7 @@ export class ProfileService {
       where: { userId },
     });
     void this.billingService.syncSubscriberAttributes(userId);
-    return this.toProfileDto(profile);
+    return await this.toProfileDto(profile);
   }
 
   async upsertAttribution(

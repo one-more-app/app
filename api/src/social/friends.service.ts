@@ -12,11 +12,13 @@ import { In, Repository } from 'typeorm';
 import { LeagueService } from '../league/league.service.js';
 import { PerformanceEntriesService } from '../performance/performance-entries.service.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
+import { UserEntity } from '../auth/entities/user.entity.js';
 import { ProgressService } from '../progress/progress.service.js';
 import { TrackedExercisesService } from '../tracked-exercises/tracked-exercises.service.js';
 import { FriendshipEntity } from './entities/friendship.entity.js';
 import { FriendshipStatus } from './entities/friendship-status.enum.js';
 import { getAcceptedFriendIds as listAcceptedFriendIds } from './lib/accepted-friend-ids.js';
+import { loadPremiumByUserIds } from './lib/premium-by-user-id.js';
 
 type FriendListItem = {
   friendshipId: string;
@@ -25,6 +27,7 @@ type FriendListItem = {
   lastName: string | null;
   username: string | null;
   avatarUrl: string | null;
+  isPremium: boolean;
   status: FriendshipStatus;
   direction: 'incoming' | 'outgoing' | 'friend';
 };
@@ -36,6 +39,8 @@ export class FriendsService {
     private readonly friendshipsRepo: Repository<FriendshipEntity>,
     @InjectRepository(UserProfileEntity)
     private readonly profilesRepo: Repository<UserProfileEntity>,
+    @InjectRepository(UserEntity)
+    private readonly usersRepo: Repository<UserEntity>,
     private readonly progressService: ProgressService,
     private readonly trackedExercisesService: TrackedExercisesService,
     private readonly performanceEntriesService: PerformanceEntriesService,
@@ -60,6 +65,10 @@ export class FriendsService {
             where: { userId: In(otherUserIds) },
           });
     const profileByUserId = new Map(profiles.map((p) => [p.userId, p]));
+    const premiumByUserId = await loadPremiumByUserIds(
+      this.usersRepo,
+      otherUserIds,
+    );
 
     const items: FriendListItem[] = friendships.map((f) => {
       const otherUserId =
@@ -79,6 +88,7 @@ export class FriendsService {
         lastName: profile?.lastName ?? null,
         username: profile?.username ?? null,
         avatarUrl: profile?.avatarUrl ?? null,
+        isPremium: premiumByUserId.get(otherUserId) ?? false,
         status: f.status,
         direction,
       };
@@ -292,6 +302,7 @@ export class FriendsService {
 
     const profile = await this.profilesRepo.findOne({
       where: { userId: friendUserId },
+      relations: ['user'],
     });
     if (!profile) throw new NotFoundException('Profil introuvable');
 
@@ -313,6 +324,7 @@ export class FriendsService {
         lastName: profile.lastName ?? undefined,
         username: profile.username,
         avatarUrl: profile.avatarUrl,
+        isPremium: profile.user?.isPremium ?? false,
       },
       progress,
       exercises,

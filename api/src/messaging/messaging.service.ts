@@ -6,7 +6,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, LessThanOrEqual, Repository } from 'typeorm';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
+import { UserEntity } from '../auth/entities/user.entity.js';
 import { FriendsService } from '../social/friends.service.js';
+import { loadPremiumByUserIds } from '../social/lib/premium-by-user-id.js';
 import { ConversationEntity } from './entities/conversation.entity.js';
 import { MessageEntity } from './entities/message.entity.js';
 import {
@@ -34,6 +36,8 @@ export class MessagingService {
     private readonly messagesRepo: Repository<MessageEntity>,
     @InjectRepository(UserProfileEntity)
     private readonly profilesRepo: Repository<UserProfileEntity>,
+    @InjectRepository(UserEntity)
+    private readonly usersRepo: Repository<UserEntity>,
     private readonly friendsService: FriendsService,
   ) {}
 
@@ -72,6 +76,14 @@ export class MessagingService {
       .addOrderBy('c.createdAt', 'DESC')
       .getMany();
 
+    const otherUserIds = conversations.map((c) =>
+      otherParticipantId(c, userId),
+    );
+    const premiumByUserId = await loadPremiumByUserIds(
+      this.usersRepo,
+      otherUserIds,
+    );
+
     const results = await Promise.all(
       conversations.map(async (c) => {
         const otherId = otherParticipantId(c, userId);
@@ -98,6 +110,7 @@ export class MessagingService {
             lastName: profile?.lastName ?? null,
             username: profile?.username ?? null,
             avatarUrl: profile?.avatarUrl ?? null,
+            isPremium: premiumByUserId.get(otherId) ?? false,
           },
           lastMessage: lastMessage ? this.toMessageDto(lastMessage) : null,
           unreadCount: unreadFromOther,
@@ -128,6 +141,7 @@ export class MessagingService {
 
     const profile = await this.profilesRepo.findOne({
       where: { userId: otherUserId },
+      relations: ['user'],
     });
 
     return {
@@ -138,6 +152,7 @@ export class MessagingService {
         lastName: profile?.lastName ?? null,
         username: profile?.username ?? null,
         avatarUrl: profile?.avatarUrl ?? null,
+        isPremium: profile?.user?.isPremium ?? false,
       },
     };
   }

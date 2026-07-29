@@ -15,8 +15,10 @@ import { DeviceTokensService } from './device-tokens.service.js';
 import { FriendTrainingAlertsService } from './friend-training-alerts.service.js';
 import { formatUserDisplayName } from './lib/display-name.js';
 import { localDateKey, localWeekKey } from './lib/timezone.js';
+import { NotificationFeedService } from './notification-feed.service.js';
 import { NotificationPreferencesService } from './notification-preferences.service.js';
 import { NotificationType } from './entities/notification-type.enum.js';
+import type { PushPayload } from './dto/push-payload.dto.js';
 import { PushNotificationService } from './push-notification.service.js';
 import { RealtimeBroadcaster } from '../realtime/realtime-broadcaster.service.js';
 
@@ -34,6 +36,7 @@ export class NotificationDispatchService {
     @InjectRepository(XpEventEntity)
     private readonly xpRepo: Repository<XpEventEntity>,
     private readonly prefs: NotificationPreferencesService,
+    private readonly feed: NotificationFeedService,
     private readonly push: PushNotificationService,
     private readonly deviceTokens: DeviceTokensService,
     private readonly trainingAlerts: FriendTrainingAlertsService,
@@ -77,25 +80,30 @@ export class NotificationDispatchService {
     return `${trimmed.slice(0, max - 1)}…`;
   }
 
+  /** Always persist to feed; FCM only when prefs allow (and optional online gate). */
+  private async deliver(
+    userId: string,
+    payload: PushPayload,
+    opts?: { skipPushIfOnline?: boolean },
+  ) {
+    const { created } = await this.feed.record(userId, payload);
+    if (!created) return;
+    if (!(await this.prefs.isEnabled(userId, payload.type))) return;
+    if (opts?.skipPushIfOnline && (await this.isUserOnline(userId))) return;
+    await this.push.sendToUser(userId, payload);
+  }
+
   async notifyFriendRequest(params: {
     addresseeId: string;
     requesterId: string;
     friendshipId: string;
   }) {
-    if (
-      !(await this.prefs.isEnabled(
-        params.addresseeId,
-        NotificationType.FriendRequest,
-      ))
-    ) {
-      return;
-    }
     const name = await this.profileName(params.requesterId);
     this.realtime.emitFriendshipUpdated(params.addresseeId, {
       friendshipId: params.friendshipId,
       action: 'request',
     });
-    await this.push.sendToUser(params.addresseeId, {
+    await this.deliver(params.addresseeId, {
       type: NotificationType.FriendRequest,
       title: "Demande d'ami",
       body: `${name} veut t'ajouter en ami`,
@@ -105,15 +113,7 @@ export class NotificationDispatchService {
   }
 
   async notifyTshirtRewardUnlocked(params: { userId: string }) {
-    if (
-      !(await this.prefs.isEnabled(
-        params.userId,
-        NotificationType.TshirtRewardUnlocked,
-      ))
-    ) {
-      return;
-    }
-    await this.push.sendToUser(params.userId, {
+    await this.deliver(params.userId, {
       type: NotificationType.TshirtRewardUnlocked,
       title: 'T-shirt débloqué',
       body: 'Bravo ! Tu as débloqué ton t-shirt One More grâce à tes parrainages.',
@@ -126,16 +126,8 @@ export class NotificationDispatchService {
     referrerId: string;
     referredUserId: string;
   }) {
-    if (
-      !(await this.prefs.isEnabled(
-        params.referrerId,
-        NotificationType.ReferralUsed,
-      ))
-    ) {
-      return;
-    }
     const name = await this.profileName(params.referredUserId);
-    await this.push.sendToUser(params.referrerId, {
+    await this.deliver(params.referrerId, {
       type: NotificationType.ReferralUsed,
       title: 'Nouveau parrainage',
       body: `${name} a utilisé ton code de parrainage`,
@@ -149,20 +141,12 @@ export class NotificationDispatchService {
     addresseeId: string;
     friendshipId: string;
   }) {
-    if (
-      !(await this.prefs.isEnabled(
-        params.requesterId,
-        NotificationType.FriendAccepted,
-      ))
-    ) {
-      return;
-    }
     const name = await this.profileName(params.addresseeId);
     this.realtime.emitFriendshipUpdated(params.requesterId, {
       friendshipId: params.friendshipId,
       action: 'accepted',
     });
-    await this.push.sendToUser(params.requesterId, {
+    await this.deliver(params.requesterId, {
       type: NotificationType.FriendAccepted,
       title: 'Demande acceptée',
       body: `${name} a accepté ta demande`,
@@ -177,25 +161,18 @@ export class NotificationDispatchService {
     conversationId: string;
     body: string;
   }) {
-    if (
-      !(await this.prefs.isEnabled(
-        params.recipientId,
-        NotificationType.MessageNew,
-      ))
-    ) {
-      return;
-    }
-    if (await this.isUserOnline(params.recipientId)) {
-      return;
-    }
     const name = await this.profileName(params.senderId);
-    await this.push.sendToUser(params.recipientId, {
-      type: NotificationType.MessageNew,
-      title: name,
-      body: this.truncate(params.body),
-      route: `/friends/chat/${params.conversationId}`,
-      dedupKey: `msg:${params.conversationId}:${Date.now()}`,
-    });
+    await this.deliver(
+      params.recipientId,
+      {
+        type: NotificationType.MessageNew,
+        title: name,
+        body: this.truncate(params.body),
+        route: `/friends/chat/${params.conversationId}`,
+        dedupKey: `msg:${params.conversationId}:${Date.now()}`,
+      },
+      { skipPushIfOnline: true },
+    );
   }
 
   async notifySessionComment(params: {
@@ -222,16 +199,6 @@ export class NotificationDispatchService {
     const excerpt = this.truncate(params.body);
 
     for (const recipientId of recipientIds) {
-      if (
-        !(await this.prefs.isEnabled(
-          recipientId,
-          NotificationType.SessionComment,
-        ))
-      ) {
-        continue;
-      }
-      if (await this.isUserOnline(recipientId)) continue;
-
       const isReplyToRecipient =
         params.parentAuthorUserId === recipientId &&
         recipientId !== params.ownerUserId;
@@ -247,13 +214,17 @@ export class NotificationDispatchService {
         body = `${name} · ${excerpt}`;
       }
 
-      await this.push.sendToUser(recipientId, {
-        type: NotificationType.SessionComment,
-        title,
-        body,
-        route: `/session/${params.ownerUserId}/${params.sessionDate}`,
-        dedupKey: `session-comment:${params.commentId}:${recipientId}`,
-      });
+      await this.deliver(
+        recipientId,
+        {
+          type: NotificationType.SessionComment,
+          title,
+          body,
+          route: `/session/${params.ownerUserId}/${params.sessionDate}`,
+          dedupKey: `session-comment:${params.commentId}:${recipientId}`,
+        },
+        { skipPushIfOnline: true },
+      );
     }
   }
 
@@ -265,26 +236,21 @@ export class NotificationDispatchService {
     targetType: 'session' | 'exercise';
   }) {
     if (params.ownerUserId === params.authorUserId) return;
-    if (
-      !(await this.prefs.isEnabled(
-        params.ownerUserId,
-        NotificationType.SessionComment,
-      ))
-    ) {
-      return;
-    }
-    if (await this.isUserOnline(params.ownerUserId)) return;
 
     const name = await this.profileName(params.authorUserId);
     const scope =
       params.targetType === 'exercise' ? 'un exercice' : 'ta séance';
-    await this.push.sendToUser(params.ownerUserId, {
-      type: NotificationType.SessionComment,
-      title: 'Réaction sur ta séance',
-      body: `${name} a réagi ${params.emoji} sur ${scope}`,
-      route: `/session/${params.ownerUserId}/${params.sessionDate}`,
-      dedupKey: `session-reaction:${params.ownerUserId}:${params.sessionDate}:${params.authorUserId}:${params.emoji}:${params.targetType}:${Date.now()}`,
-    });
+    await this.deliver(
+      params.ownerUserId,
+      {
+        type: NotificationType.SessionComment,
+        title: 'Réaction sur ta séance',
+        body: `${name} a réagi ${params.emoji} sur ${scope}`,
+        route: `/session/${params.ownerUserId}/${params.sessionDate}`,
+        dedupKey: `session-reaction:${params.ownerUserId}:${params.sessionDate}:${params.authorUserId}:${params.emoji}:${params.targetType}:${Date.now()}`,
+      },
+      { skipPushIfOnline: true },
+    );
   }
 
   async notifyFriendTraining(params: {
@@ -307,15 +273,7 @@ export class NotificationDispatchService {
     const exercise = params.exerciseName?.trim() || 'un exercice';
 
     for (const subscriberId of subscribers) {
-      if (
-        !(await this.prefs.isEnabled(
-          subscriberId,
-          NotificationType.FriendTraining,
-        ))
-      ) {
-        continue;
-      }
-      await this.push.sendToUser(subscriberId, {
+      await this.deliver(subscriberId, {
         type: NotificationType.FriendTraining,
         title: 'Séance en cours',
         body: `${name} s'entraîne sur ${exercise}`,
@@ -341,10 +299,7 @@ export class NotificationDispatchService {
     const today = localDateKey(timezone);
 
     for (const friendId of friendIds) {
-      if (!(await this.prefs.isEnabled(friendId, NotificationType.FriendPr))) {
-        continue;
-      }
-      await this.push.sendToUser(friendId, {
+      await this.deliver(friendId, {
         type: NotificationType.FriendPr,
         title: 'Nouveau record',
         body: `${name} : ${params.exerciseName} : ${params.weight} kg × ${params.reps}`,
@@ -355,9 +310,6 @@ export class NotificationDispatchService {
   }
 
   async sendStreakAtRiskForUser(userId: string, timezone: string) {
-    if (!(await this.prefs.isEnabled(userId, NotificationType.StreakAtRisk))) {
-      return;
-    }
     const progress = await this.progressRepo.findOne({ where: { userId } });
     if (!progress || progress.currentStreak <= 0 || !progress.lastActiveDate) {
       return;
@@ -384,7 +336,7 @@ export class NotificationDispatchService {
       today,
     );
 
-    await this.push.sendToUser(userId, {
+    await this.deliver(userId, {
       type: NotificationType.StreakAtRisk,
       title: 'Série en danger',
       body: `Ta série de ${streak} jours expire ce soir. Une séance suffit !`,
@@ -394,10 +346,6 @@ export class NotificationDispatchService {
   }
 
   async sendWeeklyRecapForUser(userId: string, timezone: string) {
-    if (!(await this.prefs.isEnabled(userId, NotificationType.WeeklyRecap))) {
-      return;
-    }
-
     const today = localDateKey(timezone);
     const weekKey = localWeekKey(timezone);
     const weekStart = new Date(`${today}T12:00:00Z`);
@@ -434,7 +382,7 @@ export class NotificationDispatchService {
     const sessionCount = Number.parseInt(sessions?.count ?? '0', 10);
     const xpTotal = Number.parseInt(xpRow?.total ?? '0', 10);
 
-    await this.push.sendToUser(userId, {
+    await this.deliver(userId, {
       type: NotificationType.WeeklyRecap,
       title: 'Récap de la semaine',
       body: `${sessionCount} séance${sessionCount > 1 ? 's' : ''}, +${xpTotal} XP, série ${streak}`,

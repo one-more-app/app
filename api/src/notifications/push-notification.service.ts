@@ -1,13 +1,14 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
 import type { App } from 'firebase-admin/app';
 import type { Messaging } from 'firebase-admin/messaging';
-import { Repository } from 'typeorm';
 import type { PushPayload } from './dto/push-payload.dto.js';
 import { DeviceTokensService } from './device-tokens.service.js';
-import { NotificationDeliveryEntity } from './entities/notification-delivery.entity.js';
 
+/**
+ * Sends FCM only. Feed persistence / dedup lives in NotificationFeedService
+ * (callers record first, then send if prefs allow).
+ */
 @Injectable()
 export class PushNotificationService implements OnModuleInit {
   private readonly logger = new Logger(PushNotificationService.name);
@@ -17,8 +18,6 @@ export class PushNotificationService implements OnModuleInit {
   constructor(
     private readonly config: ConfigService,
     private readonly deviceTokens: DeviceTokensService,
-    @InjectRepository(NotificationDeliveryEntity)
-    private readonly deliveriesRepo: Repository<NotificationDeliveryEntity>,
   ) {}
 
   onModuleInit() {
@@ -49,27 +48,8 @@ export class PushNotificationService implements OnModuleInit {
     }
   }
 
-  private async shouldSend(
-    userId: string,
-    payload: PushPayload,
-  ): Promise<boolean> {
-    try {
-      await this.deliveriesRepo.insert({
-        userId,
-        type: payload.type,
-        dedupKey: payload.dedupKey,
-        sentAt: new Date(),
-      });
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
   async sendToUser(userId: string, payload: PushPayload) {
     if (!this.messaging) return;
-    const allowed = await this.shouldSend(userId, payload);
-    if (!allowed) return;
 
     const tokens = await this.deviceTokens.listForUser(userId);
     if (tokens.length === 0) return;

@@ -17,6 +17,7 @@ export type ConversationListItem = {
     lastName: string | null;
     username: string | null;
     avatarUrl: string | null;
+    isPremium: boolean;
   };
   lastMessage: Message | null;
   unreadCount: number;

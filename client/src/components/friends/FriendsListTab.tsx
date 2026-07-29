@@ -1,4 +1,6 @@
 import { ProfileAvatarLink } from "@/components/profile/ProfileAvatarLink";
+import { ProBadge } from "@/components/profile/ProBadge";
+import { UsernameLine } from "@/components/profile/UsernameLine";
 import { FriendSuggestionsSection } from "@/components/friends/FriendSuggestionsSection";
 import { PresenceBadge } from "@/components/friends/PresenceBadge";
 import { Button } from "@/components/ui/button";
@@ -95,13 +97,19 @@ function AcceptedFriendRow({
                         void hapticImpact();
                     }}
                 >
-                    <p className="truncate font-medium">{name}</p>
+                    <div className="flex min-w-0 items-center gap-1.5">
+                        <p className="min-w-0 truncate font-medium">{name}</p>
+                        {item.isPremium && !showUsername ? <ProBadge /> : null}
+                    </div>
                     {hasUnread && unread?.lastMessageBody ? (
                         <p className="truncate text-xs text-muted-foreground">
                             {unread.lastMessageBody}
                         </p>
-                    ) : showUsername ? (
-                        <p className="truncate text-xs text-muted-foreground">@{item.username}</p>
+                    ) : showUsername && item.username ? (
+                        <UsernameLine
+                            username={item.username}
+                            isPremium={item.isPremium}
+                        />
                     ) : null}
                 </Link>
                 <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
@@ -178,13 +186,19 @@ function PendingFriendRow({
                         void hapticImpact();
                     }}
                 >
-                    <p className="truncate font-medium">{name}</p>
+                    <div className="flex min-w-0 items-center gap-1.5">
+                        <p className="min-w-0 truncate font-medium">{name}</p>
+                        {item.isPremium && !showUsername ? <ProBadge /> : null}
+                    </div>
                     {isPendingIncoming ? (
                         <p className="text-xs text-muted-foreground">{UI.friendRequestPending}</p>
                     ) : isPendingOutgoing ? (
                         <p className="text-xs text-muted-foreground">{UI.friendRequestOutgoing}</p>
-                    ) : showUsername ? (
-                        <p className="truncate text-xs text-muted-foreground">@{item.username}</p>
+                    ) : showUsername && item.username ? (
+                        <UsernameLine
+                            username={item.username}
+                            isPremium={item.isPremium}
+                        />
                     ) : null}
                 </Link>
             </CardContent>

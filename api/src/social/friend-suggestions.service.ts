@@ -3,9 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { UserGymEntity } from '../gyms/entities/user-gym.entity.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
+import { UserEntity } from '../auth/entities/user.entity.js';
 import { FriendshipEntity } from './entities/friendship.entity.js';
 import { FriendshipStatus } from './entities/friendship-status.enum.js';
 import { getAcceptedFriendIds } from './lib/accepted-friend-ids.js';
+import { loadPremiumByUserIds } from './lib/premium-by-user-id.js';
 
 export type FriendSuggestionReason = 'mutual_friends' | 'same_gym';
 
@@ -15,6 +17,7 @@ export type FriendSuggestion = {
   lastName: string | null;
   username: string | null;
   avatarUrl: string | null;
+  isPremium: boolean;
   reasons: FriendSuggestionReason[];
   mutualFriendsCount: number;
 };
@@ -72,6 +75,8 @@ export class FriendSuggestionsService {
     private readonly profilesRepo: Repository<UserProfileEntity>,
     @InjectRepository(UserGymEntity)
     private readonly gymsRepo: Repository<UserGymEntity>,
+    @InjectRepository(UserEntity)
+    private readonly usersRepo: Repository<UserEntity>,
   ) {}
 
   async suggest(viewerId: string): Promise<FriendSuggestion[]> {
@@ -95,6 +100,7 @@ export class FriendSuggestionsService {
       where: { userId: In(rankedIds) },
     });
     const profileByUserId = new Map(profiles.map((p) => [p.userId, p]));
+    const premiumByUserId = await loadPremiumByUserIds(this.usersRepo, rankedIds);
 
     const suggestions: FriendSuggestion[] = [];
     for (const row of ranked) {
@@ -110,6 +116,7 @@ export class FriendSuggestionsService {
         lastName: profile.lastName,
         username: profile.username,
         avatarUrl: profile.avatarUrl,
+        isPremium: premiumByUserId.get(row.userId) ?? false,
         reasons: buildSuggestionReasons(row.mutualFriendsCount, row.sameGym),
         mutualFriendsCount: row.mutualFriendsCount,
       });

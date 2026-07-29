@@ -52,6 +52,7 @@ export interface UserProfile {
   lastName?: string;
   avatarUrl?: string | null;
   username?: string | null;
+  isPremium?: boolean;
 }
 
 export type PresenceStatus = "offline" | "online" | "training";
