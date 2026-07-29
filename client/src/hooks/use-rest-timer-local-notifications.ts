@@ -1,6 +1,7 @@
 import { useGymNotificationsReady } from "@/hooks/use-gym-notifications-ready";
 import { useLatestGlobalPerf } from "@/hooks/use-latest-global-perf";
 import { useRestTargetMs } from "@/hooks/use-rest-target-ms";
+import { useRestTimerEnabled } from "@/hooks/use-rest-timer-enabled";
 import {
   isCelebrationUiBusy,
   whenCelebrationUiIdle,
@@ -29,7 +30,8 @@ function buildParamsKey(
 export function useRestTimerLocalNotifications() {
   const notificationsReady = useGymNotificationsReady();
   const gymOnboardingActive = useGymOnboardingBlocksFeatures();
-  const lifecycleActive = notificationsReady && !gymOnboardingActive;
+  const { enabled: restTimerEnabled } = useRestTimerEnabled();
+  const lifecycleActive = notificationsReady && !gymOnboardingActive && restTimerEnabled;
   const latestGlobalPerf = useLatestGlobalPerf();
   const { targetMs } = useRestTargetMs();
 

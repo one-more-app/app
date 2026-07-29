@@ -6,8 +6,17 @@ import { PremiumSettingsCard } from '@/components/settings/PremiumSettingsCard'
 import { SettingsBuildInfo } from '@/components/settings/SettingsBuildInfo'
 import { SettingsReferralLinkCard } from '@/components/settings/SettingsReferralLinkCard'
 import { ProfileNameDialog } from '@/components/profile/ProfileNameDialog'
+import { FeedbackKindToggle } from '@/components/settings/FeedbackKindToggle'
 import { SettingsProfileSkeleton } from '@/components/skeletons'
 import { Button } from '@/components/ui/button'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,17 +30,23 @@ import {
 import { useAuth } from '@/hooks/use-auth'
 import { useProfileDataRefresh, useUserProfileData } from '@/hooks/use-api-data'
 import { useTheme } from '@/hooks/use-theme'
+import {
+    submitFeedback,
+    type FeedbackKind,
+} from '@/lib/feedback-api'
 import { openStoreListing } from '@/lib/app-review'
 import type { ThemePreference } from '@/lib/storage'
 import { setUserProfileAndWait } from '@/lib/storage'
 import { UI } from '@/lib/translations'
+import { Capacitor } from '@capacitor/core'
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
 export function SettingsPage() {
     const auth = useAuth()
     const [searchParams] = useSearchParams()
+    const location = useLocation()
     const { theme, setTheme } = useTheme()
     const { data: profile } = useUserProfileData()
     const refreshProfile = useProfileDataRefresh()
@@ -40,6 +55,11 @@ export function SettingsPage() {
     const [gender, setGender] = useState<'male' | 'female'>('male')
     const [profileHydrated, setProfileHydrated] = useState(false)
     const [nameDialogOpen, setNameDialogOpen] = useState(false)
+    const [feedbackOpen, setFeedbackOpen] = useState(false)
+    const [feedbackKind, setFeedbackKind] = useState<FeedbackKind>('bug')
+    const [feedbackTitle, setFeedbackTitle] = useState('')
+    const [feedbackMessage, setFeedbackMessage] = useState('')
+    const [feedbackSending, setFeedbackSending] = useState(false)
 
     useEffect(() => {
         if (!profile) return
@@ -80,6 +100,49 @@ export function SettingsPage() {
             UI.deleteAccountEmailBody.replace('{email}', accountEmail),
         )
         window.location.href = `mailto:admin@one-more.app?subject=${subject}&body=${body}`
+    }
+
+    const resetFeedbackForm = () => {
+        setFeedbackKind('bug')
+        setFeedbackTitle('')
+        setFeedbackMessage('')
+    }
+
+    const handleSubmitFeedback = () => {
+        const trimmedTitle = feedbackTitle.trim()
+        const trimmedMessage = feedbackMessage.trim()
+
+        if (trimmedTitle.length < 3) {
+            toast.error(UI.feedbackTitleMinError)
+            return
+        }
+
+        if (trimmedMessage.length < 10) {
+            toast.error(UI.feedbackMessageMinError)
+            return
+        }
+
+        void (async () => {
+            setFeedbackSending(true)
+            try {
+                await submitFeedback({
+                    kind: feedbackKind,
+                    title: trimmedTitle,
+                    message: trimmedMessage,
+                    context: {
+                        platform: Capacitor.getPlatform() as 'web' | 'ios' | 'android',
+                        route: location.pathname,
+                    },
+                })
+                toast.success(UI.feedbackSentSuccess)
+                setFeedbackOpen(false)
+                resetFeedbackForm()
+            } catch {
+                toast.error(UI.feedbackSentError)
+            } finally {
+                setFeedbackSending(false)
+            }
+        })()
     }
 
     return (
@@ -257,6 +320,23 @@ export function SettingsPage() {
 
                 <Card>
                     <CardHeader>
+                        <CardTitle>{UI.feedbackTitle}</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                            {UI.feedbackDescription}
+                        </p>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-2">
+                        <Button
+                            className="w-full"
+                            onClick={() => setFeedbackOpen(true)}
+                        >
+                            {UI.feedbackOpenButton}
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
                         <CardTitle>{UI.rateApp}</CardTitle>
                         <p className="text-sm text-muted-foreground">{UI.rateAppDescription}</p>
                     </CardHeader>
@@ -291,6 +371,73 @@ export function SettingsPage() {
                 open={nameDialogOpen}
                 onOpenChange={setNameDialogOpen}
             />
+            <Dialog
+                open={feedbackOpen}
+                onOpenChange={(open) => {
+                    if (!feedbackSending) {
+                        setFeedbackOpen(open)
+                    }
+                }}
+            >
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>{UI.feedbackDialogTitle}</DialogTitle>
+                        <DialogDescription>{UI.feedbackDialogDescription}</DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid gap-4 py-2">
+                        <div className="grid gap-2">
+                            <Label>{UI.feedbackTypeLabel}</Label>
+                            <FeedbackKindToggle
+                                value={feedbackKind}
+                                onChange={setFeedbackKind}
+                            />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="feedback-title">{UI.feedbackSubjectLabel}</Label>
+                            <Input
+                                id="feedback-title"
+                                maxLength={120}
+                                value={feedbackTitle}
+                                onChange={(event) => setFeedbackTitle(event.target.value)}
+                                placeholder={UI.feedbackSubjectPlaceholder}
+                            />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="feedback-message">{UI.feedbackMessageLabel}</Label>
+                            <textarea
+                                id="feedback-message"
+                                rows={5}
+                                maxLength={2000}
+                                value={feedbackMessage}
+                                onChange={(event) => setFeedbackMessage(event.target.value)}
+                                placeholder={UI.feedbackMessagePlaceholder}
+                                className="w-full resize-none rounded-lg bg-secondary px-3 py-2 text-base outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm"
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setFeedbackOpen(false)}
+                            disabled={feedbackSending}
+                        >
+                            {UI.cancel}
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleSubmitFeedback}
+                            disabled={feedbackSending}
+                        >
+                            {feedbackSending ? UI.feedbackSending : UI.feedbackSend}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

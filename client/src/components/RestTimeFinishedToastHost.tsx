@@ -14,6 +14,7 @@ import {
 import { hapticNotificationSuccess } from "@/lib/haptics";
 import { playRestFinishedSound } from "@/lib/milestone-sound";
 import { useGymOnboardingBlocksFeatures } from "@/hooks/use-user-gym-data";
+import { useRestTimerEnabled } from "@/hooks/use-rest-timer-enabled";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -60,8 +61,9 @@ function showRestTimeFinishedToast(params: {
 export function RestTimeFinishedToastHost() {
   const auth = useAuth();
   const gymOnboardingActive = useGymOnboardingBlocksFeatures();
+  const { enabled: restTimerEnabled } = useRestTimerEnabled();
   const hostActive =
-    auth.status === "authenticated" && !gymOnboardingActive;
+    auth.status === "authenticated" && !gymOnboardingActive && restTimerEnabled;
   const navigate = useNavigate();
   const latestGlobalPerf = useLatestGlobalPerf();
   const { targetMs } = useRestTargetMs();

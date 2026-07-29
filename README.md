@@ -45,6 +45,7 @@ Application de suivi de progression en musculation — **PWA web** et **apps nat
    | `client/.env` | `VITE_API_URL` | URL de l’API (ex. `http://localhost:3000`) |
    | `api/.env` | `DATABASE_URL` | Postgres (défaut : `localhost:5433`) |
    | `api/.env` | `JWT_SECRET`, `JWT_EXPIRES_IN` | Sessions JWT |
+   | `api/.env` | `NOTION_TOKEN`, `NOTION_FEEDBACK_DB_ID` | Feedback utilisateur vers Notion (table Tickets) |
    | `api/.env` | `GOOGLE_CLIENT_ID_*`, `APPLE_*` | OAuth mobile (optionnel en local) |
 
    Les builds Capacitor utilisent des fichiers dédiés : `.env.dev.capacitor`, `.env.preprod.capacitor`, `.env.prod.capacitor` (voir `client/.env.example`).

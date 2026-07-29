@@ -51,6 +51,7 @@ const GYM_SETUP_DONE_KEY = "one-more-gym-setup-done-v1";
 const GYM_NOTIF_LAST_KEY = "one-more-gym-notif-last-v1";
 const THEME_PREFERENCE_KEY = "one-more-theme-preference-v1";
 const REST_TARGET_MS_KEY = "one-more-rest-target-ms-v1";
+const REST_TIMER_ENABLED_KEY = "one-more-rest-timer-enabled-v1";
 const REST_COUNTER_TOUR_COMPLETE_KEY = "one-more-rest-counter-tour-complete-v1";
 const HOME_TOUR_COMPLETE_KEY = "one-more-home-tour-complete-v1";
 
@@ -832,6 +833,27 @@ export function setRestTargetMs(ms: number): void {
     window.dispatchEvent(
       new CustomEvent("one-more:rest-target-changed", {
         detail: { ms: clamped },
+      }),
+    );
+  }
+}
+
+export function isRestTimerEnabled(): boolean {
+  try {
+    const raw = localStorage.getItem(REST_TIMER_ENABLED_KEY);
+    if (raw == null) return true;
+    return raw !== "0";
+  } catch {
+    return true;
+  }
+}
+
+export function setRestTimerEnabled(enabled: boolean): void {
+  localStorage.setItem(REST_TIMER_ENABLED_KEY, enabled ? "1" : "0");
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("one-more:rest-timer-enabled-changed", {
+        detail: { enabled },
       }),
     );
   }

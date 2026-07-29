@@ -2,12 +2,13 @@ import { trackRestTimerDismissed } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { RestCounterTour } from "@/components/RestCounterTour";
 import { RestTargetQuickEdit } from "@/components/RestTargetQuickEdit";
+import { useRestTimerEnabled } from "@/hooks/use-rest-timer-enabled";
 import { useRestSinceLastSet } from "@/hooks/use-rest-since-last-set";
 import { formatRestElapsedA11y } from "@/lib/format-rest-elapsed";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { Check, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 type RestSinceLastSetBarSourceExercise = {
@@ -30,6 +31,11 @@ export function RestSinceLastSetBar({
   currentExerciseId,
 }: RestSinceLastSetBarProps) {
   const [dismissed, setDismissed] = useState(false);
+  const { enabled, setEnabled } = useRestTimerEnabled();
+
+  useEffect(() => {
+    if (enabled) setDismissed(false);
+  }, [enabled]);
   const {
     visible,
     elapsedMs,
@@ -48,7 +54,7 @@ export function RestSinceLastSetBar({
     ? UI.restTimeFinishedA11y.replace("{time}", a11yTime)
     : UI.restSinceLastSetA11y.replace("{time}", a11yTime);
 
-  if (!visible || dismissed) {
+  if (!visible || dismissed || !enabled) {
     return null;
   }
 
@@ -134,6 +140,7 @@ export function RestSinceLastSetBar({
                 trackedExerciseId: sourceExercise?.id,
               });
               setDismissed(true);
+              setEnabled(false);
             }}
             aria-label={UI.restSinceLastSetDismiss}
           >

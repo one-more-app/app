@@ -1,6 +1,7 @@
 import {
   getRestTargetMs,
   getTrackedExerciseById,
+  isRestTimerEnabled,
 } from "@/lib/storage";
 import { subscribeAppStateChange } from "@/lib/app-state-listener";
 import { UI } from "@/lib/translations";
@@ -336,6 +337,7 @@ export function scheduleRestFinishedLocalNotificationForEntry(
   entry: PerformanceEntry,
 ): void {
   if (!Capacitor.isNativePlatform() || !lifecycleEnabled) return;
+  if (!isRestTimerEnabled()) return;
 
   const exercise = getTrackedExerciseById(entry.trackedExerciseId);
   if (!exercise) return;

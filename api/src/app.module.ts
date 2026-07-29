@@ -24,6 +24,7 @@ import { AddressesModule } from './addresses/addresses.module.js';
 import { WorkoutSessionsModule } from './workout-sessions/workout-sessions.module.js';
 import { PublicStatsModule } from './public-stats/public-stats.module.js';
 import { EventModule } from './event/event.module.js';
+import { FeedbackModule } from './feedback/feedback.module.js';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { EventModule } from './event/event.module.js';
     WorkoutSessionsModule,
     PublicStatsModule,
     EventModule,
+    FeedbackModule,
   ],
   controllers: [AppController],
   providers: [AppService],

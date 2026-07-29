@@ -1,6 +1,5 @@
 import { AddPerfDrawer } from '@/components/AddPerfDrawer'
 import { BackHeader } from '@/components/BackHeader'
-import { CustomExerciseMetadataFields } from '@/components/CustomExerciseMetadataFields'
 import { ExerciseCard } from '@/components/ExerciseCard'
 import { PerfEntryList } from '@/components/history/PerfEntryList'
 import { LeagueBadge } from '@/components/LeagueBadge'
@@ -10,15 +9,7 @@ import { RestSinceLastSetBar } from '@/components/RestSinceLastSetBar'
 import { ExerciseDetailPageSkeleton } from '@/components/skeletons'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-    Dialog,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Input } from '@/components/ui/input'
 import {
     useHomeExercisesData,
     usePerformanceDataRefresh,
@@ -28,16 +19,16 @@ import { useCelebrationQueueActive } from '@/hooks/use-celebration-queue-active'
 import { useExercisePresence } from '@/hooks/use-exercise-presence'
 import { useLatestGlobalPerf } from '@/hooks/use-latest-global-perf'
 import { usePerformance } from '@/hooks/use-performance'
+import { useRestTimerEnabled } from '@/hooks/use-rest-timer-enabled'
 import { useTheme } from '@/hooks/use-theme'
 import { useTourDomReady } from '@/hooks/use-tour-dom-ready'
-import { fetchExercisesMeta, fetchExerciseTierLadder, fetchPerformanceEntries } from '@/lib/data-api'
+import { fetchExerciseTierLadder, fetchPerformanceEntries } from '@/lib/data-api'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
 import {
     comparePerfEntriesRecentFirst,
     entryInsightsFromPerformances,
     formatDayHeading,
 } from '@/lib/history-entries'
-import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
 import { getJoyrideScrollOffset } from '@/lib/joyride-config'
 import { notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
@@ -48,7 +39,6 @@ import {
     removeTrackedExerciseAndWait,
     setOnboardingFirstExercisePending,
     setOnboardingTourComplete,
-    updateTrackedExerciseAndWait,
 } from '@/lib/storage'
 import { isDumbbellExercise } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
@@ -60,8 +50,9 @@ import {
     ChevronLeft,
     ChevronRight,
     ChevronUp,
-    Pencil,
     SearchX,
+    Timer,
+    TimerOff,
     Trash2,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -105,16 +96,6 @@ export function ExerciseDetailPage() {
                 : null,
         [id, homeExercises],
     )
-    const [renameOpen, setRenameOpen] = useState(false)
-    const [renameValue, setRenameValue] = useState('')
-    const [classificationTarget, setClassificationTarget] = useState('')
-    const [classificationEquipment, setClassificationEquipment] = useState('')
-    const { data: exerciseMeta } = useSWR('exercise-meta', fetchExercisesMeta)
-    const classificationTargets = useMemo(
-        () => exerciseMeta?.targets.filter((t) => t !== 'cardio') ?? [],
-        [exerciseMeta],
-    )
-    const classificationEquipmentOptions = exerciseMeta?.equipment ?? []
     const {
         entries,
         lastPerf,
@@ -125,6 +106,8 @@ export function ExerciseDetailPage() {
         refresh,
     } = usePerformance(id ?? null)
     const latestGlobalPerf = useLatestGlobalPerf()
+    const { enabled: restTimerEnabled, setEnabled: setRestTimerEnabled } =
+        useRestTimerEnabled()
     const leagueInfo =
         exercise && 'league' in exercise ? exercise.league ?? null : null
     const { data: allTiers } = useSWR(
@@ -147,61 +130,6 @@ export function ExerciseDetailPage() {
     useEffect(() => {
         setHistorySessionIndex(0)
     }, [id])
-
-    useEffect(() => {
-        if (!exercise?.isCustom) return
-        setClassificationTarget(exercise.target ?? classificationTargets[0] ?? '')
-        setClassificationEquipment(
-            exercise.equipment ??
-            (classificationEquipmentOptions.includes('body weight')
-                ? 'body weight'
-                : classificationEquipmentOptions[0] ?? ''),
-        )
-    }, [
-        exercise?.id,
-        exercise?.isCustom,
-        exercise?.target,
-        exercise?.equipment,
-        classificationTargets,
-        classificationEquipmentOptions,
-    ])
-
-    const canSaveRenameEdits =
-        renameValue.trim().length > 0 &&
-        (!exercise?.isCustom ||
-            (!!classificationTarget && !!classificationEquipment))
-
-    const saveRenameEdits = useCallback(async () => {
-        if (!id || !renameValue.trim()) return
-        if (
-            exercise?.isCustom &&
-            (!classificationTarget || !classificationEquipment)
-        ) {
-            return
-        }
-        const payload: Parameters<typeof updateTrackedExerciseAndWait>[1] = {
-            name: renameValue.trim(),
-        }
-        if (
-            exercise?.isCustom &&
-            classificationTarget &&
-            classificationEquipment
-        ) {
-            payload.bodyPart = inferBodyPartFromTarget(classificationTarget)
-            payload.target = classificationTarget
-            payload.equipment = classificationEquipment
-        }
-        await updateTrackedExerciseAndWait(id, payload)
-        await refreshAfterTrackedChange()
-        setRenameOpen(false)
-    }, [
-        id,
-        renameValue,
-        exercise?.isCustom,
-        classificationTarget,
-        classificationEquipment,
-        refreshAfterTrackedChange,
-    ])
 
     const onboardingFirstExercisePending = isOnboardingFirstExercisePending()
     const onboardingTourActive =
@@ -457,26 +385,19 @@ export function ExerciseDetailPage() {
                         <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => {
-                                setRenameValue(exercise.name)
-                                if (exercise.isCustom) {
-                                    setClassificationTarget(
-                                        exercise.target ?? classificationTargets[0] ?? '',
-                                    )
-                                    setClassificationEquipment(
-                                        exercise.equipment ??
-                                        (classificationEquipmentOptions.includes(
-                                            'body weight',
-                                        )
-                                            ? 'body weight'
-                                            : classificationEquipmentOptions[0] ?? ''),
-                                    )
-                                }
-                                setRenameOpen(true)
-                            }}
-                            aria-label={UI.rename}
+                            onClick={() => setRestTimerEnabled(!restTimerEnabled)}
+                            aria-label={
+                                restTimerEnabled
+                                    ? UI.restTimerToggleDisableA11y
+                                    : UI.restTimerToggleEnableA11y
+                            }
+                            aria-pressed={restTimerEnabled}
                         >
-                            <Pencil className="size-4" />
+                            {restTimerEnabled ? (
+                                <Timer className="size-4 text-foreground" />
+                            ) : (
+                                <TimerOff className="size-4 text-muted-foreground" />
+                            )}
                         </Button>
                     }
                 />
@@ -720,59 +641,6 @@ export function ExerciseDetailPage() {
                         </Button>
                     </CardHeader>
                 </Card>
-
-                <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>
-                                {exercise.isCustom
-                                    ? UI.editCustomExercise
-                                    : UI.renameExercise}
-                            </DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 py-2">
-                            <Input
-                                value={renameValue}
-                                onChange={(e) => setRenameValue(e.target.value)}
-                                placeholder={UI.placeholderExerciseName}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault()
-                                        if (canSaveRenameEdits) {
-                                            void saveRenameEdits()
-                                        }
-                                    }
-                                }}
-                            />
-                            {exercise.isCustom &&
-                                classificationTargets.length > 0 &&
-                                classificationEquipmentOptions.length > 0 ? (
-                                <CustomExerciseMetadataFields
-                                    targets={classificationTargets}
-                                    equipmentOptions={classificationEquipmentOptions}
-                                    target={classificationTarget}
-                                    equipment={classificationEquipment}
-                                    onTargetChange={setClassificationTarget}
-                                    onEquipmentChange={setClassificationEquipment}
-                                />
-                            ) : null}
-                        </div>
-                        <DialogFooter className="gap-2 sm:gap-0">
-                            <Button
-                                variant="outline"
-                                onClick={() => setRenameOpen(false)}
-                            >
-                                {UI.cancel}
-                            </Button>
-                            <Button
-                                onClick={() => void saveRenameEdits()}
-                                disabled={!canSaveRenameEdits}
-                            >
-                                {UI.save}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
 
                 {exerciseTourRun ? (
                     <Joyride
