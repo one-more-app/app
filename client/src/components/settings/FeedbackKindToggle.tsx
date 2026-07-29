@@ -45,7 +45,7 @@ export function FeedbackKindToggle({ value, onChange }: FeedbackKindToggleProps)
                             "text-xs font-medium transition-[color,transform,background-color]",
                             "active:scale-[0.98] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-secondary",
                             active
-                                ? "bg-primary text-primary-foreground"
+                                ? "bg-primary text-primary-foreground dark:bg-primary-foreground dark:text-primary"
                                 : "text-muted-foreground hover:bg-card/80 hover:text-foreground",
                         )}
                     >

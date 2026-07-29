@@ -30,6 +30,7 @@ type FriendListItem = {
   isPremium: boolean;
   status: FriendshipStatus;
   direction: 'incoming' | 'outgoing' | 'friend';
+  lastActiveDate?: string | null;
 };
 
 @Injectable()
@@ -103,8 +104,20 @@ export class FriendsService {
       return true;
     });
 
+    const lastActiveByUserId =
+      friends.length === 0
+        ? new Map<string, string | null>()
+        : await this.progressService.getLastActiveDatesByUserIds(
+            friends.map((f) => f.userId),
+          );
+
+    const friendsWithActivity = friends.map((friend) => ({
+      ...friend,
+      lastActiveDate: lastActiveByUserId.get(friend.userId) ?? null,
+    }));
+
     return {
-      friends,
+      friends: friendsWithActivity,
       pendingIncoming: items.filter(
         (i) =>
           i.status === FriendshipStatus.PENDING && i.direction === 'incoming',

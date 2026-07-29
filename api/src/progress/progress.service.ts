@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, IsNull, Repository } from 'typeorm';
+import { DataSource, In, IsNull, Repository } from 'typeorm';
 import { LeagueService } from '../league/league.service.js';
 import type { LeagueProfileInput } from '../shared/league-aggregate.js';
 import {
@@ -113,6 +113,17 @@ export class ProgressService {
         latestMonth,
       },
     };
+  }
+
+  async getLastActiveDatesByUserIds(
+    userIds: string[],
+  ): Promise<Map<string, string | null>> {
+    if (userIds.length === 0) return new Map();
+    const rows = await this.progressRepo.find({
+      where: { userId: In(userIds) },
+      select: ['userId', 'lastActiveDate'],
+    });
+    return new Map(rows.map((row) => [row.userId, row.lastActiveDate]));
   }
 
   async getProgress(userId: string): Promise<ProgressStateDto> {

@@ -26,7 +26,12 @@ export type ConversationListItem = {
 export async function fetchConversations(): Promise<{
   conversations: ConversationListItem[];
 }> {
-  return await apiFetch("/messaging/conversations");
+  const data = await apiFetch<{ conversations: ConversationListItem[] }>(
+    "/messaging/conversations",
+  );
+  return {
+    conversations: data.conversations.filter((item) => item.lastMessage != null),
+  };
 }
 
 export async function getOrCreateConversation(userId: string): Promise<{

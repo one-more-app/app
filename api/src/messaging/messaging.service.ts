@@ -72,6 +72,14 @@ export class MessagingService {
       .where('c.participantLowId = :userId OR c.participantHighId = :userId', {
         userId,
       })
+      // Only threads where the other person sent at least one message.
+      .andWhere(
+        `EXISTS (
+          SELECT 1 FROM messages m
+          WHERE m."conversationId" = c.id
+            AND m."senderId" <> :userId
+        )`,
+      )
       .orderBy('c.lastMessageAt', 'DESC', 'NULLS LAST')
       .addOrderBy('c.createdAt', 'DESC')
       .getMany();
@@ -118,7 +126,9 @@ export class MessagingService {
       }),
     );
 
-    return { conversations: results };
+    return {
+      conversations: results.filter((item) => item.lastMessage != null),
+    };
   }
 
   async getOrCreateConversation(userId: string, otherUserId: string) {

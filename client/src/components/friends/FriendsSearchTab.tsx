@@ -95,10 +95,10 @@ function SearchResultRow({
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-1.5">
             <p className="min-w-0 truncate font-medium">{name}</p>
-            {item.isPremium && !showUsername ? <ProBadge /> : null}
+            {item.isPremium ? <ProBadge /> : null}
           </div>
           {showUsername && item.username ? (
-            <UsernameLine username={item.username} isPremium={item.isPremium} />
+            <UsernameLine username={item.username} />
           ) : null}
         </div>
       </Link>

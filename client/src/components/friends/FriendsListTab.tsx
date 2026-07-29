@@ -12,6 +12,10 @@ import { useReferralDrawer } from "@/hooks/use-referral-drawer";
 import { hapticImpact } from "@/lib/haptics";
 import { getOrCreateConversation } from "@/lib/messaging-api";
 import {
+    compareFriendsByPresence,
+    formatFriendLastSessionAgo,
+} from "@/lib/friends-list";
+import {
     getProfileDisplayName,
     getProfileInitials,
 } from "@/lib/profile-display";
@@ -61,6 +65,7 @@ function AcceptedFriendRow({
         item.username && (item.firstName || item.lastName);
     const hasUnread = (unread?.unreadCount ?? 0) > 0;
     const navigate = useNavigate();
+    const lastSessionLabel = formatFriendLastSessionAgo(item.lastActiveDate);
 
     const openConversation = () => {
         void (async () => {
@@ -99,17 +104,18 @@ function AcceptedFriendRow({
                 >
                     <div className="flex min-w-0 items-center gap-1.5">
                         <p className="min-w-0 truncate font-medium">{name}</p>
-                        {item.isPremium && !showUsername ? <ProBadge /> : null}
+                        {item.isPremium ? <ProBadge /> : null}
                     </div>
                     {hasUnread && unread?.lastMessageBody ? (
                         <p className="truncate text-xs text-muted-foreground">
                             {unread.lastMessageBody}
                         </p>
+                    ) : lastSessionLabel ? (
+                        <p className="truncate text-xs text-muted-foreground">
+                            {lastSessionLabel}
+                        </p>
                     ) : showUsername && item.username ? (
-                        <UsernameLine
-                            username={item.username}
-                            isPremium={item.isPremium}
-                        />
+                        <UsernameLine username={item.username} />
                     ) : null}
                 </Link>
                 <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
@@ -188,17 +194,14 @@ function PendingFriendRow({
                 >
                     <div className="flex min-w-0 items-center gap-1.5">
                         <p className="min-w-0 truncate font-medium">{name}</p>
-                        {item.isPremium && !showUsername ? <ProBadge /> : null}
+                        {item.isPremium ? <ProBadge /> : null}
                     </div>
                     {isPendingIncoming ? (
                         <p className="text-xs text-muted-foreground">{UI.friendRequestPending}</p>
                     ) : isPendingOutgoing ? (
                         <p className="text-xs text-muted-foreground">{UI.friendRequestOutgoing}</p>
                     ) : showUsername && item.username ? (
-                        <UsernameLine
-                            username={item.username}
-                            isPremium={item.isPremium}
-                        />
+                        <UsernameLine username={item.username} />
                     ) : null}
                 </Link>
             </CardContent>
@@ -256,26 +259,9 @@ export function FriendsListTab({
             const bUnread = unreadByUserId.get(b.userId)?.unreadCount ?? 0;
             if (aUnread > 0 && bUnread === 0) return -1;
             if (aUnread === 0 && bUnread > 0) return 1;
-            return getProfileDisplayName(
-                {
-                    firstName: a.firstName ?? undefined,
-                    lastName: a.lastName ?? undefined,
-                    username: a.username ?? undefined,
-                },
-                null,
-            ).localeCompare(
-                getProfileDisplayName(
-                    {
-                        firstName: b.firstName ?? undefined,
-                        lastName: b.lastName ?? undefined,
-                        username: b.username ?? undefined,
-                    },
-                    null,
-                ),
-                "fr",
-            );
+            return compareFriendsByPresence(a, b, byUserId);
         });
-    }, [data?.friends, unreadByUserId]);
+    }, [data?.friends, unreadByUserId, byUserId]);
 
     const refreshAll = async () => {
         await Promise.all([

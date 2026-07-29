@@ -57,17 +57,14 @@ function ConversationRow({
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-1.5">
               <p className="min-w-0 truncate font-medium">{name}</p>
-              {item.otherUser.isPremium && !showUsername ? <ProBadge /> : null}
+              {item.otherUser.isPremium ? <ProBadge /> : null}
             </div>
             {item.unreadCount > 0 ? (
               <UnreadCountBadge count={item.unreadCount} />
             ) : null}
           </div>
           {showUsername && item.otherUser.username ? (
-            <UsernameLine
-              username={item.otherUser.username}
-              isPremium={item.otherUser.isPremium}
-            />
+            <UsernameLine username={item.otherUser.username} />
           ) : null}
           <p className="truncate text-xs text-muted-foreground">
             {item.lastMessage?.body ?? UI.messagesEmptyPreview}
@@ -81,12 +78,14 @@ function ConversationRow({
 export function FriendsMessagesTab() {
   const { data, isLoading } = useConversationsList();
   const { markAsRead } = useConversationUnreadActions();
+  const conversations =
+    data?.conversations.filter((item) => item.lastMessage != null) ?? [];
 
   if (isLoading) {
     return <p className="text-sm text-muted-foreground">{UI.loading}</p>;
   }
 
-  if ((data?.conversations.length ?? 0) === 0) {
+  if (conversations.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border/60 p-8 text-center">
         <MessageCircle className="size-8 text-muted-foreground" />
@@ -97,7 +96,7 @@ export function FriendsMessagesTab() {
 
   return (
     <div className="space-y-2">
-      {data!.conversations.map((item) => (
+      {conversations.map((item) => (
         <ConversationRow
           key={item.id}
           item={item}

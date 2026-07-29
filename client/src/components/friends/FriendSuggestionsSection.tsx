@@ -1,6 +1,4 @@
 import { ProfileAvatarLink } from "@/components/profile/ProfileAvatarLink";
-import { ProBadge } from "@/components/profile/ProBadge";
-import { UsernameLine } from "@/components/profile/UsernameLine";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -20,21 +18,13 @@ import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 
 function formatSuggestionReasons(item: FriendSuggestion): string {
-  const parts: string[] = [];
-  if (item.reasons.includes("mutual_friends")) {
-    parts.push(
-      item.mutualFriendsCount <= 1
-        ? UI.friendSuggestionMutualOne
-        : UI.friendSuggestionMutualMany.replace(
-            "{count}",
-            String(item.mutualFriendsCount),
-          ),
-    );
-  }
-  if (item.reasons.includes("same_gym")) {
-    parts.push(UI.friendSuggestionSameGym);
-  }
-  return parts.join(" · ");
+  if (!item.reasons.includes("mutual_friends")) return "";
+  return item.mutualFriendsCount <= 1
+    ? UI.friendSuggestionMutualOne
+    : UI.friendSuggestionMutualMany.replace(
+        "{count}",
+        String(item.mutualFriendsCount),
+      );
 }
 
 function SuggestionRow({
@@ -50,7 +40,6 @@ function SuggestionRow({
     {
       firstName: item.firstName ?? undefined,
       lastName: item.lastName ?? undefined,
-      username: item.username ?? undefined,
     },
     null,
   );
@@ -63,8 +52,6 @@ function SuggestionRow({
     null,
   );
   const reasonLabel = formatSuggestionReasons(item);
-  const showUsername =
-    item.username && (item.firstName || item.lastName);
 
   return (
     <Card className="py-0">
@@ -79,13 +66,7 @@ function SuggestionRow({
           className="min-w-0 flex-1"
         >
           <div className="min-w-0">
-            <div className="flex min-w-0 items-center gap-1.5">
-              <p className="min-w-0 truncate font-medium">{name}</p>
-              {item.isPremium && !showUsername ? <ProBadge /> : null}
-            </div>
-            {showUsername && item.username ? (
-              <UsernameLine username={item.username} isPremium={item.isPremium} />
-            ) : null}
+            <p className="min-w-0 truncate font-medium">{name}</p>
             {reasonLabel ? (
               <p className="truncate text-xs text-muted-foreground">
                 {reasonLabel}

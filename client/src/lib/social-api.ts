@@ -41,6 +41,7 @@ export type FriendListItem = {
   isPremium: boolean;
   status: "pending" | "accepted" | "declined" | "blocked";
   direction: "incoming" | "outgoing" | "friend";
+  lastActiveDate?: string | null;
 };
 
 export type FriendsListResponse = {

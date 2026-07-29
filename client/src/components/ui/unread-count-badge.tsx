@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 type UnreadCountBadgeProps = {
   count: number;
   size?: "sm" | "md";
-  variant?: "primary" | "onAccent";
+  variant?: "primary" | "accent" | "onAccent";
   className?: string;
 };
 
@@ -22,7 +22,9 @@ export function UnreadCountBadge({
         size === "md" ? "min-h-4 min-w-4 px-1 text-[10px]" : "size-5 text-[10px]",
         variant === "onAccent"
           ? "bg-accent-foreground text-accent"
-          : "bg-primary text-primary-foreground",
+          : variant === "accent"
+            ? "bg-accent text-accent-foreground"
+            : "bg-primary text-primary-foreground",
         className,
       )}
       aria-hidden
