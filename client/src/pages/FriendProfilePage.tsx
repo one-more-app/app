@@ -1,5 +1,4 @@
 import { FriendTrainingBell } from "@/components/friends/FriendTrainingBell";
-import { PresenceBadge } from "@/components/friends/PresenceBadge";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { Button } from "@/components/ui/button";
 import { useFriendsPresence } from "@/hooks/use-friends-presence";
@@ -10,9 +9,8 @@ import {
 } from "@/lib/social-api";
 import { getProfileDisplayName } from "@/lib/profile-display";
 import { UI } from "@/lib/translations";
-import { getLocalDateKey } from "@/lib/local-date";
 import { MessageCircle, UserMinus } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import useSWR from "swr";
 
@@ -56,29 +54,16 @@ export default function FriendProfilePage() {
   };
 
   const headerActions = userId ? (
-    <div className="flex flex-col gap-2 px-4 pb-2">
-      {presence?.status === "training" ? (
-        <Link
-          to={`/session/${userId}/${getLocalDateKey()}`}
-          className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 block"
-        >
-          <PresenceBadge presence={presence} />
-          <p className="mt-1 text-xs text-muted-foreground">
-            {UI.friendTrainingNowBanner}
-          </p>
-        </Link>
-      ) : null}
-      <div className="flex gap-2">
-        <FriendTrainingBell friendId={userId} />
-        <Button variant="secondary" className="flex-1" onClick={handleMessage}>
-          <MessageCircle className="size-4" />
-          {UI.messageOpenChat}
-        </Button>
-        <Button variant="outline" className="flex-1" onClick={handleRemove}>
-          <UserMinus className="size-4" />
-          {UI.friendRemove}
-        </Button>
-      </div>
+    <div className="flex gap-2">
+      <FriendTrainingBell friendId={userId} />
+      <Button variant="secondary" className="flex-1" onClick={handleMessage}>
+        <MessageCircle className="size-4" />
+        {UI.messageOpenChat}
+      </Button>
+      <Button variant="outline" className="flex-1" onClick={handleRemove}>
+        <UserMinus className="size-4" />
+        {UI.friendRemove}
+      </Button>
     </div>
   ) : null;
 

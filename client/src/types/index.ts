@@ -62,6 +62,11 @@ export type FriendPresence = {
   status: PresenceStatus;
   exerciseName: string | null;
   trackedExerciseId: string | null;
+  gifUrl?: string | null;
+  isCustom?: boolean | null;
+  bodyPart?: string | null;
+  target?: string | null;
+  equipment?: string | null;
   lastHeartbeatAt: string;
 };
 

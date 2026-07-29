@@ -26,7 +26,16 @@ export function PresenceBadge({
         className={cn("size-2 shrink-0 rounded-full", presenceDotClass(presence.status))}
         aria-hidden
       />
-      {showLabel ? <span className="truncate">{label}</span> : null}
+      {showLabel ? (
+        <span
+          className={cn(
+            "truncate",
+            presence.status === "training" && presence.exerciseName && "capitalize",
+          )}
+        >
+          {label}
+        </span>
+      ) : null}
     </span>
   );
 }
