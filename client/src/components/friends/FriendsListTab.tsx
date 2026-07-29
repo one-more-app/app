@@ -1,4 +1,4 @@
-import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallback";
+import { ProfileAvatarLink } from "@/components/profile/ProfileAvatarLink";
 import { FriendSuggestionsSection } from "@/components/friends/FriendSuggestionsSection";
 import { PresenceBadge } from "@/components/friends/PresenceBadge";
 import { Button } from "@/components/ui/button";
@@ -70,34 +70,25 @@ function AcceptedFriendRow({
             }}
         >
             <CardContent className="flex items-center gap-3 p-3">
+                <ProfileAvatarLink
+                    userId={item.userId}
+                    avatarUrl={item.avatarUrl}
+                    initials={initials}
+                    linkOptions={{ friendshipStatus: "accepted" }}
+                    stopPropagation
+                />
                 <Link
                     to={`/friends/${item.userId}`}
-                    className="flex shrink-0 items-center gap-3"
+                    className="min-w-0 flex-1"
                     onClick={(event) => {
                         event.stopPropagation();
                         void hapticImpact();
                     }}
                 >
-                    <div className="relative shrink-0">
-                        {item.avatarUrl ? (
-                            <img
-                                src={item.avatarUrl}
-                                alt=""
-                                className="size-10 rounded-full object-cover"
-                            />
-                        ) : (
-                            <ProfileAvatarFallback
-                                initials={initials}
-                                className="size-10 rounded-full text-sm"
-                            />
-                        )}
-                    </div>
-                    <div className="min-w-0">
-                        <p className="truncate font-medium">{name}</p>
-                        {showUsername ? (
-                            <p className="truncate text-xs text-muted-foreground">@{item.username}</p>
-                        ) : null}
-                    </div>
+                    <p className="truncate font-medium">{name}</p>
+                    {showUsername ? (
+                        <p className="truncate text-xs text-muted-foreground">@{item.username}</p>
+                    ) : null}
                 </Link>
                 <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
                     {presence?.status === "training" ? (
@@ -146,37 +137,27 @@ function PendingFriendRow({
     const content = (
         <Card className="py-0">
             <CardContent className="flex items-center gap-3 p-3">
+                <ProfileAvatarLink
+                    userId={item.userId}
+                    avatarUrl={item.avatarUrl}
+                    initials={initials}
+                    stopPropagation
+                />
                 <Link
                     to={`/friends/preview/${item.userId}`}
-                    className="flex min-w-0 flex-1 items-center gap-3"
+                    className="min-w-0 flex-1"
                     onClick={() => {
                         void hapticImpact();
                     }}
                 >
-                    <div className="relative shrink-0">
-                        {item.avatarUrl ? (
-                            <img
-                                src={item.avatarUrl}
-                                alt=""
-                                className="size-10 rounded-full object-cover"
-                            />
-                        ) : (
-                            <ProfileAvatarFallback
-                                initials={initials}
-                                className="size-10 rounded-full text-sm"
-                            />
-                        )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium">{name}</p>
-                        {isPendingIncoming ? (
-                            <p className="text-xs text-muted-foreground">{UI.friendRequestPending}</p>
-                        ) : isPendingOutgoing ? (
-                            <p className="text-xs text-muted-foreground">{UI.friendRequestOutgoing}</p>
-                        ) : showUsername ? (
-                            <p className="truncate text-xs text-muted-foreground">@{item.username}</p>
-                        ) : null}
-                    </div>
+                    <p className="truncate font-medium">{name}</p>
+                    {isPendingIncoming ? (
+                        <p className="text-xs text-muted-foreground">{UI.friendRequestPending}</p>
+                    ) : isPendingOutgoing ? (
+                        <p className="text-xs text-muted-foreground">{UI.friendRequestOutgoing}</p>
+                    ) : showUsername ? (
+                        <p className="truncate text-xs text-muted-foreground">@{item.username}</p>
+                    ) : null}
                 </Link>
             </CardContent>
         </Card>

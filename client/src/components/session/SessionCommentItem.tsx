@@ -1,4 +1,4 @@
-import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallback";
+import { ProfileAvatarLink } from "@/components/profile/ProfileAvatarLink";
 import { SessionCommentComposer } from "@/components/session/SessionCommentComposer";
 import {
   getProfileDisplayName,
@@ -12,6 +12,7 @@ import { useState } from "react";
 type SessionCommentItemProps = {
   comment: SessionComment;
   currentUserId: string | null;
+  sessionOwnerUserId?: string;
   depth?: number;
   onReply: (parentId: string, body: string) => Promise<void>;
   onEdit: (commentId: string, body: string) => Promise<void>;
@@ -29,6 +30,7 @@ function formatCommentTime(createdAt: string) {
 export function SessionCommentItem({
   comment,
   currentUserId,
+  sessionOwnerUserId,
   depth = 0,
   onReply,
   onEdit,
@@ -43,6 +45,7 @@ export function SessionCommentItem({
   const name = getProfileDisplayName(profile, null);
   const initials = getProfileInitials(profile, null);
   const isAuthor = currentUserId === comment.author.userId;
+  const isSessionOwner = sessionOwnerUserId === comment.author.userId;
   // Même niveau d'imbrication : on peut répondre à une réponse (aplatissement côté API).
   const replyMention =
     depth > 0
@@ -52,18 +55,17 @@ export function SessionCommentItem({
   return (
     <div className={cn(depth > 0 && "ml-10")}>
       <div className="flex gap-3">
-        {comment.author.avatarUrl ? (
-          <img
-            src={comment.author.avatarUrl}
-            alt=""
-            className="size-8 shrink-0 rounded-full object-cover"
-          />
-        ) : (
-          <ProfileAvatarFallback
-            initials={initials}
-            className="size-8 shrink-0 rounded-full text-xs"
-          />
-        )}
+        <ProfileAvatarLink
+          userId={comment.author.userId}
+          avatarUrl={comment.author.avatarUrl}
+          initials={initials}
+          sizeClassName="size-8"
+          textSizeClassName="text-xs"
+          linkOptions={{
+            isSelf: isAuthor,
+            friendshipStatus: isSessionOwner ? "accepted" : undefined,
+          }}
+        />
         <div className="min-w-0 flex-1">
           <p className="text-sm">
             <span className="font-medium">{name}</span>
@@ -140,6 +142,7 @@ export function SessionCommentItem({
           <SessionCommentItem
             comment={reply}
             currentUserId={currentUserId}
+            sessionOwnerUserId={sessionOwnerUserId}
             depth={depth + 1}
             onReply={onReply}
             onEdit={onEdit}

@@ -1,4 +1,4 @@
-import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallback";
+import { ProfileAvatarLink } from "@/components/profile/ProfileAvatarLink";
 import { FriendSuggestionsSection } from "@/components/friends/FriendSuggestionsSection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import {
   getProfileDisplayName,
   getProfileInitials,
 } from "@/lib/profile-display";
+import { getUserProfilePath } from "@/lib/user-profile-path";
 import { UI } from "@/lib/translations";
 import { Search } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
@@ -71,19 +72,22 @@ function SearchResultRow({
   return (
     <Card className="py-0">
       <CardContent className="flex items-center gap-3 p-3">
-      <Link to={`/friends/preview/${item.userId}`} className="flex min-w-0 flex-1 items-center gap-3">
-        {item.avatarUrl ? (
-          <img
-            src={item.avatarUrl}
-            alt=""
-            className="size-10 shrink-0 rounded-full object-cover"
-          />
-        ) : (
-          <ProfileAvatarFallback
-            initials={initials}
-            className="size-10 rounded-full text-sm"
-          />
-        )}
+      <ProfileAvatarLink
+        userId={item.userId}
+        avatarUrl={item.avatarUrl}
+        initials={initials}
+        linkOptions={{
+          friendshipStatus:
+            item.friendshipStatus === "accepted" ? "accepted" : undefined,
+        }}
+      />
+      <Link
+        to={getUserProfilePath(item.userId, {
+          friendshipStatus:
+            item.friendshipStatus === "accepted" ? "accepted" : undefined,
+        })}
+        className="min-w-0 flex-1"
+      >
         <div className="min-w-0">
           <p className="truncate font-medium">{name}</p>
           {item.username ? (

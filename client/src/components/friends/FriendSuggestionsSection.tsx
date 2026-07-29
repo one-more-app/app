@@ -1,4 +1,4 @@
-import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallback";
+import { ProfileAvatarLink } from "@/components/profile/ProfileAvatarLink";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -65,22 +65,15 @@ function SuggestionRow({
   return (
     <Card className="py-0">
       <CardContent className="flex items-center gap-3 p-3">
+        <ProfileAvatarLink
+          userId={item.userId}
+          avatarUrl={item.avatarUrl}
+          initials={initials}
+        />
         <Link
           to={`/friends/preview/${item.userId}`}
-          className="flex min-w-0 flex-1 items-center gap-3"
+          className="min-w-0 flex-1"
         >
-          {item.avatarUrl ? (
-            <img
-              src={item.avatarUrl}
-              alt=""
-              className="size-10 shrink-0 rounded-full object-cover"
-            />
-          ) : (
-            <ProfileAvatarFallback
-              initials={initials}
-              className="size-10 rounded-full text-sm"
-            />
-          )}
           <div className="min-w-0">
             <p className="truncate font-medium">{name}</p>
             {item.username ? (

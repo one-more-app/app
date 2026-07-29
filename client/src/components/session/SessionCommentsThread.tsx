@@ -91,6 +91,7 @@ export function SessionCommentsThread({
               <SessionCommentItem
                 comment={comment}
                 currentUserId={currentUserId}
+                sessionOwnerUserId={ownerUserId}
                 onReply={(parentId, body) => handleCreate(body, parentId)}
                 onEdit={handleEdit}
               />

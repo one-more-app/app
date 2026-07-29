@@ -1,4 +1,4 @@
-import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallback";
+import { ProfileAvatarLink } from "@/components/profile/ProfileAvatarLink";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   useConversationUnreadActions,
@@ -31,44 +31,37 @@ function ConversationRow({
   const initials = getProfileInitials(profile, null);
 
   return (
-    <Link
-      to={`/friends/chat/${item.id}`}
-      className="block"
-      onClick={() => {
-        void hapticImpact();
-        onOpen(item.id);
-      }}
-    >
-      <Card className="py-0 transition-colors hover:bg-card/90">
-        <CardContent className="flex items-center gap-3 p-3">
-          {item.otherUser.avatarUrl ? (
-            <img
-              src={item.otherUser.avatarUrl}
-              alt=""
-              className="size-10 shrink-0 rounded-full object-cover"
-            />
-          ) : (
-            <ProfileAvatarFallback
-              initials={initials}
-              className="size-10 rounded-full text-sm"
-            />
-          )}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-2">
-              <p className="min-w-0 truncate font-medium">{name}</p>
-              {item.unreadCount > 0 ? (
-                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
-                  {item.unreadCount > 9 ? "9+" : item.unreadCount}
-                </span>
-              ) : null}
-            </div>
-            <p className="truncate text-xs text-muted-foreground">
-              {item.lastMessage?.body ?? UI.messagesEmptyPreview}
-            </p>
+    <Card className="py-0 transition-colors hover:bg-card/90">
+      <CardContent className="flex items-center gap-3 p-3">
+        <ProfileAvatarLink
+          userId={item.otherUser.userId}
+          avatarUrl={item.otherUser.avatarUrl}
+          initials={initials}
+          linkOptions={{ friendshipStatus: "accepted" }}
+          stopPropagation
+        />
+        <Link
+          to={`/friends/chat/${item.id}`}
+          className="min-w-0 flex-1"
+          onClick={() => {
+            void hapticImpact();
+            onOpen(item.id);
+          }}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <p className="min-w-0 truncate font-medium">{name}</p>
+            {item.unreadCount > 0 ? (
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+                {item.unreadCount > 9 ? "9+" : item.unreadCount}
+              </span>
+            ) : null}
           </div>
-        </CardContent>
-      </Card>
-    </Link>
+          <p className="truncate text-xs text-muted-foreground">
+            {item.lastMessage?.body ?? UI.messagesEmptyPreview}
+          </p>
+        </Link>
+      </CardContent>
+    </Card>
   );
 }
 
