@@ -13,7 +13,9 @@ export function CelebrationModalShell({
 }) {
     return (
         <div
-            className="relative min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto"
+            // flex-auto (basis: auto) : taille au contenu ; shrink si max-h parent.
+            // Pas de flex-1 (basis 0) : collapse à 0px si la Dialog est en hauteur auto.
+            className="relative min-h-0 w-full flex-auto overflow-x-hidden overflow-y-auto"
             style={style}
         >
             <div

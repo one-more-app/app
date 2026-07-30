@@ -12,6 +12,11 @@ import { getProfileInitials } from "@/lib/profile-display";
 import { useAccess } from "@/hooks/use-access";
 import { setUserProfile } from "@/lib/storage";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { profileNestedClass } from "@/lib/profile-section";
 import { UI } from "@/lib/translations";
 import type { UserProfile } from "@/types";
@@ -51,6 +56,7 @@ export function ProfileIdentityHeader({
   const cropObjectUrlRef = useRef<string | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [avatarPreviewOpen, setAvatarPreviewOpen] = useState(false);
 
   const resolveAvatarUrl = () => {
     const fromProfile = avatarUrlProp ?? profile?.avatarUrl ?? null;
@@ -86,8 +92,13 @@ export function ProfileIdentityHeader({
 
   const initials = getProfileInitials(profile, readOnly ? null : auth.user);
 
+  const canPreviewAvatar = Boolean(avatarDisplaySrc && !avatarLoadFailed);
+
   const handleAvatarClick = () => {
-    if (readOnly) return;
+    if (readOnly) {
+      if (canPreviewAvatar) setAvatarPreviewOpen(true);
+      return;
+    }
     fileInputRef.current?.click();
   };
 
@@ -147,7 +158,7 @@ export function ProfileIdentityHeader({
   const avatarClassName = cn(
     profileNestedClass,
     "relative size-11 shrink-0 overflow-hidden p-0",
-    !readOnly &&
+    (!readOnly || canPreviewAvatar) &&
       "outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring",
   );
 
@@ -186,7 +197,18 @@ export function ProfileIdentityHeader({
       <CardContent className="pt-0">
       <div className="flex items-center gap-3">
         {readOnly ? (
-          <div className={avatarClassName}>{avatarInner}</div>
+          canPreviewAvatar ? (
+            <button
+              type="button"
+              onClick={handleAvatarClick}
+              className={avatarClassName}
+              aria-label={UI.profileViewPhoto}
+            >
+              {avatarInner}
+            </button>
+          ) : (
+            <div className={avatarClassName}>{avatarInner}</div>
+          )
         ) : (
           <button
             type="button"
@@ -245,6 +267,25 @@ export function ProfileIdentityHeader({
           onOpenChange={handleCropOpenChange}
           onConfirm={handleCropConfirm}
         />
+      ) : null}
+
+      {readOnly && canPreviewAvatar && avatarDisplaySrc ? (
+        <Dialog
+          open={avatarPreviewOpen}
+          onOpenChange={setAvatarPreviewOpen}
+          data-analytics-label="profile-avatar-preview"
+        >
+          <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
+            <DialogTitle className="sr-only">{UI.profileViewPhoto}</DialogTitle>
+            <div className="flex aspect-square w-full items-center justify-center overflow-hidden bg-muted">
+              <img
+                src={avatarDisplaySrc}
+                alt=""
+                className="size-full object-cover"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       ) : null}
     </Card>
   );

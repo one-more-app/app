@@ -18,8 +18,8 @@ export class ApiError extends Error {
   constructor(message: string, status: number, payload: unknown) {
     super(message);
     this.name = "ApiError";
-    this.status = status;
     this.payload = payload;
+    this.status = status;
   }
 }
 
@@ -67,6 +67,46 @@ export function setAuthSessionListener(listener: AuthSessionListener | null): vo
   authSessionListener = listener;
 }
 
+/** Timeout des appels API métier (évite skeletons / isBusy infinis). */
+export const API_FETCH_TIMEOUT_MS = 12_000;
+/** Timeout dédié au refresh (souvent sur le chemin critique cold start). */
+export const AUTH_REFRESH_TIMEOUT_MS = 10_000;
+
+function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === "AbortError") ||
+    (error instanceof Error && error.name === "AbortError")
+  );
+}
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit | undefined,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const externalSignal = init?.signal;
+  const onExternalAbort = () => controller.abort();
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      controller.abort();
+    } else {
+      externalSignal.addEventListener("abort", onExternalAbort, { once: true });
+    }
+  }
+
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timer);
+    externalSignal?.removeEventListener("abort", onExternalAbort);
+  }
+}
+
 let refreshInFlight: Promise<StoredAuthSession> | null = null;
 
 /**
@@ -83,12 +123,23 @@ export async function refreshAccessToken(): Promise<StoredAuthSession> {
     const baseUrl = getApiBaseUrl();
     let res: Response;
     try {
-      res = await fetch(`${baseUrl}/auth/refresh`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ refreshToken: stored.refreshToken }),
-      });
+      res = await fetchWithTimeout(
+        `${baseUrl}/auth/refresh`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ refreshToken: stored.refreshToken }),
+        },
+        AUTH_REFRESH_TIMEOUT_MS,
+      );
     } catch (error) {
+      if (isAbortError(error)) {
+        throw new ApiError(
+          `Délai dépassé en joignant l'API (${baseUrl}/auth/refresh).`,
+          0,
+          null,
+        );
+      }
       notifyApiUnreachable();
       const reason = error instanceof Error ? error.message : String(error);
       throw new ApiError(
@@ -169,15 +220,26 @@ export async function apiFetch<T>(
 
   let res: Response;
   try {
-    res = await fetch(url, {
-      ...rest,
-      headers: {
-        "content-type": "application/json",
-        ...(tokenToUse ? { authorization: `Bearer ${tokenToUse}` } : {}),
-        ...(headers ?? {}),
+    res = await fetchWithTimeout(
+      url,
+      {
+        ...rest,
+        headers: {
+          "content-type": "application/json",
+          ...(tokenToUse ? { authorization: `Bearer ${tokenToUse}` } : {}),
+          ...(headers ?? {}),
+        },
       },
-    });
+      API_FETCH_TIMEOUT_MS,
+    );
   } catch (error) {
+    if (isAbortError(error)) {
+      throw new ApiError(
+        `Délai dépassé en joignant l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}.`,
+        0,
+        null,
+      );
+    }
     notifyApiUnreachable();
     const reason = error instanceof Error ? error.message : String(error);
     throw new ApiError(
@@ -196,14 +258,38 @@ export async function apiFetch<T>(
     if (res.status === 401 && !skipAuthRefresh && !isAuthPath && tokenToUse) {
       // Si l'`accessToken` expire, on tente un refresh puis on retente une fois.
       const refreshed = await refreshAccessToken();
-      const retryRes = await fetch(url, {
-        ...rest,
-        headers: {
-          "content-type": "application/json",
-          ...(refreshed.accessToken ? { authorization: `Bearer ${refreshed.accessToken}` } : {}),
-          ...(headers ?? {}),
-        },
-      });
+      let retryRes: Response;
+      try {
+        retryRes = await fetchWithTimeout(
+          url,
+          {
+            ...rest,
+            headers: {
+              "content-type": "application/json",
+              ...(refreshed.accessToken
+                ? { authorization: `Bearer ${refreshed.accessToken}` }
+                : {}),
+              ...(headers ?? {}),
+            },
+          },
+          API_FETCH_TIMEOUT_MS,
+        );
+      } catch (error) {
+        if (isAbortError(error)) {
+          throw new ApiError(
+            `Délai dépassé en joignant l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}.`,
+            0,
+            null,
+          );
+        }
+        notifyApiUnreachable();
+        const reason = error instanceof Error ? error.message : String(error);
+        throw new ApiError(
+          `Impossible de joindre l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}. ${reason}`,
+          0,
+          null,
+        );
+      }
       const retryContentType = retryRes.headers.get("content-type") ?? "";
       const retryIsJson = retryContentType.includes("application/json");
       const retryPayload = retryIsJson
@@ -251,13 +337,24 @@ export async function apiFetchFormData<T>(
 
   let res: Response;
   try {
-    res = await fetch(url, {
-      ...rest,
-      method: rest.method ?? "POST",
-      body: formData,
-      headers: buildHeaders(tokenToUse),
-    });
+    res = await fetchWithTimeout(
+      url,
+      {
+        ...rest,
+        method: rest.method ?? "POST",
+        body: formData,
+        headers: buildHeaders(tokenToUse),
+      },
+      API_FETCH_TIMEOUT_MS,
+    );
   } catch (error) {
+    if (isAbortError(error)) {
+      throw new ApiError(
+        `Délai dépassé en joignant l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}.`,
+        0,
+        null,
+      );
+    }
     notifyApiUnreachable();
     const reason = error instanceof Error ? error.message : String(error);
     throw new ApiError(
@@ -275,12 +372,34 @@ export async function apiFetchFormData<T>(
     const isAuthPath = typeof path === "string" && path.startsWith("/auth/");
     if (res.status === 401 && !skipAuthRefresh && !isAuthPath && tokenToUse) {
       const refreshed = await refreshAccessToken();
-      const retryRes = await fetch(url, {
-        ...rest,
-        method: rest.method ?? "POST",
-        body: formData,
-        headers: buildHeaders(refreshed.accessToken),
-      });
+      let retryRes: Response;
+      try {
+        retryRes = await fetchWithTimeout(
+          url,
+          {
+            ...rest,
+            method: rest.method ?? "POST",
+            body: formData,
+            headers: buildHeaders(refreshed.accessToken),
+          },
+          API_FETCH_TIMEOUT_MS,
+        );
+      } catch (error) {
+        if (isAbortError(error)) {
+          throw new ApiError(
+            `Délai dépassé en joignant l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}.`,
+            0,
+            null,
+          );
+        }
+        notifyApiUnreachable();
+        const reason = error instanceof Error ? error.message : String(error);
+        throw new ApiError(
+          `Impossible de joindre l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}. ${reason}`,
+          0,
+          null,
+        );
+      }
       const retryContentType = retryRes.headers.get("content-type") ?? "";
       const retryIsJson = retryContentType.includes("application/json");
       const retryPayload = retryIsJson

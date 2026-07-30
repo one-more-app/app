@@ -77,10 +77,12 @@ function DialogContent({
             <DialogPrimitive.Content
                 data-slot="dialog-content"
                 className={cn(
-                    // Centrage via inset + margin (pas de translate) pour ne pas
-                    // entrer en conflit avec zoom-in/out de tw-animate (sinon la
-                    // modal part vers la droite, surtout en WebView iOS/Android).
-                    "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed inset-0 z-[200] m-auto flex h-fit max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-2rem)] min-w-0 flex-col gap-4 overflow-y-auto rounded-xl border p-4 shadow-lg duration-200 outline-none sm:max-w-lg",
+                    // Centrage: top/left 50% + translate (propriété CSS Tailwind v4,
+                    // indépendante de transform). tw-animate zoom-in/out anime
+                    // transform: scale3d(...) → pas de conflit, pas de dérive iOS.
+                    // Éviter inset-0 + m-auto + h-fit + flex : avec enfants
+                    // flex-1/min-h-0 le corps peut collapser à 0px (WebKit).
+                    "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-1/2 left-1/2 z-[200] grid max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-2rem)] min-w-0 -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-xl border p-4 shadow-lg duration-200 outline-none sm:max-w-lg",
                     className
                 )}
                 {...props}

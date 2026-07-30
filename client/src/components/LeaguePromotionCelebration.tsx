@@ -168,7 +168,7 @@ function LevelUpCelebrationContent({
     const leveledMultiple = level - previousLevel > 1
 
     return (
-        <div className="relative min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto">
+        <div className="relative min-h-0 w-full flex-auto overflow-x-hidden overflow-y-auto">
             <div
                 aria-hidden
                 className="pointer-events-none absolute inset-0 opacity-95 dark:opacity-100"
@@ -249,7 +249,7 @@ function StreakCelebrationContent({ payload }: { payload: StreakCelebrationPaylo
             : UI.streakSheetSubtitleStreak
 
     return (
-        <div className="relative min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto">
+        <div className="relative min-h-0 w-full flex-auto overflow-x-hidden overflow-y-auto">
             <div
                 aria-hidden
                 className="pointer-events-none absolute inset-0 opacity-95 dark:opacity-100"
@@ -378,28 +378,28 @@ export function LeaguePromotionCelebrationHost() {
                 className="flex flex-col gap-0 overflow-hidden border-2 border-border bg-card p-0 duration-300 sm:max-w-md sm:w-full"
             >
                 {open?.kind === 'league' ? (
-                    <div className="flex min-h-0 flex-1 flex-col">
+                    <div className="flex min-h-0 flex-auto flex-col">
                         <LeaguePromotionContent
                             payload={open.payload}
                             isDark={isDark}
                         />
                     </div>
                 ) : open?.kind === 'record' ? (
-                    <div className="flex min-h-0 flex-1 flex-col">
+                    <div className="flex min-h-0 flex-auto flex-col">
                         <NewRecordCelebrationContent
                             payload={open.payload}
                             isDark={isDark}
                         />
                     </div>
                 ) : open?.kind === 'streak' ? (
-                    <div className="flex min-h-0 flex-1 flex-col">
+                    <div className="flex min-h-0 flex-auto flex-col">
                         <StreakCelebrationContent
                             key={`${open.payload.current}-${open.payload.previousStreak}`}
                             payload={open.payload}
                         />
                     </div>
                 ) : open?.kind === 'levelup' ? (
-                    <div className="flex min-h-0 flex-1 flex-col">
+                    <div className="flex min-h-0 flex-auto flex-col">
                         <LevelUpCelebrationContent
                             key={`${open.payload.previousLevel}-${open.payload.level}`}
                             payload={open.payload}

@@ -7,7 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as argon2 from 'argon2';
-import { randomUUID } from 'crypto';
+import { randomBytes } from 'crypto';
 import { IsNull, Repository } from 'typeorm';
 import { SessionEntity } from './entities/session.entity.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
@@ -50,14 +50,30 @@ export class AuthService {
     );
   }
 
+  /** Format: `{selector}.{secret}` — selector indexé, secret hashé (argon2). */
+  private createRefreshTokenParts(): {
+    refreshToken: string;
+    selector: string;
+    secret: string;
+  } {
+    const selector = randomBytes(16).toString('base64url');
+    const secret = randomBytes(32).toString('base64url');
+    return {
+      refreshToken: `${selector}.${secret}`,
+      selector,
+      secret,
+    };
+  }
+
   private async issueSession(params: {
     user: AuthUser;
     deviceId?: string;
   }): Promise<AuthSession> {
-    const refreshToken = randomUUID();
-    const refreshTokenHash = await argon2.hash(refreshToken);
+    const { refreshToken, selector, secret } = this.createRefreshTokenParts();
+    const refreshTokenHash = await argon2.hash(secret);
     await this.sessionsRepo.save({
       userId: params.user.id,
+      selector,
       refreshTokenHash,
       deviceId: params.deviceId ?? null,
     });
@@ -141,15 +157,7 @@ export class AuthService {
     refreshToken: string;
     deviceId?: string;
   }): Promise<AuthSession> {
-    const sessions = await this.sessionsRepo.find({
-      where: { revokedAt: IsNull() },
-      relations: { user: true },
-      order: { createdAt: 'DESC' },
-    });
-    const match = await this.findSessionByRefreshToken(
-      sessions,
-      params.refreshToken,
-    );
+    const match = await this.findSessionByRefreshToken(params.refreshToken);
     if (!match) throw new UnauthorizedException('Session expirée');
 
     await this.sessionsRepo.update({ id: match.id }, { revokedAt: new Date() });
@@ -159,15 +167,7 @@ export class AuthService {
   }
 
   async logout(params: { refreshToken: string }): Promise<void> {
-    const sessions = await this.sessionsRepo.find({
-      where: { revokedAt: IsNull() },
-      select: ['id', 'refreshTokenHash'],
-      order: { createdAt: 'DESC' },
-    });
-    const match = await this.findSessionByRefreshToken(
-      sessions,
-      params.refreshToken,
-    );
+    const match = await this.findSessionByRefreshToken(params.refreshToken);
     if (!match) return;
     await this.sessionsRepo.update({ id: match.id }, { revokedAt: new Date() });
   }
@@ -181,15 +181,42 @@ export class AuthService {
     return { id: u.id, email: u.email };
   }
 
-  private async findSessionByRefreshToken<
-    T extends { id: string; refreshTokenHash: string },
-  >(sessions: T[], refreshToken: string): Promise<T | null> {
-    // On ne peut pas indexer un hash argon2; on compare sur un nombre réduit de sessions.
-    // MVP: OK. Plus tard: refresh token "selector" + hash pour lookup O(1).
-    for (const s of sessions) {
+  private async findSessionByRefreshToken(
+    refreshToken: string,
+  ): Promise<SessionEntity | null> {
+    const trimmed = refreshToken.trim();
+    if (!trimmed) return null;
+
+    const separator = trimmed.indexOf('.');
+    if (separator > 0) {
+      const selector = trimmed.slice(0, separator);
+      const secret = trimmed.slice(separator + 1);
+      if (!selector || !secret) return null;
+
+      const session = await this.sessionsRepo.findOne({
+        where: { selector, revokedAt: IsNull() },
+        relations: { user: true },
+      });
+      if (!session) return null;
+
       try {
-        const ok = await argon2.verify(s.refreshTokenHash, refreshToken);
-        if (ok) return s;
+        const ok = await argon2.verify(session.refreshTokenHash, secret);
+        return ok ? session : null;
+      } catch {
+        return null;
+      }
+    }
+
+    // Legacy: UUID sans selector (pré-migration). Scan limité aux lignes sans selector.
+    const legacy = await this.sessionsRepo.find({
+      where: { selector: IsNull(), revokedAt: IsNull() },
+      relations: { user: true },
+      order: { createdAt: 'DESC' },
+    });
+    for (const session of legacy) {
+      try {
+        const ok = await argon2.verify(session.refreshTokenHash, trimmed);
+        if (ok) return session;
       } catch {
         // ignore
       }

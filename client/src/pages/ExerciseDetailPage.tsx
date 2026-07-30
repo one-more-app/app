@@ -1,5 +1,6 @@
 import { AddPerfDrawer } from '@/components/AddPerfDrawer'
 import { BackHeader } from '@/components/BackHeader'
+import { CustomExerciseMetadataFields } from '@/components/CustomExerciseMetadataFields'
 import { ExerciseCard } from '@/components/ExerciseCard'
 import { PerfEntryList } from '@/components/history/PerfEntryList'
 import { LeagueBadge } from '@/components/LeagueBadge'
@@ -9,7 +10,15 @@ import { RestSinceLastSetBar } from '@/components/RestSinceLastSetBar'
 import { ExerciseDetailPageSkeleton } from '@/components/skeletons'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
     useHomeExercisesData,
     usePerformanceDataRefresh,
@@ -22,13 +31,19 @@ import { usePerformance } from '@/hooks/use-performance'
 import { useRestTimerEnabled } from '@/hooks/use-rest-timer-enabled'
 import { useTheme } from '@/hooks/use-theme'
 import { useTourDomReady } from '@/hooks/use-tour-dom-ready'
-import { fetchExerciseTierLadder, fetchPerformanceEntries } from '@/lib/data-api'
+import {
+    fetchExerciseTierLadder,
+    fetchExercisesMeta,
+    fetchPerformanceEntries,
+} from '@/lib/data-api'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
+import { finalizeDeferredGymOnboarding } from '@/lib/gym-onboarding'
 import {
     comparePerfEntriesRecentFirst,
     entryInsightsFromPerformances,
     formatDayHeading,
 } from '@/lib/history-entries'
+import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
 import { getJoyrideScrollOffset } from '@/lib/joyride-config'
 import { notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
@@ -39,10 +54,10 @@ import {
     removeTrackedExerciseAndWait,
     setOnboardingFirstExercisePending,
     setOnboardingTourComplete,
+    updateTrackedExerciseAndWait,
 } from '@/lib/storage'
 import { isDumbbellExercise } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
-import { finalizeDeferredGymOnboarding } from '@/lib/gym-onboarding'
 import { notifyXpGrants } from '@/lib/xp-notifications'
 import type { PerformanceEntry } from '@/types'
 import {
@@ -50,6 +65,7 @@ import {
     ChevronLeft,
     ChevronRight,
     ChevronUp,
+    Pencil,
     SearchX,
     Timer,
     TimerOff,
@@ -158,6 +174,21 @@ export function ExerciseDetailPage() {
         | { mode: 'edit'; entry: PerformanceEntry }
         | { mode: 'add'; date: string }
     >({ mode: 'closed' })
+    const [editOpen, setEditOpen] = useState(false)
+    const [editName, setEditName] = useState('')
+    const [editTarget, setEditTarget] = useState('')
+    const [editEquipment, setEditEquipment] = useState('')
+    const [isSavingEdit, setIsSavingEdit] = useState(false)
+
+    const { data: metaData } = useSWR(
+        exercise?.isCustom ? 'exercise-meta' : null,
+        fetchExercisesMeta,
+    )
+    const editTargets = useMemo(
+        () => (metaData?.targets ?? []).filter((t) => t !== 'cardio'),
+        [metaData],
+    )
+    const editEquipmentOptions = metaData?.equipment ?? []
 
     useExercisePresence(
         Boolean(exercise),
@@ -167,7 +198,44 @@ export function ExerciseDetailPage() {
 
     useEffect(() => {
         setSessionDrawer({ mode: 'closed' })
+        setEditOpen(false)
     }, [id])
+
+    const openEditDialog = useCallback(() => {
+        if (!exercise) return
+        setEditName(exercise.name)
+        setEditTarget(exercise.target ?? '')
+        setEditEquipment(exercise.equipment ?? '')
+        setEditOpen(true)
+    }, [exercise])
+
+    const handleSaveEdit = useCallback(() => {
+        if (!id || !exercise?.isCustom) return
+        const name = editName.trim()
+        if (!name || !editTarget || !editEquipment) return
+        setIsSavingEdit(true)
+        void (async () => {
+            try {
+                await updateTrackedExerciseAndWait(id, {
+                    name,
+                    bodyPart: inferBodyPartFromTarget(editTarget),
+                    target: editTarget,
+                    equipment: editEquipment,
+                })
+                await refreshAfterTrackedChange()
+                setEditOpen(false)
+            } finally {
+                setIsSavingEdit(false)
+            }
+        })()
+    }, [
+        id,
+        exercise?.isCustom,
+        editName,
+        editTarget,
+        editEquipment,
+        refreshAfterTrackedChange,
+    ])
 
     const entryInsights = useMemo(
         () =>
@@ -621,26 +689,84 @@ export function ExerciseDetailPage() {
                     </Card>
                 )}
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
+                    <CardHeader className="flex flex-row items-center justify-between gap-2">
                         <CardTitle>{UI.options}</CardTitle>
-                        <Button
-                            variant="outline-destructive"
-                            size="sm"
-                            onClick={() => {
-                                if (id && confirm(UI.confirmDelete)) {
-                                    void (async () => {
-                                        await removeTrackedExerciseAndWait(id)
-                                        await refreshAfterTrackedChange()
-                                        navigate('/home')
-                                    })()
-                                }
-                            }}
-                        >
-                            <Trash2 className="mr-1 size-4" />
-                            {UI.delete}
-                        </Button>
+                        <div className="flex shrink-0 gap-2">
+                            {exercise.isCustom ? (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={openEditDialog}
+                                >
+                                    <Pencil className="mr-1 size-4" />
+                                    {UI.modifyPerf}
+                                </Button>
+                            ) : null}
+                            <Button
+                                variant="outline-destructive"
+                                size="sm"
+                                onClick={() => {
+                                    if (id && confirm(UI.confirmDelete)) {
+                                        void (async () => {
+                                            await removeTrackedExerciseAndWait(id)
+                                            await refreshAfterTrackedChange()
+                                            navigate('/home')
+                                        })()
+                                    }
+                                }}
+                            >
+                                <Trash2 className="mr-1 size-4" />
+                                {UI.delete}
+                            </Button>
+                        </div>
                     </CardHeader>
                 </Card>
+
+                {exercise.isCustom ? (
+                    <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>{UI.editCustomExercise}</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="flex flex-col gap-2">
+                                    <Label htmlFor="edit-custom-name">{UI.name}</Label>
+                                    <Input
+                                        id="edit-custom-name"
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.target.value)}
+                                        placeholder={UI.placeholderExerciseName}
+                                    />
+                                </div>
+                                {editTargets.length > 0 &&
+                                    editEquipmentOptions.length > 0 ? (
+                                    <CustomExerciseMetadataFields
+                                        targets={editTargets}
+                                        equipmentOptions={editEquipmentOptions}
+                                        target={editTarget}
+                                        equipment={editEquipment}
+                                        onTargetChange={setEditTarget}
+                                        onEquipmentChange={setEditEquipment}
+                                    />
+                                ) : null}
+                                <Button
+                                    onClick={handleSaveEdit}
+                                    disabled={
+                                        isSavingEdit ||
+                                        !editName.trim() ||
+                                        !editTarget ||
+                                        !editEquipment ||
+                                        editTargets.length === 0 ||
+                                        editEquipmentOptions.length === 0
+                                    }
+                                    className="w-full"
+                                >
+                                    {UI.save}
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                ) : null}
 
                 {exerciseTourRun ? (
                     <Joyride

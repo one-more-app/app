@@ -470,6 +470,10 @@ export function ExerciseListPage() {
                 })
                 setCustomName('')
                 setCustomOpen(false)
+                navigate(`/exercise/${id}`, {
+                    replace: true,
+                    state: { fromAddExercise: true },
+                })
             })()
         })
     }

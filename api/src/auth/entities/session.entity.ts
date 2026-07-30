@@ -21,6 +21,10 @@ export class SessionEntity {
   @JoinColumn({ name: 'userId' })
   user!: Relation<UserEntity>;
 
+  /** Préfixe public du refresh token pour lookup O(1). Null = legacy UUID. */
+  @Column({ type: 'text', nullable: true })
+  selector!: string | null;
+
   @Column({ type: 'text' })
   refreshTokenHash!: string;
 

@@ -4,6 +4,7 @@ import { useAnalytics } from "@/hooks/use-analytics";
 import { usePaywall } from "@/hooks/use-paywall";
 import { AnalyticsEvents } from "@/lib/analytics";
 import { UI } from "@/lib/translations";
+import { getFreeTrialLabel } from "@/lib/paywall-free-trial";
 import {
     getCurrentOffering,
     purchasePackage,
@@ -345,6 +346,10 @@ function PaywallBody({
     purchasing,
     selectedPackage,
 }: PaywallBodyProps) {
+    const annualTrialLabel = getFreeTrialLabel(annual?.product);
+    const monthlyTrialLabel = getFreeTrialLabel(monthly?.product);
+    const selectedTrialLabel = getFreeTrialLabel(selectedPackage?.product);
+
     return (
         <div className="flex flex-col">
             <div className="relative">
@@ -396,6 +401,7 @@ function PaywallBody({
                             price={formatAnnualDisplayPrice(annual)}
                             trailingLabel={UI.paywallFirstYear}
                             badge={UI.paywallGiftBadge}
+                            trialLabel={annualTrialLabel}
                             selected={selected === "annual"}
                             onSelect={() => onSelect("annual")}
                         />
@@ -414,6 +420,7 @@ function PaywallBody({
                             }
                             price={monthly.product.priceString}
                             trailingLabel={UI.paywallPerMonthLabel}
+                            badge={monthlyTrialLabel ?? undefined}
                             selected={selected === "monthly"}
                             onSelect={() => onSelect("monthly")}
                         />
@@ -429,6 +436,8 @@ function PaywallBody({
                 >
                     {purchasing ? (
                         <Loader2 className="size-4 animate-spin" />
+                    ) : selectedTrialLabel ? (
+                        UI.paywallCtaTrial
                     ) : (
                         UI.paywallCta
                     )}
@@ -439,6 +448,7 @@ function PaywallBody({
                         <BilledLine
                             priceString={selectedPackage.product.priceString}
                             annual={isAnnualSelected}
+                            trialLabel={selectedTrialLabel}
                         />
                     ) : null}
                 </p>
@@ -452,9 +462,11 @@ function PaywallBody({
 function BilledLine({
     priceString,
     annual,
+    trialLabel,
 }: {
     priceString: string;
     annual: boolean;
+    trialLabel: string | null;
 }) {
     const isAndroid = Capacitor.getPlatform() === "android";
     const template = annual
@@ -467,6 +479,9 @@ function BilledLine({
     const [before, after] = template.split("{price}");
     return (
         <span>
+            {trialLabel
+                ? UI.paywallBilledTrialPrefix.replace("{trial}", trialLabel)
+                : null}
             {before}
             <Price value={priceString} />
             {after}
@@ -525,6 +540,7 @@ type PackageCardProps = {
     oldPrice?: string;
     trailingLabel: string;
     badge?: string;
+    trialLabel?: string | null;
     selected: boolean;
     onSelect: () => void;
 };
@@ -536,6 +552,7 @@ function PackageCard({
     oldPrice,
     trailingLabel,
     badge,
+    trialLabel,
     selected,
     onSelect,
 }: PackageCardProps) {
@@ -564,6 +581,11 @@ function PackageCard({
                 <div className="flex flex-col">
                     <span className="text-base font-semibold">{label}</span>
                     <span className="text-xs text-black/60">{perMonth}</span>
+                    {trialLabel ? (
+                        <span className="text-xs font-semibold text-[color:var(--accent)]">
+                            {trialLabel}
+                        </span>
+                    ) : null}
                 </div>
                 <div className="flex flex-col items-end">
                     <div className="flex items-baseline gap-1.5">
