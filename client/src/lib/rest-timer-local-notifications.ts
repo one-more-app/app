@@ -20,6 +20,8 @@ const REST_FINISHED_TOAST_SUPPRESS_KEY = "rest_timer_suppress_toast_exercise_id"
 
 let lastSyncedKey: string | null = null;
 let lifecycleEnabled = false;
+/** Incrémenté à chaque disable — invalide les start/cancel encore en vol. */
+let lifecycleEpoch = 0;
 let currentParams: RestFinishedLocalNotificationParams | null = null;
 let unsubscribeAppState: (() => void) | null = null;
 let syncInFlight: Promise<void> | null = null;
@@ -28,6 +30,19 @@ let suppressedRestFinishedToastExerciseId: string | null = null;
 function paramsKey(params: RestFinishedLocalNotificationParams | null): string {
   if (!params) return "";
   return `${params.exerciseId}:${params.createdAt}:${params.targetMs}`;
+}
+
+/** Sérialise les appels natifs (cancel/start/update) pour éviter cancel-après-start au toggle. */
+function enqueueNative(task: () => Promise<void>): Promise<void> {
+  const run = (syncInFlight ?? Promise.resolve()).then(task, task);
+  syncInFlight = run.finally(() => {
+    if (syncInFlight === run) syncInFlight = null;
+  });
+  return run;
+}
+
+function isLifecycleCurrent(epoch: number): boolean {
+  return lifecycleEnabled && epoch === lifecycleEpoch;
 }
 
 export function buildRestFinishedDeepLinkRoute(exerciseId: string): string {
@@ -156,15 +171,22 @@ export async function ensureRestTimerNotificationPermission(): Promise<boolean> 
   }
 }
 
-export async function cancelRestFinishedLocalNotification(): Promise<void> {
+/** Annule le natif. Invalide `lastSyncedKey` tout de suite (avant l'await). */
+async function cancelNative(): Promise<void> {
+  lastSyncedKey = "";
   if (!Capacitor.isNativePlatform()) return;
-  if (lastSyncedKey === "") return;
   try {
     await RestTimer.cancel();
-    lastSyncedKey = "";
   } catch {
     /* ignore */
   }
+}
+
+export async function cancelRestFinishedLocalNotification(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+  // Invalider synchrone : un ré-enable concurrent ne doit pas croire être déjà sync.
+  lastSyncedKey = "";
+  await enqueueNative(() => cancelNative());
 }
 
 export async function resetRestTimerLocalState(): Promise<void> {
@@ -208,43 +230,61 @@ async function syncRestFinishedLocalNotificationInternal(
   params: RestFinishedLocalNotificationParams | null,
 ): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
-  if (!lifecycleEnabled) return;
+
+  const epoch = lifecycleEpoch;
+  if (!isLifecycleCurrent(epoch)) return;
 
   const key = paramsKey(params);
   if (key === lastSyncedKey) return;
 
   if (!params) {
-    await cancelRestFinishedLocalNotification();
+    await cancelNative();
     return;
   }
 
   const start = new Date(params.createdAt).getTime();
   if (Number.isNaN(start)) {
-    await cancelRestFinishedLocalNotification();
+    await cancelNative();
     return;
   }
 
   const fireAt = start + params.targetMs;
   const now = Date.now();
   if (fireAt <= now || !isRestSinceLastSetVisible(params.createdAt, now)) {
-    await cancelRestFinishedLocalNotification();
+    await cancelNative();
     return;
   }
 
   const granted = await ensureRestTimerNotificationPermission();
+  if (!isLifecycleCurrent(epoch)) return;
   if (!granted) {
-    await cancelRestFinishedLocalNotification();
+    await cancelNative();
     return;
   }
 
-  await cancelRestFinishedLocalNotification();
+  await cancelNative();
+  if (!isLifecycleCurrent(epoch)) return;
 
   await RestTimer.start(buildStartPayload(params));
+  if (!isLifecycleCurrent(epoch)) {
+    // Disable pendant le start : ne pas laisser Live Activity / notif orphelines.
+    await cancelNative();
+    return;
+  }
+
   try {
     const { isActive } = await CapacitorApp.getState();
+    if (!isLifecycleCurrent(epoch)) {
+      await cancelNative();
+      return;
+    }
     await RestTimer.setForegroundVisible({ visible: !isActive });
   } catch {
     /* ignore */
+  }
+  if (!isLifecycleCurrent(epoch)) {
+    await cancelNative();
+    return;
   }
   lastSyncedKey = key;
 }
@@ -255,14 +295,7 @@ export async function syncRestFinishedLocalNotification(
   currentParams = params;
   if (!lifecycleEnabled) return;
 
-  if (syncInFlight) {
-    await syncInFlight;
-  }
-
-  syncInFlight = syncRestFinishedLocalNotificationInternal(params).finally(() => {
-    syncInFlight = null;
-  });
-  await syncInFlight;
+  await enqueueNative(() => syncRestFinishedLocalNotificationInternal(params));
 }
 
 function attachAppStateListener(): void {
@@ -270,10 +303,17 @@ function attachAppStateListener(): void {
 
   unsubscribeAppState = subscribeAppStateChange((isActive) => {
     if (!lifecycleEnabled) return;
-    void RestTimer.setForegroundVisible({ visible: !isActive });
-    if (!isActive) {
-      void syncRestFinishedLocalNotificationInternal(currentParams);
-    }
+    void enqueueNative(async () => {
+      if (!lifecycleEnabled) return;
+      try {
+        await RestTimer.setForegroundVisible({ visible: !isActive });
+      } catch {
+        /* ignore */
+      }
+      if (!isActive) {
+        await syncRestFinishedLocalNotificationInternal(currentParams);
+      }
+    });
   });
 }
 
@@ -283,15 +323,21 @@ function detachAppStateListener(): void {
 }
 
 export function setRestTimerLifecycleEnabled(enabled: boolean): void {
-  lifecycleEnabled = enabled;
   if (!enabled) {
+    lifecycleEpoch += 1;
+    lifecycleEnabled = false;
     currentParams = null;
+    // Synchrone : le prochain enable avec les mêmes params ne skip pas le restart.
+    lastSyncedKey = "";
     detachAppStateListener();
-    void cancelRestFinishedLocalNotification();
+    void enqueueNative(() => cancelNative());
     return;
   }
+  lifecycleEnabled = true;
   attachAppStateListener();
-  void syncRestFinishedLocalNotificationInternal(currentParams);
+  // currentParams est souvent null juste après un disable ; le hook React
+  // rappellera updateRestTimerNotificationParams avec la dernière perf.
+  void syncRestFinishedLocalNotification(currentParams);
 }
 
 export function updateRestTimerNotificationParams(
@@ -308,20 +354,28 @@ export function updateRestTimerNotificationParams(
   const key = paramsKey(params);
   if (key === lastSyncedKey) return;
 
-  void (async () => {
+  const epoch = lifecycleEpoch;
+  void enqueueNative(async () => {
+    if (!isLifecycleCurrent(epoch)) return;
+
     const start = new Date(params.createdAt).getTime();
     if (Number.isNaN(start)) return;
 
     const fireAt = start + params.targetMs;
     const now = Date.now();
     if (fireAt <= now || !isRestSinceLastSetVisible(params.createdAt, now)) {
-      await cancelRestFinishedLocalNotification();
+      await cancelNative();
       return;
     }
 
+    // Même exo : update cible sans teardown Live Activity (si encore sync).
     if (lastSyncedKey && lastSyncedKey.split(":")[0] === params.exerciseId) {
       try {
         await RestTimer.update({ targetMs: params.targetMs });
+        if (!isLifecycleCurrent(epoch)) {
+          await cancelNative();
+          return;
+        }
         lastSyncedKey = key;
         return;
       } catch {
@@ -329,8 +383,8 @@ export function updateRestTimerNotificationParams(
       }
     }
 
-    await syncRestFinishedLocalNotification(params);
-  })();
+    await syncRestFinishedLocalNotificationInternal(params);
+  });
 }
 
 export function scheduleRestFinishedLocalNotificationForEntry(
