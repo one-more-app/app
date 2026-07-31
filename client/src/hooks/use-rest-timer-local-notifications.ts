@@ -1,4 +1,4 @@
-import { useGymNotificationsReady } from "@/hooks/use-gym-notifications-ready";
+import { useAuth } from "@/hooks/use-auth";
 import { useLatestGlobalPerf } from "@/hooks/use-latest-global-perf";
 import { useRestTargetMs } from "@/hooks/use-rest-target-ms";
 import { useRestTimerEnabled } from "@/hooks/use-rest-timer-enabled";
@@ -8,11 +8,10 @@ import {
 } from "@/lib/celebration-queue";
 import {
   setRestTimerLifecycleEnabled,
-  updateRestTimerNotificationParams,
+  forceUpdateRestTimerNotificationParams,
   attachRestTimerLocalNotificationListeners,
   type RestFinishedLocalNotificationParams,
 } from "@/lib/rest-timer-local-notifications";
-import { useGymOnboardingBlocksFeatures } from "@/hooks/use-user-gym-data";
 import { Capacitor } from "@capacitor/core";
 import { useEffect, useMemo } from "react";
 
@@ -28,10 +27,13 @@ function buildParamsKey(
  * durée cible change, et écoute le tap sur la notif système.
  */
 export function useRestTimerLocalNotifications() {
-  const notificationsReady = useGymNotificationsReady();
-  const gymOnboardingActive = useGymOnboardingBlocksFeatures();
+  const auth = useAuth();
   const { enabled: restTimerEnabled } = useRestTimerEnabled();
-  const lifecycleActive = notificationsReady && !gymOnboardingActive && restTimerEnabled;
+  // Indépendant de l'onboarding salle / push gym : le repos doit marcher même sans salle.
+  const lifecycleActive =
+    Capacitor.isNativePlatform() &&
+    auth.status === "authenticated" &&
+    restTimerEnabled;
   const latestGlobalPerf = useLatestGlobalPerf();
   const { targetMs } = useRestTargetMs();
 
@@ -58,23 +60,26 @@ export function useRestTimerLocalNotifications() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     setRestTimerLifecycleEnabled(lifecycleActive);
-    return () => {
-      setRestTimerLifecycleEnabled(false);
+    if (!lifecycleActive) return;
+
+    const applyParams = () => {
+      forceUpdateRestTimerNotificationParams(notificationParams);
     };
-  }, [lifecycleActive]);
+
+    // First-perf : pas de RestTimer pendant hold/célébration (freeze Continuer iOS).
+    if (isCelebrationUiBusy()) {
+      whenCelebrationUiIdle(applyParams);
+      return;
+    }
+    applyParams();
+  }, [lifecycleActive, paramsKey, notificationParams]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
-    if (!lifecycleActive) return;
-    // First-perf : pas de RestTimer pendant hold/célébration (freeze Continuer iOS).
-    if (isCelebrationUiBusy()) {
-      whenCelebrationUiIdle(() => {
-        updateRestTimerNotificationParams(notificationParams);
-      });
-      return;
-    }
-    updateRestTimerNotificationParams(notificationParams);
-  }, [lifecycleActive, paramsKey, notificationParams]);
+    return () => {
+      setRestTimerLifecycleEnabled(false);
+    };
+  }, []);
 }
 
 /** Écoute le tap sur la notif repos fini (toujours actif sur natif). */

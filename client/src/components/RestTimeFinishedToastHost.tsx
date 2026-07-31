@@ -9,11 +9,11 @@ import {
 } from "@/lib/format-rest-elapsed";
 import {
   cancelRestFinishedLocalNotification,
+  clearRestFinishedToastSuppressionState,
   shouldSkipRestFinishedToast,
 } from "@/lib/rest-timer-local-notifications";
 import { hapticNotificationSuccess } from "@/lib/haptics";
 import { playRestFinishedSound } from "@/lib/milestone-sound";
-import { useGymOnboardingBlocksFeatures } from "@/hooks/use-user-gym-data";
 import { useRestTimerEnabled } from "@/hooks/use-rest-timer-enabled";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
@@ -60,10 +60,9 @@ function showRestTimeFinishedToast(params: {
  */
 export function RestTimeFinishedToastHost() {
   const auth = useAuth();
-  const gymOnboardingActive = useGymOnboardingBlocksFeatures();
   const { enabled: restTimerEnabled } = useRestTimerEnabled();
   const hostActive =
-    auth.status === "authenticated" && !gymOnboardingActive && restTimerEnabled;
+    auth.status === "authenticated" && restTimerEnabled;
   const navigate = useNavigate();
   const latestGlobalPerf = useLatestGlobalPerf();
   const { targetMs } = useRestTargetMs();
@@ -72,6 +71,13 @@ export function RestTimeFinishedToastHost() {
 
   const createdAt = latestGlobalPerf?.entry.createdAt ?? null;
   const exercise = latestGlobalPerf?.exercise ?? null;
+
+  useEffect(() => {
+    if (!restTimerEnabled) return;
+    notifiedForCreatedAtRef.current = null;
+    clearRestFinishedToastSuppressionState();
+    setNow(Date.now());
+  }, [restTimerEnabled]);
 
   useEffect(() => {
     if (!hostActive || !createdAt) return;

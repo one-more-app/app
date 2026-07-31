@@ -32,6 +32,11 @@ function paramsKey(params: RestFinishedLocalNotificationParams | null): string {
   return `${params.exerciseId}:${params.createdAt}:${params.targetMs}`;
 }
 
+function isRestTimerSynced(params: RestFinishedLocalNotificationParams | null): boolean {
+  if (!params) return false;
+  return lastSyncedKey === paramsKey(params);
+}
+
 /** Sérialise les appels natifs (cancel/start/update) pour éviter cancel-après-start au toggle. */
 function enqueueNative(task: () => Promise<void>): Promise<void> {
   const run = (syncInFlight ?? Promise.resolve()).then(task, task);
@@ -125,6 +130,15 @@ function handleRestFinishedNotificationOpen(url: string): boolean {
 
 export function shouldSkipRestFinishedToast(exerciseId: string): boolean {
   return consumeRestFinishedToastSuppression(exerciseId);
+}
+
+export function clearRestFinishedToastSuppressionState(): void {
+  suppressedRestFinishedToastExerciseId = null;
+  try {
+    sessionStorage.removeItem(REST_FINISHED_TOAST_SUPPRESS_KEY);
+  } catch {
+    /* ignore */
+  }
 }
 
 export function clearRestFinishedDeepLinkFromUrl(): void {
@@ -305,14 +319,23 @@ function attachAppStateListener(): void {
     if (!lifecycleEnabled) return;
     void enqueueNative(async () => {
       if (!lifecycleEnabled) return;
-      try {
-        await RestTimer.setForegroundVisible({ visible: !isActive });
-      } catch {
-        /* ignore */
+      if (isActive) {
+        try {
+          await RestTimer.setForegroundVisible({ visible: false });
+        } catch {
+          /* ignore */
+        }
+        return;
       }
-      if (!isActive) {
-        await syncRestFinishedLocalNotificationInternal(currentParams);
+      if (isRestTimerSynced(currentParams)) {
+        try {
+          await RestTimer.setForegroundVisible({ visible: true });
+        } catch {
+          /* ignore */
+        }
+        return;
       }
+      await syncRestFinishedLocalNotificationInternal(currentParams);
     });
   });
 }
@@ -334,10 +357,22 @@ export function setRestTimerLifecycleEnabled(enabled: boolean): void {
     return;
   }
   lifecycleEnabled = true;
+  lastSyncedKey = "";
   attachAppStateListener();
-  // currentParams est souvent null juste après un disable ; le hook React
-  // rappellera updateRestTimerNotificationParams avec la dernière perf.
-  void syncRestFinishedLocalNotification(currentParams);
+}
+
+/** Invalide le dedup et relance le sync natif (réactivation toggle / lifecycle). */
+export function forceUpdateRestTimerNotificationParams(
+  params: RestFinishedLocalNotificationParams | null,
+): void {
+  lastSyncedKey = "";
+  if (!params || !Capacitor.isNativePlatform()) {
+    updateRestTimerNotificationParams(params);
+    return;
+  }
+  void ensureRestTimerNotificationPermission().finally(() => {
+    updateRestTimerNotificationParams(params);
+  });
 }
 
 export function updateRestTimerNotificationParams(
@@ -390,19 +425,27 @@ export function updateRestTimerNotificationParams(
 export function scheduleRestFinishedLocalNotificationForEntry(
   entry: PerformanceEntry,
 ): void {
-  if (!Capacitor.isNativePlatform() || !lifecycleEnabled) return;
+  if (!Capacitor.isNativePlatform()) return;
   if (!isRestTimerEnabled()) return;
+
+  // L'effet React peut ne pas avoir encore activé le lifecycle (première perf).
+  if (!lifecycleEnabled) {
+    setRestTimerLifecycleEnabled(true);
+  }
 
   const exercise = getTrackedExerciseById(entry.trackedExerciseId);
   if (!exercise) return;
 
-  // Passer par le mutex (`syncInFlight`) pour éviter un double RestTimer.start
-  // (savePerformance + effect React) qui pile sur le bridge Capacitor.
-  void syncRestFinishedLocalNotification({
+  const params = {
     createdAt: entry.createdAt,
     targetMs: getRestTargetMs(),
     exerciseId: exercise.id,
     exerciseName: exercise.name,
+  };
+
+  void ensureRestTimerNotificationPermission().finally(() => {
+    if (!lifecycleEnabled || !isRestTimerEnabled()) return;
+    void syncRestFinishedLocalNotification(params);
   });
 }
 
@@ -411,11 +454,6 @@ function primeRestFinishedNotificationSuppressionFromLaunchUrl(): void {
   void CapacitorApp.getLaunchUrl().then((result) => {
     if (!result?.url) return;
     handleRestFinishedNotificationOpen(result.url);
-  });
-  void RestTimer.consumeSuppressToastExerciseId().then(({ exerciseId }) => {
-    if (typeof exerciseId === "string" && exerciseId.length > 0) {
-      markRestFinishedOpenedFromNotification(exerciseId);
-    }
   });
 }
 

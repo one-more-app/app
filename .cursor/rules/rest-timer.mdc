@@ -27,6 +27,8 @@ Barre fine qui se lance **automatiquement** dès qu'une performance est enregist
 | Point de montage | Header sticky de [`client/src/pages/ExerciseDetailPage.tsx`](../../client/src/pages/ExerciseDetailPage.tsx) |
 | **Toast fin de repos (global)** | [`client/src/components/RestTimeFinishedToastHost.tsx`](../../client/src/components/RestTimeFinishedToastHost.tsx) + [`client/src/components/RestTimeFinishedToast.tsx`](../../client/src/components/RestTimeFinishedToast.tsx) |
 | **Notif système repos (background)** | Plugin natif [`client/plugins/rest-timer`](../../client/plugins/rest-timer) via [`client/src/lib/rest-timer-local-notifications.ts`](../../client/src/lib/rest-timer-local-notifications.ts) + [`client/src/hooks/use-rest-timer-local-notifications.ts`](../../client/src/hooks/use-rest-timer-local-notifications.ts) |
+| **Activation / désactivation globale** | [`client/src/hooks/use-rest-timer-enabled.ts`](../../client/src/hooks/use-rest-timer-enabled.ts) + `isRestTimerEnabled` / `setRestTimerEnabled` dans [`client/src/lib/storage.ts`](../../client/src/lib/storage.ts) (clé `one-more-rest-timer-enabled-v1`, défaut activé) |
+| **Toggle header fiche exo** | [`client/src/pages/ExerciseDetailPage.tsx`](../../client/src/pages/ExerciseDetailPage.tsx) — icônes `Timer` / `TimerOff` |
 | **Son fin de repos in-app** | [`playRestFinishedSound()`](../../client/src/lib/milestone-sound.ts) dans `RestTimeFinishedToastHost` |
 
 ## Règles de comportement
@@ -44,14 +46,19 @@ Barre fine qui se lance **automatiquement** dès qu'une performance est enregist
     - **iOS (arrière-plan / écran verrouillé)** — Live Activity (`OneMoreRestTimer` widget extension, iOS 16.2+) + notif locale de secours à la fin. Masquée au premier plan comme Android. Tap Live Activity → deep link exercice.
     - Resync via `useRestTimerLocalNotifications` si la cible change. Ne pas utiliser `@capacitor/local-notifications` pour le repos.
 9. **Édition rapide inline (`RestTargetQuickEdit`)** — Popover autonome (state `open` **interne**, jamais remonté dans `RestSinceLastSetBar`). Pill ±15 s + presets 1:00–3:00. `stopPropagation` sur le trigger et le panneau pour ne pas déclencher la nav exo. Persiste via `setRestTargetMs` (même storage que Paramètres).
-10. **Dismiss manuel** — Le bouton croix cache la barre localement (state React) et **doit** `event.stopPropagation()` sinon le tap remonte au bouton parent et rouvre l'exo. Le dismiss se réinitialise dès qu'une nouvelle perf change le `key={createdAt}`. Ne pas persister le dismiss dans le storage.
-11. **Onglet caché** — Le ticker s'arrête sur `visibilitychange` puis resynchronise `now = Date.now()` au retour. Ne pas remplacer par un `setInterval` non-conditionnel (coût batterie / drift iOS).
-12. **Motion** — Respect de `prefers-reduced-motion` : la barre de progression saute au lieu de transitionner. À conserver pour tout nouveau visuel ajouté.
-13. **Accessibilité** — `role="status"`, `aria-label` via `UI.restSinceLastSetA11y` ou `UI.restTimeFinishedA11y` une fois la cible atteinte. Quand un exo source est cliquable, le `aria-label` du bouton concatène le nom pour annoncer la destination (`·`, pas de tiret cadratin). Mise à jour `sr-only` à chaque nouvelle minute (bucket) sans spammer le lecteur d'écran.
-14. **Tour first-time (`RestCounterTour`)** — Une seule fois par appareil (`isRestCounterTourComplete`, clé `one-more-rest-counter-tour-complete-v1`). **Deux étapes** (`continuous`) via `AppTour` :
+10. **Dismiss manuel (désactivation globale)** — Le bouton croix appelle `setRestTimerEnabled(false)` (persisté, clé `one-more-rest-timer-enabled-v1`) : même effet que le toggle `TimerOff` du header (barre masquée, toast off, Live Activity / notif native annulées). **Doit** `event.stopPropagation()` sinon le tap remonte au bouton parent et rouvre l'exo. Réactivation via le toggle header (`Timer`) ; la barre réapparaît si une perf récente existe (`useEffect` reset `dismissed` quand `enabled` repasse à `true`).
+11. **Toggle activation** — Bouton header fiche exo (`Timer` / `TimerOff`) : bascule `restTimerEnabled`. Quand désactivé : pas de barre, pas de toast fin de repos, pas de timer natif (cancel via `setRestTimerLifecycleEnabled(false)`). Quand réactivé : resync via `updateRestTimerNotificationParams` dans le hook React (ne pas relancer un `sync(null)` au enable).
+12. **Onglet caché** — Le ticker s'arrête sur `visibilitychange` puis resynchronise `now = Date.now()` au retour. Ne pas remplacer par un `setInterval` non-conditionnel (coût batterie / drift iOS).
+13. **Motion** — Respect de `prefers-reduced-motion` : la barre de progression saute au lieu de transitionner. À conserver pour tout nouveau visuel ajouté.
+14. **Accessibilité** — `role="status"`, `aria-label` via `UI.restSinceLastSetA11y` ou `UI.restTimeFinishedA11y` une fois la cible atteinte. Quand un exo source est cliquable, le `aria-label` du bouton concatène le nom pour annoncer la destination (`·`, pas de tiret cadratin). Mise à jour `sr-only` à chaque nouvelle minute (bucket) sans spammer le lecteur d'écran.
+15. **Tour first-time (`RestCounterTour`)** — Une seule fois par appareil (`isRestCounterTourComplete`, clé `one-more-rest-counter-tour-complete-v1`). **Deux étapes** (`continuous`) via `AppTour` :
     - **Étape 1** — cible `[data-tour="rest-counter"]` : présente le compteur et la barre de progression (1:30 par défaut). Pas de lien Paramètres.
     - **Étape 2** — cible `[data-tour="rest-counter-target-zone"]` : ancre **fixed** calculée par [`rest-counter-tour-spotlight.ts`](../../client/src/lib/rest-counter-tour-spotlight.ts) (union pill + panneau portal). Le popover s'ouvre **normalement** (portal sous le chrono) ; le spotlight Joyride suit tag + choix du temps. Fin / abandon : `stopRestCounterTourSpotlightSync()` + `setRestCounterTourQuickEditStep2Active(false)`.
     - Reporté tant qu'un autre tour Joyride est actif (`?tour=onboarding` ou `?tour=onboarding-first`). Démarrage 500 ms après apparition des cibles DOM.
+16. **Lifecycle natif (mutex toggle)** — [`rest-timer-local-notifications.ts`](../../client/src/lib/rest-timer-local-notifications.ts) : `lifecycleEpoch` + `enqueueNative` sérialisent cancel/start/update. Le hook appelle `setRestTimerLifecycleEnabled(lifecycleActive)` sans cleanup disable à chaque changement ; disable uniquement au unmount.
+17. **iOS background** — Au passage arrière-plan, si le timer est déjà sync (`lastSyncedKey === paramsKey`), appeler **seulement** `setForegroundVisible({ visible: true })` ; ne pas enchaîner un `sync` complet (cancel+start) qui casse la Live Activity ActivityKit. Resync complet seulement si pas encore sync ou params changés.
+18. **Permissions (indépendantes push gym / onboarding salle)** — Dès qu'une perf démarre le compteur (`scheduleRestFinishedLocalNotificationForEntry`, `forceUpdateRestTimerNotificationParams`), appeler `ensureRestTimerNotificationPermission()` (plugin `rest-timer` : `checkPermissions` puis `requestPermissions` si besoin). iOS : accordé si notifs locales **ou** Live Activities activées (`ActivityAuthorizationInfo`). **Ne pas** bloquer le repos sur `useGymNotificationsReady` ni `useGymOnboardingBlocksFeatures` ; la modale push des Paramètres ne remplace pas cette demande.
+19. **Lifecycle natif (conditions)** — `lifecycleActive = natif && authentifié && restTimerEnabled`. Le toast (`RestTimeFinishedToastHost`) suit la même règle (auth + compteur ON), sans gate onboarding salle.
 
 ## `RestTargetQuickEdit` — contraintes Radix (régression connue)
 
@@ -99,6 +106,10 @@ Si la barre doit apparaître sur une autre page (ex. Home, History) :
 - Ne pas coupler le tour au state `open` du parent — module `rest-counter-tour-quick-edit.ts` seulement.
 - Ne pas planifier la notif repos seulement au passage background (retard OS). Démarrer le timer natif à la sauvegarde perf, masquer au foreground / toast.
 - Ne pas réintroduire `@capacitor/local-notifications` pour le timer de repos (utiliser le plugin `rest-timer`).
+- Ne pas appeler `setRestTimerLifecycleEnabled(false)` dans le cleanup d'un effet React lié à `lifecycleActive` (provoque cancel/epoch spurious au re-enable).
+- Ne pas enchaîner `setForegroundVisible(true)` + `syncRestFinishedLocalNotificationInternal` sur iOS quand le timer est déjà sync (Live Activity flicker / disparition).
+- Ne pas bloquer le repos sur `useGymNotificationsReady` ou `useGymOnboardingBlocksFeatures` (onboarding salle skip, first-exercise pending, pas de salle API).
+- Ne pas confondre la permission push gym (`PushNotifications`) avec celle du plugin `rest-timer` — demander via `ensureRestTimerNotificationPermission` au démarrage du compteur.
 
 ## Voir aussi
 
