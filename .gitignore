@@ -30,3 +30,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Capacitor plugin native build outputs (Gradle / Xcode)
+client/plugins/**/android/build/
+client/plugins/**/android/.gradle/
+client/plugins/**/ios/build/
+client/ios/App/build-debug-verify/*
