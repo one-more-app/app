@@ -1,6 +1,9 @@
 import { fetchTrackedExercises } from "@/lib/data-api";
 import { fetchUserGym } from "@/lib/gyms-api";
-import { gymOnboardingPath } from "@/lib/gym-onboarding-route";
+import {
+  gymOnboardingPath,
+  isGymOnboardingBypassed,
+} from "@/lib/gym-onboarding-route";
 import { CARDIO_EQUIPMENT } from "@/lib/exercisedb";
 import {
   setOnboardingFirstExercisePending,
@@ -25,13 +28,15 @@ export async function resolvePostAuthNavigation(
     return nextPath;
   }
 
-  try {
-    const gym = await fetchUserGym();
-    if (gym?.onboardingGymPending) {
-      return gymOnboardingPath("gym-wait");
+  if (!isGymOnboardingBypassed()) {
+    try {
+      const gym = await fetchUserGym();
+      if (gym?.onboardingGymPending) {
+        return gymOnboardingPath("gym-wait");
+      }
+    } catch {
+      /* On continue vers le parcours exercices. */
     }
-  } catch {
-    /* On continue vers le parcours exercices. */
   }
 
   try {
