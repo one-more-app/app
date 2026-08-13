@@ -21,7 +21,7 @@ Pour un typecheck complet du client (hors scope du hook) : `npm run typecheck --
   - ajout d'un exercice depuis le catalogue (perf incluse)
   - enregistrement d'une performance sur la fiche exercice
   - onboarding body (genre) inclus dans `POST /auth/register`
-  - onboarding salle : skip sans salle → `/exercises`
+  - onboarding salle temporairement désactivé (pas de gym-wait, home accessible)
   - cloche notifications sur l'accueil (drawer vide)
 
 Durée typique : 30 à 60 secondes (build Vite + preview inclus).
