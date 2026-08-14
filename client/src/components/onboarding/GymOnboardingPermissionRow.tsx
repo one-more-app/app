@@ -8,6 +8,7 @@ type GymOnboardingPermissionRowProps = {
     checked: boolean
     disabled?: boolean
     busy?: boolean
+    analyticsLabel?: string
     onCheckedChange: (checked: boolean) => void
 }
 
@@ -18,6 +19,7 @@ export function GymOnboardingPermissionRow({
     checked,
     disabled,
     busy,
+    analyticsLabel,
     onCheckedChange,
 }: GymOnboardingPermissionRowProps) {
     return (
@@ -37,6 +39,7 @@ export function GymOnboardingPermissionRow({
                     disabled={disabled || busy}
                     onCheckedChange={onCheckedChange}
                     aria-label={label}
+                    data-analytics-label={analyticsLabel}
                 />
             </div>
         </div>

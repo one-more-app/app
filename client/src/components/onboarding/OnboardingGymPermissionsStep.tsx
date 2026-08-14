@@ -4,9 +4,11 @@ import {
     onboardingStepCardClassName,
     OnboardingStepLayout,
 } from '@/components/onboarding/onboarding-motion'
+import { Trackable } from '@/components/analytics/Trackable'
 import { StepCard } from '@/components/StepCard'
 import { Button } from '@/components/ui/button'
 import { subscribeAppStateChange } from '@/lib/app-state-listener'
+import { AnalyticsEvents, OnboardingSteps, track } from '@/lib/analytics'
 import {
     getGymGeofencePermissions,
     openGymGeofenceSettings,
@@ -156,6 +158,12 @@ export function OnboardingGymPermissionsStep({
                 await registerPushIfPermitted()
             }
             setNotificationsOn(granted)
+            track(
+                granted
+                    ? AnalyticsEvents.PUSH_NOTIFICATION_ENABLED
+                    : AnalyticsEvents.PUSH_NOTIFICATION_DISABLED,
+                { source: 'onboarding_gym_permissions' },
+            )
         } finally {
             setBusyNotifications(false)
         }
@@ -194,6 +202,7 @@ export function OnboardingGymPermissionsStep({
     }
 
     return (
+        <Trackable section="onboarding" feature={OnboardingSteps.GYM_PERMISSIONS}>
         <OnboardingStepLayout>
             <StepCard
                 className={onboardingStepCardClassName}
@@ -220,6 +229,7 @@ export function OnboardingGymPermissionsStep({
                                 variant="secondary"
                                 size="sm"
                                 className="mt-3 w-full"
+                                data-analytics-label="onboarding_gym_change"
                                 disabled={busyNotifications || busyLocation}
                                 onClick={onChangeGym}
                             >
@@ -237,6 +247,7 @@ export function OnboardingGymPermissionsStep({
                             hint={UI.gymOnboardingPermissionsNotificationsHint}
                             checked={notificationsOn}
                             busy={busyNotifications}
+                            analyticsLabel="onboarding_gym_notifications_toggle"
                             onCheckedChange={(checked) => void handleNotificationsToggle(checked)}
                         />
                     </OnboardingReveal>
@@ -248,6 +259,7 @@ export function OnboardingGymPermissionsStep({
                                 hint={UI.gymOnboardingPermissionsLocationHint}
                                 checked={locationOn}
                                 busy={busyLocation}
+                                analyticsLabel="onboarding_gym_location_toggle"
                                 onCheckedChange={(checked) => void handleLocationToggle(checked)}
                             />
                         </OnboardingReveal>
@@ -272,6 +284,7 @@ export function OnboardingGymPermissionsStep({
                             <Button
                                 variant="outline"
                                 className="w-full"
+                                data-analytics-label="onboarding_gym_location_settings"
                                 onClick={() => void openGymGeofenceSettings()}
                             >
                                 {UI.gymOnboardingLocationSettingsCta}
@@ -284,6 +297,7 @@ export function OnboardingGymPermissionsStep({
                         <Button
                             variant="accent"
                             className="w-full"
+                            data-analytics-label="onboarding_gym_permissions_continue"
                             disabled={!canContinue || busyNotifications || busyLocation}
                             onClick={handleContinue}
                         >
@@ -294,6 +308,7 @@ export function OnboardingGymPermissionsStep({
                         <Button
                             variant="secondary"
                             className="w-full"
+                            data-analytics-label="onboarding_gym_permissions_skip"
                             disabled={busyNotifications || busyLocation}
                             onClick={handleSkip}
                         >
@@ -303,5 +318,6 @@ export function OnboardingGymPermissionsStep({
                 </div>
             </StepCard>
         </OnboardingStepLayout>
+        </Trackable>
     )
 }

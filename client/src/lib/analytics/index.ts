@@ -14,6 +14,7 @@ export {
   isSessionReplayEnabled,
 } from "./config";
 export {
+  trackExerciseAdded,
   trackLeaguePromoted,
   trackPerfDrawerOpened,
   trackPerformanceDeleted,
@@ -22,6 +23,28 @@ export {
   trackPersonalRecordBroken,
   trackRestTimerDismissed,
 } from "./performance-tracking";
+export {
+  OnboardingSteps,
+  bodyStepFromQuestion,
+  clearOnboardingAnalyticsState,
+  getOnboardingLastStep,
+  getOnboardingSignupMethod,
+  gymStepFromSubStep,
+  persistSignupMethod,
+  resolveOnboardingStepFromLocation,
+  setOnboardingStepGlobalProperty,
+  trackAuthSuccess,
+  trackOnboardingCompleted,
+  trackOnboardingStepCompleted,
+  trackOnboardingStepSkipped,
+  trackOnboardingStepViewed,
+  useOnboardingStepViewed,
+} from "./onboarding-tracking";
+export type {
+  AuthMethod,
+  OnboardingStepId,
+  OnboardingStepProps,
+} from "./onboarding-tracking";
 export {
   clearAnalyticsUser,
   identifyUser,

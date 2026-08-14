@@ -9,6 +9,7 @@ import {
   resetLocalExerciseCaches,
   resetUserProfileCache,
 } from "@/lib/storage";
+import { clearOnboardingAnalyticsState } from "@/lib/analytics";
 
 export function purgeUserScopedClientState(cache: Cache): void {
   resetLocalExerciseCaches();
@@ -16,6 +17,7 @@ export function purgeUserScopedClientState(cache: Cache): void {
   resetUserProfileCache();
   clearProfileAvatarCache();
   clearGymOnboardingLocalState();
+  clearOnboardingAnalyticsState();
   clearCelebrationQueue();
   // Ne pas importer celebration-share-prewarm (html-to-image) dans le bundle principal.
   invalidateCelebrationShareCacheIfLoaded();

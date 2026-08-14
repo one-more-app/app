@@ -1,4 +1,5 @@
 import { GymSearchPicker } from '@/components/gyms/GymSearchPicker'
+import { Trackable } from '@/components/analytics/Trackable'
 import {
     OnboardingReveal,
     onboardingStepCardClassName,
@@ -7,6 +8,12 @@ import {
 import { StepCard } from '@/components/StepCard'
 import { Button } from '@/components/ui/button'
 import { useMutateUserGym } from '@/hooks/use-user-gym-data'
+import {
+    gymStepFromSubStep,
+    OnboardingSteps,
+    trackOnboardingStepCompleted,
+    useOnboardingStepViewed,
+} from '@/lib/analytics'
 import {
     getCurrentGymCoords,
     requestGymLocationPermission,
@@ -91,6 +98,8 @@ export function OnboardingGymStep({
     const [error, setError] = useState<string | null>(null)
     const [searchPickerKey, setSearchPickerKey] = useState(0)
     const [claimedAtGym, setClaimedAtGym] = useState(false)
+    const gymStepId = gymStepFromSubStep(subStep)
+    useOnboardingStepViewed(gymStepId)
 
     const saveGym = useCallback(
         async (place: GymPlace, coords: { lat: number; lng: number } | null) => {
@@ -122,12 +131,18 @@ export function OnboardingGymStep({
                 })
 
                 await mutateUserGym()
+                if (!fromSettings && !embedded) {
+                    trackOnboardingStepCompleted({
+                        step: OnboardingSteps.GYM_CONFIRM,
+                        claimed_at_gym: true,
+                    })
+                }
                 await onGymSaved()
             } catch {
                 setError(UI.gymSettingsSaveError)
             }
         },
-        [claimedAtGym, fromSettings, mutateUserGym, onGymSaved],
+        [claimedAtGym, embedded, fromSettings, mutateUserGym, onGymSaved],
     )
 
     const handleAtGym = async () => {
@@ -163,6 +178,7 @@ export function OnboardingGymStep({
 
     if (subStep === 'question') {
         return (
+            <Trackable section="onboarding" feature={OnboardingSteps.GYM_QUESTION}>
             <GymStepShell embedded={embedded}>
                 <StepCard
                     className={onboardingStepCardClassName}
@@ -185,8 +201,13 @@ export function OnboardingGymStep({
                             <Button
                                 variant="accent"
                                 className="w-full"
+                                data-analytics-label="onboarding_gym_yes"
                                 onClick={() => {
                                     setClaimedAtGym(true)
+                                    trackOnboardingStepCompleted({
+                                        step: OnboardingSteps.GYM_QUESTION,
+                                        claimed_at_gym: true,
+                                    })
                                     void handleAtGym()
                                 }}
                             >
@@ -195,8 +216,13 @@ export function OnboardingGymStep({
                             <Button
                                 variant="outline"
                                 className="w-full"
+                                data-analytics-label="onboarding_gym_no"
                                 onClick={() => {
                                     setClaimedAtGym(false)
+                                    trackOnboardingStepCompleted({
+                                        step: OnboardingSteps.GYM_QUESTION,
+                                        claimed_at_gym: false,
+                                    })
                                     setSubStep('search')
                                     setError(null)
                                 }}
@@ -207,11 +233,13 @@ export function OnboardingGymStep({
                     </OnboardingReveal>
                 </StepCard>
             </GymStepShell>
+            </Trackable>
         )
     }
 
     if (subStep === 'locating') {
         return (
+            <Trackable section="onboarding" feature={OnboardingSteps.GYM_LOCATING}>
             <GymStepShell embedded={embedded} centered>
                 <OnboardingReveal>
                     <Loader2 className="size-8 animate-spin text-accent" aria-hidden />
@@ -222,11 +250,13 @@ export function OnboardingGymStep({
                     </p>
                 </OnboardingReveal>
             </GymStepShell>
+            </Trackable>
         )
     }
 
     if (subStep === 'confirm' && candidate) {
         return (
+            <Trackable section="onboarding" feature={OnboardingSteps.GYM_CONFIRM}>
             <GymStepShell embedded={embedded}>
                 <StepCard
                     className={onboardingStepCardClassName}
@@ -251,6 +281,7 @@ export function OnboardingGymStep({
                         <Button
                             variant="accent"
                             className="w-full"
+                            data-analytics-label="onboarding_gym_confirm"
                             onClick={() => void saveGym(candidate, userCoords)}
                         >
                             {UI.continue}
@@ -260,6 +291,7 @@ export function OnboardingGymStep({
                         <Button
                             variant="outline"
                             className="w-full"
+                            data-analytics-label="onboarding_gym_change"
                             onClick={() => {
                                 setSearchQuery(candidate.name)
                                 setSearchView('list')
@@ -273,10 +305,12 @@ export function OnboardingGymStep({
                     </OnboardingReveal>
                 </StepCard>
             </GymStepShell>
+            </Trackable>
         )
     }
 
     return (
+        <Trackable section="onboarding" feature={OnboardingSteps.GYM_SEARCH}>
         <GymStepShell embedded={embedded}>
             <StepCard
                 className={onboardingStepCardClassName}
@@ -297,13 +331,22 @@ export function OnboardingGymStep({
                         initialSearchQuery={searchQuery}
                         initialSelectedPlaceId={selectedPlaceId}
                         initialSearchView={searchView}
-                        onGymSaved={onGymSaved}
+                        onGymSaved={() => {
+                            if (!fromSettings && !embedded) {
+                                trackOnboardingStepCompleted({
+                                    step: OnboardingSteps.GYM_SEARCH,
+                                    claimed_at_gym: claimedAtGym,
+                                })
+                            }
+                            return onGymSaved()
+                        }}
                     />
                     {canSkip ? (
                         <OnboardingReveal delayMs={200}>
                             <Button
                                 variant="ghost"
                                 className="w-full text-muted-foreground"
+                                data-analytics-label="onboarding_gym_skip"
                                 onClick={() => void onSkip?.()}
                             >
                                 {UI.gymOnboardingSkipNoGym}
@@ -313,5 +356,6 @@ export function OnboardingGymStep({
                 </div>
             </StepCard>
         </GymStepShell>
+        </Trackable>
     )
 }

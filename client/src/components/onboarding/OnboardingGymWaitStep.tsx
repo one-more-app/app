@@ -3,6 +3,7 @@ import {
     onboardingStepCardClassName,
     OnboardingStepLayout,
 } from '@/components/onboarding/onboarding-motion'
+import { Trackable } from '@/components/analytics/Trackable'
 import { StepCard } from '@/components/StepCard'
 import { Button } from '@/components/ui/button'
 import { subscribeAppStateChange } from '@/lib/app-state-listener'
@@ -18,6 +19,7 @@ import {
     registerPushIfPermitted,
 } from '@/lib/push-notifications'
 import { UI } from '@/lib/translations'
+import { OnboardingSteps } from '@/lib/analytics'
 import { Capacitor } from '@capacitor/core'
 import { Check } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -166,6 +168,7 @@ export function OnboardingGymWaitStep({
     }, [isNative, refreshPermissionState])
 
     return (
+        <Trackable section="onboarding" feature={OnboardingSteps.GYM_WAIT}>
         <OnboardingStepLayout>
             <StepCard
                 className={onboardingStepCardClassName}
@@ -193,6 +196,7 @@ export function OnboardingGymWaitStep({
                                     variant="secondary"
                                     size="sm"
                                     className="mt-3 w-full"
+                                    data-analytics-label="onboarding_gym_change"
                                     onClick={onChangeGym}
                                 >
                                     {UI.gymOnboardingWaitGymChange}
@@ -207,6 +211,7 @@ export function OnboardingGymWaitStep({
                                     type="button"
                                     variant="secondary"
                                     className="w-full"
+                                    data-analytics-label="onboarding_gym_add"
                                     onClick={onChangeGym}
                                 >
                                     {UI.gymSettingsAdd}
@@ -232,6 +237,7 @@ export function OnboardingGymWaitStep({
                     <Button
                         variant="accent"
                         className="mt-1 w-full"
+                        data-analytics-label="onboarding_gym_wait_unlock"
                         disabled={unlocking}
                         onClick={onUnlock}
                     >
@@ -240,5 +246,6 @@ export function OnboardingGymWaitStep({
                 </OnboardingReveal>
             </StepCard>
         </OnboardingStepLayout>
+        </Trackable>
     )
 }

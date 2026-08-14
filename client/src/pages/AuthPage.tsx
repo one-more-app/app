@@ -1,5 +1,6 @@
 import logoTextLight from "@/assets/logo-text.png";
 import { OnboardingShell } from "@/components/OnboardingShell";
+import { Trackable } from "@/components/analytics/Trackable";
 import { onboardingEntrance, onboardingStepCardClassName } from "@/components/onboarding/onboarding-motion";
 import { StepCard } from "@/components/StepCard";
 import { Button } from "@/components/ui/button";
@@ -11,12 +12,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { ApiError } from "@/lib/api";
+import {
+    OnboardingSteps,
+    trackAuthSuccess,
+    trackOnboardingStepCompleted,
+    useOnboardingStepViewed,
+    type OnboardingStepId,
+} from "@/lib/analytics";
 import { identifyEmail, suggestUsername } from "@/lib/auth";
 import { peekPendingInviteCode } from "@/lib/invite-code";
 import { signInWithApple, signInWithGoogle } from "@/lib/oauth";
 import { fetchInvitePreview } from "@/lib/social-api";
 import { resolvePostAuthNavigation } from "@/lib/post-auth-navigation";
-import { setUserProfile } from "@/lib/storage";
+import { needsOnboarding, setUserProfile } from "@/lib/storage";
 import { UI } from "@/lib/translations";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
 import {
@@ -35,6 +43,26 @@ type AuthStep =
     | "register_username"
     | "register_password"
     | "register_referral";
+
+function authOnboardingStep(step: AuthStep): OnboardingStepId {
+    if (step === "login") return OnboardingSteps.ACCOUNT_LOGIN;
+    if (step === "register_firstName") {
+        return OnboardingSteps.ACCOUNT_REGISTER_FIRST_NAME;
+    }
+    if (step === "register_lastName") {
+        return OnboardingSteps.ACCOUNT_REGISTER_LAST_NAME;
+    }
+    if (step === "register_username") {
+        return OnboardingSteps.ACCOUNT_REGISTER_USERNAME;
+    }
+    if (step === "register_password") {
+        return OnboardingSteps.ACCOUNT_REGISTER_PASSWORD;
+    }
+    if (step === "register_referral") {
+        return OnboardingSteps.ACCOUNT_REGISTER_REFERRAL;
+    }
+    return OnboardingSteps.ACCOUNT_EMAIL;
+}
 
 type AuthPageProps = {
     embedded?: boolean;
@@ -91,6 +119,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         () => peekPendingInviteCode() ?? "",
     );
     const [isBusy, setIsBusy] = useState(false);
+    const trackOnboardingAuth = embedded || needsOnboarding();
+    const currentAuthStep = authOnboardingStep(step);
+    useOnboardingStepViewed(trackOnboardingAuth ? currentAuthStep : null);
     const normalizedEmail = email.trim().toLowerCase();
     const canContinueEmail = normalizedEmail.includes("@") && !isBusy;
     const canLogin = normalizedEmail.includes("@") && password.length >= 8 && !isBusy;
@@ -150,8 +181,20 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
             const result = await identifyEmail({ email: normalizedEmail });
 
             if (result.exists) {
+                if (trackOnboardingAuth) {
+                    trackOnboardingStepCompleted({
+                        step: OnboardingSteps.ACCOUNT_EMAIL,
+                        exists: true,
+                    });
+                }
                 setStep("login");
             } else {
+                if (trackOnboardingAuth) {
+                    trackOnboardingStepCompleted({
+                        step: OnboardingSteps.ACCOUNT_EMAIL,
+                        exists: false,
+                    });
+                }
                 setStep(startMode === "login" ? "register_firstName" : "register_firstName");
             }
         } finally {
@@ -165,6 +208,12 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         auth.clearError();
         try {
             await auth.login({ email: normalizedEmail, password });
+            if (trackOnboardingAuth) {
+                trackOnboardingStepCompleted({
+                    step: OnboardingSteps.ACCOUNT_LOGIN,
+                    method: "email",
+                });
+            }
             await finishSuccess();
         } finally {
             setIsBusy(false);
@@ -197,6 +246,12 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                 lastName: lastName.trim(),
                 inviteCode: trimmedReferralCode || undefined,
             });
+            if (trackOnboardingAuth) {
+                trackOnboardingStepCompleted({
+                    step: OnboardingSteps.ACCOUNT_REGISTER_REFERRAL,
+                    has_referral_code: Boolean(trimmedReferralCode),
+                });
+            }
             setUserProfile(
                 {
                     firstName: firstName.trim(),
@@ -219,7 +274,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
     const registerProgress = (current: number) => (current / registerTotal) * 100;
 
     const content = (
-        <main
+        <Trackable
+            section={trackOnboardingAuth ? "onboarding" : "auth"}
+            feature={currentAuthStep}
             className={onboardingEntrance(
                 "relative z-10 mx-auto w-full max-w-2xl space-y-4 px-4 py-6",
                 "animate-in fade-in-0 slide-in-from-left-4 duration-400",
@@ -269,6 +326,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                         setStep("email");
                     }}
                     backLabel={UI.back}
+                    backAnalyticsLabel="onboarding_auth_back"
                     stepLabel={
                         step === "register_firstName"
                             ? registerStepLabel(1)
@@ -322,9 +380,15 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                             <div className="space-y-2">
                                 <Button
                                     className="w-full"
+                                    data-analytics-label="onboarding_register_first_name_next"
                                     onClick={() => {
                                         if (!canRegisterFirstName) return;
                                         auth.clearError();
+                                        if (trackOnboardingAuth) {
+                                            trackOnboardingStepCompleted({
+                                                step: OnboardingSteps.ACCOUNT_REGISTER_FIRST_NAME,
+                                            });
+                                        }
                                         setStep("register_lastName");
                                     }}
                                     disabled={!canRegisterFirstName}
@@ -351,6 +415,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                             <div className="space-y-2">
                                 <Button
                                     className="w-full"
+                                    data-analytics-label="onboarding_register_last_name_next"
                                     onClick={() => {
                                         if (!canRegisterLastName) return;
                                         auth.clearError();
@@ -367,6 +432,11 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                             } catch {
                                                 setUsername("");
                                                 setUsernameStatus("idle");
+                                            }
+                                            if (trackOnboardingAuth) {
+                                                trackOnboardingStepCompleted({
+                                                    step: OnboardingSteps.ACCOUNT_REGISTER_LAST_NAME,
+                                                });
                                             }
                                             setStep("register_username");
                                         })();
@@ -394,9 +464,15 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                             <div className="space-y-2">
                                 <Button
                                     className="w-full"
+                                    data-analytics-label="onboarding_register_username_next"
                                     onClick={() => {
                                         if (!canRegisterUsername) return;
                                         auth.clearError();
+                                        if (trackOnboardingAuth) {
+                                            trackOnboardingStepCompleted({
+                                                step: OnboardingSteps.ACCOUNT_REGISTER_USERNAME,
+                                            });
+                                        }
                                         setStep("register_password");
                                     }}
                                     disabled={!canRegisterUsername}
@@ -450,9 +526,15 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                             <div className="space-y-2">
                                 <Button
                                     className="w-full"
+                                    data-analytics-label="onboarding_register_password_next"
                                     onClick={() => {
                                         if (!canRegisterPassword) return;
                                         auth.clearError();
+                                        if (trackOnboardingAuth) {
+                                            trackOnboardingStepCompleted({
+                                                step: OnboardingSteps.ACCOUNT_REGISTER_PASSWORD,
+                                            });
+                                        }
                                         setStep("register_referral");
                                     }}
                                     disabled={!canRegisterPassword}
@@ -492,6 +574,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                             <div className="space-y-2">
                                 <Button
                                     className="w-full"
+                                    data-analytics-label="onboarding_create_account"
                                     onClick={() => void submitRegisterReferral()}
                                     disabled={isBusy}
                                 >
@@ -532,6 +615,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
 
                                 <Button
                                     className="w-full"
+                                    data-analytics-label="onboarding_email_continue"
                                     onClick={() => void submitEmail()}
                                     disabled={!canContinueEmail}
                                 >
@@ -556,6 +640,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                             type="button"
                                             className="absolute inset-y-0 right-1 my-auto flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
                                             aria-label="Changer l'email"
+                                            data-analytics-label="onboarding_change_email"
                                             onClick={returnToEmailStep}
                                         >
                                             <X className="size-4 shrink-0" aria-hidden />
@@ -588,6 +673,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 <div className="space-y-2">
                                     <Button
                                         className="w-full"
+                                        data-analytics-label="onboarding_login_submit"
                                         onClick={() => void submitLogin()}
                                         disabled={!canLogin}
                                     >
@@ -625,6 +711,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                     <Button
                         className="w-full"
                         variant="secondary"
+                        data-analytics-label="onboarding_google"
                         disabled={isBusy}
                         onClick={() => {
                             void (async () => {
@@ -633,6 +720,10 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 try {
                                     const session = await signInWithGoogle();
                                     auth.acceptSession(session);
+                                    trackAuthSuccess({
+                                        method: "google",
+                                        isNewUser: session.isNewUser === true,
+                                    });
                                     await finishSuccess();
                                 } catch (e) {
                                     console.error("[Auth] Google sign-in failed", e);
@@ -675,6 +766,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                         <Button
                             className="w-full"
                             variant="secondary"
+                            data-analytics-label="onboarding_apple"
                             disabled={isBusy}
                             onClick={() => {
                                 void (async () => {
@@ -683,6 +775,10 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                     try {
                                         const session = await signInWithApple();
                                         auth.acceptSession(session);
+                                        trackAuthSuccess({
+                                            method: "apple",
+                                            isNewUser: session.isNewUser === true,
+                                        });
                                         await finishSuccess();
                                     } catch (e) {
                                         console.error("[Auth] Apple sign-in failed", e);
@@ -709,7 +805,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                     )}
                 </CardContent>
             </Card>
-        </main>
+        </Trackable>
     );
 
     if (embedded) {

@@ -1,4 +1,5 @@
 import { HorizontalWheelPicker } from '@/components/HorizontalWheelPicker';
+import { Trackable } from '@/components/analytics/Trackable';
 import { OnboardingGymPermissionsStep } from '@/components/onboarding/OnboardingGymPermissionsStep'
 import { OnboardingGymStep } from '@/components/onboarding/OnboardingGymStep';
 import { OnboardingGymWaitStep } from '@/components/onboarding/OnboardingGymWaitStep';
@@ -10,6 +11,13 @@ import { Button } from '@/components/ui/button';
 import { useUserProfileData } from '@/hooks/use-api-data';
 import { useAuth } from '@/hooks/use-auth';
 import { useMutateUserGym, useUserGymData } from '@/hooks/use-user-gym-data';
+import {
+    OnboardingSteps,
+    bodyStepFromQuestion,
+    trackOnboardingStepCompleted,
+    trackOnboardingStepSkipped,
+    useOnboardingStepViewed,
+} from '@/lib/analytics';
 import { unlockGymAccess } from '@/lib/gym-onboarding';
 import { resolveGymOnboardingStep, gymOnboardingPath } from '@/lib/gym-onboarding-route';
 import { fetchUserGym } from '@/lib/gyms-api';
@@ -77,6 +85,11 @@ function OnboardingGenderRadios({
                             type="button"
                             role="radio"
                             aria-checked={selected}
+                            data-analytics-label={
+                                id === 'male'
+                                    ? 'onboarding_gender_male'
+                                    : 'onboarding_gender_female'
+                            }
                             onClick={() => onChange(id)}
                             className={cn(
                                 'flex w-full flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition-all duration-200 ease-out',
@@ -148,6 +161,23 @@ function OnboardingPage() {
         BODY_TOTAL - 1,
         Math.max(0, Number.parseInt(bodyQRaw ?? '0', 10) || 0),
     )
+    const viewedStep =
+        step === 'intro'
+            ? OnboardingSteps.INTRO
+            : step === 'body'
+                ? bodyStepFromQuestion(bodyQ)
+                : step === 'account'
+                    ? OnboardingSteps.ACCOUNT_EMAIL
+                    : step === 'gym'
+                        ? OnboardingSteps.GYM_QUESTION
+                        : step === 'gym-permissions'
+                            ? OnboardingSteps.GYM_PERMISSIONS
+                            : step === 'gym-wait'
+                                ? OnboardingSteps.GYM_WAIT
+                                : null
+    useOnboardingStepViewed(
+        step === 'gym' || step === 'account' ? null : viewedStep,
+    )
 
     const goBody = (q = 0) => {
         navigate(`/onboarding?step=body&bodyQ=${q}`, { replace: true })
@@ -186,6 +216,12 @@ function OnboardingPage() {
             setUserProfile(body, { silent: true })
         }
         void mutate('profile')
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.BODY_HEIGHT,
+            gender,
+            weight_kg: weightKg,
+            height_cm: heightCm,
+        })
         await finishOnboarding('/home')
     }
 
@@ -194,6 +230,17 @@ function OnboardingPage() {
         if (bodyQ === 2) {
             void finishBodyAndContinue()
             return
+        }
+        if (bodyQ === 0) {
+            trackOnboardingStepCompleted({
+                step: OnboardingSteps.BODY_GENDER,
+                gender,
+            })
+        } else if (bodyQ === 1) {
+            trackOnboardingStepCompleted({
+                step: OnboardingSteps.BODY_WEIGHT,
+                weight_kg: weightKg,
+            })
         }
         goBody(bodyQ + 1)
     }
@@ -221,8 +268,8 @@ function OnboardingPage() {
     const finishOnboarding = async (nextPath: string) => {
         if (auth.status === 'authenticated') {
             setOnboardingPostAuthRedirect(null)
-            markOnboardingDone()
             const resolvedPath = await resolvePostAuthNavigation(nextPath)
+            markOnboardingDone(resolvedPath)
             navigate(resolvedPath, { replace: true })
             return
         }
@@ -270,11 +317,16 @@ function OnboardingPage() {
     }
 
     const completeGymPermissions = async () => {
+        trackOnboardingStepCompleted({ step: OnboardingSteps.GYM_PERMISSIONS })
         setGymPermissionsPromptDone(true)
         await completeGymAfterPermissions()
     }
 
     const skipGymPermissions = async () => {
+        trackOnboardingStepSkipped({
+            step: OnboardingSteps.GYM_PERMISSIONS,
+            reason: 'skipped',
+        })
         setGymPermissionsPromptDone(true)
         await unlockGymAccess()
         setOnboardingFirstExercisePending(true)
@@ -283,6 +335,10 @@ function OnboardingPage() {
     }
 
     const skipGymStep = async () => {
+        trackOnboardingStepSkipped({
+            step: OnboardingSteps.GYM_SEARCH,
+            reason: 'no_gym',
+        })
         toast.message(UI.gymOnboardingSkipToast)
         setOnboardingFirstExercisePending(true)
         const nextPath = getOnboardingPostAuthRedirect() ?? '/home'
@@ -303,6 +359,7 @@ function OnboardingPage() {
     }
 
     const handleGymUnlock = async () => {
+        trackOnboardingStepCompleted({ step: OnboardingSteps.GYM_WAIT })
         setUnlockingGym(true)
         try {
             await unlockGymAccess()
@@ -394,16 +451,24 @@ function OnboardingPage() {
         <OnboardingShell>
             {step === 'intro' ? (
                 <OnboardingIntro
-                    onContinue={() => goBody(0)}
+                    onContinue={() => {
+                        trackOnboardingStepCompleted({ step: OnboardingSteps.INTRO })
+                        goBody(0)
+                    }}
                     errorMessage={auth.lastError}
                 />
             ) : step === 'body' ? (
+                <Trackable
+                    section="onboarding"
+                    feature={bodyStepFromQuestion(bodyQ)}
+                >
                 <OnboardingStepLayout>
                     <StepCard
                         key={`body-${bodyQ}`}
                         className={onboardingStepCardClassName}
                         onBack={backBody}
                         backLabel={UI.back}
+                        backAnalyticsLabel="onboarding_body_back"
                         stepLabel={stepIndicator}
                         progressPercent={bodyProgressPercent}
                         title={bodyStepTitle}
@@ -468,6 +533,11 @@ function OnboardingPage() {
                         <Button
                             onClick={advanceBody}
                             className="w-full"
+                            data-analytics-label={
+                                bodyQ === BODY_TOTAL - 1
+                                    ? 'onboarding_body_continue'
+                                    : 'onboarding_body_next'
+                            }
                             disabled={
                                 (bodyQ === 1 && !canAdvanceWeight) ||
                                 (bodyQ === 2 && !canAdvanceHeight)
@@ -478,6 +548,7 @@ function OnboardingPage() {
                         </OnboardingReveal>
                     </StepCard>
                 </OnboardingStepLayout>
+                </Trackable>
             ) : step === 'account' ? (
                 <AuthPage embedded />
             ) : step === 'gym' ? (

@@ -15,6 +15,7 @@ export type AuthSession = {
   accessToken: string;
   refreshToken: string;
   user: AuthUser;
+  isNewUser?: boolean;
 };
 
 export type { StoredAuthSession };
