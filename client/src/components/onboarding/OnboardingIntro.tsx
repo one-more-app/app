@@ -3,7 +3,9 @@ import {
     AnimatedWords,
     onboardingEntrance,
 } from "@/components/onboarding/onboarding-motion";
+import { Trackable } from "@/components/analytics/Trackable";
 import { Button } from "@/components/ui/button";
+import { OnboardingSteps } from "@/lib/analytics";
 import { UI } from "@/lib/translations";
 
 type OnboardingIntroProps = {
@@ -13,7 +15,7 @@ type OnboardingIntroProps = {
 
 export function OnboardingIntro({ onContinue, errorMessage }: OnboardingIntroProps) {
     return (
-        <div className="flex min-h-0 flex-1 flex-col">
+        <Trackable section="onboarding" feature={OnboardingSteps.INTRO} className="flex min-h-0 flex-1 flex-col">
             <header className="flex shrink-0 justify-center px-4 pt-4">
                 <img
                     src={logoTextLight}
@@ -61,11 +63,16 @@ export function OnboardingIntro({ onContinue, errorMessage }: OnboardingIntroPro
                         "animate-in fade-in-0 slide-in-from-left-4 duration-400 [animation-delay:480ms]",
                     )}
                 >
-                    <Button variant="accent" className="w-full" onClick={onContinue}>
+                    <Button
+                        variant="accent"
+                        className="w-full"
+                        data-analytics-label="onboarding_intro_continue"
+                        onClick={onContinue}
+                    >
                         {UI.continue}
                     </Button>
                 </div>
             </footer>
-        </div>
+        </Trackable>
     );
 }

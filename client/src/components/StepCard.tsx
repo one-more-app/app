@@ -11,6 +11,7 @@ export function StepCard(props: {
     progressPercent?: number;
     onBack?: () => void;
     backLabel?: string;
+    backAnalyticsLabel?: string;
     animated?: boolean;
     children: ReactNode;
     className?: string;
@@ -23,6 +24,7 @@ export function StepCard(props: {
         progressPercent,
         onBack,
         backLabel = "Retour",
+        backAnalyticsLabel,
         animated = false,
         children,
         className,
@@ -50,6 +52,9 @@ export function StepCard(props: {
                                 className="shrink-0 -ml-2"
                                 onClick={onBack}
                                 aria-label={backLabel}
+                                data-analytics-label={
+                                    backAnalyticsLabel ?? "onboarding_back"
+                                }
                             >
                                 <ArrowLeft className="size-5" />
                             </Button>

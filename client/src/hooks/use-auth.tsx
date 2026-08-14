@@ -8,7 +8,7 @@ import {
   registerWithEmail,
   writeStoredSession,
 } from "@/lib/auth";
-import { AnalyticsEvents, track } from "@/lib/analytics";
+import { trackAuthSuccess } from "@/lib/analytics";
 import { syncAppsFlyerCustomerUserId } from "@/lib/appsflyer";
 import {
   peekPendingAttribution,
@@ -165,7 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         applySession(session);
         clearPendingInviteCode();
         clearPendingOnboardingProfile();
-        track(AnalyticsEvents.USER_REGISTERED, { method: "email" });
+        trackAuthSuccess({ method: "email", isNewUser: true });
       } catch (e) {
         setLastError(normalizeError(e));
         throw e;
@@ -179,7 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const session = await loginWithEmail({ email, password });
       applySession(session);
-      track(AnalyticsEvents.USER_LOGGED_IN, { method: "email" });
+      trackAuthSuccess({ method: "email", isNewUser: false });
     } catch (e) {
       setLastError(normalizeError(e));
       throw e;

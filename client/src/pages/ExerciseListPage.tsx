@@ -30,6 +30,13 @@ import { useExerciseFilters } from '@/hooks/use-exercise-filters'
 import { useTheme } from '@/hooks/use-theme'
 import { useTourDomReady } from '@/hooks/use-tour-dom-ready'
 import { useTrackedExercises } from '@/hooks/use-tracked-exercises'
+import {
+    OnboardingSteps,
+    trackOnboardingStepCompleted,
+    trackOnboardingStepSkipped,
+    useOnboardingStepViewed,
+} from '@/lib/analytics'
+import { Trackable } from '@/components/analytics/Trackable'
 import { fetchExercisesCatalog, fetchExercisesMeta } from '@/lib/data-api'
 import { filterCatalogExercises } from '@/lib/exercise-catalog-browse'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
@@ -98,6 +105,9 @@ export function ExerciseListPage() {
         isOnboardingFirstExercisePending() &&
         !isOnboardingTourComplete() &&
         !firstExerciseTourDismissed
+    useOnboardingStepViewed(
+        firstExerciseTourActive ? OnboardingSteps.FIRST_EXERCISE : null,
+    )
 
     const stopFirstExerciseTour = useCallback(() => {
         setFirstExerciseTourDismissed(true)
@@ -208,6 +218,10 @@ export function ExerciseListPage() {
         if (goBackInBrowse()) return
         // Après onboarding, l'arrivée sur /exercises remplace l'historique : navigate(-1) ne fait rien.
         if (isOnboardingFirstExercisePending()) {
+            trackOnboardingStepSkipped({
+                step: OnboardingSteps.FIRST_EXERCISE,
+                reason: 'dismissed',
+            })
             setOnboardingFirstExercisePending(false)
             stopFirstExerciseTour()
             navigate('/home', { replace: true })
@@ -405,6 +419,11 @@ export function ExerciseListPage() {
             })
             setAddWithPerfExercise(null)
             stopFirstExerciseTour()
+            if (isOnboardingFirstExercisePending()) {
+                trackOnboardingStepCompleted({
+                    step: OnboardingSteps.FIRST_EXERCISE,
+                })
+            }
             setIsSubmittingFirstPerf(false)
             console.log('[first-perf-debug] navigate, wait page painted, then celebrate', {
                 elapsedMs: Date.now() - t0,
@@ -529,6 +548,14 @@ export function ExerciseListPage() {
     )
 
     return (
+        <Trackable
+            section={firstExerciseTourActive ? 'onboarding' : 'exercises'}
+            feature={
+                firstExerciseTourActive
+                    ? OnboardingSteps.FIRST_EXERCISE
+                    : 'catalog'
+            }
+        >
         <div className="min-h-screen-app bg-background">
             <BackHeader compact title={UI.chooseExercises} onBack={handleHeaderBack} />
 
@@ -698,5 +725,6 @@ export function ExerciseListPage() {
                 ) : null}
             </main>
         </div>
+        </Trackable>
     )
 }

@@ -4,6 +4,8 @@ import { PageTracker } from "./PageTracker";
 import {
   AnalyticsEvents,
   clearAnalyticsUser,
+  getOnboardingLastStep,
+  getOnboardingSignupMethod,
   identifyUser,
   incrementUserProperty,
   initGlobalAnalyticsProperties,
@@ -13,6 +15,7 @@ import {
 } from "@/lib/analytics";
 import { useAuth } from "@/hooks/use-auth";
 import { useAccess } from "@/hooks/use-access";
+import { isOnboardingMarkedDone } from "@/lib/storage";
 import { useEffect, useMemo, useRef } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -57,6 +60,9 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
       properties: {
         exercise_limit: access?.exerciseLimit ?? "unknown",
         referral_count: access?.referralCount ?? 0,
+        onboarding_last_step: getOnboardingLastStep(),
+        onboarding_completed: isOnboardingMarkedDone(),
+        signup_method: getOnboardingSignupMethod(),
       },
     });
     incrementUserProperty({
@@ -79,6 +85,9 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
         exercise_limit: access.exerciseLimit,
         referral_count: access.referralCount,
         has_used_referral_code: access.hasUsedReferralCode,
+        onboarding_last_step: getOnboardingLastStep(),
+        onboarding_completed: isOnboardingMarkedDone(),
+        signup_method: getOnboardingSignupMethod(),
       },
     });
   }, [auth.status, auth.user, access]);

@@ -273,6 +273,7 @@ export class OAuthService {
 
     let userId: string;
     let userEmail: string | null;
+    let isNewUser = false;
 
     if (linked) {
       userId = linked.user.id;
@@ -313,6 +314,7 @@ export class OAuthService {
         });
         userId = created.id;
         userEmail = created.email;
+        isNewUser = true;
       }
 
       if (existingByEmail && (normalizedFirstName || normalizedLastName)) {
@@ -335,6 +337,7 @@ export class OAuthService {
       userId,
       email: userEmail,
       deviceId: params.deviceId,
+      isNewUser,
     });
   }
 

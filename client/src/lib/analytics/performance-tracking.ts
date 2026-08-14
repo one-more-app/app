@@ -11,6 +11,16 @@ function exerciseContext(trackedExerciseId: string) {
   };
 }
 
+export function trackExerciseAdded(params: {
+  trackedExerciseId: string;
+  source?: "onboarding" | "app";
+}): void {
+  track(AnalyticsEvents.EXERCISE_ADDED, {
+    ...exerciseContext(params.trackedExerciseId),
+    source: params.source ?? "app",
+  });
+}
+
 export function trackPerformanceLogged(params: {
   trackedExerciseId: string;
   entryId: string;

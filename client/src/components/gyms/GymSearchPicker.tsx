@@ -359,6 +359,7 @@ export function GymSearchPicker({
         <Button
           variant="outline"
           className="w-full"
+          data-analytics-label="onboarding_gym_search_nearby"
           disabled={searching || nearbyLoading}
           onClick={() => void runNearbySearch()}
         >
@@ -410,11 +411,12 @@ export function GymSearchPicker({
 
       {showLocationSettings ? (
         <Reveal animated={animated} delayMs={360}>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => void openGymGeofenceSettings()}
-          >
+            <Button
+              variant="outline"
+              className="w-full"
+              data-analytics-label="onboarding_gym_location_settings"
+              onClick={() => void openGymGeofenceSettings()}
+            >
             {UI.gymOnboardingLocationSettingsCta}
           </Button>
         </Reveal>
@@ -448,6 +450,7 @@ export function GymSearchPicker({
                     <button
                       type="button"
                       aria-label={place.name}
+                      data-analytics-label="onboarding_gym_select_place"
                       className={`w-full rounded-xl border px-3 py-3 text-left transition-colors ${
                         isSelected
                           ? "border-accent/70 bg-accent/10"
@@ -481,6 +484,7 @@ export function GymSearchPicker({
           <Button
             variant="accent"
             className="w-full"
+            data-analytics-label="onboarding_gym_select_place"
             onClick={() => void saveGym(selectedPlace, userCoords)}
           >
             {UI.gymOnboardingMapSelectCta}

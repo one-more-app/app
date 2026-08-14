@@ -29,7 +29,7 @@ export async function unlockGymAccess(): Promise<void> {
   }
 
   setOnboardingFirstExercisePending(true);
-  markOnboardingDone();
+  markOnboardingDone("/home");
 }
 
 export async function finalizeDeferredGymOnboarding(): Promise<void> {

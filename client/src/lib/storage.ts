@@ -1,4 +1,6 @@
 import {
+  trackExerciseAdded,
+  trackOnboardingCompleted,
   trackPerformanceDeleted,
   trackPerformanceEdited,
   trackPerformanceLogged,
@@ -144,6 +146,10 @@ export function addTrackedExercise(exercise: TrackedExercise): void {
   };
   updateTrackedCache([...list, next]);
   notifyLocalDataChanged("trackedExercise");
+  trackExerciseAdded({
+    trackedExerciseId: next.id,
+    source: isOnboardingFirstExercisePending() ? "onboarding" : "app",
+  });
   void upsertTrackedExercise(next).catch(() => notifyRemoteWriteError());
 }
 
@@ -166,6 +172,10 @@ export async function addTrackedExerciseAndWait(
   };
   updateTrackedCache([...list, next]);
   notifyLocalDataChanged("trackedExercise");
+  trackExerciseAdded({
+    trackedExerciseId: next.id,
+    source: isOnboardingFirstExercisePending() ? "onboarding" : "app",
+  });
 
   try {
     const remote = await upsertTrackedExercise(next);
@@ -795,9 +805,21 @@ export function setGymNotifLastAt(at: number): void {
   localStorage.setItem(GYM_NOTIF_LAST_KEY, String(at));
 }
 
-export function markOnboardingDone(): void {
+export function isOnboardingMarkedDone(): boolean {
+  return localStorage.getItem(ONBOARDING_V1_KEY) === "done";
+}
+
+export function markOnboardingDone(destination?: string): void {
+  const alreadyDone = isOnboardingMarkedDone();
+  const resolvedDestination =
+    destination ?? getOnboardingPostAuthRedirect() ?? "/home";
   localStorage.setItem(ONBOARDING_V1_KEY, "done");
   localStorage.removeItem(ONBOARDING_POST_AUTH_REDIRECT_KEY);
+  if (!alreadyDone) {
+    trackOnboardingCompleted({
+      destination: resolvedDestination,
+    });
+  }
 }
 
 export function getThemePreference(): ThemePreference {

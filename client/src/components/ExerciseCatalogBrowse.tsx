@@ -107,6 +107,11 @@ function ExerciseCatalogGrid({
                                     className="h-7 w-full px-1 text-[10px]"
                                     variant={isTracked ? 'secondary' : 'default'}
                                     disabled={isTracked}
+                                    data-analytics-label={
+                                        index === tourAddButtonIndex && !isTracked
+                                            ? 'onboarding_first_exercise_add'
+                                            : 'add_exercise'
+                                    }
                                     data-tour={
                                         index === tourAddButtonIndex && !isTracked
                                             ? 'first-exercise-add'

@@ -21,8 +21,9 @@ alwaysApply: false
 |--------|---------|------|
 | Auto-clics | `AnalyticsClickCapture` | **Tous** les clics bouton/lien/tab, sans code par composant |
 | Session replay | `lib/analytics/instance.ts` | Enregistrement rrweb (activé par défaut) |
-| Pages | `PageTracker` | `page_viewed` + `current_page` global |
-| Perfs CRUD | `lib/storage.ts` | `performance_logged/edited/deleted` automatique |
+| Pages | `PageTracker` | `page_viewed` + `current_page` + `onboarding_step` global |
+| Onboarding funnel | `lib/analytics/onboarding-tracking.ts` | `onboarding_step_viewed/completed/skipped`, `onboarding_completed` |
+| Perfs CRUD | `lib/storage.ts` | `performance_logged/edited/deleted` + `exercise_added` |
 | Records / ligue | `lib/perf-notifications.ts` | `personal_record_broken`, `league_promoted` |
 | Repos | `RestSinceLastSetBar` | `rest_timer_dismissed` |
 | Drawer perf | `AddPerfDrawer` + `ui/drawer` | `perf_drawer_opened`, `drawer_opened/closed` |
@@ -30,6 +31,32 @@ alwaysApply: false
 | Overlays | `ui/dialog`, `ui/drawer` | `dialog_opened/closed` via `data-analytics-label` |
 | Boutons | `ui/button` | `data-analytics-label` pour nommer le clic |
 | Taxonomie | `lib/analytics/events.ts` | **Seul** endroit pour les noms d'événements |
+
+## Onboarding / activation
+
+Helper : `trackOnboardingStepViewed` / `Completed` / `Skipped` / `trackOnboardingCompleted` / `useOnboardingStepViewed`.
+
+`page` reste `onboarding`. Le funnel se filtre sur `step` (jamais sur le libellé FR du bouton).
+
+| `step` | Où | Event métier |
+|--------|----|----------------|
+| `intro` | `OnboardingIntro` | viewed au mount, completed sur Continuer |
+| `body_gender` / `body_weight` / `body_height` | `OnboardingPage` | viewed à chaque `bodyQ`, completed sur Suivant |
+| `account_email` | `AuthPage` | completed avec `exists` après `identifyEmail` |
+| `account_login` | `AuthPage` | + `user_logged_in` (`method=email\|google\|apple`) |
+| `account_register_*` | `AuthPage` | un substep par carte ; submit → `user_registered` |
+| `gym_question` / `gym_locating` / `gym_confirm` / `gym_search` | `OnboardingGymStep` | URL gelée, viewed sur le state interne |
+| `gym_permissions` | `OnboardingGymPermissionsStep` | skip → `onboarding_step_skipped` ; toggles push |
+| `gym_wait` | `OnboardingGymWaitStep` | completed sur unlock |
+| `first_exercise` | `ExerciseListPage` | completed après add+perf du tour ; skip si retour home |
+
+`markOnboardingDone()` est le seul endroit qui émet `onboarding_completed` (`destination`, `gym_bypassed`).
+
+OAuth : l'API renvoie `isNewUser` sur `AuthSession`. `trackAuthSuccess` choisit `user_registered` vs `user_logged_in`.
+
+Propriétés de profil au `identify` : `onboarding_last_step`, `onboarding_completed`, `signup_method`.
+
+Funnel d'activation canonique : viewed `intro` → completed body steps → `account_email` (`exists=false`) → register substeps → `user_registered` → `onboarding_completed` → `exercise_added` `source=onboarding` → `performance_logged`.
 
 ## Règles pour tout nouveau composant
 
@@ -53,6 +80,8 @@ Envelopper chaque zone fonctionnelle :
 
 Équivalent HTML : `data-analytics-section` / `data-analytics-feature` sur un conteneur.
 
+Onboarding : `section="onboarding"` et `feature={step}` (`intro`, `body_gender`, …).
+
 ### 3. Dialogs / Drawers — label obligatoire
 
 ```tsx
@@ -67,11 +96,14 @@ Le tracking open/close est **natif** dans `ui/dialog` et `ui/drawer`.
 | Action | Où tracker |
 |--------|------------|
 | Ajout / modif / suppression perf | `lib/storage.ts` (déjà fait) |
+| Ajout d'exercice | `lib/storage.ts` → `exercise_added` |
+| Steps onboarding | `lib/analytics/onboarding-tracking.ts` |
 | Record / promotion ligue | `lib/perf-notifications.ts` (déjà fait) |
 | Achat validé | `AnalyticsService` serveur (RevenueCat) |
 | Nouvel événement custom | Ajouter dans `events.ts` puis appeler `track()` |
 
 **Ne pas** re-tracker `performance_logged` dans un composant — c'est déjà dans `storage.ts`.
+**Ne pas** re-tracker `onboarding_completed` hors `markOnboardingDone()`.
 
 ### 5. Opt-out
 
@@ -84,6 +116,7 @@ Le tracking open/close est **natif** dans `ui/dialog` et `ui/drawer`.
 - PII dans les propriétés d'événement
 - Strings d'événements hors `AnalyticsEvents`
 - `identify` / `page_viewed` manuels (déjà dans `AnalyticsProvider` / `PageTracker`)
+- Event métier à chaque tick du wheel (`wheel_picker_changed` suffit)
 
 ## Session replay
 

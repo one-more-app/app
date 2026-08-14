@@ -20,6 +20,7 @@ type AuthSession = {
   accessToken: string;
   refreshToken: string;
   user: AuthUser;
+  isNewUser?: boolean;
 };
 
 @Injectable()
@@ -68,6 +69,7 @@ export class AuthService {
   private async issueSession(params: {
     user: AuthUser;
     deviceId?: string;
+    isNewUser?: boolean;
   }): Promise<AuthSession> {
     const { refreshToken, selector, secret } = this.createRefreshTokenParts();
     const refreshTokenHash = await argon2.hash(secret);
@@ -78,17 +80,24 @@ export class AuthService {
       deviceId: params.deviceId ?? null,
     });
     const accessToken = await this.signAccessToken(params.user);
-    return { accessToken, refreshToken, user: params.user };
+    return {
+      accessToken,
+      refreshToken,
+      user: params.user,
+      ...(params.isNewUser != null ? { isNewUser: params.isNewUser } : {}),
+    };
   }
 
   async createSessionForUser(params: {
     userId: string;
     email: string | null;
     deviceId?: string;
+    isNewUser?: boolean;
   }): Promise<AuthSession> {
     return await this.issueSession({
       user: { id: params.userId, email: params.email },
       deviceId: params.deviceId,
+      isNewUser: params.isNewUser,
     });
   }
 
@@ -129,6 +138,7 @@ export class AuthService {
     return await this.issueSession({
       user: { id: user.id, email: user.email },
       deviceId: params.deviceId,
+      isNewUser: true,
     });
   }
 
@@ -150,6 +160,7 @@ export class AuthService {
     return await this.issueSession({
       user: { id: user.id, email: user.email },
       deviceId: params.deviceId,
+      isNewUser: false,
     });
   }
 
