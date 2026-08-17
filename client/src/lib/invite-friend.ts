@@ -1,4 +1,5 @@
 import { Capacitor } from "@capacitor/core";
+import { trackFriendInviteSent } from "@/lib/analytics";
 import { buildOneLinkInviteUrl } from "@/lib/appsflyer-config";
 import { fetchInviteCode } from "@/lib/social-api";
 import { UI } from "@/lib/translations";
@@ -60,13 +61,16 @@ export async function inviteFriend(code?: string): Promise<boolean> {
           text: message,
           dialogTitle: UI.inviteShareDialogTitle,
         });
+        trackFriendInviteSent({ method: "native" });
       } else if (typeof navigator !== "undefined" && navigator.share) {
         await navigator.share({
           title: UI.inviteShareTitle,
           text: message,
         });
+        trackFriendInviteSent({ method: "web" });
       } else {
         await copyText(message);
+        trackFriendInviteSent({ method: "clipboard" });
         toast.success(UI.inviteLinkCopied);
         return true;
       }
@@ -75,6 +79,7 @@ export async function inviteFriend(code?: string): Promise<boolean> {
     } catch (error) {
       if (isShareCancelled(error)) return false;
       await copyText(message);
+      trackFriendInviteSent({ method: "clipboard" });
       toast.success(UI.inviteLinkCopied);
       return true;
     }
@@ -89,6 +94,7 @@ export async function copyInviteCode(code?: string): Promise<boolean> {
   try {
     const inviteCode = await resolveInviteCode(code);
     await copyText(inviteCode);
+    trackFriendInviteSent({ method: "copy_code" });
     toast.success(UI.inviteCodeCopied);
     return true;
   } catch {

@@ -1,4 +1,5 @@
 import type { CelebrationShareOpen } from '@/components/share/CelebrationShareCard'
+import { trackShareTriggered } from '@/lib/analytics'
 import { createShareTrace, type ShareTrace } from '@/lib/celebration-share-debug'
 import {
   getCelebrationShareBlob,
@@ -178,10 +179,15 @@ export async function shareCelebrationPng(
 
   const text = shareText(open)
 
+  const trackShareResult = (result: 'shared' | 'downloaded') => {
+    trackShareTriggered({ kind: open.kind, result })
+  }
+
   if (Capacitor.isNativePlatform()) {
     try {
       const result = await shareBlobNative(blob, text, trace, presentation)
       trace.log('tap:complete', { result, totalMs: trace.elapsedMs() })
+      trackShareResult(result)
       return result
     } catch (error) {
       trace.log('tap:native-error', {
@@ -192,6 +198,7 @@ export async function shareCelebrationPng(
       }
       const result = await shareBlobWeb(blob, text, trace)
       trace.log('tap:complete-web-fallback', { result, totalMs: trace.elapsedMs() })
+      trackShareResult(result)
       return result
     }
   }
@@ -199,6 +206,7 @@ export async function shareCelebrationPng(
   try {
     const result = await shareBlobWeb(blob, text, trace)
     trace.log('tap:complete', { result, totalMs: trace.elapsedMs() })
+    trackShareResult(result)
     return result
   } catch (error) {
     trace.log('tap:web-error', {

@@ -21,6 +21,28 @@ export function trackExerciseAdded(params: {
   });
 }
 
+export function trackExerciseOpened(params: {
+  trackedExerciseId: string;
+  source?: string;
+  fromAdd?: boolean;
+}): void {
+  track(AnalyticsEvents.EXERCISE_OPENED, {
+    ...exerciseContext(params.trackedExerciseId),
+    source: params.source ?? "direct",
+    from_add: params.fromAdd ?? false,
+  });
+}
+
+export function trackExerciseRemoved(params: {
+  trackedExerciseId: string;
+  source?: string;
+}): void {
+  track(AnalyticsEvents.EXERCISE_REMOVED, {
+    ...exerciseContext(params.trackedExerciseId),
+    source: params.source ?? "app",
+  });
+}
+
 export function trackPerformanceLogged(params: {
   trackedExerciseId: string;
   entryId: string;

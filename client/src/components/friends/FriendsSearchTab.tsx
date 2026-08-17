@@ -152,7 +152,7 @@ export function FriendsSearchTab({
     void (async () => {
       setBusyId(userId);
       try {
-        await requestFriend(userId);
+        await requestFriend(userId, { source: "search" });
         toast.success(UI.friendRequestSent);
         onRefreshFriends();
         await mutate(FRIEND_SUGGESTIONS_SWR_KEY);

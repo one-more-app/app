@@ -270,10 +270,13 @@ export function FriendsListTab({
         ]);
     };
 
-    const handleAccept = (friendshipId: string) => {
+    const handleAccept = (friendshipId: string, requesterUserId: string) => {
         void (async () => {
             try {
-                await acceptFriendRequest(friendshipId);
+                await acceptFriendRequest(friendshipId, {
+                    source: "friends_list",
+                    requesterUserId,
+                });
                 toast.success(UI.friendAccepted);
                 await refreshAll();
             } catch {
@@ -317,7 +320,7 @@ export function FriendsListTab({
                         <PendingFriendRow
                             key={item.friendshipId}
                             item={item}
-                            onAccept={() => handleAccept(item.friendshipId)}
+                            onAccept={() => handleAccept(item.friendshipId, item.userId)}
                             onDecline={() => handleDecline(item.friendshipId)}
                         />
                     ))}

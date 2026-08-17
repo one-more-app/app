@@ -6,6 +6,7 @@ import {
   NotFoundException,
   forwardRef,
 } from '@nestjs/common';
+import { AnalyticsService } from '../analytics/analytics.service.js';
 import { NotificationDispatchService } from '../notifications/notification-dispatch.service.js';
 import { RealtimeBroadcaster } from '../realtime/realtime-broadcaster.service.js';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,6 +16,8 @@ import { FriendshipEntity } from './entities/friendship.entity.js';
 import { FriendshipStatus } from './entities/friendship-status.enum.js';
 import { AccessService } from './access.service.js';
 import { InvitesService } from './invites.service.js';
+
+export type ReferralApplySource = 'signup' | 'apply' | 'invite_landing';
 
 @Injectable()
 export class ReferralService {
@@ -28,11 +31,13 @@ export class ReferralService {
     @Inject(forwardRef(() => NotificationDispatchService))
     private readonly notifications: NotificationDispatchService,
     private readonly realtime: RealtimeBroadcaster,
+    private readonly analytics: AnalyticsService,
   ) {}
 
   async applyReferralCode(
     userId: string,
     code: string,
+    source: ReferralApplySource = 'apply',
   ): Promise<{ ok: true; referrerUserId: string }> {
     const inviterProfile =
       await this.invitesService.findInviterProfileByCode(code);
@@ -78,11 +83,26 @@ export class ReferralService {
       });
     }
 
+    void this.analytics.track(userId, 'referral_code_applied', {
+      referrer_user_id: inviterProfile.userId,
+      source,
+      tshirt_unlocked: tshirtUnlocked,
+    });
+    void this.analytics.track(inviterProfile.userId, 'friend_invite_accepted', {
+      referred_user_id: userId,
+      source,
+      tshirt_unlocked: tshirtUnlocked,
+    });
+
     return { ok: true, referrerUserId: inviterProfile.userId };
   }
 
   async requestFromInvite(userId: string, inviteCode: string) {
-    const { referrerUserId } = await this.applyReferralCode(userId, inviteCode);
+    const { referrerUserId } = await this.applyReferralCode(
+      userId,
+      inviteCode,
+      'invite_landing',
+    );
     const friendship = await this.findFriendshipBetween(referrerUserId, userId);
     if (!friendship) {
       throw new NotFoundException('Relation introuvable');
@@ -97,7 +117,7 @@ export class ReferralService {
     if (!params.inviteCode?.trim()) return;
 
     try {
-      await this.applyReferralCode(params.newUserId, params.inviteCode);
+      await this.applyReferralCode(params.newUserId, params.inviteCode, 'signup');
     } catch (error) {
       if (
         error instanceof NotFoundException ||

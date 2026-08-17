@@ -102,6 +102,28 @@ Le tracking open/close est **natif** dans `ui/dialog` et `ui/drawer`.
 | Achat validé | `AnalyticsService` serveur (RevenueCat) |
 | Nouvel événement custom | Ajouter dans `events.ts` puis appeler `track()` |
 
+## Social & parrainage
+
+Helper : [`lib/analytics/social-tracking.ts`](../../client/src/lib/analytics/social-tracking.ts).
+
+| Event | Où | Propriétés clés |
+|-------|----|-----------------|
+| `friend_invite_sent` | `lib/invite-friend.ts` | `method` (`native`, `web`, `clipboard`, `copy_code`) |
+| `referral_code_applied` | **serveur** `ReferralService.applyReferralCode` | `referrer_user_id`, `source`, `tshirt_unlocked` |
+| `friend_invite_accepted` | **serveur** même succès | `referred_user_id`, `source`, `tshirt_unlocked` |
+| `friend_request_sent` | `lib/social-api.ts` `requestFriend` | `target_user_id`, `friendship_id`, `source` |
+| `friend_request_accepted` | `lib/social-api.ts` `acceptFriendRequest` | `friendship_id`, `requester_user_id`, `source` |
+| `message_sent` | `lib/messaging-api.ts` `sendMessage` | `conversation_id`, `message_id` |
+| `share_triggered` | `lib/celebration-share.tsx` | `kind`, `result` |
+| `exercise_opened` | `PageTracker` sur `exercise_detail` | `tracked_exercise_id`, `source`, `from_add` |
+| `exercise_removed` | `lib/storage.ts` | `tracked_exercise_id`, `source` |
+
+`source` parrainage : `signup` | `apply` | `invite_landing`.
+
+**Ne pas** re-tracker `referral_code_applied` / `friend_invite_accepted` côté client (évite les doubles).
+
+Funnel parrainage : `friend_invite_sent` → `page_viewed` `invite_landing` → `referral_code_applied` → `friend_invite_accepted` (côté parrain).
+
 **Ne pas** re-tracker `performance_logged` dans un composant — c'est déjà dans `storage.ts`.
 **Ne pas** re-tracker `onboarding_completed` hors `markOnboardingDone()`.
 

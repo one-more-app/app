@@ -42,7 +42,7 @@ export default function UserPreviewPage() {
         if (!userId) return;
         void (async () => {
             try {
-                await requestFriend(userId);
+                await requestFriend(userId, { source: "user_preview" });
                 toast.success(UI.friendRequestSent);
                 await mutate();
             } catch {
@@ -148,7 +148,10 @@ export default function UserPreviewPage() {
                                 onClick={() => {
                                     if (!data.friendshipId) return;
                                     void (async () => {
-                                        await acceptFriendRequest(data.friendshipId!);
+                                        await acceptFriendRequest(data.friendshipId!, {
+                                            source: "user_preview",
+                                            requesterUserId: data.userId,
+                                        });
                                         toast.success(UI.friendAccepted);
                                         await mutate();
                                     })();

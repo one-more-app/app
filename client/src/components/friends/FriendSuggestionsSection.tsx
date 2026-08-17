@@ -103,7 +103,7 @@ export function FriendSuggestionsSection({
     void (async () => {
       setBusyId(userId);
       try {
-        await requestFriend(userId);
+        await requestFriend(userId, { source: "suggestions" });
         toast.success(UI.friendRequestSent);
         await mutate(FRIEND_SUGGESTIONS_SWR_KEY);
         onRefreshFriends?.();

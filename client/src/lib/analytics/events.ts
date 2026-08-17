@@ -39,7 +39,8 @@ export const AnalyticsEvents = {
   CELEBRATION_VIEWED: "celebration_viewed",
   SHARE_TRIGGERED: "share_triggered",
 
-  // Social
+  // Social & parrainage
+  REFERRAL_CODE_APPLIED: "referral_code_applied",
   FRIEND_INVITE_SENT: "friend_invite_sent",
   FRIEND_INVITE_ACCEPTED: "friend_invite_accepted",
   FRIEND_REQUEST_SENT: "friend_request_sent",

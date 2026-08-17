@@ -15,6 +15,8 @@ export {
 } from "./config";
 export {
   trackExerciseAdded,
+  trackExerciseOpened,
+  trackExerciseRemoved,
   trackLeaguePromoted,
   trackPerfDrawerOpened,
   trackPerformanceDeleted,
@@ -23,6 +25,18 @@ export {
   trackPersonalRecordBroken,
   trackRestTimerDismissed,
 } from "./performance-tracking";
+export {
+  trackFriendInviteSent,
+  trackFriendRequestAccepted,
+  trackFriendRequestSent,
+  trackMessageSent,
+  trackShareTriggered,
+} from "./social-tracking";
+export type {
+  FriendAcceptSource,
+  FriendInviteShareMethod,
+  FriendRequestSource,
+} from "./social-tracking";
 export {
   OnboardingSteps,
   bodyStepFromQuestion,

@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api";
+import { trackMessageSent } from "@/lib/analytics";
 
 export type Message = {
   id: string;
@@ -57,10 +58,18 @@ export async function sendMessage(
   conversationId: string,
   body: string,
 ): Promise<{ message: Message }> {
-  return await apiFetch(`/messaging/conversations/${conversationId}/messages`, {
-    method: "POST",
-    body: JSON.stringify({ body }),
+  const result = await apiFetch<{ message: Message }>(
+    `/messaging/conversations/${conversationId}/messages`,
+    {
+      method: "POST",
+      body: JSON.stringify({ body }),
+    },
+  );
+  trackMessageSent({
+    conversationId,
+    messageId: result.message.id,
   });
+  return result;
 }
 
 export async function markConversationRead(

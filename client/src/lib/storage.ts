@@ -1,5 +1,6 @@
 import {
   trackExerciseAdded,
+  trackExerciseRemoved,
   trackOnboardingCompleted,
   trackPerformanceDeleted,
   trackPerformanceEdited,
@@ -196,6 +197,7 @@ export function removeTrackedExercise(id: string): void {
   );
   updateTrackedCache(next);
   notifyLocalDataChanged("trackedExercise");
+  trackExerciseRemoved({ trackedExerciseId: id, source: "app" });
   void deleteTrackedExerciseRemote(id).catch(() => notifyRemoteWriteError());
 }
 
@@ -206,6 +208,7 @@ export async function removeTrackedExerciseAndWait(id: string): Promise<void> {
   );
   updateTrackedCache(next);
   notifyLocalDataChanged("trackedExercise");
+  trackExerciseRemoved({ trackedExerciseId: id, source: "app" });
   try {
     await deleteTrackedExerciseRemote(id);
   } catch (error) {

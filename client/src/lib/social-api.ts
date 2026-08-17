@@ -1,4 +1,10 @@
 import { apiFetch } from "@/lib/api";
+import {
+  trackFriendRequestAccepted,
+  trackFriendRequestSent,
+  type FriendAcceptSource,
+  type FriendRequestSource,
+} from "@/lib/analytics";
 import type { UserProgressState } from "@/types";
 
 export const ACCESS_SWR_KEY = "user-access";
@@ -105,10 +111,20 @@ export async function fetchFriendsList(): Promise<FriendsListResponse> {
 
 export async function acceptFriendRequest(
   friendshipId: string,
+  options?: {
+    source?: FriendAcceptSource;
+    requesterUserId?: string;
+  },
 ): Promise<{ ok: boolean }> {
-  return await apiFetch(`/social/friends/${friendshipId}/accept`, {
+  const result = await apiFetch<{ ok: boolean }>(`/social/friends/${friendshipId}/accept`, {
     method: "POST",
   });
+  trackFriendRequestAccepted({
+    friendshipId,
+    requesterUserId: options?.requesterUserId,
+    source: options?.source,
+  });
+  return result;
 }
 
 export async function declineFriendRequest(
@@ -191,14 +207,26 @@ export async function fetchUserPreview(userId: string): Promise<UserPreview> {
   return await apiFetch<UserPreview>(`/social/users/${userId}/preview`);
 }
 
-export async function requestFriend(userId: string): Promise<{
+export async function requestFriend(
+  userId: string,
+  options?: { source?: FriendRequestSource },
+): Promise<{
   friendshipId: string;
   status: string;
 }> {
-  return await apiFetch("/social/friends/request", {
-    method: "POST",
-    body: JSON.stringify({ userId }),
+  const result = await apiFetch<{ friendshipId: string; status: string }>(
+    "/social/friends/request",
+    {
+      method: "POST",
+      body: JSON.stringify({ userId }),
+    },
+  );
+  trackFriendRequestSent({
+    targetUserId: userId,
+    friendshipId: result.friendshipId,
+    source: options?.source,
   });
+  return result;
 }
 
 export async function cancelFriendRequest(

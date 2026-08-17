@@ -9,6 +9,7 @@ const notifyFriendAccepted = jest.fn();
 const notifyReferralUsed = jest.fn();
 const notifyTshirtRewardUnlocked = jest.fn();
 const emitAccessUpdated = jest.fn();
+const analyticsTrack = jest.fn();
 
 jest.unstable_mockModule('../access.service.js', () => ({
   AccessService: class AccessService {},
@@ -39,6 +40,9 @@ describe('ReferralService', () => {
   const realtime = {
     emitAccessUpdated,
   };
+  const analytics = {
+    track: analyticsTrack,
+  };
 
   let service: InstanceType<typeof ReferralService>;
 
@@ -51,6 +55,7 @@ describe('ReferralService', () => {
       accessService as any,
       notifications as any,
       realtime as any,
+      analytics as any,
     );
   });
 
@@ -90,6 +95,16 @@ describe('ReferralService', () => {
     });
     expect(notifyFriendAccepted).not.toHaveBeenCalled();
     expect(notifyTshirtRewardUnlocked).not.toHaveBeenCalled();
+    expect(analyticsTrack).toHaveBeenCalledWith('user-1', 'referral_code_applied', {
+      referrer_user_id: 'referrer-1',
+      source: 'apply',
+      tshirt_unlocked: false,
+    });
+    expect(analyticsTrack).toHaveBeenCalledWith('referrer-1', 'friend_invite_accepted', {
+      referred_user_id: 'user-1',
+      source: 'apply',
+      tshirt_unlocked: false,
+    });
   });
 
   it('notifies t-shirt unlock on 5th referral', async () => {

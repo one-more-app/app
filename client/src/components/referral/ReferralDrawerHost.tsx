@@ -242,6 +242,7 @@ export function ReferralDrawerHost() {
         <>
             <Drawer
                 open={open}
+                data-analytics-label="referral"
                 onOpenChange={(next) => {
                     if (!next) closeReferralDrawer();
                 }}
