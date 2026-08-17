@@ -1123,4 +1123,13 @@ export const UI = {
   eventAdminResetting: "Suppression…",
   eventAdminResetDone: "Toutes les données ont été masquées.",
   eventAdminResetError: "Impossible de supprimer les données.",
+
+  webStoreLandingTitle: "Rejoins le mouvement",
+  webStoreLandingBody:
+    "Tu t'entraînes déjà. Ici on vise toujours une rep de plus.",
+  webStoreLandingCta: "Télécharge l'app maintenant",
+  webStoreLandingStores: "Dispo sur iOS et Android",
+  webStoreLandingLogoAlt: "One More",
+  webStoreLandingIosAlt: "iOS",
+  webStoreLandingAndroidAlt: "Android",
 };

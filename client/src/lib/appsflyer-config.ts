@@ -42,16 +42,24 @@ export function isAppsFlyerConfigured(): boolean {
 const DEFAULT_ONELINK_DOMAIN = "one-more.onelink.me";
 const DEFAULT_ONELINK_ID = "XFST";
 
+function getOneLinkTemplateUrl(): string {
+  const domain = getAppsFlyerOneLinkDomain() ?? DEFAULT_ONELINK_DOMAIN;
+  const templateId = getAppsFlyerOneLinkId() ?? DEFAULT_ONELINK_ID;
+  return `https://${domain}/${templateId}`;
+}
+
+/** OneLink store (détection App Store / Play Store côté AppsFlyer). */
+export function buildOneLinkDownloadUrl(): string {
+  return getOneLinkTemplateUrl();
+}
+
 export function buildOneLinkInviteUrl(code: string): string | null {
   const normalized = code.trim().toLowerCase();
   if (!normalized) return null;
-
-  const domain = getAppsFlyerOneLinkDomain() ?? DEFAULT_ONELINK_DOMAIN;
-  const templateId = getAppsFlyerOneLinkId() ?? DEFAULT_ONELINK_ID;
 
   const params = new URLSearchParams({
     deep_link_value: normalized,
     pid: "friend_invite",
   });
-  return `https://${domain}/${templateId}?${params.toString()}`;
+  return `${getOneLinkTemplateUrl()}?${params.toString()}`;
 }

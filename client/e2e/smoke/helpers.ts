@@ -166,8 +166,16 @@ export async function seedAuthenticatedSession(page: Page): Promise<void> {
 export async function seedE2eApiOrigin(page: Page): Promise<void> {
   await page.addInitScript(() => {
     window.__ONE_MORE_API_URL__ = window.location.origin;
+    window.__ONE_MORE_E2E__ = true;
   });
   await mockHealthApi(page);
+}
+
+/** Affiche la landing store même sous Playwright (bypass e2e du gate). */
+export async function seedForceWebStoreLanding(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    window.__ONE_MORE_FORCE_STORE_LANDING__ = true;
+  });
 }
 
 export async function mockHealthApi(page: Page): Promise<void> {

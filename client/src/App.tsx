@@ -54,6 +54,7 @@ import { SettingsPage } from '@/pages/SettingsPage'
 import { TshirtClaimPage } from '@/pages/TshirtClaimPage'
 import { EventAdminPage } from '@/pages/event/EventAdminPage'
 import { EventLeaderboardPage } from '@/pages/event/EventLeaderboardPage'
+import { WebStoreLandingGate } from '@/components/WebStoreLandingGate'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
@@ -368,7 +369,8 @@ function App() {
 
     return (
         <HashRouter>
-            <div className="app-shell">
+            <WebStoreLandingGate>
+                <div className="app-shell">
 
                 <NativeSystemBarsSync />
                 <SafeAreaTopScrim />
@@ -427,7 +429,8 @@ function App() {
                     </PaywallProvider>
                     </ConnectivityProvider>
                 </AuthProvider>
-            </div>
+                </div>
+            </WebStoreLandingGate>
         </HashRouter>
     )
 }

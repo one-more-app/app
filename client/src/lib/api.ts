@@ -26,6 +26,8 @@ export class ApiError extends Error {
 declare global {
   interface Window {
     __ONE_MORE_API_URL__?: string;
+    __ONE_MORE_E2E__?: boolean;
+    __ONE_MORE_FORCE_STORE_LANDING__?: boolean;
   }
 }
 
