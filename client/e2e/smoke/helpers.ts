@@ -431,27 +431,68 @@ export async function mockAuthApi(
   await mockCoreAuthenticatedApi(page, gymOptions);
 
   await page.route("**/tracked-exercises**", async (route) => {
-    if (route.request().method() !== "GET") {
-      await route.fallback();
+    const method = route.request().method();
+    if (method === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([]),
+      });
       return;
     }
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify([]),
-    });
+    if (method === "POST") {
+      const body = route.request().postDataJSON() as Record<string, unknown>;
+      const now = new Date().toISOString();
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ...body,
+          updatedAt: now,
+          deletedAt: null,
+        }),
+      });
+      return;
+    }
+    await route.fallback();
   });
 
   await page.route("**/performance-entries**", async (route) => {
-    if (route.request().method() !== "GET") {
-      await route.fallback();
+    const method = route.request().method();
+    if (method === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([]),
+      });
       return;
     }
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify([]),
-    });
+    if (method === "POST") {
+      const body = route.request().postDataJSON() as Record<string, unknown>;
+      const now = new Date().toISOString();
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ...body,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+          xp: {
+            totalXp: 10,
+            level: 1,
+            xpIntoLevel: 10,
+            xpForNextLevel: 100,
+            leveledUp: false,
+            grants: [{ sourceType: "perf", amount: 10 }],
+            streak: { current: 1, longest: 1 },
+            league: null,
+          },
+        }),
+      });
+      return;
+    }
+    await route.fallback();
   });
 
   await page.route("**/exercises/meta", async (route) => {

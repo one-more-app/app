@@ -1,3 +1,4 @@
+import { commitPendingOnboardingRecord } from "@/lib/onboarding-record";
 import { fetchTrackedExercises } from "@/lib/data-api";
 import { fetchUserGym } from "@/lib/gyms-api";
 import {
@@ -6,6 +7,8 @@ import {
 } from "@/lib/gym-onboarding-route";
 import { CARDIO_EQUIPMENT } from "@/lib/exercisedb";
 import {
+  markOnboardingDone,
+  peekOnboardingRecordDestination,
   setOnboardingFirstExercisePending,
   setOnboardingTourComplete,
 } from "@/lib/storage";
@@ -20,10 +23,17 @@ export function hasVisibleTrackedExercise(
   );
 }
 
-/** Après auth, envoie vers le tour premier exercice si le compte n'a rien de suivi. */
+/** Après auth, envoie vers la fiche du record d'onboarding, sinon le tour premier exercice. */
 export async function resolvePostAuthNavigation(
   nextPath: string,
 ): Promise<string> {
+  await commitPendingOnboardingRecord();
+  const recordDestination = peekOnboardingRecordDestination();
+  if (recordDestination) {
+    markOnboardingDone(recordDestination);
+    return recordDestination;
+  }
+
   if (nextPath !== "/home") {
     return nextPath;
   }

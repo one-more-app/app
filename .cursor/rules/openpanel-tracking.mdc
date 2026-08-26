@@ -40,8 +40,11 @@ Helper : `trackOnboardingStepViewed` / `Completed` / `Skipped` / `trackOnboardin
 
 | `step` | Où | Event métier |
 |--------|----|----------------|
-| `intro` | `OnboardingIntro` | viewed au mount, completed sur Continuer |
+| `record_pick` | `OnboardingPage` `?step=record` | viewed au mount, completed sur Continuer |
+| `record_perf` | drawer `AddPerfDrawer` depuis la liste | completed à l'enregistrement de la perf |
+| `record_1rm` | `OnboardingPage` `?step=1rm` | completed sur Continuer |
 | `body_gender` / `body_weight` / `body_height` | `OnboardingPage` | viewed à chaque `bodyQ`, completed sur Suivant |
+| `rank_reveal` | `OnboardingPage` `?step=rank` | completed sur « Bats ce record » |
 | `account_email` | `AuthPage` | completed avec `exists` après `identifyEmail` |
 | `account_login` | `AuthPage` | + `user_logged_in` (`method=email\|google\|apple`) |
 | `account_register_*` | `AuthPage` | un substep par carte ; submit → `user_registered` |
@@ -56,7 +59,7 @@ OAuth : l'API renvoie `isNewUser` sur `AuthSession`. `trackAuthSuccess` choisit 
 
 Propriétés de profil au `identify` : `onboarding_last_step`, `onboarding_completed`, `signup_method`.
 
-Funnel d'activation canonique : viewed `intro` → completed body steps → `account_email` (`exists=false`) → register substeps → `user_registered` → `onboarding_completed` → `exercise_added` `source=onboarding` → `performance_logged`.
+Funnel d'activation canonique : viewed `record_pick` → `record_perf` → `record_1rm` → completed body steps → `rank_reveal` → `account_email` (`exists=false`) → register substeps → `user_registered` → `onboarding_completed` → `exercise_added` `source=onboarding` → `performance_logged`.
 
 ## Règles pour tout nouveau composant
 

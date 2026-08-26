@@ -14,6 +14,10 @@ const SIGNUP_METHOD_KEY = "one-more-analytics-signup-method-v1";
 
 export const OnboardingSteps = {
   INTRO: "intro",
+  RECORD_PICK: "record_pick",
+  RECORD_PERF: "record_perf",
+  RECORD_1RM: "record_1rm",
+  RANK_REVEAL: "rank_reveal",
   BODY_GENDER: "body_gender",
   BODY_WEIGHT: "body_weight",
   BODY_HEIGHT: "body_height",
@@ -109,7 +113,12 @@ export function resolveOnboardingStepFromLocation(
   if (pathname !== "/onboarding") return null;
 
   const rawStep = params.get("step");
-  if (!rawStep || rawStep === "intro") return OnboardingSteps.INTRO;
+  if (!rawStep || rawStep === "intro" || rawStep === "record") {
+    return OnboardingSteps.RECORD_PICK;
+  }
+  if (rawStep === "perf") return OnboardingSteps.RECORD_PICK;
+  if (rawStep === "1rm") return OnboardingSteps.RECORD_1RM;
+  if (rawStep === "rank") return OnboardingSteps.RANK_REVEAL;
   if (rawStep === "body") {
     const bodyQ = Number.parseInt(params.get("bodyQ") ?? "0", 10) || 0;
     if (bodyQ === 1) return OnboardingSteps.BODY_WEIGHT;
@@ -126,7 +135,7 @@ export function resolveOnboardingStepFromLocation(
     return OnboardingSteps.GYM_PERMISSIONS;
   }
   if (rawStep === "gym-wait") return OnboardingSteps.GYM_WAIT;
-  return OnboardingSteps.INTRO;
+  return OnboardingSteps.RECORD_PICK;
 }
 
 export function bodyStepFromQuestion(bodyQ: number): OnboardingStepId {

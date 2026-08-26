@@ -31,6 +31,7 @@ interface AddPerfDrawerProps {
     /** Mode modification : met à jour une perf existante */
     entryId?: string
     onUpdate?: (entryId: string, weight: number, reps: number) => void
+    contentClassName?: string
 }
 
 export function AddPerfDrawer({
@@ -42,6 +43,7 @@ export function AddPerfDrawer({
     onSave,
     entryId,
     onUpdate,
+    contentClassName,
 }: AddPerfDrawerProps) {
     const [weight, setWeight] = useState(initialWeight)
     const [reps, setReps] = useState(initialReps)
@@ -99,7 +101,7 @@ export function AddPerfDrawer({
             onOpenChange={handleOpenChange}
             data-analytics-label={entryId && onUpdate ? 'edit_perf' : 'add_perf'}
         >
-            <DrawerContent>
+            <DrawerContent className={contentClassName}>
                 <div className="w-full p-4">
                     <DrawerHeader>
                         <DrawerTitle>

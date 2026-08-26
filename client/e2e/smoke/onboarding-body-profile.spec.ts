@@ -7,6 +7,25 @@ const continueButton = (page: Page) =>
 const nextButton = (page: Page) =>
   page.getByRole("button", { name: "Suivant", exact: true });
 
+async function completeRecordToBody(page: Page): Promise<void> {
+  await expect(page.getByText("Commence par un record")).toBeVisible();
+  await page.getByRole("button", { name: /Développé couché/ }).click();
+
+  const drawer = page.getByRole("dialog", { name: "Nouvelle performance" });
+  await expect(drawer).toBeVisible();
+  await drawer.getByRole("button", { name: "Enregistrer" }).click();
+
+  await expect(page.getByText("Ton 1RM", { exact: true })).toBeVisible();
+  await continueButton(page).click();
+}
+
+async function completeBodyToRank(page: Page): Promise<void> {
+  await page.getByRole("radio", { name: "Femme" }).click();
+  await nextButton(page).click();
+  await nextButton(page).click();
+  await continueButton(page).click();
+}
+
 test("l'onboarding body (genre) est envoyé dans le register", async ({
   page,
 }) => {
@@ -28,13 +47,11 @@ test("l'onboarding body (genre) est envoyé dans le register", async ({
 
   await page.goto("/#/onboarding");
 
-  await continueButton(page).click();
+  await completeRecordToBody(page);
+  await completeBodyToRank(page);
 
-  await page.getByRole("radio", { name: "Femme" }).click();
-  await nextButton(page).click();
-
-  await nextButton(page).click();
-  await continueButton(page).click();
+  await expect(page.getByText("Ton palier")).toBeVisible();
+  await page.getByRole("button", { name: "Bats ce record" }).click();
 
   await page.getByLabel("Email").fill("body-onboarding@one-more.test");
   await continueButton(page).click();

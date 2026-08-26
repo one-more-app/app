@@ -4,7 +4,6 @@ import { Trackable } from "@/components/analytics/Trackable";
 import { onboardingEntrance, onboardingStepCardClassName } from "@/components/onboarding/onboarding-motion";
 import { StepCard } from "@/components/StepCard";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     UsernameField,
     type UsernameFieldStatus,
@@ -278,7 +277,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
             section={trackOnboardingAuth ? "onboarding" : "auth"}
             feature={currentAuthStep}
             className={onboardingEntrance(
-                "relative z-10 mx-auto w-full max-w-2xl space-y-4 px-4 py-6",
+                "relative z-10 mx-auto min-h-0 w-full max-w-2xl space-y-4 overflow-y-auto px-4 py-6",
                 "animate-in fade-in-0 slide-in-from-left-4 duration-400",
             )}
         >
@@ -290,7 +289,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                 <img
                     src={logoTextLight}
                     alt="One More"
-                    className="h-18 w-auto select-none object-contain"
+                    className="h-18 w-auto select-none object-contain brightness-0 dark:brightness-100"
                     loading="eager"
                     decoding="async"
                 />
@@ -302,7 +301,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                 step === "register_referral" ? (
                 <StepCard
                     key={`register-${step}`}
-                    className={onboardingStepCardClassName}
+                    className={`${onboardingStepCardClassName} flex-none`}
                     onBack={() => {
                         auth.clearError();
                         if (step === "register_referral") {
@@ -585,105 +584,100 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                     )}
                 </StepCard>
             ) : (
-                <Card
+                <StepCard
                     key={`auth-${step}`}
-                    className={onboardingEntrance(
-                        "w-full bg-card animate-in fade-in-0 slide-in-from-left-4 duration-400",
-                    )}
+                    className={`${onboardingStepCardClassName} flex-none`}
+                    title={UI.connectOrCreateAccount}
+                    contentClassName="space-y-3"
                 >
-                    <CardHeader>
-                        <CardTitle>{UI.connectOrCreateAccount}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        {step === "email" ? (
-                            <>
+                    {step === "email" ? (
+                        <>
+                            <Input
+                                label={UI.email}
+                                value={email}
+                                onChange={(e) => handleEmailChange(e.target.value)}
+                                inputMode="email"
+                                autoCapitalize="none"
+                                autoCorrect="off"
+                                placeholder="email@exemple.com"
+                            />
+
+                            {auth.lastError && (
+                                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                                    {auth.lastError}
+                                </div>
+                            )}
+
+                            <Button
+                                className="w-full"
+                                data-analytics-label="onboarding_email_continue"
+                                onClick={() => void submitEmail()}
+                                disabled={!canContinueEmail}
+                            >
+                                {UI.continue}
+                            </Button>
+                        </>
+                    ) : (
+                        <>
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-medium">{UI.email}</label>
+                                <div className="relative">
+                                    <Input
+                                        value={email}
+                                        onChange={(e) => handleEmailChange(e.target.value)}
+                                        inputMode="email"
+                                        autoCapitalize="none"
+                                        autoCorrect="off"
+                                        placeholder="email@exemple.com"
+                                        className="pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        className="absolute inset-y-0 right-1 my-auto flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+                                        aria-label="Changer l'email"
+                                        data-analytics-label="onboarding_change_email"
+                                        onClick={returnToEmailStep}
+                                    >
+                                        <X className="size-4 shrink-0" aria-hidden />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="space-y-1">
                                 <Input
-                                    label={UI.email}
-                                    value={email}
-                                    onChange={(e) => handleEmailChange(e.target.value)}
-                                    inputMode="email"
-                                    autoCapitalize="none"
-                                    autoCorrect="off"
-                                    placeholder="email@exemple.com"
+                                    label={UI.password}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    type="password"
+                                    placeholder="••••••••"
+                                    passwordToggle={{
+                                        showLabel: UI.showPassword,
+                                        hideLabel: UI.hidePassword,
+                                    }}
                                 />
+                                <p className="text-xs text-muted-foreground">
+                                    {UI.passwordHint}
+                                </p>
+                            </div>
 
-                                {auth.lastError && (
-                                    <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                                        {auth.lastError}
-                                    </div>
-                                )}
+                            {auth.lastError && (
+                                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                                    {auth.lastError}
+                                </div>
+                            )}
 
+                            <div className="space-y-2">
                                 <Button
                                     className="w-full"
-                                    data-analytics-label="onboarding_email_continue"
-                                    onClick={() => void submitEmail()}
-                                    disabled={!canContinueEmail}
+                                    data-analytics-label="onboarding_login_submit"
+                                    onClick={() => void submitLogin()}
+                                    disabled={!canLogin}
                                 >
-                                    {UI.continue}
+                                    {UI.login}
                                 </Button>
-                            </>
-                        ) : (
-                            <>
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-medium">{UI.email}</label>
-                                    <div className="relative">
-                                        <Input
-                                            value={email}
-                                            onChange={(e) => handleEmailChange(e.target.value)}
-                                            inputMode="email"
-                                            autoCapitalize="none"
-                                            autoCorrect="off"
-                                            placeholder="email@exemple.com"
-                                            className="pr-10"
-                                        />
-                                        <button
-                                            type="button"
-                                            className="absolute inset-y-0 right-1 my-auto flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
-                                            aria-label="Changer l'email"
-                                            data-analytics-label="onboarding_change_email"
-                                            onClick={returnToEmailStep}
-                                        >
-                                            <X className="size-4 shrink-0" aria-hidden />
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <Input
-                                        label={UI.password}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        type="password"
-                                        placeholder="••••••••"
-                                        passwordToggle={{
-                                            showLabel: UI.showPassword,
-                                            hideLabel: UI.hidePassword,
-                                        }}
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        {UI.passwordHint}
-                                    </p>
-                                </div>
-
-                                {auth.lastError && (
-                                    <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                                        {auth.lastError}
-                                    </div>
-                                )}
-
-                                <div className="space-y-2">
-                                    <Button
-                                        className="w-full"
-                                        data-analytics-label="onboarding_login_submit"
-                                        onClick={() => void submitLogin()}
-                                        disabled={!canLogin}
-                                    >
-                                        {UI.login}
-                                    </Button>
-                                </div>
-                            </>
-                        )}
-                    </CardContent>
-                </Card>
+                            </div>
+                        </>
+                    )}
+                </StepCard>
             )}
 
             <div className="flex items-center gap-3 animate-in fade-in-0 duration-500 [animation-delay:80ms]">
@@ -694,15 +688,14 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                 <div className="h-px flex-1 bg-border/60" />
             </div>
 
-            <Card
+            <div
                 className={onboardingEntrance(
-                    "w-full bg-card animate-in fade-in-0 slide-in-from-left-4 duration-400 [animation-delay:120ms]",
+                    "w-full space-y-3 animate-in fade-in-0 slide-in-from-left-4 duration-400 [animation-delay:120ms]",
                 )}
             >
-                <CardHeader>
-                    <CardTitle>{UI.continueWith}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
+                <h2 className="font-one-more text-xl uppercase italic leading-tight sm:text-2xl">
+                    {UI.continueWith}
+                </h2>
                     {auth.lastError && (
                         <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                             {auth.lastError}
@@ -803,8 +796,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                             </span>
                         </Button>
                     )}
-                </CardContent>
-            </Card>
+            </div>
         </Trackable>
     );
 
