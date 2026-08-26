@@ -20,6 +20,7 @@ Pour un typecheck complet du client (hors scope du hook) : `npm run typecheck --
   - déconnexion (session effacée)
   - ajout d'un exercice depuis le catalogue (perf incluse)
   - enregistrement d'une performance sur la fiche exercice
+  - onboarding record (exercice → 1RM → palier → compte)
   - onboarding body (genre) inclus dans `POST /auth/register`
   - onboarding salle temporairement désactivé (pas de gym-wait, home accessible)
   - cloche notifications sur l'accueil (drawer vide)

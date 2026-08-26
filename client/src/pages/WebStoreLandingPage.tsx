@@ -46,7 +46,7 @@ export function WebStoreLandingPage() {
     const oneLink = resolveWebStoreLandingOneLink(pathname);
 
     return (
-        <OnboardingShell>
+        <OnboardingShell variant="cinematic">
             <header className="flex shrink-0 justify-center px-4 pt-4">
                 <img
                     src={logoTextLight}

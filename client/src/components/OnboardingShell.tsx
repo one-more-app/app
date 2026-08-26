@@ -5,7 +5,13 @@ import { cn } from "@/lib/utils";
 const ONBOARDING_VIDEO_POSTER =
     "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 
-export function OnboardingShell({ children }: { children: ReactNode }) {
+type OnboardingShellProps = {
+    children: ReactNode;
+    /** `cinematic` : vidéo + thème sombre (landing store). */
+    variant?: "theme" | "cinematic";
+};
+
+function CinematicOnboardingShell({ children }: { children: ReactNode }) {
     const [videoVisible, setVideoVisible] = useState(false);
 
     return (
@@ -34,6 +40,25 @@ export function OnboardingShell({ children }: { children: ReactNode }) {
             <div className="pointer-events-none absolute bottom-8 -right-20 size-72 animate-pulse rounded-full bg-primary/20 blur-3xl [animation-delay:700ms]" />
             <div className="relative z-10 flex min-h-dvh flex-col safe-padding">
                 {children}
+            </div>
+        </div>
+    );
+}
+
+export function OnboardingShell({
+    children,
+    variant = "theme",
+}: OnboardingShellProps) {
+    if (variant === "cinematic") {
+        return <CinematicOnboardingShell>{children}</CinematicOnboardingShell>;
+    }
+
+    return (
+        <div className="fixed inset-0 overflow-hidden bg-background text-foreground">
+            <div className="flex h-dvh min-h-dvh flex-col safe-padding">
+                <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col [&>*]:flex [&>*]:min-h-0 [&>*]:flex-1 [&>*]:flex-col">
+                    {children}
+                </div>
             </div>
         </div>
     );

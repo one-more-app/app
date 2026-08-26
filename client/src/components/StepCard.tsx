@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
@@ -32,18 +31,23 @@ export function StepCard(props: {
         contentClassName,
     } = props;
 
+    const showChrome =
+        Boolean(onBack) ||
+        Boolean(stepLabel) ||
+        typeof progressPercent === "number";
+
     return (
-        <Card
+        <div
             className={cn(
-                "w-full",
+                "flex min-h-0 w-full flex-1 flex-col",
                 animated &&
                 "animate-in fade-in-0 slide-in-from-bottom-3 duration-300 ease-out [animation-fill-mode:both] motion-reduce:animate-none motion-reduce:opacity-100 motion-reduce:translate-x-0 motion-reduce:translate-y-0",
                 className,
             )}
         >
-            <CardHeader className={cn("space-y-1", headerClassName)}>
-                {onBack || stepLabel ? (
-                    <div className="flex items-center gap-2">
+            <header className={cn("shrink-0 space-y-4", headerClassName)}>
+                {showChrome ? (
+                    <div className="flex items-center gap-3">
                         {onBack ? (
                             <Button
                                 type="button"
@@ -59,28 +63,33 @@ export function StepCard(props: {
                                 <ArrowLeft className="size-5" />
                             </Button>
                         ) : null}
+                        {typeof progressPercent === "number" ? (
+                            <Progress
+                                value={Math.max(0, Math.min(100, progressPercent))}
+                                className="h-1.5 min-w-0 flex-1"
+                            />
+                        ) : null}
                         {stepLabel ? (
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            <p className="shrink-0 text-sm tabular-nums text-muted-foreground">
                                 {stepLabel}
                             </p>
                         ) : null}
                     </div>
                 ) : null}
 
-                {typeof progressPercent === "number" ? (
-                    <Progress
-                        value={Math.max(0, Math.min(100, progressPercent))}
-                        className="h-1.5"
-                    />
-                ) : null}
+                <h1 className="font-one-more text-xl uppercase italic leading-tight sm:text-2xl">
+                    {title}
+                </h1>
+            </header>
 
-                <CardTitle>{title}</CardTitle>
-            </CardHeader>
-
-            <CardContent className={cn("space-y-6 pt-1", contentClassName)}>
+            <div
+                className={cn(
+                    "mt-6 flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto",
+                    contentClassName,
+                )}
+            >
                 {children}
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }
-

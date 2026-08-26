@@ -727,10 +727,27 @@ export const UI = {
   // Onboarding (premier lancement)
   onboardingTitle: "Rejoins le mouvement",
   onboardingDescription: "Pour ceux qui veulent faire une rep de plus.",
+  onboardingRecordTitle: "Commence par un record",
+  onboardingRecordHint:
+    "Choisis un exercice que tu connais bien. On s'en sert pour situer ton niveau tout de suite.",
+  onboardingPerfTitle: "Ton record",
+  onboardingPerfHint: "Entre le poids et les reps de ton meilleur essai.",
+  onboardingOneRmTitle: "Ton 1RM",
+  onboardingOneRmHint:
+    "Une répétition max estimée. Voilà ce que ça donne à différents pourcentages.",
+  onboardingOneRmBodyweightHint:
+    "On calcule ton équivalent lesté avec ton poids de corps.",
+  onboardingOneRmPercentRow: "{percent}% · {kg} kg · ~{reps} reps",
+  onboardingOneRmPercentRowOne: "{percent}% · {kg} kg · 1 rep",
+  onboardingRankTitle: "Ton palier",
+  onboardingRankStart: "Tu démarres à {rank}.",
+  onboardingBeatRecord: "Bats ce record",
+  onboardingRecordSaveError:
+    "Compte créé. Ton record n'a pas pu être sauvé, tu pourras le rentrer après.",
   onboardingBodyTitleGender: "Quel est ton genre ?",
   onboardingBodyTitleWeight: "Quel est ton poids de corps ?",
   onboardingBodyTitleHeight: "Quelle est ta taille ?",
-  onboardingStepIndicator: "Étape {current} sur {total}",
+  onboardingStepIndicator: "{current}/{total}",
   onboardingQuestionGenderHint: "Pour adapter les comparatifs et les ligues.",
   onboardingQuestionWeightHint: "Utilisé pour les paliers et ton classement.",
   onboardingQuestionHeightHint: "Ta taille complète le calcul de profil.",

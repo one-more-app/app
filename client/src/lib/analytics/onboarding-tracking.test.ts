@@ -7,10 +7,22 @@ import {
 } from "./onboarding-tracking";
 
 describe("resolveOnboardingStepFromLocation", () => {
-  it("maps intro, body questions, account and gym query params", () => {
+  it("maps record, body questions, account and gym query params", () => {
     expect(resolveOnboardingStepFromLocation("/onboarding", "")).toBe(
-      OnboardingSteps.INTRO,
+      OnboardingSteps.RECORD_PICK,
     );
+    expect(
+      resolveOnboardingStepFromLocation("/onboarding", "?step=record"),
+    ).toBe(OnboardingSteps.RECORD_PICK);
+    expect(
+      resolveOnboardingStepFromLocation("/onboarding", "?step=perf"),
+    ).toBe(OnboardingSteps.RECORD_PICK);
+    expect(
+      resolveOnboardingStepFromLocation("/onboarding", "?step=1rm"),
+    ).toBe(OnboardingSteps.RECORD_1RM);
+    expect(
+      resolveOnboardingStepFromLocation("/onboarding", "?step=rank"),
+    ).toBe(OnboardingSteps.RANK_REVEAL);
     expect(
       resolveOnboardingStepFromLocation("/onboarding", "?step=body&bodyQ=0"),
     ).toBe(OnboardingSteps.BODY_GENDER);

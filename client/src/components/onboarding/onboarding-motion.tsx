@@ -9,7 +9,6 @@ export const onboardingEntrance = (...classes: (string | false | undefined)[]) =
     );
 
 export const onboardingStepCardClassName = onboardingEntrance(
-    "border-border/60 bg-card/95 shadow-lg",
     "animate-in fade-in-0 slide-in-from-left-4 duration-400",
 );
 
@@ -80,9 +79,8 @@ export function OnboardingStepLayout({
     return (
         <main
             className={cn(
-                "relative z-10 mx-auto w-full max-w-2xl px-4 py-8",
-                centered &&
-                    "flex min-h-[50vh] flex-col items-center justify-center gap-3 py-16",
+                "relative z-10 mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col px-4 pt-3 pb-6",
+                centered && "items-center justify-center gap-3",
                 className,
             )}
         >

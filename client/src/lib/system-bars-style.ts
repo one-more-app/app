@@ -5,7 +5,7 @@ import type { ResolvedTheme } from '@/hooks/use-theme'
 export const IMMERSIVE_FULL_BLEED_ROUTES = new Set(['/onboarding', '/auth', '/event/leaderboard'])
 
 /** Routes immersives fond sombre : icônes et texte de barre système clairs. */
-const IMMERSIVE_DARK_ROUTES = IMMERSIVE_FULL_BLEED_ROUTES
+const IMMERSIVE_DARK_ROUTES = new Set(['/event/leaderboard'])
 
 export function getSystemBarsStyle(
     pathname: string,

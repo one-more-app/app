@@ -43,6 +43,11 @@ const ONBOARDING_POST_AUTH_REDIRECT_KEY =
 /** Draft morpho (genre/poids/taille) saisi avant auth, survit à la purge de session. */
 const PENDING_ONBOARDING_PROFILE_KEY =
   "one-more-pending-onboarding-profile-v1";
+/** Draft premier record saisi avant auth. */
+const PENDING_ONBOARDING_RECORD_KEY =
+  "one-more-pending-onboarding-record-v1";
+const ONBOARDING_RECORD_DESTINATION_KEY =
+  "one-more-onboarding-record-destination-v1";
 const ONBOARDING_GYM_PENDING_KEY = "one-more-onboarding-gym-pending-v1";
 const GYM_ONBOARDING_IN_ZONE_KEY = "one-more-gym-onboarding-in-zone-v1";
 const GYM_ONBOARDING_NAME_KEY = "one-more-gym-onboarding-name-v1";
@@ -582,6 +587,100 @@ export function setPendingOnboardingProfile(
 export function clearPendingOnboardingProfile(): void {
   try {
     localStorage.removeItem(PENDING_ONBOARDING_PROFILE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export type PendingOnboardingRecord = {
+  exerciseId: string;
+  name: string;
+  originalName: string;
+  bodyPart: string;
+  target: string;
+  equipment: string;
+  weight: number;
+  reps: number;
+  clientTrackedId: string;
+  clientPerfId: string;
+};
+
+function isPendingOnboardingRecord(
+  value: unknown,
+): value is PendingOnboardingRecord {
+  if (!value || typeof value !== "object") return false;
+  const draft = value as Record<string, unknown>;
+  return (
+    typeof draft.exerciseId === "string" &&
+    draft.exerciseId.length > 0 &&
+    typeof draft.name === "string" &&
+    typeof draft.originalName === "string" &&
+    typeof draft.bodyPart === "string" &&
+    typeof draft.target === "string" &&
+    typeof draft.equipment === "string" &&
+    typeof draft.weight === "number" &&
+    Number.isFinite(draft.weight) &&
+    typeof draft.reps === "number" &&
+    Number.isFinite(draft.reps) &&
+    draft.reps > 0 &&
+    typeof draft.clientTrackedId === "string" &&
+    typeof draft.clientPerfId === "string"
+  );
+}
+
+export function peekPendingOnboardingRecord(): PendingOnboardingRecord | null {
+  try {
+    const raw = localStorage.getItem(PENDING_ONBOARDING_RECORD_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    return isPendingOnboardingRecord(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setPendingOnboardingRecord(
+  record: PendingOnboardingRecord,
+): void {
+  try {
+    localStorage.setItem(
+      PENDING_ONBOARDING_RECORD_KEY,
+      JSON.stringify(record),
+    );
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+export function clearPendingOnboardingRecord(): void {
+  try {
+    localStorage.removeItem(PENDING_ONBOARDING_RECORD_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export function setOnboardingRecordDestination(path: string): void {
+  try {
+    localStorage.setItem(ONBOARDING_RECORD_DESTINATION_KEY, path);
+  } catch {
+    // ignore
+  }
+}
+
+export function peekOnboardingRecordDestination(): string | null {
+  try {
+    const raw = localStorage.getItem(ONBOARDING_RECORD_DESTINATION_KEY);
+    if (!raw || !raw.startsWith("/")) return null;
+    return raw;
+  } catch {
+    return null;
+  }
+}
+
+export function clearOnboardingRecordDestination(): void {
+  try {
+    localStorage.removeItem(ONBOARDING_RECORD_DESTINATION_KEY);
   } catch {
     // ignore
   }
