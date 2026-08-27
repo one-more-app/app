@@ -107,29 +107,28 @@ function NotificationFeedItemRow({
 export function NotificationFeedControl() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { items, unreadCount, mutate, markRead, markAllRead } =
-    useNotificationFeed();
+  const { items, unreadCount, mutate, markAllRead } = useNotificationFeed();
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
+      if (!next && unreadCount > 0) {
+        void markAllRead();
+      }
       setOpen(next);
       if (next) void mutate();
     },
-    [mutate],
+    [markAllRead, mutate, unreadCount],
   );
 
   const handleSelect = useCallback(
     async (item: NotificationFeedItem) => {
       void hapticImpact();
-      if (!item.readAt) {
-        void markRead([item.id]);
-      }
-      setOpen(false);
+      handleOpenChange(false);
       if (item.route) {
         navigate(item.route);
       }
     },
-    [markRead, navigate],
+    [handleOpenChange, navigate],
   );
 
   const handleMarkAll = useCallback(async () => {

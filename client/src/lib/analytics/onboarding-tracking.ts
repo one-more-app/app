@@ -28,6 +28,7 @@ export const OnboardingSteps = {
   ACCOUNT_REGISTER_USERNAME: "account_register_username",
   ACCOUNT_REGISTER_PASSWORD: "account_register_password",
   ACCOUNT_REGISTER_REFERRAL: "account_register_referral",
+  NOTIFICATIONS: "notifications",
   GYM_QUESTION: "gym_question",
   GYM_LOCATING: "gym_locating",
   GYM_CONFIRM: "gym_confirm",
@@ -113,7 +114,10 @@ export function resolveOnboardingStepFromLocation(
   if (pathname !== "/onboarding") return null;
 
   const rawStep = params.get("step");
-  if (!rawStep || rawStep === "intro" || rawStep === "record") {
+  if (!rawStep || rawStep === "intro") {
+    return OnboardingSteps.INTRO;
+  }
+  if (rawStep === "record") {
     return OnboardingSteps.RECORD_PICK;
   }
   if (rawStep === "perf") return OnboardingSteps.RECORD_PICK;
@@ -126,6 +130,7 @@ export function resolveOnboardingStepFromLocation(
     return OnboardingSteps.BODY_GENDER;
   }
   if (rawStep === "account") return OnboardingSteps.ACCOUNT_EMAIL;
+  if (rawStep === "notifications") return OnboardingSteps.NOTIFICATIONS;
   if (rawStep === "gym") return OnboardingSteps.GYM_QUESTION;
   if (
     rawStep === "gym-permissions" ||

@@ -6,7 +6,6 @@ import {
   loginWithGoogleNative,
 } from "@/lib/oauth-native";
 import {
-  clearPendingOnboardingProfile,
   peekPendingOnboardingProfile,
 } from "@/lib/storage";
 import { App } from "@capacitor/app";
@@ -81,7 +80,6 @@ export async function signInWithGoogle(): Promise<AuthSession> {
     }),
   });
   clearPendingInviteCode();
-  clearPendingOnboardingProfile();
   return session;
 }
 
@@ -105,7 +103,6 @@ export async function signInWithApple(): Promise<AuthSession> {
     }),
   });
   clearPendingInviteCode();
-  clearPendingOnboardingProfile();
   return session;
 }
 
@@ -198,6 +195,5 @@ export async function signInWithOAuth(provider: Provider): Promise<AuthSession> 
     }),
   });
   clearPendingInviteCode();
-  clearPendingOnboardingProfile();
   return session;
 }

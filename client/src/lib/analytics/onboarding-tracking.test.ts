@@ -9,8 +9,11 @@ import {
 describe("resolveOnboardingStepFromLocation", () => {
   it("maps record, body questions, account and gym query params", () => {
     expect(resolveOnboardingStepFromLocation("/onboarding", "")).toBe(
-      OnboardingSteps.RECORD_PICK,
+      OnboardingSteps.INTRO,
     );
+    expect(
+      resolveOnboardingStepFromLocation("/onboarding", "?step=intro"),
+    ).toBe(OnboardingSteps.INTRO);
     expect(
       resolveOnboardingStepFromLocation("/onboarding", "?step=record"),
     ).toBe(OnboardingSteps.RECORD_PICK);
@@ -47,6 +50,12 @@ describe("resolveOnboardingStepFromLocation", () => {
     expect(
       resolveOnboardingStepFromLocation("/onboarding", "?step=gym-wait"),
     ).toBe(OnboardingSteps.GYM_WAIT);
+    expect(
+      resolveOnboardingStepFromLocation(
+        "/onboarding",
+        "?step=notifications",
+      ),
+    ).toBe(OnboardingSteps.NOTIFICATIONS);
     expect(resolveOnboardingStepFromLocation("/auth", "")).toBe(
       OnboardingSteps.ACCOUNT_EMAIL,
     );

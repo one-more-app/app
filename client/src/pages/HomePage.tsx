@@ -1,6 +1,7 @@
 import { BrowsePageTitle, BrowseSectionTitle } from '@/components/exercise-browse-ui'
 import { ExerciseBrowseNavigator } from '@/components/ExerciseBrowseNavigator'
 import { ExerciseCard } from '@/components/ExerciseCard'
+import { HomeNotificationsPrompt } from '@/components/notifications/HomeNotificationsPrompt'
 import { HomeTour } from '@/components/HomeTour'
 import { SessionTimingLabel } from '@/components/session/SessionTimingLabel'
 import { ExerciseCardSkeletonList } from '@/components/skeletons'
@@ -333,6 +334,7 @@ function HomePage() {
                 progressReady={progress != null}
                 hasTodaySection={hasTodaySection}
             />
+            <HomeNotificationsPrompt />
         </div>
     )
 }

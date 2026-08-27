@@ -8,7 +8,7 @@ import {
   setHomeTourComplete,
 } from "@/lib/storage";
 import { UI } from "@/lib/translations";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Step } from "react-joyride";
 
 type HomeTourProps = {
@@ -26,14 +26,17 @@ export function HomeTour({
   progressReady,
   hasTodaySection,
 }: HomeTourProps) {
+  const [tourComplete, setTourComplete] = useState(isHomeTourComplete);
+
   const tourEligible =
     pageReady &&
     progressReady &&
-    !isHomeTourComplete() &&
+    !tourComplete &&
     !isOtherAppTourActive();
 
   const dismissTour = useCallback(() => {
     setHomeTourComplete(true);
+    setTourComplete(true);
   }, []);
 
   const steps = useMemo<Step[]>(() => {

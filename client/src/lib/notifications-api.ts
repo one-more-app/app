@@ -1,5 +1,11 @@
 import { apiFetch } from "@/lib/api";
 
+export type ReminderSlot = {
+  weekday: number;
+  hour: number;
+  minute: number;
+};
+
 export type NotificationPreferences = {
   streakReminders: boolean;
   friendRequests: boolean;
@@ -9,6 +15,10 @@ export type NotificationPreferences = {
   friendTraining: boolean;
   friendRecords: boolean;
   weeklyRecap: boolean;
+  reminderWeekdays: number[];
+  reminderHour: number;
+  reminderMinute: number;
+  reminderSlots: ReminderSlot[];
 };
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
@@ -20,6 +30,10 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   friendTraining: true,
   friendRecords: true,
   weeklyRecap: true,
+  reminderWeekdays: [],
+  reminderHour: 18,
+  reminderMinute: 0,
+  reminderSlots: [],
 };
 
 export function mergeNotificationPreferences(

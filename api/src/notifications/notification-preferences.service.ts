@@ -5,6 +5,11 @@ import type { NotificationPreferencesDto } from './dto/notification-preferences.
 import type { UpdateNotificationPreferencesDto } from './dto/update-preferences.dto.js';
 import { NotificationPreferencesEntity } from './entities/notification-preferences.entity.js';
 import { NotificationType } from './entities/notification-type.enum.js';
+import {
+  normalizeReminderSlots,
+  resolveReminderSlots,
+  type ReminderSlot,
+} from './lib/reminder-slots.js';
 
 @Injectable()
 export class NotificationPreferencesService {
@@ -13,9 +18,23 @@ export class NotificationPreferencesService {
     private readonly repo: Repository<NotificationPreferencesEntity>,
   ) {}
 
+  private syncLegacyColumns(slots: ReminderSlot[]): {
+    reminderWeekdays: number[];
+    reminderHour: number;
+    reminderMinute: number;
+  } {
+    return {
+      reminderWeekdays: slots.map((slot) => slot.weekday),
+      reminderHour: slots[0]?.hour ?? 18,
+      reminderMinute: slots[0]?.minute ?? 0,
+    };
+  }
+
   private toDto(
     entity: NotificationPreferencesEntity,
   ): NotificationPreferencesDto {
+    const reminderSlots = resolveReminderSlots(entity);
+    const legacy = this.syncLegacyColumns(reminderSlots);
     return {
       streakReminders: entity.streakReminders,
       friendRequests: entity.friendRequests,
@@ -25,6 +44,8 @@ export class NotificationPreferencesService {
       friendTraining: entity.friendTraining,
       friendRecords: entity.friendRecords,
       weeklyRecap: entity.weeklyRecap,
+      reminderSlots,
+      ...legacy,
     };
   }
 
@@ -40,26 +61,72 @@ export class NotificationPreferencesService {
     userId: string,
     patch: UpdateNotificationPreferencesDto,
   ): Promise<NotificationPreferencesDto> {
+    const { reminderSlots, reminderWeekdays, reminderHour, reminderMinute, ...rest } =
+      patch;
     const row = await this.repo.findOne({ where: { userId } });
     const entity =
       row ??
       (await this.repo.save(
         this.repo.create({
           userId,
-          ...patch,
+          ...rest,
         }),
       ));
     if (row) {
-      Object.assign(entity, patch);
-      await this.repo.save(entity);
+      Object.assign(entity, rest);
     }
+
+    const hasSlotPatch =
+      reminderSlots !== undefined ||
+      reminderWeekdays !== undefined ||
+      reminderHour !== undefined ||
+      reminderMinute !== undefined;
+    if (hasSlotPatch) {
+      const nextSlots =
+        reminderSlots !== undefined
+          ? normalizeReminderSlots(reminderSlots)
+          : resolveReminderSlots({
+              reminderSlots: entity.reminderSlots,
+              reminderWeekdays: reminderWeekdays ?? entity.reminderWeekdays,
+              reminderHour: reminderHour ?? entity.reminderHour,
+              reminderMinute: reminderMinute ?? entity.reminderMinute,
+            });
+      const legacy = this.syncLegacyColumns(nextSlots);
+      Object.assign(entity, { reminderSlots: nextSlots, ...legacy });
+    }
+
+    await this.repo.save(entity);
     return this.toDto(entity);
+  }
+
+  async listUserIdsDueForTrainingReminder(
+    hour: number,
+    minute: number,
+    weekday: number,
+  ): Promise<string[]> {
+    const rows = await this.repo
+      .createQueryBuilder('p')
+      .select('p.userId', 'userId')
+      .where('p.streakReminders = true')
+      .andWhere(
+        `EXISTS (
+          SELECT 1
+          FROM jsonb_array_elements(p."reminderSlots") AS slot
+          WHERE (slot->>'weekday')::int = :weekday
+            AND (slot->>'hour')::int = :hour
+            AND (slot->>'minute')::int = :minute
+        )`,
+        { weekday, hour, minute },
+      )
+      .getRawMany<{ userId: string }>();
+    return rows.map((row) => row.userId);
   }
 
   async isEnabled(userId: string, type: NotificationType): Promise<boolean> {
     const prefs = await this.getOrCreate(userId);
     switch (type) {
       case NotificationType.StreakAtRisk:
+      case NotificationType.TrainingReminder:
         return prefs.streakReminders;
       case NotificationType.FriendRequest:
         return prefs.friendRequests;

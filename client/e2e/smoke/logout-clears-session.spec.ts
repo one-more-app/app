@@ -17,9 +17,7 @@ test("la déconnexion efface la session locale", async ({ page }) => {
   await page.getByRole("button", { name: "Se déconnecter" }).click();
 
   await expect(page).toHaveURL(/#\/auth/, { timeout: 10_000 });
-  await expect(
-    page.getByText("Connectez-vous ou créez un compte"),
-  ).toBeVisible();
+  await expect(page.getByText("Content de te revoir.")).toBeVisible();
 
   const storedSession = await page.evaluate((key) => localStorage.getItem(key), AUTH_STORAGE_KEY);
   expect(storedSession).toBeNull();

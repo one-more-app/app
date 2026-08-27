@@ -19,7 +19,8 @@ import { clearPendingInviteCode, peekPendingInviteCode } from "@/lib/invite-code
 import { upsertUserAppsFlyerAttribution } from "@/lib/attribution-api";
 import { purgeUserScopedClientState } from "@/lib/purge-user-scoped-state";
 import {
-  clearPendingOnboardingProfile,
+  applyPendingOnboardingProfileAfterAuth,
+  clearOnboardingDraftsAndSession,
   peekPendingOnboardingProfile,
 } from "@/lib/storage";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -75,9 +76,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const applySession = useCallback((session: AuthSession) => {
     const current = stateRef.current;
+    const switchingAuthenticatedUser =
+      current.status === "authenticated" &&
+      current.user?.id != null &&
+      current.user.id !== session.user.id;
     const switchingUser =
-      current.status === "anonymous" ||
-      (current.user?.id != null && current.user.id !== session.user.id);
+      current.status === "anonymous" || switchingAuthenticatedUser;
+    if (switchingAuthenticatedUser) {
+      clearOnboardingDraftsAndSession();
+    }
     if (switchingUser) {
       purgeUserScopedClientState(cache);
     }
@@ -163,8 +170,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           gender: bodyProfile?.gender,
         });
         applySession(session);
+        applyPendingOnboardingProfileAfterAuth(true);
         clearPendingInviteCode();
-        clearPendingOnboardingProfile();
         trackAuthSuccess({ method: "email", isNewUser: true });
       } catch (e) {
         setLastError(normalizeError(e));
@@ -179,6 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const session = await loginWithEmail({ email, password });
       applySession(session);
+      applyPendingOnboardingProfileAfterAuth(false);
       trackAuthSuccess({ method: "email", isNewUser: false });
     } catch (e) {
       setLastError(normalizeError(e));
@@ -214,6 +222,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // si le backend est indisponible, on supprime quand même localement
     } finally {
+      clearOnboardingDraftsAndSession();
       clearSession();
     }
   }, [clearError, clearSession]);

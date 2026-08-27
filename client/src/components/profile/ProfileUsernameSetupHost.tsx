@@ -4,11 +4,17 @@ import { useUserProfileData } from "@/hooks/use-api-data";
 import { fetchTrackedExercises } from "@/lib/data-api";
 import { hasVisibleTrackedExercise } from "@/lib/post-auth-navigation";
 import {
+  isExerciseCatalogTourComplete,
+  isExerciseDetailTourComplete,
   isOnboardingFirstExercisePending,
   isOnboardingTourComplete,
-  setOnboardingTourComplete,
+  isRestCounterTourComplete,
+  subscribeExerciseCatalogTourComplete,
+  subscribeExerciseDetailTourComplete,
+  subscribeRestCounterTourComplete,
 } from "@/lib/storage";
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 /** Survit aux remontages React Strict Mode pour éviter le double flash. */
 type UsernamePromptLatch = {
@@ -30,6 +36,21 @@ function syncPromptLatchUser(userId: string | null): void {
   promptLatch.tourAllowsPrompt = null;
 }
 
+function isPageFirstTimeTourPending(pathname: string): boolean {
+  if (pathname === "/exercises") {
+    return !isExerciseCatalogTourComplete();
+  }
+  if (pathname.startsWith("/exercise/")) {
+    if (!isExerciseDetailTourComplete()) return true;
+    return (
+      !isRestCounterTourComplete() &&
+      typeof document !== "undefined" &&
+      Boolean(document.querySelector('[data-tour="rest-counter"]'))
+    );
+  }
+  return false;
+}
+
 function resolveTourGateSync(): boolean {
   if (promptLatch.tourAllowsPrompt !== null) {
     return promptLatch.tourAllowsPrompt;
@@ -48,11 +69,15 @@ function resolveTourGateSync(): boolean {
 /** Modal pseudo obligatoire sur toute l'app une fois le tutoriel terminé. */
 export function ProfileUsernameSetupHost() {
   const auth = useAuth();
+  const location = useLocation();
   const userId = auth.user?.id ?? null;
   syncPromptLatchUser(userId);
 
   const { data: profile, isValidating } = useUserProfileData();
   const [gateVersion, setGateVersion] = useState(0);
+  const [pageTourPending, setPageTourPending] = useState(() =>
+    isPageFirstTimeTourPending(location.pathname),
+  );
   const tourFetchStartedRef = useRef(false);
 
   const isAuthenticated = auth.status === "authenticated";
@@ -87,7 +112,6 @@ export function ProfileUsernameSetupHost() {
         const tracked = await fetchTrackedExercises();
         if (cancelled || promptLatch.tourAllowsPrompt !== null) return;
         const allows = hasVisibleTrackedExercise(tracked);
-        if (allows) setOnboardingTourComplete(true);
         promptLatch.tourAllowsPrompt = allows;
         setGateVersion((v) => v + 1);
       } catch {
@@ -105,11 +129,27 @@ export function ProfileUsernameSetupHost() {
     };
   }, [isAuthenticated, hasUsername, gateVersion]);
 
+  useEffect(() => {
+    const sync = () => {
+      setPageTourPending(isPageFirstTimeTourPending(location.pathname));
+    };
+    sync();
+    const unsubCatalog = subscribeExerciseCatalogTourComplete(sync);
+    const unsubDetail = subscribeExerciseDetailTourComplete(sync);
+    const unsubRest = subscribeRestCounterTourComplete(sync);
+    return () => {
+      unsubCatalog();
+      unsubDetail();
+      unsubRest();
+    };
+  }, [location.pathname]);
+
   const showUsernameSetup =
     isAuthenticated &&
     promptLatch.profileSettled &&
     !hasUsername &&
-    promptLatch.tourAllowsPrompt === true;
+    promptLatch.tourAllowsPrompt === true &&
+    !pageTourPending;
 
   if (!showUsernameSetup) return null;
 

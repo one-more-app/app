@@ -1,5 +1,13 @@
+import { ReminderScheduleFields } from "@/components/notifications/ReminderScheduleFields";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -10,15 +18,25 @@ import {
     type NotificationPreferences,
 } from "@/lib/notifications-api";
 import { requestPushPermission } from "@/lib/push-notifications";
+import {
+    DEFAULT_REMINDER_SLOTS,
+    formatReminderSchedule,
+    reminderSlotsFromPrefs,
+    type ReminderSlot,
+} from "@/lib/reminder-schedule";
 import { UI } from "@/lib/translations";
 import { Capacitor } from "@capacitor/core";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 
-type PrefKey = keyof NotificationPreferences;
+type ToggleKey = Exclude<
+    keyof NotificationPreferences,
+    "reminderWeekdays" | "reminderHour" | "reminderMinute" | "reminderSlots"
+>;
+type BusyKey = ToggleKey | "reminderSchedule";
 
-const TOGGLE_ITEMS: Array<{ key: PrefKey; label: string }> = [
+const TOGGLE_ITEMS: Array<{ key: ToggleKey; label: string }> = [
     { key: "streakReminders", label: UI.notifPrefStreak },
     { key: "friendRequests", label: UI.notifPrefFriendRequests },
     { key: "friendAccepted", label: UI.notifPrefFriendAccepted },
@@ -62,11 +80,17 @@ export function NotificationSettingsCard() {
         "notification-preferences",
         fetchNotificationPreferences,
     );
-    const [busyKey, setBusyKey] = useState<PrefKey | null>(null);
+    const [busyKey, setBusyKey] = useState<BusyKey | null>(null);
+    const [scheduleOpen, setScheduleOpen] = useState(false);
+    const [draftSlots, setDraftSlots] = useState<ReminderSlot[]>(DEFAULT_REMINDER_SLOTS);
     const isNative = Capacitor.isNativePlatform();
+    const streakOn =
+        data?.streakReminders ?? DEFAULT_NOTIFICATION_PREFERENCES.streakReminders;
+    const savedSlots = reminderSlotsFromPrefs(data ?? {});
+    const savedSummary = formatReminderSchedule(savedSlots);
 
     const handleToggle = useCallback(
-        async (key: PrefKey, next: boolean) => {
+        async (key: ToggleKey, next: boolean) => {
             setBusyKey(key);
             try {
                 await mutate(
@@ -89,6 +113,41 @@ export function NotificationSettingsCard() {
         },
         [mutate],
     );
+
+    const openSchedule = () => {
+        setDraftSlots(savedSlots);
+        setScheduleOpen(true);
+    };
+
+    const handleScheduleSave = async () => {
+        if (busyKey === "reminderSchedule") return;
+        setBusyKey("reminderSchedule");
+        try {
+            await mutate(
+                async (current) => {
+                    const updated = await updateNotificationPreferences({
+                        streakReminders: true,
+                        reminderSlots: draftSlots,
+                    });
+                    return mergeNotificationPreferences(current, updated);
+                },
+                {
+                    optimisticData: (current) =>
+                        mergeNotificationPreferences(current, {
+                            streakReminders: true,
+                            reminderSlots: draftSlots,
+                        }),
+                    rollbackOnError: true,
+                    revalidate: false,
+                },
+            );
+            setScheduleOpen(false);
+        } catch {
+            toast.error(UI.notifPrefSaveError);
+        } finally {
+            setBusyKey(null);
+        }
+    };
 
     useEffect(() => {
         if (!isNative) return;
@@ -124,21 +183,72 @@ export function NotificationSettingsCard() {
                     <p className="text-sm text-muted-foreground">{UI.loading}</p>
                 ) : (
                     TOGGLE_ITEMS.map((item) => (
-                        <NotificationToggle
-                            key={item.key}
-                            id={`notif-${item.key}`}
-                            label={item.label}
-                            checked={
-                                data?.[item.key] ?? DEFAULT_NOTIFICATION_PREFERENCES[item.key]
-                            }
-                            disabled={busyKey === item.key}
-                            onChange={(next) => {
-                                void handleToggle(item.key, next);
-                            }}
-                        />
+                        <div key={item.key} className="space-y-2">
+                            <NotificationToggle
+                                id={`notif-${item.key}`}
+                                label={item.label}
+                                checked={
+                                    data?.[item.key] ??
+                                    DEFAULT_NOTIFICATION_PREFERENCES[item.key]
+                                }
+                                disabled={busyKey === item.key}
+                                onChange={(next) => {
+                                    void handleToggle(item.key, next);
+                                }}
+                            />
+                            {item.key === "streakReminders" && streakOn ? (
+                                <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-3">
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-medium">
+                                            {UI.notifPrefReminderSchedule}
+                                        </p>
+                                        <p className="truncate text-sm text-muted-foreground">
+                                            {savedSummary || UI.notifPrefReminderNone}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="shrink-0"
+                                        data-analytics-label="reminder_schedule_edit"
+                                        onClick={openSchedule}
+                                    >
+                                        {UI.notifPrefReminderEdit}
+                                    </Button>
+                                </div>
+                            ) : null}
+                        </div>
                     ))
                 )}
             </CardContent>
+
+            <Dialog
+                open={scheduleOpen}
+                onOpenChange={setScheduleOpen}
+                data-analytics-label="reminder_schedule"
+            >
+                <DialogContent className="sm:max-w-md" showCloseButton>
+                    <DialogHeader>
+                        <DialogTitle>{UI.notifPrefReminderSchedule}</DialogTitle>
+                    </DialogHeader>
+                    <ReminderScheduleFields
+                        slots={draftSlots}
+                        onChange={setDraftSlots}
+                        disabled={busyKey === "reminderSchedule"}
+                    />
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            className="w-full"
+                            disabled={busyKey === "reminderSchedule"}
+                            onClick={() => void handleScheduleSave()}
+                        >
+                            {UI.save}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Card>
     );
 }

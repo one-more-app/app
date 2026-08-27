@@ -8,23 +8,19 @@ import {
   waitForRestCounterTourSpotlightReady,
 } from "@/lib/rest-counter-tour-spotlight";
 import {
-  isOnboardingFirstExercisePending,
-  isOnboardingTourComplete,
+  isExerciseDetailTourComplete,
   isRestCounterTourComplete,
   setRestCounterTourComplete,
+  subscribeExerciseDetailTourComplete,
 } from "@/lib/storage";
 import { UI } from "@/lib/translations";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { EVENTS, type EventData, type Step } from "react-joyride";
 
 type RestCounterTourProps = {
   /** La barre repos est visible à l'écran. */
   barVisible: boolean;
 };
-
-function isOtherAppTourActive(): boolean {
-  return isOnboardingFirstExercisePending() && !isOnboardingTourComplete();
-}
 
 function endTourQuickEditStep2(): void {
   stopRestCounterTourSpotlightSync();
@@ -37,8 +33,17 @@ const REST_COUNTER_TOUR_TARGETS = [
 ] as const;
 
 export function RestCounterTour({ barVisible }: RestCounterTourProps) {
+  const [detailTourComplete, setDetailTourComplete] = useState(
+    isExerciseDetailTourComplete,
+  );
+  useEffect(() => {
+    return subscribeExerciseDetailTourComplete(() => {
+      setDetailTourComplete(isExerciseDetailTourComplete());
+    });
+  }, []);
+
   const tourEligible =
-    barVisible && !isRestCounterTourComplete() && !isOtherAppTourActive();
+    barVisible && !isRestCounterTourComplete() && detailTourComplete;
   const domReady = useTourDomReady(tourEligible, REST_COUNTER_TOUR_TARGETS);
 
   const dismissTour = useCallback(() => {

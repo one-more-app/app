@@ -314,6 +314,36 @@ export async function mockCoreAuthenticatedApi(
     await route.fallback();
   });
 
+  await page.route("**/notifications/preferences**", async (route) => {
+    const method = route.request().method();
+    if (method === "GET" || method === "PATCH") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          streakReminders: true,
+          friendRequests: true,
+          friendAccepted: true,
+          messages: true,
+          sessionComments: true,
+          friendTraining: true,
+          friendRecords: true,
+          weeklyRecap: true,
+          reminderWeekdays: [1, 3, 5],
+          reminderHour: 18,
+          reminderMinute: 0,
+          reminderSlots: [
+            { weekday: 1, hour: 18, minute: 0 },
+            { weekday: 3, hour: 18, minute: 0 },
+            { weekday: 5, hour: 18, minute: 0 },
+          ],
+        }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+
   await page.route("**/me/access**", async (route) => {
     await route.fulfill({
       status: 200,

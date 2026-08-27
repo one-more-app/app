@@ -42,6 +42,18 @@ export class NotificationPreferencesEntity {
   @Column({ type: 'boolean', default: true })
   weeklyRecap!: boolean;
 
+  @Column({ type: 'smallint', array: true, default: () => "'{}'" })
+  reminderWeekdays!: number[];
+
+  @Column({ type: 'smallint', default: 18 })
+  reminderHour!: number;
+
+  @Column({ type: 'smallint', default: 0 })
+  reminderMinute!: number;
+
+  @Column({ type: 'jsonb', default: () => "'[]'::jsonb" })
+  reminderSlots!: Array<{ weekday: number; hour: number; minute: number }>;
+
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 }

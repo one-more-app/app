@@ -45,9 +45,11 @@ import { getJoyrideScrollOffset, getJoyrideShiftPadding } from '@/lib/joyride-co
 import {
     addTrackedExerciseAndWait,
     getPersonalBest,
+    isExerciseCatalogTourComplete,
     isOnboardingFirstExercisePending,
     isOnboardingTourComplete,
     savePerformanceAndWait,
+    setExerciseCatalogTourComplete,
     setOnboardingFirstExercisePending,
 } from '@/lib/storage'
 import {
@@ -71,7 +73,9 @@ export function ExerciseListPage() {
     const navigate = useNavigate()
     const { resolvedTheme } = useTheme()
     const refreshAfterPerfChange = usePerformanceDataRefresh()
-    const [firstExerciseTourDismissed, setFirstExerciseTourDismissed] = useState(false)
+    const [catalogTourComplete, setCatalogTourComplete] = useState(
+        isExerciseCatalogTourComplete,
+    )
     const { exercises: tracked, addExercise } = useTrackedExercises()
     const [targets, setTargets] = useState<string[]>([])
     const [equipmentOptions, setEquipmentOptions] = useState<string[]>([])
@@ -101,34 +105,34 @@ export function ExerciseListPage() {
         },
         [canAddExercise, openReferralDrawer],
     )
-    const firstExerciseTourActive =
-        isOnboardingFirstExercisePending() &&
-        !isOnboardingTourComplete() &&
-        !firstExerciseTourDismissed
+    const onboardingFirstExerciseFlow =
+        isOnboardingFirstExercisePending() && !isOnboardingTourComplete()
+    const catalogTourActive = !catalogTourComplete
     useOnboardingStepViewed(
-        firstExerciseTourActive ? OnboardingSteps.FIRST_EXERCISE : null,
+        onboardingFirstExerciseFlow ? OnboardingSteps.FIRST_EXERCISE : null,
     )
 
-    const stopFirstExerciseTour = useCallback(() => {
-        setFirstExerciseTourDismissed(true)
+    const completeCatalogTour = useCallback(() => {
+        setExerciseCatalogTourComplete(true)
+        setCatalogTourComplete(true)
     }, [])
 
     const handleFirstExerciseJoyrideEvent = useCallback(
         (data: EventData) => {
             if (data.type === EVENTS.TOUR_END) {
-                stopFirstExerciseTour()
+                completeCatalogTour()
             }
         },
-        [stopFirstExerciseTour],
+        [completeCatalogTour],
     )
 
     useEffect(() => {
-        if (!firstExerciseTourActive) return
+        if (!catalogTourActive) return
         const viewport = document.querySelector('.app-scroll-viewport')
         if (viewport instanceof HTMLElement) {
             viewport.scrollTop = 0
         }
-    }, [firstExerciseTourActive])
+    }, [catalogTourActive])
 
     const trackedIds = new Set(
         tracked.map((e) => (e.isCustom ? e.exerciseId : `api-${e.exerciseId}`))
@@ -223,7 +227,6 @@ export function ExerciseListPage() {
                 reason: 'dismissed',
             })
             setOnboardingFirstExercisePending(false)
-            stopFirstExerciseTour()
             navigate('/home', { replace: true })
             return
         }
@@ -234,7 +237,6 @@ export function ExerciseListPage() {
         goBackInBrowse,
         navigateBack,
         navigate,
-        stopFirstExerciseTour,
     ])
 
     const firstExerciseOnboardingSteps = useMemo<Step[]>(() => {
@@ -268,11 +270,11 @@ export function ExerciseListPage() {
         [firstExerciseOnboardingSteps],
     )
     const firstExerciseTourDomReady = useTourDomReady(
-        firstExerciseTourActive && catalogContentReady,
+        catalogTourActive && catalogContentReady,
         firstExerciseTourTargets,
     )
     const firstExerciseTourRun =
-        firstExerciseTourActive &&
+        catalogTourActive &&
         catalogContentReady &&
         firstExerciseTourDomReady
 
@@ -418,7 +420,7 @@ export function ExerciseListPage() {
                 t: Date.now(),
             })
             setAddWithPerfExercise(null)
-            stopFirstExerciseTour()
+            completeCatalogTour()
             if (isOnboardingFirstExercisePending()) {
                 trackOnboardingStepCompleted({
                     step: OnboardingSteps.FIRST_EXERCISE,
@@ -549,9 +551,9 @@ export function ExerciseListPage() {
 
     return (
         <Trackable
-            section={firstExerciseTourActive ? 'onboarding' : 'exercises'}
+            section={onboardingFirstExerciseFlow ? 'onboarding' : 'exercises'}
             feature={
-                firstExerciseTourActive
+                onboardingFirstExerciseFlow
                     ? OnboardingSteps.FIRST_EXERCISE
                     : 'catalog'
             }

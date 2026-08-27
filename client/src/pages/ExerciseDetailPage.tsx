@@ -23,6 +23,7 @@ import {
     useHomeExercisesData,
     usePerformanceDataRefresh,
     useTrackedDataRefresh,
+    useUserProfileData,
 } from '@/hooks/use-api-data'
 import { useCelebrationQueueActive } from '@/hooks/use-celebration-queue-active'
 import { useExercisePresence } from '@/hooks/use-exercise-presence'
@@ -49,14 +50,17 @@ import { notifyPerfMilestones } from '@/lib/perf-notifications'
 import {
     getPersonalBest,
     getTrackedExerciseById,
+    getUserProfile,
+    hasPersistedUserProfile,
+    isExerciseDetailTourComplete,
     isOnboardingFirstExercisePending,
-    isOnboardingTourComplete,
     removeTrackedExerciseAndWait,
+    setExerciseDetailTourComplete,
     setOnboardingFirstExercisePending,
     setOnboardingTourComplete,
     updateTrackedExerciseAndWait,
 } from '@/lib/storage'
-import { isDumbbellExercise } from '@/lib/strength-standards'
+import { getLeagueInfo, isDumbbellExercise, type LeagueInfo } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
 import { notifyXpGrants } from '@/lib/xp-notifications'
 import type { PerformanceEntry } from '@/types'
@@ -121,11 +125,32 @@ export function ExerciseDetailPage() {
         updatePerformance,
         refresh,
     } = usePerformance(id ?? null)
+    const { data: profile } = useUserProfileData()
     const latestGlobalPerf = useLatestGlobalPerf()
     const { enabled: restTimerEnabled, setEnabled: setRestTimerEnabled } =
         useRestTimerEnabled()
-    const leagueInfo =
-        exercise && 'league' in exercise ? exercise.league ?? null : null
+    const leagueFromApi: LeagueInfo | null =
+        exercise != null && 'league' in exercise
+            ? ((exercise as { league?: LeagueInfo | null }).league ?? null)
+            : null
+    const leagueInfo = useMemo((): LeagueInfo | null => {
+        if (leagueFromApi) return leagueFromApi
+        if (!exercise || !personalBest) return null
+        const body =
+            profile ?? (hasPersistedUserProfile() ? getUserProfile() : null)
+        if (!body) return null
+        return getLeagueInfo({
+            weight: personalBest.weight,
+            reps: personalBest.reps,
+            bodyWeightKg: body.weightKg,
+            gender: body.gender,
+            exerciseName: exercise.originalName ?? exercise.name,
+            exerciseMetadata: {
+                equipment: exercise.equipment,
+                target: exercise.target,
+            },
+        })
+    }, [leagueFromApi, exercise, personalBest, profile])
     const { data: allTiers } = useSWR(
         detailHeavyReady && id && exercise && !exercise.isCustom
             ? ['exercise-tiers', id]
@@ -148,11 +173,15 @@ export function ExerciseDetailPage() {
     }, [id])
 
     const onboardingFirstExercisePending = isOnboardingFirstExercisePending()
-    const onboardingTourActive =
-        onboardingFirstExercisePending && !isOnboardingTourComplete()
-    const tourReady = onboardingTourActive && !celebrationBlocking
+    const [detailTourComplete, setDetailTourComplete] = useState(
+        isExerciseDetailTourComplete,
+    )
+    const detailTourActive = !detailTourComplete
+    const tourReady = detailTourActive && !celebrationBlocking
 
-    const finishOnboardingTour = useCallback(() => {
+    const finishDetailTour = useCallback(() => {
+        setExerciseDetailTourComplete(true)
+        setDetailTourComplete(true)
         setOnboardingTourComplete(true)
         if (onboardingFirstExercisePending) {
             setOnboardingFirstExercisePending(false)
@@ -163,10 +192,10 @@ export function ExerciseDetailPage() {
     const handleJoyrideEvent = useCallback(
         (data: EventData) => {
             if (data.type === EVENTS.TOUR_END) {
-                finishOnboardingTour()
+                finishDetailTour()
             }
         },
-        [finishOnboardingTour],
+        [finishDetailTour],
     )
 
     const [sessionDrawer, setSessionDrawer] = useState<

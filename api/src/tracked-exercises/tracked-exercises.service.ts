@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
+import { ExerciseCatalogEntity } from '../exercises/exercise-catalog.entity.js';
 import { PerformanceEntryEntity } from '../performance/performance-entry.entity.js';
 import { LeagueService } from '../league/league.service.js';
 import { AccessService } from '../social/access.service.js';
@@ -10,6 +11,21 @@ import type {
   UpdateTrackedExerciseDto,
 } from './tracked-exercises.dto.js';
 
+type MappedTrackedExercise = {
+  id: string;
+  exerciseId: string;
+  name: string;
+  originalName: string | null;
+  bodyPart: string | null;
+  target: string | null;
+  equipment: string | null;
+  category: string | null;
+  gifUrl: string | null;
+  isCustom: boolean;
+  updatedAt: string;
+  deletedAt: string | null;
+};
+
 @Injectable()
 export class TrackedExercisesService {
   constructor(
@@ -17,6 +33,8 @@ export class TrackedExercisesService {
     private readonly trackedRepo: Repository<TrackedExerciseEntity>,
     @InjectRepository(PerformanceEntryEntity)
     private readonly perfRepo: Repository<PerformanceEntryEntity>,
+    @InjectRepository(ExerciseCatalogEntity)
+    private readonly catalogRepo: Repository<ExerciseCatalogEntity>,
     private readonly accessService: AccessService,
     private readonly leagueService: LeagueService,
   ) {}
@@ -36,6 +54,35 @@ export class TrackedExercisesService {
       updatedAt: entity.updatedAt.toISOString(),
       deletedAt: entity.deletedAt ? entity.deletedAt.toISOString() : null,
     };
+  }
+
+  private async enrichCatalogMedia<T extends MappedTrackedExercise>(
+    items: T[],
+  ): Promise<T[]> {
+    const missingIds = [
+      ...new Set(
+        items
+          .filter((item) => !item.isCustom && !item.gifUrl)
+          .map((item) => item.exerciseId),
+      ),
+    ];
+    if (missingIds.length === 0) return items;
+
+    const catalogRows = await this.catalogRepo.find({
+      where: { exerciseId: In(missingIds) },
+      select: { exerciseId: true, gifUrl: true },
+    });
+    const gifByExerciseId = new Map(
+      catalogRows
+        .filter((row) => row.gifUrl)
+        .map((row) => [row.exerciseId, row.gifUrl as string]),
+    );
+
+    return items.map((item) => {
+      if (item.isCustom || item.gifUrl) return item;
+      const gifUrl = gifByExerciseId.get(item.exerciseId);
+      return gifUrl ? { ...item, gifUrl } : item;
+    });
   }
 
   private mapPerformance(
@@ -62,7 +109,7 @@ export class TrackedExercisesService {
       },
       order: { updatedAt: 'DESC' },
     });
-    return list.map((e) => this.mapTrackedExercise(e));
+    return this.enrichCatalogMedia(list.map((e) => this.mapTrackedExercise(e)));
   }
 
   async listWithPerformance(userId: string) {
@@ -125,13 +172,24 @@ export class TrackedExercisesService {
       };
     });
 
-    return this.leagueService.attachLeagueToExercises(rows, profile);
+    const hydrated = await this.enrichCatalogMedia(rows);
+    return this.leagueService.attachLeagueToExercises(hydrated, profile);
   }
 
   async create(userId: string, body: CreateTrackedExerciseDto) {
     const isNew = await this.accessService.isNewActiveExercise(userId, body.id);
     if (isNew) {
       await this.accessService.assertCanAddExercise(userId);
+    }
+
+    const isCustom = body.isCustom ?? body.exerciseId.startsWith('custom-');
+    let gifUrl = body.gifUrl ?? null;
+    if (!isCustom && !gifUrl) {
+      const catalog = await this.catalogRepo.findOne({
+        where: { exerciseId: body.exerciseId },
+        select: { gifUrl: true },
+      });
+      gifUrl = catalog?.gifUrl ?? null;
     }
 
     await this.trackedRepo.upsert(
@@ -145,8 +203,8 @@ export class TrackedExercisesService {
         target: body.target ?? null,
         equipment: body.equipment ?? null,
         category: body.category ?? null,
-        gifUrl: body.gifUrl ?? null,
-        isCustom: body.isCustom ?? body.exerciseId.startsWith('custom-'),
+        gifUrl,
+        isCustom,
         deletedAt: null,
       },
       ['userId', 'clientId'],
