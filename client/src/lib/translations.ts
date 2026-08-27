@@ -686,10 +686,23 @@ export const UI = {
   accountSyncDescription:
     "Connecte-toi pour associer tes données à ton compte et les retrouver depuis l’app.",
   backToSettings: "Retour",
-  connectOrCreateAccount: "Connectez-vous ou créez un compte",
-  createAccount: "Créer un compte",
+  connectOrCreateAccount: "Garde ta progression",
+  authSaveProgressTitle: "Garde ta progression",
+  authSaveProgressDescription:
+    "Ton palier, ton record et ton historique sont prêts. Crée ton compte pour ne rien perdre et voir chaque PR te faire grimper dans ta ligue.",
+  authSaveProgressDescriptionStandalone:
+    "Crée ton compte ou connecte-toi pour retrouver tes records sur tous tes appareils.",
+  authLoginTitle: "Content de te revoir.",
+  authLoginDescription:
+    "Connecte-toi pour retrouver tes records et ta progression.",
+  createAccount: "Créer mon compte",
+  joinCta: "Rejoindre",
   login: "Se connecter",
   email: "Email",
+  authLegalBefore: "En continuant, tu acceptes les",
+  authTermsOfUse: "conditions d'utilisation",
+  authLegalAnd: "et la",
+  authPrivacyPolicy: "politique de confidentialité",
   firstNameTitle: "Quel est ton prénom ?",
   firstName: "Prénom",
   lastNameTitle: "Quel est ton nom de famille ?",
@@ -725,30 +738,84 @@ export const UI = {
   settingsBuildApi: "API",
 
   // Onboarding (premier lancement)
-  onboardingTitle: "Rejoins le mouvement",
-  onboardingDescription: "Pour ceux qui veulent faire une rep de plus.",
-  onboardingRecordTitle: "Commence par un record",
+  onboardingTitle: "Bats tes records. Prouve-le.",
+  onboardingTitleLine1: "Bats tes records.",
+  onboardingTitleLine2: "Prouve-le.",
+  onboardingDescription:
+    "Le carnet des athlètes qui traquent chaque PR. Note ta série en 3 secondes, vois ta progression, situe-toi contre les tiens. Zéro coaching IA : toi, tes chiffres, ta force.",
+  onboardingCta: "Établir mon premier record",
+  onboardingRecordTitle: "On commence par quel record ?",
   onboardingRecordHint:
-    "Choisis un exercice que tu connais bien. On s'en sert pour situer ton niveau tout de suite.",
-  onboardingPerfTitle: "Ton record",
+    "Choisis un mouvement et entre ta meilleure perf. On s'occupe du reste.",
+  onboardingRecordMicro:
+    "Ta série la plus lourde suffit. Tu ajouteras tes autres mouvements après.",
+  onboardingPerfTitle: "Rentre ton record",
   onboardingPerfHint: "Entre le poids et les reps de ton meilleur essai.",
   onboardingOneRmTitle: "Ton 1RM",
   onboardingOneRmHint:
-    "Une répétition max estimée. Voilà ce que ça donne à différents pourcentages.",
+    "Le 1RM (une répétition max), c’est le poids le plus lourd que tu pourrais soulever une seule fois. On l’estime à partir de ta série : {weight} kg × {reps} reps.",
   onboardingOneRmBodyweightHint:
-    "On calcule ton équivalent lesté avec ton poids de corps.",
-  onboardingOneRmPercentRow: "{percent}% · {kg} kg · ~{reps} reps",
-  onboardingOneRmPercentRowOne: "{percent}% · {kg} kg · 1 rep",
+    "Pour un exo au poids du corps, le 1RM affiché est uniquement le lest estimé (en plus de ton poids), à partir de ta série : {reps} reps{addedPart}.",
+  onboardingOneRmTableCaption:
+    "Voici les charges à différents pourcentages de ton max :",
   onboardingRankTitle: "Ton palier",
-  onboardingRankStart: "Tu démarres à {rank}.",
+  onboardingRankYouAre: "Tu es {rank}.",
+  onboardingRankGap: "Il te manque {kg} kg pour passer {next}",
+  onboardingRankUpcoming: "Les paliers suivants t'attendent",
   onboardingBeatRecord: "Bats ce record",
+  onboardingSaveAccountCta: "Créer mon compte et sauvegarder",
+  onboardingAccountLossHint:
+    "Sans compte, ton palier et tes données ne seront pas sauvegardés.",
+  onboardingNotificationsTitle: "Quand tu t'entraînes ?",
+  onboardingNotificationsBody:
+    "Coche tes jours, puis règle l'heure de chacun. On t'envoie une notif pile à ce moment-là.",
+  onboardingNotificationsDaysLabel: "Tes jours",
+  onboardingNotificationsTimeLabel: "L'heure",
+  onboardingNotificationsTimeForDay: "Heure du {day}",
+  onboardingNotificationsDayTimeHint:
+    "Touche un jour pour régler son heure. Retouche-le pour le retirer.",
+  hourPickerHourColumn: "h",
+  hourPickerMinuteColumn: "min",
+  onboardingNotificationsNeedDay: "Choisis au moins un jour",
+  onboardingNotificationsCta: "Activer les notifications",
+  weekdayMon: "Lun",
+  weekdayTue: "Mar",
+  weekdayWed: "Mer",
+  weekdayThu: "Jeu",
+  weekdayFri: "Ven",
+  weekdaySat: "Sam",
+  weekdaySun: "Dim",
+  weekdayMonday: "lundi",
+  weekdayTuesday: "mardi",
+  weekdayWednesday: "mercredi",
+  weekdayThursday: "jeudi",
+  weekdayFriday: "vendredi",
+  weekdaySaturday: "samedi",
+  weekdaySunday: "dimanche",
+  reminderScheduleEveryDay: "Tous les jours à {time}",
+  reminderScheduleWeekdays: "En semaine à {time}",
+  reminderScheduleOneDay: "Tous les {day}s à {time}",
+  reminderScheduleManyDays: "Tous les {days} à {time}",
+  reminderScheduleAnd: " et ",
+  notifPrefReminderSchedule: "Tes jours d'entraînement",
+  notifPrefReminderEdit: "Modifier",
+  notifPrefReminderNone: "Aucun jour — pas de rappel d'entraînement",
+  notifPrefReminderClear: "Tout décocher",
   onboardingRecordSaveError:
     "Compte créé. Ton record n'a pas pu être sauvé, tu pourras le rentrer après.",
-  onboardingBodyTitleGender: "Quel est ton genre ?",
+  onboardingBodyTitleGender: "Tu t'entraînes en tant que…",
+  onboardingBodyTitleBuild: "Ton gabarit",
   onboardingBodyTitleWeight: "Quel est ton poids de corps ?",
   onboardingBodyTitleHeight: "Quelle est ta taille ?",
   onboardingStepIndicator: "{current}/{total}",
-  onboardingQuestionGenderHint: "Pour adapter les comparatifs et les ligues.",
+  onboardingQuestionGenderHint:
+    "Les paliers de force se calculent par catégorie. C'est juste pour te comparer aux bons athlètes.",
+  onboardingQuestionGenderMicro: "Modifiable à tout moment.",
+  onboardingQuestionBuildHint:
+    "La force, c'est relatif. Ton poids de corps sert à calculer ton ratio et ton palier. Rien à voir avec l'esthétique.",
+  onboardingQuestionBuildMicro:
+    "Une estimation suffit, tu ajusteras plus tard.",
+  onboardingSeeRankCta: "Voir mon palier",
   onboardingQuestionWeightHint: "Utilisé pour les paliers et ton classement.",
   onboardingQuestionHeightHint: "Ta taille complète le calcul de profil.",
   onboardingFirstExerciseTitle: "Ton premier exercice",
@@ -761,7 +828,7 @@ export const UI = {
   onboardingFirstExerciseSearch: "Rechercher…",
   onboardingSkipFirstExercise: "Passer pour l’instant",
   onboardingCreateAccountDescription:
-    "Crée ton compte maintenant pour sauvegarder et envoyer les données de ton onboarding.",
+    "Ton palier, ton record et ton historique sont prêts. Crée ton compte pour ne rien perdre et voir chaque PR te faire grimper dans ta ligue.",
 
   // Salle de sport (onboarding post-compte)
   gymOnboardingTitle: "Tu es à la salle en ce moment ?",
@@ -983,7 +1050,8 @@ export const UI = {
   notificationDefaultTitle: "One More",
   notificationSeeAction: "Voir",
   notificationPushChannelName: "Notifications",
-  notificationPushChannelDescription: "Alertes amis, séries, messages et récaps",
+  notificationPushChannelDescription:
+    "Alertes amis, séries, messages et récaps",
   notificationsFeedTitle: "Notifications",
   notificationsMarkAllRead: "Tout marquer comme lu",
   notificationsEmpty: "Rien pour l'instant",
@@ -1141,12 +1209,8 @@ export const UI = {
   eventAdminResetDone: "Toutes les données ont été masquées.",
   eventAdminResetError: "Impossible de supprimer les données.",
 
-  webStoreLandingTitle: "Rejoins le mouvement",
-  webStoreLandingBody:
-    "Tu t'entraînes déjà. Ici on vise toujours une rep de plus.",
   webStoreLandingCta: "Télécharge l'app maintenant",
   webStoreLandingStores: "Dispo sur iOS et Android",
-  webStoreLandingLogoAlt: "One More",
   webStoreLandingIosAlt: "iOS",
   webStoreLandingAndroidAlt: "Android",
 };

@@ -1,10 +1,37 @@
 import { Capacitor } from '@capacitor/core'
 
+type HapticsModule = typeof import('@capacitor/haptics')
+
+let hapticsMod: HapticsModule | null = null
+let hapticsLoad: Promise<HapticsModule | null> | null = null
+
+async function loadHaptics(): Promise<HapticsModule | null> {
+    if (!Capacitor.isNativePlatform()) return null
+    if (hapticsMod) return hapticsMod
+    if (!hapticsLoad) {
+        hapticsLoad = import('@capacitor/haptics')
+            .then((mod) => {
+                hapticsMod = mod
+                return mod
+            })
+            .catch(() => {
+                hapticsLoad = null
+                return null
+            })
+    }
+    return hapticsLoad
+}
+
+/** Précharge le plugin pour que le premier tick d'une roulette ne soit pas muet. */
+export function primeHaptics(): void {
+    void loadHaptics()
+}
+
 async function runImpact(style: 'Light' | 'Medium' | 'Heavy'): Promise<void> {
-    if (!Capacitor.isNativePlatform()) return
+    const mod = await loadHaptics()
+    if (!mod) return
     try {
-        const { Haptics, ImpactStyle } = await import('@capacitor/haptics')
-        await Haptics.impact({ style: ImpactStyle[style] })
+        await mod.Haptics.impact({ style: mod.ImpactStyle[style] })
     } catch {
         // Ignore si Haptics indisponible (web, etc.)
     }
@@ -13,10 +40,10 @@ async function runImpact(style: 'Light' | 'Medium' | 'Heavy'): Promise<void> {
 async function runNotification(
     type: 'Success' | 'Warning' | 'Error',
 ): Promise<void> {
-    if (!Capacitor.isNativePlatform()) return
+    const mod = await loadHaptics()
+    if (!mod) return
     try {
-        const { Haptics, NotificationType } = await import('@capacitor/haptics')
-        await Haptics.notification({ type: NotificationType[type] })
+        await mod.Haptics.notification({ type: mod.NotificationType[type] })
     } catch {
         // Ignore si Haptics indisponible
     }
@@ -24,10 +51,10 @@ async function runNotification(
 
 /** Retour haptique au changement de sélection (sliders, filtres, onglets) */
 export async function hapticSelectionChanged(): Promise<void> {
-    if (!Capacitor.isNativePlatform()) return
+    const mod = await loadHaptics()
+    if (!mod) return
     try {
-        const { Haptics } = await import('@capacitor/haptics')
-        await Haptics.selectionChanged()
+        await mod.Haptics.selectionChanged()
     } catch {
         // Ignore si Haptics indisponible
     }

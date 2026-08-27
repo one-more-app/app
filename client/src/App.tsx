@@ -156,6 +156,14 @@ function AccessGate({ children }: { children: React.ReactNode }) {
 
     if (
         auth.status === 'authenticated' &&
+        isOnboardingRoute &&
+        onboardingStep === 'notifications'
+    ) {
+        return <>{children}</>
+    }
+
+    if (
+        auth.status === 'authenticated' &&
         !onboardingNeeded &&
         isOnboardingRoute &&
         onboardingStep === 'gym' &&

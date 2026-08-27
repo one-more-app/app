@@ -21,6 +21,7 @@ import {
   clampRestTargetMs,
   DEFAULT_REST_TARGET_MS,
 } from "@/lib/format-rest-elapsed";
+import { excludePerformanceFromRestTimer } from "@/lib/rest-timer-exclude";
 import { scheduleRestFinishedLocalNotificationForEntry } from "@/lib/rest-timer-local-notifications";
 import {
   chronologicalPerfOrder,
@@ -46,6 +47,8 @@ const PENDING_ONBOARDING_PROFILE_KEY =
 /** Draft premier record saisi avant auth. */
 const PENDING_ONBOARDING_RECORD_KEY =
   "one-more-pending-onboarding-record-v1";
+/** Identifie le parcours d'onboarding de cet onglet ; un leftover d'une autre visite n'est pas renvoyé. */
+const ONBOARDING_DRAFT_SESSION_KEY = "one-more-onboarding-draft-session-v1";
 const ONBOARDING_RECORD_DESTINATION_KEY =
   "one-more-onboarding-record-destination-v1";
 const ONBOARDING_GYM_PENDING_KEY = "one-more-onboarding-gym-pending-v1";
@@ -55,13 +58,30 @@ const GYM_LOCATION_PROMPT_DONE_KEY =
   "one-more-gym-location-prompt-done-v1";
 const GYM_NOTIFICATIONS_PROMPT_DONE_KEY =
   "one-more-gym-notifications-prompt-done-v1";
+const ONBOARDING_NOTIFICATIONS_PROMPT_DONE_KEY =
+  "one-more-onboarding-notifications-prompt-done-v1";
 const GYM_SETUP_DONE_KEY = "one-more-gym-setup-done-v1";
 const GYM_NOTIF_LAST_KEY = "one-more-gym-notif-last-v1";
 const THEME_PREFERENCE_KEY = "one-more-theme-preference-v1";
 const REST_TARGET_MS_KEY = "one-more-rest-target-ms-v1";
 const REST_TIMER_ENABLED_KEY = "one-more-rest-timer-enabled-v1";
 const REST_COUNTER_TOUR_COMPLETE_KEY = "one-more-rest-counter-tour-complete-v1";
+const EXERCISE_CATALOG_TOUR_COMPLETE_KEY =
+  "one-more-exercise-catalog-tour-complete-v1";
+const EXERCISE_DETAIL_TOUR_COMPLETE_KEY =
+  "one-more-exercise-detail-tour-complete-v1";
 const HOME_TOUR_COMPLETE_KEY = "one-more-home-tour-complete-v1";
+const HOME_NOTIFICATIONS_PROMPT_PENDING_KEY =
+  "one-more-home-notifications-prompt-pending-v1";
+const HOME_NOTIFICATIONS_PROMPT_DONE_KEY =
+  "one-more-home-notifications-prompt-done-v1";
+const HOME_TOUR_COMPLETE_EVENT = "one-more:home-tour-complete";
+const REST_COUNTER_TOUR_COMPLETE_EVENT =
+  "one-more:rest-counter-tour-complete";
+const EXERCISE_CATALOG_TOUR_COMPLETE_EVENT =
+  "one-more:exercise-catalog-tour-complete";
+const EXERCISE_DETAIL_TOUR_COMPLETE_EVENT =
+  "one-more:exercise-detail-tour-complete";
 
 type LocalChangeKind =
   | "trackedExercise"
@@ -352,13 +372,18 @@ export async function savePerformanceAndWait(
   trackedExerciseId: string,
   weight: number,
   reps: number,
-  opts?: { date?: string; skipRestTimer?: boolean },
+  opts?: {
+    date?: string;
+    id?: string;
+    skipRestTimer?: boolean;
+    excludeFromRestTimer?: boolean;
+  },
 ): Promise<{ entry: PerformanceEntry; xp?: XpGrantResult }> {
   const today = getLocalDateKey();
   const day =
     opts?.date && /^\d{4}-\d{2}-\d{2}$/.test(opts.date) ? opts.date : today;
   const entry: PerformanceEntry = {
-    id: crypto.randomUUID(),
+    id: opts?.id?.trim() || crypto.randomUUID(),
     trackedExerciseId,
     date: day,
     weight,
@@ -367,6 +392,9 @@ export async function savePerformanceAndWait(
     updatedAt: nowIso(),
     deletedAt: null,
   };
+  if (opts?.excludeFromRestTimer) {
+    excludePerformanceFromRestTimer(entry.id);
+  }
   updatePerformanceCache([...getAllPerformanceEntries(), entry]);
   notifyLocalDataChanged("performance");
 
@@ -384,6 +412,9 @@ export async function savePerformanceAndWait(
       date: day,
       source: "save_performance_and_wait",
     });
+    if (opts?.excludeFromRestTimer && remote.id !== entry.id) {
+      excludePerformanceFromRestTimer(remote.id);
+    }
     // First-perf + célébration : différer RestTimer (bridge natif sous la modale = freeze).
     if (!opts?.skipRestTimer) {
       scheduleRestFinishedLocalNotificationForEntry(remote);
@@ -542,6 +573,69 @@ export type PendingOnboardingBodyProfile = Pick<
   "weightKg" | "heightCm" | "gender"
 >;
 
+function readOnboardingDraftSessionId(): string | null {
+  try {
+    return sessionStorage.getItem(ONBOARDING_DRAFT_SESSION_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeOnboardingDraftSessionId(sessionId: string): void {
+  try {
+    sessionStorage.setItem(ONBOARDING_DRAFT_SESSION_KEY, sessionId);
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+function clearOnboardingDraftSessionId(): void {
+  try {
+    sessionStorage.removeItem(ONBOARDING_DRAFT_SESSION_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function belongsToCurrentOnboardingSession(sessionId: unknown): boolean {
+  if (typeof sessionId !== "string" || sessionId.length === 0) return false;
+  const current = readOnboardingDraftSessionId();
+  return current != null && sessionId === current;
+}
+
+/** Crée un nouveau parcours d'onboarding et jette les drafts d'une visite précédente. */
+export function beginOnboardingDraftSession(): string {
+  const sessionId = crypto.randomUUID();
+  writeOnboardingDraftSessionId(sessionId);
+  clearPendingOnboardingRecord();
+  clearPendingOnboardingProfile();
+  return sessionId;
+}
+
+export function ensureOnboardingDraftSession(): string {
+  const existing = readOnboardingDraftSessionId();
+  if (existing) return existing;
+  const sessionId = crypto.randomUUID();
+  writeOnboardingDraftSessionId(sessionId);
+  return sessionId;
+}
+
+export function hasOnboardingDraftSession(): boolean {
+  return readOnboardingDraftSessionId() != null;
+}
+
+/** Login « j'ai un compte » depuis l'intro : ne pas pousser un leftover. */
+export function discardPendingOnboardingDrafts(): void {
+  clearPendingOnboardingRecord();
+  clearPendingOnboardingProfile();
+}
+
+/** Logout / changement de compte authentifié. */
+export function clearOnboardingDraftsAndSession(): void {
+  discardPendingOnboardingDrafts();
+  clearOnboardingDraftSessionId();
+}
+
 function isPendingOnboardingBodyProfile(
   value: unknown,
 ): value is PendingOnboardingBodyProfile {
@@ -561,7 +655,15 @@ export function peekPendingOnboardingProfile(): PendingOnboardingBodyProfile | n
     const raw = localStorage.getItem(PENDING_ONBOARDING_PROFILE_KEY);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
-    return isPendingOnboardingBodyProfile(parsed) ? parsed : null;
+    if (!isPendingOnboardingBodyProfile(parsed)) return null;
+    if (
+      !belongsToCurrentOnboardingSession(
+        (parsed as { sessionId?: unknown }).sessionId,
+      )
+    ) {
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -577,6 +679,7 @@ export function setPendingOnboardingProfile(
         weightKg: profile.weightKg,
         heightCm: profile.heightCm,
         gender: profile.gender,
+        sessionId: ensureOnboardingDraftSession(),
       }),
     );
   } catch {
@@ -592,6 +695,25 @@ export function clearPendingOnboardingProfile(): void {
   }
 }
 
+/** Après applySession (purge), réinjecte le draft morpho d'un nouvel inscrit. */
+export function consumePendingOnboardingProfileToLocalCache(): void {
+  const pending = peekPendingOnboardingProfile();
+  if (pending) {
+    setUserProfile(pending, { silent: true });
+  }
+  clearPendingOnboardingProfile();
+}
+
+export function applyPendingOnboardingProfileAfterAuth(
+  isNewUser: boolean,
+): void {
+  if (isNewUser) {
+    consumePendingOnboardingProfileToLocalCache();
+    return;
+  }
+  clearPendingOnboardingProfile();
+}
+
 export type PendingOnboardingRecord = {
   exerciseId: string;
   name: string;
@@ -599,10 +721,12 @@ export type PendingOnboardingRecord = {
   bodyPart: string;
   target: string;
   equipment: string;
+  gifUrl?: string;
   weight: number;
   reps: number;
   clientTrackedId: string;
   clientPerfId: string;
+  sessionId?: string;
 };
 
 function isPendingOnboardingRecord(
@@ -618,6 +742,7 @@ function isPendingOnboardingRecord(
     typeof draft.bodyPart === "string" &&
     typeof draft.target === "string" &&
     typeof draft.equipment === "string" &&
+    (draft.gifUrl === undefined || typeof draft.gifUrl === "string") &&
     typeof draft.weight === "number" &&
     Number.isFinite(draft.weight) &&
     typeof draft.reps === "number" &&
@@ -633,7 +758,9 @@ export function peekPendingOnboardingRecord(): PendingOnboardingRecord | null {
     const raw = localStorage.getItem(PENDING_ONBOARDING_RECORD_KEY);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
-    return isPendingOnboardingRecord(parsed) ? parsed : null;
+    if (!isPendingOnboardingRecord(parsed)) return null;
+    if (!belongsToCurrentOnboardingSession(parsed.sessionId)) return null;
+    return parsed;
   } catch {
     return null;
   }
@@ -645,7 +772,10 @@ export function setPendingOnboardingRecord(
   try {
     localStorage.setItem(
       PENDING_ONBOARDING_RECORD_KEY,
-      JSON.stringify(record),
+      JSON.stringify({
+        ...record,
+        sessionId: ensureOnboardingDraftSession(),
+      }),
     );
   } catch {
     // ignore quota / private mode
@@ -860,6 +990,22 @@ export function isGymNotificationsPromptDone(): boolean {
   return localStorage.getItem(GYM_NOTIFICATIONS_PROMPT_DONE_KEY) === "1";
 }
 
+export function isOnboardingNotificationsPromptDone(): boolean {
+  if (localStorage.getItem(ONBOARDING_V1_KEY) === "done") return true;
+  return (
+    localStorage.getItem(ONBOARDING_NOTIFICATIONS_PROMPT_DONE_KEY) === "1"
+  );
+}
+
+export function setOnboardingNotificationsPromptDone(done: boolean): void {
+  if (done) {
+    localStorage.setItem(ONBOARDING_NOTIFICATIONS_PROMPT_DONE_KEY, "1");
+    setGymNotificationsPromptDone(true);
+  } else {
+    localStorage.removeItem(ONBOARDING_NOTIFICATIONS_PROMPT_DONE_KEY);
+  }
+}
+
 export function setGymNotificationsPromptDone(done: boolean): void {
   if (done) {
     localStorage.setItem(GYM_NOTIFICATIONS_PROMPT_DONE_KEY, "1");
@@ -994,9 +1140,81 @@ export function isRestCounterTourComplete(): boolean {
 export function setRestCounterTourComplete(complete: boolean): void {
   if (complete) {
     localStorage.setItem(REST_COUNTER_TOUR_COMPLETE_KEY, "1");
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent(REST_COUNTER_TOUR_COMPLETE_EVENT));
+    }
   } else {
     localStorage.removeItem(REST_COUNTER_TOUR_COMPLETE_KEY);
   }
+}
+
+export function subscribeRestCounterTourComplete(
+  listener: () => void,
+): () => void {
+  window.addEventListener(REST_COUNTER_TOUR_COMPLETE_EVENT, listener);
+  return () => {
+    window.removeEventListener(REST_COUNTER_TOUR_COMPLETE_EVENT, listener);
+  };
+}
+
+export function isExerciseCatalogTourComplete(): boolean {
+  try {
+    return localStorage.getItem(EXERCISE_CATALOG_TOUR_COMPLETE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setExerciseCatalogTourComplete(complete: boolean): void {
+  if (complete) {
+    localStorage.setItem(EXERCISE_CATALOG_TOUR_COMPLETE_KEY, "1");
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent(EXERCISE_CATALOG_TOUR_COMPLETE_EVENT),
+      );
+    }
+  } else {
+    localStorage.removeItem(EXERCISE_CATALOG_TOUR_COMPLETE_KEY);
+  }
+}
+
+export function subscribeExerciseCatalogTourComplete(
+  listener: () => void,
+): () => void {
+  window.addEventListener(EXERCISE_CATALOG_TOUR_COMPLETE_EVENT, listener);
+  return () => {
+    window.removeEventListener(EXERCISE_CATALOG_TOUR_COMPLETE_EVENT, listener);
+  };
+}
+
+export function isExerciseDetailTourComplete(): boolean {
+  try {
+    return localStorage.getItem(EXERCISE_DETAIL_TOUR_COMPLETE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setExerciseDetailTourComplete(complete: boolean): void {
+  if (complete) {
+    localStorage.setItem(EXERCISE_DETAIL_TOUR_COMPLETE_KEY, "1");
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent(EXERCISE_DETAIL_TOUR_COMPLETE_EVENT),
+      );
+    }
+  } else {
+    localStorage.removeItem(EXERCISE_DETAIL_TOUR_COMPLETE_KEY);
+  }
+}
+
+export function subscribeExerciseDetailTourComplete(
+  listener: () => void,
+): () => void {
+  window.addEventListener(EXERCISE_DETAIL_TOUR_COMPLETE_EVENT, listener);
+  return () => {
+    window.removeEventListener(EXERCISE_DETAIL_TOUR_COMPLETE_EVENT, listener);
+  };
 }
 
 export function isHomeTourComplete(): boolean {
@@ -1009,8 +1227,56 @@ export function isHomeTourComplete(): boolean {
 
 export function setHomeTourComplete(complete: boolean): void {
   if (complete) {
+    const alreadyComplete = isHomeTourComplete();
     localStorage.setItem(HOME_TOUR_COMPLETE_KEY, "1");
+    if (!alreadyComplete && !isHomeNotificationsPromptDone()) {
+      setHomeNotificationsPromptPending(true);
+    }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent(HOME_TOUR_COMPLETE_EVENT));
+    }
   } else {
     localStorage.removeItem(HOME_TOUR_COMPLETE_KEY);
   }
+}
+
+export function isHomeNotificationsPromptPending(): boolean {
+  try {
+    return localStorage.getItem(HOME_NOTIFICATIONS_PROMPT_PENDING_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setHomeNotificationsPromptPending(pending: boolean): void {
+  if (pending) {
+    localStorage.setItem(HOME_NOTIFICATIONS_PROMPT_PENDING_KEY, "1");
+  } else {
+    localStorage.removeItem(HOME_NOTIFICATIONS_PROMPT_PENDING_KEY);
+  }
+}
+
+export function isHomeNotificationsPromptDone(): boolean {
+  try {
+    return localStorage.getItem(HOME_NOTIFICATIONS_PROMPT_DONE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setHomeNotificationsPromptDone(done: boolean): void {
+  if (done) {
+    localStorage.setItem(HOME_NOTIFICATIONS_PROMPT_DONE_KEY, "1");
+    setHomeNotificationsPromptPending(false);
+    setOnboardingNotificationsPromptDone(true);
+  } else {
+    localStorage.removeItem(HOME_NOTIFICATIONS_PROMPT_DONE_KEY);
+  }
+}
+
+export function subscribeHomeTourComplete(listener: () => void): () => void {
+  window.addEventListener(HOME_TOUR_COMPLETE_EVENT, listener);
+  return () => {
+    window.removeEventListener(HOME_TOUR_COMPLETE_EVENT, listener);
+  };
 }

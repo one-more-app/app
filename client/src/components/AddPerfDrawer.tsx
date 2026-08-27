@@ -28,6 +28,8 @@ interface AddPerfDrawerProps {
     initialReps: number
     /** Mode ajout : sauvegarde une nouvelle perf */
     onSave?: (weight: number, reps: number) => void
+    /** Titre en mode ajout. Défaut : « Nouvelle performance ». */
+    title?: string
     /** Mode modification : met à jour une perf existante */
     entryId?: string
     onUpdate?: (entryId: string, weight: number, reps: number) => void
@@ -41,6 +43,7 @@ export function AddPerfDrawer({
     initialWeight,
     initialReps,
     onSave,
+    title,
     entryId,
     onUpdate,
     contentClassName,
@@ -105,7 +108,7 @@ export function AddPerfDrawer({
                 <div className="w-full p-4">
                     <DrawerHeader>
                         <DrawerTitle>
-                            {isEditMode ? UI.modifyPerf : UI.newPerf}
+                            {isEditMode ? UI.modifyPerf : title ?? UI.newPerf}
                         </DrawerTitle>
                     </DrawerHeader>
                     <form

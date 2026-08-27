@@ -3,6 +3,7 @@ import {
   usePerformanceEntriesData,
 } from "@/hooks/use-api-data";
 import { getLatestPerformanceEntry } from "@/lib/performance-order";
+import { isPerformanceExcludedFromRestTimer } from "@/lib/rest-timer-exclude";
 import { getTrackedExerciseById } from "@/lib/storage";
 import type { PerformanceEntry, TrackedExercise } from "@/types";
 import { useMemo } from "react";
@@ -24,7 +25,9 @@ export function useLatestGlobalPerf(): LatestGlobalPerf | null {
   const { data: homeExercises = [] } = useHomeExercisesData();
 
   return useMemo(() => {
-    const active = allEntries.filter((e) => !e.deletedAt);
+    const active = allEntries.filter(
+      (e) => !e.deletedAt && !isPerformanceExcludedFromRestTimer(e.id),
+    );
     const entry = getLatestPerformanceEntry(active);
     if (!entry) return null;
 

@@ -14,7 +14,7 @@ test("l'inscription complète ne plante pas au clic Créer un compte", async ({
   await page.goto("/#/auth");
 
   await page.getByLabel("Email").fill("nouveau@one-more.test");
-  await continueButton(page).click();
+  await page.getByRole("button", { name: "Rejoindre", exact: true }).click();
 
   await page.getByLabel("Prénom").fill("Smoke");
   await continueButton(page).click();

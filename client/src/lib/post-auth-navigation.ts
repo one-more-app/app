@@ -6,12 +6,27 @@ import {
   isGymOnboardingBypassed,
 } from "@/lib/gym-onboarding-route";
 import { CARDIO_EQUIPMENT } from "@/lib/exercisedb";
+import { isPushPermissionGranted } from "@/lib/push-notifications";
 import {
+  isOnboardingNotificationsPromptDone,
   markOnboardingDone,
   peekOnboardingRecordDestination,
   setOnboardingFirstExercisePending,
+  setOnboardingNotificationsPromptDone,
   setOnboardingTourComplete,
 } from "@/lib/storage";
+
+export const ONBOARDING_NOTIFICATIONS_PATH =
+  "/onboarding?step=notifications";
+
+/** Masque temporairement l'écran jours/heure + push. Remettre à true pour réactiver. */
+export const ONBOARDING_NOTIFICATIONS_STEP_ENABLED = false;
+
+export function isOnboardingNotificationsPath(path: string): boolean {
+  return (
+    path.startsWith("/onboarding") && path.includes("step=notifications")
+  );
+}
 
 export function hasVisibleTrackedExercise(
   tracked: Awaited<ReturnType<typeof fetchTrackedExercises>>,
@@ -30,6 +45,9 @@ export async function resolvePostAuthNavigation(
   await commitPendingOnboardingRecord();
   const recordDestination = peekOnboardingRecordDestination();
   if (recordDestination) {
+    if (await shouldShowOnboardingNotificationsPrompt()) {
+      return ONBOARDING_NOTIFICATIONS_PATH;
+    }
     markOnboardingDone(recordDestination);
     return recordDestination;
   }
@@ -61,4 +79,34 @@ export async function resolvePostAuthNavigation(
   } catch {
     return nextPath;
   }
+}
+
+/** Landing fiche exo : retour accueil, pas l'écran compte. */
+export function postAuthNavigateOptions(path: string): {
+  replace: true;
+  state?: { fromAddExercise: true };
+} {
+  if (path.startsWith("/exercise/")) {
+    return { replace: true, state: { fromAddExercise: true } };
+  }
+  return { replace: true };
+}
+
+async function shouldShowOnboardingNotificationsPrompt(): Promise<boolean> {
+  if (!ONBOARDING_NOTIFICATIONS_STEP_ENABLED) return false;
+  if (!isGymOnboardingBypassed()) return false;
+  if (isOnboardingNotificationsPromptDone()) return false;
+  if (await isPushPermissionGranted()) {
+    setOnboardingNotificationsPromptDone(true);
+    return false;
+  }
+  return true;
+}
+
+/** Après l'écran notifications : termine l'onboarding et ouvre la fiche record. */
+export function continueAfterOnboardingNotifications(): string {
+  setOnboardingNotificationsPromptDone(true);
+  const destination = peekOnboardingRecordDestination() ?? "/home";
+  markOnboardingDone(destination);
+  return destination;
 }

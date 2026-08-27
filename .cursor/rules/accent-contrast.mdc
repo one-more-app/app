@@ -1,0 +1,45 @@
+---
+description: Couleur accent — pas de texte accent sur fond blanc, usage parcimonieux
+globs: client/src/**/*.{ts,tsx,css}
+alwaysApply: false
+---
+
+# Accent et lisibilité (One More)
+
+`--accent` (`#dfff5e`) est un jaune-vert flashy. Sur fond blanc / `background` clair, **le contraste est insuffisant** : ni le texte `text-accent`, ni un filet / icône / pastille accent isolés ne se lisent correctement.
+
+## Interdit
+
+- Texte, labels, liens, chiffres ou icônes en `text-accent` (ou `color: var(--accent)`) sur fond blanc, `bg-background`, `bg-card` clair.
+- Petits accents décoratifs seuls sur blanc : `border-accent`, underline, dot, badge minuscule.
+
+```tsx
+// ❌ Texte accent sur fond clair — illisible
+<p className="text-accent">Nouveau record</p>
+<span className="text-xs font-semibold text-accent">Premium</span>
+
+// ❌ Filet / pastille accent sur blanc, sans masse
+<div className="border border-accent text-foreground">…</div>
+```
+
+## Autorisé : gros bloc rempli
+
+L’accent sert de **surface**, pas de couleur de texte. Le bloc doit avoir une vraie masse (padding généreux, largeur utile) et le texte à l’intérieur en `text-accent-foreground` (noir).
+
+```tsx
+// ✅ CTA / bouton plein
+<Button variant="accent">Continuer</Button>
+
+// ✅ Gros bloc : fond accent, texte noir dedans
+<div className="rounded-2xl bg-accent px-4 py-3">
+  <p className="font-one-more text-lg font-bold italic text-accent-foreground">
+    Nouveau record
+  </p>
+</div>
+```
+
+Surfaces teintées très légères (`bg-accent/5`, `bg-accent/10`) : OK si le **texte reste `text-foreground`**, jamais `text-accent`.
+
+## Parcimonie
+
+Réserver l’accent aux moments qui comptent : CTA principal, célébration, highlight d’un écran. Un seul bloc accent fort par vue. Le reste de l’UI reste neutre (`foreground` / `muted-foreground`).

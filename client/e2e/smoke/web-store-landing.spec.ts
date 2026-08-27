@@ -11,9 +11,9 @@ test("landing store web : un CTA OneLink iOS et Android", async ({ page }) => {
   await page.goto("/#/home");
 
   await expect(
-    page.getByRole("heading", { name: UI.webStoreLandingTitle }),
+    page.getByRole("heading", { name: UI.onboardingTitle }),
   ).toBeVisible();
-  await expect(page.getByText(UI.webStoreLandingBody)).toBeVisible();
+  await expect(page.getByText(UI.onboardingDescription)).toBeVisible();
   await expect(page.getByText(UI.webStoreLandingStores)).toBeVisible();
 
   const cta = page.getByRole("link", { name: UI.webStoreLandingCta });

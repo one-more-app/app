@@ -345,6 +345,25 @@ export class NotificationDispatchService {
     });
   }
 
+  async sendTrainingReminderForUser(userId: string, timezone: string) {
+    const today = localDateKey(timezone);
+    const hadPerfToday = await this.perfRepo
+      .createQueryBuilder('p')
+      .where('p.userId = :userId', { userId })
+      .andWhere('p.date = :today', { today })
+      .andWhere('p.deletedAt IS NULL')
+      .getCount();
+    if (hadPerfToday > 0) return;
+
+    await this.deliver(userId, {
+      type: NotificationType.TrainingReminder,
+      title: "C'est l'heure",
+      body: "Ta séance t'attend. Une rep de plus.",
+      route: '/home',
+      dedupKey: `training_reminder:${today}`,
+    });
+  }
+
   async sendWeeklyRecapForUser(userId: string, timezone: string) {
     const today = localDateKey(timezone);
     const weekKey = localWeekKey(timezone);

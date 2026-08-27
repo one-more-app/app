@@ -1,3 +1,4 @@
+import { clearRestTimerExcludedPerformances } from "@/lib/rest-timer-exclude";
 import {
   getRestTargetMs,
   getTrackedExerciseById,
@@ -207,6 +208,7 @@ export async function resetRestTimerLocalState(): Promise<void> {
   currentParams = null;
   lastSyncedKey = null;
   suppressedRestFinishedToastExerciseId = null;
+  clearRestTimerExcludedPerformances();
   if (typeof sessionStorage !== "undefined") {
     sessionStorage.removeItem(REST_FINISHED_TOAST_SUPPRESS_KEY);
   }

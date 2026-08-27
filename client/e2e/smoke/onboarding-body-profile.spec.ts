@@ -4,26 +4,19 @@ import { mockAuthApi, trackPageErrors } from "./helpers";
 const continueButton = (page: Page) =>
   page.getByRole("button", { name: "Continuer", exact: true });
 
-const nextButton = (page: Page) =>
-  page.getByRole("button", { name: "Suivant", exact: true });
-
 async function completeRecordToBody(page: Page): Promise<void> {
-  await expect(page.getByText("Commence par un record")).toBeVisible();
+  await expect(page.getByText("On commence par quel record ?")).toBeVisible();
   await page.getByRole("button", { name: /Développé couché/ }).click();
 
-  const drawer = page.getByRole("dialog", { name: "Nouvelle performance" });
+  const drawer = page.getByRole("dialog", { name: "Rentre ton record" });
   await expect(drawer).toBeVisible();
   await drawer.getByRole("button", { name: "Enregistrer" }).click();
-
-  await expect(page.getByText("Ton 1RM", { exact: true })).toBeVisible();
-  await continueButton(page).click();
 }
 
 async function completeBodyToRank(page: Page): Promise<void> {
   await page.getByRole("radio", { name: "Femme" }).click();
-  await nextButton(page).click();
-  await nextButton(page).click();
   await continueButton(page).click();
+  await page.getByRole("button", { name: "Voir mon palier" }).click();
 }
 
 test("l'onboarding body (genre) est envoyé dans le register", async ({
@@ -45,16 +38,16 @@ test("l'onboarding body (genre) est envoyé dans le register", async ({
     );
   });
 
-  await page.goto("/#/onboarding");
+  await page.goto("/#/onboarding?step=record");
 
   await completeRecordToBody(page);
   await completeBodyToRank(page);
 
   await expect(page.getByText("Ton palier")).toBeVisible();
-  await page.getByRole("button", { name: "Bats ce record" }).click();
+  await page.getByRole("button", { name: "Créer mon compte et sauvegarder" }).click();
 
   await page.getByLabel("Email").fill("body-onboarding@one-more.test");
-  await continueButton(page).click();
+  await page.getByRole("button", { name: "Rejoindre", exact: true }).click();
 
   await page.getByLabel("Prénom").fill("Body");
   await continueButton(page).click();
@@ -86,6 +79,13 @@ test("l'onboarding body (genre) est envoyé dans le register", async ({
     weightKg: 75,
     heightCm: 175,
   });
+
+  await expect(page.getByRole("heading", { name: /Quand tu t'entraînes/i })).toBeVisible({
+    timeout: 10_000,
+  });
+  await expect(page.getByRole("button", { name: "lundi" })).toBeVisible();
+  await page.getByRole("button", { name: "Plus tard", exact: true }).click();
+  await expect(page).toHaveURL(/#\/exercise\//, { timeout: 10_000 });
 
   expect(pageErrors).toEqual([]);
 });

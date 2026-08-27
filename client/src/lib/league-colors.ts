@@ -20,6 +20,16 @@ export function leagueMapFill(tier: LeagueTier, isDark: boolean): string {
   return isDark ? LEAGUE_MAP_FILL[tier].dark : LEAGUE_MAP_FILL[tier].light;
 }
 
+/** Couleur d’accent des badges (chiffres romains) — aussi utilisée pour la barre de palier. */
+export const LEAGUE_ACCENT: Record<LeagueTier, string> = {
+  bronze: "#C47A2A",
+  silver: "#A8AAB4",
+  gold: "#F5C518",
+  platinum: "#22d3ee",
+  diamond: "#a78bfa",
+  legend: "#dfff5e",
+};
+
 /** Couleur d’accent (icône + sous-rang) pour les pastilles de rang noires. */
 export const LEAGUE_ACCENT_CLASS: Record<LeagueTier, string> = {
   bronze: "text-[#C47A2A]",

@@ -20,6 +20,7 @@ import { NotificationPreferencesService } from './notification-preferences.servi
 import { NotificationsController } from './notifications.controller.js';
 import { PushNotificationService } from './push-notification.service.js';
 import { StreakReminderCron } from './streak-reminder.cron.js';
+import { TrainingReminderCron } from './training-reminder.cron.js';
 import { WeeklyRecapCron } from './weekly-recap.cron.js';
 
 @Module({
@@ -48,6 +49,7 @@ import { WeeklyRecapCron } from './weekly-recap.cron.js';
     FriendTrainingAlertsService,
     NotificationDispatchService,
     StreakReminderCron,
+    TrainingReminderCron,
     WeeklyRecapCron,
   ],
   exports: [NotificationDispatchService, FriendTrainingAlertsService],

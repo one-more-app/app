@@ -11,6 +11,17 @@ export function localHour(timezone: string, date = new Date()): number {
   return Number.parseInt(hour, 10);
 }
 
+export function localMinute(timezone: string, date = new Date()): number {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+  const minute = parts.find((part) => part.type === 'minute')?.value ?? '0';
+  return Number.parseInt(minute, 10);
+}
+
 export function localWeekKey(timezone: string, date = new Date()): string {
   const dateKey = localDateKey(timezone, date);
   const [y, m, d] = dateKey.split('-').map(Number);
@@ -35,9 +46,16 @@ export function isEveningWindow(
 }
 
 export function isSundayEvening(timezone: string, date = new Date()): boolean {
-  const weekday = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    weekday: 'short',
-  }).format(date);
-  return weekday === 'Sun' && isEveningWindow(timezone, 18, 20, date);
+  return localIsoWeekday(timezone, date) === 7 && isEveningWindow(timezone, 18, 20, date);
+}
+
+export function localIsoWeekday(timezone: string, date = new Date()): number {
+  const dateKey = localDateKey(timezone, date);
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const utc = new Date(Date.UTC(y, m - 1, d));
+  return utc.getUTCDay() || 7;
+}
+
+export function normalizeLocalHour(hour: number): number {
+  return hour === 24 ? 0 : hour;
 }

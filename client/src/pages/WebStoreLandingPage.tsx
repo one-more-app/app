@@ -1,8 +1,5 @@
-import logoTextLight from "@/assets/logo-text.png";
-import {
-    AnimatedWords,
-    onboardingEntrance,
-} from "@/components/onboarding/onboarding-motion";
+import { OnboardingPresentationHero } from "@/components/onboarding/OnboardingIntro";
+import { onboardingEntrance } from "@/components/onboarding/onboarding-motion";
 import { OnboardingShell } from "@/components/OnboardingShell";
 import { Button } from "@/components/ui/button";
 import { UI } from "@/lib/translations";
@@ -47,39 +44,12 @@ export function WebStoreLandingPage() {
 
     return (
         <OnboardingShell variant="cinematic">
-            <header className="flex shrink-0 justify-center px-4 pt-4">
-                <img
-                    src={logoTextLight}
-                    alt={UI.webStoreLandingLogoAlt}
-                    className={onboardingEntrance(
-                        "h-14 w-auto select-none object-contain sm:h-16 animate-in fade-in-0 slide-in-from-left-4 duration-400",
-                    )}
-                    loading="eager"
-                    decoding="async"
-                />
-            </header>
+            <OnboardingPresentationHero />
 
-            <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-4 py-8">
-                <div className="space-y-4 text-center">
-                    <h1 className="font-one-more text-4xl font-semibold uppercase italic leading-[1.05] tracking-tight sm:text-5xl">
-                        <AnimatedWords
-                            text={UI.webStoreLandingTitle}
-                            baseDelayMs={140}
-                            staggerMs={50}
-                        />
-                    </h1>
-                    <p
-                        className={onboardingEntrance(
-                            "text-base leading-relaxed text-muted-foreground animate-in fade-in-0 slide-in-from-left-3 duration-350 [animation-delay:360ms]",
-                        )}
-                    >
-                        {UI.webStoreLandingBody}
-                    </p>
-                </div>
-
+            <footer className="shrink-0 px-4 pb-4">
                 <div
                     className={onboardingEntrance(
-                        "mt-8 flex w-full flex-col items-center gap-4 animate-in fade-in-0 slide-in-from-left-4 duration-400 [animation-delay:480ms]",
+                        "mx-auto flex w-full max-w-lg flex-col items-center gap-4 animate-in fade-in-0 slide-in-from-left-4 duration-400 [animation-delay:480ms]",
                     )}
                 >
                     <Button variant="accent" className="w-full" size="lg" asChild>
@@ -107,7 +77,7 @@ export function WebStoreLandingPage() {
                         </p>
                     </div>
                 </div>
-            </main>
+            </footer>
         </OnboardingShell>
     );
 }

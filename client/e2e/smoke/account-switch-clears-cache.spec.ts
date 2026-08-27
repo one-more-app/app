@@ -17,9 +17,6 @@ const userBSession = {
   },
 };
 
-const continueButton = (page: import("@playwright/test").Page) =>
-  page.getByRole("button", { name: "Continuer", exact: true });
-
 test("changement de compte sans fuite d'exercices", async ({ page }) => {
   const pageErrors = trackPageErrors(page);
   await seedOnboardingDone(page);
@@ -84,7 +81,7 @@ test("changement de compte sans fuite d'exercices", async ({ page }) => {
   });
 
   await page.getByLabel("Email").fill(userBSession.user.email);
-  await continueButton(page).click();
+  await page.getByRole("button", { name: "Rejoindre", exact: true }).click();
   await page.getByLabel("Mot de passe", { exact: true }).fill("password123");
 
   const loginResponse = page.waitForResponse(

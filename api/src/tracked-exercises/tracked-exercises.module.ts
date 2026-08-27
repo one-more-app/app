@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ExerciseCatalogEntity } from '../exercises/exercise-catalog.entity.js';
 import { PerformanceEntryEntity } from '../performance/performance-entry.entity.js';
 import { LeagueModule } from '../league/league.module.js';
 import { AccessModule } from '../social/access.module.js';
@@ -11,7 +12,11 @@ import { TrackedExercisesService } from './tracked-exercises.service.js';
   imports: [
     AccessModule,
     LeagueModule,
-    TypeOrmModule.forFeature([TrackedExerciseEntity, PerformanceEntryEntity]),
+    TypeOrmModule.forFeature([
+      TrackedExerciseEntity,
+      PerformanceEntryEntity,
+      ExerciseCatalogEntity,
+    ]),
   ],
   controllers: [TrackedExercisesController],
   providers: [TrackedExercisesService],
