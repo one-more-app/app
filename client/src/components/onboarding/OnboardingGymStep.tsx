@@ -331,6 +331,7 @@ export function OnboardingGymStep({
                         initialSearchQuery={searchQuery}
                         initialSelectedPlaceId={selectedPlaceId}
                         initialSearchView={searchView}
+                        inputClassName="bg-card"
                         onGymSaved={() => {
                             if (!fromSettings && !embedded) {
                                 trackOnboardingStepCompleted({

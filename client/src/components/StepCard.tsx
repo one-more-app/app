@@ -82,9 +82,11 @@ export function StepCard(props: {
                 </h1>
             </header>
 
+            {/* -mx-1 / p-1 : le conteneur scrollable clippe aussi en X, la marge
+                negative compense le padding qui laisse respirer le focus ring. */}
             <div
                 className={cn(
-                    "mt-6 flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto",
+                    "-mx-1 mt-5 flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-1",
                     contentClassName,
                 )}
             >

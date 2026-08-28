@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api";
 import type { AuthSession } from "@/lib/auth";
 import { clearPendingInviteCode, peekPendingInviteCode } from "@/lib/invite-code";
+import { OAuthUnavailableError } from "@/lib/oauth-errors";
 import {
   loginWithAppleNative,
   loginWithGoogleNative,
@@ -57,12 +58,16 @@ function oauthPlatform(): Platform {
   const platform = Capacitor.getPlatform();
   if (platform === "ios") return "ios";
   if (platform === "android") return "android";
-  throw new Error("OAuth mobile disponible uniquement sur iOS et Android");
+  throw new OAuthUnavailableError(
+    "Connexion disponible uniquement sur l'application mobile",
+  );
 }
 
 export async function signInWithGoogle(): Promise<AuthSession> {
   if (!Capacitor.isNativePlatform()) {
-    throw new Error("Connexion Google disponible uniquement sur l'application mobile");
+    throw new OAuthUnavailableError(
+      "Connexion Google disponible uniquement sur l'application mobile",
+    );
   }
 
   const platform = oauthPlatform();
@@ -85,7 +90,7 @@ export async function signInWithGoogle(): Promise<AuthSession> {
 
 export async function signInWithApple(): Promise<AuthSession> {
   if (Capacitor.getPlatform() !== "ios") {
-    throw new Error("Connexion Apple disponible uniquement sur iOS");
+    throw new OAuthUnavailableError("Connexion Apple disponible uniquement sur iOS");
   }
 
   const platform = oauthPlatform();

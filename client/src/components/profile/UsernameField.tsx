@@ -22,6 +22,7 @@ type UsernameFieldProps = {
   useProfileCheck?: boolean;
   autoFocus?: boolean;
   id?: string;
+  inputClassName?: string;
 };
 
 export function UsernameField({
@@ -31,6 +32,7 @@ export function UsernameField({
   useProfileCheck = false,
   autoFocus = false,
   id = "username",
+  inputClassName,
 }: UsernameFieldProps) {
   const [status, setStatus] = useState<UsernameFieldStatus>("idle");
   const normalized = normalizeUsername(value);
@@ -78,6 +80,7 @@ export function UsernameField({
         autoCapitalize="none"
         autoCorrect="off"
         autoFocus={autoFocus}
+        className={inputClassName}
       />
       <p className="text-xs text-muted-foreground">{UI.usernameHint}</p>
       {status === "checking" ? (

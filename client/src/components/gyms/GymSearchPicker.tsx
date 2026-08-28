@@ -19,6 +19,7 @@ import {
   type GymPlace,
 } from "@/lib/gyms-api";
 import { UI } from "@/lib/translations";
+import { cn } from "@/lib/utils";
 import { Capacitor } from "@capacitor/core";
 import { List, Loader2, Map, MapPin, Search } from "lucide-react";
 import {
@@ -49,6 +50,7 @@ export type GymSearchPickerProps = {
   showHint?: boolean;
   autoSearchNearby?: boolean;
   className?: string;
+  inputClassName?: string;
 };
 
 function formatDistance(distanceM: number | null): string {
@@ -80,6 +82,7 @@ export function GymSearchPicker({
   showHint = true,
   autoSearchNearby = true,
   className,
+  inputClassName,
 }: GymSearchPickerProps) {
   const mutateUserGym = useMutateUserGym();
   const isNative = Capacitor.isNativePlatform();
@@ -350,7 +353,7 @@ export function GymSearchPicker({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={UI.gymOnboardingSearchPlaceholder}
-            className="pl-9"
+            className={cn("pl-9", inputClassName)}
           />
         </div>
       </Reveal>

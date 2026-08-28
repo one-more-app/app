@@ -720,6 +720,8 @@ export const UI = {
   continueWithGoogle: "Continuer avec Google",
   continueWithApple: "Continuer avec Apple",
   oauthComingSoon: "Connexion via Google/Apple",
+  oauthSignInError:
+    "Connexion {provider} impossible pour le moment. Réessaie ou continue avec ton email.",
   connectedAs: "Connecté en tant que",
   notConnected: "Non connecté",
   signIn: "Se connecter",

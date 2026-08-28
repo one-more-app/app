@@ -20,6 +20,7 @@ import { ApiError } from "@/lib/api";
 import { identifyEmail, suggestUsername } from "@/lib/auth";
 import { peekPendingInviteCode } from "@/lib/invite-code";
 import { signInWithApple, signInWithGoogle } from "@/lib/oauth";
+import { isOAuthCancelledByUser, oauthUserMessage } from "@/lib/oauth-errors";
 import { postAuthNavigateOptions, resolvePostAuthNavigation } from "@/lib/post-auth-navigation";
 import { fetchInvitePreview } from "@/lib/social-api";
 import { applyPendingOnboardingProfileAfterAuth, needsOnboarding, peekPendingOnboardingRecord, setUserProfile } from "@/lib/storage";
@@ -72,27 +73,6 @@ type AuthPageProps = {
 
 const showAppleSignIn =
     Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
-
-function oauthErrorCode(error: unknown): string {
-    if (
-        error != null &&
-        typeof error === "object" &&
-        "code" in error &&
-        (error as { code?: unknown }).code != null
-    ) {
-        return String((error as { code?: unknown }).code);
-    }
-    return "";
-}
-
-function oauthErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof Error && error.message.trim()) {
-        const code = oauthErrorCode(error);
-        return code ? `${error.message} (${code})` : error.message;
-    }
-    const raw = String(error ?? "").trim();
-    return raw || fallback;
-}
 
 export function AuthPage({ embedded = false }: AuthPageProps) {
     const navigate = useNavigate();
@@ -361,6 +341,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                             <Input
                                 label={UI.firstName}
                                 value={firstName}
+                                className="bg-card"
                                 onChange={(e) => setFirstName(e.target.value)}
                                 placeholder="Prénom"
                             />
@@ -398,6 +379,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
                                 placeholder="Nom"
+                                className="bg-card"
                             />
 
                             {auth.lastError && (
@@ -447,6 +429,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 value={username}
                                 onChange={setUsername}
                                 onStatusChange={setUsernameStatus}
+                                inputClassName="bg-card"
                             />
 
                             {auth.lastError && (
@@ -481,6 +464,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 <Input
                                     label={UI.password}
                                     value={password}
+                                    className="bg-card"
                                     onChange={(e) => setPassword(e.target.value)}
                                     type="password"
                                     placeholder="••••••••"
@@ -498,6 +482,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 <Input
                                     label={UI.confirmPassword}
                                     value={passwordConfirm}
+                                    className="bg-card"
                                     onChange={(e) => setPasswordConfirm(e.target.value)}
                                     type="password"
                                     placeholder="••••••••"
@@ -543,6 +528,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 <Input
                                     label={UI.signupReferralCodeLabel}
                                     value={referralCode}
+                                    className="bg-card"
                                     onChange={(e) => {
                                         setReferralCode(e.target.value);
                                         auth.clearError();
@@ -616,7 +602,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
 
                         <div className="space-y-3">
                             <Button
-                                className="w-full"
+                                className="w-full bg-card"
                                 variant="secondary"
                                 data-analytics-label="onboarding_google"
                                 disabled={isBusy}
@@ -636,10 +622,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                             });
                                             await finishSuccess();
                                         } catch (e) {
+                                            if (isOAuthCancelledByUser(e)) return;
                                             console.error("[Auth] Google sign-in failed", e);
-                                            auth.setError(
-                                                oauthErrorMessage(e, "Connexion Google impossible"),
-                                            );
+                                            auth.setError(oauthUserMessage(e, "google"));
                                         } finally {
                                             setIsBusy(false);
                                         }
@@ -674,7 +659,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                             </Button>
                             {showAppleSignIn && (
                                 <Button
-                                    className="w-full"
+                                    className="w-full bg-card"
                                     variant="secondary"
                                     data-analytics-label="onboarding_apple"
                                     disabled={isBusy}
@@ -694,10 +679,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                                 });
                                                 await finishSuccess();
                                             } catch (e) {
+                                                if (isOAuthCancelledByUser(e)) return;
                                                 console.error("[Auth] Apple sign-in failed", e);
-                                                auth.setError(
-                                                    oauthErrorMessage(e, "Connexion Apple impossible"),
-                                                );
+                                                auth.setError(oauthUserMessage(e, "apple"));
                                             } finally {
                                                 setIsBusy(false);
                                             }
@@ -735,6 +719,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                         onChange={(e) => handleEmailChange(e.target.value)}
                                         inputMode="email"
                                         autoCapitalize="none"
+                                        className="bg-card"
                                         autoCorrect="off"
                                         placeholder="email@exemple.com"
                                     />
@@ -767,7 +752,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                                 autoCapitalize="none"
                                                 autoCorrect="off"
                                                 placeholder="email@exemple.com"
-                                                className="pr-10"
+                                                className="pr-10 bg-card"
                                             />
                                             <button
                                                 type="button"
@@ -787,6 +772,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                             onChange={(e) => setPassword(e.target.value)}
                                             type="password"
                                             placeholder="••••••••"
+                                            className="bg-card"
                                             passwordToggle={{
                                                 showLabel: UI.showPassword,
                                                 hideLabel: UI.hidePassword,
