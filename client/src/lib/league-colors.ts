@@ -37,7 +37,7 @@ export const LEAGUE_ACCENT_CLASS: Record<LeagueTier, string> = {
   gold: "text-[#F5C518]",
   platinum: "text-cyan-400",
   diamond: "text-violet-400",
-  legend: "text-accent",
+  legend: "accent-text",
 };
 
 export const LEAGUE_COLORS: Record<LeagueTier, string> = {

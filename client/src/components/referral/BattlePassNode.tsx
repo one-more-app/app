@@ -53,7 +53,7 @@ export function BattlePassNode({
             <span
                 className={
                     isHighlighted
-                        ? "text-center text-[9px] font-semibold leading-tight text-accent"
+                        ? "accent-text text-center text-[9px] font-semibold leading-tight"
                         : "text-center text-[9px] leading-tight text-muted-foreground"
                 }
             >

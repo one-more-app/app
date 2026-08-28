@@ -123,7 +123,7 @@ export function RankBadge({
                     <span
                         className={cn(
                             "font-one-more font-bold italic leading-none",
-                            accentClass,
+                            isLegend ? "text-accent-foreground" : accentClass,
                             sizes.sub,
                         )}
                     >

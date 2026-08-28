@@ -80,8 +80,8 @@ export function EventSpectacleOverlayShell({
                 <OnboardingReveal delayMs={stagger * 3}>
                     <div
                         className={cn(
-                            "font-one-more text-sm uppercase italic tracking-[0.3em] lg:text-base",
-                            isCelebration ? "text-accent" : "text-accent/80",
+                            "accent-text font-one-more text-sm uppercase italic tracking-[0.3em] lg:text-base",
+                            isCelebration ? null : "opacity-80",
                         )}
                     >
                         {badgeLabel}

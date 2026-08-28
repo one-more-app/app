@@ -177,7 +177,7 @@ function EventLeaderboardContent() {
                                     staggerMs={TITLE_STAGGER_MS}
                                 />
                                 {"\u00A0"}
-                                <span className="text-accent">
+                                <span className="accent-text">
                                     <AnimatedWords
                                         text={UI.eventStandTitleAccent}
                                         baseDelayMs={titleAccentDelayMs}

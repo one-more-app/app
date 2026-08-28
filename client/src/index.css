@@ -194,6 +194,28 @@
   }
 }
 
+/*
+ * Texte en couleur accent (lime). Illisible sur une surface claire :
+ * en thème clair on surligne le texte (fond lime + texte noir) au lieu de le colorer.
+ * Réservé au TEXTE : les icônes/SVG gardent `text-accent`.
+ * `:not(.dark *)` = miroir du variant `dark` de Tailwind (classe `dark` sur <html> ou sur un wrapper).
+ */
+@layer utilities {
+  .accent-text {
+    color: var(--accent);
+  }
+
+  .accent-text:not(.dark *) {
+    width: fit-content;
+    max-width: 100%;
+    padding-inline: 0.25em;
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+}
+
 /* Hauteur plein écran mobile sans scroll parasite (safe area incluse dans la boîte) */
 @layer utilities {
   .min-h-screen-app {

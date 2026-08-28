@@ -88,7 +88,7 @@ export const EventLeaderRow = forwardRef<HTMLElement, EventLeaderRowProps>(
         >
           <span
             className={cn(
-              "font-one-more text-2xl italic tabular-nums text-accent",
+              "accent-text font-one-more text-2xl italic tabular-nums",
               highlight &&
                 animateEntrance &&
                 "level-up-count-anim inline-block motion-reduce:animate-none",

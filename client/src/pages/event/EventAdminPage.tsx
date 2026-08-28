@@ -453,7 +453,7 @@ function EventAdminForm() {
       {tvDisplayActive && tvDisplayKind && tvDisplayName ? (
         <Card className="border-accent/50 bg-accent/10">
           <CardHeader>
-            <CardTitle className="text-accent">{UI.eventAdminTvDisplayTitle}</CardTitle>
+            <CardTitle className="accent-text">{UI.eventAdminTvDisplayTitle}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="font-one-more text-sm uppercase italic tracking-wide text-muted-foreground">
@@ -654,14 +654,14 @@ function EventAdminForm() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="font-one-more text-xl uppercase italic">{lastResult.displayName}</p>
-            <p className="font-one-more text-4xl italic tabular-nums text-accent">
+            <p className="accent-text font-one-more text-4xl italic tabular-nums">
               {UI.eventAdminResultScore.replace("{reps}", String(lastResult.reps))}
             </p>
             <p className="font-one-more text-lg uppercase italic">
               {UI.eventAdminResultRank.replace("{rank}", String(lastResult.rank))}
             </p>
             {lastResult.beatPreviousLeader ? (
-              <p className="text-sm text-accent">{UI.eventStandCongratsTshirt}</p>
+              <p className="accent-text text-sm">{UI.eventStandCongratsTshirt}</p>
             ) : null}
             {resultLeague ? <RankBadge league={resultLeague} size="md" /> : null}
             <Button

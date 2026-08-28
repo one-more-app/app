@@ -26,7 +26,7 @@ export function EventLiveRecordChase({
       <p
         key="live-new-record"
         className={cn(
-          "event-live-rank-rise font-one-more uppercase italic tracking-[0.15em] text-accent motion-reduce:animate-none",
+          "accent-text event-live-rank-rise font-one-more uppercase italic tracking-[0.15em] motion-reduce:animate-none",
           isTv ? "text-base lg:text-lg" : "text-xs",
         )}
       >
