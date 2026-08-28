@@ -1,8 +1,9 @@
 import "@ncdai/react-wheel-picker/style.css"
 
 import * as WheelPickerPrimitive from "@ncdai/react-wheel-picker"
-
+import { hapticSelectionChanged } from "@/lib/haptics"
 import { cn } from "@/lib/utils"
+import { useCallback, useEffect, useRef } from "react"
 
 type WheelPickerValue = WheelPickerPrimitive.WheelPickerValue
 
@@ -28,10 +29,39 @@ function WheelPickerWrapper({
     )
 }
 
+type WheelPickerProps<T extends WheelPickerValue = string> =
+    WheelPickerPrimitive.WheelPickerProps<T> & {
+        /** Retour haptique à chaque cran (défaut: true) */
+        haptic?: boolean
+    }
+
 function WheelPicker<T extends WheelPickerValue = string>({
     classNames,
+    haptic = true,
+    onValueChange,
+    value,
+    defaultValue,
     ...props
-}: WheelPickerPrimitive.WheelPickerProps<T>) {
+}: WheelPickerProps<T>) {
+    const lastHapticValue = useRef<T | undefined>(value ?? defaultValue)
+
+    useEffect(() => {
+        if (value !== undefined) {
+            lastHapticValue.current = value
+        }
+    }, [value])
+
+    const handleValueChange = useCallback(
+        (next: T) => {
+            onValueChange?.(next)
+            if (haptic && next !== lastHapticValue.current) {
+                lastHapticValue.current = next
+                void hapticSelectionChanged()
+            }
+        },
+        [haptic, onValueChange],
+    )
+
     return (
         <WheelPickerPrimitive.WheelPicker
             classNames={{
@@ -49,11 +79,14 @@ function WheelPicker<T extends WheelPickerValue = string>({
                     classNames?.highlightItem
                 ),
             }}
+            value={value}
+            defaultValue={defaultValue}
+            onValueChange={handleValueChange}
             {...props}
         />
     )
 }
 
 export { WheelPicker, WheelPickerWrapper }
-export type { WheelPickerClassNames, WheelPickerOption }
+export type { WheelPickerClassNames, WheelPickerOption, WheelPickerProps }
 

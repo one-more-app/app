@@ -3,7 +3,6 @@ import {
   WheelPickerWrapper,
   type WheelPickerOption,
 } from "@/components/wheel-picker/wheel-picker";
-import { hapticSelectionChanged } from "@/lib/haptics";
 import {
   clampReminderHour,
   clampReminderMinute,
@@ -68,13 +67,11 @@ export function TimePicker({
   const handleHourChange = (next: number) => {
     if (next === hourRef.current) return;
     onChange(next, minuteRef.current);
-    void hapticSelectionChanged();
   };
 
   const handleMinuteChange = (next: number) => {
     if (next === minuteRef.current) return;
     onChange(hourRef.current, next);
-    void hapticSelectionChanged();
   };
 
   return (
