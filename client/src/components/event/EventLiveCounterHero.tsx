@@ -60,7 +60,7 @@ export function EventLiveCounterHero({
                     <p
                         key={reps}
                         className={cn(
-                            "event-live-count-bump relative z-[1] font-one-more font-bold italic tabular-nums leading-none text-accent motion-reduce:animate-none",
+                            "accent-text event-live-count-bump relative z-[1] font-one-more font-bold italic tabular-nums leading-none motion-reduce:animate-none",
                         )}
                     >
                         {reps}

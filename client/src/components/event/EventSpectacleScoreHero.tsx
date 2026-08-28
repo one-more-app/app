@@ -65,7 +65,7 @@ export function EventSpectacleScoreHero({
 
           <p
             key={heroKey}
-            className="event-live-count-bump relative z-[1] font-one-more font-bold italic tabular-nums leading-none text-accent motion-reduce:animate-none"
+            className="accent-text event-live-count-bump relative z-[1] font-one-more font-bold italic tabular-nums leading-none motion-reduce:animate-none"
           >
             {reps}
           </p>

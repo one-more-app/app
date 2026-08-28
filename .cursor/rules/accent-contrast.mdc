@@ -1,5 +1,5 @@
 ---
-description: Couleur accent — pas de texte accent sur fond blanc, usage parcimonieux
+description: Couleur accent — texte accent surligné en thème clair (.accent-text), usage parcimonieux
 globs: client/src/**/*.{ts,tsx,css}
 alwaysApply: false
 ---
@@ -8,23 +8,59 @@ alwaysApply: false
 
 `--accent` (`#dfff5e`) est un jaune-vert flashy. Sur fond blanc / `background` clair, **le contraste est insuffisant** : ni le texte `text-accent`, ni un filet / icône / pastille accent isolés ne se lisent correctement.
 
-## Interdit
+## Règle texte : `accent-text`, jamais `text-accent`
 
-- Texte, labels, liens, chiffres ou icônes en `text-accent` (ou `color: var(--accent)`) sur fond blanc, `bg-background`, `bg-card` clair.
-- Petits accents décoratifs seuls sur blanc : `border-accent`, underline, dot, badge minuscule.
+Tout **texte** en couleur accent doit utiliser la classe `accent-text` (définie dans [`client/src/index.css`](../../client/src/index.css)) :
+
+- **thème sombre** : texte lime, exactement comme avant ;
+- **thème clair** : le texte est **surligné** (fond lime, texte noir `--accent-foreground`), pas coloré.
 
 ```tsx
-// ❌ Texte accent sur fond clair — illisible
+// ❌ Interdit sur du texte
 <p className="text-accent">Nouveau record</p>
-<span className="text-xs font-semibold text-accent">Premium</span>
+<span className="text-xs font-semibold text-[color:var(--accent)]">Premium</span>
 
-// ❌ Filet / pastille accent sur blanc, sans masse
-<div className="border border-accent text-foreground">…</div>
+// ✅ Surlignage auto en thème clair, lime en thème sombre
+<p className="accent-text font-one-more text-lg italic">Nouveau record</p>
 ```
+
+Implémentation (ne pas dupliquer ailleurs) :
+
+```css
+.accent-text { color: var(--accent); }
+
+.accent-text:not(.dark *) {
+  width: fit-content;
+  border-radius: 0.25rem;
+  padding-inline: 0.25em;
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+  box-decoration-break: clone;
+}
+```
+
+`:not(.dark *)` est le miroir du variant `dark` de Tailwind : la classe `dark` posée sur `<html>` (hook `use-theme`) ou sur un wrapper (`OnboardingShell`, stand event) neutralise le surlignage. Aucun `dark:` à écrire côté composant.
+
+### Points d'attention
+
+- `width: fit-content` fait que le surlignage épouse le texte. Sur un bloc centré, garder le parent en `flex items-center` ou ajouter `mx-auto`.
+- Ne pas combiner avec une autre classe de couleur de texte (`text-foreground`, `text-accent/80`) : `accent-text` gagne. Pour atténuer, utiliser `opacity-80` sur l'élément.
+- Surface claire **forcée** (carte `bg-white` en dur, ex. paywall) : le thème ne s'applique pas, surligner en dur (`rounded bg-[color:var(--accent)] px-1 text-black`).
+
+## Icônes : `text-accent` reste autorisé
+
+La règle ne concerne que le texte. Une icône lucide, un SVG ou un conteneur d'icône gardent `text-accent`.
+
+```tsx
+// ✅ Icône
+<Loader2 className="size-6 animate-spin text-accent" aria-hidden />
+```
+
+Invariant à respecter : dans `client/src/`, `text-accent` (sans `-foreground`) ne doit apparaître **que** sur des icônes.
 
 ## Autorisé : gros bloc rempli
 
-L’accent sert de **surface**, pas de couleur de texte. Le bloc doit avoir une vraie masse (padding généreux, largeur utile) et le texte à l’intérieur en `text-accent-foreground` (noir).
+L'accent sert de **surface**, pas de couleur de texte. Le bloc doit avoir une vraie masse (padding généreux, largeur utile) et le texte à l'intérieur en `text-accent-foreground` (noir).
 
 ```tsx
 // ✅ CTA / bouton plein
@@ -38,8 +74,13 @@ L’accent sert de **surface**, pas de couleur de texte. Le bloc doit avoir une 
 </div>
 ```
 
-Surfaces teintées très légères (`bg-accent/5`, `bg-accent/10`) : OK si le **texte reste `text-foreground`**, jamais `text-accent`.
+Surfaces teintées très légères (`bg-accent/5`, `bg-accent/10`) : OK si le **texte reste `text-foreground`** ou `accent-text`, jamais `text-accent`.
+
+## Interdit
+
+- Texte en `text-accent` / `color: var(--accent)` sur fond clair (utiliser `accent-text`).
+- Petits accents décoratifs seuls sur blanc : `border-accent`, underline, dot, badge minuscule.
 
 ## Parcimonie
 
-Réserver l’accent aux moments qui comptent : CTA principal, célébration, highlight d’un écran. Un seul bloc accent fort par vue. Le reste de l’UI reste neutre (`foreground` / `muted-foreground`).
+Réserver l'accent aux moments qui comptent : CTA principal, célébration, highlight d'un écran. Un seul bloc accent fort par vue. Le reste de l'UI reste neutre (`foreground` / `muted-foreground`).

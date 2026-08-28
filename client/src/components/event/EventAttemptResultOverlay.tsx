@@ -48,7 +48,7 @@ export function EventAttemptResultOverlay({
                 isRecord ? (
                     <div className="flex flex-col items-center gap-4 lg:gap-6">
                         <span>{UI.eventStandCongratsRecord}</span>
-                        <span className="text-4xl text-accent lg:text-6xl">
+                        <span className="accent-text text-4xl lg:text-6xl">
                             {UI.eventStandWonBadge}
                         </span>
                     </div>
@@ -80,7 +80,7 @@ export function EventAttemptResultOverlay({
                     />
 
                     <div className="flex min-w-0 flex-col gap-3 border-l border-border/50 pl-5 text-left lg:gap-4 lg:pl-7">
-                        <p className="font-one-more text-4xl uppercase italic leading-none text-accent">
+                        <p className="accent-text font-one-more text-4xl uppercase italic leading-none">
                             {instagramLead}
                         </p>
                         <div className="flex items-center gap-2.5">

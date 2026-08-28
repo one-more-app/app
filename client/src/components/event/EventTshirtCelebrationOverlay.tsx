@@ -56,7 +56,7 @@ export function EventTshirtCelebrationOverlay({
         animationKey={celebration.entryId}
         size="tv"
         footer={
-          <p className="font-one-more text-xl uppercase italic leading-snug text-accent lg:text-3xl">
+          <p className="accent-text font-one-more text-xl uppercase italic leading-snug lg:text-3xl">
             {UI.eventStandCongratsTshirt}
           </p>
         }

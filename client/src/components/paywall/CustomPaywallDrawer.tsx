@@ -582,7 +582,7 @@ function PackageCard({
                     <span className="text-base font-semibold">{label}</span>
                     <span className="text-xs text-black/60">{perMonth}</span>
                     {trialLabel ? (
-                        <span className="text-xs font-semibold text-[color:var(--accent)]">
+                        <span className="w-fit rounded bg-[color:var(--accent)] px-1 text-xs font-semibold text-black">
                             {trialLabel}
                         </span>
                     ) : null}
