@@ -1,15 +1,14 @@
-import { OnboardingShell } from "@/components/OnboardingShell";
 import { Trackable } from "@/components/analytics/Trackable";
 import { onboardingEntrance, onboardingStepCardClassName } from "@/components/onboarding/onboarding-motion";
-import { StepCard } from "@/components/StepCard";
-import { Button } from "@/components/ui/button";
+import { OnboardingShell } from "@/components/OnboardingShell";
 import {
     UsernameField,
     type UsernameFieldStatus,
 } from "@/components/profile/UsernameField";
+import { StepCard } from "@/components/StepCard";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
-import { ApiError } from "@/lib/api";
 import {
     OnboardingSteps,
     trackAuthSuccess,
@@ -17,24 +16,26 @@ import {
     useOnboardingStepViewed,
     type OnboardingStepId,
 } from "@/lib/analytics";
+import { ApiError } from "@/lib/api";
 import { identifyEmail, suggestUsername } from "@/lib/auth";
 import { peekPendingInviteCode } from "@/lib/invite-code";
 import { signInWithApple, signInWithGoogle } from "@/lib/oauth";
-import { fetchInvitePreview } from "@/lib/social-api";
 import { postAuthNavigateOptions, resolvePostAuthNavigation } from "@/lib/post-auth-navigation";
-import { needsOnboarding, peekPendingOnboardingRecord, setUserProfile, applyPendingOnboardingProfileAfterAuth } from "@/lib/storage";
+import { fetchInvitePreview } from "@/lib/social-api";
+import { applyPendingOnboardingProfileAfterAuth, needsOnboarding, peekPendingOnboardingRecord, setUserProfile } from "@/lib/storage";
 import { UI } from "@/lib/translations";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
-import {
-  EXERCISE_BONUS_FOR_USING_REFERRAL,
-} from "@one-more/shared/access-config";
 import { Capacitor } from "@capacitor/core";
+import {
+    EXERCISE_BONUS_FOR_USING_REFERRAL,
+} from "@one-more/shared/access-config";
 import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 const CGU_URL = "https://site.one-more.app/cgu";
 const PRIVACY_URL = "https://site.one-more.app/privacy";
+const AUTH_HERO_IMAGE_SRC = "/images/marcus.png";
 
 type AuthStep =
     | "email"
@@ -286,7 +287,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
             section={trackOnboardingAuth ? "onboarding" : "auth"}
             feature={currentAuthStep}
             className={onboardingEntrance(
-                "relative z-10 mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col overflow-y-auto px-4 py-6",
+                "relative z-10 mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col overflow-y-auto px-4 pb-6",
+                // Le hero doit toucher le haut de l'écran : on annule le safe-top du shell.
+                isRegisterStep ? "pt-3" : "mt-[calc(-1*var(--safe-top))]",
                 "animate-in fade-in-0 slide-in-from-left-4 duration-400",
             )}
         >
@@ -576,109 +579,66 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                     )}
                 </StepCard>
             ) : (
-                <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
-                    <div className="flex flex-1 flex-col gap-8">
-                    <header className="space-y-3 text-center">
-                        <h1 className="font-one-more text-xl uppercase italic leading-tight sm:text-2xl">
-                            {fromOnboardingConversion
-                                ? UI.authSaveProgressTitle
-                                : UI.authLoginTitle}
-                        </h1>
-                        <p className="text-sm leading-relaxed text-muted-foreground">
-                            {fromOnboardingConversion
-                                ? UI.authSaveProgressDescription
-                                : UI.authLoginDescription}
-                        </p>
-                        {fromOnboardingConversion ? (
-                            <p className="text-xs text-muted-foreground">
-                                {UI.onboardingAccountLossHint}
-                            </p>
-                        ) : null}
-                    </header>
-
-                    <div className="space-y-3">
-                        <Button
-                            className="w-full"
-                            variant="secondary"
-                            data-analytics-label="onboarding_google"
-                            disabled={isBusy}
-                            onClick={() => {
-                                void (async () => {
-                                    setIsBusy(true);
-                                    auth.clearError();
-                                    try {
-                                        const session = await signInWithGoogle();
-                                        auth.acceptSession(session);
-                                        applyPendingOnboardingProfileAfterAuth(
-                                            session.isNewUser === true,
-                                        );
-                                        trackAuthSuccess({
-                                            method: "google",
-                                            isNewUser: session.isNewUser === true,
-                                        });
-                                        await finishSuccess();
-                                    } catch (e) {
-                                        console.error("[Auth] Google sign-in failed", e);
-                                        auth.setError(
-                                            oauthErrorMessage(e, "Connexion Google impossible"),
-                                        );
-                                    } finally {
-                                        setIsBusy(false);
-                                    }
-                                })();
-                            }}
-                        >
-                            <span className="inline-flex items-center justify-center gap-2">
-                                <svg
+                <div className="flex w-full flex-1 flex-col">
+                    <div className="flex flex-1 flex-col gap-6">
+                        <div className="space-y-4">
+                            <div className="relative -mx-4 shrink-0 overflow-hidden">
+                                <img
+                                    src={AUTH_HERO_IMAGE_SRC}
+                                    alt=""
+                                    className="h-50 w-full select-none object-cover object-[50%_15%]"
+                                    draggable={false}
+                                />
+                                <div
                                     aria-hidden
-                                    viewBox="0 0 48 48"
-                                    className="size-5"
-                                >
-                                    <path
-                                        fill="#EA4335"
-                                        d="M24 9.5c3.13 0 5.95 1.08 8.16 2.85l6.1-6.1C34.55 2.79 29.6.5 24 .5 14.62.5 6.54 5.88 2.66 13.7l7.38 5.73C11.94 13.6 17.53 9.5 24 9.5z"
-                                    />
-                                    <path
-                                        fill="#4285F4"
-                                        d="M46.5 24.5c0-1.6-.14-2.74-.45-3.93H24v7.44h12.91c-.26 2.06-1.67 5.17-4.8 7.25l7.24 5.61C43.55 35.11 46.5 30.31 46.5 24.5z"
-                                    />
-                                    <path
-                                        fill="#FBBC05"
-                                        d="M10.04 28.57A14.8 14.8 0 0 1 9.27 24c0-1.59.28-3.12.77-4.57l-7.38-5.73A23.45 23.45 0 0 0 .5 24c0 3.79.9 7.37 2.16 10.3l7.38-5.73z"
-                                    />
-                                    <path
-                                        fill="#34A853"
-                                        d="M24 47.5c5.6 0 10.3-1.85 13.73-5.04l-7.24-5.61c-1.94 1.35-4.55 2.3-6.49 2.3-6.47 0-12.06-4.1-13.96-9.93l-7.38 5.73C6.54 42.12 14.62 47.5 24 47.5z"
-                                    />
-                                </svg>
-                                <span>{UI.continueWithGoogle}</span>
-                            </span>
-                        </Button>
-                        {showAppleSignIn && (
+                                    className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background via-background/70 to-transparent"
+                                />
+                            </div>
+
+                            <header className="space-y-3 text-center">
+                                <h1 className="font-one-more text-xl uppercase italic leading-tight sm:text-2xl">
+                                    {fromOnboardingConversion
+                                        ? UI.authSaveProgressTitle
+                                        : UI.authLoginTitle}
+                                </h1>
+                                <p className="text-sm leading-relaxed text-muted-foreground">
+                                    {fromOnboardingConversion
+                                        ? UI.authSaveProgressDescription
+                                        : UI.authLoginDescription}
+                                </p>
+                                {fromOnboardingConversion ? (
+                                    <p className="text-xs text-muted-foreground">
+                                        {UI.onboardingAccountLossHint}
+                                    </p>
+                                ) : null}
+                            </header>
+                        </div>
+
+                        <div className="space-y-3">
                             <Button
                                 className="w-full"
                                 variant="secondary"
-                                data-analytics-label="onboarding_apple"
+                                data-analytics-label="onboarding_google"
                                 disabled={isBusy}
                                 onClick={() => {
                                     void (async () => {
                                         setIsBusy(true);
                                         auth.clearError();
                                         try {
-                                            const session = await signInWithApple();
+                                            const session = await signInWithGoogle();
                                             auth.acceptSession(session);
                                             applyPendingOnboardingProfileAfterAuth(
                                                 session.isNewUser === true,
                                             );
                                             trackAuthSuccess({
-                                                method: "apple",
+                                                method: "google",
                                                 isNewUser: session.isNewUser === true,
                                             });
                                             await finishSuccess();
                                         } catch (e) {
-                                            console.error("[Auth] Apple sign-in failed", e);
+                                            console.error("[Auth] Google sign-in failed", e);
                                             auth.setError(
-                                                oauthErrorMessage(e, "Connexion Apple impossible"),
+                                                oauthErrorMessage(e, "Connexion Google impossible"),
                                             );
                                         } finally {
                                             setIsBusy(false);
@@ -689,119 +649,177 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 <span className="inline-flex items-center justify-center gap-2">
                                     <svg
                                         aria-hidden
-                                        viewBox="0 0 24 24"
-                                        className="size-5 fill-current"
+                                        viewBox="0 0 48 48"
+                                        className="size-5"
                                     >
-                                        <path d="M17.05 20.28c-.98.95-2.05 1.88-3.3 1.88-1.22 0-1.55-.79-2.9-.79-1.34 0-1.72.82-2.9.82-1.18 0-2.07-1.05-3.05-2.1C4.79 17.25 3.4 14.2 5.03 10.7c.82-1.6 2.28-2.61 3.87-2.61 1.21 0 2.35.82 3.17.82.78 0 2.01-.99 3.4-.84.58.02 2.22.24 3.27 1.82-.08.05-1.96 1.14-1.94 3.4.03 2.7 2.35 3.6 2.38 3.61-.03.07-.37 1.26-1.14 2.38zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+                                        <path
+                                            fill="#EA4335"
+                                            d="M24 9.5c3.13 0 5.95 1.08 8.16 2.85l6.1-6.1C34.55 2.79 29.6.5 24 .5 14.62.5 6.54 5.88 2.66 13.7l7.38 5.73C11.94 13.6 17.53 9.5 24 9.5z"
+                                        />
+                                        <path
+                                            fill="#4285F4"
+                                            d="M46.5 24.5c0-1.6-.14-2.74-.45-3.93H24v7.44h12.91c-.26 2.06-1.67 5.17-4.8 7.25l7.24 5.61C43.55 35.11 46.5 30.31 46.5 24.5z"
+                                        />
+                                        <path
+                                            fill="#FBBC05"
+                                            d="M10.04 28.57A14.8 14.8 0 0 1 9.27 24c0-1.59.28-3.12.77-4.57l-7.38-5.73A23.45 23.45 0 0 0 .5 24c0 3.79.9 7.37 2.16 10.3l7.38-5.73z"
+                                        />
+                                        <path
+                                            fill="#34A853"
+                                            d="M24 47.5c5.6 0 10.3-1.85 13.73-5.04l-7.24-5.61c-1.94 1.35-4.55 2.3-6.49 2.3-6.47 0-12.06-4.1-13.96-9.93l-7.38 5.73C6.54 42.12 14.62 47.5 24 47.5z"
+                                        />
                                     </svg>
-                                    <span>{UI.continueWithApple}</span>
+                                    <span>{UI.continueWithGoogle}</span>
                                 </span>
                             </Button>
-                        )}
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <div className="h-px flex-1 bg-border/60" />
-                        <p className="text-xs text-muted-foreground">
-                            ou
-                        </p>
-                        <div className="h-px flex-1 bg-border/60" />
-                    </div>
-
-                    <div className="space-y-4">
-                        {step === "email" ? (
-                            <>
-                                <Input
-                                    label={UI.email}
-                                    value={email}
-                                    onChange={(e) => handleEmailChange(e.target.value)}
-                                    inputMode="email"
-                                    autoCapitalize="none"
-                                    autoCorrect="off"
-                                    placeholder="email@exemple.com"
-                                />
-
-                                {auth.lastError && (
-                                    <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                                        {auth.lastError}
-                                    </div>
-                                )}
-
+                            {showAppleSignIn && (
                                 <Button
-                                    variant="accent"
-                                    className="mt-4 w-full"
-                                    data-analytics-label="onboarding_email_continue"
-                                    onClick={() => void submitEmail()}
-                                    disabled={!canContinueEmail}
+                                    className="w-full"
+                                    variant="secondary"
+                                    data-analytics-label="onboarding_apple"
+                                    disabled={isBusy}
+                                    onClick={() => {
+                                        void (async () => {
+                                            setIsBusy(true);
+                                            auth.clearError();
+                                            try {
+                                                const session = await signInWithApple();
+                                                auth.acceptSession(session);
+                                                applyPendingOnboardingProfileAfterAuth(
+                                                    session.isNewUser === true,
+                                                );
+                                                trackAuthSuccess({
+                                                    method: "apple",
+                                                    isNewUser: session.isNewUser === true,
+                                                });
+                                                await finishSuccess();
+                                            } catch (e) {
+                                                console.error("[Auth] Apple sign-in failed", e);
+                                                auth.setError(
+                                                    oauthErrorMessage(e, "Connexion Apple impossible"),
+                                                );
+                                            } finally {
+                                                setIsBusy(false);
+                                            }
+                                        })();
+                                    }}
                                 >
-                                    {UI.joinCta}
-                                </Button>
-                            </>
-                        ) : (
-                            <>
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-medium">{UI.email}</label>
-                                    <div className="relative">
-                                        <Input
-                                            value={email}
-                                            onChange={(e) => handleEmailChange(e.target.value)}
-                                            inputMode="email"
-                                            autoCapitalize="none"
-                                            autoCorrect="off"
-                                            placeholder="email@exemple.com"
-                                            className="pr-10"
-                                        />
-                                        <button
-                                            type="button"
-                                            className="absolute inset-y-0 right-1 my-auto flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
-                                            aria-label="Changer l'email"
-                                            data-analytics-label="onboarding_change_email"
-                                            onClick={returnToEmailStep}
+                                    <span className="inline-flex items-center justify-center gap-2">
+                                        <svg
+                                            aria-hidden
+                                            viewBox="0 0 24 24"
+                                            className="size-5 fill-current"
                                         >
-                                            <X className="size-4 shrink-0" aria-hidden />
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
+                                            <path d="M17.05 20.28c-.98.95-2.05 1.88-3.3 1.88-1.22 0-1.55-.79-2.9-.79-1.34 0-1.72.82-2.9.82-1.18 0-2.07-1.05-3.05-2.1C4.79 17.25 3.4 14.2 5.03 10.7c.82-1.6 2.28-2.61 3.87-2.61 1.21 0 2.35.82 3.17.82.78 0 2.01-.99 3.4-.84.58.02 2.22.24 3.27 1.82-.08.05-1.96 1.14-1.94 3.4.03 2.7 2.35 3.6 2.38 3.61-.03.07-.37 1.26-1.14 2.38zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+                                        </svg>
+                                        <span>{UI.continueWithApple}</span>
+                                    </span>
+                                </Button>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <div className="h-px flex-1 bg-border/60" />
+                            <p className="text-xs text-muted-foreground">
+                                ou
+                            </p>
+                            <div className="h-px flex-1 bg-border/60" />
+                        </div>
+
+                        <div className="space-y-4">
+                            {step === "email" ? (
+                                <>
                                     <Input
-                                        label={UI.password}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        type="password"
-                                        placeholder="••••••••"
-                                        passwordToggle={{
-                                            showLabel: UI.showPassword,
-                                            hideLabel: UI.hidePassword,
-                                        }}
+                                        label={UI.email}
+                                        value={email}
+                                        onChange={(e) => handleEmailChange(e.target.value)}
+                                        inputMode="email"
+                                        autoCapitalize="none"
+                                        autoCorrect="off"
+                                        placeholder="email@exemple.com"
                                     />
-                                    <p className="text-xs text-muted-foreground">
-                                        {UI.passwordHint}
-                                    </p>
-                                </div>
 
-                                {auth.lastError && (
-                                    <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                                        {auth.lastError}
-                                    </div>
-                                )}
+                                    {auth.lastError && (
+                                        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                                            {auth.lastError}
+                                        </div>
+                                    )}
 
-                                <div className="space-y-2">
                                     <Button
                                         variant="accent"
                                         className="mt-4 w-full"
-                                        data-analytics-label="onboarding_login_submit"
-                                        onClick={() => void submitLogin()}
-                                        disabled={!canLogin}
+                                        data-analytics-label="onboarding_email_continue"
+                                        onClick={() => void submitEmail()}
+                                        disabled={!canContinueEmail}
                                     >
-                                        {UI.login}
+                                        {UI.joinCta}
                                     </Button>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-sm font-medium">{UI.email}</label>
+                                        <div className="relative">
+                                            <Input
+                                                value={email}
+                                                onChange={(e) => handleEmailChange(e.target.value)}
+                                                inputMode="email"
+                                                autoCapitalize="none"
+                                                autoCorrect="off"
+                                                placeholder="email@exemple.com"
+                                                className="pr-10"
+                                            />
+                                            <button
+                                                type="button"
+                                                className="absolute inset-y-0 right-1 my-auto flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+                                                aria-label="Changer l'email"
+                                                data-analytics-label="onboarding_change_email"
+                                                onClick={returnToEmailStep}
+                                            >
+                                                <X className="size-4 shrink-0" aria-hidden />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Input
+                                            label={UI.password}
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            type="password"
+                                            placeholder="••••••••"
+                                            passwordToggle={{
+                                                showLabel: UI.showPassword,
+                                                hideLabel: UI.hidePassword,
+                                            }}
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            {UI.passwordHint}
+                                        </p>
+                                    </div>
+
+                                    {auth.lastError && (
+                                        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                                            {auth.lastError}
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-2">
+                                        <Button
+                                            variant="accent"
+                                            className="mt-4 w-full"
+                                            data-analytics-label="onboarding_login_submit"
+                                            onClick={() => void submitLogin()}
+                                            disabled={!canLogin}
+                                        >
+                                            {UI.login}
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
 
-                    <p className="shrink-0 pt-10 text-center text-[11px] leading-relaxed text-muted-foreground">
+                    <p className="shrink-0 pt-6 text-center text-[11px] leading-relaxed text-muted-foreground">
                         {UI.authLegalBefore}{" "}
                         <a
                             href={CGU_URL}

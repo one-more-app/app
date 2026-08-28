@@ -66,7 +66,7 @@ export function StepCard(props: {
                         {typeof progressPercent === "number" ? (
                             <Progress
                                 value={Math.max(0, Math.min(100, progressPercent))}
-                                className="h-1.5 min-w-0 flex-1"
+                                className="h-1.5 min-w-0 flex-1 bg-card"
                             />
                         ) : null}
                         {stepLabel ? (

@@ -3,9 +3,8 @@ import {
     WheelPickerWrapper,
     type WheelPickerOption,
 } from '@/components/wheel-picker/wheel-picker'
-import { hapticSelectionChanged } from '@/lib/haptics'
 import { cn } from '@/lib/utils'
-import { useEffect, useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 
 interface NumberWheelPickerProps {
     value: number
@@ -42,12 +41,6 @@ export function NumberWheelPicker({
     unit = '',
     className,
 }: NumberWheelPickerProps) {
-    const lastHapticValue = useRef(value)
-
-    useEffect(() => {
-        lastHapticValue.current = value
-    }, [value])
-
     const options = useMemo(
         () => buildOptions(min, max, step),
         [min, max, step]
@@ -55,10 +48,6 @@ export function NumberWheelPicker({
 
     const handleValueChange = (v: number) => {
         onChange(v)
-        if (v !== lastHapticValue.current) {
-            lastHapticValue.current = v
-            hapticSelectionChanged()
-        }
     }
 
     const VIEWPORT_W = 224

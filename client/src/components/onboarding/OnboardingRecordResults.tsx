@@ -333,7 +333,7 @@ function RankReel({
                 aria-hidden
             />
             <div
-                className="pointer-events-none absolute inset-x-8 top-1/2 z-0 h-11 -translate-y-1/2 rounded-full bg-secondary/50"
+                className="pointer-events-none absolute inset-x-8 top-1/2 z-0 h-11 -translate-y-1/2 rounded-xl bg-card/70"
                 aria-hidden
             />
             <div
@@ -402,7 +402,7 @@ function RankProgressBar({
 
     return (
         <div
-            className="h-1.5 overflow-hidden rounded-full bg-muted"
+            className="h-1.5 overflow-hidden rounded-full bg-background"
             aria-hidden
         >
             <div

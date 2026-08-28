@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AnalyticsEvents, track } from '@/lib/analytics'
-import { hapticImpact, hapticSelectionChanged } from '@/lib/haptics'
+import { hapticSelectionChanged, primeHaptics } from '@/lib/haptics'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import { Minus, Plus } from 'lucide-react'
@@ -72,9 +72,18 @@ export function HorizontalWheelPicker({
     const scrollRef = useRef<HTMLDivElement>(null)
     const isInternalUpdate = useRef(false)
     const isReady = useRef(false)
+    const lastHapticIndex = useRef(0)
 
     const index = useMemo(() => findClosestIndex(options, value), [options, value])
     const clampedIndex = Math.max(0, Math.min(index, options.length - 1))
+
+    useEffect(() => {
+        lastHapticIndex.current = clampedIndex
+    }, [clampedIndex])
+
+    useEffect(() => {
+        primeHaptics()
+    }, [])
 
     const scrollToIndex = useCallback((targetIndex: number, smooth = false) => {
         const el = scrollRef.current
@@ -116,7 +125,7 @@ export function HorizontalWheelPicker({
         setInputText(null)
         if (newValue !== value) {
             emitChange(newValue, 'input')
-            hapticImpact()
+            void hapticSelectionChanged()
         }
     }, [inputText, parseAndClamp, value, emitChange])
 
@@ -153,7 +162,12 @@ export function HorizontalWheelPicker({
     useEffect(() => {
         const el = scrollRef.current
         if (!el) return
-        const ro = new ResizeObserver(syncToValue)
+        const ro = new ResizeObserver(() => {
+            if (el.offsetWidth > 0) {
+                isReady.current = true
+            }
+            syncToValue()
+        })
         ro.observe(el)
         return () => ro.disconnect()
     }, [syncToValue])
@@ -166,25 +180,30 @@ export function HorizontalWheelPicker({
         const center = el.scrollLeft + el.offsetWidth / 2
         const i = Math.round((center - PADDING - ITEM_WIDTH / 2) / ITEM_WIDTH)
         const clamped = Math.max(0, Math.min(i, options.length - 1))
+        if (clamped !== lastHapticIndex.current) {
+            lastHapticIndex.current = clamped
+            void hapticSelectionChanged()
+        }
         const newValue = options[clamped]?.value
         if (newValue !== undefined && newValue !== value) {
             emitChange(newValue, 'scroll')
-            hapticSelectionChanged()
         }
     }, [options, value, emitChange])
 
     const handleDecrement = useCallback(() => {
         const next = Math.max(0, clampedIndex - 1)
+        lastHapticIndex.current = next
         scrollToIndex(next, true)
         emitChange(options[next]!.value, 'button')
-        hapticImpact()
+        void hapticSelectionChanged()
     }, [clampedIndex, options, emitChange, scrollToIndex])
 
     const handleIncrement = useCallback(() => {
         const next = Math.min(options.length - 1, clampedIndex + 1)
+        lastHapticIndex.current = next
         scrollToIndex(next, true)
         emitChange(options[next]!.value, 'button')
-        hapticImpact()
+        void hapticSelectionChanged()
     }, [clampedIndex, options, emitChange, scrollToIndex])
 
     useEffect(() => {
@@ -215,6 +234,7 @@ export function HorizontalWheelPicker({
                         className="size-10 shrink-0 rounded-full sm:size-11"
                         onClick={handleDecrement}
                         disabled={clampedIndex <= 0}
+                        haptic={false}
                     >
                         <Minus className="size-4 sm:size-5" />
                     </Button>
@@ -278,6 +298,7 @@ export function HorizontalWheelPicker({
                         className="size-10 shrink-0 rounded-full sm:size-11"
                         onClick={handleIncrement}
                         disabled={clampedIndex >= options.length - 1}
+                        haptic={false}
                     >
                         <Plus className="size-4 sm:size-5" />
                     </Button>
