@@ -9,11 +9,11 @@ import {
 describe("resolveOnboardingStepFromLocation", () => {
   it("maps record, body questions, account and gym query params", () => {
     expect(resolveOnboardingStepFromLocation("/onboarding", "")).toBe(
-      OnboardingSteps.INTRO,
+      OnboardingSteps.RECORD_PICK,
     );
     expect(
       resolveOnboardingStepFromLocation("/onboarding", "?step=intro"),
-    ).toBe(OnboardingSteps.INTRO);
+    ).toBe(OnboardingSteps.RECORD_PICK);
     expect(
       resolveOnboardingStepFromLocation("/onboarding", "?step=record"),
     ).toBe(OnboardingSteps.RECORD_PICK);

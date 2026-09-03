@@ -18,9 +18,7 @@ test("l'onboarding record montre le palier puis le compte", async ({
 
   await page.goto("/#/onboarding");
 
-  await expect(page.getByRole("heading", { name: "Bats tes records. Prouve-le." })).toBeVisible();
-  await page.getByRole("button", { name: "Établir mon premier record", exact: true }).click();
-
+  await expect(page.getByText("On commence par quel record ?")).toBeVisible();
   await expect(page.getByText("1/3")).toBeVisible();
   await submitStarterRecord(page);
 
@@ -30,7 +28,7 @@ test("l'onboarding record montre le palier puis le compte", async ({
   await page.getByRole("button", { name: "Voir mon palier" }).click();
 
   await expect(page.getByText("3/3")).toBeVisible();
-  await expect(page.getByText("Ton palier")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ton palier" })).toBeVisible();
   await expect(page.getByText("Développé couché").first()).toBeVisible();
   await expect(page.getByText("Record", { exact: true })).toBeVisible();
   await expect(page.getByText("Dernier", { exact: true })).toHaveCount(0);

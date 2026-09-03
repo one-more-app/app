@@ -5,6 +5,11 @@ import { Button } from "@/components/ui/button";
 import { OnboardingSteps } from "@/lib/analytics";
 import { UI } from "@/lib/translations";
 
+/**
+ * Écran d'intro (hero + CTA). Mis de côté : le funnel démarre sur `step=record`.
+ * Conservé pour réactivation. `OnboardingPresentationHero` sert encore la landing store.
+ */
+
 type OnboardingIntroProps = {
     onContinue: () => void;
     onHasAccount: () => void;

@@ -173,6 +173,8 @@ export function OnboardingGymWaitStep({
             <StepCard
                 className={onboardingStepCardClassName}
                 title={UI.gymOnboardingWaitTitle}
+                onBack={onChangeGym}
+                backLabel={UI.back}
                 headerClassName="space-y-3"
                 contentClassName="space-y-5"
             >

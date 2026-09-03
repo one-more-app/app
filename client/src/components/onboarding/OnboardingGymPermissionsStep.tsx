@@ -207,6 +207,8 @@ export function OnboardingGymPermissionsStep({
             <StepCard
                 className={onboardingStepCardClassName}
                 title={UI.gymOnboardingPermissionsTitle}
+                onBack={onChangeGym}
+                backLabel={UI.back}
             >
                 <OnboardingReveal delayMs={80}>
                     <p className="text-sm text-muted-foreground">

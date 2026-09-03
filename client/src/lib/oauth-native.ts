@@ -1,4 +1,4 @@
-import { App } from "@capacitor/app";
+import { muteAndroidBackButton } from "@/lib/app-back-navigation";
 import { Capacitor } from "@capacitor/core";
 import { SocialLogin } from "@capgo/capacitor-social-login";
 
@@ -69,13 +69,11 @@ export async function initNativeSocialSignIn(): Promise<void> {
 async function withAndroidBackButtonMuted<T>(fn: () => Promise<T>): Promise<T> {
   if (Capacitor.getPlatform() !== "android") return fn();
 
-  const listener = await App.addListener("backButton", () => {
-    /* Ne pas propager le back vers l'app pendant le picker Google. */
-  });
+  const unmute = muteAndroidBackButton();
   try {
     return await fn();
   } finally {
-    await listener.remove();
+    unmute();
   }
 }
 

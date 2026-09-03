@@ -38,6 +38,7 @@ export function BackHeader({
                 className="shrink-0"
                 onClick={handleBack}
                 aria-label={UI.back}
+                data-hardware-back=""
             >
                 <ArrowLeft className="size-4" />
             </Button>

@@ -30,9 +30,7 @@ test("l'inscription complète ne plante pas au clic Créer un compte", async ({
 
   await page.getByLabel("Mot de passe", { exact: true }).fill("password123");
   await page.getByLabel("Confirmer le mot de passe").fill("password123");
-  await continueButton(page).click();
-
-  await page.getByRole("button", { name: "Créer un compte" }).click();
+  await page.getByRole("button", { name: "Créer mon compte", exact: true }).click();
 
   await expect(page).toHaveURL(/#\/(home|exercises)/, { timeout: 10_000 });
   expect(pageErrors).toEqual([]);

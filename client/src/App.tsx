@@ -1,6 +1,7 @@
 import { BottomNav } from '@/components/BottomNav'
 import { ConnectivityGate } from '@/components/ConnectivityGate'
 import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCelebration'
+import { NativeBackNavigation } from '@/components/NativeBackNavigation'
 import { ProfileUsernameSetupHost } from '@/components/profile/ProfileUsernameSetupHost'
 import { RestTimeFinishedToastHost } from '@/components/RestTimeFinishedToastHost'
 import { Toaster } from '@/components/ui/sonner'
@@ -358,25 +359,9 @@ function App() {
         }
     }, [])
 
-    useEffect(() => {
-        if (Capacitor.getPlatform() !== 'android') return
-        const handlerPromise = CapacitorApp.addListener(
-            'backButton',
-            ({ canGoBack }: { canGoBack: boolean }) => {
-                if (canGoBack) {
-                    window.history.back()
-                } else {
-                    CapacitorApp.exitApp()
-                }
-            }
-        )
-        return () => {
-            handlerPromise.then((handle) => handle.remove())
-        }
-    }, [])
-
     return (
         <HashRouter>
+            <NativeBackNavigation />
             <WebStoreLandingGate>
                 <div className="app-shell">
 

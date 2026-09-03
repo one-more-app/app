@@ -7,7 +7,6 @@ import { OnboardingExerciseList } from '@/components/onboarding/OnboardingExerci
 import { OnboardingGymPermissionsStep } from '@/components/onboarding/OnboardingGymPermissionsStep';
 import { OnboardingGymStep } from '@/components/onboarding/OnboardingGymStep';
 import { OnboardingGymWaitStep } from '@/components/onboarding/OnboardingGymWaitStep';
-import { OnboardingIntro } from '@/components/onboarding/OnboardingIntro';
 import { OnboardingNotificationsStep } from '@/components/onboarding/OnboardingNotificationsStep';
 import { OnboardingRankReveal } from '@/components/onboarding/OnboardingRecordResults';
 import { OnboardingReveal, OnboardingStepLayout, onboardingEntrance, onboardingStepCardClassName } from '@/components/onboarding/onboarding-motion';
@@ -174,11 +173,9 @@ function OnboardingPage() {
                                 ? 'notifications'
                                 : normalizedStep === 'rank'
                                     ? 'rank'
-                                    : normalizedStep === 'intro' || !normalizedStep
-                                        ? 'intro'
-                                        : normalizedStep === '1rm'
-                                            ? 'body'
-                                            : 'record'
+                                    : normalizedStep === '1rm'
+                                        ? 'body'
+                                        : 'record'
     const bodyQRaw = searchParams.get('bodyQ')
     const fromSettings = isOnboardingGymFromSettings(
         normalizedStep,
@@ -193,25 +190,23 @@ function OnboardingPage() {
         Math.max(0, Number.parseInt(bodyQRaw ?? '0', 10) || 0),
     )
     const viewedStep =
-        step === 'intro'
-            ? OnboardingSteps.INTRO
-            : step === 'record'
-                ? OnboardingSteps.RECORD_PICK
-                : step === 'rank'
-                    ? OnboardingSteps.RANK_REVEAL
-                    : step === 'body'
-                        ? bodyStepFromQuestion(bodyQ)
-                        : step === 'account'
-                            ? OnboardingSteps.ACCOUNT_EMAIL
-                            : step === 'gym'
-                                ? OnboardingSteps.GYM_QUESTION
-                                : step === 'gym-permissions'
-                                    ? OnboardingSteps.GYM_PERMISSIONS
-                                    : step === 'gym-wait'
-                                        ? OnboardingSteps.GYM_WAIT
-                                        : step === 'notifications'
-                                            ? OnboardingSteps.NOTIFICATIONS
-                                            : null
+        step === 'record'
+            ? OnboardingSteps.RECORD_PICK
+            : step === 'rank'
+                ? OnboardingSteps.RANK_REVEAL
+                : step === 'body'
+                    ? bodyStepFromQuestion(bodyQ)
+                    : step === 'account'
+                        ? OnboardingSteps.ACCOUNT_EMAIL
+                        : step === 'gym'
+                            ? OnboardingSteps.GYM_QUESTION
+                            : step === 'gym-permissions'
+                                ? OnboardingSteps.GYM_PERMISSIONS
+                                : step === 'gym-wait'
+                                    ? OnboardingSteps.GYM_WAIT
+                                    : step === 'notifications'
+                                        ? OnboardingSteps.NOTIFICATIONS
+                                        : null
     useOnboardingStepViewed(
         step === 'gym' || step === 'account' ? null : viewedStep,
     )
@@ -571,6 +566,9 @@ function OnboardingPage() {
         if (rawStep === '1rm') {
             navigate('/onboarding?step=body&bodyQ=0', { replace: true })
         }
+        if (!rawStep || rawStep === 'intro') {
+            navigate('/onboarding?step=record', { replace: true })
+        }
     }, [navigate, rawStep])
 
     useEffect(() => {
@@ -646,26 +644,8 @@ function OnboardingPage() {
     }, [step, auth.status, navigate, searchParams])
 
     return (
-        <OnboardingShell variant={step === 'intro' ? 'cinematic' : 'theme'}>
-            {step === 'intro' ? (
-                <OnboardingIntro
-                    onContinue={() => {
-                        trackOnboardingStepCompleted({
-                            step: OnboardingSteps.INTRO,
-                        })
-                        beginOnboardingDraftSession()
-                        goRecord()
-                    }}
-                    onHasAccount={() => {
-                        trackOnboardingStepSkipped({
-                            step: OnboardingSteps.INTRO,
-                            reason: 'has_account',
-                        })
-                        discardPendingOnboardingDrafts()
-                        void finishOnboarding('/home')
-                    }}
-                />
-            ) : step === 'record' ? (
+        <OnboardingShell>
+            {step === 'record' ? (
                 <Trackable section="onboarding" feature={OnboardingSteps.RECORD_PICK}>
                     <OnboardingStepLayout>
                         <StepCard
@@ -684,6 +664,24 @@ function OnboardingPage() {
                                 <p className="text-xs text-muted-foreground">
                                     {UI.onboardingRecordMicro}
                                 </p>
+                            </OnboardingReveal>
+                            <OnboardingReveal delayMs={240}>
+                                <Button
+                                    type="button"
+                                    variant="link"
+                                    className="w-full text-xs text-muted-foreground"
+                                    data-analytics-label="onboarding_intro_has_account"
+                                    onClick={() => {
+                                        trackOnboardingStepSkipped({
+                                            step: OnboardingSteps.RECORD_PICK,
+                                            reason: 'has_account',
+                                        })
+                                        discardPendingOnboardingDrafts()
+                                        void finishOnboarding('/home')
+                                    }}
+                                >
+                                    {UI.switchToLogin}
+                                </Button>
                             </OnboardingReveal>
                         </StepCard>
                     </OnboardingStepLayout>

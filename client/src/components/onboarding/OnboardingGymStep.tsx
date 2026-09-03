@@ -26,9 +26,11 @@ import {
     type GymPlace,
 } from '@/lib/gyms-api'
 import { UI } from '@/lib/translations'
+import { registerHardwareBackHandler } from '@/lib/app-back-navigation'
 import { Capacitor } from '@capacitor/core'
 import { Loader2 } from 'lucide-react'
-import { useCallback, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 type GymSubStep = 'question' | 'locating' | 'confirm' | 'search'
 
@@ -83,6 +85,7 @@ export function OnboardingGymStep({
     onCancel,
 }: OnboardingGymStepProps) {
     const mutateUserGym = useMutateUserGym()
+    const navigate = useNavigate()
     const isNative = Capacitor.isNativePlatform()
     const canSkip = Boolean(onSkip) && !fromSettings && !embedded
     const [subStep, setSubStep] = useState<GymSubStep>(
@@ -100,6 +103,33 @@ export function OnboardingGymStep({
     const [claimedAtGym, setClaimedAtGym] = useState(false)
     const gymStepId = gymStepFromSubStep(subStep)
     useOnboardingStepViewed(gymStepId)
+
+    const goGymQuestion = useCallback(() => {
+        setError(null)
+        setSubStep('question')
+    }, [])
+
+    useEffect(() => {
+        return registerHardwareBackHandler(() => {
+            if (subStep === 'question') {
+                if (fromSettings) {
+                    onCancel?.()
+                    return Boolean(onCancel)
+                }
+                return false
+            }
+            if (subStep === 'search' && fromSettings) {
+                onCancel?.()
+                return Boolean(onCancel)
+            }
+            if (subStep === 'search' && onSearchBack) {
+                onSearchBack()
+                return true
+            }
+            goGymQuestion()
+            return true
+        })
+    }, [fromSettings, goGymQuestion, onCancel, onSearchBack, subStep])
 
     const saveGym = useCallback(
         async (place: GymPlace, coords: { lat: number; lng: number } | null) => {
@@ -183,7 +213,11 @@ export function OnboardingGymStep({
                 <StepCard
                     className={onboardingStepCardClassName}
                     title={UI.gymOnboardingTitle}
-                    onBack={fromSettings ? onCancel : undefined}
+                    onBack={
+                        fromSettings
+                            ? onCancel
+                            : () => navigate('/onboarding?step=rank', { replace: true })
+                    }
                     backLabel={UI.back}
                 >
                     <OnboardingReveal delayMs={80}>
@@ -241,14 +275,21 @@ export function OnboardingGymStep({
         return (
             <Trackable section="onboarding" feature={OnboardingSteps.GYM_LOCATING}>
             <GymStepShell embedded={embedded} centered>
-                <OnboardingReveal>
-                    <Loader2 className="size-8 animate-spin text-accent" aria-hidden />
-                </OnboardingReveal>
-                <OnboardingReveal delayMs={120}>
-                    <p className="text-sm text-muted-foreground">
-                        {UI.gymOnboardingLocationWhy}
-                    </p>
-                </OnboardingReveal>
+                <StepCard
+                    className={onboardingStepCardClassName}
+                    title={UI.gymOnboardingTitle}
+                    onBack={fromSettings ? onCancel : goGymQuestion}
+                    backLabel={UI.back}
+                >
+                    <OnboardingReveal>
+                        <Loader2 className="size-8 animate-spin text-accent" aria-hidden />
+                    </OnboardingReveal>
+                    <OnboardingReveal delayMs={120}>
+                        <p className="text-sm text-muted-foreground">
+                            {UI.gymOnboardingLocationWhy}
+                        </p>
+                    </OnboardingReveal>
+                </StepCard>
             </GymStepShell>
             </Trackable>
         )
@@ -261,6 +302,8 @@ export function OnboardingGymStep({
                 <StepCard
                     className={onboardingStepCardClassName}
                     title={UI.gymOnboardingConfirmTitle}
+                    onBack={goGymQuestion}
+                    backLabel={UI.back}
                 >
                     <OnboardingReveal delayMs={80}>
                         <div className="rounded-2xl border border-border/80 bg-muted/20 p-4">
@@ -319,7 +362,7 @@ export function OnboardingGymStep({
                         ? (settingsPickerTitle ?? UI.gymSettingsChange)
                         : UI.gymOnboardingSearch
                 }
-                onBack={fromSettings ? onCancel : onSearchBack}
+                onBack={fromSettings ? onCancel : onSearchBack ?? goGymQuestion}
                 backLabel={UI.back}
             >
                 <div className="space-y-1">

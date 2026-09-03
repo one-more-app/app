@@ -43,7 +43,7 @@ test("l'onboarding body (genre) est envoyé dans le register", async ({
   await completeRecordToBody(page);
   await completeBodyToRank(page);
 
-  await expect(page.getByText("Ton palier")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ton palier" })).toBeVisible();
   await page.getByRole("button", { name: "Créer mon compte et sauvegarder" }).click();
 
   await page.getByLabel("Email").fill("body-onboarding@one-more.test");
@@ -63,9 +63,7 @@ test("l'onboarding body (genre) est envoyé dans le register", async ({
 
   await page.getByLabel("Mot de passe", { exact: true }).fill("password123");
   await page.getByLabel("Confirmer le mot de passe").fill("password123");
-  await continueButton(page).click();
-
-  await page.getByRole("button", { name: "Créer un compte" }).click();
+  await page.getByRole("button", { name: "Créer mon compte", exact: true }).click();
 
   await expect
     .poll(() => registerBodies.some((body) => body.gender === "female"), {
@@ -80,11 +78,6 @@ test("l'onboarding body (genre) est envoyé dans le register", async ({
     heightCm: 175,
   });
 
-  await expect(page.getByRole("heading", { name: /Quand tu t'entraînes/i })).toBeVisible({
-    timeout: 10_000,
-  });
-  await expect(page.getByRole("button", { name: "lundi" })).toBeVisible();
-  await page.getByRole("button", { name: "Plus tard", exact: true }).click();
   await expect(page).toHaveURL(/#\/exercise\//, { timeout: 10_000 });
 
   expect(pageErrors).toEqual([]);

@@ -18,6 +18,7 @@ const PopoverContent = React.forwardRef<
     const content = (
         <PopoverPrimitive.Content
             ref={ref}
+            data-slot="popover-content"
             align={align}
             sideOffset={sideOffset}
             className={cn(

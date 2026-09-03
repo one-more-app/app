@@ -56,6 +56,7 @@ export function StepCard(props: {
                                 className="shrink-0 -ml-2"
                                 onClick={onBack}
                                 aria-label={backLabel}
+                                data-hardware-back=""
                                 data-analytics-label={
                                     backAnalyticsLabel ?? "onboarding_back"
                                 }

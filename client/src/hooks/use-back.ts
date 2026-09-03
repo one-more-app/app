@@ -1,15 +1,25 @@
-import { useNavigate } from "react-router-dom";
+import {
+  APP_BACK_HOME_PATH,
+  canGoBackInAppHistory,
+  isAppBackExitRoute,
+} from "@/lib/app-back-navigation";
+import { useLocation, useNavigate } from "react-router-dom";
 
 /**
- * Retourne une fonction pour naviguer en arrière.
- * Utilise l'historique du navigateur pour un comportement cohérent :
- * chaque appui sur "retour" remonte d'une page dans la pile.
- *
- * Selon l'API React Router useNavigate :
- * https://reactrouter.com/api/hooks/useNavigate
- * navigate(delta) avec delta = -1 pour revenir en arrière.
+ * Retour in-app (header). Utilise l'historique React Router.
+ * Sans entrée précédente : accueil, plutôt que de sortir de l'app.
  */
 export function useBack() {
   const navigate = useNavigate();
-  return () => navigate(-1);
+  const location = useLocation();
+
+  return () => {
+    if (canGoBackInAppHistory()) {
+      navigate(-1);
+      return;
+    }
+    if (!isAppBackExitRoute(location.pathname)) {
+      navigate(APP_BACK_HOME_PATH, { replace: true });
+    }
+  };
 }
