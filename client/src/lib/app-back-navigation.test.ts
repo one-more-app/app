@@ -37,22 +37,28 @@ describe("resolveOnboardingBackTarget", () => {
     ).toEqual({ kind: "stay" });
   });
 
-  it("remonte le record vers l'intro", () => {
+  it("remonte record, body, intent, rank et account", () => {
     expect(
       resolveOnboardingBackTarget("/onboarding", "?step=record"),
-    ).toEqual({ kind: "path", to: "/onboarding?step=intro" });
-  });
-
-  it("remonte body, rank et account", () => {
+    ).toEqual({ kind: "path", to: "/onboarding?step=intent&intentQ=2" });
     expect(
       resolveOnboardingBackTarget("/onboarding", "?step=body&bodyQ=0"),
-    ).toEqual({ kind: "path", to: "/onboarding?step=record" });
+    ).toEqual({ kind: "path", to: "/onboarding?step=intro" });
     expect(
       resolveOnboardingBackTarget("/onboarding", "?step=body&bodyQ=1"),
     ).toEqual({ kind: "path", to: "/onboarding?step=body&bodyQ=0" });
     expect(
+      resolveOnboardingBackTarget("/onboarding", "?step=body&bodyQ=3"),
+    ).toEqual({ kind: "path", to: "/onboarding?step=body&bodyQ=2" });
+    expect(
+      resolveOnboardingBackTarget("/onboarding", "?step=intent&intentQ=0"),
+    ).toEqual({ kind: "path", to: "/onboarding?step=body&bodyQ=3" });
+    expect(
+      resolveOnboardingBackTarget("/onboarding", "?step=intent&intentQ=2"),
+    ).toEqual({ kind: "path", to: "/onboarding?step=intent&intentQ=1" });
+    expect(
       resolveOnboardingBackTarget("/onboarding", "?step=rank"),
-    ).toEqual({ kind: "path", to: "/onboarding?step=body&bodyQ=1" });
+    ).toEqual({ kind: "path", to: "/onboarding?step=record" });
     expect(
       resolveOnboardingBackTarget("/onboarding", "?step=account"),
     ).toEqual({ kind: "path", to: "/onboarding?step=rank" });
@@ -117,7 +123,7 @@ describe("resolveAppBackAction", () => {
         pathname: "/onboarding",
         search: "?step=body&bodyQ=0",
       }),
-    ).toEqual({ type: "navigate", to: "/onboarding?step=record" });
+    ).toEqual({ type: "navigate", to: "/onboarding?step=intro" });
   });
 
   it("reste à l'intro sans quitter l'app", () => {
@@ -130,14 +136,14 @@ describe("resolveAppBackAction", () => {
     ).toBe("stay");
   });
 
-  it("navigue du record vers l'intro", () => {
+  it("navigue du record vers intent", () => {
     expect(
       resolveAppBackAction({
         ...base,
         pathname: "/onboarding",
         search: "?step=record",
       }),
-    ).toEqual({ type: "navigate", to: "/onboarding?step=intro" });
+    ).toEqual({ type: "navigate", to: "/onboarding?step=intent&intentQ=2" });
   });
 
   it("remonte l'historique in-app hors onboarding", () => {
