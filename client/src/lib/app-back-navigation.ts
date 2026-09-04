@@ -85,7 +85,10 @@ function normalizeOnboardingStep(rawStep: string | null): string {
     return "gym-permissions";
   }
   if (rawStep === "1rm") return "body";
-  if (!rawStep || rawStep === "intro" || rawStep === "record" || rawStep === "perf") {
+  if (!rawStep || rawStep === "intro") {
+    return "intro";
+  }
+  if (rawStep === "record" || rawStep === "perf") {
     return "record";
   }
   return rawStep;
@@ -109,7 +112,10 @@ export function resolveOnboardingBackTarget(
   const fromSettings = params.get("from") === "settings";
   const reselect = params.get("reselect") === "1";
 
-  if (step === "record") return { kind: "stay" };
+  if (step === "intro") return { kind: "stay" };
+  if (step === "record") {
+    return { kind: "path", to: "/onboarding?step=intro" };
+  }
   if (step === "body") {
     if (bodyQ <= 0) return { kind: "path", to: "/onboarding?step=record" };
     return { kind: "path", to: `/onboarding?step=body&bodyQ=${bodyQ - 1}` };
