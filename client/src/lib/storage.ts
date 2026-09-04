@@ -570,7 +570,13 @@ export function hasPersistedUserProfile(): boolean {
 
 export type PendingOnboardingBodyProfile = Pick<
   UserProfile,
-  "weightKg" | "heightCm" | "gender"
+  | "weightKg"
+  | "heightCm"
+  | "gender"
+  | "ageYears"
+  | "trainingGoal"
+  | "trainingExperience"
+  | "sessionsPerWeek"
 >;
 
 function readOnboardingDraftSessionId(): string | null {
@@ -679,6 +685,10 @@ export function setPendingOnboardingProfile(
         weightKg: profile.weightKg,
         heightCm: profile.heightCm,
         gender: profile.gender,
+        ageYears: profile.ageYears ?? null,
+        trainingGoal: profile.trainingGoal ?? null,
+        trainingExperience: profile.trainingExperience ?? null,
+        sessionsPerWeek: profile.sessionsPerWeek ?? null,
         sessionId: ensureOnboardingDraftSession(),
       }),
     );
