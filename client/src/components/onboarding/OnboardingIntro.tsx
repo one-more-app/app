@@ -17,7 +17,7 @@ export function OnboardingPresentationHero() {
                     src={logoTextLight}
                     alt="One More"
                     className={onboardingEntrance(
-                        "h-14 w-auto select-none object-contain sm:h-16 animate-in fade-in-0 slide-in-from-left-4 duration-400",
+                        "h-14 w-auto select-none object-contain brightness-0 sm:h-16 animate-in fade-in-0 slide-in-from-left-4 duration-400 dark:brightness-100",
                     )}
                     loading="eager"
                     decoding="async"
@@ -72,12 +72,12 @@ export function OnboardingIntro({ onContinue, onHasAccount }: OnboardingIntroPro
             feature={OnboardingSteps.INTRO}
             className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
-            <header className="flex shrink-0 px-4 pt-4">
+            <header className="flex shrink-0 justify-center px-4 pt-4">
                 <img
                     src={logoTextLight}
                     alt="One More"
                     className={onboardingEntrance(
-                        "h-14 w-auto select-none object-contain sm:h-16 animate-in fade-in-0 slide-in-from-bottom-3 duration-400",
+                        "h-14 w-auto select-none object-contain brightness-0 sm:h-16 animate-in fade-in-0 slide-in-from-bottom-3 duration-400 dark:brightness-100",
                     )}
                     loading="eager"
                     decoding="async"

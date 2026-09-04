@@ -100,11 +100,11 @@ export function OnboardingFeatureSlider() {
                     return (
                         <div
                             key={slide.title}
-                            className="flex w-full shrink-0 snap-center flex-col px-1"
+                            className="flex w-full shrink-0 snap-center flex-col justify-center px-1"
                             aria-hidden={!active}
                         >
                             <div
-                                className="min-h-0 flex-1 pointer-events-none"
+                                className="pointer-events-none h-60 w-full"
                                 aria-hidden
                             >
                                 <div
