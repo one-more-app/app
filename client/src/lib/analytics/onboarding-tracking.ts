@@ -114,7 +114,10 @@ export function resolveOnboardingStepFromLocation(
   if (pathname !== "/onboarding") return null;
 
   const rawStep = params.get("step");
-  if (!rawStep || rawStep === "intro" || rawStep === "record") {
+  if (!rawStep || rawStep === "intro") {
+    return OnboardingSteps.INTRO;
+  }
+  if (rawStep === "record") {
     return OnboardingSteps.RECORD_PICK;
   }
   if (rawStep === "perf") return OnboardingSteps.RECORD_PICK;
