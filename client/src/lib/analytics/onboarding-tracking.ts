@@ -21,6 +21,10 @@ export const OnboardingSteps = {
   BODY_GENDER: "body_gender",
   BODY_WEIGHT: "body_weight",
   BODY_HEIGHT: "body_height",
+  BODY_AGE: "body_age",
+  INTENT_GOAL: "intent_goal",
+  INTENT_EXPERIENCE: "intent_experience",
+  INTENT_FREQUENCY: "intent_frequency",
   ACCOUNT_EMAIL: "account_email",
   ACCOUNT_LOGIN: "account_login",
   ACCOUNT_REGISTER_FIRST_NAME: "account_register_first_name",
@@ -127,7 +131,14 @@ export function resolveOnboardingStepFromLocation(
     const bodyQ = Number.parseInt(params.get("bodyQ") ?? "0", 10) || 0;
     if (bodyQ === 1) return OnboardingSteps.BODY_WEIGHT;
     if (bodyQ === 2) return OnboardingSteps.BODY_HEIGHT;
+    if (bodyQ === 3) return OnboardingSteps.BODY_AGE;
     return OnboardingSteps.BODY_GENDER;
+  }
+  if (rawStep === "intent") {
+    const intentQ = Number.parseInt(params.get("intentQ") ?? "0", 10) || 0;
+    if (intentQ === 1) return OnboardingSteps.INTENT_EXPERIENCE;
+    if (intentQ === 2) return OnboardingSteps.INTENT_FREQUENCY;
+    return OnboardingSteps.INTENT_GOAL;
   }
   if (rawStep === "account") return OnboardingSteps.ACCOUNT_EMAIL;
   if (rawStep === "notifications") return OnboardingSteps.NOTIFICATIONS;
@@ -146,7 +157,14 @@ export function resolveOnboardingStepFromLocation(
 export function bodyStepFromQuestion(bodyQ: number): OnboardingStepId {
   if (bodyQ === 1) return OnboardingSteps.BODY_WEIGHT;
   if (bodyQ === 2) return OnboardingSteps.BODY_HEIGHT;
+  if (bodyQ === 3) return OnboardingSteps.BODY_AGE;
   return OnboardingSteps.BODY_GENDER;
+}
+
+export function intentStepFromQuestion(intentQ: number): OnboardingStepId {
+  if (intentQ === 1) return OnboardingSteps.INTENT_EXPERIENCE;
+  if (intentQ === 2) return OnboardingSteps.INTENT_FREQUENCY;
+  return OnboardingSteps.INTENT_GOAL;
 }
 
 export function gymStepFromSubStep(
