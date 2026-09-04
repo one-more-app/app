@@ -109,19 +109,32 @@ export function resolveOnboardingBackTarget(
   );
   const step = normalizeOnboardingStep(params.get("step"));
   const bodyQ = Math.max(0, Number.parseInt(params.get("bodyQ") ?? "0", 10) || 0);
+  const intentQ = Math.max(
+    0,
+    Number.parseInt(params.get("intentQ") ?? "0", 10) || 0,
+  );
   const fromSettings = params.get("from") === "settings";
   const reselect = params.get("reselect") === "1";
 
   if (step === "intro") return { kind: "stay" };
   if (step === "record") {
-    return { kind: "path", to: "/onboarding?step=intro" };
+    return { kind: "path", to: "/onboarding?step=intent&intentQ=2" };
   }
   if (step === "body") {
-    if (bodyQ <= 0) return { kind: "path", to: "/onboarding?step=record" };
+    if (bodyQ <= 0) return { kind: "path", to: "/onboarding?step=intro" };
     return { kind: "path", to: `/onboarding?step=body&bodyQ=${bodyQ - 1}` };
   }
+  if (step === "intent") {
+    if (intentQ <= 0) {
+      return { kind: "path", to: "/onboarding?step=body&bodyQ=3" };
+    }
+    return {
+      kind: "path",
+      to: `/onboarding?step=intent&intentQ=${intentQ - 1}`,
+    };
+  }
   if (step === "rank") {
-    return { kind: "path", to: "/onboarding?step=body&bodyQ=1" };
+    return { kind: "path", to: "/onboarding?step=record" };
   }
   if (step === "account" || step === "notifications") {
     return { kind: "path", to: "/onboarding?step=rank" };
