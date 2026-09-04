@@ -1,161 +1,206 @@
-import { OnboardingDemoExerciseHeader, OnboardingSceneStage } from "@/components/onboarding/OnboardingSceneStage";
+import { ExerciseImage } from "@/components/ExerciseImage";
+import { OnboardingSceneStage } from "@/components/onboarding/OnboardingSceneStage";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { UI } from "@/lib/translations";
+import {
+    ONBOARDING_STARTER_EXERCISES,
+    onboardingExerciseGifUrl,
+} from "@/lib/onboarding-starter-exercises";
+import { UI, translateBodyPart } from "@/lib/translations";
 import { cn } from "@/lib/utils";
-import { Minus, Plus } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 
-const WEIGHTS = [80, 85, 90, 95, 100];
-const ITEM_WIDTH = 44;
-const TICK_MS = 280;
+const DEMO_EXERCISE = ONBOARDING_STARTER_EXERCISES[0];
+const DEMO_GIF_URL = onboardingExerciseGifUrl(DEMO_EXERCISE.exerciseId);
+const WEIGHTS = [80, 100];
+const REPS = [5, 5];
+const ITEM_WIDTH = 40;
+const TAP_MS = 650;
+const DRAWER_MS = 820;
+const VALUE_MS = 1550;
+const SAVE_MS = 2300;
+
+type Phase = "card" | "tap" | "drawer" | "saved";
 
 type OnboardingSceneLogPerfProps = {
     active: boolean;
     reduceMotion: boolean;
 };
 
+function DemoWheel({
+    label,
+    unit,
+    options,
+    value,
+}: {
+    label: string;
+    unit?: string;
+    options: number[];
+    value: number;
+}) {
+    const unique = [...new Set(options)];
+    const index = Math.max(0, unique.indexOf(value));
+
+    return (
+        <div className="flex w-full flex-col items-center gap-0.5">
+            <span className="text-[10px] font-medium text-muted-foreground">
+                {unit ? `${label} (${unit})` : label}
+            </span>
+            <div className="relative w-full font-one-more">
+                <div className="flex h-10 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_22%,black_78%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_22%,black_78%,transparent)]">
+                    <div
+                        className="flex transition-transform duration-300 ease-out"
+                        style={{
+                            transform: `translateX(calc(50% - ${index * ITEM_WIDTH + ITEM_WIDTH / 2}px))`,
+                        }}
+                    >
+                        {unique.map((opt) => (
+                            <div
+                                key={opt}
+                                className={cn(
+                                    "flex shrink-0 items-center justify-center font-semibold tabular-nums",
+                                    opt === value
+                                        ? "text-transparent text-lg"
+                                        : "text-xs text-muted-foreground/50",
+                                )}
+                                style={{ width: ITEM_WIDTH, height: 40 }}
+                            >
+                                {opt}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <span className="flex h-9 w-14 items-center justify-center rounded-xl border border-border/70 bg-secondary text-lg font-semibold tabular-nums">
+                        {value}
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export function OnboardingSceneLogPerf({
     active,
     reduceMotion,
 }: OnboardingSceneLogPerfProps) {
     const play = active && !reduceMotion;
-    const [tick, setTick] = useState(WEIGHTS.length - 1);
+    const [phase, setPhase] = useState<Phase>("saved");
+    const [valueIndex, setValueIndex] = useState(1);
 
     useEffect(() => {
         if (!play) {
-            setTick(WEIGHTS.length - 1);
+            setPhase("saved");
+            setValueIndex(1);
             return;
         }
-        setTick(0);
-        const id = window.setInterval(() => {
-            setTick((current) => {
-                if (current >= WEIGHTS.length - 1) {
-                    window.clearInterval(id);
-                    return current;
-                }
-                return current + 1;
-            });
-        }, TICK_MS);
-        return () => window.clearInterval(id);
+        setPhase("card");
+        setValueIndex(0);
+        const timers = [
+            window.setTimeout(() => setPhase("tap"), TAP_MS),
+            window.setTimeout(() => setPhase("drawer"), DRAWER_MS),
+            window.setTimeout(() => setValueIndex(1), VALUE_MS),
+            window.setTimeout(() => setPhase("saved"), SAVE_MS),
+        ];
+        return () => timers.forEach((id) => window.clearTimeout(id));
     }, [play]);
 
-    const weight = WEIGHTS[tick] ?? 100;
-    const saved = tick === WEIGHTS.length - 1;
-    const shownWeight = saved ? 100 : 90;
-    const shownRecord = saved ? 100 : 90;
+    const drawerOpen = phase === "drawer" || phase === "saved";
+    const saved = phase === "saved";
+    const weight = WEIGHTS[valueIndex] ?? 100;
+    const reps = REPS[valueIndex] ?? 5;
 
     return (
-        <OnboardingSceneStage>
-            <OnboardingDemoExerciseHeader
-                lastWeight={shownWeight}
-                lastReps={5}
-                recordWeight={shownRecord}
-                recordReps={5}
-            />
-
-            <div
-                className={cn(
-                    "absolute inset-0 bg-black/50",
-                    play && "animate-in fade-in-0 duration-300 ease-out [animation-fill-mode:both]",
-                )}
-            />
-
-            <div
-                className={cn(
-                    "absolute inset-x-0 bottom-0 rounded-t-lg border-t bg-background pb-3",
-                    play &&
-                        "animate-in fade-in-0 slide-in-from-bottom-8 duration-400 ease-out [animation-fill-mode:both]",
-                )}
-            >
-                <div className="bg-muted mx-auto mt-3 h-2 w-[100px] rounded-full" />
-                <div className="space-y-3 px-4 pt-3">
-                    <p className="text-center font-one-more text-sm uppercase italic text-foreground">
-                        {UI.newPerf}
-                    </p>
-                    <DemoWheel
-                        label={`${UI.weight} (kg)`}
-                        value={weight}
-                        options={WEIGHTS}
-                    />
-                    <DemoWheel
-                        label={UI.reps}
-                        value={5}
-                        options={[3, 4, 5, 6, 7]}
-                    />
+        <OnboardingSceneStage className="relative">
+            <div className="flex h-full items-center px-2.5">
+                <div className="flex w-full items-center gap-2.5 rounded-xl border bg-background px-2.5 py-2">
+                    <div className="size-10 shrink-0 overflow-hidden rounded-lg bg-muted">
+                        <ExerciseImage
+                            gifUrl={DEMO_GIF_URL}
+                            bodyPart={DEMO_EXERCISE.bodyPart}
+                            target={DEMO_EXERCISE.target}
+                            className="size-full"
+                            imgClassName="size-full object-cover"
+                            fallbackIconClassName="size-6 text-muted-foreground"
+                        />
+                    </div>
+                    <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+                        <p className="truncate font-one-more text-[11px] uppercase italic leading-none">
+                            {DEMO_EXERCISE.name}
+                        </p>
+                        <Badge variant="secondary" className="text-[10px]">
+                            {translateBodyPart(DEMO_EXERCISE.bodyPart)}
+                        </Badge>
+                    </div>
                     <Button
                         type="button"
+                        size="icon"
+                        variant="default"
                         className={cn(
-                            "w-full",
-                            saved && "celebration-count-anim bg-accent text-accent-foreground",
+                            "relative size-9 shrink-0 rounded-full transition-transform duration-150",
+                            phase === "tap" && "scale-90",
                         )}
                         tabIndex={-1}
                         haptic={false}
+                        aria-label={UI.newPerf}
                     >
-                        {UI.save}
+                        {play && phase === "card" ? (
+                            <span className="absolute inset-0 animate-ping rounded-full bg-primary/35" />
+                        ) : null}
+                        <Plus className="relative size-4" aria-hidden />
                     </Button>
                 </div>
             </div>
-        </OnboardingSceneStage>
-    );
-}
 
-function DemoWheel({
-    label,
-    value,
-    options,
-}: {
-    label: string;
-    value: number;
-    options: number[];
-}) {
-    const index = Math.max(0, options.indexOf(value));
-    const offset = index * ITEM_WIDTH;
-
-    return (
-        <div className="flex flex-col items-center gap-1">
-            <span className="text-xs font-medium text-muted-foreground">
-                {label}
-            </span>
-            <div className="flex w-full items-center gap-1.5">
-                <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border bg-background">
-                    <Minus className="size-4" aria-hidden />
-                </span>
-                <div className="relative min-w-0 flex-1 font-one-more">
-                    <div
-                        className="flex h-11 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)]"
-                    >
-                        <div
-                            className="flex transition-transform duration-200 ease-out"
-                            style={{
-                                transform: `translateX(calc(50% - ${offset + ITEM_WIDTH / 2}px))`,
-                            }}
-                        >
-                            {options.map((opt) => (
-                                <div
-                                    key={opt}
-                                    className={cn(
-                                        "flex shrink-0 items-center justify-center font-semibold tabular-nums",
-                                        opt === value
-                                            ? "text-transparent text-lg"
-                                            : "text-muted-foreground/50 text-sm",
-                                    )}
-                                    style={{ width: ITEM_WIDTH, height: 44 }}
-                                >
-                                    {opt}
-                                </div>
-                            ))}
+            {drawerOpen ? (
+                <div
+                    className={cn(
+                        "absolute inset-x-0 bottom-0 rounded-t-lg border-t bg-background pb-2",
+                        play &&
+                            phase !== "saved" &&
+                            "animate-in fade-in-0 slide-in-from-bottom-6 duration-300 ease-out [animation-fill-mode:both]",
+                    )}
+                >
+                    <div className="bg-muted mx-auto mt-2 h-1.5 w-[80px] rounded-full" />
+                    <div className="space-y-2 px-3 pt-2">
+                        <p className="text-center font-one-more text-xs uppercase italic">
+                            {UI.newPerf}
+                        </p>
+                        <div className="flex w-full flex-col items-center gap-2">
+                            <DemoWheel
+                                label={UI.weight}
+                                unit="kg"
+                                options={WEIGHTS}
+                                value={weight}
+                            />
+                            <DemoWheel
+                                label={UI.reps}
+                                options={REPS}
+                                value={reps}
+                            />
                         </div>
-                    </div>
-                    <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
-                        <span className="flex h-10 w-[4.5rem] items-center justify-center rounded-xl border border-border/70 bg-secondary text-lg font-semibold tabular-nums shadow-sm">
-                            {value}
-                        </span>
+                        <Button
+                            type="button"
+                            size="sm"
+                            className="w-full"
+                            tabIndex={-1}
+                            haptic={false}
+                            aria-label={UI.save}
+                        >
+                            {saved ? (
+                                <Check
+                                    className="size-4 celebration-count-anim"
+                                    strokeWidth={2.5}
+                                    aria-hidden
+                                />
+                            ) : (
+                                UI.save
+                            )}
+                        </Button>
                     </div>
                 </div>
-                <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border bg-background">
-                    <Plus className="size-4" aria-hidden />
-                </span>
-            </div>
-        </div>
+            ) : null}
+        </OnboardingSceneStage>
     );
 }
