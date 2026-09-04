@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { mockAuthApi, trackPageErrors } from "./helpers";
 import { UI } from "../../src/lib/translations";
 
-test("l'intro onboarding montre les features puis Commencer mène au record", async ({
+test("l'intro onboarding montre les features puis Commencer mène au genre", async ({
   page,
 }) => {
   const pageErrors = trackPageErrors(page);
@@ -23,7 +23,9 @@ test("l'intro onboarding montre les features puis Commencer mène au record", as
 
   await page.getByRole("button", { name: UI.onboardingIntroCta }).click();
 
-  await expect(page.getByText(UI.onboardingRecordTitle)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: UI.onboardingBodyTitleGender }),
+  ).toBeVisible();
   await expect(
     page.getByRole("button", { name: UI.switchToLogin }),
   ).toHaveCount(0);
