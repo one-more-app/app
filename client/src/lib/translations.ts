@@ -745,7 +745,15 @@ export const UI = {
   onboardingTitleLine2: "Prouve-le.",
   onboardingDescription:
     "Le carnet des athlètes qui traquent chaque PR. Note ta série en 3 secondes, vois ta progression, situe-toi contre les tiens. Zéro coaching IA : toi, tes chiffres, ta force.",
-  onboardingCta: "Établir mon premier record",
+  onboardingIntroCta: "Commencer",
+  onboardingIntroCarouselA11y: "Présentation",
+  onboardingIntroSlide1Title: "Note en 3 secondes",
+  onboardingIntroSlide1Body: "Poids, reps, c'est plié.",
+  onboardingIntroSlide2Title: "Bats tes records",
+  onboardingIntroSlide2Body: "Chaque PR est célébré.",
+  onboardingIntroSlide3Title: "Suis ta progression",
+  onboardingIntroSlide3Body: "Tes chiffres, séance après séance.",
+  onboardingIntroSceneExercise: "Développé couché",
   onboardingRecordTitle: "On commence par quel record ?",
   onboardingRecordHint:
     "Choisis un mouvement et entre ta meilleure perf. On s'occupe du reste.",

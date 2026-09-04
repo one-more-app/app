@@ -16,7 +16,7 @@ test("l'onboarding record montre le palier puis le compte", async ({
   const pageErrors = trackPageErrors(page);
   await mockAuthApi(page);
 
-  await page.goto("/#/onboarding");
+  await page.goto("/#/onboarding?step=record");
 
   await expect(page.getByText("On commence par quel record ?")).toBeVisible();
   await expect(page.getByText("1/3")).toBeVisible();
