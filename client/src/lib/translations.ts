@@ -839,6 +839,10 @@ export const UI = {
   onboardingFrequencyHighHint: "5 à 7 fois par semaine",
   onboardingPrivacyHint: "Tes données restent privées.",
   onboardingSkip: "Passer",
+  settingsAgeYears: "Âge",
+  settingsTrainingGoal: "Objectif principal",
+  settingsTrainingExperience: "Expérience",
+  settingsTrainingFrequency: "Fréquence d'entraînement",
   onboardingBodyTitleBuild: "Ton gabarit",
   onboardingStepIndicator: "{current}/{total}",
   onboardingQuestionGenderHint:
