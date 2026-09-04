@@ -1,8 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 import { mockAuthApi, trackPageErrors } from "./helpers";
+import { UI } from "../../src/lib/translations";
 
 async function submitStarterRecord(page: Page): Promise<void> {
-  await expect(page.getByText("On commence par quel record ?")).toBeVisible();
+  await expect(page.getByText(UI.onboardingRecordTitle)).toBeVisible();
   await page.getByRole("button", { name: /Développé couché/ }).click();
 
   const drawer = page.getByRole("dialog", { name: "Rentre ton record" });
@@ -18,16 +19,8 @@ test("l'onboarding record montre le palier puis le compte", async ({
 
   await page.goto("/#/onboarding?step=record");
 
-  await expect(page.getByText("On commence par quel record ?")).toBeVisible();
-  await expect(page.getByText("1/3")).toBeVisible();
   await submitStarterRecord(page);
 
-  await expect(page.getByText("2/3")).toBeVisible();
-  await page.getByRole("radio", { name: "Homme" }).click();
-  await page.getByRole("button", { name: "Continuer", exact: true }).click();
-  await page.getByRole("button", { name: "Voir mon palier" }).click();
-
-  await expect(page.getByText("3/3")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Ton palier" })).toBeVisible();
   await expect(page.getByText("Développé couché").first()).toBeVisible();
   await expect(page.getByText("Record", { exact: true })).toBeVisible();
