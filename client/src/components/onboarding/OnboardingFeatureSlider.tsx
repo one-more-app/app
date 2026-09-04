@@ -107,7 +107,15 @@ export function OnboardingFeatureSlider() {
                                 className="min-h-0 flex-1 pointer-events-none"
                                 aria-hidden
                             >
-                                {slide.scene({ active, reduceMotion })}
+                                <div
+                                    key={active ? "play" : "idle"}
+                                    className="h-full min-h-0"
+                                >
+                                    {slide.scene({
+                                        active,
+                                        reduceMotion,
+                                    })}
+                                </div>
                             </div>
                             <div className="mt-4 space-y-2 text-center">
                                 <h2 className="font-one-more text-2xl font-semibold uppercase italic tracking-tight sm:text-3xl">
