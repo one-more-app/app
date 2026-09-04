@@ -835,6 +835,16 @@ export function setUserProfile(
     weightKg: profile.weightKg ?? profileCache.weightKg,
     heightCm: profile.heightCm ?? profileCache.heightCm,
     gender: profile.gender ?? profileCache.gender,
+    ...(profile.ageYears !== undefined ? { ageYears: profile.ageYears } : {}),
+    ...(profile.trainingGoal !== undefined
+      ? { trainingGoal: profile.trainingGoal }
+      : {}),
+    ...(profile.trainingExperience !== undefined
+      ? { trainingExperience: profile.trainingExperience }
+      : {}),
+    ...(profile.sessionsPerWeek !== undefined
+      ? { sessionsPerWeek: profile.sessionsPerWeek }
+      : {}),
     ...(profile.firstName !== undefined
       ? { firstName: profile.firstName }
       : {}),
@@ -859,6 +869,16 @@ export async function setUserProfileAndWait(
     weightKg: profile.weightKg ?? profileCache.weightKg,
     heightCm: profile.heightCm ?? profileCache.heightCm,
     gender: profile.gender ?? profileCache.gender,
+    ...(profile.ageYears !== undefined ? { ageYears: profile.ageYears } : {}),
+    ...(profile.trainingGoal !== undefined
+      ? { trainingGoal: profile.trainingGoal }
+      : {}),
+    ...(profile.trainingExperience !== undefined
+      ? { trainingExperience: profile.trainingExperience }
+      : {}),
+    ...(profile.sessionsPerWeek !== undefined
+      ? { sessionsPerWeek: profile.sessionsPerWeek }
+      : {}),
     ...(profile.firstName !== undefined
       ? { firstName: profile.firstName }
       : {}),
@@ -874,6 +894,10 @@ export async function setUserProfileAndWait(
       weightKg: remote.weightKg,
       heightCm: remote.heightCm,
       gender: remote.gender,
+      ageYears: remote.ageYears ?? null,
+      trainingGoal: remote.trainingGoal ?? null,
+      trainingExperience: remote.trainingExperience ?? null,
+      sessionsPerWeek: remote.sessionsPerWeek ?? null,
       ...(remote.firstName !== undefined
         ? { firstName: remote.firstName }
         : {}),
