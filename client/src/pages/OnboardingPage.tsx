@@ -304,19 +304,24 @@ function OnboardingPage() {
     }, [step])
 
     useEffect(() => {
-        if (step !== 'body' && step !== 'intent') return
+        if (
+            step !== 'body' &&
+            step !== 'intent' &&
+            step !== 'record' &&
+            step !== 'rank'
+        ) {
+            return
+        }
         const pending = peekPendingOnboardingProfile()
         const p = pending ?? profile ?? (hasPersistedUserProfile() ? getUserProfile() : null)
         if (!p) return
         setWeightKg(p.weightKg)
         setHeightCm(p.heightCm)
         if (p.ageYears != null) setAgeYears(p.ageYears)
-        if (pending) {
-            setGender(p.gender)
-            if (p.trainingGoal) setTrainingGoal(p.trainingGoal)
-            if (p.trainingExperience) setTrainingExperience(p.trainingExperience)
-            if (p.sessionsPerWeek) setSessionsPerWeek(p.sessionsPerWeek)
-        }
+        if (p.gender === 'male' || p.gender === 'female') setGender(p.gender)
+        if (p.trainingGoal) setTrainingGoal(p.trainingGoal)
+        if (p.trainingExperience) setTrainingExperience(p.trainingExperience)
+        if (p.sessionsPerWeek) setSessionsPerWeek(p.sessionsPerWeek)
     }, [profile, step])
 
     useEffect(() => {
@@ -327,6 +332,13 @@ function OnboardingPage() {
     useEffect(() => {
         if (step !== 'rank') return
         if (selectedExercise) return
+        const draft = peekPendingOnboardingRecord()
+        if (draft) {
+            setSelectedExercise(onboardingExerciseFromDraft(draft))
+            setPerfWeight(draft.weight)
+            setPerfReps(draft.reps)
+            return
+        }
         goRecord()
         // goRecord est stable via navigate replace
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -842,7 +854,10 @@ function OnboardingPage() {
                                     variant="ghost"
                                     className="w-full text-muted-foreground"
                                     data-analytics-label="onboarding_record_see_more"
-                                    onClick={() => navigate(ONBOARDING_EXERCISE_PICK_PATH)}
+                                    onClick={() => {
+                                        if (gender) persistProfileDraft()
+                                        navigate(ONBOARDING_EXERCISE_PICK_PATH)
+                                    }}
                                 >
                                     {UI.onboardingSeeMoreExercises}
                                 </Button>

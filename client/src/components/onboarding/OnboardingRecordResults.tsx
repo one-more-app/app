@@ -124,6 +124,12 @@ export function OnboardingRankReveal({
     }, [])
 
     useEffect(() => {
+        if (landed) return
+        const fallback = window.setTimeout(() => setLanded(true), 2800)
+        return () => window.clearTimeout(fallback)
+    }, [landed])
+
+    useEffect(() => {
         if (!landed || percentile < league.percentileEstimate) return
         const reduced = window.matchMedia(
             "(prefers-reduced-motion: reduce)",
