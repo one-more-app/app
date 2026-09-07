@@ -1,14 +1,15 @@
 import { BackHeader } from '@/components/BackHeader'
-import { GymSettingsCard } from '@/components/settings/GymSettingsCard'
-import { NotificationSettingsCard } from '@/components/settings/NotificationSettingsCard'
-import { RestTimeSettingsCard } from '@/components/settings/RestTimeSettingsCard'
-import { PremiumSettingsCard } from '@/components/settings/PremiumSettingsCard'
-import { SettingsBuildInfo } from '@/components/settings/SettingsBuildInfo'
-import { SettingsReferralLinkCard } from '@/components/settings/SettingsReferralLinkCard'
 import { ProfileNameDialog } from '@/components/profile/ProfileNameDialog'
 import { FeedbackKindToggle } from '@/components/settings/FeedbackKindToggle'
+import { GymSettingsCard } from '@/components/settings/GymSettingsCard'
+import { NotificationSettingsCard } from '@/components/settings/NotificationSettingsCard'
+import { PremiumSettingsCard } from '@/components/settings/PremiumSettingsCard'
+import { RestTimeSettingsCard } from '@/components/settings/RestTimeSettingsCard'
+import { SettingsBuildInfo } from '@/components/settings/SettingsBuildInfo'
+import { SettingsReferralLinkCard } from '@/components/settings/SettingsReferralLinkCard'
 import { SettingsProfileSkeleton } from '@/components/skeletons'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
     Dialog,
     DialogContent,
@@ -19,7 +20,6 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
     Select,
     SelectContent,
@@ -27,21 +27,21 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { useAuth } from '@/hooks/use-auth'
 import { useProfileDataRefresh, useUserProfileData } from '@/hooks/use-api-data'
+import { useAuth } from '@/hooks/use-auth'
 import { useTheme } from '@/hooks/use-theme'
+import { openStoreListing } from '@/lib/app-review'
 import {
     submitFeedback,
     type FeedbackKind,
 } from '@/lib/feedback-api'
-import { openStoreListing } from '@/lib/app-review'
+import { setUserProfileAndWait } from '@/lib/storage'
+import { UI } from '@/lib/translations'
 import type {
     SessionsPerWeekBand,
     TrainingExperienceLevel,
     TrainingGoal,
 } from '@/types'
-import { setUserProfileAndWait } from '@/lib/storage'
-import { UI } from '@/lib/translations'
 import { Capacitor } from '@capacitor/core'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
@@ -265,7 +265,7 @@ export function SettingsPage() {
                                                     : UI.profileDefaultName)}
                                         </p>
                                         {profile?.username &&
-                                        (profile.firstName || profile.lastName) ? (
+                                            (profile.firstName || profile.lastName) ? (
                                             <p className="truncate text-xs text-muted-foreground">
                                                 @{profile.username}
                                             </p>

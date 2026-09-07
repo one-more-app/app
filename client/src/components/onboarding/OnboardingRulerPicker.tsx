@@ -138,7 +138,7 @@ export function OnboardingRulerPicker({
                     className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center"
                     aria-hidden
                 >
-                    <div className="h-10 w-0.5 rounded-full bg-accent" />
+                    <div className="h-10 w-0.5 rounded-full bg-white shadow-sm ring-1 ring-foreground/20 dark:bg-accent dark:shadow-none dark:ring-0" />
                 </div>
                 <div
                     ref={scrollRef}
@@ -159,8 +159,10 @@ export function OnboardingRulerPicker({
                             >
                                 <div
                                     className={cn(
-                                        'w-px rounded-full bg-border',
-                                        isMajor ? 'h-8' : 'h-4',
+                                        'w-0.5 rounded-full',
+                                        isMajor
+                                            ? 'h-8 bg-foreground/70'
+                                            : 'h-4 bg-foreground/40',
                                     )}
                                 />
                             </div>

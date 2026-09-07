@@ -1,35 +1,59 @@
-import { OnboardingSceneLeaguePromo } from "@/components/onboarding/OnboardingSceneLeaguePromo";
-import { OnboardingSceneLogPerf } from "@/components/onboarding/OnboardingSceneLogPerf";
-import { OnboardingSceneProgress } from "@/components/onboarding/OnboardingSceneProgress";
+import { OnboardingSceneLeaguePromo, ONBOARDING_SCENE_LEAGUE_PROMO_MS } from "@/components/onboarding/OnboardingSceneLeaguePromo";
+import {
+    ONBOARDING_SCENE_LOG_PERF_MS,
+    OnboardingSceneLogPerf,
+} from "@/components/onboarding/OnboardingSceneLogPerf";
+import {
+    ONBOARDING_SCENE_PROGRESS_MS,
+    OnboardingSceneProgress,
+} from "@/components/onboarding/OnboardingSceneProgress";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
-export const ONBOARDING_INTRO_SLIDE_MS = 4000;
+type SceneOpts = {
+    active: boolean;
+    reduceMotion: boolean;
+};
 
 type Slide = {
     title: string;
     body: string;
-    scene: (opts: { active: boolean; reduceMotion: boolean }) => ReactNode;
+    durationMs: number;
+    holdMs?: number;
+    scene: (opts: SceneOpts) => ReactNode;
 };
+
+const REDUCED_MOTION_SLIDE_MS = 2500;
+/** Pause par défaut après la fin de l'animation avant la slide suivante. */
+const SLIDE_HOLD_MS = 500;
+/** Pause plus longue pour la slide graphique de progression. */
+const SLIDE_PROGRESS_HOLD_MS = 1200;
 
 const SLIDES: Slide[] = [
     {
         title: UI.onboardingIntroSlide1Title,
         body: UI.onboardingIntroSlide1Body,
+        durationMs: ONBOARDING_SCENE_LOG_PERF_MS,
         scene: (opts) => <OnboardingSceneLogPerf {...opts} />,
     },
     {
         title: UI.onboardingIntroSlide2Title,
         body: UI.onboardingIntroSlide2Body,
+        durationMs: ONBOARDING_SCENE_LEAGUE_PROMO_MS,
         scene: (opts) => <OnboardingSceneLeaguePromo {...opts} />,
     },
     {
         title: UI.onboardingIntroSlide3Title,
         body: UI.onboardingIntroSlide3Body,
+        durationMs: ONBOARDING_SCENE_PROGRESS_MS,
+        holdMs: SLIDE_PROGRESS_HOLD_MS,
         scene: (opts) => <OnboardingSceneProgress {...opts} />,
     },
 ];
+
+/** Slides + clone de la 1re pour une boucle infinie vers l'avant. */
+const LOOP_SLIDES: Slide[] = [...SLIDES, SLIDES[0]];
 
 function usePrefersReducedMotion(): boolean {
     const [reduced, setReduced] = useState(() =>
@@ -41,7 +65,6 @@ function usePrefersReducedMotion(): boolean {
     useEffect(() => {
         const media = window.matchMedia("(prefers-reduced-motion: reduce)");
         const onChange = () => setReduced(media.matches);
-        onChange();
         media.addEventListener("change", onChange);
         return () => media.removeEventListener("change", onChange);
     }, []);
@@ -51,41 +74,103 @@ function usePrefersReducedMotion(): boolean {
 
 export function OnboardingFeatureSlider() {
     const reduceMotion = usePrefersReducedMotion();
-    const [index, setIndex] = useState(0);
+    const [trackIndex, setTrackIndex] = useState(0);
     const scrollerRef = useRef<HTMLDivElement>(null);
-    const previousIndex = useRef(0);
+    const programmaticScrollRef = useRef(false);
+    const loopResettingRef = useRef(false);
 
-    useEffect(() => {
+    const logicalIndex = trackIndex % SLIDES.length;
+    const activeSlide = SLIDES[logicalIndex];
+
+    const resetLoop = useCallback(() => {
         const el = scrollerRef.current;
         if (!el) return;
-        const jumped = previousIndex.current === SLIDES.length - 1 && index === 0;
-        previousIndex.current = index;
-        el.scrollTo({
-            left: index * el.clientWidth,
-            behavior: jumped || reduceMotion ? "auto" : "smooth",
+
+        loopResettingRef.current = true;
+        programmaticScrollRef.current = true;
+
+        el.style.scrollSnapType = "none";
+        el.scrollLeft = 0;
+
+        window.requestAnimationFrame(() => {
+            setTrackIndex(0);
+            window.requestAnimationFrame(() => {
+                el.style.scrollSnapType = "";
+                loopResettingRef.current = false;
+                programmaticScrollRef.current = false;
+            });
         });
-    }, [index, reduceMotion]);
+    }, []);
+
+    const goToNextSlide = useCallback(() => {
+        setTrackIndex((current) => current + 1);
+    }, []);
 
     useEffect(() => {
-        if (reduceMotion) return;
-        const id = window.setInterval(() => {
-            setIndex((current) => (current + 1) % SLIDES.length);
-        }, ONBOARDING_INTRO_SLIDE_MS);
-        return () => window.clearInterval(id);
-    }, [index, reduceMotion]);
+        if (trackIndex >= SLIDES.length) return;
+
+        const holdMs = SLIDES[trackIndex].holdMs ?? SLIDE_HOLD_MS;
+        const durationMs = reduceMotion
+            ? REDUCED_MOTION_SLIDE_MS
+            : SLIDES[trackIndex].durationMs + holdMs;
+        const id = window.setTimeout(goToNextSlide, durationMs);
+        return () => window.clearTimeout(id);
+    }, [trackIndex, reduceMotion, goToNextSlide]);
+
+    useEffect(() => {
+        const el = scrollerRef.current;
+        if (!el || loopResettingRef.current) return;
+
+        programmaticScrollRef.current = true;
+
+        el.scrollTo({
+            left: trackIndex * el.clientWidth,
+            behavior: reduceMotion ? "auto" : "smooth",
+        });
+
+        const releaseProgrammaticScroll = () => {
+            if (loopResettingRef.current) return;
+            programmaticScrollRef.current = false;
+        };
+
+        if (trackIndex === SLIDES.length) {
+            if (reduceMotion) {
+                resetLoop();
+                return;
+            }
+
+            el.addEventListener("scrollend", resetLoop, { once: true });
+            const fallbackId = window.setTimeout(resetLoop, 800);
+            return () => {
+                el.removeEventListener("scrollend", resetLoop);
+                window.clearTimeout(fallbackId);
+            };
+        }
+
+        el.addEventListener("scrollend", releaseProgrammaticScroll, { once: true });
+        const fallbackId = window.setTimeout(releaseProgrammaticScroll, 700);
+
+        return () => {
+            el.removeEventListener("scrollend", releaseProgrammaticScroll);
+            window.clearTimeout(fallbackId);
+        };
+    }, [trackIndex, reduceMotion, resetLoop]);
 
     const onScroll = () => {
+        if (programmaticScrollRef.current || loopResettingRef.current) return;
+
         const el = scrollerRef.current;
         if (!el || el.clientWidth === 0) return;
+
         const next = Math.round(el.scrollLeft / el.clientWidth);
-        if (next !== index && next >= 0 && next < SLIDES.length) {
-            setIndex(next);
+        if (next !== trackIndex && next >= 0 && next < LOOP_SLIDES.length) {
+            setTrackIndex(next);
         }
     };
 
     return (
         <div
-            className="flex min-h-0 flex-1 flex-col"
+            className="flex min-h-0 flex-col"
             role="region"
             aria-roledescription="carousel"
             aria-label={UI.onboardingIntroCarouselA11y}
@@ -93,13 +178,13 @@ export function OnboardingFeatureSlider() {
             <div
                 ref={scrollerRef}
                 onScroll={onScroll}
-                className="flex min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="flex min-h-0 snap-x snap-mandatory overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-                {SLIDES.map((slide, slideIndex) => {
-                    const active = slideIndex === index;
+                {LOOP_SLIDES.map((slide, slideIndex) => {
+                    const active = slideIndex === trackIndex;
                     return (
                         <div
-                            key={slide.title}
+                            key={`${slide.title}-${slideIndex}`}
                             className="flex w-full shrink-0 snap-center flex-col justify-center px-1"
                             aria-hidden={!active}
                         >
@@ -117,17 +202,16 @@ export function OnboardingFeatureSlider() {
                                     })}
                                 </div>
                             </div>
-                            <div className="mt-4 space-y-2 text-center">
-                                <h2 className="font-one-more text-2xl font-semibold uppercase italic tracking-tight sm:text-3xl">
-                                    {slide.title}
-                                </h2>
-                                <p className="text-sm text-muted-foreground">
-                                    {slide.body}
-                                </p>
-                            </div>
                         </div>
                     );
                 })}
+            </div>
+
+            <div className="mt-4 space-y-2 text-center">
+                <h2 className="font-one-more text-2xl font-semibold uppercase italic tracking-tight sm:text-3xl">
+                    {activeSlide.title}
+                </h2>
+                <p className="text-sm text-muted-foreground">{activeSlide.body}</p>
             </div>
 
             <div
@@ -136,7 +220,7 @@ export function OnboardingFeatureSlider() {
                 aria-label={UI.onboardingIntroCarouselA11y}
             >
                 {SLIDES.map((slide, slideIndex) => {
-                    const selected = slideIndex === index;
+                    const selected = slideIndex === logicalIndex;
                     return (
                         <button
                             key={slide.title}
@@ -148,7 +232,7 @@ export function OnboardingFeatureSlider() {
                                 "size-2 rounded-full transition-colors",
                                 selected ? "bg-foreground" : "bg-muted-foreground/40",
                             )}
-                            onClick={() => setIndex(slideIndex)}
+                            onClick={() => setTrackIndex(slideIndex)}
                         />
                     );
                 })}

@@ -8,6 +8,9 @@ import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 
+/** Durée de l'animation nudge (0.65s × 3 alternances) — voir index.css */
+export const ONBOARDING_SCENE_LEAGUE_PROMO_MS = 650 * 3;
+
 type OnboardingSceneLeaguePromoProps = {
     active: boolean;
     reduceMotion: boolean;

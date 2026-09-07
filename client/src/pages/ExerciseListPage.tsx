@@ -38,6 +38,10 @@ import {
 } from '@/lib/analytics'
 import { Trackable } from '@/components/analytics/Trackable'
 import { fetchExercisesCatalog, fetchExercisesMeta } from '@/lib/data-api'
+import {
+    ONBOARDING_EXERCISE_PICK_FROM,
+    onboardingExerciseFromCatalog,
+} from '@/lib/onboarding-exercise-pick'
 import { filterCatalogExercises } from '@/lib/exercise-catalog-browse'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
@@ -51,6 +55,7 @@ import {
     savePerformanceAndWait,
     setExerciseCatalogTourComplete,
     setOnboardingFirstExercisePending,
+    setPendingOnboardingExercisePick,
 } from '@/lib/storage'
 import {
     afterUiOverlaySettle,
@@ -66,11 +71,14 @@ import type { ExerciseDBExercise } from '@/types'
 import { Plus, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EVENTS, Joyride, type EventData, type Step } from 'react-joyride'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import useSWR from 'swr'
 
 export function ExerciseListPage() {
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
+    const onboardingRecordPick =
+        searchParams.get('from') === ONBOARDING_EXERCISE_PICK_FROM
     const { resolvedTheme } = useTheme()
     const refreshAfterPerfChange = usePerformanceDataRefresh()
     const [catalogTourComplete, setCatalogTourComplete] = useState(
@@ -106,8 +114,10 @@ export function ExerciseListPage() {
         [canAddExercise, openReferralDrawer],
     )
     const onboardingFirstExerciseFlow =
-        isOnboardingFirstExercisePending() && !isOnboardingTourComplete()
-    const catalogTourActive = !catalogTourComplete
+        !onboardingRecordPick &&
+        isOnboardingFirstExercisePending() &&
+        !isOnboardingTourComplete()
+    const catalogTourActive = !onboardingRecordPick && !catalogTourComplete
     useOnboardingStepViewed(
         onboardingFirstExerciseFlow ? OnboardingSteps.FIRST_EXERCISE : null,
     )
@@ -214,12 +224,24 @@ export function ExerciseListPage() {
         }
     }, [equipmentOptions, customEquipment])
 
+    const pickExerciseForOnboarding = useCallback(
+        (exercise: ExerciseDBExercise) => {
+            setPendingOnboardingExercisePick(onboardingExerciseFromCatalog(exercise))
+            navigate('/onboarding?step=record', { replace: true })
+        },
+        [navigate],
+    )
+
     const handleHeaderBack = useCallback(() => {
         if (isSearchMode) {
             handleSearchChange('')
             return
         }
         if (goBackInBrowse()) return
+        if (onboardingRecordPick) {
+            navigate('/onboarding?step=record', { replace: true })
+            return
+        }
         // Après onboarding, l'arrivée sur /exercises remplace l'historique : navigate(-1) ne fait rien.
         if (isOnboardingFirstExercisePending()) {
             trackOnboardingStepSkipped({
@@ -235,6 +257,7 @@ export function ExerciseListPage() {
         isSearchMode,
         handleSearchChange,
         goBackInBrowse,
+        onboardingRecordPick,
         navigateBack,
         navigate,
     ])
@@ -373,6 +396,10 @@ export function ExerciseListPage() {
     )
 
     const openAddWithPerf = (ex: ExerciseDBExercise) => {
+        if (onboardingRecordPick) {
+            pickExerciseForOnboarding(ex)
+            return
+        }
         if (trackedIds.has(`api-${ex.id}`)) return
         guardAddExercise(() => {
             setAddWithPerfExercise(ex)
@@ -551,9 +578,15 @@ export function ExerciseListPage() {
 
     return (
         <Trackable
-            section={onboardingFirstExerciseFlow ? 'onboarding' : 'exercises'}
+            section={
+                onboardingRecordPick || onboardingFirstExerciseFlow
+                    ? 'onboarding'
+                    : 'exercises'
+            }
             feature={
-                onboardingFirstExerciseFlow
+                onboardingRecordPick
+                    ? OnboardingSteps.RECORD_PICK
+                    : onboardingFirstExerciseFlow
                     ? OnboardingSteps.FIRST_EXERCISE
                     : 'catalog'
             }
@@ -577,7 +610,7 @@ export function ExerciseListPage() {
                                 className="bg-card pl-9"
                             />
                         </div>
-                        {customExerciseDialog}
+                        {onboardingRecordPick ? null : customExerciseDialog}
                     </div>
                 ) : null}
                 {catalogError ? (
@@ -690,15 +723,20 @@ export function ExerciseListPage() {
                                     </div>
                                     <Button
                                         className="w-full"
-                                        disabled={trackedIds.has(`api-${selectedExercise.id}`)}
+                                        disabled={
+                                            !onboardingRecordPick &&
+                                            trackedIds.has(`api-${selectedExercise.id}`)
+                                        }
                                         onClick={() => {
                                             openAddWithPerf(selectedExercise)
                                             setSelectedExercise(null)
                                         }}
                                     >
-                                        {trackedIds.has(`api-${selectedExercise.id}`)
-                                            ? UI.added
-                                            : UI.add}
+                                        {onboardingRecordPick
+                                            ? UI.onboardingChooseExercise
+                                            : trackedIds.has(`api-${selectedExercise.id}`)
+                                              ? UI.added
+                                              : UI.add}
                                     </Button>
                                 </div>
                             </>

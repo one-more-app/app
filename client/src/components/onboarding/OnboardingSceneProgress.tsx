@@ -10,6 +10,8 @@ const Y_MIN = 76;
 const Y_MAX = 104;
 const DRAW_MS = 800;
 
+export const ONBOARDING_SCENE_PROGRESS_MS = DRAW_MS;
+
 type OnboardingSceneProgressProps = {
     active: boolean;
     reduceMotion: boolean;

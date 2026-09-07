@@ -102,11 +102,13 @@ export function resolveOnboardingBackTarget(
   pathname: string,
   search: string,
 ): OnboardingBackTarget | null {
-  if (pathname !== "/onboarding") return null;
-
   const params = new URLSearchParams(
     search.startsWith("?") ? search.slice(1) : search,
   );
+  if (pathname === "/exercises" && params.get("from") === "onboarding") {
+    return { kind: "path", to: "/onboarding?step=record" };
+  }
+  if (pathname !== "/onboarding") return null;
   const step = normalizeOnboardingStep(params.get("step"));
   const bodyQ = Math.max(0, Number.parseInt(params.get("bodyQ") ?? "0", 10) || 0);
   const intentQ = Math.max(

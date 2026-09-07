@@ -11,6 +11,24 @@ async function submitStarterRecord(page: Page): Promise<void> {
   await drawer.getByRole("button", { name: "Enregistrer" }).click();
 }
 
+test("voir plus d'exercices ouvre le catalogue puis revient au record", async ({
+  page,
+}) => {
+  const pageErrors = trackPageErrors(page);
+  await mockAuthApi(page);
+
+  await page.goto("/#/onboarding?step=record");
+  await expect(page.getByText(UI.onboardingRecordTitle)).toBeVisible();
+
+  await page.getByRole("button", { name: UI.onboardingSeeMoreExercises }).click();
+  await expect(page).toHaveURL(/#\/exercises\?from=onboarding/);
+  await expect(page.getByRole("heading", { name: UI.chooseExercises })).toBeVisible();
+
+  await page.getByRole("button", { name: UI.back }).click();
+  await expect(page.getByText(UI.onboardingRecordTitle)).toBeVisible();
+  expect(pageErrors).toEqual([]);
+});
+
 test("l'onboarding record montre le palier puis le compte", async ({
   page,
 }) => {

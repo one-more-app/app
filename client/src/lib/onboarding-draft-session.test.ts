@@ -3,8 +3,10 @@ import {
   beginOnboardingDraftSession,
   clearOnboardingDraftsAndSession,
   discardPendingOnboardingDrafts,
+  peekPendingOnboardingExercisePick,
   peekPendingOnboardingProfile,
   peekPendingOnboardingRecord,
+  setPendingOnboardingExercisePick,
   setPendingOnboardingProfile,
   setPendingOnboardingRecord,
   type PendingOnboardingRecord,
@@ -108,7 +110,17 @@ describe("onboarding draft session", () => {
   it("jette les drafts sur « j'ai un compte »", () => {
     beginOnboardingDraftSession();
     setPendingOnboardingRecord(record);
+    setPendingOnboardingExercisePick({
+      exerciseId: "abc123",
+      name: "Soulevé de terre",
+      originalName: "barbell deadlift",
+      subtitle: "Dos",
+      bodyPart: "back",
+      target: "lats",
+      equipment: "barbell",
+    });
     discardPendingOnboardingDrafts();
     expect(peekPendingOnboardingRecord()).toBeNull();
+    expect(peekPendingOnboardingExercisePick()).toBeNull();
   });
 });

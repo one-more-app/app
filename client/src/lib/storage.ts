@@ -47,6 +47,9 @@ const PENDING_ONBOARDING_PROFILE_KEY =
 /** Draft premier record saisi avant auth. */
 const PENDING_ONBOARDING_RECORD_KEY =
   "one-more-pending-onboarding-record-v1";
+/** Exercice catalogue choisi pendant l’onboarding, avant la saisie de perf. */
+const PENDING_ONBOARDING_EXERCISE_PICK_KEY =
+  "one-more-pending-onboarding-exercise-pick-v1";
 /** Identifie le parcours d'onboarding de cet onglet ; un leftover d'une autre visite n'est pas renvoyé. */
 const ONBOARDING_DRAFT_SESSION_KEY = "one-more-onboarding-draft-session-v1";
 const ONBOARDING_RECORD_DESTINATION_KEY =
@@ -615,6 +618,7 @@ export function beginOnboardingDraftSession(): string {
   writeOnboardingDraftSessionId(sessionId);
   clearPendingOnboardingRecord();
   clearPendingOnboardingProfile();
+  clearPendingOnboardingExercisePick();
   return sessionId;
 }
 
@@ -634,6 +638,7 @@ export function hasOnboardingDraftSession(): boolean {
 export function discardPendingOnboardingDrafts(): void {
   clearPendingOnboardingRecord();
   clearPendingOnboardingProfile();
+  clearPendingOnboardingExercisePick();
 }
 
 /** Logout / changement de compte authentifié. */
@@ -795,6 +800,79 @@ export function setPendingOnboardingRecord(
 export function clearPendingOnboardingRecord(): void {
   try {
     localStorage.removeItem(PENDING_ONBOARDING_RECORD_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export type PendingOnboardingExercisePick = {
+  exerciseId: string;
+  name: string;
+  originalName: string;
+  subtitle: string;
+  bodyPart: string;
+  target: string;
+  equipment: string;
+  gifUrl?: string;
+  sessionId?: string;
+};
+
+function isPendingOnboardingExercisePick(
+  value: unknown,
+): value is PendingOnboardingExercisePick {
+  if (!value || typeof value !== "object") return false;
+  const pick = value as Record<string, unknown>;
+  return (
+    typeof pick.exerciseId === "string" &&
+    pick.exerciseId.length > 0 &&
+    typeof pick.name === "string" &&
+    typeof pick.originalName === "string" &&
+    typeof pick.subtitle === "string" &&
+    typeof pick.bodyPart === "string" &&
+    typeof pick.target === "string" &&
+    typeof pick.equipment === "string" &&
+    (pick.gifUrl === undefined || typeof pick.gifUrl === "string")
+  );
+}
+
+export function peekPendingOnboardingExercisePick(): PendingOnboardingExercisePick | null {
+  try {
+    const raw = localStorage.getItem(PENDING_ONBOARDING_EXERCISE_PICK_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (!isPendingOnboardingExercisePick(parsed)) return null;
+    if (!belongsToCurrentOnboardingSession(parsed.sessionId)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function setPendingOnboardingExercisePick(
+  pick: Omit<PendingOnboardingExercisePick, "sessionId">,
+): void {
+  try {
+    localStorage.setItem(
+      PENDING_ONBOARDING_EXERCISE_PICK_KEY,
+      JSON.stringify({
+        ...pick,
+        sessionId: ensureOnboardingDraftSession(),
+      }),
+    );
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+export function consumePendingOnboardingExercisePick(): PendingOnboardingExercisePick | null {
+  const pick = peekPendingOnboardingExercisePick();
+  if (pick) clearPendingOnboardingExercisePick();
+  return pick;
+}
+
+export function clearPendingOnboardingExercisePick(): void {
+  try {
+    localStorage.removeItem(PENDING_ONBOARDING_EXERCISE_PICK_KEY);
   } catch {
     // ignore
   }

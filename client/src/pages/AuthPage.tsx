@@ -1,4 +1,6 @@
 import { Trackable } from "@/components/analytics/Trackable";
+import { OnboardingFeatureSlider } from "@/components/onboarding/OnboardingFeatureSlider";
+import { OnboardingMarcusHero } from "@/components/onboarding/OnboardingMarcusHero";
 import { onboardingEntrance, onboardingStepCardClassName } from "@/components/onboarding/onboarding-motion";
 import { OnboardingShell } from "@/components/OnboardingShell";
 import {
@@ -31,8 +33,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 const CGU_URL = "https://site.one-more.app/cgu";
 const PRIVACY_URL = "https://site.one-more.app/privacy";
-const AUTH_HERO_IMAGE_SRC = "/images/marcus.png";
-
 type AuthStep =
     | "email"
     | "login"
@@ -245,8 +245,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
             feature={currentAuthStep}
             className={onboardingEntrance(
                 "relative z-10 mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col overflow-y-auto px-4 pb-6",
-                // Le hero doit toucher le haut de l'écran : on annule le safe-top du shell.
-                isRegisterStep ? "pt-3" : "mt-[calc(-1*var(--safe-top))]",
+                isRegisterStep ? "pt-3" : "pt-0",
                 "animate-in fade-in-0 slide-in-from-left-4 duration-400",
             )}
         >
@@ -485,38 +484,33 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
             ) : (
                 <div className="flex w-full flex-1 flex-col">
                     <div className="flex flex-1 flex-col gap-6">
-                        <div className="space-y-4">
-                            <div className="relative -mx-4 shrink-0 overflow-hidden">
+                        <div className="relative shrink-0">
+                            <OnboardingMarcusHero />
+                            <div
+                                aria-hidden
+                                className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/50 to-transparent"
+                            />
+                            <div className="absolute inset-x-0 top-0 z-10 flex justify-center px-4 pt-4">
                                 <img
-                                    src={AUTH_HERO_IMAGE_SRC}
-                                    alt=""
-                                    className="h-50 w-full select-none object-cover object-[50%_15%]"
-                                    draggable={false}
-                                />
-                                <div
-                                    aria-hidden
-                                    className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background via-background/70 to-transparent"
+                                    src="/logo-white-text.png"
+                                    alt="One More"
+                                    className={onboardingEntrance(
+                                        "h-14 w-auto select-none object-contain sm:h-16 animate-in fade-in-0 slide-in-from-bottom-3 duration-400",
+                                    )}
+                                    loading="eager"
+                                    decoding="async"
                                 />
                             </div>
-
-                            <header className="space-y-3 text-center">
-                                <h1 className="font-one-more text-xl uppercase italic leading-tight sm:text-2xl">
-                                    {fromOnboardingConversion
-                                        ? UI.authSaveProgressTitle
-                                        : UI.authLoginTitle}
-                                </h1>
-                                <p className="text-sm leading-relaxed text-muted-foreground">
-                                    {fromOnboardingConversion
-                                        ? UI.authSaveProgressDescription
-                                        : UI.authLoginDescription}
-                                </p>
-                                {fromOnboardingConversion ? (
-                                    <p className="text-xs text-muted-foreground">
-                                        {UI.onboardingAccountLossHint}
-                                    </p>
-                                ) : null}
-                            </header>
                         </div>
+                        <div className="flex min-h-80 flex-col">
+                            <OnboardingFeatureSlider />
+                        </div>
+
+                        {fromOnboardingConversion ? (
+                            <p className="text-center text-xs text-muted-foreground">
+                                {UI.onboardingAccountLossHint}
+                            </p>
+                        ) : null}
 
                         <div className="space-y-3">
                             <Button

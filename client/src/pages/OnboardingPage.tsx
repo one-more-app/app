@@ -42,15 +42,19 @@ import {
 } from '@/lib/onboarding-gym-dev';
 import {
     defaultOnboardingPerf,
-    findOnboardingStarterExercise,
-    onboardingExerciseGifUrl,
     onboardingTrackedId,
+    resolveOnboardingExerciseGifUrl,
     type OnboardingStarterExercise,
 } from '@/lib/onboarding-starter-exercises';
+import {
+    ONBOARDING_EXERCISE_PICK_PATH,
+    onboardingExerciseFromDraft,
+} from '@/lib/onboarding-exercise-pick';
 import { continueAfterOnboardingNotifications, isOnboardingNotificationsPath, ONBOARDING_NOTIFICATIONS_STEP_ENABLED, postAuthNavigateOptions, resolvePostAuthNavigation } from '@/lib/post-auth-navigation';
 import {
     beginOnboardingDraftSession,
     clearPendingOnboardingRecord,
+    consumePendingOnboardingExercisePick,
     discardPendingOnboardingDrafts,
     getGymOnboardingContext,
     getOnboardingPostAuthRedirect,
@@ -58,6 +62,7 @@ import {
     hasOnboardingDraftSession,
     hasPersistedUserProfile,
     markOnboardingDone,
+    peekPendingOnboardingProfile,
     peekPendingOnboardingRecord,
     setGymPermissionsPromptDone,
     setOnboardingFirstExercisePending,
@@ -229,21 +234,18 @@ function OnboardingPage() {
     const [weightKg, setWeightKg] = useState(75)
     const [heightCm, setHeightCm] = useState(175)
     const [ageYears, setAgeYears] = useState(25)
-    const [gender, setGender] = useState<'male' | 'female'>('male')
-    const [trainingGoal, setTrainingGoal] = useState<TrainingGoal>('muscle')
+    const [gender, setGender] = useState<'male' | 'female' | null>(null)
+    const [trainingGoal, setTrainingGoal] = useState<TrainingGoal | null>(null)
     const [trainingExperience, setTrainingExperience] =
-        useState<TrainingExperienceLevel>('beginner')
+        useState<TrainingExperienceLevel | null>(null)
     const [sessionsPerWeek, setSessionsPerWeek] =
-        useState<SessionsPerWeekBand>('moderate')
+        useState<SessionsPerWeekBand | null>(null)
     const [unlockingGym, setUnlockingGym] = useState(false)
-    const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null)
+    const [selectedExercise, setSelectedExercise] =
+        useState<OnboardingStarterExercise | null>(null)
     const [perfDrawerOpen, setPerfDrawerOpen] = useState(false)
     const [perfWeight, setPerfWeight] = useState(60)
     const [perfReps, setPerfReps] = useState(5)
-
-    const selectedExercise = selectedExerciseId
-        ? findOnboardingStarterExercise(selectedExerciseId) ?? null
-        : null
 
     const persistRecordDraft = (
         exercise: OnboardingStarterExercise,
@@ -258,7 +260,7 @@ function OnboardingPage() {
             bodyPart: exercise.bodyPart,
             target: exercise.target,
             equipment: exercise.equipment,
-            gifUrl: onboardingExerciseGifUrl(exercise.exerciseId),
+            gifUrl: resolveOnboardingExerciseGifUrl(exercise),
             weight,
             reps,
             clientTrackedId: onboardingTrackedId(exercise.exerciseId),
@@ -273,26 +275,48 @@ function OnboardingPage() {
         if (step !== 'record') return
         if (!hasOnboardingDraftSession()) {
             beginOnboardingDraftSession()
+        }
+        const pick = consumePendingOnboardingExercisePick()
+        if (pick) {
+            const exercise = onboardingExerciseFromDraft(pick)
+            setSelectedExercise(exercise)
+            const draft = peekPendingOnboardingRecord()
+            if (draft?.exerciseId === exercise.exerciseId) {
+                setPerfWeight(draft.weight)
+                setPerfReps(draft.reps)
+            } else {
+                const defaults = defaultOnboardingPerf(exercise)
+                setPerfWeight(defaults.weight)
+                setPerfReps(defaults.reps)
+            }
+            setPerfDrawerOpen(true)
+            trackOnboardingStepCompleted({
+                step: OnboardingSteps.RECORD_PICK,
+                exercise_id: exercise.exerciseId,
+            })
             return
         }
         const draft = peekPendingOnboardingRecord()
         if (!draft) return
-        setSelectedExerciseId(draft.exerciseId)
+        setSelectedExercise(onboardingExerciseFromDraft(draft))
         setPerfWeight(draft.weight)
         setPerfReps(draft.reps)
     }, [step])
 
     useEffect(() => {
         if (step !== 'body' && step !== 'intent') return
-        const p = profile ?? (hasPersistedUserProfile() ? getUserProfile() : null)
+        const pending = peekPendingOnboardingProfile()
+        const p = pending ?? profile ?? (hasPersistedUserProfile() ? getUserProfile() : null)
         if (!p) return
-        setGender(p.gender)
         setWeightKg(p.weightKg)
         setHeightCm(p.heightCm)
         if (p.ageYears != null) setAgeYears(p.ageYears)
-        if (p.trainingGoal) setTrainingGoal(p.trainingGoal)
-        if (p.trainingExperience) setTrainingExperience(p.trainingExperience)
-        if (p.sessionsPerWeek) setSessionsPerWeek(p.sessionsPerWeek)
+        if (pending) {
+            setGender(p.gender)
+            if (p.trainingGoal) setTrainingGoal(p.trainingGoal)
+            if (p.trainingExperience) setTrainingExperience(p.trainingExperience)
+            if (p.sessionsPerWeek) setSessionsPerWeek(p.sessionsPerWeek)
+        }
     }, [profile, step])
 
     useEffect(() => {
@@ -315,15 +339,70 @@ function OnboardingPage() {
     const profileDraft = () => ({
         weightKg,
         heightCm,
-        gender,
+        gender: gender!,
         ageYears,
         trainingGoal,
         trainingExperience,
         sessionsPerWeek,
     })
 
-    const persistProfileDraft = () => {
-        const body = profileDraft()
+    const selectGender = (value: 'male' | 'female') => {
+        setGender(value)
+        advanceFromGender(value)
+    }
+
+    const selectTrainingGoal = (value: TrainingGoal) => {
+        setTrainingGoal(value)
+        advanceFromTrainingGoal(value)
+    }
+
+    const selectTrainingExperience = (value: TrainingExperienceLevel) => {
+        setTrainingExperience(value)
+        advanceFromTrainingExperience(value)
+    }
+
+    const selectSessionsPerWeek = (value: SessionsPerWeekBand) => {
+        setSessionsPerWeek(value)
+        advanceFromSessionsPerWeek(value)
+    }
+
+    const advanceFromGender = (value: 'male' | 'female') => {
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.BODY_GENDER,
+            gender: value,
+        })
+        goBody(1)
+    }
+
+    const advanceFromTrainingGoal = (value: TrainingGoal) => {
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.INTENT_GOAL,
+            training_goal: value,
+        })
+        goIntent(1)
+    }
+
+    const advanceFromTrainingExperience = (value: TrainingExperienceLevel) => {
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.INTENT_EXPERIENCE,
+            training_experience: value,
+        })
+        goIntent(2)
+    }
+
+    const advanceFromSessionsPerWeek = (value: SessionsPerWeekBand) => {
+        persistProfileDraft({ sessionsPerWeek: value })
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.INTENT_FREQUENCY,
+            sessions_per_week: value,
+        })
+        goRecord()
+    }
+
+    const persistProfileDraft = (
+        overrides?: Partial<ReturnType<typeof profileDraft>>,
+    ) => {
+        const body = { ...profileDraft(), ...overrides }
         if (auth.status === 'authenticated') {
             setUserProfile(body)
         } else {
@@ -351,11 +430,8 @@ function OnboardingPage() {
 
     const advanceBody = () => {
         if (bodyQ === 0) {
-            trackOnboardingStepCompleted({
-                step: OnboardingSteps.BODY_GENDER,
-                gender,
-            })
-            goBody(1)
+            if (!gender) return
+            advanceFromGender(gender)
             return
         }
         if (bodyQ === 1) {
@@ -388,27 +464,17 @@ function OnboardingPage() {
 
     const advanceIntent = () => {
         if (intentQ === 0) {
-            trackOnboardingStepCompleted({
-                step: OnboardingSteps.INTENT_GOAL,
-                training_goal: trainingGoal,
-            })
-            goIntent(1)
+            if (!trainingGoal) return
+            advanceFromTrainingGoal(trainingGoal)
             return
         }
         if (intentQ === 1) {
-            trackOnboardingStepCompleted({
-                step: OnboardingSteps.INTENT_EXPERIENCE,
-                training_experience: trainingExperience,
-            })
-            goIntent(2)
+            if (!trainingExperience) return
+            advanceFromTrainingExperience(trainingExperience)
             return
         }
-        persistProfileDraft()
-        trackOnboardingStepCompleted({
-            step: OnboardingSteps.INTENT_FREQUENCY,
-            sessions_per_week: sessionsPerWeek,
-        })
-        goRecord()
+        if (!sessionsPerWeek) return
+        advanceFromSessionsPerWeek(sessionsPerWeek)
     }
 
     const backBody = () => {
@@ -465,7 +531,7 @@ function OnboardingPage() {
     }
 
     const leagueInfo = useMemo(() => {
-        if (!selectedExercise) return null
+        if (!selectedExercise || !gender) return null
         return getLeagueInfo({
             weight: perfWeight,
             reps: perfReps,
@@ -480,7 +546,7 @@ function OnboardingPage() {
     }, [selectedExercise, perfWeight, perfReps, weightKg, gender])
 
     const openRecordDrawer = (exercise: OnboardingStarterExercise) => {
-        setSelectedExerciseId(exercise.exerciseId)
+        setSelectedExercise(exercise)
         const draft = peekPendingOnboardingRecord()
         if (draft?.exerciseId === exercise.exerciseId) {
             setPerfWeight(draft.weight)
@@ -498,11 +564,7 @@ function OnboardingPage() {
     }
 
     const saveRecordFromDrawer = (weight: number, reps: number) => {
-        const exercise =
-            selectedExercise ??
-            (selectedExerciseId
-                ? findOnboardingStarterExercise(selectedExerciseId) ?? null
-                : null)
+        const exercise = selectedExercise
         if (!exercise || reps <= 0) return
         setPerfWeight(weight)
         setPerfReps(reps)
@@ -774,6 +836,17 @@ function OnboardingPage() {
                                 </p>
                             </OnboardingReveal>
                             <OnboardingExerciseList onSelect={openRecordDrawer} />
+                            <OnboardingReveal delayMs={160}>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="w-full text-muted-foreground"
+                                    data-analytics-label="onboarding_record_see_more"
+                                    onClick={() => navigate(ONBOARDING_EXERCISE_PICK_PATH)}
+                                >
+                                    {UI.onboardingSeeMoreExercises}
+                                </Button>
+                            </OnboardingReveal>
                             <OnboardingReveal delayMs={200}>
                                 <p className="text-xs text-muted-foreground">
                                     {UI.onboardingRecordMicro}
@@ -863,7 +936,7 @@ function OnboardingPage() {
                                 <OnboardingChoiceList
                                     value={gender}
                                     options={GENDER_CHOICES}
-                                    onChange={setGender}
+                                    onSelect={selectGender}
                                     ariaLabel={UI.gender}
                                 />
                             ) : null}
@@ -914,6 +987,7 @@ function OnboardingPage() {
                                             : 'onboarding_body_next'
                                     }
                                     disabled={
+                                        (bodyQ === 0 && !gender) ||
                                         (bodyQ === 1 && !canAdvanceWeight) ||
                                         (bodyQ === 2 && !canAdvanceHeight) ||
                                         (bodyQ === 3 && !canAdvanceAge)
@@ -947,7 +1021,7 @@ function OnboardingPage() {
                                 <OnboardingChoiceList
                                     value={trainingGoal}
                                     options={GOAL_CHOICES}
-                                    onChange={setTrainingGoal}
+                                    onSelect={selectTrainingGoal}
                                     ariaLabel={UI.onboardingIntentTitleGoal}
                                 />
                             ) : null}
@@ -956,7 +1030,7 @@ function OnboardingPage() {
                                 <OnboardingChoiceList
                                     value={trainingExperience}
                                     options={EXPERIENCE_CHOICES}
-                                    onChange={setTrainingExperience}
+                                    onSelect={selectTrainingExperience}
                                     ariaLabel={UI.onboardingIntentTitleExperience}
                                 />
                             ) : null}
@@ -965,7 +1039,7 @@ function OnboardingPage() {
                                 <OnboardingChoiceList
                                     value={sessionsPerWeek}
                                     options={FREQUENCY_CHOICES}
-                                    onChange={setSessionsPerWeek}
+                                    onSelect={selectSessionsPerWeek}
                                     ariaLabel={UI.onboardingIntentTitleFrequency}
                                 />
                             ) : null}
@@ -981,6 +1055,11 @@ function OnboardingPage() {
                                         intentQ === INTENT_TOTAL - 1
                                             ? 'onboarding_intent_continue'
                                             : 'onboarding_intent_next'
+                                    }
+                                    disabled={
+                                        (intentQ === 0 && !trainingGoal) ||
+                                        (intentQ === 1 && !trainingExperience) ||
+                                        (intentQ === 2 && !sessionsPerWeek)
                                     }
                                 >
                                     {UI.continue}
