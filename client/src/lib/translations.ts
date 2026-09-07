@@ -758,6 +758,8 @@ export const UI = {
     "Choisis un mouvement et entre ta meilleure perf. On s'occupe du reste.",
   onboardingRecordMicro:
     "Ta série la plus lourde suffit. Tu ajouteras tes autres mouvements après.",
+  onboardingSeeMoreExercises: "Voir plus d'exercices",
+  onboardingChooseExercise: "Choisir",
   onboardingPerfTitle: "Rentre ton record",
   onboardingPerfHint: "Entre le poids et les reps de ton meilleur essai.",
   onboardingOneRmTitle: "Ton 1RM",

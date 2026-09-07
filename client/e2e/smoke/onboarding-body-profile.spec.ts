@@ -10,13 +10,12 @@ async function completeBodyQuestions(page: Page): Promise<void> {
   await continueButton(page).click();
   await continueButton(page).click();
   await continueButton(page).click();
-  await continueButton(page).click();
 }
 
 async function completeIntentQuestions(page: Page): Promise<void> {
-  await continueButton(page).click();
-  await continueButton(page).click();
-  await continueButton(page).click();
+  await page.getByRole("radio", { name: UI.onboardingGoalMuscle }).click();
+  await page.getByRole("radio", { name: UI.onboardingExperienceBeginner }).click();
+  await page.getByRole("radio", { name: UI.onboardingFrequencyModerate }).click();
 }
 
 async function completeRecordToRank(page: Page): Promise<void> {

@@ -20,6 +20,7 @@ import {
     persistAndNavigateToInvite,
     setupAppsFlyer,
 } from '@/lib/appsflyer'
+import { isOnboardingExercisePickLocation } from '@/lib/onboarding-exercise-pick'
 import { isOnboardingGymDevPreview, isGymPermissionsNativeContext, isOnboardingGymFromSettings, isGymReselectOnboarding } from '@/lib/onboarding-gym-dev'
 import { useUserGymData } from '@/hooks/use-user-gym-data'
 import {
@@ -89,6 +90,10 @@ function AccessGate({ children }: { children: React.ReactNode }) {
     useGymGeofenceNotificationTap()
     const isAuthRoute = location.pathname === '/auth'
     const isOnboardingRoute = location.pathname === '/onboarding'
+    const isOnboardingExercisePick = isOnboardingExercisePickLocation(
+        location.pathname,
+        location.search,
+    )
     const isInviteRoute = location.pathname.startsWith('/invite/')
     const isEventRoute = location.pathname.startsWith('/event/')
     const onboardingNeeded = needsOnboarding()
@@ -195,7 +200,14 @@ function AccessGate({ children }: { children: React.ReactNode }) {
             if (isAuthRoute && peekPendingInviteCode()) {
                 return <Navigate to="/onboarding" replace />
             }
-            if (isOnboardingRoute || isAuthRoute || isInviteRoute) return <>{children}</>
+            if (
+                isOnboardingRoute ||
+                isAuthRoute ||
+                isInviteRoute ||
+                isOnboardingExercisePick
+            ) {
+                return <>{children}</>
+            }
             return <Navigate to="/onboarding" replace />
         }
         if (isAuthRoute || isInviteRoute) return <>{children}</>
@@ -231,7 +243,8 @@ function AccessGate({ children }: { children: React.ReactNode }) {
         auth.status === 'authenticated' &&
         onboardingNeeded &&
         location.pathname !== '/onboarding' &&
-        !isAuthRoute
+        !isAuthRoute &&
+        !isOnboardingExercisePick
     ) {
         if (gymOnboardingStep) {
             return <Navigate to={gymOnboardingPath(gymOnboardingStep)} replace />

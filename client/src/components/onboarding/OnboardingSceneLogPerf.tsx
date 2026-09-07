@@ -19,14 +19,17 @@ const ITEM_WIDTH = 40;
 const TAP_MS = 650;
 const DRAWER_MS = 820;
 const VALUE_MS = 1550;
+const SAVE_TAP_MS = 2050;
 const SAVE_MS = 2300;
 
-type Phase = "card" | "tap" | "drawer" | "saved";
+type Phase = "card" | "tap" | "drawer" | "saveTap" | "saved";
 
 type OnboardingSceneLogPerfProps = {
     active: boolean;
     reduceMotion: boolean;
 };
+
+export const ONBOARDING_SCENE_LOG_PERF_MS = SAVE_MS;
 
 function DemoWheel({
     label,
@@ -72,7 +75,7 @@ function DemoWheel({
                     </div>
                 </div>
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                    <span className="flex h-9 w-14 items-center justify-center rounded-xl border border-border/70 bg-secondary text-lg font-semibold tabular-nums">
+                    <span className="flex h-9 w-14 items-center justify-center rounded-xl bg-secondary text-lg font-semibold tabular-nums">
                         {value}
                     </span>
                 </div>
@@ -101,20 +104,22 @@ export function OnboardingSceneLogPerf({
             window.setTimeout(() => setPhase("tap"), TAP_MS),
             window.setTimeout(() => setPhase("drawer"), DRAWER_MS),
             window.setTimeout(() => setValueIndex(1), VALUE_MS),
+            window.setTimeout(() => setPhase("saveTap"), SAVE_TAP_MS),
             window.setTimeout(() => setPhase("saved"), SAVE_MS),
         ];
         return () => timers.forEach((id) => window.clearTimeout(id));
     }, [play]);
 
-    const drawerOpen = phase === "drawer" || phase === "saved";
+    const drawerOpen = phase === "drawer" || phase === "saveTap" || phase === "saved";
     const saved = phase === "saved";
+    const saveButtonPulse = play && phase === "drawer" && valueIndex === 1;
     const weight = WEIGHTS[valueIndex] ?? 100;
     const reps = REPS[valueIndex] ?? 5;
 
     return (
         <OnboardingSceneStage className="relative">
             <div className="flex h-full items-center px-2.5">
-                <div className="flex w-full items-center gap-2.5 rounded-xl border bg-background px-2.5 py-2">
+                <div className="flex w-full items-center gap-2.5 rounded-xl bg-background px-2.5 py-2">
                     <div className="size-10 shrink-0 overflow-hidden rounded-lg bg-muted">
                         <ExerciseImage
                             gifUrl={DEMO_GIF_URL}
@@ -156,7 +161,7 @@ export function OnboardingSceneLogPerf({
             {drawerOpen ? (
                 <div
                     className={cn(
-                        "absolute inset-x-0 bottom-0 rounded-t-lg border-t bg-background pb-2",
+                        "absolute inset-x-5 bottom-0 rounded-t-lg bg-background pb-2",
                         play &&
                             phase !== "saved" &&
                             "animate-in fade-in-0 slide-in-from-bottom-6 duration-300 ease-out [animation-fill-mode:both]",
@@ -183,7 +188,10 @@ export function OnboardingSceneLogPerf({
                         <Button
                             type="button"
                             size="sm"
-                            className="w-full"
+                            className={cn(
+                                "relative w-full transition-transform duration-150 ease-out",
+                                phase === "saveTap" && "scale-[0.97]",
+                            )}
                             tabIndex={-1}
                             haptic={false}
                             aria-label={UI.save}
@@ -195,7 +203,15 @@ export function OnboardingSceneLogPerf({
                                     aria-hidden
                                 />
                             ) : (
-                                UI.save
+                                <>
+                                    {saveButtonPulse ? (
+                                        <span
+                                            className="absolute inset-0 animate-ping rounded-lg bg-primary/30 motion-reduce:animate-none"
+                                            aria-hidden
+                                        />
+                                    ) : null}
+                                    <span className="relative">{UI.save}</span>
+                                </>
                             )}
                         </Button>
                     </div>

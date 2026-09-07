@@ -6,6 +6,7 @@ export type OnboardingStarterExercise = {
   bodyPart: string
   target: string
   equipment: string
+  gifUrl?: string
 }
 
 export const ONBOARDING_STARTER_EXERCISES: OnboardingStarterExercise[] = [
@@ -125,4 +126,10 @@ export function defaultOnboardingPerf(exercise: OnboardingStarterExercise): {
     return { weight: 0, reps: 8 }
   }
   return { weight: 60, reps: 5 }
+}
+
+export function resolveOnboardingExerciseGifUrl(
+  exercise: Pick<OnboardingStarterExercise, "exerciseId" | "gifUrl">,
+): string {
+  return exercise.gifUrl?.trim() || onboardingExerciseGifUrl(exercise.exerciseId)
 }

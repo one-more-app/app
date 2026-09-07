@@ -1,5 +1,6 @@
 import logoTextLight from "@/assets/logo-text.png";
 import { OnboardingFeatureSlider } from "@/components/onboarding/OnboardingFeatureSlider";
+import { OnboardingMarcusHero } from "@/components/onboarding/OnboardingMarcusHero";
 import { onboardingEntrance } from "@/components/onboarding/onboarding-motion";
 import { Trackable } from "@/components/analytics/Trackable";
 import { Button } from "@/components/ui/button";
@@ -72,23 +73,30 @@ export function OnboardingIntro({ onContinue, onHasAccount }: OnboardingIntroPro
             feature={OnboardingSteps.INTRO}
             className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
-            <header className="flex shrink-0 justify-center px-4 pt-4">
-                <img
-                    src={logoTextLight}
-                    alt="One More"
-                    className={onboardingEntrance(
-                        "h-14 w-auto select-none object-contain brightness-0 sm:h-16 animate-in fade-in-0 slide-in-from-bottom-3 duration-400 dark:brightness-100",
-                    )}
-                    loading="eager"
-                    decoding="async"
+            <div className="relative shrink-0">
+                <OnboardingMarcusHero />
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/50 to-transparent"
                 />
-            </header>
+                <div className="absolute inset-x-0 top-0 z-10 flex justify-center px-4 pt-4">
+                    <img
+                        src="/logo-white-text.png"
+                        alt="One More"
+                        className={onboardingEntrance(
+                            "h-14 w-auto select-none object-contain sm:h-16 animate-in fade-in-0 slide-in-from-bottom-3 duration-400",
+                        )}
+                        loading="eager"
+                        decoding="async"
+                    />
+                </div>
+            </div>
 
-            <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col px-4 py-3">
+            <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col justify-center px-4 py-6">
                 <OnboardingFeatureSlider />
             </div>
 
-            <footer className="shrink-0 px-4 pb-4">
+            <footer className="shrink-0 px-4 pb-4 pt-2">
                 <div
                     className={onboardingEntrance(
                         "mx-auto w-full max-w-lg animate-in fade-in-0 slide-in-from-bottom-3 duration-400 [animation-delay:200ms]",

@@ -115,6 +115,10 @@ export function resolveOnboardingStepFromLocation(
     return OnboardingSteps.ACCOUNT_EMAIL;
   }
 
+  if (pathname === "/exercises" && params.get("from") === "onboarding") {
+    return OnboardingSteps.RECORD_PICK;
+  }
+
   if (pathname !== "/onboarding") return null;
 
   const rawStep = params.get("step");

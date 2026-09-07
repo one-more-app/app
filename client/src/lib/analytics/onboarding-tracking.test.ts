@@ -19,6 +19,9 @@ describe("resolveOnboardingStepFromLocation", () => {
       resolveOnboardingStepFromLocation("/onboarding", "?step=record"),
     ).toBe(OnboardingSteps.RECORD_PICK);
     expect(
+      resolveOnboardingStepFromLocation("/exercises", "?from=onboarding"),
+    ).toBe(OnboardingSteps.RECORD_PICK);
+    expect(
       resolveOnboardingStepFromLocation("/onboarding", "?step=perf"),
     ).toBe(OnboardingSteps.RECORD_PICK);
     expect(

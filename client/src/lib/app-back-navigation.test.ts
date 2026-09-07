@@ -42,6 +42,10 @@ describe("resolveOnboardingBackTarget", () => {
       resolveOnboardingBackTarget("/onboarding", "?step=record"),
     ).toEqual({ kind: "path", to: "/onboarding?step=intent&intentQ=2" });
     expect(
+      resolveOnboardingBackTarget("/exercises", "?from=onboarding"),
+    ).toEqual({ kind: "path", to: "/onboarding?step=record" });
+    expect(resolveOnboardingBackTarget("/exercises", "")).toBeNull();
+    expect(
       resolveOnboardingBackTarget("/onboarding", "?step=body&bodyQ=0"),
     ).toEqual({ kind: "path", to: "/onboarding?step=intro" });
     expect(
