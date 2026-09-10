@@ -37,10 +37,13 @@ describe("resolveOnboardingBackTarget", () => {
     ).toEqual({ kind: "stay" });
   });
 
-  it("remonte record, body, intent, rank et account", () => {
+  it("remonte record vers intent, bloque rank, remonte body / intent / account", () => {
     expect(
       resolveOnboardingBackTarget("/onboarding", "?step=record"),
     ).toEqual({ kind: "path", to: "/onboarding?step=intent&intentQ=2" });
+    expect(
+      resolveOnboardingBackTarget("/onboarding", "?step=rank"),
+    ).toEqual({ kind: "stay" });
     expect(
       resolveOnboardingBackTarget("/exercises", "?from=onboarding"),
     ).toEqual({ kind: "path", to: "/onboarding?step=record" });
@@ -60,9 +63,6 @@ describe("resolveOnboardingBackTarget", () => {
     expect(
       resolveOnboardingBackTarget("/onboarding", "?step=intent&intentQ=2"),
     ).toEqual({ kind: "path", to: "/onboarding?step=intent&intentQ=1" });
-    expect(
-      resolveOnboardingBackTarget("/onboarding", "?step=rank"),
-    ).toEqual({ kind: "path", to: "/onboarding?step=record" });
     expect(
       resolveOnboardingBackTarget("/onboarding", "?step=account"),
     ).toEqual({ kind: "path", to: "/onboarding?step=rank" });
@@ -148,6 +148,16 @@ describe("resolveAppBackAction", () => {
         search: "?step=record",
       }),
     ).toEqual({ type: "navigate", to: "/onboarding?step=intent&intentQ=2" });
+  });
+
+  it("reste sur rank sans remonter vers record", () => {
+    expect(
+      resolveAppBackAction({
+        ...base,
+        pathname: "/onboarding",
+        search: "?step=rank",
+      }),
+    ).toBe("stay");
   });
 
   it("remonte l'historique in-app hors onboarding", () => {

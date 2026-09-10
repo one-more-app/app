@@ -5,9 +5,12 @@ export const DISCOVERY_SOURCES = [
   'friends_family',
   'tiktok',
   'instagram',
+  'youtube',
   'influencer',
   'chatgpt_ai',
-  'youtube',
+  'claude',
+  'gemini',
+  'perplexity',
   'other',
   'skipped',
 ] as const;

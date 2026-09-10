@@ -8,11 +8,17 @@ type OnboardingMarcusHeroProps = {
 
 export function OnboardingMarcusHero({ className }: OnboardingMarcusHeroProps) {
     return (
-        <div className={cn("relative shrink-0 overflow-hidden", className)}>
+        <div
+            className={cn(
+                // Compense le `safe-padding` du shell : l’image passe derrière la status bar.
+                "relative -mt-[var(--safe-top)] shrink-0 overflow-hidden",
+                className,
+            )}
+        >
             <img
                 src={ONBOARDING_MARCUS_IMAGE_SRC}
                 alt=""
-                className="h-[300px] w-full select-none object-cover object-[50%_55%]"
+                className="h-[calc(300px+var(--safe-top))] w-full select-none object-cover object-[50%_55%]"
                 draggable={false}
             />
             <div

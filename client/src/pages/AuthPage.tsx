@@ -235,12 +235,6 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         }
     };
 
-    const registerTotal = 4;
-    const registerStepLabel = (current: number) =>
-        UI.onboardingStepIndicator
-            .replace("{current}", String(current))
-            .replace("{total}", String(registerTotal));
-    const registerProgress = (current: number) => (current / registerTotal) * 100;
     const isRegisterStep =
         step === "register_firstName" ||
         step === "register_lastName" ||
@@ -283,24 +277,6 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                     }}
                     backLabel={UI.back}
                     backAnalyticsLabel="onboarding_auth_back"
-                    stepLabel={
-                        step === "register_firstName"
-                            ? registerStepLabel(1)
-                            : step === "register_lastName"
-                                ? registerStepLabel(2)
-                                : step === "register_username"
-                                    ? registerStepLabel(3)
-                                    : registerStepLabel(4)
-                    }
-                    progressPercent={
-                        step === "register_firstName"
-                            ? registerProgress(1)
-                            : step === "register_lastName"
-                                ? registerProgress(2)
-                                : step === "register_username"
-                                    ? registerProgress(3)
-                                    : registerProgress(4)
-                    }
                     title={
                         step === "register_firstName"
                             ? UI.firstNameTitle
@@ -582,7 +558,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                             aria-hidden
                             className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/50 to-transparent"
                         />
-                        <div className="absolute inset-x-0 top-0 z-10 flex justify-center px-4 pt-4">
+                        <div className="absolute inset-x-0 top-0 z-10 flex justify-center px-4 pt-[calc(var(--safe-top)+1rem)]">
                             <img
                                 src="/logo-white-text.png"
                                 alt="One More"
