@@ -181,7 +181,11 @@ export function OnboardingFeatureSlider() {
                 className="flex min-h-0 snap-x snap-mandatory overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
                 {LOOP_SLIDES.map((slide, slideIndex) => {
-                    const active = slideIndex === trackIndex;
+                    // La slide clone (fin de piste) ne doit pas lancer l'anim :
+                    // elle sert uniquement au scroll, puis resetLoop revient à 0
+                    // qui rejoue proprement depuis la pose de début.
+                    const active =
+                        slideIndex === trackIndex && trackIndex < SLIDES.length;
                     return (
                         <div
                             key={`${slide.title}-${slideIndex}`}

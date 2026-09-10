@@ -2,12 +2,16 @@ import { onboardingEntrance, OnboardingReveal } from '@/components/onboarding/on
 import { hapticSelectionChanged } from '@/lib/haptics'
 import { cn } from '@/lib/utils'
 import type { LucideIcon } from 'lucide-react'
+import type { ReactNode } from 'react'
 
 export type OnboardingChoiceOption<T extends string> = {
     id: T
     label: string
     hint?: string
     Icon?: LucideIcon
+    /** Icône marque déjà colorée (pas recolorée selon la sélection). */
+    icon?: ReactNode
+    section?: string
     analyticsLabel: string
 }
 
@@ -24,89 +28,95 @@ export function OnboardingChoiceList<T extends string>({
     onSelect,
     ariaLabel,
 }: OnboardingChoiceListProps<T>) {
-    const compactGrid =
-        options.length === 2 && options.every((option) => !option.hint)
-
     return (
         <OnboardingReveal delayMs={160}>
             <div
-                className={cn(
-                    'flex flex-col gap-2',
-                    compactGrid && 'grid grid-cols-2 gap-2',
-                )}
+                className="flex flex-col gap-3"
                 role="radiogroup"
                 aria-label={ariaLabel}
             >
-                {options.map(({ id, label, hint, Icon, analyticsLabel }, index) => {
+                {options.map(({ id, label, hint, Icon, icon, section, analyticsLabel }, index) => {
                     const selected = value === id
+                    const prevSection = index > 0 ? options[index - 1]?.section : undefined
+                    const showSection = Boolean(section && section !== prevSection)
 
                     return (
-                        <button
-                            key={id}
-                            type="button"
-                            role="radio"
-                            aria-checked={selected}
-                            data-analytics-label={analyticsLabel}
-                            onClick={() => {
-                                void hapticSelectionChanged()
-                                onSelect(id)
-                            }}
-                            className={onboardingEntrance(
-                                'flex w-full gap-2.5 rounded-xl px-3 py-2.5 text-left',
-                                hint ? 'items-start' : 'items-center',
-                                'transition-[color,background-color,opacity] duration-150 ease-out',
-                                'active:opacity-90',
-                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                                selected
-                                    ? 'bg-primary text-primary-foreground active:bg-primary/85 dark:bg-primary-foreground dark:text-primary dark:active:bg-primary-foreground/85'
-                                    : 'bg-secondary text-foreground hover:bg-secondary/80 active:bg-muted',
-                                'animate-in fade-in-0 slide-in-from-bottom-2 duration-350',
-                                compactGrid && 'flex-col items-center justify-center gap-2 py-4 text-center',
-                            )}
-                            style={{
-                                animationDelay: `${120 + index * 60}ms`,
-                            }}
-                        >
-                            {Icon ? (
-                                <Icon
+                        <div key={id} className="flex flex-col gap-2">
+                            {showSection ? (
+                                <p
                                     className={cn(
-                                        'size-5 shrink-0 stroke-[1.75]',
-                                        hint && 'mt-0.5',
-                                        selected
-                                            ? 'text-primary-foreground dark:text-primary'
-                                            : 'text-muted-foreground',
-                                    )}
-                                    aria-hidden
-                                />
-                            ) : null}
-                            <span
-                                className={cn(
-                                    'flex min-w-0 flex-col gap-0.5',
-                                    compactGrid ? 'flex-none items-center' : 'flex-1',
-                                )}
-                            >
-                                <span
-                                    className={cn(
-                                        'font-one-more text-xs uppercase italic leading-tight',
-                                        compactGrid && 'text-center',
+                                        'px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground',
+                                        index > 0 && 'pt-1',
                                     )}
                                 >
-                                    {label}
-                                </span>
-                                {hint ? (
+                                    {section}
+                                </p>
+                            ) : null}
+                            <button
+                                type="button"
+                                role="radio"
+                                aria-checked={selected}
+                                data-analytics-label={analyticsLabel}
+                                onClick={() => {
+                                    void hapticSelectionChanged()
+                                    onSelect(id)
+                                }}
+                                className={onboardingEntrance(
+                                    'flex w-full gap-2.5 rounded-xl px-4 py-4 text-left',
+                                    hint ? 'items-start' : 'items-center',
+                                    'transition-[color,background-color,opacity] duration-150 ease-out',
+                                    'active:opacity-90',
+                                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                                    selected
+                                        ? 'bg-primary text-primary-foreground active:bg-primary/85 dark:bg-primary-foreground dark:text-primary dark:active:bg-primary-foreground/85'
+                                        : 'bg-secondary text-foreground hover:bg-secondary/80 active:bg-muted',
+                                    'animate-in fade-in-0 slide-in-from-bottom-2 duration-350',
+                                )}
+                                style={{
+                                    animationDelay: `${120 + index * 60}ms`,
+                                }}
+                            >
+                                {icon ? (
                                     <span
                                         className={cn(
-                                            'text-[11px] leading-snug normal-case',
+                                            'flex size-5 shrink-0 items-center justify-center',
+                                            hint && 'mt-0.5',
+                                        )}
+                                        aria-hidden
+                                    >
+                                        {icon}
+                                    </span>
+                                ) : Icon ? (
+                                    <Icon
+                                        className={cn(
+                                            'size-5 shrink-0 stroke-[1.75]',
+                                            hint && 'mt-0.5',
                                             selected
-                                                ? 'text-primary-foreground/75 dark:text-primary/75'
+                                                ? 'text-primary-foreground dark:text-primary'
                                                 : 'text-muted-foreground',
                                         )}
-                                    >
-                                        {hint}
-                                    </span>
+                                        aria-hidden
+                                    />
                                 ) : null}
-                            </span>
-                        </button>
+                                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                    <span className="font-one-more text-sm uppercase italic leading-tight">
+                                        {label}
+                                    </span>
+                                    {hint ? (
+                                        <span
+                                            className={cn(
+                                                'text-xs leading-snug normal-case',
+                                                selected
+                                                    ? 'text-primary-foreground/75 dark:text-primary/75'
+                                                    : 'text-muted-foreground',
+                                            )}
+                                        >
+                                            {hint}
+                                        </span>
+                                    ) : null}
+                                </span>
+                            </button>
+                        </div>
                     )
                 })}
             </div>

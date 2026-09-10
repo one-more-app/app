@@ -1,13 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
 
 export function StepCard(props: {
     title: string;
-    stepLabel?: string;
-    progressPercent?: number;
     onBack?: () => void;
     backLabel?: string;
     backAnalyticsLabel?: string;
@@ -22,8 +19,6 @@ export function StepCard(props: {
 }) {
     const {
         title,
-        stepLabel,
-        progressPercent,
         onBack,
         backLabel = "Retour",
         backAnalyticsLabel,
@@ -37,11 +32,7 @@ export function StepCard(props: {
         contentClassName,
     } = props;
 
-    const showChrome =
-        Boolean(onBack) ||
-        Boolean(onSkip) ||
-        Boolean(stepLabel) ||
-        typeof progressPercent === "number";
+    const showChrome = Boolean(onBack) || Boolean(onSkip);
 
     return (
         <div
@@ -73,19 +64,7 @@ export function StepCard(props: {
                         ) : (
                             <span className="size-9 shrink-0" aria-hidden />
                         )}
-                        {typeof progressPercent === "number" ? (
-                            <Progress
-                                value={Math.max(0, Math.min(100, progressPercent))}
-                                className="h-1.5 min-w-0 flex-1 bg-card [&_[data-slot=progress-indicator]]:bg-foreground dark:[&_[data-slot=progress-indicator]]:bg-accent"
-                            />
-                        ) : (
-                            <span className="min-w-0 flex-1" aria-hidden />
-                        )}
-                        {stepLabel ? (
-                            <p className="shrink-0 text-sm tabular-nums text-muted-foreground">
-                                {stepLabel}
-                            </p>
-                        ) : null}
+                        <span className="min-w-0 flex-1" aria-hidden />
                         {onSkip ? (
                             <Button
                                 type="button"

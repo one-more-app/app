@@ -122,6 +122,8 @@ export function resolveOnboardingBackTarget(
   if (step === "record") {
     return { kind: "path", to: "/onboarding?step=intent&intentQ=2" };
   }
+  // Point de non-retour : rank ne remonte plus vers record.
+  if (step === "rank") return { kind: "stay" };
   if (step === "body") {
     if (bodyQ <= 0) return { kind: "path", to: "/onboarding?step=intro" };
     return { kind: "path", to: `/onboarding?step=body&bodyQ=${bodyQ - 1}` };
@@ -134,9 +136,6 @@ export function resolveOnboardingBackTarget(
       kind: "path",
       to: `/onboarding?step=intent&intentQ=${intentQ - 1}`,
     };
-  }
-  if (step === "rank") {
-    return { kind: "path", to: "/onboarding?step=record" };
   }
   if (step === "account" || step === "notifications") {
     return { kind: "path", to: "/onboarding?step=rank" };

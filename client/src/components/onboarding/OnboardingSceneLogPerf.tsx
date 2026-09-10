@@ -89,13 +89,15 @@ export function OnboardingSceneLogPerf({
     reduceMotion,
 }: OnboardingSceneLogPerfProps) {
     const play = active && !reduceMotion;
-    const [phase, setPhase] = useState<Phase>("saved");
-    const [valueIndex, setValueIndex] = useState(1);
+    // Idle / 1er paint = pose de début (`card`). Évite le flash de l'état
+    // final `saved` au remount (boucle carousel / key play↔idle).
+    const [phase, setPhase] = useState<Phase>("card");
+    const [valueIndex, setValueIndex] = useState(0);
 
     useEffect(() => {
         if (!play) {
-            setPhase("saved");
-            setValueIndex(1);
+            setPhase("card");
+            setValueIndex(0);
             return;
         }
         setPhase("card");

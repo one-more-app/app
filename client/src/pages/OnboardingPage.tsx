@@ -6,12 +6,12 @@ import {
     OnboardingChoiceList,
     type OnboardingChoiceOption,
 } from '@/components/onboarding/OnboardingChoiceList';
+import { OnboardingDiscoveryStep } from '@/components/onboarding/OnboardingDiscoveryStep';
 import { OnboardingExerciseList } from '@/components/onboarding/OnboardingExerciseList';
 import { OnboardingGymPermissionsStep } from '@/components/onboarding/OnboardingGymPermissionsStep';
 import { OnboardingGymStep } from '@/components/onboarding/OnboardingGymStep';
 import { OnboardingGymWaitStep } from '@/components/onboarding/OnboardingGymWaitStep';
 import { OnboardingIntro } from '@/components/onboarding/OnboardingIntro';
-import { OnboardingDiscoveryStep } from '@/components/onboarding/OnboardingDiscoveryStep';
 import { OnboardingNotificationsStep } from '@/components/onboarding/OnboardingNotificationsStep';
 import { OnboardingRankReveal } from '@/components/onboarding/OnboardingRecordResults';
 import { OnboardingRulerPicker } from '@/components/onboarding/OnboardingRulerPicker';
@@ -35,6 +35,11 @@ import { gymOnboardingPath, resolveGymOnboardingStep } from '@/lib/gym-onboardin
 import { fetchUserGym } from '@/lib/gyms-api';
 import { primeHaptics } from '@/lib/haptics';
 import {
+    ONBOARDING_EXERCISE_PICK_PATH,
+    hydrateOnboardingRecordSelection,
+    onboardingExerciseFromDraft,
+} from '@/lib/onboarding-exercise-pick';
+import {
     isGymPermissionsNativeContext,
     isGymReselectOnboarding,
     isOnboardingGymDevPreview,
@@ -48,15 +53,10 @@ import {
     type OnboardingStarterExercise,
 } from '@/lib/onboarding-starter-exercises';
 import {
-    ONBOARDING_EXERCISE_PICK_PATH,
-    hydrateOnboardingRecordSelection,
-    onboardingExerciseFromDraft,
-} from '@/lib/onboarding-exercise-pick';
-import {
+    ONBOARDING_NOTIFICATIONS_STEP_ENABLED,
     continueAfterOnboardingDiscovery,
     continueAfterOnboardingNotifications,
     isPostAuthOnboardingFlowPath,
-    ONBOARDING_NOTIFICATIONS_STEP_ENABLED,
     postAuthNavigateOptions,
     resolvePostAuthNavigation,
 } from '@/lib/post-auth-navigation';
@@ -81,12 +81,12 @@ import {
 } from '@/lib/storage';
 import { getLeagueInfo } from '@/lib/strength-standards';
 import { UI } from '@/lib/translations';
+import { AuthPage } from '@/pages/AuthPage';
 import type {
     SessionsPerWeekBand,
     TrainingExperienceLevel,
     TrainingGoal,
 } from '@/types';
-import { AuthPage } from '@/pages/AuthPage';
 import {
     Dumbbell,
     Mars,
@@ -127,18 +127,6 @@ const FREQUENCY_CHOICES: OnboardingChoiceOption<SessionsPerWeekBand>[] = [
     { id: 'high', label: UI.onboardingFrequencyHigh, hint: UI.onboardingFrequencyHighHint, analyticsLabel: 'onboarding_frequency_high' },
 ]
 
-function onboardingProgressPercent(
-    step: string,
-    bodyQ: number,
-    intentQ: number,
-): number | undefined {
-    if (step === 'body') return 11 + bodyQ * 11
-    if (step === 'intent') return 55 + intentQ * 11
-    if (step === 'record') return 88
-    if (step === 'rank') return 100
-    return undefined
-}
-
 function OnboardingPage() {
     const navigate = useNavigate()
     const { mutate } = useSWRConfig()
@@ -157,26 +145,26 @@ function OnboardingPage() {
             ? 'body'
             : normalizedStep === 'intent'
                 ? 'intent'
-            : normalizedStep === 'account'
-                ? 'account'
-                : normalizedStep === 'gym'
-                    ? 'gym'
-                    : normalizedStep === 'gym-permissions'
-                        ? 'gym-permissions'
-                        : normalizedStep === 'gym-wait'
-                            ? 'gym-wait'
-                            : normalizedStep === 'discovery'
-                                ? 'discovery'
-                                : normalizedStep === 'notifications'
-                                    ? 'notifications'
-                                    : normalizedStep === 'rank'
-                                        ? 'rank'
-                                        : normalizedStep === '1rm'
-                                            ? 'body'
-                                            : normalizedStep === 'record' ||
-                                                normalizedStep === 'perf'
-                                                ? 'record'
-                                                : 'intro'
+                : normalizedStep === 'account'
+                    ? 'account'
+                    : normalizedStep === 'gym'
+                        ? 'gym'
+                        : normalizedStep === 'gym-permissions'
+                            ? 'gym-permissions'
+                            : normalizedStep === 'gym-wait'
+                                ? 'gym-wait'
+                                : normalizedStep === 'discovery'
+                                    ? 'discovery'
+                                    : normalizedStep === 'notifications'
+                                        ? 'notifications'
+                                        : normalizedStep === 'rank'
+                                            ? 'rank'
+                                            : normalizedStep === '1rm'
+                                                ? 'body'
+                                                : normalizedStep === 'record' ||
+                                                    normalizedStep === 'perf'
+                                                    ? 'record'
+                                                    : 'intro'
     const bodyQRaw = searchParams.get('bodyQ')
     const intentQRaw = searchParams.get('intentQ')
     const fromSettings = isOnboardingGymFromSettings(
@@ -199,26 +187,26 @@ function OnboardingPage() {
         step === 'intro'
             ? OnboardingSteps.INTRO
             : step === 'record'
-            ? OnboardingSteps.RECORD_PICK
-            : step === 'rank'
-                ? OnboardingSteps.RANK_REVEAL
-                : step === 'body'
-                    ? bodyStepFromQuestion(bodyQ)
-                    : step === 'intent'
-                        ? intentStepFromQuestion(intentQ)
-                    : step === 'account'
-                        ? OnboardingSteps.ACCOUNT_EMAIL
-                        : step === 'gym'
-                            ? OnboardingSteps.GYM_QUESTION
-                            : step === 'gym-permissions'
-                                ? OnboardingSteps.GYM_PERMISSIONS
-                                : step === 'gym-wait'
-                                    ? OnboardingSteps.GYM_WAIT
-                                    : step === 'discovery'
-                                        ? OnboardingSteps.DISCOVERY
-                                        : step === 'notifications'
-                                            ? OnboardingSteps.NOTIFICATIONS
-                                            : null
+                ? OnboardingSteps.RECORD_PICK
+                : step === 'rank'
+                    ? OnboardingSteps.RANK_REVEAL
+                    : step === 'body'
+                        ? bodyStepFromQuestion(bodyQ)
+                        : step === 'intent'
+                            ? intentStepFromQuestion(intentQ)
+                            : step === 'account'
+                                ? OnboardingSteps.ACCOUNT_EMAIL
+                                : step === 'gym'
+                                    ? OnboardingSteps.GYM_QUESTION
+                                    : step === 'gym-permissions'
+                                        ? OnboardingSteps.GYM_PERMISSIONS
+                                        : step === 'gym-wait'
+                                            ? OnboardingSteps.GYM_WAIT
+                                            : step === 'discovery'
+                                                ? OnboardingSteps.DISCOVERY
+                                                : step === 'notifications'
+                                                    ? OnboardingSteps.NOTIFICATIONS
+                                                    : null
     useOnboardingStepViewed(
         step === 'gym' ||
             step === 'account' ||
@@ -317,7 +305,12 @@ function OnboardingPage() {
             return
         }
         const pending = peekPendingOnboardingProfile()
-        const p = pending ?? profile ?? (hasPersistedUserProfile() ? getUserProfile() : null)
+        // Ne pas hydrater depuis le fallback DEFAULT_PROFILE (gender: male) :
+        // sinon Homme est présélectionné dès l'arrivée sur l'étape.
+        const p =
+            pending ??
+            (auth.status === 'authenticated' ? profile : null) ??
+            (hasPersistedUserProfile() ? getUserProfile() : null)
         if (!p) return
         setWeightKg(p.weightKg)
         setHeightCm(p.heightCm)
@@ -326,7 +319,7 @@ function OnboardingPage() {
         if (p.trainingGoal) setTrainingGoal(p.trainingGoal)
         if (p.trainingExperience) setTrainingExperience(p.trainingExperience)
         if (p.sessionsPerWeek) setSessionsPerWeek(p.sessionsPerWeek)
-    }, [profile, step])
+    }, [auth.status, profile, step])
 
     useEffect(() => {
         if (step !== 'body' && step !== 'intent' && step !== 'rank') return
@@ -508,8 +501,6 @@ function OnboardingPage() {
         }
         goIntent(intentQ - 1)
     }
-
-    const progressPercent = onboardingProgressPercent(step, bodyQ, intentQ)
 
     const bodyStepTitle =
         bodyQ === 0
@@ -849,7 +840,6 @@ function OnboardingPage() {
                             onSkip={handleSkip}
                             skipLabel={UI.onboardingSkip}
                             skipAnalyticsLabel="onboarding_record_skip"
-                            progressPercent={progressPercent}
                             title={UI.onboardingRecordTitle}
                         >
                             <OnboardingReveal delayMs={80}>
@@ -861,8 +851,8 @@ function OnboardingPage() {
                             <OnboardingReveal delayMs={160}>
                                 <Button
                                     type="button"
-                                    variant="ghost"
-                                    className="w-full text-muted-foreground"
+                                    variant="secondary"
+                                    className="w-full"
                                     data-analytics-label="onboarding_record_see_more"
                                     onClick={() => {
                                         if (gender) persistProfileDraft()
@@ -872,11 +862,7 @@ function OnboardingPage() {
                                     {UI.onboardingSeeMoreExercises}
                                 </Button>
                             </OnboardingReveal>
-                            <OnboardingReveal delayMs={200}>
-                                <p className="text-xs text-muted-foreground">
-                                    {UI.onboardingRecordMicro}
-                                </p>
-                            </OnboardingReveal>
+                     
                         </StepCard>
                     </OnboardingStepLayout>
                     {selectedExercise ? (
@@ -902,10 +888,6 @@ function OnboardingPage() {
                     <OnboardingStepLayout>
                         <StepCard
                             className={onboardingStepCardClassName}
-                            onBack={() => goRecord()}
-                            backLabel={UI.back}
-                            backAnalyticsLabel="onboarding_rank_back"
-                            progressPercent={progressPercent}
                             title={UI.onboardingRankTitle}
                         >
                             {leagueInfo && selectedExercise ? (
@@ -954,7 +936,6 @@ function OnboardingPage() {
                             onSkip={canSkipCurrentStep ? handleSkip : undefined}
                             skipLabel={UI.onboardingSkip}
                             skipAnalyticsLabel="onboarding_body_skip"
-                            progressPercent={progressPercent}
                             title={bodyStepTitle}
                         >
                             {bodyQ === 0 ? (
@@ -972,7 +953,7 @@ function OnboardingPage() {
                                     onChange={setWeightKg}
                                     min={30}
                                     max={300}
-                                    step={0.5}
+                                    step={0.1}
                                     unit="kg"
                                 />
                             ) : null}
@@ -1039,7 +1020,6 @@ function OnboardingPage() {
                             onSkip={handleSkip}
                             skipLabel={UI.onboardingSkip}
                             skipAnalyticsLabel="onboarding_intent_skip"
-                            progressPercent={progressPercent}
                             title={intentStepTitle}
                         >
                             {intentQ === 0 ? (

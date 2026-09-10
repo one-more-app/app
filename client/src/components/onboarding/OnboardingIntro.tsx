@@ -79,7 +79,7 @@ export function OnboardingIntro({ onContinue, onHasAccount }: OnboardingIntroPro
                     aria-hidden
                     className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/50 to-transparent"
                 />
-                <div className="absolute inset-x-0 top-0 z-10 flex justify-center px-4 pt-4">
+                <div className="absolute inset-x-0 top-0 z-10 flex justify-center px-4 pt-[calc(var(--safe-top)+1rem)]">
                     <img
                         src="/logo-white-text.png"
                         alt="One More"

@@ -1,9 +1,24 @@
 import {
+    AppleBrandIcon,
+    ChatGptBrandIcon,
+    ClaudeBrandIcon,
+    GeminiBrandIcon,
+    GoogleBrandIcon,
+    GooglePlayBrandIcon,
+    InstagramBrandIcon,
+    PerplexityBrandIcon,
+    TikTokBrandIcon,
+    YouTubeBrandIcon,
+} from '@/components/onboarding/discovery-brand-icons'
+import {
     OnboardingReveal,
     onboardingStepCardClassName,
     OnboardingStepLayout,
 } from '@/components/onboarding/onboarding-motion'
-import { OnboardingChoiceList } from '@/components/onboarding/OnboardingChoiceList'
+import {
+    OnboardingChoiceList,
+    type OnboardingChoiceOption,
+} from '@/components/onboarding/OnboardingChoiceList'
 import { Trackable } from '@/components/analytics/Trackable'
 import { StepCard } from '@/components/StepCard'
 import { Button } from '@/components/ui/button'
@@ -20,6 +35,7 @@ import type { DiscoverySourceChoice } from '@/lib/discovery-source'
 import { upsertDiscoverySource } from '@/lib/discovery-source-api'
 import { UI } from '@/lib/translations'
 import { Capacitor } from '@capacitor/core'
+import { CircleEllipsis, Megaphone, Store, Users } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 type OnboardingDiscoveryStepProps = {
@@ -36,75 +52,113 @@ export function OnboardingDiscoveryStep({
     const [selected, setSelected] = useState<DiscoverySourceChoice | null>(null)
     const [otherDetail, setOtherDetail] = useState('')
 
-    const options = useMemo(() => {
+    const options = useMemo((): OnboardingChoiceOption<DiscoverySourceChoice>[] => {
         const platform = Capacitor.getPlatform()
-        const storeOption =
+        const storeOption: OnboardingChoiceOption<DiscoverySourceChoice> =
             platform === 'android'
                 ? {
-                      id: 'google_play' as const,
+                      id: 'google_play',
                       label: UI.onboardingDiscoveryPlayStore,
+                      icon: <GooglePlayBrandIcon />,
                       analyticsLabel: 'discovery_google_play',
                   }
                 : platform === 'ios'
                   ? {
-                        id: 'app_store' as const,
+                        id: 'app_store',
                         label: UI.onboardingDiscoveryAppStore,
+                        icon: <AppleBrandIcon />,
                         analyticsLabel: 'discovery_app_store',
                     }
                   : {
-                        id: 'app_store' as const,
+                        id: 'app_store',
                         label: UI.onboardingDiscoveryAppStores,
+                        Icon: Store,
                         analyticsLabel: 'discovery_app_store',
                     }
+
+        const social = UI.onboardingDiscoverySectionSocial
+        const ai = UI.onboardingDiscoverySectionAi
 
         return [
             storeOption,
             {
-                id: 'google_web' as const,
+                id: 'google_web',
                 label: UI.onboardingDiscoveryGoogleWeb,
+                icon: <GoogleBrandIcon />,
                 analyticsLabel: 'discovery_google_web',
             },
             {
-                id: 'friends_family' as const,
+                id: 'friends_family',
                 label: UI.onboardingDiscoveryFriendsFamily,
+                Icon: Users,
                 analyticsLabel: 'discovery_friends_family',
             },
             {
-                id: 'tiktok' as const,
+                id: 'tiktok',
                 label: UI.onboardingDiscoveryTiktok,
+                icon: <TikTokBrandIcon />,
+                section: social,
                 analyticsLabel: 'discovery_tiktok',
             },
             {
-                id: 'instagram' as const,
+                id: 'instagram',
                 label: UI.onboardingDiscoveryInstagram,
+                icon: <InstagramBrandIcon />,
+                section: social,
                 analyticsLabel: 'discovery_instagram',
             },
             {
-                id: 'influencer' as const,
-                label: UI.onboardingDiscoveryInfluencer,
-                analyticsLabel: 'discovery_influencer',
-            },
-            {
-                id: 'chatgpt_ai' as const,
-                label: UI.onboardingDiscoveryChatgptAi,
-                analyticsLabel: 'discovery_chatgpt_ai',
-            },
-            {
-                id: 'youtube' as const,
+                id: 'youtube',
                 label: UI.onboardingDiscoveryYoutube,
+                icon: <YouTubeBrandIcon />,
+                section: social,
                 analyticsLabel: 'discovery_youtube',
             },
             {
-                id: 'other' as const,
+                id: 'influencer',
+                label: UI.onboardingDiscoveryInfluencer,
+                Icon: Megaphone,
+                section: social,
+                analyticsLabel: 'discovery_influencer',
+            },
+            {
+                id: 'chatgpt_ai',
+                label: UI.onboardingDiscoveryChatgpt,
+                icon: <ChatGptBrandIcon />,
+                section: ai,
+                analyticsLabel: 'discovery_chatgpt_ai',
+            },
+            {
+                id: 'claude',
+                label: UI.onboardingDiscoveryClaude,
+                icon: <ClaudeBrandIcon />,
+                section: ai,
+                analyticsLabel: 'discovery_claude',
+            },
+            {
+                id: 'gemini',
+                label: UI.onboardingDiscoveryGemini,
+                icon: <GeminiBrandIcon />,
+                section: ai,
+                analyticsLabel: 'discovery_gemini',
+            },
+            {
+                id: 'perplexity',
+                label: UI.onboardingDiscoveryPerplexity,
+                icon: <PerplexityBrandIcon />,
+                section: ai,
+                analyticsLabel: 'discovery_perplexity',
+            },
+            {
+                id: 'other',
                 label: UI.onboardingDiscoveryOther,
+                Icon: CircleEllipsis,
                 analyticsLabel: 'discovery_other',
             },
         ]
     }, [])
 
-    const canContinue =
-        selected != null &&
-        (selected !== 'other' || otherDetail.trim().length > 0)
+    const canSubmitOther = otherDetail.trim().length > 0
 
     const persistAndLeave = async (
         source: DiscoverySourceChoice | 'skipped',
@@ -145,6 +199,13 @@ export function OnboardingDiscoveryStep({
         }
     }
 
+    const selectSource = (source: DiscoverySourceChoice) => {
+        if (busy) return
+        setSelected(source)
+        if (source === 'other') return
+        void persistAndLeave(source)
+    }
+
     return (
         <Trackable section="onboarding" feature={OnboardingSteps.DISCOVERY}>
             <OnboardingStepLayout>
@@ -160,11 +221,11 @@ export function OnboardingDiscoveryStep({
                     <OnboardingChoiceList
                         value={selected}
                         options={options}
-                        onSelect={setSelected}
+                        onSelect={selectSource}
                         ariaLabel={UI.onboardingDiscoveryTitle}
                     />
                     {selected === 'other' ? (
-                        <OnboardingReveal delayMs={80}>
+                        <OnboardingReveal delayMs={80} className="space-y-3">
                             <Input
                                 value={otherDetail}
                                 onChange={(event) =>
@@ -175,31 +236,35 @@ export function OnboardingDiscoveryStep({
                                 }
                                 maxLength={200}
                                 disabled={busy}
+                                autoFocus
                                 aria-label={
                                     UI.onboardingDiscoveryOtherPlaceholder
                                 }
+                                onKeyDown={(event) => {
+                                    if (event.key !== 'Enter') return
+                                    if (!canSubmitOther) return
+                                    void persistAndLeave(
+                                        'other',
+                                        otherDetail.trim(),
+                                    )
+                                }}
                             />
-                        </OnboardingReveal>
-                    ) : null}
-                    <div className="mt-auto pt-2">
-                        <OnboardingReveal delayMs={200}>
                             <Button
                                 variant="accent"
                                 className="w-full"
                                 data-analytics-label="onboarding_discovery_continue"
-                                disabled={busy || !canContinue}
-                                onClick={() => {
-                                    if (!selected) return
+                                disabled={busy || !canSubmitOther}
+                                onClick={() =>
                                     void persistAndLeave(
-                                        selected,
-                                        otherDetail.trim() || null,
+                                        'other',
+                                        otherDetail.trim(),
                                     )
-                                }}
+                                }
                             >
                                 {UI.onboardingDiscoveryContinue}
                             </Button>
                         </OnboardingReveal>
-                    </div>
+                    ) : null}
                 </StepCard>
             </OnboardingStepLayout>
         </Trackable>
