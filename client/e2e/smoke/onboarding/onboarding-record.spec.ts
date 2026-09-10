@@ -3,6 +3,22 @@ import { e2eCatalogExercise } from "../../fixtures/exercises";
 import { mockAuthApi, trackPageErrors } from "../helpers";
 import { UI } from "../../../src/lib/translations";
 
+async function seedOnboardingDraftProfile(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const sessionId = crypto.randomUUID();
+    sessionStorage.setItem("one-more-onboarding-draft-session-v1", sessionId);
+    localStorage.setItem(
+      "one-more-pending-onboarding-profile-v1",
+      JSON.stringify({
+        weightKg: 75,
+        heightCm: 175,
+        gender: "male",
+        sessionId,
+      }),
+    );
+  });
+}
+
 async function submitStarterRecord(page: Page): Promise<void> {
   await expect(page.getByText(UI.onboardingRecordTitle)).toBeVisible();
   await page.getByRole("button", { name: /Développé couché/ }).click();
@@ -68,6 +84,7 @@ test("changer d'exo via le catalogue après retour garde le nouvel exo", async (
   page,
 }) => {
   const pageErrors = trackPageErrors(page);
+  await seedOnboardingDraftProfile(page);
   await mockAuthApi(page);
   await mockOnboardingCatalogApi(page);
 
@@ -76,27 +93,30 @@ test("changer d'exo via le catalogue après retour garde le nouvel exo", async (
   await expect(page.getByRole("heading", { name: "Ton palier" })).toBeVisible();
   await expect(page.getByText("Développé couché").first()).toBeVisible();
 
-  await page.getByRole("button", { name: UI.back }).click();
+  await page.goto("/#/onboarding?step=record");
   await expect(page.getByText(UI.onboardingRecordTitle)).toBeVisible();
 
   await page.getByRole("button", { name: UI.onboardingSeeMoreExercises }).click();
   await expect(page).toHaveURL(/#\/exercises\?from=onboarding/);
   await page.getByPlaceholder(UI.searchExercise).fill(e2eCatalogExercise.name);
   await page.getByRole("button", { name: UI.add, exact: true }).click();
+  await expect(page).toHaveURL(/#\/exercises\?from=onboarding/);
 
   const drawer = page.getByRole("dialog", { name: UI.onboardingPerfTitle });
   await expect(drawer).toBeVisible();
 
-  const pendingAfterPick = await page.evaluate(() => {
+  await drawer.getByRole("button", { name: "Enregistrer" }).click();
+  await expect(page).toHaveURL(/#\/onboarding\?step=rank/);
+
+  const pendingAfterSave = await page.evaluate(() => {
     const raw = localStorage.getItem("one-more-pending-onboarding-record-v1");
     return raw
       ? (JSON.parse(raw) as { exerciseId: string; originalName: string })
       : null;
   });
-  expect(pendingAfterPick?.exerciseId).toBe(e2eCatalogExercise.id);
-  expect(pendingAfterPick?.originalName).toBe(e2eCatalogExercise.name);
+  expect(pendingAfterSave?.exerciseId).toBe(e2eCatalogExercise.id);
+  expect(pendingAfterSave?.originalName).toBe(e2eCatalogExercise.name);
 
-  await drawer.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByRole("heading", { name: "Ton palier" })).toBeVisible();
   await expect(page.getByText(e2eCatalogExercise.name).first()).toBeVisible();
   await expect(page.getByText("Développé couché")).toHaveCount(0);
@@ -108,6 +128,7 @@ test("l'onboarding record montre le palier puis le compte", async ({
   page,
 }) => {
   const pageErrors = trackPageErrors(page);
+  await seedOnboardingDraftProfile(page);
   await mockAuthApi(page);
 
   await page.goto("/#/onboarding?step=record");
