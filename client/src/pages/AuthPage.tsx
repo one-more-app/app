@@ -455,14 +455,6 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                             className="space-y-3"
                             onSubmit={(e) => {
                                 e.preventDefault();
-                                if (!password) {
-                                    registerPasswordRef.current?.focus();
-                                    return;
-                                }
-                                if (!passwordConfirm) {
-                                    registerPasswordConfirmRef.current?.focus();
-                                    return;
-                                }
                                 void submitRegister();
                             }}
                         >
@@ -478,6 +470,16 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                     autoComplete="new-password"
                                     autoFocus
                                     enterKeyHint="next"
+                                    onKeyDown={(e) => {
+                                        // Bouton submit disabled → Entrée ne déclenche pas onSubmit.
+                                        if (e.key !== "Enter") return;
+                                        e.preventDefault();
+                                        if (!passwordConfirm) {
+                                            registerPasswordConfirmRef.current?.focus();
+                                            return;
+                                        }
+                                        void submitRegister();
+                                    }}
                                     passwordToggle={{
                                         showLabel: UI.showPassword,
                                         hideLabel: UI.hidePassword,
@@ -499,6 +501,15 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                     placeholder="••••••••"
                                     autoComplete="new-password"
                                     enterKeyHint="done"
+                                    onKeyDown={(e) => {
+                                        if (e.key !== "Enter") return;
+                                        e.preventDefault();
+                                        if (!password) {
+                                            registerPasswordRef.current?.focus();
+                                            return;
+                                        }
+                                        void submitRegister();
+                                    }}
                                     passwordToggle={{
                                         showLabel: UI.showPassword,
                                         hideLabel: UI.hidePassword,
