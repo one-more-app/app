@@ -1,7 +1,7 @@
 import "@ncdai/react-wheel-picker/style.css"
 
 import * as WheelPickerPrimitive from "@ncdai/react-wheel-picker"
-import { hapticSelectionChanged } from "@/lib/haptics"
+import { hapticImpact } from "@/lib/haptics"
 import { cn } from "@/lib/utils"
 import { useCallback, useEffect, useRef } from "react"
 
@@ -53,11 +53,13 @@ function WheelPicker<T extends WheelPickerValue = string>({
 
     const handleValueChange = useCallback(
         (next: T) => {
-            onValueChange?.(next)
+            // Haptic avant le setState parent : évite de perdre le tick si la value
+            // contrôlée est synchronisée dans le même cycle.
             if (haptic && next !== lastHapticValue.current) {
                 lastHapticValue.current = next
-                void hapticSelectionChanged()
+                void hapticImpact()
             }
+            onValueChange?.(next)
         },
         [haptic, onValueChange],
     )

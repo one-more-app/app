@@ -87,12 +87,18 @@ import type {
     TrainingGoal,
 } from '@/types';
 import {
-    Dumbbell,
+    Activity,
+    BicepsFlexed,
+    Calendar,
+    CalendarDays,
+    CalendarRange,
     Mars,
+    Mountain,
     Scale,
-    Timer,
-    Trophy,
+    Sprout,
+    TrendingUp,
     Venus,
+    Weight,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -108,22 +114,22 @@ const GENDER_CHOICES: OnboardingChoiceOption<'male' | 'female'>[] = [
 ]
 
 const GOAL_CHOICES: OnboardingChoiceOption<TrainingGoal>[] = [
-    { id: 'muscle', label: UI.onboardingGoalMuscle, Icon: Dumbbell, analyticsLabel: 'onboarding_goal_muscle' },
-    { id: 'strength', label: UI.onboardingGoalStrength, Icon: Trophy, analyticsLabel: 'onboarding_goal_strength' },
+    { id: 'muscle', label: UI.onboardingGoalMuscle, Icon: BicepsFlexed, analyticsLabel: 'onboarding_goal_muscle' },
+    { id: 'strength', label: UI.onboardingGoalStrength, Icon: Weight, analyticsLabel: 'onboarding_goal_strength' },
     { id: 'weight_loss', label: UI.onboardingGoalWeightLoss, Icon: Scale, analyticsLabel: 'onboarding_goal_weight_loss' },
-    { id: 'athlete', label: UI.onboardingGoalAthlete, Icon: Timer, analyticsLabel: 'onboarding_goal_athlete' },
+    { id: 'athlete', label: UI.onboardingGoalAthlete, Icon: Activity, analyticsLabel: 'onboarding_goal_athlete' },
 ]
 
 const EXPERIENCE_CHOICES: OnboardingChoiceOption<TrainingExperienceLevel>[] = [
-    { id: 'beginner', label: UI.onboardingExperienceBeginner, hint: UI.onboardingExperienceBeginnerHint, analyticsLabel: 'onboarding_experience_beginner' },
-    { id: 'intermediate', label: UI.onboardingExperienceIntermediate, hint: UI.onboardingExperienceIntermediateHint, analyticsLabel: 'onboarding_experience_intermediate' },
-    { id: 'advanced', label: UI.onboardingExperienceAdvanced, hint: UI.onboardingExperienceAdvancedHint, analyticsLabel: 'onboarding_experience_advanced' },
+    { id: 'beginner', label: UI.onboardingExperienceBeginner, hint: UI.onboardingExperienceBeginnerHint, Icon: Sprout, analyticsLabel: 'onboarding_experience_beginner' },
+    { id: 'intermediate', label: UI.onboardingExperienceIntermediate, hint: UI.onboardingExperienceIntermediateHint, Icon: TrendingUp, analyticsLabel: 'onboarding_experience_intermediate' },
+    { id: 'advanced', label: UI.onboardingExperienceAdvanced, hint: UI.onboardingExperienceAdvancedHint, Icon: Mountain, analyticsLabel: 'onboarding_experience_advanced' },
 ]
 
 const FREQUENCY_CHOICES: OnboardingChoiceOption<SessionsPerWeekBand>[] = [
-    { id: 'low', label: UI.onboardingFrequencyLow, hint: UI.onboardingFrequencyLowHint, analyticsLabel: 'onboarding_frequency_low' },
-    { id: 'moderate', label: UI.onboardingFrequencyModerate, hint: UI.onboardingFrequencyModerateHint, analyticsLabel: 'onboarding_frequency_moderate' },
-    { id: 'high', label: UI.onboardingFrequencyHigh, hint: UI.onboardingFrequencyHighHint, analyticsLabel: 'onboarding_frequency_high' },
+    { id: 'low', label: UI.onboardingFrequencyLow, hint: UI.onboardingFrequencyLowHint, Icon: Calendar, analyticsLabel: 'onboarding_frequency_low' },
+    { id: 'moderate', label: UI.onboardingFrequencyModerate, hint: UI.onboardingFrequencyModerateHint, Icon: CalendarDays, analyticsLabel: 'onboarding_frequency_moderate' },
+    { id: 'high', label: UI.onboardingFrequencyHigh, hint: UI.onboardingFrequencyHighHint, Icon: CalendarRange, analyticsLabel: 'onboarding_frequency_high' },
 ]
 
 function OnboardingPage() {
@@ -786,7 +792,7 @@ function OnboardingPage() {
     }, [step, auth.status, navigate, searchParams])
 
     return (
-        <OnboardingShell>
+        <OnboardingShell bleedTop={step === 'intro' || step === 'account'}>
             {step === 'intro' ? (
                 <OnboardingIntro
                     onContinue={() => {
@@ -828,7 +834,7 @@ function OnboardingPage() {
                                 <Button
                                     type="button"
                                     variant="secondary"
-                                    className="w-full"
+                                    className="w-full bg-card"
                                     data-analytics-label="onboarding_record_see_more"
                                     onClick={() => {
                                         if (gender) persistProfileDraft()
@@ -838,7 +844,7 @@ function OnboardingPage() {
                                     {UI.onboardingSeeMoreExercises}
                                 </Button>
                             </OnboardingReveal>
-                     
+
                         </StepCard>
                     </OnboardingStepLayout>
                     {selectedExercise ? (

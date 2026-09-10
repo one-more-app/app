@@ -1,4 +1,7 @@
-import { hapticSelectionChanged, primeHaptics } from '@/lib/haptics'
+import {
+    hapticImpact,
+    primeHaptics,
+} from '@/lib/haptics'
 import { cn } from '@/lib/utils'
 import {
     useCallback,
@@ -134,8 +137,7 @@ export function OnboardingRulerPicker({
     const ignoreScrollRef = useRef(false)
     const isScrollingRef = useRef(false)
     const scrollIdleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-    const lastHapticIndex = useRef(0)
-    const lastHapticAt = useRef(0)
+    const lastHapticIndex = useRef(-1)
     const valueRef = useRef(value)
     const onChangeRef = useRef(onChange)
     const pendingValueRef = useRef(value)
@@ -208,6 +210,7 @@ export function OnboardingRulerPicker({
             if (Math.abs(el.scrollLeft - nextLeft) < 0.5) return
 
             ignoreScrollRef.current = true
+            lastHapticIndex.current = clamped
             el.scrollLeft = nextLeft
             requestAnimationFrame(() => {
                 ignoreScrollRef.current = false
@@ -281,11 +284,7 @@ export function OnboardingRulerPicker({
 
         if (i !== lastHapticIndex.current) {
             lastHapticIndex.current = i
-            const now = performance.now()
-            if (now - lastHapticAt.current > 28) {
-                lastHapticAt.current = now
-                void hapticSelectionChanged()
-            }
+            void hapticImpact()
         }
 
         const newValue = options[i]

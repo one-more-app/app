@@ -238,6 +238,13 @@
     padding-bottom: var(--safe-bottom);
   }
 
+  /* Onboarding/auth hero : image edge-to-edge sous la status bar ; L/R/B restent safe. */
+  .safe-padding-bleed-top {
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+    padding-bottom: var(--safe-bottom);
+  }
+
   /* Vidéo onboarding : masque l’UI native (icône play Android WebView, contrôles Safari). */
   .onboarding-bg-video::-webkit-media-controls,
   .onboarding-bg-video::-webkit-media-controls-enclosure,

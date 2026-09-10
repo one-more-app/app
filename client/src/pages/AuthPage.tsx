@@ -26,6 +26,7 @@ import { postAuthNavigateOptions, resolvePostAuthNavigation } from "@/lib/post-a
 import { applyPendingOnboardingProfileAfterAuth, needsOnboarding, peekPendingOnboardingRecord, setUserProfile } from "@/lib/storage";
 import { UI } from "@/lib/translations";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
+import { cn } from "@/lib/utils";
 import { Capacitor } from "@capacitor/core";
 import { Mail } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -235,6 +236,53 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         }
     };
 
+    const goToRegisterLastName = () => {
+        if (!canRegisterFirstName) return;
+        auth.clearError();
+        if (trackOnboardingAuth) {
+            trackOnboardingStepCompleted({
+                step: OnboardingSteps.ACCOUNT_REGISTER_FIRST_NAME,
+            });
+        }
+        setStep("register_lastName");
+    };
+
+    const goToRegisterUsername = () => {
+        if (!canRegisterLastName) return;
+        auth.clearError();
+        void (async () => {
+            try {
+                const { available } = await suggestUsername({
+                    firstName: firstName.trim(),
+                    lastName: lastName.trim(),
+                    email: normalizedEmail,
+                });
+                setUsername(available);
+                setUsernameStatus("idle");
+            } catch {
+                setUsername("");
+                setUsernameStatus("idle");
+            }
+            if (trackOnboardingAuth) {
+                trackOnboardingStepCompleted({
+                    step: OnboardingSteps.ACCOUNT_REGISTER_LAST_NAME,
+                });
+            }
+            setStep("register_username");
+        })();
+    };
+
+    const goToRegisterPassword = () => {
+        if (!canRegisterUsername) return;
+        auth.clearError();
+        if (trackOnboardingAuth) {
+            trackOnboardingStepCompleted({
+                step: OnboardingSteps.ACCOUNT_REGISTER_USERNAME,
+            });
+        }
+        setStep("register_password");
+    };
+
     const isRegisterStep =
         step === "register_firstName" ||
         step === "register_lastName" ||
@@ -248,7 +296,13 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
             feature={currentAuthStep ?? "account_methods"}
             className={onboardingEntrance(
                 isFormStep
-                    ? "relative z-10 mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col overflow-y-auto px-4 pt-3 pb-6"
+                    ? cn(
+                          "relative z-10 mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col overflow-y-auto px-4 pb-6",
+                          // Shell parent en bleedTop (onboarding account) : on pose le safe-top ici.
+                          embedded
+                              ? "pt-[calc(var(--safe-top)+0.75rem)]"
+                              : "pt-3",
+                      )
                     : "relative z-10 flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto",
                 "animate-in fade-in-0 slide-in-from-left-4 duration-400",
             )}
@@ -289,13 +343,21 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                     contentClassName="space-y-3"
                 >
                     {step === "register_firstName" ? (
-                        <>
+                        <form
+                            className="space-y-3"
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                goToRegisterLastName();
+                            }}
+                        >
                             <Input
                                 label={UI.firstName}
                                 value={firstName}
                                 className="bg-card"
                                 onChange={(e) => setFirstName(e.target.value)}
                                 placeholder="Prénom"
+                                autoComplete="given-name"
+                                enterKeyHint="next"
                             />
 
                             {auth.lastError && (
@@ -306,32 +368,31 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
 
                             <div className="space-y-2">
                                 <Button
+                                    type="submit"
                                     className="w-full"
                                     data-analytics-label="onboarding_register_first_name_next"
-                                    onClick={() => {
-                                        if (!canRegisterFirstName) return;
-                                        auth.clearError();
-                                        if (trackOnboardingAuth) {
-                                            trackOnboardingStepCompleted({
-                                                step: OnboardingSteps.ACCOUNT_REGISTER_FIRST_NAME,
-                                            });
-                                        }
-                                        setStep("register_lastName");
-                                    }}
                                     disabled={!canRegisterFirstName}
                                 >
                                     {UI.continue}
                                 </Button>
                             </div>
-                        </>
+                        </form>
                     ) : step === "register_lastName" ? (
-                        <>
+                        <form
+                            className="space-y-3"
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                goToRegisterUsername();
+                            }}
+                        >
                             <Input
                                 label={UI.lastName}
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
                                 placeholder="Nom"
                                 className="bg-card"
+                                autoComplete="family-name"
+                                enterKeyHint="next"
                             />
 
                             {auth.lastError && (
@@ -342,46 +403,29 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
 
                             <div className="space-y-2">
                                 <Button
+                                    type="submit"
                                     className="w-full"
                                     data-analytics-label="onboarding_register_last_name_next"
-                                    onClick={() => {
-                                        if (!canRegisterLastName) return;
-                                        auth.clearError();
-                                        void (async () => {
-                                            try {
-                                                const { available } =
-                                                    await suggestUsername({
-                                                        firstName: firstName.trim(),
-                                                        lastName: lastName.trim(),
-                                                        email: normalizedEmail,
-                                                    });
-                                                setUsername(available);
-                                                setUsernameStatus("idle");
-                                            } catch {
-                                                setUsername("");
-                                                setUsernameStatus("idle");
-                                            }
-                                            if (trackOnboardingAuth) {
-                                                trackOnboardingStepCompleted({
-                                                    step: OnboardingSteps.ACCOUNT_REGISTER_LAST_NAME,
-                                                });
-                                            }
-                                            setStep("register_username");
-                                        })();
-                                    }}
                                     disabled={!canRegisterLastName}
                                 >
                                     {UI.continue}
                                 </Button>
                             </div>
-                        </>
+                        </form>
                     ) : step === "register_username" ? (
-                        <>
+                        <form
+                            className="space-y-3"
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                goToRegisterPassword();
+                            }}
+                        >
                             <UsernameField
                                 value={username}
                                 onChange={setUsername}
                                 onStatusChange={setUsernameStatus}
                                 inputClassName="bg-card"
+                                enterKeyHint="next"
                             />
 
                             {auth.lastError && (
@@ -392,26 +436,23 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
 
                             <div className="space-y-2">
                                 <Button
+                                    type="submit"
                                     className="w-full"
                                     data-analytics-label="onboarding_register_username_next"
-                                    onClick={() => {
-                                        if (!canRegisterUsername) return;
-                                        auth.clearError();
-                                        if (trackOnboardingAuth) {
-                                            trackOnboardingStepCompleted({
-                                                step: OnboardingSteps.ACCOUNT_REGISTER_USERNAME,
-                                            });
-                                        }
-                                        setStep("register_password");
-                                    }}
                                     disabled={!canRegisterUsername}
                                 >
                                     {UI.continue}
                                 </Button>
                             </div>
-                        </>
+                        </form>
                     ) : (
-                        <>
+                        <form
+                            className="space-y-3"
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                void submitRegister();
+                            }}
+                        >
                             <div className="space-y-1">
                                 <Input
                                     label={UI.password}
@@ -420,6 +461,8 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                     onChange={(e) => setPassword(e.target.value)}
                                     type="password"
                                     placeholder="••••••••"
+                                    autoComplete="new-password"
+                                    enterKeyHint="next"
                                     passwordToggle={{
                                         showLabel: UI.showPassword,
                                         hideLabel: UI.hidePassword,
@@ -438,6 +481,8 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                     onChange={(e) => setPasswordConfirm(e.target.value)}
                                     type="password"
                                     placeholder="••••••••"
+                                    autoComplete="new-password"
+                                    enterKeyHint="done"
                                     passwordToggle={{
                                         showLabel: UI.showPassword,
                                         hideLabel: UI.hidePassword,
@@ -456,15 +501,15 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
 
                             <div className="space-y-2">
                                 <Button
+                                    type="submit"
                                     className="w-full"
                                     data-analytics-label="onboarding_create_account"
-                                    onClick={() => void submitRegister()}
                                     disabled={!canRegisterPassword}
                                 >
                                     {UI.createAccount}
                                 </Button>
                             </div>
-                        </>
+                        </form>
                     )}
                 </StepCard>
             ) : step === "email" ? (
@@ -477,33 +522,43 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                     title={UI.emailTitle}
                     contentClassName="space-y-3"
                 >
-                    <Input
-                        label={UI.email}
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        inputMode="email"
-                        autoCapitalize="none"
-                        className="bg-card"
-                        autoCorrect="off"
-                        placeholder="email@exemple.com"
-                    />
+                    <form
+                        className="space-y-3"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            void submitEmail();
+                        }}
+                    >
+                        <Input
+                            label={UI.email}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            inputMode="email"
+                            autoCapitalize="none"
+                            className="bg-card"
+                            autoCorrect="off"
+                            autoComplete="email"
+                            enterKeyHint="next"
+                            placeholder="email@exemple.com"
+                        />
 
-                    {auth.lastError && (
-                        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                            {auth.lastError}
+                        {auth.lastError && (
+                            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                                {auth.lastError}
+                            </div>
+                        )}
+
+                        <div className="space-y-2">
+                            <Button
+                                type="submit"
+                                className="w-full"
+                                data-analytics-label="onboarding_email_submit"
+                                disabled={!canContinueEmail}
+                            >
+                                {UI.continue}
+                            </Button>
                         </div>
-                    )}
-
-                    <div className="space-y-2">
-                        <Button
-                            className="w-full"
-                            data-analytics-label="onboarding_email_submit"
-                            onClick={() => void submitEmail()}
-                            disabled={!canContinueEmail}
-                        >
-                            {UI.continue}
-                        </Button>
-                    </div>
+                    </form>
                 </StepCard>
             ) : step === "login" ? (
                 <StepCard
@@ -515,40 +570,50 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                     title={UI.authLoginTitle}
                     contentClassName="space-y-3"
                 >
-                    <div className="space-y-1">
-                        <Input
-                            label={UI.password}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            type="password"
-                            placeholder="••••••••"
-                            className="bg-card"
-                            passwordToggle={{
-                                showLabel: UI.showPassword,
-                                hideLabel: UI.hidePassword,
-                            }}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                            {UI.passwordHint}
-                        </p>
-                    </div>
-
-                    {auth.lastError && (
-                        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                            {auth.lastError}
+                    <form
+                        className="space-y-3"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            void submitLogin();
+                        }}
+                    >
+                        <div className="space-y-1">
+                            <Input
+                                label={UI.password}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                type="password"
+                                placeholder="••••••••"
+                                className="bg-card"
+                                autoComplete="current-password"
+                                enterKeyHint="done"
+                                passwordToggle={{
+                                    showLabel: UI.showPassword,
+                                    hideLabel: UI.hidePassword,
+                                }}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                {UI.passwordHint}
+                            </p>
                         </div>
-                    )}
 
-                    <div className="space-y-2">
-                        <Button
-                            className="w-full"
-                            data-analytics-label="onboarding_login_submit"
-                            onClick={() => void submitLogin()}
-                            disabled={!canLogin}
-                        >
-                            {UI.login}
-                        </Button>
-                    </div>
+                        {auth.lastError && (
+                            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                                {auth.lastError}
+                            </div>
+                        )}
+
+                        <div className="space-y-2">
+                            <Button
+                                type="submit"
+                                className="w-full"
+                                data-analytics-label="onboarding_login_submit"
+                                disabled={!canLogin}
+                            >
+                                {UI.login}
+                            </Button>
+                        </div>
+                    </form>
                 </StepCard>
             ) : (
                 <div className="flex min-h-0 w-full flex-1 flex-col">
@@ -747,5 +812,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
         return content;
     }
 
-    return <OnboardingShell>{content}</OnboardingShell>;
+    return (
+        <OnboardingShell bleedTop={step === "methods"}>{content}</OnboardingShell>
+    );
 }

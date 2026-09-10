@@ -3,9 +3,12 @@ import {
     WheelPickerWrapper,
     type WheelPickerOption,
 } from '@/components/wheel-picker/wheel-picker'
-import { primeHaptics } from '@/lib/haptics'
+import {
+    hapticImpact,
+    primeHaptics,
+} from '@/lib/haptics'
 import { cn } from '@/lib/utils'
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 const OPTION_ITEM_HEIGHT = 64
 const VISIBLE_COUNT = 12
@@ -38,6 +41,31 @@ function buildOptions(
     return options
 }
 
+/**
+ * Estime l’index courant depuis le translateY de la highlight-list
+ * (mis à jour à chaque frame pendant le drag par @ncdai/react-wheel-picker).
+ */
+function readWheelIndex(root: HTMLElement, itemHeight: number): number | null {
+    const list = root.querySelector<HTMLElement>('[data-rwp-highlight-list]')
+    if (!list) return null
+    const transform = list.style.transform || getComputedStyle(list).transform
+    if (!transform || transform === 'none') return null
+
+    let translateY = 0
+    const cssMatch = /translateY\(\s*(-?[\d.]+)px\s*\)/.exec(transform)
+    if (cssMatch) {
+        translateY = Number(cssMatch[1])
+    } else {
+        const matrixMatch = /matrix\(([^)]+)\)/.exec(transform)
+        if (!matrixMatch) return null
+        const parts = matrixMatch[1].split(',').map((p) => Number(p.trim()))
+        translateY = parts[5] ?? 0
+    }
+
+    if (!Number.isFinite(translateY) || itemHeight <= 0) return null
+    return Math.round(-translateY / itemHeight)
+}
+
 export function OnboardingVerticalWheelPicker({
     value,
     onChange,
@@ -51,13 +79,124 @@ export function OnboardingVerticalWheelPicker({
         () => buildOptions(min, max, step),
         [min, max, step],
     )
+    const rootRef = useRef<HTMLDivElement>(null)
+    const lastHapticIndexRef = useRef<number | null>(null)
+    const gestureActiveRef = useRef(false)
+    const gestureGenRef = useRef(0)
+    const rafRef = useRef<number | null>(null)
+    const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const onChangeRef = useRef(onChange)
+
+    useEffect(() => {
+        onChangeRef.current = onChange
+    }, [onChange])
+
+    const fireIndexHaptic = useCallback((index: number) => {
+        if (lastHapticIndexRef.current === index) return
+        lastHapticIndexRef.current = index
+        void hapticImpact()
+    }, [])
+
+    const sampleIndex = useCallback(() => {
+        const root = rootRef.current
+        if (!root) return
+        const index = readWheelIndex(root, OPTION_ITEM_HEIGHT)
+        if (index == null) return
+        const clamped = Math.max(0, Math.min(index, options.length - 1))
+        fireIndexHaptic(clamped)
+    }, [fireIndexHaptic, options.length])
+
+    const stopSampling = useCallback(() => {
+        if (rafRef.current != null) {
+            cancelAnimationFrame(rafRef.current)
+            rafRef.current = null
+        }
+        gestureActiveRef.current = false
+    }, [])
+
+    const scheduleStopSampling = useCallback(
+        (delayMs: number) => {
+            if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+            const gen = gestureGenRef.current
+            idleTimerRef.current = setTimeout(() => {
+                if (gen !== gestureGenRef.current) return
+                stopSampling()
+                sampleIndex()
+            }, delayMs)
+        },
+        [sampleIndex, stopSampling],
+    )
+
+    const startSampling = useCallback(() => {
+        gestureGenRef.current += 1
+        if (idleTimerRef.current) {
+            clearTimeout(idleTimerRef.current)
+            idleTimerRef.current = null
+        }
+        gestureActiveRef.current = true
+        const loop = () => {
+            sampleIndex()
+            if (gestureActiveRef.current) {
+                rafRef.current = requestAnimationFrame(loop)
+            }
+        }
+        if (rafRef.current == null) {
+            rafRef.current = requestAnimationFrame(loop)
+        }
+    }, [sampleIndex])
 
     useEffect(() => {
         primeHaptics()
-    }, [])
+        lastHapticIndexRef.current = findOptionIndex(options, value)
+    }, [options, value])
+
+    useEffect(() => {
+        const el = rootRef.current
+        if (!el) return
+
+        const onPointerDown = (event: PointerEvent) => {
+            if (event.button !== 0 && event.pointerType === 'mouse') return
+            startSampling()
+        }
+
+        const onPointerUp = () => {
+            sampleIndex()
+            scheduleStopSampling(320)
+        }
+
+        const onWheel = () => {
+            startSampling()
+            sampleIndex()
+            scheduleStopSampling(180)
+        }
+
+        el.addEventListener('pointerdown', onPointerDown)
+        window.addEventListener('pointerup', onPointerUp)
+        window.addEventListener('pointercancel', onPointerUp)
+        el.addEventListener('wheel', onWheel, { passive: true })
+
+        return () => {
+            el.removeEventListener('pointerdown', onPointerDown)
+            window.removeEventListener('pointerup', onPointerUp)
+            window.removeEventListener('pointercancel', onPointerUp)
+            el.removeEventListener('wheel', onWheel)
+            if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+            stopSampling()
+        }
+    }, [sampleIndex, scheduleStopSampling, startSampling, stopSampling])
+
+    const handleValueChange = useCallback(
+        (next: number) => {
+            const index = findOptionIndex(options, next)
+            if (index >= 0) fireIndexHaptic(index)
+            onChangeRef.current(next)
+        },
+        [fireIndexHaptic, options],
+    )
 
     return (
         <div
+            ref={rootRef}
             className={cn(
                 'relative mx-auto flex min-h-0 w-full max-w-xs flex-1 flex-col',
                 // Hitbox = tout le bloc : la roue s’étire, le rendu reste masqué aux bords.
@@ -71,9 +210,11 @@ export function OnboardingVerticalWheelPicker({
                     <WheelPicker
                         options={options}
                         value={value}
-                        onValueChange={onChange}
+                        onValueChange={handleValueChange}
                         optionItemHeight={OPTION_ITEM_HEIGHT}
                         visibleCount={VISIBLE_COUNT}
+                        // Ticks cran-par-cran via sampling du transform.
+                        haptic={false}
                         classNames={{
                             optionItem:
                                 'text-base text-muted-foreground/50 font-one-more italic',
@@ -97,4 +238,12 @@ export function OnboardingVerticalWheelPicker({
             ) : null}
         </div>
     )
+}
+
+function findOptionIndex(
+    options: WheelPickerOption<number>[],
+    value: number,
+): number {
+    const exact = options.findIndex((o) => o.value === value)
+    return exact >= 0 ? exact : 0
 }

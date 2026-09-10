@@ -1,5 +1,5 @@
 import { onboardingEntrance, OnboardingReveal } from '@/components/onboarding/onboarding-motion'
-import { hapticSelectionChanged } from '@/lib/haptics'
+import { hapticImpact } from '@/lib/haptics'
 import { cn } from '@/lib/utils'
 import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -58,7 +58,7 @@ export function OnboardingChoiceList<T extends string>({
                                 aria-checked={selected}
                                 data-analytics-label={analyticsLabel}
                                 onClick={() => {
-                                    void hapticSelectionChanged()
+                                    void hapticImpact()
                                     onSelect(id)
                                 }}
                                 className={onboardingEntrance(
@@ -69,7 +69,7 @@ export function OnboardingChoiceList<T extends string>({
                                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                                     selected
                                         ? 'bg-primary text-primary-foreground active:bg-primary/85 dark:bg-primary-foreground dark:text-primary dark:active:bg-primary-foreground/85'
-                                        : 'bg-secondary text-foreground hover:bg-secondary/80 active:bg-muted',
+                                        : 'bg-card text-foreground hover:bg-card/80 active:bg-muted',
                                     'animate-in fade-in-0 slide-in-from-bottom-2 duration-350',
                                 )}
                                 style={{
@@ -79,7 +79,7 @@ export function OnboardingChoiceList<T extends string>({
                                 {icon ? (
                                     <span
                                         className={cn(
-                                            'flex size-5 shrink-0 items-center justify-center',
+                                            'flex h-5 shrink-0 items-center justify-center',
                                             hint && 'mt-0.5',
                                         )}
                                         aria-hidden

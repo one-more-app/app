@@ -95,7 +95,7 @@ function NotificationMockCard({
                         <img
                             src={logoBlack}
                             alt=""
-                            className="size-5 select-none object-contain"
+                            className="size-5 select-none object-contain -mr-0.5"
                             draggable={false}
                             aria-hidden
                         />
