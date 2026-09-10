@@ -1,9 +1,22 @@
 import type { Page } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { UI } from "../../src/lib/translations";
 
 export const AUTH_STORAGE_KEY = "one-more-auth-v1";
 export const ONBOARDING_DONE_KEY = "one-more-onboarding-v1";
 export const ONBOARDING_GYM_PENDING_KEY = "one-more-onboarding-gym-pending-v1";
 export const GYM_SETUP_DONE_KEY = "one-more-gym-setup-done-v1";
+export const NOTIFICATIONS_EDU_DONE_KEY =
+  "one-more-notifications-edu-done-v1";
+
+/** Tours produit (Joyride) : évite l'overlay qui bloque les clics smoke. */
+export const TOUR_COMPLETE_KEYS = [
+  "one-more-onboarding-tour-complete-v1",
+  "one-more-exercise-catalog-tour-complete-v1",
+  "one-more-exercise-detail-tour-complete-v1",
+  "one-more-rest-counter-tour-complete-v1",
+  "one-more-home-tour-complete-v1",
+] as const;
 
 export const mockGymPlace = {
   placeId: "e2e-gym-1",
@@ -142,22 +155,35 @@ export function trackPageErrors(page: Page): string[] {
 
 export async function seedOnboardingDone(page: Page): Promise<void> {
   await seedE2eApiOrigin(page);
-  await page.addInitScript((key) => {
-    localStorage.setItem(key, "done");
-  }, ONBOARDING_DONE_KEY);
+  await page.addInitScript(
+    ({ onboardingKey, notificationsEduKey }) => {
+      localStorage.setItem(onboardingKey, "done");
+      localStorage.setItem(notificationsEduKey, "1");
+    },
+    {
+      onboardingKey: ONBOARDING_DONE_KEY,
+      notificationsEduKey: NOTIFICATIONS_EDU_DONE_KEY,
+    },
+  );
 }
 
 export async function seedAuthenticatedSession(page: Page): Promise<void> {
   await seedE2eApiOrigin(page);
   await page.addInitScript(
-    ({ authKey, onboardingKey, session }) => {
+    ({ authKey, onboardingKey, notificationsEduKey, session, tourKeys }) => {
       localStorage.setItem(onboardingKey, "done");
+      localStorage.setItem(notificationsEduKey, "1");
       localStorage.setItem(authKey, JSON.stringify(session));
+      for (const key of tourKeys) {
+        localStorage.setItem(key, "1");
+      }
     },
     {
       authKey: AUTH_STORAGE_KEY,
       onboardingKey: ONBOARDING_DONE_KEY,
+      notificationsEduKey: NOTIFICATIONS_EDU_DONE_KEY,
       session: mockSession,
+      tourKeys: [...TOUR_COMPLETE_KEYS],
     },
   );
 }
@@ -219,7 +245,32 @@ export async function mockCoreAuthenticatedApi(
     lastName: "Test",
     avatarUrl: null as string | null,
     username: "smoke_user",
+    discoverySource: null as string | null,
+    discoverySourceDetail: null as string | null,
   };
+
+  await page.route("**/profile/discovery-source", async (route) => {
+    if (route.request().method() !== "PUT") {
+      await route.fallback();
+      return;
+    }
+    const body = route.request().postDataJSON() as {
+      source?: string;
+      detail?: string | null;
+    };
+    if (!savedProfile.discoverySource) {
+      savedProfile = {
+        ...savedProfile,
+        discoverySource: body.source ?? "skipped",
+        discoverySourceDetail: body.detail ?? null,
+      };
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true }),
+    });
+  });
 
   await page.route("**/profile", async (route) => {
     const method = route.request().method();
@@ -245,6 +296,7 @@ export async function mockCoreAuthenticatedApi(
         username?: string | null;
       };
       savedProfile = {
+        ...savedProfile,
         weightKg: body.weightKg ?? savedProfile.weightKg,
         heightCm: body.heightCm ?? savedProfile.heightCm,
         gender: body.gender ?? savedProfile.gender,
@@ -543,6 +595,57 @@ export async function mockAuthApi(
       body: JSON.stringify({ items: [], total: 0 }),
     });
   });
+}
+
+/** Ouvre le flow email depuis l'écran methods, puis soumet l'adresse. */
+export async function continueWithEmailFlow(
+  page: Page,
+  email: string,
+): Promise<void> {
+  await page
+    .getByRole("button", { name: "Continuer avec l'email", exact: true })
+    .click();
+  await page.getByLabel("Email").fill(email);
+  await page.getByRole("button", { name: "Continuer", exact: true }).click();
+}
+
+/** Après register : passe discovery puis notifs (web) s'ils s'affichent. */
+export async function dismissPostAuthDiscoveryAndNotifications(
+  page: Page,
+): Promise<void> {
+  const postAuthUrl =
+    /#\/(onboarding\?(?:.*&)?step=(discovery|notifications)|home|exercises|exercise\/)/;
+
+  await expect.poll(() => postAuthUrl.test(page.url()), { timeout: 10_000 }).toBe(
+    true,
+  );
+
+  if (page.url().includes("step=discovery")) {
+    await page
+      .getByRole("button", { name: UI.onboardingSkip, exact: true })
+      .click();
+    await expect
+      .poll(
+        () =>
+          /#\/(onboarding\?(?:.*&)?step=notifications|home|exercises|exercise\/)/.test(
+            page.url(),
+          ),
+        { timeout: 10_000 },
+      )
+      .toBe(true);
+  }
+
+  if (page.url().includes("step=notifications")) {
+    await page
+      .getByRole("button", { name: UI.onboardingSkip, exact: true })
+      .click();
+    await expect
+      .poll(
+        () => /#\/(home|exercises|exercise\/)/.test(page.url()),
+        { timeout: 10_000 },
+      )
+      .toBe(true);
+  }
 }
 
 export async function mockAuthenticatedApi(page: Page): Promise<void> {

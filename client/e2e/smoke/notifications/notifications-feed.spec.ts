@@ -4,8 +4,8 @@ import {
   seedAuthenticatedSession,
   seedOnboardingDone,
   trackPageErrors,
-} from "./helpers";
-import { UI } from "../../src/lib/translations";
+} from "../helpers";
+import { UI } from "../../../src/lib/translations";
 
 test("cloche notifications visible sur l'accueil", async ({ page }) => {
   const pageErrors = trackPageErrors(page);

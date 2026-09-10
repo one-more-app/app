@@ -22,6 +22,7 @@ Pour un typecheck complet du client (hors scope du hook) : `npm run typecheck --
   - enregistrement d'une performance sur la fiche exercice
   - onboarding intro (slider features → Commencer → genre)
   - onboarding body + intent + record → palier → compte
+  - onboarding record : changement d'exo via « Voir plus » après retour garde le nouvel exo
   - onboarding body (genre, profil) inclus dans `POST /auth/register`
   - onboarding skip (âge → compte → catalogue exercices)
   - onboarding salle temporairement désactivé (pas de gym-wait, home accessible)
@@ -56,8 +57,8 @@ git push --no-verify
 
 ## Ajouter un parcours smoke
 
-1. Copier un fichier dans [`client/e2e/smoke/`](../client/e2e/smoke/).
-2. Réutiliser [`helpers.ts`](../client/e2e/smoke/helpers.ts) et [`workflow-api.ts`](../client/e2e/smoke/workflow-api.ts).
+1. Créer le spec dans [`client/e2e/smoke/<feature>/`](../client/e2e/smoke/) (voir rule `e2e-feature-organization`).
+2. Réutiliser [`helpers.ts`](../client/e2e/smoke/helpers.ts) et [`workflow-api.ts`](../client/e2e/smoke/workflow-api.ts) via `../`.
 3. Vérifier les sélecteurs sur le texte UI français (`UI.*` dans `translations.ts`).
 4. Lancer `task check:smoke` avant de pousser.
 

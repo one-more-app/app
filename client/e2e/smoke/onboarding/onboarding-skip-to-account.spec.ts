@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
-import { mockAuthApi, trackPageErrors } from "./helpers";
-import { UI } from "../../src/lib/translations";
+import { continueWithEmailFlow, mockAuthApi, trackPageErrors } from "../helpers";
+import { UI } from "../../../src/lib/translations";
 
 const continueButton = (page: Page) =>
   page.getByRole("button", { name: UI.continue, exact: true });
@@ -23,8 +23,7 @@ test("skip depuis l'âge mène au compte puis au catalogue exercices", async ({
   ).toBeVisible();
   await page.getByRole("button", { name: UI.onboardingSkip }).click();
 
-  await page.getByLabel("Email").fill("skip-onboarding@one-more.test");
-  await page.getByRole("button", { name: "Rejoindre", exact: true }).click();
+  await continueWithEmailFlow(page, "skip-onboarding@one-more.test");
 
   await page.getByLabel("Prénom").fill("Skip");
   await continueButton(page).click();

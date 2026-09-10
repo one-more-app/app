@@ -1,0 +1,73 @@
+---
+description: Organisation des tests e2e Playwright par feature
+globs: client/e2e/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Organisation e2e par feature
+
+## Objectif
+
+Ranger chaque spec smoke sous le dossier de la feature qu'il couvre. Pas de specs « fourre-tout » à la racine de `smoke/`.
+
+## Structure
+
+```txt
+client/e2e/
+  fixtures/                 # données stables partagées
+  smoke/
+    helpers.ts              # session, mocks de base, trackPageErrors
+    workflow-api.ts         # mocks stateful exercices / perfs
+    <feature>/
+      <parcours>.spec.ts
+```
+
+`npm run test:smoke` lance `e2e/smoke` : Playwright découvre les sous-dossiers récursivement. Pas besoin de changer la config.
+
+## Features connues
+
+| Dossier | Contenu typique |
+|---------|-----------------|
+| `auth/` | charge `/auth`, inscription, logout, switch de compte |
+| `onboarding/` | intro, record, body, skip compte, gym onboarding |
+| `exercises/` | ajout catalogue, log perf, fiche exercice |
+| `session/` | vue séance |
+| `notifications/` | cloche, feed |
+| `gym/` | salle hors onboarding (ex. user existant) |
+| `web-store/` | landing store web |
+
+Nouvelle feature produit → **nouveau dossier** `client/e2e/smoke/<feature>/`, jamais un fichier isolé à la racine de `smoke/`.
+
+## Règles
+
+- Un spec = un parcours ; le préfixe feature dans le nom de fichier est optionnel si le dossier suffit (`add-exercise.spec.ts` dans `exercises/`).
+- Helpers / mocks partagés restent à la racine de `smoke/` (`helpers.ts`, `workflow-api.ts`). Pas de duplication par feature.
+- Fixtures catalogue → `client/e2e/fixtures/`.
+- Imports relatifs depuis un sous-dossier : `../helpers`, `../workflow-api`, `../../fixtures/...`.
+- Ne pas créer de dossiers techniques (`helpers/`, `utils/`, `common/`) sous `smoke/` pour y mettre des specs.
+
+## Exemples
+
+```txt
+# ❌ BAD : tout à plat
+client/e2e/smoke/auth-loads.spec.ts
+client/e2e/smoke/onboarding-intro.spec.ts
+client/e2e/smoke/add-exercise.spec.ts
+
+# ❌ BAD : dossier technique au lieu d'une feature
+client/e2e/smoke/specs/auth-loads.spec.ts
+
+# ✅ GOOD
+client/e2e/smoke/auth/auth-loads.spec.ts
+client/e2e/smoke/onboarding/intro.spec.ts
+client/e2e/smoke/exercises/add-exercise.spec.ts
+```
+
+## Checklist avant d'ajouter un spec
+
+1. Identifier la feature produit (ou en créer le dossier).
+2. Placer le fichier dans `client/e2e/smoke/<feature>/`.
+3. Importer helpers/mocks via `../`.
+4. Mettre à jour `docs/quality-gates.md` avec le chemin complet.
+
+Voir aussi : [`e2e-tests.mdc`](e2e-tests.mdc), skill `.cursor/skills/e2e-test/SKILL.md`.

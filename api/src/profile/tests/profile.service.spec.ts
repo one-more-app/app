@@ -180,4 +180,63 @@ describe('ProfileService', () => {
       sessionsPerWeek: 'moderate',
     });
   });
+
+  it('upsertDiscoverySource is write-once', async () => {
+    const existing = {
+      userId: 'user-1',
+      discoverySource: null,
+      discoverySourceDetail: null,
+      discoverySourceRecordedAt: null,
+    };
+    profilesRepo.findOne.mockResolvedValue(existing);
+    profilesRepo.save.mockImplementation((profile) => Promise.resolve(profile));
+
+    await service.upsertDiscoverySource('user-1', {
+      source: 'tiktok',
+    });
+
+    expect(profilesRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        discoverySource: 'tiktok',
+        discoverySourceDetail: null,
+        discoverySourceRecordedAt: expect.any(Date),
+      }),
+    );
+
+    profilesRepo.findOne.mockResolvedValue({
+      ...existing,
+      discoverySource: 'tiktok',
+      discoverySourceRecordedAt: new Date(),
+    });
+    profilesRepo.save.mockClear();
+
+    await service.upsertDiscoverySource('user-1', {
+      source: 'youtube',
+    });
+
+    expect(profilesRepo.save).not.toHaveBeenCalled();
+  });
+
+  it('upsertDiscoverySource stores other detail', async () => {
+    const existing = {
+      userId: 'user-1',
+      discoverySource: null,
+      discoverySourceDetail: null,
+      discoverySourceRecordedAt: null,
+    };
+    profilesRepo.findOne.mockResolvedValue(existing);
+    profilesRepo.save.mockImplementation((profile) => Promise.resolve(profile));
+
+    await service.upsertDiscoverySource('user-1', {
+      source: 'other',
+      detail: '  Podcast XYZ  ',
+    });
+
+    expect(profilesRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        discoverySource: 'other',
+        discoverySourceDetail: 'Podcast XYZ',
+      }),
+    );
+  });
 });

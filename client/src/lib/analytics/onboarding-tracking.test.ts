@@ -72,6 +72,9 @@ describe("resolveOnboardingStepFromLocation", () => {
         "?step=notifications",
       ),
     ).toBe(OnboardingSteps.NOTIFICATIONS);
+    expect(
+      resolveOnboardingStepFromLocation("/onboarding", "?step=discovery"),
+    ).toBe(OnboardingSteps.DISCOVERY);
     expect(resolveOnboardingStepFromLocation("/auth", "")).toBe(
       OnboardingSteps.ACCOUNT_EMAIL,
     );

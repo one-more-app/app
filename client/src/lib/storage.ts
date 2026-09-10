@@ -54,6 +54,9 @@ const PENDING_ONBOARDING_EXERCISE_PICK_KEY =
 const ONBOARDING_DRAFT_SESSION_KEY = "one-more-onboarding-draft-session-v1";
 const ONBOARDING_RECORD_DESTINATION_KEY =
   "one-more-onboarding-record-destination-v1";
+const POST_AUTH_FLOW_DESTINATION_KEY =
+  "one-more-post-auth-flow-destination-v1";
+const NOTIFICATIONS_EDU_DONE_KEY = "one-more-notifications-edu-done-v1";
 const ONBOARDING_GYM_PENDING_KEY = "one-more-onboarding-gym-pending-v1";
 const GYM_ONBOARDING_IN_ZONE_KEY = "one-more-gym-onboarding-in-zone-v1";
 const GYM_ONBOARDING_NAME_KEY = "one-more-gym-onboarding-name-v1";
@@ -61,8 +64,6 @@ const GYM_LOCATION_PROMPT_DONE_KEY =
   "one-more-gym-location-prompt-done-v1";
 const GYM_NOTIFICATIONS_PROMPT_DONE_KEY =
   "one-more-gym-notifications-prompt-done-v1";
-const ONBOARDING_NOTIFICATIONS_PROMPT_DONE_KEY =
-  "one-more-onboarding-notifications-prompt-done-v1";
 const GYM_SETUP_DONE_KEY = "one-more-gym-setup-done-v1";
 const GYM_NOTIF_LAST_KEY = "one-more-gym-notif-last-v1";
 const THEME_PREFERENCE_KEY = "one-more-theme-preference-v1";
@@ -74,10 +75,6 @@ const EXERCISE_CATALOG_TOUR_COMPLETE_KEY =
 const EXERCISE_DETAIL_TOUR_COMPLETE_KEY =
   "one-more-exercise-detail-tour-complete-v1";
 const HOME_TOUR_COMPLETE_KEY = "one-more-home-tour-complete-v1";
-const HOME_NOTIFICATIONS_PROMPT_PENDING_KEY =
-  "one-more-home-notifications-prompt-pending-v1";
-const HOME_NOTIFICATIONS_PROMPT_DONE_KEY =
-  "one-more-home-notifications-prompt-done-v1";
 const HOME_TOUR_COMPLETE_EVENT = "one-more:home-tour-complete";
 const REST_COUNTER_TOUR_COMPLETE_EVENT =
   "one-more:rest-counter-tour-complete";
@@ -904,6 +901,53 @@ export function clearOnboardingRecordDestination(): void {
   }
 }
 
+export function setPostAuthFlowDestination(path: string): void {
+  try {
+    if (!path.startsWith("/")) return;
+    localStorage.setItem(POST_AUTH_FLOW_DESTINATION_KEY, path);
+  } catch {
+    // ignore
+  }
+}
+
+export function peekPostAuthFlowDestination(): string | null {
+  try {
+    const raw = localStorage.getItem(POST_AUTH_FLOW_DESTINATION_KEY);
+    if (!raw || !raw.startsWith("/")) return null;
+    return raw;
+  } catch {
+    return null;
+  }
+}
+
+export function clearPostAuthFlowDestination(): void {
+  try {
+    localStorage.removeItem(POST_AUTH_FLOW_DESTINATION_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export function isNotificationsEduDone(): boolean {
+  try {
+    return localStorage.getItem(NOTIFICATIONS_EDU_DONE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setNotificationsEduDone(done: boolean): void {
+  try {
+    if (done) {
+      localStorage.setItem(NOTIFICATIONS_EDU_DONE_KEY, "1");
+    } else {
+      localStorage.removeItem(NOTIFICATIONS_EDU_DONE_KEY);
+    }
+  } catch {
+    // ignore
+  }
+}
+
 export function setUserProfile(
   profile: Partial<UserProfile>,
   opts?: { silent?: boolean },
@@ -1102,22 +1146,6 @@ export function isGymNotificationsPromptDone(): boolean {
   return localStorage.getItem(GYM_NOTIFICATIONS_PROMPT_DONE_KEY) === "1";
 }
 
-export function isOnboardingNotificationsPromptDone(): boolean {
-  if (localStorage.getItem(ONBOARDING_V1_KEY) === "done") return true;
-  return (
-    localStorage.getItem(ONBOARDING_NOTIFICATIONS_PROMPT_DONE_KEY) === "1"
-  );
-}
-
-export function setOnboardingNotificationsPromptDone(done: boolean): void {
-  if (done) {
-    localStorage.setItem(ONBOARDING_NOTIFICATIONS_PROMPT_DONE_KEY, "1");
-    setGymNotificationsPromptDone(true);
-  } else {
-    localStorage.removeItem(ONBOARDING_NOTIFICATIONS_PROMPT_DONE_KEY);
-  }
-}
-
 export function setGymNotificationsPromptDone(done: boolean): void {
   if (done) {
     localStorage.setItem(GYM_NOTIFICATIONS_PROMPT_DONE_KEY, "1");
@@ -1172,9 +1200,13 @@ export function isOnboardingMarkedDone(): boolean {
 export function markOnboardingDone(destination?: string): void {
   const alreadyDone = isOnboardingMarkedDone();
   const resolvedDestination =
-    destination ?? getOnboardingPostAuthRedirect() ?? "/home";
+    destination ??
+    peekPostAuthFlowDestination() ??
+    getOnboardingPostAuthRedirect() ??
+    "/home";
   localStorage.setItem(ONBOARDING_V1_KEY, "done");
   localStorage.removeItem(ONBOARDING_POST_AUTH_REDIRECT_KEY);
+  localStorage.removeItem(POST_AUTH_FLOW_DESTINATION_KEY);
   if (!alreadyDone) {
     trackOnboardingCompleted({
       destination: resolvedDestination,
@@ -1339,50 +1371,12 @@ export function isHomeTourComplete(): boolean {
 
 export function setHomeTourComplete(complete: boolean): void {
   if (complete) {
-    const alreadyComplete = isHomeTourComplete();
     localStorage.setItem(HOME_TOUR_COMPLETE_KEY, "1");
-    if (!alreadyComplete && !isHomeNotificationsPromptDone()) {
-      setHomeNotificationsPromptPending(true);
-    }
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent(HOME_TOUR_COMPLETE_EVENT));
     }
   } else {
     localStorage.removeItem(HOME_TOUR_COMPLETE_KEY);
-  }
-}
-
-export function isHomeNotificationsPromptPending(): boolean {
-  try {
-    return localStorage.getItem(HOME_NOTIFICATIONS_PROMPT_PENDING_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-export function setHomeNotificationsPromptPending(pending: boolean): void {
-  if (pending) {
-    localStorage.setItem(HOME_NOTIFICATIONS_PROMPT_PENDING_KEY, "1");
-  } else {
-    localStorage.removeItem(HOME_NOTIFICATIONS_PROMPT_PENDING_KEY);
-  }
-}
-
-export function isHomeNotificationsPromptDone(): boolean {
-  try {
-    return localStorage.getItem(HOME_NOTIFICATIONS_PROMPT_DONE_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-export function setHomeNotificationsPromptDone(done: boolean): void {
-  if (done) {
-    localStorage.setItem(HOME_NOTIFICATIONS_PROMPT_DONE_KEY, "1");
-    setHomeNotificationsPromptPending(false);
-    setOnboardingNotificationsPromptDone(true);
-  } else {
-    localStorage.removeItem(HOME_NOTIFICATIONS_PROMPT_DONE_KEY);
   }
 }
 

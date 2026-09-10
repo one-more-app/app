@@ -9,11 +9,13 @@ alwaysApply: true
 
 | Fichier | Rôle |
 |---------|------|
-| `client/e2e/smoke/*.spec.ts` | Parcours smoke (pre-push) |
+| `client/e2e/smoke/<feature>/*.spec.ts` | Parcours smoke par feature (pre-push) |
 | `client/e2e/smoke/helpers.ts` | Session, mocks API de base, `trackPageErrors` |
 | `client/e2e/smoke/workflow-api.ts` | Mocks stateful exercices + perfs (POST/GET) |
 | `client/e2e/fixtures/` | Données catalogue stables (`e2e-bench-press`) |
 | `client/playwright.config.ts` | Preview Vite `127.0.0.1:4173`, build auto |
+
+Organisation des dossiers : [`e2e-feature-organization.mdc`](e2e-feature-organization.mdc).
 
 ## Commandes
 
@@ -37,8 +39,8 @@ Lancé automatiquement par `.husky/pre-push`.
 
 ```typescript
 import { expect, test } from "@playwright/test";
-import { seedAuthenticatedSession, seedOnboardingDone, trackPageErrors } from "./helpers";
-import { mockExerciseWorkflowApi } from "./workflow-api";
+import { seedAuthenticatedSession, seedOnboardingDone, trackPageErrors } from "../helpers";
+import { mockExerciseWorkflowApi } from "../workflow-api";
 
 test("description du parcours", async ({ page }) => {
   const pageErrors = trackPageErrors(page);
@@ -87,29 +89,28 @@ test("description du parcours", async ({ page }) => {
 | Nom exercice fiche | `locator('h1').filter({ hasText: name })` (évite strict mode) |
 | Dernière perf | `getByText('Dernier')` |
 
-## Parcours smoke actuels (8)
+## Parcours smoke (exemples par feature)
 
-1. `auth-loads` : page `/auth` sans erreur JS
-2. `register-no-crash` : inscription complète mockée
-3. `logout-clears-session` : session localStorage purgée
-4. `add-exercise` : catalogue → Ajouter → perf → fiche exercice
-5. `log-performance` : fiche exercice → Nouvelle performance → Dernier visible
-6. `onboarding-body-profile` : record + body (genre) → inscription → champs dans `POST /auth/register`
-7. `onboarding-record` : exercice → drawer perf → 1RM → palier / percentile → « Bats ce record » → compte
-8. `notifications-feed` : cloche sur `/home` → drawer « Notifications » vide
+- `auth/` : `auth-loads`, `register-no-crash`, `logout-clears-session`, `account-switch-clears-cache`
+- `onboarding/` : intro, record, body-profile, skip-to-account, gym
+- `exercises/` : `add-exercise`, `log-performance`
+- `session/` : `session-view`
+- `notifications/` : `notifications-feed`
+- `gym/` : `existing-user-gym`
+- `web-store/` : `web-store-landing`
 
 ## Déboguer un échec
 
 1. Lire `client/test-results/**/error-context.md`
 2. Vérifier que le drawer reste ouvert = souvent API non mockée ou `xp.grants` manquant
-3. Relancer un seul test : `npx playwright test e2e/smoke/nom.spec.ts --prefix client`
+3. Relancer un seul test : `npx playwright test e2e/smoke/<feature>/nom.spec.ts --prefix client`
 4. Tuer le preview stale si code app modifié : `lsof -ti:4173 | xargs kill -9`
 
 ## Ajouter un parcours
 
 1. Explorer le composant / page cible et `data-api.ts` pour les routes API
 2. Étendre `workflow-api.ts` ou `helpers.ts` si nouvel endpoint
-3. Créer `client/e2e/smoke/mon-parcours.spec.ts`
+3. Créer `client/e2e/smoke/<feature>/mon-parcours.spec.ts`
 4. Lancer `npm run test:smoke --prefix client`
 5. Mettre à jour `docs/quality-gates.md`
 

@@ -1,13 +1,13 @@
 import { expect, test } from "@playwright/test";
-import { buildTrackedExercise } from "../fixtures/exercises";
-import { UI } from "../../src/lib/translations";
+import { buildTrackedExercise } from "../../fixtures/exercises";
+import { UI } from "../../../src/lib/translations";
 import {
   mockSession,
   seedAuthenticatedSession,
   seedOnboardingDone,
   trackPageErrors,
-} from "./helpers";
-import { mockExerciseWorkflowApi } from "./workflow-api";
+} from "../helpers";
+import { mockExerciseWorkflowApi } from "../workflow-api";
 
 test("historique vers page séance", async ({ page }) => {
   const pageErrors = trackPageErrors(page);

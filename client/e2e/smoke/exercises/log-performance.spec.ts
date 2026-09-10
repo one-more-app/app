@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { e2eCatalogExercise, e2eTrackedId } from "../fixtures/exercises";
+import { e2eCatalogExercise, e2eTrackedId } from "../../fixtures/exercises";
 import {
   seedAuthenticatedSession,
   seedOnboardingDone,
   trackPageErrors,
-} from "./helpers";
-import { mockExerciseWorkflowApi } from "./workflow-api";
+} from "../helpers";
+import { mockExerciseWorkflowApi } from "../workflow-api";
 
 test("renseigner une performance sur la fiche exercice", async ({ page }) => {
   const pageErrors = trackPageErrors(page);

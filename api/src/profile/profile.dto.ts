@@ -18,6 +18,7 @@ import {
   TRAINING_EXPERIENCE_LEVELS,
   TRAINING_GOALS,
 } from './profile-training-fields.js';
+import { DISCOVERY_SOURCES } from './profile-discovery-source.js';
 
 export class UpsertProfileDto {
   @IsNumber()
@@ -101,4 +102,14 @@ export class UpsertAttributionDto {
   @IsOptional()
   @IsString()
   deepLinkValue?: string | null;
+}
+
+export class UpsertDiscoverySourceDto {
+  @IsIn([...DISCOVERY_SOURCES])
+  source!: (typeof DISCOVERY_SOURCES)[number];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  detail?: string | null;
 }
