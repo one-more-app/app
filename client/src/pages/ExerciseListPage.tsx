@@ -1,3 +1,4 @@
+import { AddPerfDrawer } from '@/components/AddPerfDrawer'
 import { BackHeader } from '@/components/BackHeader'
 import { CustomExerciseMetadataFields } from '@/components/CustomExerciseMetadataFields'
 import { ExerciseCatalogBrowse } from '@/components/ExerciseCatalogBrowse'
@@ -41,7 +42,12 @@ import { fetchExercisesCatalog, fetchExercisesMeta } from '@/lib/data-api'
 import {
     ONBOARDING_EXERCISE_PICK_FROM,
     onboardingExerciseFromCatalog,
+    persistOnboardingRecordDraft,
 } from '@/lib/onboarding-exercise-pick'
+import {
+    defaultOnboardingPerf,
+    onboardingTrackedId,
+} from '@/lib/onboarding-starter-exercises'
 import { filterCatalogExercises } from '@/lib/exercise-catalog-browse'
 import { getExerciseImageUrl } from '@/lib/exercisedb'
 import { inferBodyPartFromTarget } from '@/lib/infer-body-part-from-target'
@@ -52,10 +58,10 @@ import {
     isExerciseCatalogTourComplete,
     isOnboardingFirstExercisePending,
     isOnboardingTourComplete,
+    peekPendingOnboardingRecord,
     savePerformanceAndWait,
     setExerciseCatalogTourComplete,
     setOnboardingFirstExercisePending,
-    setPendingOnboardingExercisePick,
 } from '@/lib/storage'
 import {
     afterUiOverlaySettle,
@@ -96,6 +102,11 @@ export function ExerciseListPage() {
     const [customTarget, setCustomTarget] = useState('chest' as string)
     const [customEquipment, setCustomEquipment] = useState('body weight')
     const [addWithPerfExercise, setAddWithPerfExercise] = useState<ExerciseDBExercise | null>(null)
+    const [onboardingRecordExercise, setOnboardingRecordExercise] =
+        useState<ReturnType<typeof onboardingExerciseFromCatalog> | null>(null)
+    const [onboardingPerfWeight, setOnboardingPerfWeight] = useState(60)
+    const [onboardingPerfReps, setOnboardingPerfReps] = useState(5)
+    const [onboardingPerfDrawerOpen, setOnboardingPerfDrawerOpen] = useState(false)
     const [selectedExercise, setSelectedExercise] = useState<ExerciseDBExercise | null>(null)
     const [perfWeight, setPerfWeight] = useState(0)
     const [perfReps, setPerfReps] = useState(1)
@@ -224,13 +235,24 @@ export function ExerciseListPage() {
         }
     }, [equipmentOptions, customEquipment])
 
-    const pickExerciseForOnboarding = useCallback(
-        (exercise: ExerciseDBExercise) => {
-            setPendingOnboardingExercisePick(onboardingExerciseFromCatalog(exercise))
-            navigate('/onboarding?step=record', { replace: true })
-        },
-        [navigate],
-    )
+    const openOnboardingRecordDrawer = useCallback((exercise: ExerciseDBExercise) => {
+        const starter = onboardingExerciseFromCatalog(exercise)
+        const draft = peekPendingOnboardingRecord()
+        if (draft?.exerciseId === starter.exerciseId) {
+            setOnboardingPerfWeight(draft.weight)
+            setOnboardingPerfReps(draft.reps)
+        } else {
+            const defaults = defaultOnboardingPerf(starter)
+            setOnboardingPerfWeight(defaults.weight)
+            setOnboardingPerfReps(defaults.reps)
+        }
+        setOnboardingRecordExercise(starter)
+        setOnboardingPerfDrawerOpen(true)
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.RECORD_PICK,
+            exercise_id: starter.exerciseId,
+        })
+    }, [])
 
     const handleHeaderBack = useCallback(() => {
         if (isSearchMode) {
@@ -397,7 +419,7 @@ export function ExerciseListPage() {
 
     const openAddWithPerf = (ex: ExerciseDBExercise) => {
         if (onboardingRecordPick) {
-            pickExerciseForOnboarding(ex)
+            openOnboardingRecordDrawer(ex)
             return
         }
         if (trackedIds.has(`api-${ex.id}`)) return
@@ -489,6 +511,20 @@ export function ExerciseListPage() {
             setCelebrationUiHold(false)
             setIsSubmittingFirstPerf(false)
         }
+    }
+
+    const saveOnboardingRecordFromDrawer = (weight: number, reps: number) => {
+        if (!onboardingRecordExercise || reps <= 0) return
+        persistOnboardingRecordDraft(onboardingRecordExercise, weight, reps)
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.RECORD_PERF,
+            exercise_id: onboardingRecordExercise.exerciseId,
+            weight,
+            reps,
+        })
+        setOnboardingPerfDrawerOpen(false)
+        setOnboardingRecordExercise(null)
+        navigate('/onboarding?step=rank', { replace: true })
     }
 
     function getWeightLabel(ex: ExerciseDBExercise): string {
@@ -639,7 +675,31 @@ export function ExerciseListPage() {
                     />
                 )}
 
-                <Drawer open={!!addWithPerfExercise} onOpenChange={(open) => !open && setAddWithPerfExercise(null)}>
+                {onboardingRecordExercise ? (
+                    <AddPerfDrawer
+                        open={onboardingPerfDrawerOpen}
+                        onOpenChange={(open) => {
+                            setOnboardingPerfDrawerOpen(open)
+                            if (!open) setOnboardingRecordExercise(null)
+                        }}
+                        title={UI.onboardingPerfTitle}
+                        exercise={{
+                            id: onboardingTrackedId(onboardingRecordExercise.exerciseId),
+                            name: onboardingRecordExercise.name,
+                            originalName: onboardingRecordExercise.originalName,
+                            equipment: onboardingRecordExercise.equipment,
+                            target: onboardingRecordExercise.target,
+                        }}
+                        initialWeight={onboardingPerfWeight}
+                        initialReps={onboardingPerfReps}
+                        onSave={saveOnboardingRecordFromDrawer}
+                    />
+                ) : null}
+
+                <Drawer
+                    open={!onboardingRecordPick && !!addWithPerfExercise}
+                    onOpenChange={(open) => !open && setAddWithPerfExercise(null)}
+                >
                     <DrawerContent>
                         <div className="w-full p-4">
                             <DrawerHeader>
