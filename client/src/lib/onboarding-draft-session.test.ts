@@ -3,10 +3,8 @@ import {
   beginOnboardingDraftSession,
   clearOnboardingDraftsAndSession,
   discardPendingOnboardingDrafts,
-  peekPendingOnboardingExercisePick,
   peekPendingOnboardingProfile,
   peekPendingOnboardingRecord,
-  setPendingOnboardingExercisePick,
   setPendingOnboardingProfile,
   setPendingOnboardingRecord,
   type PendingOnboardingRecord,
@@ -110,17 +108,23 @@ describe("onboarding draft session", () => {
   it("jette les drafts sur « j'ai un compte »", () => {
     beginOnboardingDraftSession();
     setPendingOnboardingRecord(record);
-    setPendingOnboardingExercisePick({
-      exerciseId: "abc123",
-      name: "Soulevé de terre",
-      originalName: "barbell deadlift",
-      subtitle: "Dos",
-      bodyPart: "back",
-      target: "lats",
-      equipment: "barbell",
-    });
+    localStorage.setItem(
+      "one-more-pending-onboarding-exercise-pick-v1",
+      JSON.stringify({
+        exerciseId: "abc123",
+        name: "Soulevé de terre",
+        originalName: "barbell deadlift",
+        subtitle: "Dos",
+        bodyPart: "back",
+        target: "lats",
+        equipment: "barbell",
+        sessionId: sessionStorage.getItem("one-more-onboarding-draft-session-v1"),
+      }),
+    );
     discardPendingOnboardingDrafts();
     expect(peekPendingOnboardingRecord()).toBeNull();
-    expect(peekPendingOnboardingExercisePick()).toBeNull();
+    expect(
+      localStorage.getItem("one-more-pending-onboarding-exercise-pick-v1"),
+    ).toBeNull();
   });
 });

@@ -5,12 +5,12 @@ import {
   isOnboardingExercisePickLocation,
   onboardingExerciseFromCatalog,
   onboardingExerciseFromDraft,
+  persistOnboardingRecordDraft,
 } from "./onboarding-exercise-pick";
 import {
   beginOnboardingDraftSession,
   clearOnboardingDraftsAndSession,
-  setPendingOnboardingExercisePick,
-  setPendingOnboardingRecord,
+  peekPendingOnboardingRecord,
 } from "./storage";
 
 function memoryStorage(): Storage {
@@ -97,7 +97,7 @@ describe("onboardingExerciseFromDraft", () => {
   });
 });
 
-describe("hydrateOnboardingRecordSelection", () => {
+describe("persistOnboardingRecordDraft", () => {
   beforeEach(() => {
     Object.defineProperty(globalThis, "localStorage", {
       value: memoryStorage(),
@@ -114,37 +114,43 @@ describe("hydrateOnboardingRecordSelection", () => {
     clearOnboardingDraftsAndSession();
   });
 
-  it("garde le nouvel exo du catalogue après un second hydrate (Strict Mode)", () => {
-    setPendingOnboardingRecord({
-      exerciseId: "EIeI8Vf",
-      name: "Développé couché",
-      originalName: "barbell bench press",
-      bodyPart: "chest",
-      target: "pectorals",
-      equipment: "barbell",
-      weight: 60,
-      reps: 5,
-      clientTrackedId: "api-EIeI8Vf",
-      clientPerfId: "perf-old",
-    });
-    setPendingOnboardingExercisePick({
+  it("écrit le draft et hydrate le restaure", () => {
+    const exercise = onboardingExerciseFromDraft({
       exerciseId: "catalog-squat",
       name: "Squat",
       originalName: "barbell squat",
-      subtitle: "Quadriceps",
       bodyPart: "upper legs",
       target: "quads",
       equipment: "barbell",
       gifUrl: "https://example.com/squat.gif",
     });
+    persistOnboardingRecordDraft(exercise, 80, 3);
+    const pending = peekPendingOnboardingRecord();
+    expect(pending?.exerciseId).toBe("catalog-squat");
+    expect(pending?.weight).toBe(80);
+    expect(pending?.reps).toBe(3);
 
-    const first = hydrateOnboardingRecordSelection();
-    expect(first?.fromPick).toBe(true);
-    expect(first?.exercise.exerciseId).toBe("catalog-squat");
+    const hydrated = hydrateOnboardingRecordSelection();
+    expect(hydrated).toMatchObject({
+      exercise: { exerciseId: "catalog-squat", name: "Squat" },
+      weight: 80,
+      reps: 3,
+    });
+  });
 
-    const second = hydrateOnboardingRecordSelection();
-    expect(second?.fromPick).toBe(false);
-    expect(second?.exercise.exerciseId).toBe("catalog-squat");
-    expect(second?.exercise.name).toBe("Squat");
+  it("réutilise clientPerfId si même exerciseId", () => {
+    const exercise = onboardingExerciseFromDraft({
+      exerciseId: "same",
+      name: "A",
+      originalName: "a",
+      bodyPart: "chest",
+      target: "pectorals",
+      equipment: "barbell",
+    });
+    persistOnboardingRecordDraft(exercise, 60, 5);
+    const firstId = peekPendingOnboardingRecord()!.clientPerfId;
+    persistOnboardingRecordDraft(exercise, 70, 4);
+    expect(peekPendingOnboardingRecord()!.clientPerfId).toBe(firstId);
+    expect(peekPendingOnboardingRecord()!.weight).toBe(70);
   });
 });
