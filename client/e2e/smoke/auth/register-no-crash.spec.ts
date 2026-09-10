@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { mockAuthApi, seedOnboardingDone, trackPageErrors } from "./helpers";
+import {
+  continueWithEmailFlow,
+  dismissPostAuthDiscoveryAndNotifications,
+  mockAuthApi,
+  seedOnboardingDone,
+  trackPageErrors,
+} from "../helpers";
 
 const continueButton = (page: import("@playwright/test").Page) =>
   page.getByRole("button", { name: "Continuer", exact: true });
@@ -13,8 +19,7 @@ test("l'inscription complète ne plante pas au clic Créer un compte", async ({
 
   await page.goto("/#/auth");
 
-  await page.getByLabel("Email").fill("nouveau@one-more.test");
-  await page.getByRole("button", { name: "Rejoindre", exact: true }).click();
+  await continueWithEmailFlow(page, "nouveau@one-more.test");
 
   await page.getByLabel("Prénom").fill("Smoke");
   await continueButton(page).click();
@@ -31,6 +36,8 @@ test("l'inscription complète ne plante pas au clic Créer un compte", async ({
   await page.getByLabel("Mot de passe", { exact: true }).fill("password123");
   await page.getByLabel("Confirmer le mot de passe").fill("password123");
   await page.getByRole("button", { name: "Créer mon compte", exact: true }).click();
+
+  await dismissPostAuthDiscoveryAndNotifications(page);
 
   await expect(page).toHaveURL(/#\/(home|exercises)/, { timeout: 10_000 });
   expect(pageErrors).toEqual([]);

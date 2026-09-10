@@ -1,12 +1,13 @@
 import { expect, test } from "@playwright/test";
-import { e2eCatalogExercise, e2eTrackedId } from "../fixtures/exercises";
+import { e2eCatalogExercise, e2eTrackedId } from "../../fixtures/exercises";
 import {
   AUTH_STORAGE_KEY,
+  continueWithEmailFlow,
   seedAuthenticatedSession,
   seedOnboardingDone,
   trackPageErrors,
-} from "./helpers";
-import { mockExerciseWorkflowApi } from "./workflow-api";
+} from "../helpers";
+import { mockExerciseWorkflowApi } from "../workflow-api";
 
 const userBSession = {
   accessToken: "smoke-access-token-b",
@@ -80,8 +81,7 @@ test("changement de compte sans fuite d'exercices", async ({ page }) => {
     });
   });
 
-  await page.getByLabel("Email").fill(userBSession.user.email);
-  await page.getByRole("button", { name: "Rejoindre", exact: true }).click();
+  await continueWithEmailFlow(page, userBSession.user.email);
   await page.getByLabel("Mot de passe", { exact: true }).fill("password123");
 
   const loginResponse = page.waitForResponse(

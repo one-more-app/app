@@ -16,7 +16,11 @@ import type {
   XpGrantResult,
 } from "@/types";
 
-type RemoteProfile = UserProfile & { updatedAt: string };
+type RemoteProfile = UserProfile & {
+  updatedAt: string;
+  discoverySource?: string | null;
+  discoverySourceDetail?: string | null;
+};
 
 type RemoteTrackedExercise = Omit<TrackedExercise, "updatedAt" | "deletedAt"> & {
   updatedAt: string;

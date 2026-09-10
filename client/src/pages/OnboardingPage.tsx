@@ -11,6 +11,7 @@ import { OnboardingGymPermissionsStep } from '@/components/onboarding/Onboarding
 import { OnboardingGymStep } from '@/components/onboarding/OnboardingGymStep';
 import { OnboardingGymWaitStep } from '@/components/onboarding/OnboardingGymWaitStep';
 import { OnboardingIntro } from '@/components/onboarding/OnboardingIntro';
+import { OnboardingDiscoveryStep } from '@/components/onboarding/OnboardingDiscoveryStep';
 import { OnboardingNotificationsStep } from '@/components/onboarding/OnboardingNotificationsStep';
 import { OnboardingRankReveal } from '@/components/onboarding/OnboardingRecordResults';
 import { OnboardingRulerPicker } from '@/components/onboarding/OnboardingRulerPicker';
@@ -48,13 +49,20 @@ import {
 } from '@/lib/onboarding-starter-exercises';
 import {
     ONBOARDING_EXERCISE_PICK_PATH,
+    hydrateOnboardingRecordSelection,
     onboardingExerciseFromDraft,
 } from '@/lib/onboarding-exercise-pick';
-import { continueAfterOnboardingNotifications, isOnboardingNotificationsPath, ONBOARDING_NOTIFICATIONS_STEP_ENABLED, postAuthNavigateOptions, resolvePostAuthNavigation } from '@/lib/post-auth-navigation';
+import {
+    continueAfterOnboardingDiscovery,
+    continueAfterOnboardingNotifications,
+    isPostAuthOnboardingFlowPath,
+    ONBOARDING_NOTIFICATIONS_STEP_ENABLED,
+    postAuthNavigateOptions,
+    resolvePostAuthNavigation,
+} from '@/lib/post-auth-navigation';
 import {
     beginOnboardingDraftSession,
     clearPendingOnboardingRecord,
-    consumePendingOnboardingExercisePick,
     discardPendingOnboardingDrafts,
     getGymOnboardingContext,
     getOnboardingPostAuthRedirect,
@@ -157,16 +165,18 @@ function OnboardingPage() {
                         ? 'gym-permissions'
                         : normalizedStep === 'gym-wait'
                             ? 'gym-wait'
-                            : normalizedStep === 'notifications'
-                                ? 'notifications'
-                                : normalizedStep === 'rank'
-                                    ? 'rank'
-                                    : normalizedStep === '1rm'
-                                        ? 'body'
-                                        : normalizedStep === 'record' ||
-                                            normalizedStep === 'perf'
-                                            ? 'record'
-                                            : 'intro'
+                            : normalizedStep === 'discovery'
+                                ? 'discovery'
+                                : normalizedStep === 'notifications'
+                                    ? 'notifications'
+                                    : normalizedStep === 'rank'
+                                        ? 'rank'
+                                        : normalizedStep === '1rm'
+                                            ? 'body'
+                                            : normalizedStep === 'record' ||
+                                                normalizedStep === 'perf'
+                                                ? 'record'
+                                                : 'intro'
     const bodyQRaw = searchParams.get('bodyQ')
     const intentQRaw = searchParams.get('intentQ')
     const fromSettings = isOnboardingGymFromSettings(
@@ -204,11 +214,18 @@ function OnboardingPage() {
                                 ? OnboardingSteps.GYM_PERMISSIONS
                                 : step === 'gym-wait'
                                     ? OnboardingSteps.GYM_WAIT
-                                    : step === 'notifications'
-                                        ? OnboardingSteps.NOTIFICATIONS
-                                        : null
+                                    : step === 'discovery'
+                                        ? OnboardingSteps.DISCOVERY
+                                        : step === 'notifications'
+                                            ? OnboardingSteps.NOTIFICATIONS
+                                            : null
     useOnboardingStepViewed(
-        step === 'gym' || step === 'account' ? null : viewedStep,
+        step === 'gym' ||
+            step === 'account' ||
+            step === 'discovery' ||
+            step === 'notifications'
+            ? null
+            : viewedStep,
     )
 
     const goRecord = () => {
@@ -276,31 +293,18 @@ function OnboardingPage() {
         if (!hasOnboardingDraftSession()) {
             beginOnboardingDraftSession()
         }
-        const pick = consumePendingOnboardingExercisePick()
-        if (pick) {
-            const exercise = onboardingExerciseFromDraft(pick)
-            setSelectedExercise(exercise)
-            const draft = peekPendingOnboardingRecord()
-            if (draft?.exerciseId === exercise.exerciseId) {
-                setPerfWeight(draft.weight)
-                setPerfReps(draft.reps)
-            } else {
-                const defaults = defaultOnboardingPerf(exercise)
-                setPerfWeight(defaults.weight)
-                setPerfReps(defaults.reps)
-            }
+        const hydrated = hydrateOnboardingRecordSelection()
+        if (!hydrated) return
+        setSelectedExercise(hydrated.exercise)
+        setPerfWeight(hydrated.weight)
+        setPerfReps(hydrated.reps)
+        if (hydrated.fromPick) {
             setPerfDrawerOpen(true)
             trackOnboardingStepCompleted({
                 step: OnboardingSteps.RECORD_PICK,
-                exercise_id: exercise.exerciseId,
+                exercise_id: hydrated.exercise.exerciseId,
             })
-            return
         }
-        const draft = peekPendingOnboardingRecord()
-        if (!draft) return
-        setSelectedExercise(onboardingExerciseFromDraft(draft))
-        setPerfWeight(draft.weight)
-        setPerfReps(draft.reps)
     }, [step])
 
     useEffect(() => {
@@ -606,7 +610,7 @@ function OnboardingPage() {
         if (auth.status === 'authenticated') {
             setOnboardingPostAuthRedirect(null)
             const resolvedPath = await resolvePostAuthNavigation(nextPath)
-            if (!isOnboardingNotificationsPath(resolvedPath)) {
+            if (!isPostAuthOnboardingFlowPath(resolvedPath)) {
                 markOnboardingDone(resolvedPath)
             }
             navigate(resolvedPath, postAuthNavigateOptions(resolvedPath))
@@ -689,6 +693,11 @@ function OnboardingPage() {
         await finishOnboarding(nextPath)
     }
 
+    const completeDiscoveryStep = async () => {
+        const nextPath = await continueAfterOnboardingDiscovery()
+        navigate(nextPath, postAuthNavigateOptions(nextPath))
+    }
+
     const completeNotificationsStep = (outcome: 'enabled' | 'skipped') => {
         if (outcome === 'enabled') {
             trackOnboardingStepCompleted({ step: OnboardingSteps.NOTIFICATIONS })
@@ -758,6 +767,7 @@ function OnboardingPage() {
             step === 'gym-permissions' ||
             step === 'gym-wait' ||
             step === 'account' ||
+            step === 'discovery' ||
             step === 'notifications'
         ) {
             return
@@ -1129,6 +1139,11 @@ function OnboardingPage() {
                     onUnlock={() => void handleGymUnlock()}
                     onChangeGym={goChangeGym}
                     unlocking={unlockingGym}
+                />
+            ) : step === 'discovery' ? (
+                <OnboardingDiscoveryStep
+                    onContinue={() => void completeDiscoveryStep()}
+                    onSkip={() => void completeDiscoveryStep()}
                 />
             ) : step === 'notifications' && ONBOARDING_NOTIFICATIONS_STEP_ENABLED ? (
                 <OnboardingNotificationsStep

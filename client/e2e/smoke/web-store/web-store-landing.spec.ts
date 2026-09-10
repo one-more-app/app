@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { seedForceWebStoreLanding, trackPageErrors } from "./helpers";
-import { UI } from "../../src/lib/translations";
+import { seedForceWebStoreLanding, trackPageErrors } from "../helpers";
+import { UI } from "../../../src/lib/translations";
 
 const ONELINK_DOWNLOAD_URL = "https://one-more.onelink.me/XFST";
 

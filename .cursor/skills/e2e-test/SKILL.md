@@ -18,7 +18,7 @@ description: Crée et exécute des tests e2e Playwright smoke pour One More à p
 - [ ] 1. Comprendre le parcours demandé (état initial, actions, résultat visible)
 - [ ] 2. Explorer le code (page React, hooks, data-api.ts, translations.ts)
 - [ ] 3. Choisir les helpers/mocks existants
-- [ ] 4. Écrire le spec dans client/e2e/smoke/
+- [ ] 4. Écrire le spec dans client/e2e/smoke/<feature>/ (rule e2e-feature-organization)
 - [ ] 5. Exécuter npm run test:smoke --prefix client
 - [ ] 6. Corriger jusqu'à 5/5 verts (ou N+1 si nouveau spec)
 - [ ] 7. Mettre à jour docs/quality-gates.md si nouveau parcours smoke
@@ -34,7 +34,7 @@ description: Crée et exécute des tests e2e Playwright smoke pour One More à p
 | Texte bouton/label | `client/src/lib/translations.ts` (`UI.*`) |
 | Endpoints API | `client/src/lib/data-api.ts`, `client/src/lib/social-api.ts` |
 | Flux métier (ajout perf, etc.) | page `client/src/pages/*.tsx` |
-| Specs existantes | `client/e2e/smoke/*.spec.ts` |
+| Specs existantes | `client/e2e/smoke/<feature>/*.spec.ts` |
 
 Lire au moins un spec proche (`add-exercise.spec.ts`, `log-performance.spec.ts`) avant d'écrire.
 
@@ -61,8 +61,8 @@ import {
   seedAuthenticatedSession,
   seedOnboardingDone,
   trackPageErrors,
-} from "./helpers";
-import { mockExerciseWorkflowApi } from "./workflow-api";
+} from "../helpers";
+import { mockExerciseWorkflowApi } from "../workflow-api";
 
 test("description courte en français", async ({ page }) => {
   const pageErrors = trackPageErrors(page);
@@ -112,7 +112,7 @@ Données stables : `client/e2e/fixtures/exercises.ts` (`e2eCatalogExercise`, `e2
 npm run test:smoke --prefix client
 
 # Un seul fichier
-cd client && npx playwright test e2e/smoke/mon-parcours.spec.ts
+cd client && npx playwright test e2e/smoke/<feature>/mon-parcours.spec.ts
 
 # Preview stale après modif app
 lsof -ti:4173 | xargs kill -9
@@ -136,5 +136,6 @@ Ajouter une ligne dans `docs/quality-gates.md` (section pre-push) pour chaque no
 ## Références
 
 - Rule globale : `.cursor/rules/e2e-tests.mdc`
+- Organisation par feature : `.cursor/rules/e2e-feature-organization.mdc`
 - Copy FR : `.cursor/rules/copywriting-french.mdc`
 - Quality gates : `docs/quality-gates.md`

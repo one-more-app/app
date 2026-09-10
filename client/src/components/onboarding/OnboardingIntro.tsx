@@ -1,8 +1,8 @@
 import logoTextLight from "@/assets/logo-text.png";
+import { Trackable } from "@/components/analytics/Trackable";
 import { OnboardingFeatureSlider } from "@/components/onboarding/OnboardingFeatureSlider";
 import { OnboardingMarcusHero } from "@/components/onboarding/OnboardingMarcusHero";
 import { onboardingEntrance } from "@/components/onboarding/onboarding-motion";
-import { Trackable } from "@/components/analytics/Trackable";
 import { Button } from "@/components/ui/button";
 import { OnboardingSteps } from "@/lib/analytics";
 import { UI } from "@/lib/translations";
@@ -92,7 +92,7 @@ export function OnboardingIntro({ onContinue, onHasAccount }: OnboardingIntroPro
                 </div>
             </div>
 
-            <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col justify-center px-4 py-6">
+            <div className="-mt-40 mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col justify-center px-4 py-6">
                 <OnboardingFeatureSlider />
             </div>
 

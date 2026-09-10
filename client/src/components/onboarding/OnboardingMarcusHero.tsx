@@ -8,16 +8,16 @@ type OnboardingMarcusHeroProps = {
 
 export function OnboardingMarcusHero({ className }: OnboardingMarcusHeroProps) {
     return (
-        <div className={cn("relative -mx-4 shrink-0 overflow-hidden", className)}>
+        <div className={cn("relative shrink-0 overflow-hidden", className)}>
             <img
                 src={ONBOARDING_MARCUS_IMAGE_SRC}
                 alt=""
-                className="h-50 w-full select-none object-cover object-[50%_15%]"
+                className="h-[300px] w-full select-none object-cover object-[50%_55%]"
                 draggable={false}
             />
             <div
                 aria-hidden
-                className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background via-background/70 to-transparent"
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-[200px] bg-gradient-to-t from-background via-background/70 to-transparent"
             />
         </div>
     );

@@ -32,6 +32,7 @@ export const OnboardingSteps = {
   ACCOUNT_REGISTER_USERNAME: "account_register_username",
   ACCOUNT_REGISTER_PASSWORD: "account_register_password",
   ACCOUNT_REGISTER_REFERRAL: "account_register_referral",
+  DISCOVERY: "discovery",
   NOTIFICATIONS: "notifications",
   GYM_QUESTION: "gym_question",
   GYM_LOCATING: "gym_locating",
@@ -145,6 +146,7 @@ export function resolveOnboardingStepFromLocation(
     return OnboardingSteps.INTENT_GOAL;
   }
   if (rawStep === "account") return OnboardingSteps.ACCOUNT_EMAIL;
+  if (rawStep === "discovery") return OnboardingSteps.DISCOVERY;
   if (rawStep === "notifications") return OnboardingSteps.NOTIFICATIONS;
   if (rawStep === "gym") return OnboardingSteps.GYM_QUESTION;
   if (

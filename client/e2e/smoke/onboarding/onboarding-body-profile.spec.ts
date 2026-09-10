@@ -1,6 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
-import { mockAuthApi, trackPageErrors } from "./helpers";
-import { UI } from "../../src/lib/translations";
+import {
+  continueWithEmailFlow,
+  dismissPostAuthDiscoveryAndNotifications,
+  mockAuthApi,
+  trackPageErrors,
+} from "../helpers";
+import { UI } from "../../../src/lib/translations";
 
 const continueButton = (page: Page) =>
   page.getByRole("button", { name: UI.continue, exact: true });
@@ -57,8 +62,7 @@ test("l'onboarding body (genre) est envoyé dans le register", async ({
   await expect(page.getByRole("heading", { name: "Ton palier" })).toBeVisible();
   await page.getByRole("button", { name: "Créer mon compte et sauvegarder" }).click();
 
-  await page.getByLabel("Email").fill("body-onboarding@one-more.test");
-  await page.getByRole("button", { name: "Rejoindre", exact: true }).click();
+  await continueWithEmailFlow(page, "body-onboarding@one-more.test");
 
   await page.getByLabel("Prénom").fill("Body");
   await continueButton(page).click();
@@ -90,6 +94,8 @@ test("l'onboarding body (genre) est envoyé dans le register", async ({
     ageYears: 25,
     trainingGoal: "muscle",
   });
+
+  await dismissPostAuthDiscoveryAndNotifications(page);
 
   await expect(page).toHaveURL(/#\/exercise\//, { timeout: 10_000 });
 

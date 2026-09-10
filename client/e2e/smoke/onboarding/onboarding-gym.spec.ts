@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { isGymOnboardingBypassed } from "../../src/lib/gym-onboarding-route";
-import { UI } from "../../src/lib/translations";
+import { isGymOnboardingBypassed } from "../../../src/lib/gym-onboarding-route";
+import { UI } from "../../../src/lib/translations";
 import {
   mockAuthApi,
   mockGymPlace,
@@ -9,7 +9,7 @@ import {
   trackPageErrors,
   AUTH_STORAGE_KEY,
   ONBOARDING_DONE_KEY,
-} from "./helpers";
+} from "../helpers";
 
 const gymOnboardingOff = isGymOnboardingBypassed();
 

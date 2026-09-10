@@ -16,7 +16,11 @@ import { UserEntity } from '../auth/entities/user.entity.js';
 import { UsernameService } from '../social/username.service.js';
 import { ObjectStorageService } from '../storage/object-storage.service.js';
 import { UserProfileEntity } from './user-profile.entity.js';
-import type { UpsertProfileDto, UpsertAttributionDto } from './profile.dto.js';
+import type {
+  UpsertProfileDto,
+  UpsertAttributionDto,
+  UpsertDiscoverySourceDto,
+} from './profile.dto.js';
 
 const MAX_AVATAR_BYTES = 512 * 1024;
 const ALLOWED_AVATAR_MIME_TYPES = new Set([
@@ -113,6 +117,8 @@ export class ProfileService {
       avatarUrl: this.objectStorage.normalizePublicObjectUrl(profile.avatarUrl),
       username: profile.username,
       isPremium,
+      discoverySource: profile.discoverySource,
+      discoverySourceDetail: profile.discoverySourceDetail,
       updatedAt: profile.updatedAt.toISOString(),
     };
   }
@@ -208,6 +214,29 @@ export class ProfileService {
 
     await this.profilesRepo.save(profile);
     void this.billingService.syncSubscriberAttributes(userId);
+    return { ok: true };
+  }
+
+  async upsertDiscoverySource(
+    userId: string,
+    body: UpsertDiscoverySourceDto,
+  ): Promise<{ ok: true }> {
+    const profile = await this.profilesRepo.findOne({ where: { userId } });
+    if (!profile) throw new NotFoundException('Profil introuvable');
+
+    // Write-once : on conserve la première réponse (ou skip).
+    if (profile.discoverySourceRecordedAt) return { ok: true };
+
+    const now = new Date();
+    profile.discoverySource = body.source;
+    const detail =
+      body.source === 'other' && body.detail?.trim()
+        ? body.detail.trim().slice(0, 200)
+        : null;
+    profile.discoverySourceDetail = detail;
+    profile.discoverySourceRecordedAt = now;
+
+    await this.profilesRepo.save(profile);
     return { ok: true };
   }
 

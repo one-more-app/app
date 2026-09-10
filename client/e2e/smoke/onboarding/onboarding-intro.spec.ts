@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { mockAuthApi, trackPageErrors } from "./helpers";
-import { UI } from "../../src/lib/translations";
+import { mockAuthApi, trackPageErrors } from "../helpers";
+import { UI } from "../../../src/lib/translations";
 
 test("l'intro onboarding montre les features puis Commencer mène au genre", async ({
   page,

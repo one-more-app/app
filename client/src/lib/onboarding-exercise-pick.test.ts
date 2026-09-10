@@ -1,10 +1,35 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   ONBOARDING_EXERCISE_PICK_PATH,
+  hydrateOnboardingRecordSelection,
   isOnboardingExercisePickLocation,
   onboardingExerciseFromCatalog,
   onboardingExerciseFromDraft,
 } from "./onboarding-exercise-pick";
+import {
+  beginOnboardingDraftSession,
+  clearOnboardingDraftsAndSession,
+  setPendingOnboardingExercisePick,
+  setPendingOnboardingRecord,
+} from "./storage";
+
+function memoryStorage(): Storage {
+  const map = new Map<string, string>();
+  return {
+    get length() {
+      return map.size;
+    },
+    clear: () => map.clear(),
+    getItem: (key: string) => map.get(key) ?? null,
+    key: (index: number) => [...map.keys()][index] ?? null,
+    removeItem: (key: string) => {
+      map.delete(key);
+    },
+    setItem: (key: string, value: string) => {
+      map.set(key, String(value));
+    },
+  };
+}
 
 describe("isOnboardingExercisePickLocation", () => {
   it("détecte le catalogue ouvert depuis le record onboarding", () => {
@@ -69,5 +94,57 @@ describe("onboardingExerciseFromDraft", () => {
       originalName: "barbell deadlift",
       subtitle: "Dorsaux",
     });
+  });
+});
+
+describe("hydrateOnboardingRecordSelection", () => {
+  beforeEach(() => {
+    Object.defineProperty(globalThis, "localStorage", {
+      value: memoryStorage(),
+      configurable: true,
+    });
+    Object.defineProperty(globalThis, "sessionStorage", {
+      value: memoryStorage(),
+      configurable: true,
+    });
+    beginOnboardingDraftSession();
+  });
+
+  afterEach(() => {
+    clearOnboardingDraftsAndSession();
+  });
+
+  it("garde le nouvel exo du catalogue après un second hydrate (Strict Mode)", () => {
+    setPendingOnboardingRecord({
+      exerciseId: "EIeI8Vf",
+      name: "Développé couché",
+      originalName: "barbell bench press",
+      bodyPart: "chest",
+      target: "pectorals",
+      equipment: "barbell",
+      weight: 60,
+      reps: 5,
+      clientTrackedId: "api-EIeI8Vf",
+      clientPerfId: "perf-old",
+    });
+    setPendingOnboardingExercisePick({
+      exerciseId: "catalog-squat",
+      name: "Squat",
+      originalName: "barbell squat",
+      subtitle: "Quadriceps",
+      bodyPart: "upper legs",
+      target: "quads",
+      equipment: "barbell",
+      gifUrl: "https://example.com/squat.gif",
+    });
+
+    const first = hydrateOnboardingRecordSelection();
+    expect(first?.fromPick).toBe(true);
+    expect(first?.exercise.exerciseId).toBe("catalog-squat");
+
+    const second = hydrateOnboardingRecordSelection();
+    expect(second?.fromPick).toBe(false);
+    expect(second?.exercise.exerciseId).toBe("catalog-squat");
+    expect(second?.exercise.name).toBe("Squat");
   });
 });

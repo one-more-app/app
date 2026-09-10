@@ -93,6 +93,15 @@ export class UserProfileEntity {
   @Column({ type: 'timestamptz', nullable: true })
   attributionRecordedAt!: Date | null;
 
+  @Column({ type: 'text', nullable: true })
+  discoverySource!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  discoverySourceDetail!: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  discoverySourceRecordedAt!: Date | null;
+
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 }
