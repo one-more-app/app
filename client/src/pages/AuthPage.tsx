@@ -29,7 +29,7 @@ import { isValidUsername, normalizeUsername } from "@/lib/username";
 import { cn } from "@/lib/utils";
 import { Capacitor } from "@capacitor/core";
 import { Mail } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 const CGU_URL = "https://site.one-more.app/cgu";
@@ -92,6 +92,8 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
     const [password, setPassword] = useState("");
     const [passwordConfirm, setPasswordConfirm] = useState("");
     const [isBusy, setIsBusy] = useState(false);
+    const registerPasswordRef = useRef<HTMLInputElement>(null);
+    const registerPasswordConfirmRef = useRef<HTMLInputElement>(null);
     const trackOnboardingAuth = embedded || needsOnboarding();
     const fromOnboardingConversion = embedded && peekPendingOnboardingRecord() != null;
     const currentAuthStep = authOnboardingStep(step);
@@ -357,6 +359,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 onChange={(e) => setFirstName(e.target.value)}
                                 placeholder="Prénom"
                                 autoComplete="given-name"
+                                autoFocus
                                 enterKeyHint="next"
                             />
 
@@ -392,6 +395,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 placeholder="Nom"
                                 className="bg-card"
                                 autoComplete="family-name"
+                                autoFocus
                                 enterKeyHint="next"
                             />
 
@@ -425,6 +429,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 onChange={setUsername}
                                 onStatusChange={setUsernameStatus}
                                 inputClassName="bg-card"
+                                autoFocus
                                 enterKeyHint="next"
                             />
 
@@ -450,11 +455,20 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                             className="space-y-3"
                             onSubmit={(e) => {
                                 e.preventDefault();
+                                if (!password) {
+                                    registerPasswordRef.current?.focus();
+                                    return;
+                                }
+                                if (!passwordConfirm) {
+                                    registerPasswordConfirmRef.current?.focus();
+                                    return;
+                                }
                                 void submitRegister();
                             }}
                         >
                             <div className="space-y-1">
                                 <Input
+                                    ref={registerPasswordRef}
                                     label={UI.password}
                                     value={password}
                                     className="bg-card"
@@ -462,6 +476,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                     type="password"
                                     placeholder="••••••••"
                                     autoComplete="new-password"
+                                    autoFocus
                                     enterKeyHint="next"
                                     passwordToggle={{
                                         showLabel: UI.showPassword,
@@ -475,6 +490,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
 
                             <div className="space-y-1">
                                 <Input
+                                    ref={registerPasswordConfirmRef}
                                     label={UI.confirmPassword}
                                     value={passwordConfirm}
                                     className="bg-card"
@@ -538,6 +554,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                             className="bg-card"
                             autoCorrect="off"
                             autoComplete="email"
+                            autoFocus
                             enterKeyHint="next"
                             placeholder="email@exemple.com"
                         />
@@ -586,6 +603,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 placeholder="••••••••"
                                 className="bg-card"
                                 autoComplete="current-password"
+                                autoFocus
                                 enterKeyHint="done"
                                 passwordToggle={{
                                     showLabel: UI.showPassword,
