@@ -38,6 +38,7 @@ import {
     ONBOARDING_EXERCISE_PICK_PATH,
     hydrateOnboardingRecordSelection,
     onboardingExerciseFromDraft,
+    persistOnboardingRecordDraft,
 } from '@/lib/onboarding-exercise-pick';
 import {
     isGymPermissionsNativeContext,
@@ -49,7 +50,6 @@ import {
 import {
     defaultOnboardingPerf,
     onboardingTrackedId,
-    resolveOnboardingExerciseGifUrl,
     type OnboardingStarterExercise,
 } from '@/lib/onboarding-starter-exercises';
 import {
@@ -76,7 +76,6 @@ import {
     setOnboardingFirstExercisePending,
     setOnboardingPostAuthRedirect,
     setPendingOnboardingProfile,
-    setPendingOnboardingRecord,
     setUserProfile,
 } from '@/lib/storage';
 import { getLeagueInfo } from '@/lib/strength-standards';
@@ -257,23 +256,7 @@ function OnboardingPage() {
         weight: number,
         reps: number,
     ) => {
-        const existing = peekPendingOnboardingRecord()
-        setPendingOnboardingRecord({
-            exerciseId: exercise.exerciseId,
-            name: exercise.name,
-            originalName: exercise.originalName,
-            bodyPart: exercise.bodyPart,
-            target: exercise.target,
-            equipment: exercise.equipment,
-            gifUrl: resolveOnboardingExerciseGifUrl(exercise),
-            weight,
-            reps,
-            clientTrackedId: onboardingTrackedId(exercise.exerciseId),
-            clientPerfId:
-                existing?.exerciseId === exercise.exerciseId
-                    ? existing.clientPerfId
-                    : crypto.randomUUID(),
-        })
+        persistOnboardingRecordDraft(exercise, weight, reps)
     }
 
     useEffect(() => {
@@ -286,13 +269,6 @@ function OnboardingPage() {
         setSelectedExercise(hydrated.exercise)
         setPerfWeight(hydrated.weight)
         setPerfReps(hydrated.reps)
-        if (hydrated.fromPick) {
-            setPerfDrawerOpen(true)
-            trackOnboardingStepCompleted({
-                step: OnboardingSteps.RECORD_PICK,
-                exercise_id: hydrated.exercise.exerciseId,
-            })
-        }
     }, [step])
 
     useEffect(() => {
