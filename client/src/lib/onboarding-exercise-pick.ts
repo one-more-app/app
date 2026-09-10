@@ -1,13 +1,10 @@
 import {
-  defaultOnboardingPerf,
   findOnboardingStarterExercise,
   onboardingTrackedId,
   resolveOnboardingExerciseGifUrl,
   type OnboardingStarterExercise,
 } from "@/lib/onboarding-starter-exercises";
 import {
-  clearPendingOnboardingExercisePick,
-  peekPendingOnboardingExercisePick,
   peekPendingOnboardingRecord,
   setPendingOnboardingRecord,
 } from "@/lib/storage";
@@ -71,53 +68,42 @@ export function onboardingExerciseFromDraft(draft: {
   );
 }
 
+export function persistOnboardingRecordDraft(
+  exercise: OnboardingStarterExercise,
+  weight: number,
+  reps: number,
+): void {
+  const existing = peekPendingOnboardingRecord();
+  setPendingOnboardingRecord({
+    exerciseId: exercise.exerciseId,
+    name: exercise.name,
+    originalName: exercise.originalName,
+    bodyPart: exercise.bodyPart,
+    target: exercise.target,
+    equipment: exercise.equipment,
+    gifUrl: resolveOnboardingExerciseGifUrl(exercise),
+    weight,
+    reps,
+    clientTrackedId: onboardingTrackedId(exercise.exerciseId),
+    clientPerfId:
+      existing?.exerciseId === exercise.exerciseId
+        ? existing.clientPerfId
+        : crypto.randomUUID(),
+  });
+}
+
 export type OnboardingRecordSelectionHydration = {
   exercise: OnboardingStarterExercise;
   weight: number;
   reps: number;
-  fromPick: boolean;
 };
 
-/**
- * Hydrate l'étape record. Un pick catalogue aligne aussi le draft pour qu'un
- * second passage (Strict Mode remount) ne restaure pas l'ancien exo.
- */
 export function hydrateOnboardingRecordSelection(): OnboardingRecordSelectionHydration | null {
-  const pick = peekPendingOnboardingExercisePick();
-  if (pick) {
-    clearPendingOnboardingExercisePick();
-    const exercise = onboardingExerciseFromDraft(pick);
-    const draft = peekPendingOnboardingRecord();
-    const defaults = defaultOnboardingPerf(exercise);
-    const weight =
-      draft?.exerciseId === exercise.exerciseId ? draft.weight : defaults.weight;
-    const reps =
-      draft?.exerciseId === exercise.exerciseId ? draft.reps : defaults.reps;
-    setPendingOnboardingRecord({
-      exerciseId: exercise.exerciseId,
-      name: exercise.name,
-      originalName: exercise.originalName,
-      bodyPart: exercise.bodyPart,
-      target: exercise.target,
-      equipment: exercise.equipment,
-      gifUrl: resolveOnboardingExerciseGifUrl(exercise),
-      weight,
-      reps,
-      clientTrackedId: onboardingTrackedId(exercise.exerciseId),
-      clientPerfId:
-        draft?.exerciseId === exercise.exerciseId
-          ? draft.clientPerfId
-          : crypto.randomUUID(),
-    });
-    return { exercise, weight, reps, fromPick: true };
-  }
-
   const draft = peekPendingOnboardingRecord();
   if (!draft) return null;
   return {
     exercise: onboardingExerciseFromDraft(draft),
     weight: draft.weight,
     reps: draft.reps,
-    fromPick: false,
   };
 }
