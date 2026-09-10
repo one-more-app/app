@@ -5,7 +5,7 @@ import {
 } from "@/lib/profile-username-api";
 import { UI } from "@/lib/translations";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
 
 export type UsernameFieldStatus =
   | "idle"
@@ -23,6 +23,7 @@ type UsernameFieldProps = {
   autoFocus?: boolean;
   id?: string;
   inputClassName?: string;
+  enterKeyHint?: ComponentProps<"input">["enterKeyHint"];
 };
 
 export function UsernameField({
@@ -33,6 +34,7 @@ export function UsernameField({
   autoFocus = false,
   id = "username",
   inputClassName,
+  enterKeyHint,
 }: UsernameFieldProps) {
   const [status, setStatus] = useState<UsernameFieldStatus>("idle");
   const normalized = normalizeUsername(value);
@@ -80,6 +82,7 @@ export function UsernameField({
         autoCapitalize="none"
         autoCorrect="off"
         autoFocus={autoFocus}
+        enterKeyHint={enterKeyHint}
         className={inputClassName}
       />
       <p className="text-xs text-muted-foreground">{UI.usernameHint}</p>

@@ -1,14 +1,12 @@
 import {
-    AppleBrandIcon,
+    AppStoreBrandIcon,
     ChatGptBrandIcon,
     ClaudeBrandIcon,
     GeminiBrandIcon,
     GoogleBrandIcon,
     GooglePlayBrandIcon,
-    InstagramBrandIcon,
     PerplexityBrandIcon,
-    TikTokBrandIcon,
-    YouTubeBrandIcon,
+    SocialNetworksBrandIcons,
 } from '@/components/onboarding/discovery-brand-icons'
 import {
     OnboardingReveal,
@@ -35,7 +33,7 @@ import type { DiscoverySourceChoice } from '@/lib/discovery-source'
 import { upsertDiscoverySource } from '@/lib/discovery-source-api'
 import { UI } from '@/lib/translations'
 import { Capacitor } from '@capacitor/core'
-import { CircleEllipsis, Megaphone, Store, Users } from 'lucide-react'
+import { CircleEllipsis, Store, Users } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 type OnboardingDiscoveryStepProps = {
@@ -66,7 +64,7 @@ export function OnboardingDiscoveryStep({
                   ? {
                         id: 'app_store',
                         label: UI.onboardingDiscoveryAppStore,
-                        icon: <AppleBrandIcon />,
+                        icon: <AppStoreBrandIcon />,
                         analyticsLabel: 'discovery_app_store',
                     }
                   : {
@@ -75,9 +73,6 @@ export function OnboardingDiscoveryStep({
                         Icon: Store,
                         analyticsLabel: 'discovery_app_store',
                     }
-
-        const social = UI.onboardingDiscoverySectionSocial
-        const ai = UI.onboardingDiscoverySectionAi
 
         return [
             storeOption,
@@ -94,59 +89,33 @@ export function OnboardingDiscoveryStep({
                 analyticsLabel: 'discovery_friends_family',
             },
             {
-                id: 'tiktok',
-                label: UI.onboardingDiscoveryTiktok,
-                icon: <TikTokBrandIcon />,
-                section: social,
-                analyticsLabel: 'discovery_tiktok',
-            },
-            {
-                id: 'instagram',
-                label: UI.onboardingDiscoveryInstagram,
-                icon: <InstagramBrandIcon />,
-                section: social,
-                analyticsLabel: 'discovery_instagram',
-            },
-            {
-                id: 'youtube',
-                label: UI.onboardingDiscoveryYoutube,
-                icon: <YouTubeBrandIcon />,
-                section: social,
-                analyticsLabel: 'discovery_youtube',
-            },
-            {
-                id: 'influencer',
-                label: UI.onboardingDiscoveryInfluencer,
-                Icon: Megaphone,
-                section: social,
-                analyticsLabel: 'discovery_influencer',
+                id: 'social',
+                label: UI.onboardingDiscoverySocial,
+                icon: <SocialNetworksBrandIcons />,
+                analyticsLabel: 'discovery_social',
             },
             {
                 id: 'chatgpt_ai',
                 label: UI.onboardingDiscoveryChatgpt,
                 icon: <ChatGptBrandIcon />,
-                section: ai,
                 analyticsLabel: 'discovery_chatgpt_ai',
             },
             {
                 id: 'claude',
                 label: UI.onboardingDiscoveryClaude,
                 icon: <ClaudeBrandIcon />,
-                section: ai,
                 analyticsLabel: 'discovery_claude',
             },
             {
                 id: 'gemini',
                 label: UI.onboardingDiscoveryGemini,
                 icon: <GeminiBrandIcon />,
-                section: ai,
                 analyticsLabel: 'discovery_gemini',
             },
             {
                 id: 'perplexity',
                 label: UI.onboardingDiscoveryPerplexity,
                 icon: <PerplexityBrandIcon />,
-                section: ai,
                 analyticsLabel: 'discovery_perplexity',
             },
             {

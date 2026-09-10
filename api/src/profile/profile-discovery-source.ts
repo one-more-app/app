@@ -3,6 +3,8 @@ export const DISCOVERY_SOURCES = [
   'google_play',
   'google_web',
   'friends_family',
+  'social',
+  // Legacy (anciennes réponses UI, encore acceptées en API)
   'tiktok',
   'instagram',
   'youtube',

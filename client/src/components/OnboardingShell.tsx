@@ -9,6 +9,11 @@ type OnboardingShellProps = {
     children: ReactNode;
     /** `cinematic` : vidéo + thème sombre (landing store). */
     variant?: "theme" | "cinematic";
+    /**
+     * Pas de padding-top : le hero (Marcus) passe derrière la status bar.
+     * Les écrans texte doivent ajouter leur propre `pt-safe-top`.
+     */
+    bleedTop?: boolean;
 };
 
 function CinematicOnboardingShell({ children }: { children: ReactNode }) {
@@ -48,6 +53,7 @@ function CinematicOnboardingShell({ children }: { children: ReactNode }) {
 export function OnboardingShell({
     children,
     variant = "theme",
+    bleedTop = false,
 }: OnboardingShellProps) {
     if (variant === "cinematic") {
         return <CinematicOnboardingShell>{children}</CinematicOnboardingShell>;
@@ -55,7 +61,12 @@ export function OnboardingShell({
 
     return (
         <div className="fixed inset-0 overflow-hidden bg-background text-foreground">
-            <div className="flex h-dvh min-h-dvh flex-col safe-padding">
+            <div
+                className={cn(
+                    "flex h-dvh min-h-dvh flex-col",
+                    bleedTop ? "safe-padding-bleed-top" : "safe-padding",
+                )}
+            >
                 <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col [&>*]:flex [&>*]:min-h-0 [&>*]:flex-1 [&>*]:flex-col">
                     {children}
                 </div>
