@@ -122,8 +122,7 @@ export function resolveOnboardingStepFromLocation(
   if (rawStep === "rank") return OnboardingSteps.RANK_REVEAL;
   if (rawStep === "body") {
     const bodyQ = Number.parseInt(params.get("bodyQ") ?? "0", 10) || 0;
-    if (bodyQ === 1) return OnboardingSteps.BODY_WEIGHT;
-    if (bodyQ === 2) return OnboardingSteps.BODY_HEIGHT;
+    if (bodyQ >= 1) return OnboardingSteps.BODY_WEIGHT;
     return OnboardingSteps.BODY_GENDER;
   }
   if (rawStep === "account") return OnboardingSteps.ACCOUNT_EMAIL;
@@ -141,8 +140,7 @@ export function resolveOnboardingStepFromLocation(
 }
 
 export function bodyStepFromQuestion(bodyQ: number): OnboardingStepId {
-  if (bodyQ === 1) return OnboardingSteps.BODY_WEIGHT;
-  if (bodyQ === 2) return OnboardingSteps.BODY_HEIGHT;
+  if (bodyQ >= 1) return OnboardingSteps.BODY_WEIGHT;
   return OnboardingSteps.BODY_GENDER;
 }
 

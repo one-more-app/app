@@ -43,7 +43,7 @@ Helper : `trackOnboardingStepViewed` / `Completed` / `Skipped` / `trackOnboardin
 | `record_pick` | `OnboardingPage` `?step=record` | viewed au mount, completed sur Continuer |
 | `record_perf` | drawer `AddPerfDrawer` depuis la liste | completed à l'enregistrement de la perf |
 | `record_1rm` | `OnboardingPage` `?step=1rm` | completed sur Continuer |
-| `body_gender` / `body_weight` / `body_height` | `OnboardingPage` | viewed à chaque `bodyQ`, completed sur Suivant |
+| `body_gender` / `body_weight` | `OnboardingPage` | genre puis poids+taille regroupés ; `body_weight` completed avec `gender`, `weight_kg`, `height_cm` |
 | `rank_reveal` | `OnboardingPage` `?step=rank` | completed sur « Bats ce record » |
 | `account_email` | `AuthPage` | completed avec `exists` après `identifyEmail` |
 | `account_login` | `AuthPage` | + `user_logged_in` (`method=email\|google\|apple`) |

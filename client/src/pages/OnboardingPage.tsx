@@ -315,7 +315,7 @@ function OnboardingPage() {
         }
         void mutate('profile')
         trackOnboardingStepCompleted({
-            step: OnboardingSteps.BODY_HEIGHT,
+            step: OnboardingSteps.BODY_WEIGHT,
             gender,
             weight_kg: weightKg,
             height_cm: heightCm,
@@ -325,10 +325,6 @@ function OnboardingPage() {
 
     const advanceBody = () => {
         if (bodyQ === 1) {
-            trackOnboardingStepCompleted({
-                step: OnboardingSteps.BODY_WEIGHT,
-                weight_kg: weightKg,
-            })
             void finishBodyAndContinue()
             return
         }

@@ -34,7 +34,7 @@ describe("resolveOnboardingStepFromLocation", () => {
     ).toBe(OnboardingSteps.BODY_WEIGHT);
     expect(
       resolveOnboardingStepFromLocation("/onboarding", "?step=body&bodyQ=2"),
-    ).toBe(OnboardingSteps.BODY_HEIGHT);
+    ).toBe(OnboardingSteps.BODY_WEIGHT);
     expect(
       resolveOnboardingStepFromLocation("/onboarding", "?step=account"),
     ).toBe(OnboardingSteps.ACCOUNT_EMAIL);
@@ -67,7 +67,7 @@ describe("body and gym step helpers", () => {
   it("maps bodyQ and gym substeps", () => {
     expect(bodyStepFromQuestion(0)).toBe(OnboardingSteps.BODY_GENDER);
     expect(bodyStepFromQuestion(1)).toBe(OnboardingSteps.BODY_WEIGHT);
-    expect(bodyStepFromQuestion(2)).toBe(OnboardingSteps.BODY_HEIGHT);
+    expect(bodyStepFromQuestion(2)).toBe(OnboardingSteps.BODY_WEIGHT);
     expect(gymStepFromSubStep("question")).toBe(OnboardingSteps.GYM_QUESTION);
     expect(gymStepFromSubStep("search")).toBe(OnboardingSteps.GYM_SEARCH);
   });
