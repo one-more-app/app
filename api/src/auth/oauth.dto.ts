@@ -7,6 +7,21 @@ import {
   Min,
 } from 'class-validator';
 
+export class RedditAdsMatchDto {
+  /** Click ID Reddit (`rdt_cid`) si l’utilisateur vient d’une pub. */
+  @IsOptional()
+  @IsString()
+  redditClickId?: string;
+
+  @IsOptional()
+  @IsString()
+  idfa?: string;
+
+  @IsOptional()
+  @IsString()
+  aaid?: string;
+}
+
 export class OAuthStartDto {
   @IsOptional()
   @IsString()
@@ -23,7 +38,7 @@ export class OAuthStartDto {
   state?: string;
 }
 
-export class OAuthCallbackDto {
+export class OAuthCallbackDto extends RedditAdsMatchDto {
   @IsString()
   code!: string;
 
@@ -61,7 +76,7 @@ export class OAuthCallbackDto {
   gender?: 'male' | 'female';
 }
 
-export class GoogleIdTokenDto {
+export class GoogleIdTokenDto extends RedditAdsMatchDto {
   @IsString()
   idToken!: string;
 
@@ -101,7 +116,7 @@ export class GoogleIdTokenDto {
   gender?: 'male' | 'female';
 }
 
-export class AppleIdTokenDto {
+export class AppleIdTokenDto extends RedditAdsMatchDto {
   @IsString()
   idToken!: string;
 

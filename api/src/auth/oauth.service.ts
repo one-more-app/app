@@ -19,6 +19,8 @@ import { AuthService } from './auth.service.js';
 import { InvitesService } from '../social/invites.service.js';
 import { ReferralService } from '../social/referral.service.js';
 import { consumeOAuthState, saveOAuthState } from './oauth-state.store.js';
+import { RedditConversionsService } from '../analytics/reddit-conversions.service.js';
+import type { RedditAdsRequestContext } from '../analytics/reddit-conversions.js';
 
 type Provider = 'google' | 'apple';
 type Platform = 'android' | 'ios';
@@ -79,6 +81,7 @@ export class OAuthService {
     private auth: AuthService,
     private invites: InvitesService,
     private referrals: ReferralService,
+    private redditConversions: RedditConversionsService,
   ) {}
 
   start(
@@ -159,6 +162,7 @@ export class OAuthService {
       weightKg?: number;
       heightCm?: number;
       gender?: 'male' | 'female';
+      ads?: RedditAdsRequestContext;
     },
   ) {
     const pending = consumeOAuthState(params.state);
@@ -186,6 +190,7 @@ export class OAuthService {
       weightKg: params.weightKg,
       heightCm: params.heightCm,
       gender: params.gender,
+      ads: params.ads,
     });
   }
 
@@ -199,6 +204,7 @@ export class OAuthService {
     weightKg?: number;
     heightCm?: number;
     gender?: 'male' | 'female';
+    ads?: RedditAdsRequestContext;
   }) {
     const audience = this.googleIdTokenAudience(params.platform);
     const {
@@ -218,6 +224,7 @@ export class OAuthService {
       weightKg: params.weightKg,
       heightCm: params.heightCm,
       gender: params.gender,
+      ads: params.ads,
     });
   }
 
@@ -231,6 +238,7 @@ export class OAuthService {
     weightKg?: number;
     heightCm?: number;
     gender?: 'male' | 'female';
+    ads?: RedditAdsRequestContext;
   }) {
     const audience = this.appleIdTokenAudience(params.platform);
     const {
@@ -250,6 +258,7 @@ export class OAuthService {
       weightKg: params.weightKg,
       heightCm: params.heightCm,
       gender: params.gender,
+      ads: params.ads,
     });
   }
 
@@ -264,6 +273,7 @@ export class OAuthService {
     weightKg?: number;
     heightCm?: number;
     gender?: 'male' | 'female';
+    ads?: RedditAdsRequestContext;
   }) {
     const oauthProvider = toOAuthProvider(params.provider);
     const linked = await this.oauthAccountsRepo.findOne({
@@ -332,6 +342,13 @@ export class OAuthService {
         email: params.email ? params.email.trim().toLowerCase() : null,
       });
     }
+
+    void this.redditConversions.scheduleSignUp({
+      isNewUser,
+      userId,
+      email: userEmail,
+      ...params.ads,
+    });
 
     return await this.auth.createSessionForUser({
       userId,

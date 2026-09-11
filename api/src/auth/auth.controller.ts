@@ -17,6 +17,8 @@ import {
   RegisterDto,
 } from './auth.dto.js';
 import { JwtAuthGuard } from './jwt.guard.js';
+import { redditAdsFromRequest } from './reddit-ads-request.js';
+import type { Request } from 'express';
 
 @Controller()
 export class AuthController {
@@ -49,8 +51,11 @@ export class AuthController {
   }
 
   @Post('/auth/register')
-  async register(@Body() body: RegisterDto) {
-    return await this.auth.registerWithEmail(body);
+  async register(@Body() body: RegisterDto, @Req() req: Request) {
+    return await this.auth.registerWithEmail({
+      ...body,
+      ads: redditAdsFromRequest(req, body),
+    });
   }
 
   @Post('/auth/login')

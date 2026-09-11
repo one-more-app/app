@@ -11,6 +11,7 @@ import {
 } from "@/lib/appsflyer-config";
 import { setPendingInviteCode } from "@/lib/invite-code";
 import { setPendingAttribution } from "@/lib/appsflyer-attribution";
+import { setRedditAdsMatch } from "@/lib/reddit-ads";
 
 const INVITE_ATTRIBUTION_KEYS = [
   "deep_link_value",
@@ -145,6 +146,21 @@ function extractAdsAttribution(
   };
 }
 
+function extractRedditAdsMatch(
+  data: Record<string, unknown> | null | undefined,
+): void {
+  if (!data) return;
+  const redditClickId = getStringValue(data, [
+    "rdt_cid",
+    "clickid",
+    "click_id",
+    "af_click_id",
+  ]);
+  const idfa = getStringValue(data, ["idfa"]);
+  const aaid = getStringValue(data, ["advertising_id", "aaid", "gaid"]);
+  setRedditAdsMatch({ redditClickId, idfa, aaid });
+}
+
 function registerAppsFlyerListeners(): void {
   AppsFlyer.addListener(AFConstants.UDL_CALLBACK, (event) => {
     if (event.status === "FOUND" && event.deepLink) {
@@ -153,6 +169,7 @@ function registerAppsFlyerListeners(): void {
 
       const attribution = extractAdsAttribution(deepLink);
       if (attribution) setPendingAttribution(attribution);
+      extractRedditAdsMatch(deepLink);
     }
   });
 
@@ -169,6 +186,7 @@ function registerAppsFlyerListeners(): void {
 
     const attribution = extractAdsAttribution(data);
     if (attribution) setPendingAttribution(attribution);
+    extractRedditAdsMatch(data);
   });
 }
 

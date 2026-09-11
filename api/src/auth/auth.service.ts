@@ -14,6 +14,8 @@ import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { UserEntity } from './entities/user.entity.js';
 import { InvitesService } from '../social/invites.service.js';
 import { ReferralService } from '../social/referral.service.js';
+import { RedditConversionsService } from '../analytics/reddit-conversions.service.js';
+import type { RedditAdsRequestContext } from '../analytics/reddit-conversions.js';
 
 type AuthUser = { id: string; email: string | null };
 type AuthSession = {
@@ -36,6 +38,7 @@ export class AuthService {
     private config: ConfigService,
     private invites: InvitesService,
     private referrals: ReferralService,
+    private redditConversions: RedditConversionsService,
   ) {}
 
   private async signAccessToken(user: AuthUser): Promise<string> {
@@ -116,6 +119,7 @@ export class AuthService {
     trainingGoal?: string;
     trainingExperience?: string;
     sessionsPerWeek?: string;
+    ads?: RedditAdsRequestContext;
   }): Promise<AuthSession> {
     const email = params.email.trim().toLowerCase();
     const existing = await this.usersRepo.findOne({ where: { email } });
@@ -142,6 +146,12 @@ export class AuthService {
     await this.referrals.applyReferralCodeOnSignup({
       newUserId: user.id,
       inviteCode: params.inviteCode,
+    });
+    void this.redditConversions.scheduleSignUp({
+      isNewUser: true,
+      userId: user.id,
+      email: user.email,
+      ...params.ads,
     });
     return await this.issueSession({
       user: { id: user.id, email: user.email },

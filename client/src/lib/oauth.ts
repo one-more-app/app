@@ -12,6 +12,7 @@ import {
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { Capacitor } from "@capacitor/core";
+import { redditAdsBodyFields } from "@/lib/reddit-ads";
 
 type Provider = "google" | "apple";
 type Platform = "android" | "ios";
@@ -90,6 +91,7 @@ export async function signInWithGoogle(): Promise<AuthSession> {
       firstName: firstName ?? undefined,
       lastName: lastName ?? undefined,
       ...pendingBodyProfilePayload(),
+      ...redditAdsBodyFields(),
     }),
   });
   clearPendingInviteCode();
@@ -113,6 +115,7 @@ export async function signInWithApple(): Promise<AuthSession> {
       firstName: firstName ?? undefined,
       lastName: lastName ?? undefined,
       ...pendingBodyProfilePayload(),
+      ...redditAdsBodyFields(),
     }),
   });
   clearPendingInviteCode();
@@ -205,6 +208,7 @@ export async function signInWithOAuth(provider: Provider): Promise<AuthSession> 
       state,
       inviteCode: peekPendingInviteCode() ?? undefined,
       ...pendingBodyProfilePayload(),
+      ...redditAdsBodyFields(),
     }),
   });
   clearPendingInviteCode();

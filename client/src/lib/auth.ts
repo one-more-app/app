@@ -10,6 +10,7 @@ import {
   writeStoredSession,
   type StoredAuthSession,
 } from "@/lib/auth-storage";
+import { redditAdsBodyFields } from "@/lib/reddit-ads";
 
 export type AuthUser = {
   id: string;
@@ -71,7 +72,10 @@ export async function registerWithEmail(params: {
 }): Promise<AuthSession> {
   return await apiFetch<AuthSession>("/auth/register", {
     method: "POST",
-    body: JSON.stringify(params),
+    body: JSON.stringify({
+      ...params,
+      ...redditAdsBodyFields(),
+    }),
   });
 }
 

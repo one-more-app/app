@@ -89,6 +89,19 @@ export class RegisterDto {
   @IsOptional()
   @IsIn([...SESSIONS_PER_WEEK_BANDS])
   sessionsPerWeek?: (typeof SESSIONS_PER_WEEK_BANDS)[number];
+
+  /** Click ID Reddit (`rdt_cid`) si l’utilisateur vient d’une pub. */
+  @IsOptional()
+  @IsString()
+  redditClickId?: string;
+
+  @IsOptional()
+  @IsString()
+  idfa?: string;
+
+  @IsOptional()
+  @IsString()
+  aaid?: string;
 }
 
 export class LoginDto {

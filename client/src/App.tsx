@@ -32,6 +32,7 @@ import {
     needsOnboarding,
 } from '@/lib/storage'
 import { peekPendingInviteCode } from '@/lib/invite-code'
+import { captureRedditClickIdFromUrl } from '@/lib/reddit-ads'
 import { fetchTshirtRewardStatus, TSHIRT_REWARD_SWR_KEY } from '@/lib/rewards-api'
 import { parseTshirtClaimRewardType, tshirtClaimPath } from '@/lib/tshirt-claim-route'
 import { scheduleSafeAreaCssSync } from '@/lib/sync-safe-area-css'
@@ -348,6 +349,8 @@ function App() {
     }, [])
 
     useEffect(() => {
+        captureRedditClickIdFromUrl()
+
         if (!Capacitor.isNativePlatform()) return
 
         scheduleSafeAreaCssSync()
@@ -356,12 +359,14 @@ function App() {
 
         void CapacitorApp.getLaunchUrl().then((result) => {
             if (!result?.url) return
+            captureRedditClickIdFromUrl(result.url)
             const inviteCode = extractInviteCodeFromUrl(result.url)
             if (!inviteCode) return
             persistAndNavigateToInvite(inviteCode)
         })
 
         const handlerPromise = CapacitorApp.addListener('appUrlOpen', (event) => {
+            captureRedditClickIdFromUrl(event.url)
             const inviteCode = extractInviteCodeFromUrl(event.url)
             if (!inviteCode) return
             persistAndNavigateToInvite(inviteCode)
