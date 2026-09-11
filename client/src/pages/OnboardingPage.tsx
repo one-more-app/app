@@ -27,6 +27,7 @@ import {
     intentStepFromQuestion,
     trackOnboardingStepCompleted,
     trackOnboardingStepSkipped,
+    trackOnboardingStepViewed,
     useOnboardingStepViewed,
     type OnboardingStepId,
 } from '@/lib/analytics';
@@ -200,7 +201,7 @@ function OnboardingPage() {
                         : step === 'intent'
                             ? intentStepFromQuestion(intentQ)
                             : step === 'account'
-                                ? OnboardingSteps.ACCOUNT_EMAIL
+                                ? OnboardingSteps.PRE_REGISTRATION
                                 : step === 'gym'
                                     ? OnboardingSteps.GYM_QUESTION
                                     : step === 'gym-permissions'
@@ -216,7 +217,8 @@ function OnboardingPage() {
         step === 'gym' ||
             step === 'account' ||
             step === 'discovery' ||
-            step === 'notifications'
+            step === 'notifications' ||
+            step === 'intro'
             ? null
             : viewedStep,
     )
@@ -549,6 +551,9 @@ function OnboardingPage() {
         trackOnboardingStepCompleted({
             step: OnboardingSteps.RECORD_PICK,
             exercise_id: exercise.exerciseId,
+        })
+        trackOnboardingStepViewed({
+            step: OnboardingSteps.RECORD_PERF,
         })
     }
 

@@ -7,6 +7,11 @@ import {
     ONBOARDING_SCENE_PROGRESS_MS,
     OnboardingSceneProgress,
 } from "@/components/onboarding/OnboardingSceneProgress";
+import {
+    trackOnboardingStepViewed,
+    type OnboardingFeatureSlideId,
+    type OnboardingStepId,
+} from "@/lib/analytics";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
@@ -17,6 +22,7 @@ type SceneOpts = {
 };
 
 type Slide = {
+    id: OnboardingFeatureSlideId;
     title: string;
     body: string;
     durationMs: number;
@@ -32,18 +38,21 @@ const SLIDE_PROGRESS_HOLD_MS = 1200;
 
 const SLIDES: Slide[] = [
     {
+        id: "log",
         title: UI.onboardingIntroSlide1Title,
         body: UI.onboardingIntroSlide1Body,
         durationMs: ONBOARDING_SCENE_LOG_PERF_MS,
         scene: (opts) => <OnboardingSceneLogPerf {...opts} />,
     },
     {
+        id: "record",
         title: UI.onboardingIntroSlide2Title,
         body: UI.onboardingIntroSlide2Body,
         durationMs: ONBOARDING_SCENE_LEAGUE_PROMO_MS,
         scene: (opts) => <OnboardingSceneLeaguePromo {...opts} />,
     },
     {
+        id: "progress",
         title: UI.onboardingIntroSlide3Title,
         body: UI.onboardingIntroSlide3Body,
         durationMs: ONBOARDING_SCENE_PROGRESS_MS,
@@ -72,15 +81,35 @@ function usePrefersReducedMotion(): boolean {
     return reduced;
 }
 
-export function OnboardingFeatureSlider() {
+type OnboardingFeatureSliderProps = {
+    /** Step analytics (`intro` ou `pre_registration`). */
+    analyticsStep: OnboardingStepId;
+};
+
+export function OnboardingFeatureSlider({
+    analyticsStep,
+}: OnboardingFeatureSliderProps) {
     const reduceMotion = usePrefersReducedMotion();
     const [trackIndex, setTrackIndex] = useState(0);
     const scrollerRef = useRef<HTMLDivElement>(null);
     const programmaticScrollRef = useRef(false);
     const loopResettingRef = useRef(false);
+    const seenSlidesRef = useRef(new Set<OnboardingFeatureSlideId>());
 
     const logicalIndex = trackIndex % SLIDES.length;
     const activeSlide = SLIDES[logicalIndex];
+
+    useEffect(() => {
+        // Clone de boucle : logicalIndex = 0 mais déjà vu → ne pas re-tracker.
+        if (trackIndex >= SLIDES.length) return;
+        const slideId = SLIDES[logicalIndex]?.id;
+        if (!slideId || seenSlidesRef.current.has(slideId)) return;
+        seenSlidesRef.current.add(slideId);
+        trackOnboardingStepViewed({
+            step: analyticsStep,
+            slide: slideId,
+        });
+    }, [analyticsStep, logicalIndex, trackIndex]);
 
     const resetLoop = useCallback(() => {
         const el = scrollerRef.current;
@@ -188,7 +217,7 @@ export function OnboardingFeatureSlider() {
                         slideIndex === trackIndex && trackIndex < SLIDES.length;
                     return (
                         <div
-                            key={`${slide.title}-${slideIndex}`}
+                            key={`${slide.id}-${slideIndex}`}
                             className="flex w-full shrink-0 snap-center flex-col justify-center px-1"
                             aria-hidden={!active}
                         >
@@ -227,7 +256,7 @@ export function OnboardingFeatureSlider() {
                     const selected = slideIndex === logicalIndex;
                     return (
                         <button
-                            key={slide.title}
+                            key={slide.id}
                             type="button"
                             role="tab"
                             aria-selected={selected}

@@ -48,6 +48,7 @@ export {
   persistSignupMethod,
   resolveOnboardingStepFromLocation,
   setOnboardingStepGlobalProperty,
+  trackAuthFailure,
   trackAuthSuccess,
   trackOnboardingCompleted,
   trackOnboardingStepCompleted,
@@ -56,7 +57,9 @@ export {
   useOnboardingStepViewed,
 } from "./onboarding-tracking";
 export type {
+  AuthFailureContext,
   AuthMethod,
+  OnboardingFeatureSlideId,
   OnboardingStepId,
   OnboardingStepProps,
 } from "./onboarding-tracking";

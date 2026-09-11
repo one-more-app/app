@@ -8,7 +8,7 @@ import {
   registerWithEmail,
   writeStoredSession,
 } from "@/lib/auth";
-import { trackAuthSuccess } from "@/lib/analytics";
+import { trackAuthFailure, trackAuthSuccess } from "@/lib/analytics";
 import { syncAppsFlyerCustomerUserId } from "@/lib/appsflyer";
 import {
   peekPendingAttribution,
@@ -178,6 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         clearPendingInviteCode();
         trackAuthSuccess({ method: "email", isNewUser: true });
       } catch (e) {
+        trackAuthFailure({ method: "email", context: "register" });
         setLastError(normalizeError(e));
         throw e;
       }
@@ -193,6 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       applyPendingOnboardingProfileAfterAuth(false);
       trackAuthSuccess({ method: "email", isNewUser: false });
     } catch (e) {
+      trackAuthFailure({ method: "email", context: "login" });
       setLastError(normalizeError(e));
       throw e;
     }

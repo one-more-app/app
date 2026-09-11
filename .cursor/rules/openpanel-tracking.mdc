@@ -34,20 +34,26 @@ alwaysApply: false
 
 ## Onboarding / activation
 
-Helper : `trackOnboardingStepViewed` / `Completed` / `Skipped` / `trackOnboardingCompleted` / `useOnboardingStepViewed`.
+Helper : `trackOnboardingStepViewed` / `Completed` / `Skipped` / `trackOnboardingCompleted` / `trackAuthSuccess` / `trackAuthFailure` / `useOnboardingStepViewed`.
 
 `page` reste `onboarding`. Le funnel se filtre sur `step` (jamais sur le libellé FR du bouton).
 
+**Ne pas** renommer les `step` historiques ni inventer d'events pour des écrans absents (offre in-funnel, birthdate, health sync, etc.). Les dashboards existants sur `onboarding_step_*` + `step` restent la source de vérité.
+
 | `step` | Où | Event métier |
 |--------|----|----------------|
-| `record_pick` | `OnboardingPage` `?step=record` | viewed au mount, completed sur Continuer |
-| `record_perf` | drawer `AddPerfDrawer` depuis la liste | completed à l'enregistrement de la perf |
-| `record_1rm` | `OnboardingPage` `?step=1rm` | completed sur Continuer |
-| `body_gender` / `body_weight` | `OnboardingPage` | genre puis poids+taille regroupés ; `body_weight` completed avec `gender`, `weight_kg`, `height_cm` |
+| `intro` | `OnboardingPage` + slider | `onboarding_step_viewed` à chaque slide vue **1re fois** (`slide=log\|record\|progress`) ; completed CTA Commencer ; skip `has_account` |
+| `body_gender` / `body_weight` / `body_height` / `body_age` | `OnboardingPage` | viewed à chaque `bodyQ`, completed avec props (`gender`, `weight_kg`, …) |
+| `intent_goal` / `intent_experience` / `intent_frequency` | `OnboardingPage` | viewed / completed avec `training_goal`, `training_experience`, `sessions_per_week` |
+| `record_pick` | `OnboardingPage` `?step=record` / catalogue `from=onboarding` | viewed au mount, completed à l'ouverture du drawer |
+| `record_perf` | drawer `AddPerfDrawer` onboarding | **viewed** à l'ouverture du drawer ; completed à l'enregistrement (`exercise_id`, `weight`, `reps`) |
+| `record_1rm` | `OnboardingPage` `?step=1rm` (legacy) | completed sur Continuer |
 | `rank_reveal` | `OnboardingPage` `?step=rank` | completed sur « Bats ce record » |
+| `pre_registration` | `AuthPage` écran choix méthode + slider | même pattern slides que `intro` ; completed CTA email (`method=email`) |
 | `account_email` | `AuthPage` | completed avec `exists` après `identifyEmail` |
 | `account_login` | `AuthPage` | + `user_logged_in` (`method=email\|google\|apple`) |
 | `account_register_*` | `AuthPage` | un substep par carte ; submit → `user_registered` |
+| `discovery` / `notifications` | steps post-auth | viewed / completed / skipped |
 | `gym_question` / `gym_locating` / `gym_confirm` / `gym_search` | `OnboardingGymStep` | URL gelée, viewed sur le state interne |
 | `gym_permissions` | `OnboardingGymPermissionsStep` | skip → `onboarding_step_skipped` ; toggles push |
 | `gym_wait` | `OnboardingGymWaitStep` | completed sur unlock |
@@ -55,11 +61,31 @@ Helper : `trackOnboardingStepViewed` / `Completed` / `Skipped` / `trackOnboardin
 
 `markOnboardingDone()` est le seul endroit qui émet `onboarding_completed` (`destination`, `gym_bypassed`).
 
-OAuth : l'API renvoie `isNewUser` sur `AuthSession`. `trackAuthSuccess` choisit `user_registered` vs `user_logged_in`.
+Auth :
+- Succès : `trackAuthSuccess` → `user_registered` ou `user_logged_in` (`method`).
+- Échec : `trackAuthFailure` → `user_auth_failed` (`method`, `context` = `login` \| `register` \| `oauth`). Pas de PII.
+- OAuth : l'API renvoie `isNewUser` sur `AuthSession`. Annulation OAuth utilisateur : **pas** de `user_auth_failed`.
 
 Propriétés de profil au `identify` : `onboarding_last_step`, `onboarding_completed`, `signup_method`.
 
-Funnel d'activation canonique : viewed `record_pick` → `record_perf` → `record_1rm` → completed body steps → `rank_reveal` → `account_email` (`exists=false`) → register substeps → `user_registered` → `onboarding_completed` → `exercise_added` `source=onboarding` → `performance_logged`.
+Funnel d'activation canonique : viewed `intro` (`slide=log` puis `record` / `progress` 1re fois) → body / intent → `record_pick` → viewed `record_perf` → completed `record_perf` → `rank_reveal` → `pre_registration` (slides) → `account_email` (`exists=false`) → register substeps → `user_registered` → `onboarding_completed` → `exercise_added` `source=onboarding` → `performance_logged`.
+
+### Mapping conceptuel (schéma produit ↔ One More)
+
+Les noms du type `landing_view` / `step_1_*` / `select_offer` **n'existent pas** dans le code. Équivalents :
+
+| Concept schéma | One More (events / steps) |
+|----------------|---------------------------|
+| Landing / app open | `onboarding_step_viewed` `step=intro` + `slide` (`log` / `record` / `progress`, 1re vue) |
+| Signup / login click | `ui_element_clicked` labels `onboarding_intro_continue` / `onboarding_intro_has_account` |
+| Infos perso (genre, poids, taille, âge) | `body_*` viewed + completed (props) ; pas d'`input_*` (ruler → `wheel_picker_changed`) |
+| Objectif | `intent_goal` + `training_goal` |
+| Activité | `intent_experience` + `intent_frequency` |
+| Analyse | `rank_reveal` (+ record avant) |
+| Offre abonnement in-funnel | **absent** ; paywall hors funnel = `paywall_viewed` |
+| Choix méthode auth | `pre_registration` (+ slides comme intro) |
+| Signup success / error | `user_registered` / `user_logged_in` ; `user_auth_failed` |
+| Onboarding complete | `onboarding_completed` |
 
 ## Règles pour tout nouveau composant
 
