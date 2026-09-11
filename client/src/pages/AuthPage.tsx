@@ -19,7 +19,10 @@ import {
     useOnboardingStepViewed,
     type OnboardingStepId,
 } from "@/lib/analytics";
-import { registerHardwareBackHandler } from "@/lib/app-back-navigation";
+import {
+  registerHardwareBackHandler,
+  resolveAccountOnboardingBackPath,
+} from "@/lib/app-back-navigation";
 import { identifyEmail, suggestUsername } from "@/lib/auth";
 import { signInWithApple, signInWithGoogle } from "@/lib/oauth";
 import { isOAuthCancelledByUser, oauthUserMessage } from "@/lib/oauth-errors";
@@ -144,7 +147,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                 return true;
             }
             if (step === "methods" && embedded) {
-                navigate("/onboarding?step=rank", { replace: true });
+                navigate(resolveAccountOnboardingBackPath(), { replace: true });
                 return true;
             }
             return false;

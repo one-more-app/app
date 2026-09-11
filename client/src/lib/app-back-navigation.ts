@@ -1,5 +1,14 @@
+import { peekPendingOnboardingRecord } from "@/lib/storage";
+
 /** Accueil : seul onglet d'où le back matériel peut quitter l'app. */
 export const APP_BACK_HOME_PATH = "/home";
+
+/** Back depuis account : rank si draft record, sinon dernière question intent. */
+export function resolveAccountOnboardingBackPath(): string {
+  return peekPendingOnboardingRecord() != null
+    ? "/onboarding?step=rank"
+    : "/onboarding?step=intent&intentQ=2";
+}
 
 export type AppBackNavigateAction = { type: "navigate"; to: string };
 
@@ -137,7 +146,10 @@ export function resolveOnboardingBackTarget(
       to: `/onboarding?step=intent&intentQ=${intentQ - 1}`,
     };
   }
-  if (step === "account" || step === "notifications") {
+  if (step === "account") {
+    return { kind: "path", to: resolveAccountOnboardingBackPath() };
+  }
+  if (step === "notifications") {
     return { kind: "path", to: "/onboarding?step=rank" };
   }
   if (step === "gym") {

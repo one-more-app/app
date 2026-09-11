@@ -1,13 +1,67 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   applyLocationToHistoryStack,
   canGoBackInAppHistory,
   hasOpenOverlay,
   isAppBackExitRoute,
+  resolveAccountOnboardingBackPath,
   resolveAppBackAction,
   resolveOnboardingBackTarget,
   setInAppHistoryDepth,
 } from "./app-back-navigation";
+import {
+  beginOnboardingDraftSession,
+  clearOnboardingDraftsAndSession,
+  setPendingOnboardingRecord,
+  type PendingOnboardingRecord,
+} from "./storage";
+
+function memoryStorage(): Storage {
+  const map = new Map<string, string>();
+  return {
+    get length() {
+      return map.size;
+    },
+    clear: () => map.clear(),
+    getItem: (key: string) => map.get(key) ?? null,
+    key: (index: number) => [...map.keys()][index] ?? null,
+    removeItem: (key: string) => {
+      map.delete(key);
+    },
+    setItem: (key: string, value: string) => {
+      map.set(key, String(value));
+    },
+  };
+}
+
+const sampleRecord: PendingOnboardingRecord = {
+  exerciseId: "EIeI8Vf",
+  name: "Développé couché",
+  originalName: "barbell bench press",
+  bodyPart: "chest",
+  target: "pectorals",
+  equipment: "barbell",
+  weight: 60,
+  reps: 5,
+  clientTrackedId: "api-EIeI8Vf",
+  clientPerfId: "perf-1",
+};
+
+beforeEach(() => {
+  Object.defineProperty(globalThis, "localStorage", {
+    value: memoryStorage(),
+    configurable: true,
+  });
+  Object.defineProperty(globalThis, "sessionStorage", {
+    value: memoryStorage(),
+    configurable: true,
+  });
+});
+
+afterEach(() => {
+  clearOnboardingDraftsAndSession();
+  setInAppHistoryDepth(0);
+});
 
 describe("isAppBackExitRoute", () => {
   it("autorise la sortie sur accueil et auth standalone", () => {
@@ -37,7 +91,7 @@ describe("resolveOnboardingBackTarget", () => {
     ).toEqual({ kind: "stay" });
   });
 
-  it("remonte record vers intent, bloque rank, remonte body / intent / account", () => {
+  it("remonte record vers intent, bloque rank, remonte body / intent", () => {
     expect(
       resolveOnboardingBackTarget("/onboarding", "?step=record"),
     ).toEqual({ kind: "path", to: "/onboarding?step=intent&intentQ=2" });
@@ -63,6 +117,21 @@ describe("resolveOnboardingBackTarget", () => {
     expect(
       resolveOnboardingBackTarget("/onboarding", "?step=intent&intentQ=2"),
     ).toEqual({ kind: "path", to: "/onboarding?step=intent&intentQ=1" });
+  });
+
+  it("remonte account vers intent sans draft record", () => {
+    expect(resolveAccountOnboardingBackPath()).toBe(
+      "/onboarding?step=intent&intentQ=2",
+    );
+    expect(
+      resolveOnboardingBackTarget("/onboarding", "?step=account"),
+    ).toEqual({ kind: "path", to: "/onboarding?step=intent&intentQ=2" });
+  });
+
+  it("remonte account vers rank avec draft record", () => {
+    beginOnboardingDraftSession();
+    setPendingOnboardingRecord(sampleRecord);
+    expect(resolveAccountOnboardingBackPath()).toBe("/onboarding?step=rank");
     expect(
       resolveOnboardingBackTarget("/onboarding", "?step=account"),
     ).toEqual({ kind: "path", to: "/onboarding?step=rank" });
@@ -181,10 +250,6 @@ describe("resolveAppBackAction", () => {
 });
 
 describe("canGoBackInAppHistory", () => {
-  afterEach(() => {
-    setInAppHistoryDepth(0);
-  });
-
   it("suit la profondeur de pile in-app", () => {
     setInAppHistoryDepth(1);
     expect(canGoBackInAppHistory({ idx: 0 })).toBe(false);

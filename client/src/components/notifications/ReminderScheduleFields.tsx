@@ -1,6 +1,6 @@
 import { TimePicker } from "@/components/TimePicker";
 import { Label } from "@/components/ui/label";
-import { hapticSelectionChanged } from "@/lib/haptics";
+import { hapticImpact } from "@/lib/haptics";
 import {
   formatReminderSchedule,
   formatReminderTime,
@@ -55,7 +55,7 @@ export function ReminderDaySelect({
             }
             data-analytics-label={`reminder_day_${day.iso}`}
             onClick={() => {
-              void hapticSelectionChanged();
+              void hapticImpact();
               onDayPress(day.iso);
             }}
             className={cn(
@@ -154,7 +154,7 @@ export function ReminderScheduleFields({
             className="mx-auto block text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
             data-analytics-label="reminder_days_clear"
             onClick={() => {
-              void hapticSelectionChanged();
+              void hapticImpact();
               onChange([]);
               setFocusedWeekday(null);
             }}

@@ -4,8 +4,6 @@ type HapticsModule = typeof import('@capacitor/haptics')
 
 let hapticsMod: HapticsModule | null = null
 let hapticsLoad: Promise<HapticsModule | null> | null = null
-/** Capacitor exige `selectionStart` avant tout `selectionChanged` (iOS + Android). */
-let selectionSessionActive = false
 
 async function loadHaptics(): Promise<HapticsModule | null> {
     if (!Capacitor.isNativePlatform()) return null
@@ -24,23 +22,9 @@ async function loadHaptics(): Promise<HapticsModule | null> {
     return hapticsLoad
 }
 
-async function ensureSelectionSession(mod: HapticsModule): Promise<void> {
-    if (selectionSessionActive) return
-    await mod.Haptics.selectionStart()
-    selectionSessionActive = true
-}
-
-/** Précharge le plugin + ouvre la session selection (ticks immédiats). */
+/** Précharge le plugin pour un premier tick sans latence. */
 export function primeHaptics(): void {
-    void (async () => {
-        const mod = await loadHaptics()
-        if (!mod) return
-        try {
-            await ensureSelectionSession(mod)
-        } catch {
-            // Ignore si Haptics indisponible
-        }
-    })()
+    void loadHaptics()
 }
 
 async function runImpact(style: 'Light' | 'Medium' | 'Heavy'): Promise<void> {
@@ -65,42 +49,7 @@ async function runNotification(
     }
 }
 
-/** Démarre une session de sélection (roulettes, sliders). Idempotent. */
-export async function hapticSelectionStart(): Promise<void> {
-    const mod = await loadHaptics()
-    if (!mod) return
-    try {
-        await ensureSelectionSession(mod)
-    } catch {
-        // Ignore si Haptics indisponible
-    }
-}
-
-/** Retour haptique au changement de sélection (sliders, filtres, onglets, crans). */
-export async function hapticSelectionChanged(): Promise<void> {
-    const mod = await loadHaptics()
-    if (!mod) return
-    try {
-        await ensureSelectionSession(mod)
-        await mod.Haptics.selectionChanged()
-    } catch {
-        // Ignore si Haptics indisponible
-    }
-}
-
-/** Ferme la session de sélection (fin de geste). */
-export async function hapticSelectionEnd(): Promise<void> {
-    const mod = await loadHaptics()
-    if (!mod) return
-    try {
-        await mod.Haptics.selectionEnd()
-        selectionSessionActive = false
-    } catch {
-        // Ignore si Haptics indisponible
-    }
-}
-
-/** Retour haptique léger (boutons, cartes, actions courantes) */
+/** Retour haptique léger (boutons, cartes, onglets, crans, actions courantes) */
 export async function hapticImpact(): Promise<void> {
     await runImpact('Light')
 }
@@ -132,17 +81,13 @@ export async function hapticNotificationError(): Promise<void> {
 
 /** Changement d'onglet ou de section dans la navigation */
 export function hapticTab(): void {
-    void hapticSelectionChanged()
+    void hapticImpact()
 }
 
 /** Haptique adaptée au variant d'un bouton */
 export function triggerButtonHaptic(variant?: string | null): void {
     if (variant === 'destructive' || variant === 'outline-destructive') {
         void hapticImpactMedium()
-        return
-    }
-    if (variant === 'ghost' || variant === 'link' || variant === 'outline') {
-        void hapticSelectionChanged()
         return
     }
     void hapticImpact()

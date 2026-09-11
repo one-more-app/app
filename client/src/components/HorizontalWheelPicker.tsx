@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AnalyticsEvents, track } from '@/lib/analytics'
-import { hapticSelectionChanged, primeHaptics } from '@/lib/haptics'
+import { hapticImpact, primeHaptics } from '@/lib/haptics'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import { Minus, Plus } from 'lucide-react'
@@ -125,7 +125,7 @@ export function HorizontalWheelPicker({
         setInputText(null)
         if (newValue !== value) {
             emitChange(newValue, 'input')
-            void hapticSelectionChanged()
+            void hapticImpact()
         }
     }, [inputText, parseAndClamp, value, emitChange])
 
@@ -182,7 +182,7 @@ export function HorizontalWheelPicker({
         const clamped = Math.max(0, Math.min(i, options.length - 1))
         if (clamped !== lastHapticIndex.current) {
             lastHapticIndex.current = clamped
-            void hapticSelectionChanged()
+            void hapticImpact()
         }
         const newValue = options[clamped]?.value
         if (newValue !== undefined && newValue !== value) {
@@ -195,7 +195,7 @@ export function HorizontalWheelPicker({
         lastHapticIndex.current = next
         scrollToIndex(next, true)
         emitChange(options[next]!.value, 'button')
-        void hapticSelectionChanged()
+        void hapticImpact()
     }, [clampedIndex, options, emitChange, scrollToIndex])
 
     const handleIncrement = useCallback(() => {
@@ -203,7 +203,7 @@ export function HorizontalWheelPicker({
         lastHapticIndex.current = next
         scrollToIndex(next, true)
         emitChange(options[next]!.value, 'button')
-        void hapticSelectionChanged()
+        void hapticImpact()
     }, [clampedIndex, options, emitChange, scrollToIndex])
 
     useEffect(() => {

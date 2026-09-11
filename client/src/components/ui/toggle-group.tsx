@@ -5,7 +5,7 @@ import { ToggleGroup as ToggleGroupPrimitive } from "radix-ui"
 import * as React from "react"
 
 import { toggleVariants } from "@/components/ui/toggle"
-import { hapticSelectionChanged } from "@/lib/haptics"
+import { hapticImpact } from "@/lib/haptics"
 import { cn } from "@/lib/utils"
 
 const ToggleGroupContext = React.createContext<
@@ -42,7 +42,7 @@ function ToggleGroup({
                 className
             )}
             onValueChange={(value) => {
-                void hapticSelectionChanged()
+                void hapticImpact()
                 onValueChange?.(value)
             }}
             {...props}
