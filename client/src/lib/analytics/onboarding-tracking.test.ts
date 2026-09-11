@@ -53,7 +53,7 @@ describe("resolveOnboardingStepFromLocation", () => {
     ).toBe(OnboardingSteps.INTENT_FREQUENCY);
     expect(
       resolveOnboardingStepFromLocation("/onboarding", "?step=account"),
-    ).toBe(OnboardingSteps.ACCOUNT_EMAIL);
+    ).toBe(OnboardingSteps.PRE_REGISTRATION);
     expect(resolveOnboardingStepFromLocation("/onboarding", "?step=gym")).toBe(
       OnboardingSteps.GYM_QUESTION,
     );
@@ -76,7 +76,7 @@ describe("resolveOnboardingStepFromLocation", () => {
       resolveOnboardingStepFromLocation("/onboarding", "?step=discovery"),
     ).toBe(OnboardingSteps.DISCOVERY);
     expect(resolveOnboardingStepFromLocation("/auth", "")).toBe(
-      OnboardingSteps.ACCOUNT_EMAIL,
+      OnboardingSteps.PRE_REGISTRATION,
     );
     expect(resolveOnboardingStepFromLocation("/home", "")).toBeNull();
   });

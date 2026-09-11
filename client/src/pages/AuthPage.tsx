@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import {
     OnboardingSteps,
+    trackAuthFailure,
     trackAuthSuccess,
     trackOnboardingStepCompleted,
     useOnboardingStepViewed,
@@ -44,7 +45,7 @@ type AuthStep =
     | "register_password";
 
 function authOnboardingStep(step: AuthStep): OnboardingStepId | null {
-    if (step === "methods") return null;
+    if (step === "methods") return OnboardingSteps.PRE_REGISTRATION;
     if (step === "login") return OnboardingSteps.ACCOUNT_LOGIN;
     if (step === "register_firstName") {
         return OnboardingSteps.ACCOUNT_REGISTER_FIRST_NAME;
@@ -98,7 +99,11 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
     const fromOnboardingConversion = embedded && peekPendingOnboardingRecord() != null;
     const currentAuthStep = authOnboardingStep(step);
     useOnboardingStepViewed(
-        trackOnboardingAuth && currentAuthStep ? currentAuthStep : null,
+        trackOnboardingAuth &&
+            currentAuthStep &&
+            currentAuthStep !== OnboardingSteps.PRE_REGISTRATION
+            ? currentAuthStep
+            : null,
     );
     const normalizedEmail = email.trim().toLowerCase();
     const canContinueEmail = normalizedEmail.includes("@") && !isBusy;
@@ -202,6 +207,8 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                 });
             }
             await finishSuccess({ isNewUser: false });
+        } catch {
+            // trackAuthFailure déjà émis dans use-auth.login
         } finally {
             setIsBusy(false);
         }
@@ -233,6 +240,8 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                 { silent: true },
             );
             await finishSuccess({ isNewUser: true });
+        } catch {
+            // trackAuthFailure déjà émis dans use-auth.register
         } finally {
             setIsBusy(false);
         }
@@ -295,7 +304,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
     const content = (
         <Trackable
             section={trackOnboardingAuth ? "onboarding" : "auth"}
-            feature={currentAuthStep ?? "account_methods"}
+            feature={currentAuthStep ?? "pre_registration"}
             className={onboardingEntrance(
                 isFormStep
                     ? cn(
@@ -666,7 +675,9 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                     </div>
 
                     <div className="-mt-40 mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col justify-center px-4 py-6">
-                        <OnboardingFeatureSlider />
+                        <OnboardingFeatureSlider
+                            analyticsStep={OnboardingSteps.PRE_REGISTRATION}
+                        />
                     </div>
 
                     <footer className="shrink-0 px-4 pb-4 pt-2">
@@ -706,6 +717,10 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                         } catch (e) {
                                             if (isOAuthCancelledByUser(e)) return;
                                             console.error("[Auth] Google sign-in failed", e);
+                                            trackAuthFailure({
+                                                method: "google",
+                                                context: "oauth",
+                                            });
                                             auth.setError(oauthUserMessage(e, "google"));
                                         } finally {
                                             setIsBusy(false);
@@ -765,6 +780,10 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                             } catch (e) {
                                                 if (isOAuthCancelledByUser(e)) return;
                                                 console.error("[Auth] Apple sign-in failed", e);
+                                                trackAuthFailure({
+                                                    method: "apple",
+                                                    context: "oauth",
+                                                });
                                                 auth.setError(oauthUserMessage(e, "apple"));
                                             } finally {
                                                 setIsBusy(false);
@@ -800,6 +819,12 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 disabled={isBusy}
                                 onClick={() => {
                                     auth.clearError();
+                                    if (trackOnboardingAuth) {
+                                        trackOnboardingStepCompleted({
+                                            step: OnboardingSteps.PRE_REGISTRATION,
+                                            method: "email",
+                                        });
+                                    }
                                     setStep("email");
                                 }}
                             >

@@ -93,7 +93,7 @@ export function OnboardingIntro({ onContinue, onHasAccount }: OnboardingIntroPro
             </div>
 
             <div className="-mt-40 mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col justify-center px-4 py-6">
-                <OnboardingFeatureSlider />
+                <OnboardingFeatureSlider analyticsStep={OnboardingSteps.INTRO} />
             </div>
 
             <footer className="shrink-0 px-4 pb-4 pt-2">

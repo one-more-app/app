@@ -14,6 +14,7 @@ export const AnalyticsEvents = {
   USER_REGISTERED: "user_registered",
   USER_LOGGED_IN: "user_logged_in",
   USER_LOGGED_OUT: "user_logged_out",
+  USER_AUTH_FAILED: "user_auth_failed",
   ONBOARDING_STEP_VIEWED: "onboarding_step_viewed",
   ONBOARDING_STEP_COMPLETED: "onboarding_step_completed",
   ONBOARDING_STEP_SKIPPED: "onboarding_step_skipped",

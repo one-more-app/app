@@ -25,6 +25,7 @@ export const OnboardingSteps = {
   INTENT_GOAL: "intent_goal",
   INTENT_EXPERIENCE: "intent_experience",
   INTENT_FREQUENCY: "intent_frequency",
+  PRE_REGISTRATION: "pre_registration",
   ACCOUNT_EMAIL: "account_email",
   ACCOUNT_LOGIN: "account_login",
   ACCOUNT_REGISTER_FIRST_NAME: "account_register_first_name",
@@ -48,9 +49,15 @@ export type OnboardingStepId =
 
 export type AuthMethod = "email" | "google" | "apple";
 
+export type AuthFailureContext = "login" | "register" | "oauth";
+
+/** Slides du carousel intro / pre_registration. */
+export type OnboardingFeatureSlideId = "log" | "record" | "progress";
+
 export type OnboardingStepProps = AnalyticsProperties & {
   step: OnboardingStepId;
   substep?: string;
+  slide?: OnboardingFeatureSlideId;
 };
 
 function persistLastStep(step: string): void {
@@ -113,7 +120,7 @@ export function resolveOnboardingStepFromLocation(
   );
 
   if (pathname === "/auth") {
-    return OnboardingSteps.ACCOUNT_EMAIL;
+    return OnboardingSteps.PRE_REGISTRATION;
   }
 
   if (pathname === "/exercises" && params.get("from") === "onboarding") {
@@ -145,7 +152,7 @@ export function resolveOnboardingStepFromLocation(
     if (intentQ === 2) return OnboardingSteps.INTENT_FREQUENCY;
     return OnboardingSteps.INTENT_GOAL;
   }
-  if (rawStep === "account") return OnboardingSteps.ACCOUNT_EMAIL;
+  if (rawStep === "account") return OnboardingSteps.PRE_REGISTRATION;
   if (rawStep === "discovery") return OnboardingSteps.DISCOVERY;
   if (rawStep === "notifications") return OnboardingSteps.NOTIFICATIONS;
   if (rawStep === "gym") return OnboardingSteps.GYM_QUESTION;
@@ -188,6 +195,7 @@ export function trackOnboardingStepViewed(params: OnboardingStepProps): void {
   track(AnalyticsEvents.ONBOARDING_STEP_VIEWED, {
     step: params.step,
     substep: params.substep,
+    slide: params.slide,
   });
 }
 
@@ -243,6 +251,17 @@ export function trackAuthSuccess(params: {
       : AnalyticsEvents.USER_LOGGED_IN,
     { method: params.method },
   );
+}
+
+/** Échec auth / signup. Pas de PII (pas d'email, pas de message brut). */
+export function trackAuthFailure(params: {
+  method: AuthMethod;
+  context: AuthFailureContext;
+}): void {
+  track(AnalyticsEvents.USER_AUTH_FAILED, {
+    method: params.method,
+    context: params.context,
+  });
 }
 
 /** Émet `onboarding_step_viewed` une fois par step (et met à jour le contexte global). */

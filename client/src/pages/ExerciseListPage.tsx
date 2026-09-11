@@ -35,6 +35,7 @@ import {
     OnboardingSteps,
     trackOnboardingStepCompleted,
     trackOnboardingStepSkipped,
+    trackOnboardingStepViewed,
     useOnboardingStepViewed,
 } from '@/lib/analytics'
 import { Trackable } from '@/components/analytics/Trackable'
@@ -251,6 +252,9 @@ export function ExerciseListPage() {
         trackOnboardingStepCompleted({
             step: OnboardingSteps.RECORD_PICK,
             exercise_id: starter.exerciseId,
+        })
+        trackOnboardingStepViewed({
+            step: OnboardingSteps.RECORD_PERF,
         })
     }, [])
 
