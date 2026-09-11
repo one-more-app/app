@@ -2,13 +2,14 @@ import { expect, test } from "@playwright/test";
 import { isGymOnboardingBypassed } from "../../../src/lib/gym-onboarding-route";
 import { UI } from "../../../src/lib/translations";
 import {
+  AUTH_STORAGE_KEY,
+  dismissPostAuthDiscoveryAndNotifications,
   mockAuthApi,
   mockGymPlace,
   mockSession,
+  ONBOARDING_DONE_KEY,
   seedE2eApiOrigin,
   trackPageErrors,
-  AUTH_STORAGE_KEY,
-  ONBOARDING_DONE_KEY,
 } from "../helpers";
 
 const gymOnboardingOff = isGymOnboardingBypassed();
@@ -306,6 +307,7 @@ test.describe("parcours salle désactivé", () => {
       page.getByText(UI.gymOnboardingTitle, { exact: true }),
     ).toHaveCount(0);
     await expect(page).not.toHaveURL(/gym-wait/);
+    await dismissPostAuthDiscoveryAndNotifications(page);
     await expect(page).toHaveURL(/#\/(home|exercises|onboarding\?step=body)/);
 
     expect(pageErrors).toEqual([]);

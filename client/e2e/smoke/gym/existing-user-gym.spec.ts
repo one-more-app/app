@@ -2,12 +2,13 @@ import { expect, test } from "@playwright/test";
 import { isGymOnboardingBypassed } from "../../../src/lib/gym-onboarding-route";
 import { UI } from "../../../src/lib/translations";
 import {
+  AUTH_STORAGE_KEY,
+  dismissPostAuthDiscoveryAndNotifications,
   mockAuthApi,
   mockSession,
   ONBOARDING_DONE_KEY,
   seedE2eApiOrigin,
   trackPageErrors,
-  AUTH_STORAGE_KEY,
 } from "../helpers";
 
 const gymOnboardingOff = isGymOnboardingBypassed();
@@ -61,6 +62,7 @@ test("onboarding account step skips gym when gym already saved in API", async ({
   await expect(
     page.getByText(UI.gymOnboardingTitle, { exact: true }),
   ).toHaveCount(0);
+  await dismissPostAuthDiscoveryAndNotifications(page);
   await expect(page).toHaveURL(/#\/(home|exercises)$/);
 
   expect(pageErrors).toEqual([]);
