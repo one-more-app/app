@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Slider as SliderPrimitive } from "radix-ui"
 
-import { hapticSelectionChanged } from "@/lib/haptics"
+import { hapticImpact } from "@/lib/haptics"
 import { cn } from "@/lib/utils"
 
 function Slider({
@@ -34,7 +34,7 @@ function Slider({
 
   const handleValueChange = React.useCallback(
     (next: number[]) => {
-      void hapticSelectionChanged()
+      void hapticImpact()
       onValueChange?.(next)
     },
     [onValueChange],

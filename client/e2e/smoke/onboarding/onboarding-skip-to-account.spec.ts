@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
-import { continueWithEmailFlow, mockAuthApi, trackPageErrors } from "../helpers";
+import {
+  continueWithEmailFlow,
+  dismissPostAuthDiscoveryAndNotifications,
+  mockAuthApi,
+  trackPageErrors,
+} from "../helpers";
 import { UI } from "../../../src/lib/translations";
 
 const continueButton = (page: Page) =>
@@ -11,9 +16,9 @@ test("skip depuis l'âge mène au compte puis au catalogue exercices", async ({
   const pageErrors = trackPageErrors(page);
   await mockAuthApi(page);
 
-  await page.goto("/#/onboarding");
+  await page.goto("/#/onboarding?step=body&bodyQ=0");
 
-  await page.getByRole("button", { name: UI.onboardingIntroCta }).click();
+  await page.getByRole("radio", { name: UI.male }).click();
   await continueButton(page).click();
   await continueButton(page).click();
   await continueButton(page).click();
@@ -40,6 +45,8 @@ test("skip depuis l'âge mène au compte puis au catalogue exercices", async ({
   await page.getByLabel("Mot de passe", { exact: true }).fill("password123");
   await page.getByLabel("Confirmer le mot de passe").fill("password123");
   await page.getByRole("button", { name: "Créer mon compte", exact: true }).click();
+
+  await dismissPostAuthDiscoveryAndNotifications(page);
 
   await expect(page).toHaveURL(/#\/exercises/, { timeout: 10_000 });
 

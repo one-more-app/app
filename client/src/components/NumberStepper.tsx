@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
-import { hapticImpact, hapticSelectionChanged } from '@/lib/haptics'
+import { hapticImpact } from '@/lib/haptics'
 import { cn } from '@/lib/utils'
 import { Minus, Plus } from 'lucide-react'
 import { useEffect, useRef } from 'react'
@@ -55,7 +55,7 @@ export function NumberStepper({
         onChange(clamped)
         if (clamped !== lastHapticValue.current) {
             lastHapticValue.current = clamped
-            hapticSelectionChanged()
+            hapticImpact()
         }
     }
 

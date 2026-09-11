@@ -2,7 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { Toggle as TogglePrimitive } from "radix-ui"
 import * as React from "react"
 
-import { hapticSelectionChanged } from "@/lib/haptics"
+import { hapticImpact } from "@/lib/haptics"
 import { cn } from "@/lib/utils"
 
 const toggleVariants = cva(
@@ -39,7 +39,7 @@ function Toggle({
             data-slot="toggle"
             className={cn(toggleVariants({ variant, size }), className)}
             onPressedChange={(pressed) => {
-                void hapticSelectionChanged()
+                void hapticImpact()
                 onPressedChange?.(pressed)
             }}
             {...props}

@@ -10,7 +10,7 @@ import {
     PopoverContent,
 } from '@/components/ui/popover'
 import { useLongPress } from '@/hooks/use-long-press'
-import { hapticSelectionChanged } from '@/lib/haptics'
+import { hapticImpact } from '@/lib/haptics'
 import {
     summarizeExerciseGroupInsights,
     type HistoryEntryInsight,
@@ -84,7 +84,7 @@ export function HistoryExerciseCollapsible({
     const [pickerOpen, setPickerOpen] = useState(false)
     const openPicker = useCallback(() => {
         if (!canReact) return
-        void hapticSelectionChanged()
+        void hapticImpact()
         setPickerOpen(true)
     }, [canReact])
 
@@ -107,7 +107,7 @@ export function HistoryExerciseCollapsible({
         <button
             type="button"
             onPointerDown={(event) => {
-                void hapticSelectionChanged()
+                void hapticImpact()
                 longPressHandlers.onPointerDown(event)
             }}
             onPointerMove={longPressHandlers.onPointerMove}
@@ -197,7 +197,7 @@ export function HistoryExerciseCollapsible({
                                                 )}
                                                 className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs transition-colors hover:bg-muted"
                                                 onClick={() => {
-                                                    void hapticSelectionChanged()
+                                                    void hapticImpact()
                                                     onToggleReaction?.(emoji)
                                                     setPickerOpen(false)
                                                 }}

@@ -1,7 +1,7 @@
 import { Switch as SwitchPrimitive } from "radix-ui"
 import * as React from "react"
 
-import { hapticSelectionChanged } from "@/lib/haptics"
+import { hapticImpact } from "@/lib/haptics"
 import { cn } from "@/lib/utils"
 
 function Switch({
@@ -21,7 +21,7 @@ function Switch({
         className,
       )}
       onCheckedChange={(checked) => {
-        void hapticSelectionChanged()
+        void hapticImpact()
         onCheckedChange?.(checked)
       }}
       {...props}

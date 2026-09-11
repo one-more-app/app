@@ -418,7 +418,10 @@ function OnboardingPage() {
             navigate('/exercises', { replace: true })
             return
         }
-        goAccount()
+        navigate(
+            `/onboarding?step=account&redirect=${encodeURIComponent('/exercises')}`,
+            { replace: true },
+        )
     }
 
     const advanceBody = () => {
@@ -787,6 +790,13 @@ function OnboardingPage() {
         if (auth.status === 'authenticated') return
         const mode = searchParams.get('mode')
         const currentRedirect = searchParams.get('redirect')
+        // Ne pas écraser Passer → /exercises (ni autre destination post-auth).
+        if (
+            currentRedirect &&
+            currentRedirect !== '/onboarding?step=account'
+        ) {
+            return
+        }
         if (mode === 'login' && currentRedirect === '/onboarding?step=account') {
             return
         }

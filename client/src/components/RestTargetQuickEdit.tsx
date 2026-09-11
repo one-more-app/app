@@ -12,7 +12,7 @@ import {
   REST_TARGET_MIN_MS,
   REST_TARGET_PRESETS_MS,
 } from "@/lib/format-rest-elapsed";
-import { hapticSelectionChanged } from "@/lib/haptics";
+import { hapticImpact } from "@/lib/haptics";
 import {
   subscribeRestCounterTourQuickEditStep2,
 } from "@/lib/rest-counter-tour-quick-edit";
@@ -116,7 +116,7 @@ export function RestTargetQuickEdit({ className }: RestTargetQuickEditProps) {
   const applyTarget = (nextMs: number) => {
     if (nextMs === targetMs) return;
     setTargetMs(nextMs);
-    void hapticSelectionChanged();
+    void hapticImpact();
   };
 
   const step = (deltaMs: number) => {

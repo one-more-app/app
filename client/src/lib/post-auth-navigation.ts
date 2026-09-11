@@ -9,6 +9,7 @@ import { CARDIO_EQUIPMENT } from "@/lib/exercisedb";
 import { isPushPermissionGranted } from "@/lib/push-notifications";
 import {
   isNotificationsEduDone,
+  isOnboardingFirstExercisePending,
   markOnboardingDone,
   peekOnboardingRecordDestination,
   peekPostAuthFlowDestination,
@@ -85,6 +86,7 @@ async function resolveFinalPostAuthDestination(
     setOnboardingFirstExercisePending(true);
     return "/exercises";
   } catch {
+    if (isOnboardingFirstExercisePending()) return "/exercises";
     return nextPath;
   }
 }
