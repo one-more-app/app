@@ -20,7 +20,7 @@ import {
     persistAndNavigateToInvite,
     setupAppsFlyer,
 } from '@/lib/appsflyer'
-import { requestAdsTrackingIfNeeded } from '@/lib/ads-tracking'
+import { requestAdsTrackingWhenAppActive } from '@/lib/ads-tracking'
 import { isOnboardingExercisePickLocation } from '@/lib/onboarding-exercise-pick'
 import { isOnboardingGymDevPreview, isGymPermissionsNativeContext, isOnboardingGymFromSettings, isGymReselectOnboarding } from '@/lib/onboarding-gym-dev'
 import { useUserGymData } from '@/hooks/use-user-gym-data'
@@ -356,7 +356,10 @@ function App() {
 
         scheduleSafeAreaCssSync()
 
-        void setupAppsFlyer().then(() => requestAdsTrackingIfNeeded())
+        // ATT seulement une fois `active` (pas pendant le splash).
+        // initSDK attend la réponse (waitForATT 60s) — ne pas await init avant.
+        void setupAppsFlyer()
+        void requestAdsTrackingWhenAppActive()
 
         void CapacitorApp.getLaunchUrl().then((result) => {
             if (!result?.url) return

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  canPresentAttPrompt,
   isTrackingAuthorized,
   shouldPromptAtt,
   type AttAuthorizationStatus,
@@ -12,6 +13,13 @@ describe("shouldPromptAtt", () => {
     expect(shouldPromptAtt("denied")).toBe(false);
     expect(shouldPromptAtt("restricted")).toBe(false);
     expect(shouldPromptAtt("unavailable")).toBe(false);
+  });
+});
+
+describe("canPresentAttPrompt", () => {
+  it("is only true while the app is foreground-active", () => {
+    expect(canPresentAttPrompt(true)).toBe(true);
+    expect(canPresentAttPrompt(false)).toBe(false);
   });
 });
 

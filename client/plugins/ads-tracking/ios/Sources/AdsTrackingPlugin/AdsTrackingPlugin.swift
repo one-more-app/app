@@ -20,7 +20,26 @@ public class AdsTrackingPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func requestPermission(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
-            self.requestAtt(call)
+            self.requestAttWhenActive(call)
+        }
+    }
+
+    private func requestAttWhenActive(_ call: CAPPluginCall) {
+        if UIApplication.shared.applicationState == .active {
+            requestAtt(call)
+            return
+        }
+
+        var observer: NSObjectProtocol?
+        observer = NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            if let observer {
+                NotificationCenter.default.removeObserver(observer)
+            }
+            self?.requestAtt(call)
         }
     }
 

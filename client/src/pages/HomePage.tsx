@@ -34,6 +34,7 @@ import {
     getPersonalBest,
     savePerformanceAndWait,
 } from '@/lib/storage'
+import { requestAdsTrackingWhenAppActive } from '@/lib/ads-tracking'
 import { UI } from '@/lib/translations'
 import { notifyXpGrants } from '@/lib/xp-notifications'
 import { ChevronRight, Dumbbell, Plus, Search } from 'lucide-react'
@@ -58,6 +59,10 @@ function HomePage() {
     }, [auth.status, auth.user?.id])
 
     const todayKey = getLocalDateKey()
+
+    useEffect(() => {
+        void requestAdsTrackingWhenAppActive()
+    }, [])
 
     const todayEntries = useMemo(
         () =>

@@ -6,9 +6,16 @@ export function getAppsFlyerDevKey(): string | undefined {
 }
 
 /** ID App Store numérique (iOS uniquement). */
+export function normalizeAppsFlyerIosAppId(
+  raw: string | undefined,
+): string | undefined {
+  const id = raw?.trim();
+  if (!id) return undefined;
+  return id.replace(/^id/i, "");
+}
+
 export function getAppsFlyerAppId(): string | undefined {
-  const id = import.meta.env.VITE_APPSFLYER_APP_ID?.trim();
-  return id || undefined;
+  return normalizeAppsFlyerIosAppId(import.meta.env.VITE_APPSFLYER_APP_ID);
 }
 
 /** ID du template OneLink (segment d’URL, ex. `H5hv`). */

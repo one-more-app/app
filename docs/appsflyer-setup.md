@@ -77,7 +77,21 @@ Puis **SHA-256** du keystore dans AppsFlyer (Paramètres Android → App Links).
 2. AppsFlyer configure le fichier `apple-app-site-association` sur le domaine OneLink.
 3. Ne pas supprimer le code `application(_:continue:)` dans `AppDelegate.swift` (déjà en place pour Capacitor).
 
-## 6. Parcours utilisateur
+## 6. Events in-app (TikTok / SRN)
+
+Le SDK n’envoie **pas** `af_app_opened` tout seul (session ≠ event). Ne pas mapper `af_app_opened` → LaunchAPP.
+
+| Event AppsFlyer | Quand | TikTok |
+|-----------------|-------|--------|
+| `af_complete_registration` | `trackAuthSuccess({ isNewUser: true })` après `setupAppsFlyer()` | CompleteRegistration |
+| `af_tutorial_completion` | fin d’onboarding | — |
+| `af_start_trial` | essai gratuit paywall | StartTrial |
+| `af_subscribe` | abo mensuel / annuel | Subscribe |
+| `af_purchase` | lifetime / one-shot | Purchase |
+
+Rebuild natif obligatoire (`cap sync` + archive TestFlight). Tester avec **SDK Integration Test** (ID appareil), ATT accepté, **nouveau compte**.
+
+## 7. Parcours utilisateur
 
 | Scénario | Comportement |
 |----------|----------------|
@@ -86,20 +100,20 @@ Puis **SHA-256** du keystore dans AppsFlyer (Paramètres Android → App Links).
 | Web sans app | URL OneLink → store ou landing ; code dans `deep_link_value` |
 | Inscription | `inviteCode` envoyé à l’API → `applyReferralCodeOnSignup` |
 
-## 7. Tests
+## 8. Tests
 
 1. Dashboard AppsFlyer → **Test devices** : ajouter l’IDFA/GAID de l’appareil de test.
 2. Activer `isDebug` (déjà lié à `import.meta.env.DEV` dans le code).
 3. Tester un lien généré depuis **Paramètres → Parrainage → Partager mon invitation**.
 4. Vérifier dans les logs : `UDL_CALLBACK` avec `status: FOUND` et `deep_link_value`.
 
-## 8. Store (Play / App Store)
+## 9. Store (Play / App Store)
 
 Sur la landing web (ou page AppsFlyer), les boutons store doivent pointer vers les fiches officielles. Le **deferred deep link** est géré par AppsFlyer au premier open après install — pas besoin de coller le code manuellement si UDL est bien configuré.
 
 Pour Android, tu peux en plus ajouter un `referrer` Play Store ; AppsFlyer UDL reste la source principale recommandée.
 
-## 9. iOS — ATT, SKAdNetwork, Meta Ads
+## 10. iOS — ATT, SKAdNetwork, Meta Ads
 
 Le wizard Meta Events Manager propose encore `FBSDKCoreKit ~> 8.0` et `AdvertisingTrackingEnabled = true` en dur. **Ne pas suivre ça** : SDK 8 est obsolète, et forcer ATE à true si l’utilisateur refuse ATT est un motif de rejet App Store.
 
@@ -108,7 +122,7 @@ Ce qui est en place :
 | Élément | Détail |
 |---------|--------|
 | Facebook SDK | CocoaPods `FBSDKCoreKit ~> 18.0` (pas Login/Share/Gaming). Query schemes Meta (`fbapi`, `fbauth2`, messenger, share). |
-| ATT | Prompt une seule fois, après `AppsFlyer.initSDK` (`waitForATTUserAuthorization: 60`) |
+| ATT | Prompt une fois l’app `active` (home / premier plan), pas pendant le splash ; `initSDK` attend la réponse (`waitForATT 60`) |
 | ATE Meta | `Settings.isAdvertiserTrackingEnabled` = résultat ATT (jamais hardcodé à true) |
 | SKAN | `SKAdNetworkItems` (Meta `v9qkcwr9w5` + `v9wttpbfk9` + `n38lu8286q`) |
 | Copies SKAN | `NSAdvertisingAttributionReportEndpoint` + AdAttributionKit → `https://appsflyer-skadnetwork.com/` |
@@ -135,7 +149,7 @@ Après un build TestFlight / prod avec App ID + token :
 3. Dans Events Manager, la tâche SDK peut rester « quelques jours » même si le SDK 18 tourne déjà — c’est normal.
 4. Ne mets pas `AdvertisingTrackingEnabled` à true dans le dashboard si ATT est refusé.
 
-## 10. Android — Meta App Events
+## 11. Android — Meta App Events
 
 Même règle que iOS : le wizard « Démarrage rapide » est **obsolète** (`facebook-android-sdk:[8,9)`, bouton Login, `com.example.myapp.MainActivity`). En place : `facebook-core:18.0.3`, App ID + Client Token, `AdvertiserIDCollectionEnabled`, pas de Facebook Login.
 

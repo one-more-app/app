@@ -1,3 +1,4 @@
+import { logAppsFlyerCommerce } from "@/lib/appsflyer-events";
 import { AnalyticsEvents } from "./events";
 import { getOpenPanel } from "./instance";
 import { track, type AnalyticsProperties } from "./track";
@@ -11,6 +12,7 @@ export type PurchaseValidatedParams = {
   provider?: "revenuecat" | "stripe" | "manual";
   subscriptionPeriod?: "monthly" | "yearly" | "lifetime" | "weekly";
   isRenewal?: boolean;
+  isTrial?: boolean;
   properties?: AnalyticsProperties;
 };
 
@@ -33,6 +35,14 @@ export async function trackPurchaseValidated(
   };
 
   track(AnalyticsEvents.PURCHASE_VALIDATED, eventProps);
+  logAppsFlyerCommerce({
+    isTrial: params.isTrial,
+    subscriptionPeriod: params.subscriptionPeriod,
+    isRenewal: params.isRenewal,
+    revenue: params.amount,
+    currency: params.currency,
+    productId: params.productId,
+  });
 
   if (op) {
     await op.revenue(params.amount, eventProps);

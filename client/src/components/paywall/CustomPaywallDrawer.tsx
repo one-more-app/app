@@ -3,6 +3,7 @@ import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { usePaywall } from "@/hooks/use-paywall";
 import { AnalyticsEvents } from "@/lib/analytics";
+import { logAppsFlyerCommerce } from "@/lib/appsflyer-events";
 import { UI } from "@/lib/translations";
 import { getFreeTrialLabel } from "@/lib/paywall-free-trial";
 import {
@@ -227,6 +228,14 @@ export function CustomPaywallDrawer() {
                     source: source ?? "unknown",
                     package: selectedPackage.identifier,
                     package_type: selectedPackage.packageType,
+                });
+                const product = selectedPackage.product;
+                logAppsFlyerCommerce({
+                    isTrial: Boolean(getFreeTrialLabel(product)),
+                    subscriptionPeriod: isAnnualSelected ? "yearly" : "monthly",
+                    revenue: product.price,
+                    currency: product.currencyCode,
+                    productId: product.identifier,
                 });
                 toast.success(UI.premiumSubscribeSuccess);
                 resolvePaywall(true);

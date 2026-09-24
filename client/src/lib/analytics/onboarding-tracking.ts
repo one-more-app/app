@@ -7,6 +7,10 @@ import {
 } from "./track";
 import { isGymOnboardingBypassed } from "@/lib/gym-onboarding-route";
 import { readStoredSession } from "@/lib/auth-storage";
+import {
+  logAppsFlyerRegistrationIfNew,
+  logAppsFlyerTutorialCompletion,
+} from "@/lib/appsflyer-events";
 import { useEffect } from "react";
 
 const LAST_STEP_KEY = "one-more-analytics-onboarding-last-step-v1";
@@ -226,6 +230,7 @@ export function trackOnboardingCompleted(params: {
     destination: params.destination,
     gym_bypassed: params.gymBypassed ?? isGymOnboardingBypassed(),
   });
+  logAppsFlyerTutorialCompletion();
   const session = readStoredSession();
   if (session) {
     identifyUser({
@@ -251,6 +256,7 @@ export function trackAuthSuccess(params: {
       : AnalyticsEvents.USER_LOGGED_IN,
     { method: params.method },
   );
+  logAppsFlyerRegistrationIfNew(params.isNewUser, params.method);
 }
 
 /** Échec auth / signup. Pas de PII (pas d'email, pas de message brut). */
