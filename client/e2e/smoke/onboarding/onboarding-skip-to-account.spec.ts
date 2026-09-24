@@ -16,12 +16,7 @@ test("skip depuis l'âge mène au compte puis au catalogue exercices", async ({
   const pageErrors = trackPageErrors(page);
   await mockAuthApi(page);
 
-  await page.goto("/#/onboarding?step=body&bodyQ=0");
-
-  await page.getByRole("radio", { name: UI.male }).click();
-  await continueButton(page).click();
-  await continueButton(page).click();
-  await continueButton(page).click();
+  await page.goto("/#/onboarding?step=body&bodyQ=3");
 
   await expect(
     page.getByRole("heading", { name: UI.onboardingBodyTitleAge }),
