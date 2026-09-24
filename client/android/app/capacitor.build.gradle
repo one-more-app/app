@@ -23,6 +23,7 @@ dependencies {
     implementation project(':capawesome-capacitor-app-review')
     implementation project(':capgo-capacitor-social-login')
     implementation project(':revenuecat-purchases-capacitor')
+    implementation project(':ads-tracking')
     implementation project(':appsflyer-capacitor-plugin')
     implementation project(':gym-geofence')
     implementation project(':rest-timer')

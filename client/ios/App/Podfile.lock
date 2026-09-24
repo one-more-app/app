@@ -1,4 +1,7 @@
 PODS:
+  - AdsTracking (1.0.0):
+    - Capacitor
+    - FBSDKCoreKit (~> 18.0)
   - Alamofire (5.10.2)
   - AppAuth (2.0.0):
     - AppAuth/Core (= 2.0.0)
@@ -92,6 +95,7 @@ PODS:
     - PurchasesHybridCommon (= 18.18.0)
 
 DEPENDENCIES:
+  - AdsTracking (from `../../plugins/ads-tracking`)
   - AppsflyerCapacitorPlugin (from `../../node_modules/appsflyer-capacitor-plugin`)
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
@@ -108,6 +112,7 @@ DEPENDENCIES:
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
   - "CapawesomeCapacitorAppReview (from `../../node_modules/@capawesome/capacitor-app-review`)"
   - "CapgoCapacitorSocialLogin (from `../../node_modules/@capgo/capacitor-social-login`)"
+  - FBSDKCoreKit (~> 18.0)
   - GymGeofence (from `../../plugins/gym-geofence`)
   - RestTimer (from `../../plugins/rest-timer`)
   - "RevenuecatPurchasesCapacitor (from `../../node_modules/@revenuecat/purchases-capacitor`)"
@@ -133,6 +138,8 @@ SPEC REPOS:
     - RevenueCat
 
 EXTERNAL SOURCES:
+  AdsTracking:
+    :path: "../../plugins/ads-tracking"
   AppsflyerCapacitorPlugin:
     :path: "../../node_modules/appsflyer-capacitor-plugin"
   Capacitor:
@@ -173,6 +180,7 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@revenuecat/purchases-capacitor"
 
 SPEC CHECKSUMS:
+  AdsTracking: 5da8d176e765da39e04d34e278ea187fbf305322
   Alamofire: 7193b3b92c74a07f85569e1a6c4f4237291e7496
   AppAuth: 1c1a8afa7e12f2ec3a294d9882dfa5ab7d3cb063
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
@@ -210,6 +218,6 @@ SPEC CHECKSUMS:
   RevenueCat: f4427b8a1daa7a04a26cb20d60807aa818d9420b
   RevenuecatPurchasesCapacitor: c31daadc8c3b89ff31686b6ea07ff99bc21c96b7
 
-PODFILE CHECKSUM: 8a4b3cf4e281b81a219b2aeb210c53328e4ac9fd
+PODFILE CHECKSUM: e05fde126e39c53f052591e220cb73433c0cf210
 
 COCOAPODS: 1.16.2

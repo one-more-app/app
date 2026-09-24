@@ -222,6 +222,8 @@ export function setupAppsFlyer(): Promise<void> {
       isDebug: import.meta.env.DEV,
       registerConversionListener: true,
       registerOnDeepLink: true,
+      // Laisse le 1er launch en file jusqu’à la réponse ATT (ou 60s).
+      waitForATTUserAuthorization: 60,
     });
   })().catch((err) => {
     initPromise = null;

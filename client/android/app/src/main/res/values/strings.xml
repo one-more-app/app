@@ -5,4 +5,6 @@
     <string name="package_name">com.one_more.app</string>
     <string name="custom_url_scheme">com.one_more.app</string>
     <string name="default_notification_channel_id">one-more-push</string>
+    <string name="facebook_app_id">1761494881722245</string>
+    <string name="facebook_client_token">a40926d083aa63abfc0edef9d084f448</string>
 </resources>

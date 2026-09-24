@@ -1,6 +1,8 @@
+import AppTrackingTransparency
 import GoogleSignIn
 import UIKit
 import Capacitor
+import FBSDKCoreKit
 import FirebaseCore
 import FirebaseMessaging
 import UserNotifications
@@ -16,6 +18,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
         FirebaseApp.configure()
         Messaging.messaging().delegate = self
         UNUserNotificationCenter.current().delegate = self
+
+        configureFacebookSdk(application: application, launchOptions: launchOptions)
         return true
     }
 
@@ -34,6 +38,33 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
             NotificationCenter.default.post(name: .capacitorOpenURL, object: url)
         }
         completionHandler()
+    }
+
+    private var hasFacebookAppId: Bool {
+        let raw = Bundle.main.object(forInfoDictionaryKey: "FacebookAppID") as? String ?? ""
+        let appId = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !appId.isEmpty && !appId.contains("$(")
+    }
+
+    private func configureFacebookSdk(
+        application: UIApplication,
+        launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) {
+        guard hasFacebookAppId else { return }
+
+        Settings.shared.isAdvertiserIDCollectionEnabled = true
+        Settings.shared.isAutoLogAppEventsEnabled = true
+        Settings.shared.isSKAdNetworkReportEnabled = true
+        if #available(iOS 14, *) {
+            Settings.shared.isAdvertiserTrackingEnabled =
+                ATTrackingManager.trackingAuthorizationStatus == .authorized
+        } else {
+            Settings.shared.isAdvertiserTrackingEnabled = true
+        }
+        ApplicationDelegate.shared.application(
+            application,
+            didFinishLaunchingWithOptions: launchOptions
+        )
     }
 
     private static func extractExerciseId(from route: String) -> String? {
@@ -67,6 +98,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
+        if hasFacebookAppId {
+            AppEvents.shared.activateApp()
+        }
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
@@ -74,6 +108,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
 
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
         if GIDSignIn.sharedInstance.handle(url) {
+            return true
+        }
+        if hasFacebookAppId,
+           ApplicationDelegate.shared.application(app, open: url, options: options) {
             return true
         }
 

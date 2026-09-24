@@ -20,6 +20,7 @@ import {
     persistAndNavigateToInvite,
     setupAppsFlyer,
 } from '@/lib/appsflyer'
+import { requestAdsTrackingIfNeeded } from '@/lib/ads-tracking'
 import { isOnboardingExercisePickLocation } from '@/lib/onboarding-exercise-pick'
 import { isOnboardingGymDevPreview, isGymPermissionsNativeContext, isOnboardingGymFromSettings, isGymReselectOnboarding } from '@/lib/onboarding-gym-dev'
 import { useUserGymData } from '@/hooks/use-user-gym-data'
@@ -355,7 +356,7 @@ function App() {
 
         scheduleSafeAreaCssSync()
 
-        void setupAppsFlyer()
+        void setupAppsFlyer().then(() => requestAdsTrackingIfNeeded())
 
         void CapacitorApp.getLaunchUrl().then((result) => {
             if (!result?.url) return

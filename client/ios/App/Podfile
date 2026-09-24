@@ -22,6 +22,7 @@ def capacitor_pods
   pod 'CapawesomeCapacitorAppReview', :path => '../../node_modules/@capawesome/capacitor-app-review'
   pod 'CapgoCapacitorSocialLogin', :path => '../../node_modules/@capgo/capacitor-social-login'
   pod 'RevenuecatPurchasesCapacitor', :path => '../../node_modules/@revenuecat/purchases-capacitor'
+  pod 'AdsTracking', :path => '../../plugins/ads-tracking'
   pod 'AppsflyerCapacitorPlugin', :path => '../../node_modules/appsflyer-capacitor-plugin'
   pod 'GymGeofence', :path => '../../plugins/gym-geofence'
   pod 'RestTimer', :path => '../../plugins/rest-timer'
@@ -29,7 +30,9 @@ end
 
 target 'App' do
   capacitor_pods
-  # Pods ajoutés par `npx cap sync ios`
+  # Hors capacitor_pods : `cap sync` réécrit la liste Capacitor, pas cette ligne.
+  # Meta Events Manager demande le SDK Facebook iOS à jour (pas 8.0 du wizard).
+  pod 'FBSDKCoreKit', '~> 18.0'
 end
 
 post_install do |installer|
