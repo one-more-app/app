@@ -168,6 +168,7 @@ export function ReferralDrawerHost() {
         void hapticNotificationWarning();
         track(AnalyticsEvents.PAYWALL_VIEWED, {
             paywall_type: "exercise_limit",
+            source: "exercise_limit",
             active_count: access?.activeExerciseCount,
             exercise_limit: access?.exerciseLimit,
             referral_count: referralCount,
