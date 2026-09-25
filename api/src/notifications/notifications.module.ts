@@ -22,6 +22,8 @@ import { PushNotificationService } from './push-notification.service.js';
 import { StreakReminderCron } from './streak-reminder.cron.js';
 import { TrainingReminderCron } from './training-reminder.cron.js';
 import { WeeklyRecapCron } from './weekly-recap.cron.js';
+import { NewUserD1Cron } from './new-user-d1.cron.js';
+import { UserEntity } from '../auth/entities/user.entity.js';
 
 @Module({
   imports: [
@@ -37,6 +39,7 @@ import { WeeklyRecapCron } from './weekly-recap.cron.js';
       PerformanceEntryEntity,
       XpEventEntity,
       UserPresenceEntity,
+      UserEntity,
     ]),
     forwardRef(() => RealtimeModule),
   ],
@@ -51,6 +54,7 @@ import { WeeklyRecapCron } from './weekly-recap.cron.js';
     StreakReminderCron,
     TrainingReminderCron,
     WeeklyRecapCron,
+    NewUserD1Cron,
   ],
   exports: [NotificationDispatchService, FriendTrainingAlertsService],
 })

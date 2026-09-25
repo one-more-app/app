@@ -146,6 +146,11 @@ export class NotificationPreferencesService {
         return prefs.friendAccepted;
       case NotificationType.TshirtRewardUnlocked:
         return prefs.friendAccepted;
+      case NotificationType.NewUserD1Morning:
+      case NotificationType.NewUserD1MiddayTrain:
+      case NotificationType.NewUserD1Referral:
+      case NotificationType.NewUserD1Evening:
+        return true;
       default:
         return false;
     }

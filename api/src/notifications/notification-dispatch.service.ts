@@ -15,6 +15,7 @@ import { DeviceTokensService } from './device-tokens.service.js';
 import { FriendTrainingAlertsService } from './friend-training-alerts.service.js';
 import { formatUserDisplayName } from './lib/display-name.js';
 import { localDateKey, localWeekKey } from './lib/timezone.js';
+import type { NewUserD1TrainingHour } from './lib/new-user-d1.js';
 import { NotificationFeedService } from './notification-feed.service.js';
 import { NotificationPreferencesService } from './notification-preferences.service.js';
 import { NotificationType } from './entities/notification-type.enum.js';
@@ -361,6 +362,68 @@ export class NotificationDispatchService {
       body: "Ta séance t'attend. Une rep de plus.",
       route: '/home',
       dedupKey: `training_reminder:${today}`,
+    });
+  }
+
+  private async hadPerfOnLocalDate(
+    userId: string,
+    localDate: string,
+  ): Promise<boolean> {
+    const count = await this.perfRepo
+      .createQueryBuilder('p')
+      .where('p.userId = :userId', { userId })
+      .andWhere('p.date = :localDate', { localDate })
+      .andWhere('p.deletedAt IS NULL')
+      .getCount();
+    return count > 0;
+  }
+
+  async sendNewUserD1TrainingForUser(
+    userId: string,
+    timezone: string,
+    hour: NewUserD1TrainingHour,
+  ) {
+    const today = localDateKey(timezone);
+    if (await this.hadPerfOnLocalDate(userId, today)) return;
+
+    if (hour === 7) {
+      await this.deliver(userId, {
+        type: NotificationType.NewUserD1Morning,
+        title: 'One More',
+        body: "N'oublie pas de t'entraîner aujourd'hui.",
+        route: '/home',
+        dedupKey: `new_user_d1_morning:${userId}`,
+      });
+      return;
+    }
+
+    if (hour === 11) {
+      await this.deliver(userId, {
+        type: NotificationType.NewUserD1MiddayTrain,
+        title: 'Note ta séance',
+        body: 'Une minute pour logger ta perf.',
+        route: '/home',
+        dedupKey: `new_user_d1_midday_train:${userId}`,
+      });
+      return;
+    }
+
+    await this.deliver(userId, {
+      type: NotificationType.NewUserD1Evening,
+      title: 'Encore le temps',
+      body: 'Termine ta journée avec une séance.',
+      route: '/home',
+      dedupKey: `new_user_d1_evening:${userId}`,
+    });
+  }
+
+  async sendNewUserD1ReferralForUser(userId: string) {
+    await this.deliver(userId, {
+      type: NotificationType.NewUserD1Referral,
+      title: 'Invite un pote',
+      body: 'Parraine et gagne un t-shirt One More.',
+      route: '/settings?focus=referral',
+      dedupKey: `new_user_d1_referral:${userId}`,
     });
   }
 
