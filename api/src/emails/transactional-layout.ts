@@ -272,7 +272,7 @@ ${renderPreheader(input.preheader)}
       <table role="presentation" class="om-container" width="520" cellpadding="0" cellspacing="0" border="0" style="width:520px; max-width:520px;">
         <tr>
           <td align="center" style="padding:0 0 20px 0;">
-            <img src="${logoSrc}" width="40" height="40" alt="One More" style="display:block; width:40px; max-width:40px; height:auto;">
+            <img src="${logoSrc}" width="140" alt="One More" style="display:block; width:140px; max-width:140px; height:auto;">
           </td>
         </tr>
         <tr>

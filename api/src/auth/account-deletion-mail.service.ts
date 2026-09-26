@@ -6,7 +6,7 @@ import nodemailer from 'nodemailer';
 import { renderAccountDeletionEmail } from './emails/account-deletion-template.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const LOGO_PATH = resolve(__dirname, '../emails/assets/logo-black.png');
+const LOGO_PATH = resolve(__dirname, '../emails/assets/logo-black-text.png');
 const FONT_WOFF2_PATH = resolve(
   __dirname,
   '../event/emails/fonts/TBJ-One-More.woff2',
@@ -86,7 +86,7 @@ export class AccountDeletionMailService {
     try {
       const logo = await readFile(LOGO_PATH);
       attachments.push({
-        filename: 'logo-black.png',
+        filename: 'logo-black-text.png',
         content: logo,
         cid: LOGO_CID,
         contentDisposition: 'inline',
