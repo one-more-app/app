@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { decodeJwt, importPKCS8, SignJWT } from 'jose';
@@ -286,6 +286,9 @@ export class OAuthService {
     let isNewUser = false;
 
     if (linked) {
+      if (linked.user.deletedAt) {
+        throw new UnauthorizedException('Compte désactivé');
+      }
       userId = linked.user.id;
       userEmail = linked.user.email;
     } else {
@@ -295,9 +298,13 @@ export class OAuthService {
       const existingByEmail = normalizedEmail
         ? await this.usersRepo.findOne({
             where: { email: normalizedEmail },
-            select: ['id', 'email'],
+            select: ['id', 'email', 'deletedAt'],
           })
         : null;
+
+      if (existingByEmail?.deletedAt) {
+        throw new UnauthorizedException('Compte désactivé');
+      }
 
       const normalizedFirstName = this.normalizeName(params.firstName);
       const normalizedLastName = this.normalizeName(params.lastName);

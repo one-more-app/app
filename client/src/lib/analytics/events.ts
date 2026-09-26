@@ -74,6 +74,7 @@ export const AnalyticsEvents = {
   REVIEW_SESSION_CARD_DISMISSED: "review_session_card_dismissed",
   REVIEW_FEEDBACK_SENT: "review_feedback_sent",
   REVIEW_FEEDBACK_SKIPPED: "review_feedback_skipped",
+  ACCOUNT_DELETION_REQUESTED: "account_deletion_requested",
 
   // Notifications
   PUSH_NOTIFICATION_ENABLED: "push_notification_enabled",

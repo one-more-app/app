@@ -133,3 +133,11 @@ export class LogoutDto {
   @IsString()
   deviceId?: string;
 }
+
+export class DeleteAccountDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  comment?: string;
+}
+

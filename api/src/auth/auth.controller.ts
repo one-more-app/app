@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Post,
   Query,
@@ -10,6 +11,7 @@ import {
 import { ProfileService } from '../profile/profile.service.js';
 import { AuthService } from './auth.service.js';
 import {
+  DeleteAccountDto,
   IdentifyDto,
   LoginDto,
   LogoutDto,
@@ -17,8 +19,6 @@ import {
   RegisterDto,
 } from './auth.dto.js';
 import { JwtAuthGuard } from './jwt.guard.js';
-import { redditAdsFromRequest } from './reddit-ads-request.js';
-import type { Request } from 'express';
 
 @Controller()
 export class AuthController {
@@ -51,11 +51,8 @@ export class AuthController {
   }
 
   @Post('/auth/register')
-  async register(@Body() body: RegisterDto, @Req() req: Request) {
-    return await this.auth.registerWithEmail({
-      ...body,
-      ads: redditAdsFromRequest(req, body),
-    });
+  async register(@Body() body: RegisterDto) {
+    return await this.auth.registerWithEmail(body);
   }
 
   @Post('/auth/login')
@@ -72,6 +69,14 @@ export class AuthController {
   async logout(@Body() body: LogoutDto) {
     await this.auth.logout(body);
     return { ok: true };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('/auth/account')
+  async deleteAccount(@Req() req: any, @Body() body: DeleteAccountDto) {
+    return await this.auth.deleteAccount(req.user.sub, {
+      comment: body.comment,
+    });
   }
 
   @UseGuards(JwtAuthGuard)

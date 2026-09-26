@@ -28,8 +28,12 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { useProfileDataRefresh, useUserProfileData } from '@/hooks/use-api-data'
+import { useAccess } from '@/hooks/use-access'
 import { useAuth } from '@/hooks/use-auth'
 import { useTheme } from '@/hooks/use-theme'
+import { deleteAccount } from '@/lib/account-api'
+import { AnalyticsEvents } from '@/lib/analytics/events'
+import { track } from '@/lib/analytics/track'
 import { openStoreListing } from '@/lib/app-review'
 import {
     submitFeedback,
@@ -49,6 +53,7 @@ import { toast } from 'sonner'
 
 export function SettingsPage() {
     const auth = useAuth()
+    const { isPremium } = useAccess()
     const [searchParams] = useSearchParams()
     const location = useLocation()
     const { theme, setTheme } = useTheme()
@@ -70,6 +75,9 @@ export function SettingsPage() {
     const [feedbackTitle, setFeedbackTitle] = useState('')
     const [feedbackMessage, setFeedbackMessage] = useState('')
     const [feedbackSending, setFeedbackSending] = useState(false)
+    const [deleteOpen, setDeleteOpen] = useState(false)
+    const [deleteComment, setDeleteComment] = useState('')
+    const [deleteSending, setDeleteSending] = useState(false)
 
     useEffect(() => {
         if (!profile) return
@@ -114,15 +122,37 @@ export function SettingsPage() {
         }
     }
 
-    const handleDeleteAccount = () => {
-        if (!window.confirm(UI.deleteAccountConfirm)) return
+    const resetDeleteForm = () => {
+        setDeleteComment('')
+    }
 
-        const accountEmail = auth.user?.email ?? auth.user?.id ?? '–'
-        const subject = encodeURIComponent(UI.deleteAccountEmailSubject)
-        const body = encodeURIComponent(
-            UI.deleteAccountEmailBody.replace('{email}', accountEmail),
-        )
-        window.location.href = `mailto:admin@one-more.app?subject=${subject}&body=${body}`
+    const handleDeleteAccount = () => {
+        setDeleteOpen(true)
+    }
+
+    const handleConfirmDeleteAccount = () => {
+        const trimmedComment = deleteComment.trim()
+
+        void (async () => {
+            setDeleteSending(true)
+            try {
+                track(AnalyticsEvents.ACCOUNT_DELETION_REQUESTED, {
+                    has_comment: trimmedComment.length > 0,
+                    is_premium: isPremium,
+                })
+                await deleteAccount({
+                    comment: trimmedComment || undefined,
+                })
+                toast.success(UI.deleteAccountSuccess)
+                setDeleteOpen(false)
+                resetDeleteForm()
+                await auth.logout()
+            } catch {
+                toast.error(UI.deleteAccountError)
+            } finally {
+                setDeleteSending(false)
+            }
+        })()
     }
 
     const resetFeedbackForm = () => {
@@ -541,6 +571,71 @@ export function SettingsPage() {
                             disabled={feedbackSending}
                         >
                             {feedbackSending ? UI.feedbackSending : UI.feedbackSend}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={deleteOpen}
+                onOpenChange={(open) => {
+                    if (!deleteSending) {
+                        setDeleteOpen(open)
+                        if (!open) resetDeleteForm()
+                    }
+                }}
+                data-analytics-label="delete_account"
+            >
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>{UI.deleteAccountDialogTitle}</DialogTitle>
+                        <DialogDescription>
+                            {UI.deleteAccountDialogDescription}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid gap-4 py-2">
+                        <div className="grid gap-2">
+                            <Label htmlFor="delete-account-comment">
+                                {UI.deleteAccountCommentLabel}
+                            </Label>
+                            <textarea
+                                id="delete-account-comment"
+                                rows={4}
+                                maxLength={1000}
+                                value={deleteComment}
+                                onChange={(event) =>
+                                    setDeleteComment(event.target.value)
+                                }
+                                placeholder={UI.deleteAccountCommentPlaceholder}
+                                className="w-full resize-none rounded-lg bg-secondary px-3 py-2 text-base outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm"
+                            />
+                        </div>
+
+                        <p className="text-xs text-muted-foreground">
+                            {UI.deleteAccountConfirm}
+                        </p>
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setDeleteOpen(false)}
+                            disabled={deleteSending}
+                        >
+                            {UI.deleteAccountCancelButton}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleConfirmDeleteAccount}
+                            disabled={deleteSending}
+                            data-analytics-label="delete_account_confirm"
+                        >
+                            {deleteSending
+                                ? UI.deleteAccountDeleting
+                                : UI.deleteAccountConfirmButton}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

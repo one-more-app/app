@@ -31,15 +31,21 @@ export function SettingsBuildInfo() {
         }
     }, [])
 
+    const showDebugInfo = !import.meta.env.PROD
+
     return (
         <div className="pb-10 pt-2 text-center">
             <dl className="space-y-0.5 font-mono text-[10px] leading-relaxed">
                 <BuildInfoLine label={UI.settingsBuildVersion} value={info.version} />
                 <BuildInfoLine label={UI.settingsBuildNumber} value={info.build} />
-                <BuildInfoLine label={UI.settingsBuildEnv} value={info.env} />
-                <BuildInfoLine label={UI.settingsBuildMode} value={info.mode} />
-                <BuildInfoLine label={UI.settingsBuildPlatform} value={info.platform} />
-                <BuildInfoLine label={UI.settingsBuildApi} value={info.apiUrl} />
+                {showDebugInfo ? (
+                    <>
+                        <BuildInfoLine label={UI.settingsBuildEnv} value={info.env} />
+                        <BuildInfoLine label={UI.settingsBuildMode} value={info.mode} />
+                        <BuildInfoLine label={UI.settingsBuildPlatform} value={info.platform} />
+                        <BuildInfoLine label={UI.settingsBuildApi} value={info.apiUrl} />
+                    </>
+                ) : null}
             </dl>
         </div>
     )

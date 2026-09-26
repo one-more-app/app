@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { DataSource } from 'typeorm';
 import { OAuthAccountEntity } from '../auth/entities/oauth-account.entity.js';
 import { SessionEntity } from '../auth/entities/session.entity.js';
+import { AccountDeletionFeedbackEntity } from '../auth/entities/account-deletion-feedback.entity.js';
 import { UserEntity } from '../auth/entities/user.entity.js';
 import { ExerciseCatalogEntity } from '../exercises/exercise-catalog.entity.js';
 import { PerformanceEntryEntity } from '../performance/performance-entry.entity.js';
@@ -47,6 +48,7 @@ export default new DataSource({
   url: databaseUrl,
   entities: [
     UserEntity,
+    AccountDeletionFeedbackEntity,
     UserProfileEntity,
     OAuthAccountEntity,
     SessionEntity,
