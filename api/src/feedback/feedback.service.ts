@@ -5,7 +5,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ProfileService } from '../profile/profile.service.js';
-import type { CreateFeedbackDto, FeedbackKind } from './dto/create-feedback.dto.js';
+import type {
+  CreateFeedbackDto,
+  FeedbackKind,
+} from './dto/create-feedback.dto.js';
+import type { CreateReviewFeedbackDto } from './dto/create-review-feedback.dto.js';
 
 const NOTION_API_BASE = 'https://api.notion.com/v1';
 const NOTION_VERSION = '2022-06-28';
@@ -24,6 +28,69 @@ export class FeedbackService {
     private readonly config: ConfigService,
     private readonly profileService: ProfileService,
   ) {}
+
+  async createReviewFeedback(
+    userId: string,
+    sessionEmail: string | null,
+    payload: CreateReviewFeedbackDto,
+  ): Promise<void> {
+    const notionToken = this.config.get<string>('NOTION_TOKEN')?.trim() ?? '';
+    const notionDatabaseId =
+      this.config.get<string>('NOTION_FEEDBACK_DB_ID')?.trim() ?? '';
+
+    if (!notionToken || !notionDatabaseId) {
+      this.logger.error(
+        'Notion feedback non configuré (NOTION_TOKEN / NOTION_FEEDBACK_DB_ID).',
+      );
+      throw new InternalServerErrorException(
+        "Le service de feedback n'est pas disponible.",
+      );
+    }
+
+    const profile = await this.profileService.getProfile(userId);
+    const notionPayload = this.buildReviewNotionPayload(
+      notionDatabaseId,
+      userId,
+      sessionEmail,
+      profile,
+      payload,
+    );
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    try {
+      const response = await fetch(`${NOTION_API_BASE}/pages`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${notionToken}`,
+          'content-type': 'application/json',
+          'notion-version': NOTION_VERSION,
+        },
+        body: JSON.stringify(notionPayload),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        this.logger.error(
+          `Échec création review feedback Notion (${response.status}): ${text}`,
+        );
+        throw new InternalServerErrorException(
+          "Impossible d'enregistrer le feedback.",
+        );
+      }
+    } catch (error) {
+      if (error instanceof InternalServerErrorException) throw error;
+      const reason = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Erreur appel Notion review feedback: ${reason}`);
+      throw new InternalServerErrorException(
+        "Impossible d'enregistrer le feedback.",
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
 
   async create(
     userId: string,
@@ -89,6 +156,74 @@ export class FeedbackService {
     }
   }
 
+  private buildReviewNotionPayload(
+    databaseId: string,
+    userId: string,
+    sessionEmail: string | null,
+    profile: {
+      firstName: string | null;
+      lastName: string | null;
+    } | null,
+    payload: CreateReviewFeedbackDto,
+  ) {
+    const firstName = profile?.firstName?.trim() || 'non renseigné';
+    const lastName = profile?.lastName?.trim() || 'non renseigné';
+    const email = sessionEmail?.trim() || 'non renseigné';
+    const chipLine = payload.chips.join(', ');
+    const userMessage = payload.message?.trim() ?? '';
+
+    const bodyLines = [
+      `Chips: ${chipLine}`,
+      userMessage ? `Message: ${userMessage}` : '',
+      '',
+      `Sessions (count): ${payload.sessionsCount}`,
+      `Locale: ${payload.locale}`,
+      `App: ${payload.appVersion}`,
+      `Plateforme: ${payload.platform}`,
+      payload.sessionId ? `Session: ${payload.sessionId}` : '',
+      payload.deviceModel ? `Device: ${payload.deviceModel}` : '',
+      payload.osVersion ? `OS: ${payload.osVersion}` : '',
+      '',
+      `Prénom: ${firstName}`,
+      `Nom: ${lastName}`,
+      `Email: ${email}`,
+      `User ID: ${userId}`,
+      `Date: ${payload.createdAt}`,
+    ].filter(Boolean);
+
+    return {
+      parent: { database_id: databaseId },
+      properties: {
+        Name: {
+          title: [{ text: { content: 'Review pulse (Pas encore)' } }],
+        },
+        Type: {
+          select: { name: 'Chore' },
+        },
+        Status: {
+          status: { name: 'Backlog' },
+        },
+        Priority: {
+          select: { name: 'Low' },
+        },
+      },
+      children: [
+        {
+          object: 'block' as const,
+          type: 'paragraph' as const,
+          paragraph: {
+            rich_text: [
+              {
+                type: 'text' as const,
+                text: { content: bodyLines.join('\n') },
+              },
+            ],
+          },
+        },
+      ],
+    };
+  }
+
   private buildNotionPayload(
     databaseId: string,
     userId: string,
@@ -140,7 +275,10 @@ export class FeedbackService {
           type: 'paragraph' as const,
           paragraph: {
             rich_text: [
-              { type: 'text' as const, text: { content: bodyLines.join('\n') } },
+              {
+                type: 'text' as const,
+                text: { content: bodyLines.join('\n') },
+              },
             ],
           },
         },

@@ -1288,3 +1288,113 @@ export const UI = {
   webStoreLandingIosAlt: "iOS",
   webStoreLandingAndroidAlt: "Android",
 };
+
+export type ReviewLocale = "fr" | "en";
+
+export const REVIEW_COPY = {
+  fr: {
+    pulse: {
+      title: "L'app te plaît ?",
+      yes: "Oui",
+      no: "Pas encore",
+    },
+    positive: {
+      title: "Alors aide-nous à en aller chercher une de plus.",
+      textIos:
+        "Ton avis sur l'App Store, c'est ce qui fait découvrir One-More aux athlètes comme toi. 20 secondes, et tu retournes sous la barre.",
+      textAndroid:
+        "Ton avis sur Google Play, c'est ce qui fait découvrir One-More aux athlètes comme toi. 20 secondes, et tu retournes sous la barre.",
+      cta: "Laisser un avis",
+      later: "Après la séance",
+    },
+    negative: {
+      title: "Dis-nous ce qui manque.",
+      subtitle:
+        "Tu sais ce que tu veux. On veut le construire. Un tap suffit, une phrase c'est encore mieux.",
+      chips: {
+        slow_logging: "Saisie trop lente",
+        missing_exercise: "Il manque un exercice",
+        analytics: "Stats et progression",
+        cardio: "Cardio (Strava, Garmin, Apple Santé)",
+        data: "Import / export de données",
+        bug: "Un bug",
+        other: "Autre",
+      },
+      placeholder: "Ex. : je veux voir mon volume par groupe musculaire",
+      counter: "280 caractères max",
+      send: "Envoyer",
+      skip: "Passer",
+    },
+    sessionSummaryCard: {
+      title: "Séance bouclée. Un PR de plus au compteur.",
+      text: "Tu avais dit après la séance. C'est maintenant.",
+      cta: "Laisser un avis",
+      dismiss: "Pas aujourd'hui",
+    },
+    toast: {
+      thanksStore: "Merci. Ça compte vraiment. 🙏",
+      feedbackSent: "Reçu. On s'y met.",
+      feedbackQueued: "Reçu. Envoi dès que tu retrouves du réseau.",
+      storeOffline: "Pas de réseau. On te le reproposera après la séance.",
+      restOver: "Repos terminé. On en reparle une autre fois.",
+    },
+  },
+  en: {
+    pulse: {
+      title: "Do you like the app?",
+      yes: "Yes",
+      no: "Not yet",
+    },
+    positive: {
+      title: "Then help us go for one more.",
+      textIos:
+        "Your App Store review is how athletes like you find One-More. 20 seconds, then back under the bar.",
+      textAndroid:
+        "Your Google Play review is how athletes like you find One-More. 20 seconds, then back under the bar.",
+      cta: "Leave a review",
+      later: "After my workout",
+    },
+    negative: {
+      title: "Tell us what's missing.",
+      subtitle:
+        "You know what you want. We want to build it. One tap works, one sentence is even better.",
+      chips: {
+        slow_logging: "Logging is too slow",
+        missing_exercise: "Missing an exercise",
+        analytics: "Stats and progress",
+        cardio: "Cardio (Strava, Garmin, Apple Health)",
+        data: "Data import / export",
+        bug: "A bug",
+        other: "Other",
+      },
+      placeholder: "E.g. I want to see my volume per muscle group",
+      counter: "280 characters max",
+      send: "Send",
+      skip: "Skip",
+    },
+    sessionSummaryCard: {
+      title: "Workout done. One more PR on the board.",
+      text: "You said after your workout. That's now.",
+      cta: "Leave a review",
+      dismiss: "Not today",
+    },
+    toast: {
+      thanksStore: "Thank you. It really matters. 🙏",
+      feedbackSent: "Got it. We're on it.",
+      feedbackQueued: "Got it. We'll send it when you're back online.",
+      storeOffline: "No connection. We'll ask again after your workout.",
+      restOver: "Rest's over. We'll talk later.",
+    },
+  },
+} as const;
+
+export type ReviewChipKey = keyof typeof REVIEW_COPY.fr.negative.chips;
+
+export function getReviewLocale(): ReviewLocale {
+  if (typeof navigator === "undefined") return "fr";
+  return navigator.language.toLowerCase().startsWith("en") ? "en" : "fr";
+}
+
+export function getReviewCopy(locale: ReviewLocale = getReviewLocale()) {
+  return REVIEW_COPY[locale];
+}

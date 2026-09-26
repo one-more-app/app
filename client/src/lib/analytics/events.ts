@@ -64,6 +64,16 @@ export const AnalyticsEvents = {
   APP_REVIEW_PROMPTED: "app_review_prompted",
   APP_REVIEW_POSITIVE_MOMENT: "app_review_positive_moment",
   LEAGUE_PROMOTION_CELEBRATED: "league_promotion_celebrated",
+  REVIEW_PULSE_ELIGIBLE: "review_pulse_eligible",
+  REVIEW_PULSE_SHOWN: "review_pulse_shown",
+  REVIEW_PULSE_ANSWERED: "review_pulse_answered",
+  REVIEW_PULSE_DISMISSED: "review_pulse_dismissed",
+  REVIEW_STORE_OPENED: "review_store_opened",
+  REVIEW_LATER_SELECTED: "review_later_selected",
+  REVIEW_SESSION_CARD_SHOWN: "review_session_card_shown",
+  REVIEW_SESSION_CARD_DISMISSED: "review_session_card_dismissed",
+  REVIEW_FEEDBACK_SENT: "review_feedback_sent",
+  REVIEW_FEEDBACK_SKIPPED: "review_feedback_skipped",
   ACCOUNT_DELETION_REQUESTED: "account_deletion_requested",
 
   // Notifications
