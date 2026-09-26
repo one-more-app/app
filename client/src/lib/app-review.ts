@@ -1,8 +1,8 @@
 import { Capacitor } from "@capacitor/core";
-import { Browser } from "@capacitor/browser";
 import { AppReview } from "@capawesome/capacitor-app-review";
 import type { ReviewLastAnswer } from "@/lib/review-eligibility";
 import { canRequestNativeReviewOnRecap } from "@/lib/review-eligibility";
+import { isReviewPulsePlatformAllowed } from "@/lib/review-platform";
 
 const STORAGE_KEY = "one-more-app-review";
 const ANDROID_PACKAGE = "com.one_more.app";
@@ -154,43 +154,27 @@ function getAppleAppId(): string | undefined {
   return typeof id === "string" && id.trim() ? id.trim() : undefined;
 }
 
-export function getStoreReviewUrl(): string {
-  const platform = Capacitor.getPlatform();
-  if (platform === "ios") {
-    const appId = getAppleAppId();
-    if (appId) {
-      return `https://apps.apple.com/app/id${appId}?action=write-review`;
-    }
-    return "https://apps.apple.com/app/id000000000?action=write-review";
-  }
-  if (platform === "android") {
-    return `market://details?id=${ANDROID_PACKAGE}`;
-  }
-  return `https://play.google.com/store/apps/details?id=${ANDROID_PACKAGE}`;
-}
-
 export function getStoreReviewWebFallbackUrl(): string {
   return `https://play.google.com/store/apps/details?id=${ANDROID_PACKAGE}`;
 }
 
-/** Ouvre la page avis du store (pas requestReview). */
+/**
+ * Demande l'avis via le dialogue natif (requestReview).
+ * Si ça échoue → même fallback que Settings (`openAppStore`).
+ */
 export async function openStoreReviewListing(): Promise<void> {
-  if (!Capacitor.isNativePlatform()) return;
-  const platform = Capacitor.getPlatform();
-  const url = getStoreReviewUrl();
-  try {
-    await Browser.open({ url });
-  } catch {
-    if (platform === "android") {
-      await Browser.open({ url: getStoreReviewWebFallbackUrl() });
-    } else {
-      const appId = getAppleAppId();
-      if (appId) {
-        await AppReview.openAppStore({ appId });
-      } else {
-        await AppReview.openAppStore();
-      }
+  if (!Capacitor.isNativePlatform()) {
+    if (isReviewPulsePlatformAllowed() && typeof window !== "undefined") {
+      window.open(getStoreReviewWebFallbackUrl(), "_blank", "noopener,noreferrer");
+      markReviewStoreOpened();
     }
+    return;
+  }
+
+  try {
+    await AppReview.requestReview();
+  } catch {
+    await openStoreListing();
   }
   markReviewStoreOpened();
 }

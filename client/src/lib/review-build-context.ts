@@ -6,6 +6,7 @@ import {
   type ReviewPulseEligibilityInput,
 } from "@/lib/review-eligibility";
 import { getReviewStateSnapshot } from "@/lib/app-review";
+import { isReviewPulsePlatformAllowed } from "@/lib/review-platform";
 import { getDistinctSessionDateKeys } from "@/lib/review-session-dates";
 import { sessionHadReviewBlockingSyncError } from "@/lib/review-session-sync-error";
 import { isReviewPerfDrawerOpen } from "@/lib/review-perf-drawer-open";
@@ -25,7 +26,7 @@ export function buildReviewPulseEligibilityInput(opts: {
   const nowMs = opts.nowMs ?? Date.now();
 
   return {
-    isNativePlatform: Capacitor.isNativePlatform(),
+    isNativePlatform: isReviewPulsePlatformAllowed(),
     todayDateKey,
     distinctSessionDateKeys: getDistinctSessionDateKeys(),
     firstSeenAtMs: state.firstSeenAtMs,
