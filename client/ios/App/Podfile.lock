@@ -28,6 +28,8 @@ PODS:
   - CapacitorClipboard (8.0.1):
     - Capacitor
   - CapacitorCordova (8.3.4)
+  - CapacitorDevice (8.0.3):
+    - Capacitor
   - CapacitorFilesystem (8.1.2):
     - Capacitor
     - IONFilesystemLib (~> 1.1.1)
@@ -102,6 +104,7 @@ DEPENDENCIES:
   - "CapacitorBrowser (from `../../node_modules/@capacitor/browser`)"
   - "CapacitorClipboard (from `../../node_modules/@capacitor/clipboard`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorDevice (from `../../node_modules/@capacitor/device`)"
   - "CapacitorFilesystem (from `../../node_modules/@capacitor/filesystem`)"
   - "CapacitorGeolocation (from `../../node_modules/@capacitor/geolocation`)"
   - "CapacitorHaptics (from `../../node_modules/@capacitor/haptics`)"
@@ -152,6 +155,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/clipboard"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
+  CapacitorDevice:
+    :path: "../../node_modules/@capacitor/device"
   CapacitorFilesystem:
     :path: "../../node_modules/@capacitor/filesystem"
   CapacitorGeolocation:
@@ -191,6 +196,7 @@ SPEC CHECKSUMS:
   CapacitorBrowser: c987c73d09d8bd3b5ec13f06338b1e14d5d2be69
   CapacitorClipboard: c75fdaa6e622111119f35e7914ecfc67b05efecb
   CapacitorCordova: c07921bdcfec6f691bae22274446b4d606ebf6a4
+  CapacitorDevice: 708e742b60a61572cd593e44c809592e8f31da14
   CapacitorFilesystem: 2db285a1ac6e475cc27cae2e1bea999000f9e2be
   CapacitorGeolocation: b36f6287bfc9f2eefa04dc900496f2c8ae666136
   CapacitorHaptics: 296f771ecd89c7a1bd92a7b6826a7d268e2e70f5
@@ -218,6 +224,6 @@ SPEC CHECKSUMS:
   RevenueCat: f4427b8a1daa7a04a26cb20d60807aa818d9420b
   RevenuecatPurchasesCapacitor: c31daadc8c3b89ff31686b6ea07ff99bc21c96b7
 
-PODFILE CHECKSUM: e05fde126e39c53f052591e220cb73433c0cf210
+PODFILE CHECKSUM: f911ddd171b07b682dc99892e29586468fbb39ac
 
 COCOAPODS: 1.16.2
