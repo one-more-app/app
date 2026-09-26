@@ -184,7 +184,7 @@ function buildPlainText(input: TransactionalEmailInput): string {
     lines.push('', input.secondaryText.trim());
   }
 
-  lines.push('', 'ALWAYS ONE MORE', '', 'One More SAS - Paris, France');
+  lines.push('', 'ALWAYS ONE MORE', '', 'Zilton - Aix-en-Provence, France');
 
   if (input.footerLinks && input.footerLinks.length > 0) {
     lines.push(
@@ -320,12 +320,7 @@ ${renderPreheader(input.preheader)}
         </tr>
         <tr>
           <td align="center" style="padding:12px 20px 0 20px; font-family:'Hanken Grotesk',Arial,Helvetica,sans-serif; font-size:11px; line-height:1.5; color:${MUTED};">
-            Email automatique envoyé par One More. Merci de ne pas y répondre.
-          </td>
-        </tr>
-        <tr>
-          <td align="center" style="padding:6px 20px 0 20px; font-family:'Hanken Grotesk',Arial,Helvetica,sans-serif; font-size:11px; line-height:1.5; color:${MUTED};">
-            One More SAS - Paris, France
+            Zilton - Aix-en-Provence, France
           </td>
         </tr>
         ${footerLinksBlock}

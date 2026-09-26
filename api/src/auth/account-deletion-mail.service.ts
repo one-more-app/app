@@ -1,19 +1,36 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import nodemailer from 'nodemailer';
 import { renderAccountDeletionEmail } from './emails/account-deletion-template.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const LOGO_PATH = resolve(__dirname, '../emails/assets/logo-black-text.png');
-const FONT_WOFF2_PATH = resolve(
-  __dirname,
-  '../event/emails/fonts/TBJ-One-More.woff2',
-);
+
+/** Paths dist puis src (watch Nest peut vider dist avant de recopier les assets). */
+const LOGO_CANDIDATES = [
+  resolve(__dirname, '../emails/assets/p.png'),
+  resolve(__dirname, '../../src/emails/assets/logo-black-text.png'),
+];
+const FONT_CANDIDATES = [
+  resolve(__dirname, '../event/emails/fonts/TBJ-One-More.woff2'),
+  resolve(__dirname, '../../src/event/emails/fonts/TBJ-One-More.woff2'),
+];
 
 const LOGO_CID = 'one-more-logo';
 const SUPPORT_EMAIL = 'admin@one-more.app';
+
+async function firstExistingPath(candidates: string[]): Promise<string | null> {
+  for (const path of candidates) {
+    try {
+      await access(path);
+      return path;
+    } catch {
+      // try next
+    }
+  }
+  return null;
+}
 
 type SmtpConfig = {
   host: string;
@@ -84,7 +101,13 @@ export class AccountDeletionMailService {
 
     const attachments: nodemailer.SendMailOptions['attachments'] = [];
     try {
-      const logo = await readFile(LOGO_PATH);
+      const logoPath = await firstExistingPath(LOGO_CANDIDATES);
+      if (!logoPath) {
+        throw new Error(
+          `Logo introuvable (${LOGO_CANDIDATES.join(' | ')})`,
+        );
+      }
+      const logo = await readFile(logoPath);
       attachments.push({
         filename: 'logo-black-text.png',
         content: logo,
@@ -108,7 +131,11 @@ export class AccountDeletionMailService {
 
   private async getFontDataUri(): Promise<string> {
     if (this.fontDataUriCache) return this.fontDataUriCache;
-    const buf = await readFile(FONT_WOFF2_PATH);
+    const fontPath = await firstExistingPath(FONT_CANDIDATES);
+    if (!fontPath) {
+      throw new Error(`Police introuvable (${FONT_CANDIDATES.join(' | ')})`);
+    }
+    const buf = await readFile(fontPath);
     this.fontDataUriCache = `data:font/woff2;base64,${buf.toString('base64')}`;
     return this.fontDataUriCache;
   }

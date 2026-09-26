@@ -34,6 +34,10 @@ export class DeviceTokensService {
     return { ok: true };
   }
 
+  async removeAllForUser(userId: string): Promise<void> {
+    await this.repo.delete({ userId });
+  }
+
   async removeInvalidToken(token: string) {
     await this.repo.delete({ token });
   }

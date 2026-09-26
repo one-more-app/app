@@ -5,13 +5,16 @@ import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
+import { AccountDeletionMailService } from './account-deletion-mail.service.js';
 import { JwtStrategy } from './jwt.strategy.js';
 import { OAuthController } from './oauth.controller.js';
 import { OAuthService } from './oauth.service.js';
+import { AccountDeletionFeedbackEntity } from './entities/account-deletion-feedback.entity.js';
 import { OAuthAccountEntity } from './entities/oauth-account.entity.js';
 import { SessionEntity } from './entities/session.entity.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { UserEntity } from './entities/user.entity.js';
+import { DeviceTokenEntity } from '../notifications/entities/device-token.entity.js';
 import { SocialModule } from '../social/social.module.js';
 import { ProfileModule } from '../profile/profile.module.js';
 
@@ -24,6 +27,8 @@ import { ProfileModule } from '../profile/profile.module.js';
       UserProfileEntity,
       SessionEntity,
       OAuthAccountEntity,
+      AccountDeletionFeedbackEntity,
+      DeviceTokenEntity,
     ]),
     PassportModule,
     JwtModule.registerAsync({
@@ -37,7 +42,12 @@ import { ProfileModule } from '../profile/profile.module.js';
     }),
   ],
   controllers: [AuthController, OAuthController],
-  providers: [AuthService, JwtStrategy, OAuthService],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    OAuthService,
+    AccountDeletionMailService,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

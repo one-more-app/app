@@ -30,7 +30,7 @@ export function renderAccountDeletionEmail(input: AccountDeletionTemplateInput):
     'Tes données associées ne sont plus accessibles via ce compte.',
     '',
     'On aimerait comprendre ce qui n’a pas fonctionné pour toi.',
-    'Réponds simplement à cet email et dis-nous ce qui ne te convenait pas — ça nous aide vraiment à améliorer One More.',
+    'Réponds simplement à cet email et dis-nous ce qui ne te convenait pas, ça nous aide vraiment à améliorer One More.',
   ].join('\n');
 
   const bodyHtml = `
@@ -41,13 +41,13 @@ export function renderAccountDeletionEmail(input: AccountDeletionTemplateInput):
       Tes données associées ne sont plus accessibles via ce compte.
     </p>
     <p style="margin:0; font-family:'Hanken Grotesk',Arial,Helvetica,sans-serif; font-size:15px; font-weight:500; line-height:1.55; color:#3A3A3A;">
-      On aimerait comprendre ce qui n’a pas fonctionné pour toi. Réponds à cet email — même en deux lignes — pour nous aider à faire mieux.
+      On aimerait comprendre ce qui n’a pas fonctionné pour toi. Réponds à cet email, même en deux lignes, pour nous aider à faire mieux.
     </p>`;
 
   return renderTransactionalEmail({
     subject: buildAccountDeletionSubject(),
     preheader:
-      'Confirmation de suppression — dis-nous ce qui n’allait pas si tu as 30 secondes.',
+      'Confirmation de suppression : dis-nous ce qui n’allait pas si tu as 30 secondes.',
     logoSrc: input.logoSrc,
     fontDataUri: input.fontDataUri,
     eyebrow: 'Compte',

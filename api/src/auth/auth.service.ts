@@ -1,6 +1,8 @@
 import {
   BadRequestException,
+  GoneException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -12,10 +14,13 @@ import { IsNull, Repository } from 'typeorm';
 import { SessionEntity } from './entities/session.entity.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { UserEntity } from './entities/user.entity.js';
+import { AccountDeletionFeedbackEntity } from './entities/account-deletion-feedback.entity.js';
 import { InvitesService } from '../social/invites.service.js';
 import { ReferralService } from '../social/referral.service.js';
 import { RedditConversionsService } from '../analytics/reddit-conversions.service.js';
 import type { RedditAdsRequestContext } from '../analytics/reddit-conversions.js';
+import { DeviceTokenEntity } from '../notifications/entities/device-token.entity.js';
+import { AccountDeletionMailService } from './account-deletion-mail.service.js';
 
 type AuthUser = { id: string; email: string | null };
 type AuthSession = {
@@ -27,6 +32,8 @@ type AuthSession = {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(UserEntity)
     private readonly usersRepo: Repository<UserEntity>,
@@ -34,11 +41,16 @@ export class AuthService {
     private readonly profilesRepo: Repository<UserProfileEntity>,
     @InjectRepository(SessionEntity)
     private readonly sessionsRepo: Repository<SessionEntity>,
+    @InjectRepository(AccountDeletionFeedbackEntity)
+    private readonly deletionFeedbackRepo: Repository<AccountDeletionFeedbackEntity>,
+    @InjectRepository(DeviceTokenEntity)
+    private readonly deviceTokensRepo: Repository<DeviceTokenEntity>,
     private jwt: JwtService,
     private config: ConfigService,
     private invites: InvitesService,
     private referrals: ReferralService,
     private redditConversions: RedditConversionsService,
+    private accountDeletionMail: AccountDeletionMailService,
   ) {}
 
   private async signAccessToken(user: AuthUser): Promise<string> {
@@ -122,8 +134,20 @@ export class AuthService {
     ads?: RedditAdsRequestContext;
   }): Promise<AuthSession> {
     const email = params.email.trim().toLowerCase();
-    const existing = await this.usersRepo.findOne({ where: { email } });
+    const existing = await this.usersRepo.findOne({
+      where: { email, deletedAt: IsNull() },
+    });
     if (existing) throw new BadRequestException('Cet email est déjà utilisé');
+
+    const softDeleted = await this.usersRepo.findOne({
+      where: { email },
+      select: ['id', 'deletedAt'],
+    });
+    if (softDeleted?.deletedAt) {
+      throw new BadRequestException(
+        'Cet email est associé à un compte supprimé. Contacte le support.',
+      );
+    }
 
     const passwordHash = await argon2.hash(params.password);
     const user = await this.usersRepo.save({
@@ -167,8 +191,8 @@ export class AuthService {
   }): Promise<AuthSession> {
     const email = params.email.trim().toLowerCase();
     const user = await this.usersRepo.findOne({
-      where: { email },
-      select: ['id', 'email', 'password'],
+      where: { email, deletedAt: IsNull() },
+      select: ['id', 'email', 'password', 'deletedAt'],
     });
     if (!user || !user.password)
       throw new UnauthorizedException('Identifiants invalides');
@@ -188,6 +212,10 @@ export class AuthService {
   }): Promise<AuthSession> {
     const match = await this.findSessionByRefreshToken(params.refreshToken);
     if (!match) throw new UnauthorizedException('Session expirée');
+    if (match.user.deletedAt) {
+      await this.sessionsRepo.update({ id: match.id }, { revokedAt: new Date() });
+      throw new UnauthorizedException('Compte désactivé');
+    }
 
     await this.sessionsRepo.update({ id: match.id }, { revokedAt: new Date() });
 
@@ -203,11 +231,59 @@ export class AuthService {
 
   async me(userId: string): Promise<AuthUser> {
     const u = await this.usersRepo.findOne({
-      where: { id: userId },
+      where: { id: userId, deletedAt: IsNull() },
       select: ['id', 'email'],
     });
     if (!u) throw new UnauthorizedException();
     return { id: u.id, email: u.email };
+  }
+
+  async deleteAccount(
+    userId: string,
+    params: { comment?: string } = {},
+  ): Promise<{ ok: true }> {
+    const comment = params.comment?.trim() || null;
+
+    const user = await this.usersRepo.findOne({
+      where: { id: userId },
+      select: ['id', 'email', 'deletedAt'],
+    });
+    if (!user) throw new UnauthorizedException();
+    if (user.deletedAt) {
+      throw new GoneException('Compte déjà supprimé');
+    }
+
+    const now = new Date();
+    await this.usersRepo.update({ id: userId }, { deletedAt: now });
+    await this.sessionsRepo.update(
+      { userId, revokedAt: IsNull() },
+      { revokedAt: now },
+    );
+    await this.deviceTokensRepo.delete({ userId });
+    await this.deletionFeedbackRepo.save({
+      userId,
+      comment,
+    });
+
+    if (user.email) {
+      const profile = await this.profilesRepo.findOne({
+        where: { userId },
+        select: ['firstName'],
+      });
+      try {
+        await this.accountDeletionMail.sendConfirmation({
+          to: user.email,
+          firstName: profile?.firstName ?? null,
+        });
+      } catch (err) {
+        this.logger.warn(
+          `Email confirmation suppression échoué pour ${userId}`,
+          err,
+        );
+      }
+    }
+
+    return { ok: true };
   }
 
   private async findSessionByRefreshToken(
@@ -257,7 +333,7 @@ export class AuthService {
     const email = emailRaw.trim().toLowerCase();
     if (!email) return { exists: false };
     const existing = await this.usersRepo.findOne({
-      where: { email },
+      where: { email, deletedAt: IsNull() },
       select: ['id'],
     });
     return { exists: Boolean(existing) };

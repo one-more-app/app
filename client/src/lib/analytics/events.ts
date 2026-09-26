@@ -64,6 +64,7 @@ export const AnalyticsEvents = {
   APP_REVIEW_PROMPTED: "app_review_prompted",
   APP_REVIEW_POSITIVE_MOMENT: "app_review_positive_moment",
   LEAGUE_PROMOTION_CELEBRATED: "league_promotion_celebrated",
+  ACCOUNT_DELETION_REQUESTED: "account_deletion_requested",
 
   // Notifications
   PUSH_NOTIFICATION_ENABLED: "push_notification_enabled",
