@@ -238,9 +238,14 @@ export function ReviewPromptHost() {
       setStep("pulse");
       return;
     }
-    if (step === "pulse" && shownThisOpenRef.current) {
-      markReviewPulseAnswer("dismissed");
-      track(AnalyticsEvents.REVIEW_PULSE_DISMISSED, { reason: "swipe" });
+    if (shownThisOpenRef.current) {
+      track(AnalyticsEvents.REVIEW_PULSE_DISMISSED, {
+        reason: "swipe",
+        step,
+      });
+      if (step === "pulse") {
+        markReviewPulseAnswer("dismissed");
+      }
     }
     setOpen(false);
     setStep("pulse");
@@ -259,12 +264,14 @@ export function ReviewPromptHost() {
     markReviewPulseAnswer("yes");
     track(AnalyticsEvents.REVIEW_PULSE_ANSWERED, { answer: "yes" });
     setStep("positive");
+    track(AnalyticsEvents.REVIEW_POSITIVE_SHOWN, {});
   };
 
   const handleNo = () => {
     markReviewPulseAnswer("no");
     track(AnalyticsEvents.REVIEW_PULSE_ANSWERED, { answer: "no" });
     setStep("negative");
+    track(AnalyticsEvents.REVIEW_NEGATIVE_SHOWN, {});
   };
 
   const handleStore = async (source: "pulse" | "session_card") => {
@@ -317,7 +324,9 @@ export function ReviewPromptHost() {
       toast(copy.toast.feedbackQueued);
       track(AnalyticsEvents.REVIEW_FEEDBACK_SENT, {
         chips: selectedChips.join(","),
+        chip_count: selectedChips.length,
         has_message: message.trim().length > 0,
+        message_length: message.trim().length,
         queued: true,
       });
       closeDrawer();
@@ -329,7 +338,9 @@ export function ReviewPromptHost() {
       toast(copy.toast.feedbackSent);
       track(AnalyticsEvents.REVIEW_FEEDBACK_SENT, {
         chips: selectedChips.join(","),
+        chip_count: selectedChips.length,
         has_message: message.trim().length > 0,
+        message_length: message.trim().length,
         queued: false,
       });
     } catch {
@@ -337,7 +348,9 @@ export function ReviewPromptHost() {
       toast(copy.toast.feedbackQueued);
       track(AnalyticsEvents.REVIEW_FEEDBACK_SENT, {
         chips: selectedChips.join(","),
+        chip_count: selectedChips.length,
         has_message: message.trim().length > 0,
+        message_length: message.trim().length,
         queued: true,
       });
     }
@@ -346,7 +359,11 @@ export function ReviewPromptHost() {
   };
 
   const skipFeedback = () => {
-    track(AnalyticsEvents.REVIEW_FEEDBACK_SKIPPED, {});
+    track(AnalyticsEvents.REVIEW_FEEDBACK_SKIPPED, {
+      chips: selectedChips.join(","),
+      chip_count: selectedChips.length,
+      had_message_draft: message.trim().length > 0,
+    });
     closeDrawer();
   };
 

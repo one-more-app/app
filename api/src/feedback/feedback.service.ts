@@ -9,6 +9,7 @@ import type {
   CreateFeedbackDto,
   FeedbackKind,
 } from './dto/create-feedback.dto.js';
+import { buildReviewNotionPayload } from './build-review-notion-payload.js';
 import type { CreateReviewFeedbackDto } from './dto/create-review-feedback.dto.js';
 
 const NOTION_API_BASE = 'https://api.notion.com/v1';
@@ -36,11 +37,11 @@ export class FeedbackService {
   ): Promise<void> {
     const notionToken = this.config.get<string>('NOTION_TOKEN')?.trim() ?? '';
     const notionDatabaseId =
-      this.config.get<string>('NOTION_FEEDBACK_DB_ID')?.trim() ?? '';
+      this.config.get<string>('NOTION_REVIEW_FEEDBACK_DB_ID')?.trim() ?? '';
 
     if (!notionToken || !notionDatabaseId) {
       this.logger.error(
-        'Notion feedback non configuré (NOTION_TOKEN / NOTION_FEEDBACK_DB_ID).',
+        'Notion review feedback non configuré (NOTION_TOKEN / NOTION_REVIEW_FEEDBACK_DB_ID).',
       );
       throw new InternalServerErrorException(
         "Le service de feedback n'est pas disponible.",
@@ -48,7 +49,7 @@ export class FeedbackService {
     }
 
     const profile = await this.profileService.getProfile(userId);
-    const notionPayload = this.buildReviewNotionPayload(
+    const notionPayload = buildReviewNotionPayload(
       notionDatabaseId,
       userId,
       sessionEmail,
@@ -154,74 +155,6 @@ export class FeedbackService {
     } finally {
       clearTimeout(timeout);
     }
-  }
-
-  private buildReviewNotionPayload(
-    databaseId: string,
-    userId: string,
-    sessionEmail: string | null,
-    profile: {
-      firstName: string | null;
-      lastName: string | null;
-    } | null,
-    payload: CreateReviewFeedbackDto,
-  ) {
-    const firstName = profile?.firstName?.trim() || 'non renseigné';
-    const lastName = profile?.lastName?.trim() || 'non renseigné';
-    const email = sessionEmail?.trim() || 'non renseigné';
-    const chipLine = payload.chips.join(', ');
-    const userMessage = payload.message?.trim() ?? '';
-
-    const bodyLines = [
-      `Chips: ${chipLine}`,
-      userMessage ? `Message: ${userMessage}` : '',
-      '',
-      `Sessions (count): ${payload.sessionsCount}`,
-      `Locale: ${payload.locale}`,
-      `App: ${payload.appVersion}`,
-      `Plateforme: ${payload.platform}`,
-      payload.sessionId ? `Session: ${payload.sessionId}` : '',
-      payload.deviceModel ? `Device: ${payload.deviceModel}` : '',
-      payload.osVersion ? `OS: ${payload.osVersion}` : '',
-      '',
-      `Prénom: ${firstName}`,
-      `Nom: ${lastName}`,
-      `Email: ${email}`,
-      `User ID: ${userId}`,
-      `Date: ${payload.createdAt}`,
-    ].filter(Boolean);
-
-    return {
-      parent: { database_id: databaseId },
-      properties: {
-        Name: {
-          title: [{ text: { content: 'Review pulse (Pas encore)' } }],
-        },
-        Type: {
-          select: { name: 'Chore' },
-        },
-        Status: {
-          status: { name: 'Backlog' },
-        },
-        Priority: {
-          select: { name: 'Low' },
-        },
-      },
-      children: [
-        {
-          object: 'block' as const,
-          type: 'paragraph' as const,
-          paragraph: {
-            rich_text: [
-              {
-                type: 'text' as const,
-                text: { content: bodyLines.join('\n') },
-              },
-            ],
-          },
-        },
-      ],
-    };
   }
 
   private buildNotionPayload(

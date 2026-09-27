@@ -67,6 +67,8 @@ export const AnalyticsEvents = {
   REVIEW_PULSE_ELIGIBLE: "review_pulse_eligible",
   REVIEW_PULSE_SHOWN: "review_pulse_shown",
   REVIEW_PULSE_ANSWERED: "review_pulse_answered",
+  REVIEW_POSITIVE_SHOWN: "review_positive_shown",
+  REVIEW_NEGATIVE_SHOWN: "review_negative_shown",
   REVIEW_PULSE_DISMISSED: "review_pulse_dismissed",
   REVIEW_STORE_OPENED: "review_store_opened",
   REVIEW_LATER_SELECTED: "review_later_selected",
