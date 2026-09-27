@@ -173,26 +173,45 @@ export function getStoreReviewWebFallbackUrl(): string {
   return `https://play.google.com/store/apps/details?id=${ANDROID_PACKAGE}`;
 }
 
-/** Ouvre la page avis du store (pas requestReview). */
+/**
+ * « Laisser un avis » : modale système (SKStoreReviewController / In-App Review),
+ * puis repli fiche store si besoin. Pas de Browser.open sur iOS (URL souvent
+ * invalide en simu sans VITE_APPLE_APP_ID).
+ */
 export async function openStoreReviewListing(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
-  const platform = Capacitor.getPlatform();
-  const url = getStoreReviewUrl();
+
   try {
-    await Browser.open({ url });
+    await AppReview.requestReview();
+    markReviewStoreOpened();
+    return;
   } catch {
-    if (platform === "android") {
-      await Browser.open({ url: getStoreReviewWebFallbackUrl() });
-    } else {
+    /* quota OS ou indisponible → repli store */
+  }
+
+  try {
+    if (Capacitor.getPlatform() === "ios") {
       const appId = getAppleAppId();
       if (appId) {
         await AppReview.openAppStore({ appId });
       } else {
         await AppReview.openAppStore();
       }
+    } else {
+      // Android : fiche Play Store (+ dialog avis si le plugin/OS le permet)
+      await AppReview.openAppStore();
+    }
+    markReviewStoreOpened();
+  } catch {
+    if (Capacitor.getPlatform() === "android") {
+      try {
+        await Browser.open({ url: getStoreReviewWebFallbackUrl() });
+        markReviewStoreOpened();
+      } catch {
+        /* rien à afficher */
+      }
     }
   }
-  markReviewStoreOpened();
 }
 
 /** Réglages : fiche store (comportement historique). */

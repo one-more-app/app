@@ -5,6 +5,7 @@ const MIN_REST_REMAINING_MS = 30 * 1000;
 
 export const REVIEW_COOLDOWN_DAYS_DEFAULT = 60;
 export const REVIEW_COOLDOWN_DAYS_AFTER_REST_OVER = 14;
+/** @deprecated Plus utilisé : « Pas encore » / dismiss → reproposition le lendemain. */
 export const REVIEW_COOLDOWN_DAYS_AFTER_NO = 90;
 export const REVIEW_COOLDOWN_DAYS_AFTER_STORE = 365;
 export const REVIEW_MAX_SHOWS_PER_YEAR = 3;
@@ -64,20 +65,20 @@ export function getReviewPulseIneligibilityReasons(
     }
   }
 
-  if (input.lastAnswer === "no" && input.lastShownAtMs != null) {
-    const since = input.nowMs - input.lastShownAtMs;
-    if (since < REVIEW_COOLDOWN_DAYS_AFTER_NO * MS_DAY) {
-      reasons.push("answered_no_cooldown");
-    }
-  }
-
   if (input.lastShownAtMs != null) {
     const since = input.nowMs - input.lastShownAtMs;
-    const minDays =
-      input.lastAnswer === "rest_over"
-        ? REVIEW_COOLDOWN_DAYS_AFTER_REST_OVER
-        : REVIEW_COOLDOWN_DAYS_DEFAULT;
-    if (since < minDays * MS_DAY) {
+    const softDecline =
+      input.lastAnswer === "no" || input.lastAnswer === "dismissed";
+    let minDays: number | null = null;
+    if (input.lastAnswer === "rest_over") {
+      minDays = REVIEW_COOLDOWN_DAYS_AFTER_REST_OVER;
+    } else if (softDecline) {
+      // Même jour : `already_shown_today`. Lendemain : re-éligible au prochain PR en repos.
+      minDays = null;
+    } else {
+      minDays = REVIEW_COOLDOWN_DAYS_DEFAULT;
+    }
+    if (minDays != null && since < minDays * MS_DAY) {
       reasons.push("last_shown_cooldown");
     }
   }

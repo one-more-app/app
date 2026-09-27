@@ -1286,8 +1286,11 @@ export type ReviewLocale = "fr" | "en";
 export const REVIEW_COPY = {
   fr: {
     pulse: {
-      title: "L'app te plaît ?",
-      yes: "Oui",
+      title: "L'application te plaît ?",
+      subtitle:
+        "Salut, c'est Vincent et Tom, les deux fondateurs. On a créé One-More parce qu'on voulait une app plus simple que ce qui existait. On a encore du chemin à faire ensemble, alors chaque avis nous aide. Merci !",
+      signature: "",
+      yes: "OUI",
       no: "Pas encore",
     },
     positive: {
@@ -1301,8 +1304,7 @@ export const REVIEW_COPY = {
     },
     negative: {
       title: "Dis-nous ce qui manque.",
-      subtitle:
-        "Tu sais ce que tu veux. On veut le construire. Un tap suffit, une phrase c'est encore mieux.",
+      subtitle: "On lit tout.",
       chips: {
         slow_logging: "Saisie trop lente",
         missing_exercise: "Il manque un exercice",
@@ -1312,6 +1314,7 @@ export const REVIEW_COPY = {
         bug: "Un bug",
         other: "Autre",
       },
+      messageLabel: "Précise si tu veux",
       placeholder: "Ex. : je veux voir mon volume par groupe musculaire",
       counter: "280 caractères max",
       send: "Envoyer",
@@ -1333,8 +1336,11 @@ export const REVIEW_COPY = {
   },
   en: {
     pulse: {
-      title: "Do you like the app?",
-      yes: "Yes",
+      title: "Do you like the application?",
+      subtitle:
+        "Hi, we're Vincent and Tom, the two founders. We built One-More because we wanted an app simpler than what was out there. We still have a way to go together, so every review helps. Thanks!",
+      signature: "",
+      yes: "YES",
       no: "Not yet",
     },
     positive: {
@@ -1348,8 +1354,7 @@ export const REVIEW_COPY = {
     },
     negative: {
       title: "Tell us what's missing.",
-      subtitle:
-        "You know what you want. We want to build it. One tap works, one sentence is even better.",
+      subtitle: "We read everything.",
       chips: {
         slow_logging: "Logging is too slow",
         missing_exercise: "Missing an exercise",
@@ -1359,6 +1364,7 @@ export const REVIEW_COPY = {
         bug: "A bug",
         other: "Other",
       },
+      messageLabel: "Add details if you want",
       placeholder: "E.g. I want to see my volume per muscle group",
       counter: "280 characters max",
       send: "Send",

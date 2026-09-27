@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   canShowReviewPulse,
   type ReviewPulseEligibilityInput,
-  REVIEW_COOLDOWN_DAYS_AFTER_NO,
   REVIEW_COOLDOWN_DAYS_AFTER_REST_OVER,
   REVIEW_COOLDOWN_DAYS_AFTER_STORE,
   REVIEW_COOLDOWN_DAYS_DEFAULT,
@@ -77,23 +76,25 @@ describe("canShowReviewPulse", () => {
     ).toBe(false);
   });
 
-  it("refuse après « no » avant 90 jours", () => {
+  it("accepte « no » le lendemain (hors même jour)", () => {
     expect(
       canShowReviewPulse(
         base({
           lastAnswer: "no",
-          lastShownAtMs: NOW - (REVIEW_COOLDOWN_DAYS_AFTER_NO - 1) * MS_DAY,
+          lastShownAtMs: NOW - MS_DAY,
+          pulseShownSessionDate: "2026-06-14",
         }),
       ),
-    ).toBe(false);
+    ).toBe(true);
   });
 
-  it("accepte après « no » à 90 jours", () => {
+  it("accepte dismissed le lendemain", () => {
     expect(
       canShowReviewPulse(
         base({
-          lastAnswer: "no",
-          lastShownAtMs: NOW - REVIEW_COOLDOWN_DAYS_AFTER_NO * MS_DAY,
+          lastAnswer: "dismissed",
+          lastShownAtMs: NOW - MS_DAY,
+          pulseShownSessionDate: "2026-06-14",
         }),
       ),
     ).toBe(true);
@@ -156,11 +157,13 @@ describe("canShowReviewPulse", () => {
     ).toBe(false);
   });
 
-  it("refuse si dernier affichage < 60 jours (hors rest_over)", () => {
+  it("refuse si Oui puis dernier affichage < 60 jours", () => {
     expect(
       canShowReviewPulse(
         base({
+          lastAnswer: "yes",
           lastShownAtMs: NOW - (REVIEW_COOLDOWN_DAYS_DEFAULT - 1) * MS_DAY,
+          pulseShownSessionDate: "2026-06-14",
         }),
       ),
     ).toBe(false);

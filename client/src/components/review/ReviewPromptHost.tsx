@@ -49,6 +49,7 @@ import {
 } from "@/lib/translations";
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
+import { ReviewFoundersPhoto } from "@/components/review/ReviewFoundersPhoto";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 import "@/lib/review-pulse-debug";
@@ -362,11 +363,20 @@ export function ReviewPromptHost() {
         <div className="mx-auto w-full max-w-lg overflow-y-auto p-4 pb-6">
           {step === "pulse" ? (
             <>
-              <DrawerHeader className="text-left">
-                <DrawerTitle>{copy.pulse.title}</DrawerTitle>
-              </DrawerHeader>
-              <div className="mt-4 flex flex-col gap-2">
-                <Button variant="accent" className="w-full" onClick={handleYes}>
+              <ReviewFoundersPhoto compact className="mb-3" />
+              <DrawerDescription className="px-0 text-left">
+                {copy.pulse.subtitle}
+              </DrawerDescription>
+              {copy.pulse.signature ? (
+                <p className="mt-2 text-left text-xs text-muted-foreground">
+                  {copy.pulse.signature}
+                </p>
+              ) : null}
+              <div className="mt-5 flex flex-col gap-2">
+                <DrawerTitle className="mb-1 px-0 text-left">
+                  {copy.pulse.title}
+                </DrawerTitle>
+                <Button className="w-full" onClick={handleYes}>
                   {copy.pulse.yes}
                 </Button>
                 <Button variant="outline" className="w-full" onClick={handleNo}>
@@ -378,17 +388,14 @@ export function ReviewPromptHost() {
 
           {step === "positive" ? (
             <>
-              <DrawerHeader className="text-left">
-                <DrawerTitle className="text-lg">
-                  {copy.positive.title}
-                </DrawerTitle>
-                <DrawerDescription className="text-sm text-muted-foreground">
+              <DrawerHeader className="px-0 text-left">
+                <DrawerTitle>{copy.positive.title}</DrawerTitle>
+                <DrawerDescription className="text-left text-sm text-muted-foreground">
                   {positiveText}
                 </DrawerDescription>
               </DrawerHeader>
               <div className="mt-4 flex flex-col gap-2">
                 <Button
-                  variant="accent"
                   className="w-full"
                   onClick={() => void handleStore("pulse")}
                 >
@@ -403,11 +410,11 @@ export function ReviewPromptHost() {
 
           {step === "negative" ? (
             <>
-              <DrawerHeader className="text-left">
-                <DrawerTitle className="text-lg">
-                  {copy.negative.title}
-                </DrawerTitle>
-                <DrawerDescription>{copy.negative.subtitle}</DrawerDescription>
+              <DrawerHeader className="px-0 text-left">
+                <DrawerTitle>{copy.negative.title}</DrawerTitle>
+                <DrawerDescription className="text-left">
+                  {copy.negative.subtitle}
+                </DrawerDescription>
               </DrawerHeader>
               <div className="mt-3 flex flex-wrap gap-2">
                 {CHIP_KEYS.map((key) => {
@@ -419,7 +426,7 @@ export function ReviewPromptHost() {
                       className={cn(
                         "rounded-full border px-3 py-2 text-sm transition-colors",
                         active
-                          ? "border-accent bg-accent/15 text-foreground"
+                          ? "border-primary bg-primary font-medium text-primary-foreground"
                           : "border-border bg-background text-muted-foreground",
                       )}
                       onClick={() => toggleChip(key)}
@@ -429,8 +436,15 @@ export function ReviewPromptHost() {
                   );
                 })}
               </div>
+              <label
+                htmlFor="review-feedback-message"
+                className="mt-4 block text-sm font-medium text-foreground"
+              >
+                {copy.negative.messageLabel}
+              </label>
               <textarea
-                className="mt-3 min-h-[88px] w-full rounded-md border border-input bg-background px-3 py-2 text-base text-foreground"
+                id="review-feedback-message"
+                className="mt-1.5 min-h-[88px] w-full rounded-md border border-input bg-muted/40 px-3 py-2 text-base text-foreground"
                 placeholder={copy.negative.placeholder}
                 maxLength={280}
                 value={message}
@@ -441,7 +455,6 @@ export function ReviewPromptHost() {
               </p>
               <div className="mt-4 flex flex-col gap-2">
                 <Button
-                  variant="accent"
                   className="w-full"
                   disabled={!canSendFeedback}
                   onClick={() => void sendFeedback()}

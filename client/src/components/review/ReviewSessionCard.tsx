@@ -49,7 +49,7 @@ export function ReviewSessionCard({ onDismissCard }: Props) {
           {copy.sessionSummaryCard.text}
         </p>
       </div>
-      <Button variant="accent" className="w-full" onClick={() => void handleStore()}>
+      <Button className="w-full" onClick={() => void handleStore()}>
         {copy.sessionSummaryCard.cta}
       </Button>
       <button
