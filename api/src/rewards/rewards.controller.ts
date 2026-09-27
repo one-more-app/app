@@ -17,10 +17,14 @@ export class RewardsController {
   @UseGuards(JwtAuthGuard)
   @Post('/me/rewards/tshirt/claim')
   async claimTshirt(
-    @Req() req: { user: { sub: string } },
+    @Req() req: { user: { sub: string; email?: string | null } },
     @Body() body: ClaimTshirtDto,
   ) {
-    return await this.rewardsService.claimTshirt(req.user.sub, body);
+    return await this.rewardsService.claimTshirt(
+      req.user.sub,
+      req.user.email ?? null,
+      body,
+    );
   }
 }
 

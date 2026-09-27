@@ -12,7 +12,28 @@ import { ClaimTshirtDto } from './dto/claim-tshirt.dto.js';
 import { TshirtRewardClaimEntity } from './entities/tshirt-reward-claim.entity.js';
 import { TshirtRewardStatus } from './entities/tshirt-reward-status.enum.js';
 import { TshirtRewardType } from './entities/tshirt-reward-type.enum.js';
+import { buildTshirtNotionPayload } from './lib/build-tshirt-notion-payload.js';
+import { NOTION_REWARD_STATUS_DEFAULT } from './lib/notion-rewards-constants.js';
+import { ensureRewardsNotionDatabaseSchema } from './lib/notion-rewards-schema-sync.js';
 import { buildTshirtOpsWebhookPayload } from './lib/tshirt-ops-webhook.js';
+
+const NOTION_API_BASE = 'https://api.notion.com/v1';
+const NOTION_VERSION = '2022-06-28';
+
+function readNotionEnv(config: ConfigService, key: string): string {
+  const raw = config.get<string>(key)?.trim() ?? '';
+  if (
+    (raw.startsWith('"') && raw.endsWith('"')) ||
+    (raw.startsWith("'") && raw.endsWith("'"))
+  ) {
+    return raw.slice(1, -1).trim();
+  }
+  return raw;
+}
+
+export function readRewardsNotionDatabaseId(config: ConfigService): string {
+  return readNotionEnv(config, 'NOTION_REWARDS_DB_ID');
+}
 
 export type TshirtRewardClaimDto = {
   id: string;
@@ -116,6 +137,7 @@ export class RewardsService {
 
   async claimTshirt(
     userId: string,
+    sessionEmail: string | null,
     dto: ClaimTshirtDto,
   ): Promise<TshirtRewardClaimDto> {
     if (dto.rewardType === TshirtRewardType.ReferralLimited) {
@@ -143,6 +165,7 @@ export class RewardsService {
     const claim = await this.claimsRepo.save(reward);
 
     void this.notifyOps(claim);
+    void this.notifyNotion(claim, sessionEmail);
 
     return this.toDto(claim);
   }
@@ -157,6 +180,71 @@ export class RewardsService {
       order: { claimedAt: 'ASC' },
     });
     return claims.map((claim) => this.toDto(claim));
+  }
+
+  private rewardsNotionStatusName(): string {
+    return (
+      readNotionEnv(this.config, 'NOTION_REWARDS_STATUS') ||
+      NOTION_REWARD_STATUS_DEFAULT
+    );
+  }
+
+  private async notifyNotion(
+    claim: TshirtRewardClaimEntity,
+    sessionEmail: string | null,
+  ): Promise<void> {
+    const notionToken = readNotionEnv(this.config, 'NOTION_TOKEN');
+    const notionDatabaseId = readRewardsNotionDatabaseId(this.config);
+    if (!notionToken || !notionDatabaseId) {
+      this.logger.debug(
+        'Notion rewards non configuré (NOTION_TOKEN + NOTION_REWARDS_DB_ID).',
+      );
+      return;
+    }
+
+    const statusName = this.rewardsNotionStatusName();
+
+    await ensureRewardsNotionDatabaseSchema(
+      notionToken,
+      notionDatabaseId,
+      statusName,
+      this.logger,
+    );
+
+    const body = buildTshirtNotionPayload(
+      notionDatabaseId,
+      claim,
+      sessionEmail,
+      statusName,
+    );
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    try {
+      const response = await fetch(`${NOTION_API_BASE}/pages`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${notionToken}`,
+          'content-type': 'application/json',
+          'notion-version': NOTION_VERSION,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        this.logger.warn(
+          `Notion rewards claim failed (${response.status}): ${text}`,
+        );
+      }
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Notion rewards claim error: ${reason}`);
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   private async notifyOps(claim: TshirtRewardClaimEntity): Promise<void> {

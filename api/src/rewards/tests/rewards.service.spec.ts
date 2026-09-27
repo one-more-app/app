@@ -37,7 +37,7 @@ describe('RewardsService', () => {
   it('rejects claim when not eligible', async () => {
     accessService.getAccess.mockResolvedValue({ tshirtRewardEligible: false });
     await expect(
-      service.claimTshirt('user-1', {
+      service.claimTshirt('user-1', null, {
         rewardType: TshirtRewardType.ReferralLimited,
         fullName: 'Jean Dupont',
         street: '1 rue Test',
@@ -55,7 +55,7 @@ describe('RewardsService', () => {
       .mockResolvedValueOnce({ id: 'claim-1', status: 'pending' })
       .mockResolvedValueOnce({ id: 'claim-1', status: 'pending' });
     await expect(
-      service.claimTshirt('user-1', {
+      service.claimTshirt('user-1', null, {
         rewardType: TshirtRewardType.ReferralLimited,
         fullName: 'Jean Dupont',
         street: '1 rue Test',
@@ -93,7 +93,7 @@ describe('RewardsService', () => {
       shippedAt: null,
     });
 
-    const result = await service.claimTshirt('user-1', {
+    const result = await service.claimTshirt('user-1', 'user@example.com', {
       rewardType: TshirtRewardType.ReferralLimited,
       fullName: 'Jean Dupont',
       street: '1 rue Test',
@@ -107,5 +107,44 @@ describe('RewardsService', () => {
     expect(result.status).toBe('pending');
     expect(result.rewardType).toBe('referral_limited');
     expect(claimsRepo.save).toHaveBeenCalled();
+  });
+
+  it('succeeds when Notion is not configured', async () => {
+    accessService.getAccess.mockResolvedValue({ tshirtRewardEligible: true });
+    claimsRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 'claim-1',
+      userId: 'user-1',
+      rewardType: 'referral_limited',
+      status: 'claim_pending',
+    });
+    claimsRepo.save.mockResolvedValue({
+      id: 'claim-1',
+      userId: 'user-1',
+      rewardType: 'referral_limited',
+      status: 'pending',
+      size: 'M',
+      gender: null,
+      fullName: 'Jean Dupont',
+      street: '1 rue Test',
+      city: 'Paris',
+      postalCode: '75001',
+      country: 'France',
+      trackingNumber: null,
+      claimedAt: new Date(),
+      shippedAt: null,
+    });
+    config.get.mockReturnValue(undefined);
+
+    await expect(
+      service.claimTshirt('user-1', 'user@example.com', {
+        rewardType: TshirtRewardType.ReferralLimited,
+        fullName: 'Jean Dupont',
+        street: '1 rue Test',
+        city: 'Paris',
+        postalCode: '75001',
+        country: 'France',
+        size: 'M',
+      }),
+    ).resolves.toMatchObject({ id: 'claim-1', status: 'pending' });
   });
 });

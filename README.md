@@ -47,6 +47,7 @@ Application de suivi de progression en musculation — **PWA web** et **apps nat
    | `api/.env` | `JWT_SECRET`, `JWT_EXPIRES_IN` | Sessions JWT |
    | `api/.env` | `NOTION_TOKEN`, `NOTION_FEEDBACK_DB_ID` | Feedback Réglages → Notion Tickets |
    | `api/.env` | `NOTION_REVIEW_FEEDBACK_DB_ID` | Review pulse « Pas encore » → base dédiée ([schéma](docs/notion-review-feedback-db.md)) |
+   | `api/.env` | `NOTION_REWARDS_DB_ID` | Claims t-shirt → Rewards CRM ([schéma](docs/notion-rewards-crm.md)) |
    | `api/.env` | `GOOGLE_CLIENT_ID_*`, `APPLE_*` | OAuth mobile (optionnel en local) |
 
    Les builds Capacitor utilisent des fichiers dédiés : `.env.dev.capacitor`, `.env.preprod.capacitor`, `.env.prod.capacitor` (voir `client/.env.example`).
