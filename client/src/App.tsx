@@ -1,6 +1,7 @@
 import { BottomNav } from '@/components/BottomNav'
 import { ConnectivityGate } from '@/components/ConnectivityGate'
 import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCelebration'
+import { ReviewPromptHost } from '@/components/review/ReviewPromptHost'
 import { NativeBackNavigation } from '@/components/NativeBackNavigation'
 import { ProfileUsernameSetupHost } from '@/components/profile/ProfileUsernameSetupHost'
 import { RestTimeFinishedToastHost } from '@/components/RestTimeFinishedToastHost'
@@ -394,6 +395,7 @@ function App() {
                 <AuthProvider>
                     <ConnectivityProvider>
                     <RestTimeFinishedToastHost />
+                    <ReviewPromptHost />
                     <PaywallProvider>
                     <ReferralDrawerProvider>
                     <PurchasesSyncHost />

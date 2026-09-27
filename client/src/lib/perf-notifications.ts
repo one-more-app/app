@@ -2,8 +2,8 @@ import {
   trackLeaguePromoted,
   trackPersonalRecordBroken,
 } from "@/lib/analytics"
-import { maybeRequestAppReview } from "@/lib/app-review"
 import { enqueueCelebration } from "@/lib/celebration-queue"
+import { markReviewPrLoggedToday } from "@/lib/review-pr-today"
 import type { LeagueChangeDto } from "@/lib/league-types"
 import type { LeagueInfo } from "@/lib/strength-standards"
 import type { PerformanceEntry } from "@/types"
@@ -107,10 +107,10 @@ export function notifyPerfMilestones(params: {
         target,
       },
     })
-    return
   }
 
   if (isRecord) {
+    markReviewPrLoggedToday()
     trackPersonalRecordBroken({
       exerciseName,
       weight: savedWeight,
@@ -131,6 +131,5 @@ export function notifyPerfMilestones(params: {
         target,
       },
     })
-    void maybeRequestAppReview("milestone")
   }
 }

@@ -34,7 +34,13 @@ import { notifyXpGrants } from "@/lib/xp-notifications";
 import type { PerformanceEntry } from "@/types";
 import { toast } from "sonner";
 import { Radio } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { ReviewSessionCard } from "@/components/review/ReviewSessionCard";
+import {
+    isReviewSessionCardPending,
+    maybeRequestNativeReviewOnRecap,
+} from "@/lib/app-review";
+import { hadReviewPrToday } from "@/lib/review-pr-today";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import useSWR, { useSWRConfig } from "swr";
 
@@ -60,6 +66,9 @@ export default function SessionPage() {
         date: string;
         trackedExerciseId: string;
     } | null>(null);
+    const [showReviewCard, setShowReviewCard] = useState(
+        () => isReviewSessionCardPending(),
+    );
 
     const entries = session?.entries ?? [];
     const exercises = session?.exercises ?? [];
@@ -68,6 +77,15 @@ export default function SessionPage() {
         dayKey: date ?? "",
         isPresenceTraining: session?.isLive,
     });
+
+    useEffect(() => {
+        if (!isOwner || !date || session?.isLive) return;
+        void maybeRequestNativeReviewOnRecap({
+            sessionIsLive: session?.isLive ?? false,
+            hasPrInSession: hadReviewPrToday(date),
+            todayDateKey: date,
+        });
+    }, [isOwner, date, session?.isLive]);
 
     const sessionSummaryLine = useMemo(() => {
         if (!session) return "";
@@ -226,6 +244,15 @@ export default function SessionPage() {
                             <p className="text-xs text-muted-foreground">
                                 {sessionSummaryLine}
                             </p>
+                        ) : null}
+
+                        {isOwner &&
+                        showReviewCard &&
+                        session &&
+                        !session.isLive ? (
+                            <ReviewSessionCard
+                                onDismissCard={() => setShowReviewCard(false)}
+                            />
                         ) : null}
 
                         {dayGroups.length > 0 ? (

@@ -9,6 +9,7 @@ import {
 import { trackPerfDrawerOpened } from '@/lib/analytics'
 import { hapticImpact, hapticImpactMedium } from '@/lib/haptics'
 import { isBodyweightAdditiveExercise, isDumbbellExercise } from '@/lib/strength-standards'
+import { setReviewPerfDrawerOpen } from '@/lib/review-perf-drawer-open'
 import { UI } from '@/lib/translations'
 import { useEffect, useState } from 'react'
 
@@ -52,6 +53,10 @@ export function AddPerfDrawer({
     const [reps, setReps] = useState(initialReps)
 
     useEffect(() => {
+        setReviewPerfDrawerOpen(open)
+    }, [open])
+
+    useEffect(() => {
         if (open) {
             setWeight(initialWeight)
             setReps(initialReps)
@@ -82,6 +87,7 @@ export function AddPerfDrawer({
             setWeight(initialWeight)
             setReps(initialReps)
         }
+        setReviewPerfDrawerOpen(o)
         onOpenChange(o)
     }
 
