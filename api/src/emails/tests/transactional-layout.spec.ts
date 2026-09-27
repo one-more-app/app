@@ -21,9 +21,12 @@ describe('renderTransactionalEmail', () => {
     expect(html).toContain('Suppression confirmée');
     expect(html).toContain('Salut Vince,');
     expect(html).toContain('ALWAYS ONE MORE');
+    expect(html).toContain('© 2026 ZILTON. Tous droits réservés.');
+    expect(html).toContain('bgcolor="#0A0A0A"');
     expect(html).toContain('#dfff5e');
     expect(text).toContain('Vince');
     expect(text).toContain('Corps');
+    expect(text).toContain('© 2026 ZILTON. Tous droits réservés.');
   });
 
   it('omet info, cta, secondary et footer links si absents', () => {

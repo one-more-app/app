@@ -7,17 +7,11 @@ import { renderAccountDeletionEmail } from './emails/account-deletion-template.j
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-/** Paths dist puis src (watch Nest peut vider dist avant de recopier les assets). */
-const LOGO_CANDIDATES = [
-  resolve(__dirname, '../emails/assets/p.png'),
-  resolve(__dirname, '../../src/emails/assets/logo-black-text.png'),
-];
 const FONT_CANDIDATES = [
   resolve(__dirname, '../event/emails/fonts/TBJ-One-More.woff2'),
   resolve(__dirname, '../../src/event/emails/fonts/TBJ-One-More.woff2'),
 ];
 
-const LOGO_CID = 'one-more-logo';
 const SUPPORT_EMAIL = 'admin@one-more.app';
 
 async function firstExistingPath(candidates: string[]): Promise<string | null> {
@@ -86,7 +80,6 @@ export class AccountDeletionMailService {
 
     const { subject, html, text } = renderAccountDeletionEmail({
       firstName: params.firstName?.trim() || 'athlète',
-      logoSrc: `cid:${LOGO_CID}`,
       fontDataUri,
       replyMailto,
       supportEmail: SUPPORT_EMAIL,
@@ -99,25 +92,6 @@ export class AccountDeletionMailService {
       auth: { user: smtp.user, pass: smtp.pass },
     });
 
-    const attachments: nodemailer.SendMailOptions['attachments'] = [];
-    try {
-      const logoPath = await firstExistingPath(LOGO_CANDIDATES);
-      if (!logoPath) {
-        throw new Error(
-          `Logo introuvable (${LOGO_CANDIDATES.join(' | ')})`,
-        );
-      }
-      const logo = await readFile(logoPath);
-      attachments.push({
-        filename: 'logo-black-text.png',
-        content: logo,
-        cid: LOGO_CID,
-        contentDisposition: 'inline',
-      });
-    } catch (err) {
-      this.logger.warn('Logo mail introuvable — envoi sans logo CID', err);
-    }
-
     await transporter.sendMail({
       from: smtp.from,
       to: params.to,
@@ -125,7 +99,6 @@ export class AccountDeletionMailService {
       subject,
       html,
       text,
-      attachments,
     });
   }
 

@@ -1,8 +1,11 @@
 import { renderTransactionalEmail } from '../../emails/transactional-layout.js';
 
+/** Logo wordmark blanc (fond transparent). Le layout le pose sur un bandeau noir. */
+const ACCOUNT_DELETION_LOGO_SRC =
+  'https://one-more.app/_next/image?url=%2Fapi%2Fcms-assets%2Fc0534ae2-e030-40d4-92fc-086df7fdf369%3Fv%3D1788202288452&w=256&q=75';
+
 export type AccountDeletionTemplateInput = {
   firstName: string;
-  logoSrc: string;
   /**
    * Data URI woff2 (`data:font/woff2;base64,...`).
    * Obligatoire pour un rendu fiable : les URLs HTTPS du site n'ont pas de CORS.
@@ -17,7 +20,9 @@ export function buildAccountDeletionSubject(): string {
   return 'Ton compte One More a été supprimé';
 }
 
-export function renderAccountDeletionEmail(input: AccountDeletionTemplateInput): {
+export function renderAccountDeletionEmail(
+  input: AccountDeletionTemplateInput,
+): {
   subject: string;
   html: string;
   text: string;
@@ -48,7 +53,7 @@ export function renderAccountDeletionEmail(input: AccountDeletionTemplateInput):
     subject: buildAccountDeletionSubject(),
     preheader:
       'Confirmation de suppression : dis-nous ce qui n’allait pas si tu as 30 secondes.',
-    logoSrc: input.logoSrc,
+    logoSrc: ACCOUNT_DELETION_LOGO_SRC,
     fontDataUri: input.fontDataUri,
     eyebrow: 'Compte',
     title: 'Suppression confirmée',

@@ -142,9 +142,7 @@ function renderSecondary(secondaryText: string): string {
         </tr>`;
 }
 
-function renderFooterLinks(
-  links: TransactionalEmailFooterLink[],
-): string {
+function renderFooterLinks(links: TransactionalEmailFooterLink[]): string {
   if (links.length === 0) return '';
   const parts = links.map((link, index) => {
     const label = escapeHtml(link.label);
@@ -184,7 +182,7 @@ function buildPlainText(input: TransactionalEmailInput): string {
     lines.push('', input.secondaryText.trim());
   }
 
-  lines.push('', 'ALWAYS ONE MORE', '', 'Zilton - Aix-en-Provence, France');
+  lines.push('', 'ALWAYS ONE MORE', '', '© 2026 ZILTON. Tous droits réservés.');
 
   if (input.footerLinks && input.footerLinks.length > 0) {
     lines.push(
@@ -272,7 +270,13 @@ ${renderPreheader(input.preheader)}
       <table role="presentation" class="om-container" width="520" cellpadding="0" cellspacing="0" border="0" style="width:520px; max-width:520px;">
         <tr>
           <td align="center" style="padding:0 0 20px 0;">
-            <img src="${logoSrc}" width="140" alt="One More" style="display:block; width:140px; max-width:140px; height:auto;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+              <tr>
+                <td align="center" bgcolor="#0A0A0A" style="background-color:#0A0A0A; border-radius:16px; padding:18px 28px;">
+                  <img src="${logoSrc}" width="140" alt="One More" style="display:block; width:140px; max-width:140px; height:auto;">
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <tr>
@@ -320,7 +324,7 @@ ${renderPreheader(input.preheader)}
         </tr>
         <tr>
           <td align="center" style="padding:12px 20px 0 20px; font-family:'Hanken Grotesk',Arial,Helvetica,sans-serif; font-size:11px; line-height:1.5; color:${MUTED};">
-            Zilton - Aix-en-Provence, France
+            © 2026 ZILTON. Tous droits réservés.
           </td>
         </tr>
         ${footerLinksBlock}
