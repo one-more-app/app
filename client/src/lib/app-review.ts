@@ -1,5 +1,4 @@
 import { Capacitor } from "@capacitor/core";
-import { Browser } from "@capacitor/browser";
 import { AppReview } from "@capawesome/capacitor-app-review";
 import type { ReviewLastAnswer } from "@/lib/review-eligibility";
 import { canRequestNativeReviewOnRecap } from "@/lib/review-eligibility";
@@ -173,56 +172,37 @@ export function getStoreReviewWebFallbackUrl(): string {
   return `https://play.google.com/store/apps/details?id=${ANDROID_PACKAGE}`;
 }
 
+const REVIEW_REQUEST_TIMEOUT_MS = 12_000;
+
 /**
- * « Laisser un avis » : modale système (SKStoreReviewController / In-App Review),
- * puis repli fiche store si besoin. Pas de Browser.open sur iOS (URL souvent
- * invalide en simu sans VITE_APPLE_APP_ID).
+ * Modale avis native (Capacitor). Jamais de fiche store.
+ * iOS/Android peuvent ne rien afficher (quota, déjà noté) : l’appel part quand même.
  */
-export async function openStoreReviewListing(): Promise<void> {
-  if (!Capacitor.isNativePlatform()) return;
-
-  try {
-    await AppReview.requestReview();
-    markReviewStoreOpened();
-    return;
-  } catch {
-    /* quota OS ou indisponible → repli store */
+export async function requestNativeAppReview(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) {
+    throw new Error("native-only");
   }
 
-  try {
-    if (Capacitor.getPlatform() === "ios") {
-      const appId = getAppleAppId();
-      if (appId) {
-        await AppReview.openAppStore({ appId });
-      } else {
-        await AppReview.openAppStore();
-      }
-    } else {
-      // Android : fiche Play Store (+ dialog avis si le plugin/OS le permet)
-      await AppReview.openAppStore();
-    }
-    markReviewStoreOpened();
-  } catch {
-    if (Capacitor.getPlatform() === "android") {
-      try {
-        await Browser.open({ url: getStoreReviewWebFallbackUrl() });
-        markReviewStoreOpened();
-      } catch {
-        /* rien à afficher */
-      }
-    }
-  }
+  const reviewCall = AppReview.requestReview();
+  const timeout = new Promise<never>((_, reject) => {
+    window.setTimeout(
+      () => reject(new Error("review-request-timeout")),
+      REVIEW_REQUEST_TIMEOUT_MS,
+    );
+  });
+
+  await Promise.race([reviewCall, timeout]);
 }
 
-/** Réglages : fiche store (comportement historique). */
+/** Parcours review pulse / carte séance (cooldown store pulse). */
+export async function openStoreReviewListing(): Promise<void> {
+  await requestNativeAppReview();
+  markReviewStoreOpened();
+}
+
+/** Réglages · Noter l'app (sans cooldown pulse, rappelable à chaque tap). */
 export async function openStoreListing(): Promise<void> {
-  if (!Capacitor.isNativePlatform()) return;
-  const appId = getAppleAppId();
-  if (appId) {
-    await AppReview.openAppStore({ appId });
-    return;
-  }
-  await AppReview.openAppStore();
+  await requestNativeAppReview();
 }
 
 export async function maybeRequestNativeReviewOnRecap(input: {

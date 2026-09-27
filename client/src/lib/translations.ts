@@ -1039,8 +1039,12 @@ export const UI = {
   // Avis
   rateApp: "Laisser un avis",
   rateAppDescription:
-    "Si l'app t’aide à progresser, une note sur le Store fait vraiment la différence.",
+    "Ouvre la fenêtre système pour noter. Si rien ne s'affiche, iOS ou Android limite les rappels (déjà noté ou quota).",
   rateNow: "Noter l'app",
+  rateAppUnavailable:
+    "Disponible uniquement dans l'app iOS ou Android.",
+  rateAppRequestFailed:
+    "Impossible d'ouvrir la fenêtre d'avis. Réessaie dans un instant.",
   dontAskAgain: "Ne plus demander",
   feedbackTitle: "Remonter un bug ou une idée",
   feedbackDescription:

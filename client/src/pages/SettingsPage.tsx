@@ -75,6 +75,7 @@ export function SettingsPage() {
     const [feedbackTitle, setFeedbackTitle] = useState('')
     const [feedbackMessage, setFeedbackMessage] = useState('')
     const [feedbackSending, setFeedbackSending] = useState(false)
+    const [rateAppSending, setRateAppSending] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [deleteComment, setDeleteComment] = useState('')
     const [deleteSending, setDeleteSending] = useState(false)
@@ -159,6 +160,23 @@ export function SettingsPage() {
         setFeedbackKind('bug')
         setFeedbackTitle('')
         setFeedbackMessage('')
+    }
+
+    const handleRateApp = () => {
+        if (!Capacitor.isNativePlatform()) {
+            toast.error(UI.rateAppUnavailable)
+            return
+        }
+        void (async () => {
+            setRateAppSending(true)
+            try {
+                await openStoreListing()
+            } catch {
+                toast.error(UI.rateAppRequestFailed)
+            } finally {
+                setRateAppSending(false)
+            }
+        })()
     }
 
     const handleSubmitFeedback = () => {
@@ -479,12 +497,11 @@ export function SettingsPage() {
                     </CardHeader>
                     <CardContent className="flex flex-col gap-2">
                         <Button
-                            onClick={() => {
-                                void openStoreListing()
-                            }}
+                            onClick={handleRateApp}
+                            disabled={rateAppSending}
                             className="w-full"
                         >
-                            {UI.rateNow}
+                            {rateAppSending ? UI.feedbackSending : UI.rateNow}
                         </Button>
                     </CardContent>
                 </Card>
