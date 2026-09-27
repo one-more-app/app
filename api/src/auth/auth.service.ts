@@ -21,6 +21,7 @@ import { RedditConversionsService } from '../analytics/reddit-conversions.servic
 import type { RedditAdsRequestContext } from '../analytics/reddit-conversions.js';
 import { DeviceTokenEntity } from '../notifications/entities/device-token.entity.js';
 import { AccountDeletionMailService } from './account-deletion-mail.service.js';
+import { FeedbackService } from '../feedback/feedback.service.js';
 
 type AuthUser = { id: string; email: string | null };
 type AuthSession = {
@@ -51,6 +52,7 @@ export class AuthService {
     private referrals: ReferralService,
     private redditConversions: RedditConversionsService,
     private accountDeletionMail: AccountDeletionMailService,
+    private feedback: FeedbackService,
   ) {}
 
   private async signAccessToken(user: AuthUser): Promise<string> {
@@ -213,7 +215,10 @@ export class AuthService {
     const match = await this.findSessionByRefreshToken(params.refreshToken);
     if (!match) throw new UnauthorizedException('Session expirée');
     if (match.user.deletedAt) {
-      await this.sessionsRepo.update({ id: match.id }, { revokedAt: new Date() });
+      await this.sessionsRepo.update(
+        { id: match.id },
+        { revokedAt: new Date() },
+      );
       throw new UnauthorizedException('Compte désactivé');
     }
 
@@ -264,6 +269,21 @@ export class AuthService {
       userId,
       comment,
     });
+
+    if (comment) {
+      try {
+        await this.feedback.createAccountDeletionFeedback(
+          userId,
+          user.email,
+          comment,
+        );
+      } catch (err) {
+        this.logger.warn(
+          `Notion feedback suppression échoué pour ${userId}`,
+          err,
+        );
+      }
+    }
 
     if (user.email) {
       const profile = await this.profilesRepo.findOne({

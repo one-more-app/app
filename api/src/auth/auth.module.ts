@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, type JwtSignOptions } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthController } from './auth.controller.js';
@@ -17,11 +17,13 @@ import { UserEntity } from './entities/user.entity.js';
 import { DeviceTokenEntity } from '../notifications/entities/device-token.entity.js';
 import { SocialModule } from '../social/social.module.js';
 import { ProfileModule } from '../profile/profile.module.js';
+import { FeedbackModule } from '../feedback/feedback.module.js';
 
 @Module({
   imports: [
     SocialModule,
     ProfileModule,
+    FeedbackModule,
     TypeOrmModule.forFeature([
       UserEntity,
       UserProfileEntity,
@@ -36,7 +38,8 @@ import { ProfileModule } from '../profile/profile.module.js';
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('JWT_SECRET') ?? 'dev-secret',
         signOptions: {
-          expiresIn: (config.get<string>('JWT_EXPIRES_IN') ?? '15m') as any,
+          expiresIn: (config.get<string>('JWT_EXPIRES_IN') ??
+            '15m') as JwtSignOptions['expiresIn'],
         },
       }),
     }),

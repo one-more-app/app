@@ -9,6 +9,8 @@ export const NOTION_SOURCE_REVIEW = 'Review pulse';
 export const NOTION_SOURCE_SETTINGS = 'Réglages';
 
 export const NOTION_TYPE_REVIEW = 'Review';
+/** Commentaire laissé au moment de supprimer le compte (Réglages). */
+export const NOTION_TYPE_ACCOUNT_DELETION = 'Suppression';
 
 export const NOTION_TYPE_BY_KIND: Record<FeedbackKind, string> = {
   bug: 'Bug',
@@ -26,4 +28,5 @@ export const NOTION_TYPE_OPTIONS = [
   'Idea',
   'Suggestion',
   NOTION_TYPE_REVIEW,
+  NOTION_TYPE_ACCOUNT_DELETION,
 ] as const;

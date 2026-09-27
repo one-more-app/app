@@ -28,6 +28,9 @@ describe('AuthService.deleteAccount', () => {
   const accountDeletionMail = {
     sendConfirmation: jest.fn(),
   };
+  const feedback = {
+    createAccountDeletionFeedback: jest.fn(),
+  };
   const jwt = { signAsync: jest.fn() };
   const config = { get: jest.fn() };
   const invites = {};
@@ -50,6 +53,7 @@ describe('AuthService.deleteAccount', () => {
       referrals as any,
       redditConversions as any,
       accountDeletionMail as any,
+      feedback as any,
     );
   });
 
@@ -61,6 +65,7 @@ describe('AuthService.deleteAccount', () => {
     } as any);
     profilesRepo.findOne.mockResolvedValue({ firstName: 'Vince' } as any);
     accountDeletionMail.sendConfirmation.mockResolvedValue(undefined as any);
+    feedback.createAccountDeletionFeedback.mockResolvedValue(undefined as any);
 
     const result = await service.deleteAccount('user-1', {
       comment: 'prix trop élevé',
@@ -84,6 +89,11 @@ describe('AuthService.deleteAccount', () => {
       to: 'a@b.co',
       firstName: 'Vince',
     });
+    expect(feedback.createAccountDeletionFeedback).toHaveBeenCalledWith(
+      'user-1',
+      'a@b.co',
+      'prix trop élevé',
+    );
   });
 
   it('allows deletion without comment', async () => {
@@ -102,6 +112,7 @@ describe('AuthService.deleteAccount', () => {
       userId: 'user-1',
       comment: null,
     });
+    expect(feedback.createAccountDeletionFeedback).not.toHaveBeenCalled();
   });
 
   it('does not rollback delete when email fails', async () => {
@@ -115,6 +126,26 @@ describe('AuthService.deleteAccount', () => {
 
     const result = await service.deleteAccount('user-1', {
       comment: 'test',
+    });
+
+    expect(result).toEqual({ ok: true });
+    expect(usersRepo.update).toHaveBeenCalled();
+  });
+
+  it('does not rollback delete when Notion feedback fails', async () => {
+    usersRepo.findOne.mockResolvedValue({
+      id: 'user-1',
+      email: 'a@b.co',
+      deletedAt: null,
+    } as any);
+    profilesRepo.findOne.mockResolvedValue({ firstName: 'Vince' } as any);
+    accountDeletionMail.sendConfirmation.mockResolvedValue(undefined as any);
+    feedback.createAccountDeletionFeedback.mockRejectedValue(
+      new Error('notion'),
+    );
+
+    const result = await service.deleteAccount('user-1', {
+      comment: 'trop cher',
     });
 
     expect(result).toEqual({ ok: true });
@@ -146,7 +177,11 @@ describe('AuthService.loginWithEmail soft-delete', () => {
   const jwt = { signAsync: jest.fn().mockResolvedValue('access' as any) };
   const config = {
     get: jest.fn((key: string) =>
-      key === 'JWT_SECRET' ? 'secret' : key === 'JWT_EXPIRES_IN' ? '15m' : undefined,
+      key === 'JWT_SECRET'
+        ? 'secret'
+        : key === 'JWT_EXPIRES_IN'
+          ? '15m'
+          : undefined,
     ),
   };
 
@@ -166,6 +201,7 @@ describe('AuthService.loginWithEmail soft-delete', () => {
       {} as any,
       {} as any,
       accountDeletionMail as any,
+      { createAccountDeletionFeedback: jest.fn() } as any,
     );
   });
 

@@ -6,6 +6,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { ProfileService } from '../profile/profile.service.js';
 import type { CreateFeedbackDto } from './dto/create-feedback.dto.js';
+import { buildAccountDeletionNotionPayload } from './build-account-deletion-notion-payload.js';
 import { buildReviewNotionPayload } from './build-review-notion-payload.js';
 import { buildSettingsNotionPayload } from './build-settings-notion-payload.js';
 import { ensureReviewNotionDatabaseSchema } from './notion-review-schema-sync.js';
@@ -167,5 +168,52 @@ export class FeedbackService {
     );
 
     await this.postNotionPage(notionToken, notionPayload, 'feedback réglages');
+  }
+
+  /** Commentaire laissé dans le dialog de suppression de compte (Réglages). */
+  async createAccountDeletionFeedback(
+    userId: string,
+    sessionEmail: string | null,
+    comment: string,
+  ): Promise<void> {
+    const trimmed = comment.trim();
+    if (!trimmed) return;
+
+    const notionToken = readNotionEnv(this.config, 'NOTION_TOKEN');
+    const notionDatabaseId = readClientFeedbackDatabaseId(this.config);
+
+    if (!notionToken || !notionDatabaseId) {
+      this.logger.error(
+        'Notion feedback non configuré (NOTION_TOKEN + NOTION_REVIEW_FEEDBACK_DB_ID ou NOTION_FEEDBACK_DB_ID).',
+      );
+      throw new InternalServerErrorException(
+        "Le service de feedback n'est pas disponible.",
+      );
+    }
+
+    const statusName = this.feedbackStatusName();
+
+    await ensureReviewNotionDatabaseSchema(
+      notionToken,
+      notionDatabaseId,
+      statusName,
+      this.logger,
+    );
+
+    const profile = await this.profileService.getProfile(userId);
+    const notionPayload = buildAccountDeletionNotionPayload(
+      notionDatabaseId,
+      userId,
+      sessionEmail,
+      profile,
+      trimmed,
+      statusName,
+    );
+
+    await this.postNotionPage(
+      notionToken,
+      notionPayload,
+      'feedback suppression de compte',
+    );
   }
 }

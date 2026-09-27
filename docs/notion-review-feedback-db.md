@@ -11,7 +11,7 @@ Une seule base. Variables :
 |---------|-------------|------|
 | **Name** | Title | Titre / résumé |
 | **Source** | **Select** | `Review pulse` · `Réglages` |
-| **Type** | **Select** | `Bug` · `Idea` · `Suggestion` · `Review` |
+| **Type** | **Select** | `Bug` · `Idea` · `Suggestion` · `Review` · `Suppression` |
 | **Status** | Status | Workflow (défaut API : `NOTION_REVIEW_STATUS` ou `Backlog`) |
 | **Email** | Text | |
 | **User ID** | Text | |
@@ -38,6 +38,7 @@ L’API **ajoute les options** manquantes sur Source, Type, Platform, Chips, Sta
 | Réglages · Bug | Réglages | Bug |
 | Réglages · Idée | Réglages | Idea |
 | Réglages · Suggestion | Réglages | Suggestion |
+| Réglages · suppression de compte (commentaire) | Réglages | Suppression |
 
 ## Chips (multi-select)
 
