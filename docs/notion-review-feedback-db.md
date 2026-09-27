@@ -27,7 +27,9 @@ Même intégration Notion que le reste : `NOTION_TOKEN`. Connecter l’intégrat
 
 **Pas de colonne Type, Priority, Source.** Toute la base = feedback review pulse. **Status** = ton pipeline (ex. Backlog → En cours → Traité).
 
-Option **Status** requise à la création : **Backlog** (comme Tickets).
+**Status** à la création : par défaut **Backlog** (`NOTION_REVIEW_STATUS` pour utiliser ton libellé, ex. `À faire`).
+
+L’API **ajoute automatiquement** les options manquantes sur **Status**, **Platform** et **Chips** (PATCH Notion, cache 1 h) si l’intégration a le droit de modifier la base. Sinon crée-les à la main ou fixe `NOTION_REVIEW_STATUS` sur une option déjà présente.
 
 ## Options multi-select **Chips** (copier-coller une par une)
 

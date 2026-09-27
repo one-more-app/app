@@ -10,10 +10,29 @@ import type {
   FeedbackKind,
 } from './dto/create-feedback.dto.js';
 import { buildReviewNotionPayload } from './build-review-notion-payload.js';
+import { ensureReviewNotionDatabaseSchema } from './notion-review-schema-sync.js';
 import type { CreateReviewFeedbackDto } from './dto/create-review-feedback.dto.js';
 
 const NOTION_API_BASE = 'https://api.notion.com/v1';
 const NOTION_VERSION = '2022-06-28';
+
+function readNotionEnv(config: ConfigService, key: string): string {
+  const raw = config.get<string>(key)?.trim() ?? '';
+  if (
+    (raw.startsWith('"') && raw.endsWith('"')) ||
+    (raw.startsWith("'") && raw.endsWith("'"))
+  ) {
+    return raw.slice(1, -1).trim();
+  }
+  return raw;
+}
+
+function readReviewFeedbackDatabaseId(config: ConfigService): string {
+  return (
+    readNotionEnv(config, 'NOTION_REVIEW_FEEDBACK_DB_ID') ||
+    readNotionEnv(config, 'NOTION_FEEDBACK_DB_ID')
+  );
+}
 
 const FEEDBACK_KIND_TO_TICKET_TYPE: Record<FeedbackKind, string> = {
   bug: 'Fix',
@@ -35,18 +54,27 @@ export class FeedbackService {
     sessionEmail: string | null,
     payload: CreateReviewFeedbackDto,
   ): Promise<void> {
-    const notionToken = this.config.get<string>('NOTION_TOKEN')?.trim() ?? '';
-    const notionDatabaseId =
-      this.config.get<string>('NOTION_REVIEW_FEEDBACK_DB_ID')?.trim() ?? '';
+    const notionToken = readNotionEnv(this.config, 'NOTION_TOKEN');
+    const notionDatabaseId = readReviewFeedbackDatabaseId(this.config);
 
     if (!notionToken || !notionDatabaseId) {
       this.logger.error(
-        'Notion review feedback non configuré (NOTION_TOKEN / NOTION_REVIEW_FEEDBACK_DB_ID).',
+        'Notion review feedback non configuré (NOTION_TOKEN + NOTION_REVIEW_FEEDBACK_DB_ID ou NOTION_FEEDBACK_DB_ID).',
       );
       throw new InternalServerErrorException(
         "Le service de feedback n'est pas disponible.",
       );
     }
+
+    const statusName =
+      readNotionEnv(this.config, 'NOTION_REVIEW_STATUS') || 'Backlog';
+
+    await ensureReviewNotionDatabaseSchema(
+      notionToken,
+      notionDatabaseId,
+      statusName,
+      this.logger,
+    );
 
     const profile = await this.profileService.getProfile(userId);
     const notionPayload = buildReviewNotionPayload(
@@ -55,6 +83,7 @@ export class FeedbackService {
       sessionEmail,
       profile,
       payload,
+      statusName,
     );
 
     const controller = new AbortController();
@@ -98,9 +127,11 @@ export class FeedbackService {
     sessionEmail: string | null,
     payload: CreateFeedbackDto,
   ): Promise<void> {
-    const notionToken = this.config.get<string>('NOTION_TOKEN')?.trim() ?? '';
-    const notionDatabaseId =
-      this.config.get<string>('NOTION_FEEDBACK_DB_ID')?.trim() ?? '';
+    const notionToken = readNotionEnv(this.config, 'NOTION_TOKEN');
+    const notionDatabaseId = readNotionEnv(
+      this.config,
+      'NOTION_FEEDBACK_DB_ID',
+    );
 
     if (!notionToken || !notionDatabaseId) {
       this.logger.error(

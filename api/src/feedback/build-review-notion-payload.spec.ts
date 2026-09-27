@@ -19,6 +19,7 @@ describe('buildReviewNotionPayload', () => {
         deviceModel: 'iPhone',
         osVersion: '18.0',
       },
+      'Backlog',
     );
 
     expect(payload.parent).toEqual({ database_id: 'db-id' });

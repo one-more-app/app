@@ -37,6 +37,7 @@ export function buildReviewNotionPayload(
   sessionEmail: string | null,
   profile: ReviewNotionProfile | null,
   payload: CreateReviewFeedbackDto,
+  statusName: string,
 ) {
   const firstName = profile?.firstName?.trim() || 'non renseigné';
   const lastName = profile?.lastName?.trim() || 'non renseigné';
@@ -52,7 +53,7 @@ export function buildReviewNotionPayload(
     Prénom: richText(firstName),
     Nom: richText(lastName),
     Status: {
-      status: { name: 'Backlog' },
+      status: { name: statusName },
     },
     Chips: {
       multi_select: reviewChipKeysToNotionOptions(payload.chips),
