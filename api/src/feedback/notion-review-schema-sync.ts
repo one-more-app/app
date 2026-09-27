@@ -1,10 +1,10 @@
-import { REVIEW_CHIP_LABELS } from './review-chip-labels.js';
+import { reviewChipNotionOptionNames } from './review-chip-labels.js';
 
 const NOTION_API_BASE = 'https://api.notion.com/v1';
 const NOTION_VERSION = '2022-06-28';
 
 const REVIEW_PLATFORMS = ['ios', 'android', 'web'] as const;
-const REVIEW_CHIP_OPTIONS = Object.values(REVIEW_CHIP_LABELS);
+const REVIEW_CHIP_OPTIONS = reviewChipNotionOptionNames();
 
 const schemaSyncCache = new Map<string, number>();
 const SCHEMA_SYNC_TTL_MS = 60 * 60 * 1000;
