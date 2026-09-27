@@ -1,22 +1,17 @@
 import type { CreateReviewFeedbackDto } from './dto/create-review-feedback.dto.js';
 import {
+  NOTION_COL_SOURCE,
+  NOTION_COL_TYPE,
+  NOTION_SOURCE_REVIEW,
+  NOTION_TYPE_REVIEW,
+} from './notion-feedback-constants.js';
+import { notionRichText } from './notion-rich-text.js';
+import {
   REVIEW_CHIP_LABELS,
   reviewChipKeysToNotionOptions,
 } from './review-chip-labels.js';
 
-const NOTION_RICH_TEXT_MAX = 2000;
 const NOTION_TITLE_MAX = 200;
-
-function richText(content: string) {
-  return {
-    rich_text: [
-      {
-        type: 'text' as const,
-        text: { content: content.slice(0, NOTION_RICH_TEXT_MAX) },
-      },
-    ],
-  };
-}
 
 function buildReviewTitle(chips: CreateReviewFeedbackDto['chips']): string {
   const first = chips[0] ? REVIEW_CHIP_LABELS[chips[0]] : 'Review pulse';
@@ -48,10 +43,16 @@ export function buildReviewNotionPayload(
     Name: {
       title: [{ text: { content: buildReviewTitle(payload.chips) } }],
     },
-    Email: richText(email),
-    'User ID': richText(userId),
-    Prénom: richText(firstName),
-    Nom: richText(lastName),
+    [NOTION_COL_SOURCE]: {
+      select: { name: NOTION_SOURCE_REVIEW },
+    },
+    [NOTION_COL_TYPE]: {
+      select: { name: NOTION_TYPE_REVIEW },
+    },
+    Email: notionRichText(email),
+    'User ID': notionRichText(userId),
+    Prénom: notionRichText(firstName),
+    Nom: notionRichText(lastName),
     Status: {
       status: { name: statusName },
     },
@@ -64,24 +65,24 @@ export function buildReviewNotionPayload(
     Sessions: {
       number: payload.sessionsCount,
     },
-    Locale: richText(payload.locale),
-    'App version': richText(payload.appVersion),
+    Locale: notionRichText(payload.locale),
+    'App version': notionRichText(payload.appVersion),
     Date: {
       date: { start: payload.createdAt.slice(0, 10) },
     },
   };
 
   if (userMessage) {
-    properties.Message = richText(userMessage);
+    properties.Message = notionRichText(userMessage);
   }
   if (payload.sessionId) {
-    properties['Session date'] = richText(payload.sessionId);
+    properties['Session date'] = notionRichText(payload.sessionId);
   }
   if (payload.deviceModel) {
-    properties.Device = richText(payload.deviceModel);
+    properties.Device = notionRichText(payload.deviceModel);
   }
   if (payload.osVersion) {
-    properties.OS = richText(payload.osVersion);
+    properties.OS = notionRichText(payload.osVersion);
   }
 
   return {

@@ -1,41 +1,47 @@
-# Base Notion · Review pulse (« Pas encore »)
+# Base Notion · Retours clients (review + réglages)
 
-Base **séparée** de la table Tickets. Variable d’env : `NOTION_REVIEW_FEEDBACK_DB_ID`.
+Une seule base. Variables :
 
-Même intégration Notion que le reste : `NOTION_TOKEN`. Connecter l’intégration à **cette** base uniquement (ou aux deux bases si tu utilises aussi Tickets).
+- `NOTION_TOKEN`
+- `NOTION_REVIEW_FEEDBACK_DB_ID` **ou** `NOTION_FEEDBACK_DB_ID` (même ID possible)
 
-## Colonnes à créer (noms **exactes**, sensibles à la casse)
+## Colonnes à créer
 
-| Colonne Notion | Type Notion | Obligatoire | Contenu |
-|----------------|-------------|-------------|---------|
-| **Name** | Title | oui | Résumé auto, ex. `Feedback review · Il manque un exercice (+1)` |
-| **Status** | Status | oui | Création en **Backlog** (workflow traitement) |
-| **Email** | Text | oui | Email session ou `non renseigné` |
-| **User ID** | Text | oui | UUID utilisateur |
-| **Prénom** | Text | oui | Profil |
-| **Nom** | Text | oui | Profil |
-| **Chips** | Multi-select | oui | Options ci-dessous (libellés **identiques**) |
-| **Message** | Text | non | Texte libre (max 280 côté app) |
-| **Platform** | Select | oui | Options : `ios`, `android`, `web` |
-| **Sessions** | Number | oui | Nombre de jours de séance distincts |
-| **Locale** | Text | oui | ex. `fr`, `en` |
-| **App version** | Text | oui | Version app |
-| **Date** | Date | oui | Horodatage envoi (ISO client) |
-| **Session date** | Text | non | Clé jour séance locale |
-| **Device** | Text | non | Si chip « Un bug » |
-| **OS** | Text | non | Si chip « Un bug » |
+| Colonne | Type Notion | Rôle |
+|---------|-------------|------|
+| **Name** | Title | Titre / résumé |
+| **Source** | **Select** | `Review pulse` · `Réglages` |
+| **Type** | **Select** | `Bug` · `Idea` · `Suggestion` · `Review` |
+| **Status** | Status | Workflow (défaut API : `NOTION_REVIEW_STATUS` ou `Backlog`) |
+| **Email** | Text | |
+| **User ID** | Text | |
+| **Prénom** | Text | |
+| **Nom** | Text | |
+| **Message** | Text | Description / message libre |
+| **Chips** | Multi-select | Review pulse uniquement (7 libellés, sans virgule) |
+| **Platform** | Select | `ios` · `android` · `web` |
+| **Sessions** | Number | Review pulse |
+| **Locale** | Text | Review pulse |
+| **App version** | Text | |
+| **Date** | Date | Review pulse |
+| **Session date** | Text | Optionnel |
+| **Device** | Text | Optionnel |
+| **OS** | Text | Optionnel |
 
-**Pas de colonne Type, Priority, Source.** Toute la base = feedback review pulse. **Status** = ton pipeline (ex. Backlog → En cours → Traité).
+L’API **ajoute les options** manquantes sur Source, Type, Platform, Chips, Status (si droits intégration).
 
-**Status** à la création : par défaut **Backlog** (`NOTION_REVIEW_STATUS` pour utiliser ton libellé, ex. `À faire`).
+## Mapping app → Notion
 
-L’API **ajoute automatiquement** les options manquantes sur **Status**, **Platform** et **Chips** (PATCH Notion, cache 1 h) si l’intégration a le droit de modifier la base. Sinon crée-les à la main ou fixe `NOTION_REVIEW_STATUS` sur une option déjà présente.
+| Entrée | Source | Type |
+|--------|--------|------|
+| Review pulse « Pas encore » | Review pulse | Review |
+| Réglages · Bug | Réglages | Bug |
+| Réglages · Idée | Réglages | Idea |
+| Réglages · Suggestion | Réglages | Suggestion |
 
-## Options multi-select **Chips**
+## Chips (multi-select)
 
-Pas de **virgule** dans un libellé (limitation Notion). L’API normalise `,` → ` · ` si besoin.
-
-Copier-coller une par une :
+Pas de virgule dans un libellé (Notion).
 
 1. Saisie trop lente  
 2. Il manque un exercice  
@@ -44,13 +50,3 @@ Copier-coller une par une :
 5. Import / export de données  
 6. Un bug  
 7. Autre  
-
-## Options select **Platform**
-
-- ios  
-- android  
-- web  
-
-## ID de la base
-
-URL Notion → segment 32 caractères hex → `NOTION_REVIEW_FEEDBACK_DB_ID` dans `api/.env`.

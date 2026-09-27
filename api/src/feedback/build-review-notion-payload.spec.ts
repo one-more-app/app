@@ -24,7 +24,8 @@ describe('buildReviewNotionPayload', () => {
 
     expect(payload.parent).toEqual({ database_id: 'db-id' });
     const props = payload.properties;
-    expect(props.Type).toBeUndefined();
+    expect(props.Type).toEqual({ select: { name: 'Review' } });
+    expect(props.Source).toEqual({ select: { name: 'Review pulse' } });
     expect(props.Status).toEqual({ status: { name: 'Backlog' } });
     expect(props.Chips).toEqual({
       multi_select: [{ name: 'Il manque un exercice' }, { name: 'Un bug' }],

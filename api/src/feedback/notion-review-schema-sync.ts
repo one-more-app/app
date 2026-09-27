@@ -1,4 +1,10 @@
 import { reviewChipNotionOptionNames } from './review-chip-labels.js';
+import {
+  NOTION_COL_SOURCE,
+  NOTION_COL_TYPE,
+  NOTION_SOURCE_OPTIONS,
+  NOTION_TYPE_OPTIONS,
+} from './notion-feedback-constants.js';
 
 const NOTION_API_BASE = 'https://api.notion.com/v1';
 const NOTION_VERSION = '2022-06-28';
@@ -70,6 +76,22 @@ export function buildReviewSchemaPatch(
   if (status?.type === 'status' && status.status) {
     const merged = mergeOptions(status.status.options ?? [], [statusDefault]);
     if (merged) patch.Status = { status: { options: merged } };
+  }
+
+  const source = properties[NOTION_COL_SOURCE];
+  if (source?.type === 'select' && source.select) {
+    const merged = mergeOptions(source.select.options ?? [], [
+      ...NOTION_SOURCE_OPTIONS,
+    ]);
+    if (merged) patch[NOTION_COL_SOURCE] = { select: { options: merged } };
+  }
+
+  const typeProp = properties[NOTION_COL_TYPE];
+  if (typeProp?.type === 'select' && typeProp.select) {
+    const merged = mergeOptions(typeProp.select.options ?? [], [
+      ...NOTION_TYPE_OPTIONS,
+    ]);
+    if (merged) patch[NOTION_COL_TYPE] = { select: { options: merged } };
   }
 
   return patch;

@@ -5,11 +5,9 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ProfileService } from '../profile/profile.service.js';
-import type {
-  CreateFeedbackDto,
-  FeedbackKind,
-} from './dto/create-feedback.dto.js';
+import type { CreateFeedbackDto } from './dto/create-feedback.dto.js';
 import { buildReviewNotionPayload } from './build-review-notion-payload.js';
+import { buildSettingsNotionPayload } from './build-settings-notion-payload.js';
 import { ensureReviewNotionDatabaseSchema } from './notion-review-schema-sync.js';
 import type { CreateReviewFeedbackDto } from './dto/create-review-feedback.dto.js';
 
@@ -27,18 +25,13 @@ function readNotionEnv(config: ConfigService, key: string): string {
   return raw;
 }
 
-function readReviewFeedbackDatabaseId(config: ConfigService): string {
+/** Base unique « Retours clients » (review + réglages). */
+export function readClientFeedbackDatabaseId(config: ConfigService): string {
   return (
     readNotionEnv(config, 'NOTION_REVIEW_FEEDBACK_DB_ID') ||
     readNotionEnv(config, 'NOTION_FEEDBACK_DB_ID')
   );
 }
-
-const FEEDBACK_KIND_TO_TICKET_TYPE: Record<FeedbackKind, string> = {
-  bug: 'Fix',
-  idea: 'Feat',
-  suggestion: 'Chore',
-};
 
 @Injectable()
 export class FeedbackService {
@@ -49,25 +42,73 @@ export class FeedbackService {
     private readonly profileService: ProfileService,
   ) {}
 
+  private async postNotionPage(
+    notionToken: string,
+    body: Record<string, unknown>,
+    logLabel: string,
+  ): Promise<void> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    try {
+      const response = await fetch(`${NOTION_API_BASE}/pages`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${notionToken}`,
+          'content-type': 'application/json',
+          'notion-version': NOTION_VERSION,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        this.logger.error(
+          `Échec création ${logLabel} Notion (${response.status}): ${text}`,
+        );
+        throw new InternalServerErrorException(
+          "Impossible d'enregistrer le feedback.",
+        );
+      }
+    } catch (error) {
+      if (error instanceof InternalServerErrorException) throw error;
+      const reason = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Erreur appel Notion ${logLabel}: ${reason}`);
+      throw new InternalServerErrorException(
+        "Impossible d'enregistrer le feedback.",
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  private feedbackStatusName(): string {
+    return (
+      readNotionEnv(this.config, 'NOTION_REVIEW_STATUS') ||
+      readNotionEnv(this.config, 'NOTION_FEEDBACK_STATUS') ||
+      'Backlog'
+    );
+  }
+
   async createReviewFeedback(
     userId: string,
     sessionEmail: string | null,
     payload: CreateReviewFeedbackDto,
   ): Promise<void> {
     const notionToken = readNotionEnv(this.config, 'NOTION_TOKEN');
-    const notionDatabaseId = readReviewFeedbackDatabaseId(this.config);
+    const notionDatabaseId = readClientFeedbackDatabaseId(this.config);
 
     if (!notionToken || !notionDatabaseId) {
       this.logger.error(
-        'Notion review feedback non configuré (NOTION_TOKEN + NOTION_REVIEW_FEEDBACK_DB_ID ou NOTION_FEEDBACK_DB_ID).',
+        'Notion feedback non configuré (NOTION_TOKEN + NOTION_REVIEW_FEEDBACK_DB_ID ou NOTION_FEEDBACK_DB_ID).',
       );
       throw new InternalServerErrorException(
         "Le service de feedback n'est pas disponible.",
       );
     }
 
-    const statusName =
-      readNotionEnv(this.config, 'NOTION_REVIEW_STATUS') || 'Backlog';
+    const statusName = this.feedbackStatusName();
 
     await ensureReviewNotionDatabaseSchema(
       notionToken,
@@ -86,40 +127,7 @@ export class FeedbackService {
       statusName,
     );
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-
-    try {
-      const response = await fetch(`${NOTION_API_BASE}/pages`, {
-        method: 'POST',
-        headers: {
-          authorization: `Bearer ${notionToken}`,
-          'content-type': 'application/json',
-          'notion-version': NOTION_VERSION,
-        },
-        body: JSON.stringify(notionPayload),
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        this.logger.error(
-          `Échec création review feedback Notion (${response.status}): ${text}`,
-        );
-        throw new InternalServerErrorException(
-          "Impossible d'enregistrer le feedback.",
-        );
-      }
-    } catch (error) {
-      if (error instanceof InternalServerErrorException) throw error;
-      const reason = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Erreur appel Notion review feedback: ${reason}`);
-      throw new InternalServerErrorException(
-        "Impossible d'enregistrer le feedback.",
-      );
-    } finally {
-      clearTimeout(timeout);
-    }
+    await this.postNotionPage(notionToken, notionPayload, 'review feedback');
   }
 
   async create(
@@ -128,125 +136,36 @@ export class FeedbackService {
     payload: CreateFeedbackDto,
   ): Promise<void> {
     const notionToken = readNotionEnv(this.config, 'NOTION_TOKEN');
-    const notionDatabaseId = readNotionEnv(
-      this.config,
-      'NOTION_FEEDBACK_DB_ID',
-    );
+    const notionDatabaseId = readClientFeedbackDatabaseId(this.config);
 
     if (!notionToken || !notionDatabaseId) {
       this.logger.error(
-        'Notion feedback non configuré (NOTION_TOKEN / NOTION_FEEDBACK_DB_ID).',
+        'Notion feedback non configuré (NOTION_TOKEN + NOTION_REVIEW_FEEDBACK_DB_ID ou NOTION_FEEDBACK_DB_ID).',
       );
       throw new InternalServerErrorException(
         "Le service de feedback n'est pas disponible.",
       );
     }
 
-    const profile = await this.profileService.getProfile(userId);
+    const statusName = this.feedbackStatusName();
 
-    const notionPayload = this.buildNotionPayload(
+    await ensureReviewNotionDatabaseSchema(
+      notionToken,
+      notionDatabaseId,
+      statusName,
+      this.logger,
+    );
+
+    const profile = await this.profileService.getProfile(userId);
+    const notionPayload = buildSettingsNotionPayload(
       notionDatabaseId,
       userId,
       sessionEmail,
       profile,
       payload,
+      statusName,
     );
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-
-    try {
-      const response = await fetch(`${NOTION_API_BASE}/pages`, {
-        method: 'POST',
-        headers: {
-          authorization: `Bearer ${notionToken}`,
-          'content-type': 'application/json',
-          'notion-version': NOTION_VERSION,
-        },
-        body: JSON.stringify(notionPayload),
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        this.logger.error(
-          `Échec création feedback Notion (${response.status}): ${text}`,
-        );
-        throw new InternalServerErrorException(
-          "Impossible d'enregistrer le feedback.",
-        );
-      }
-    } catch (error) {
-      if (error instanceof InternalServerErrorException) throw error;
-      const reason = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Erreur appel Notion feedback: ${reason}`);
-      throw new InternalServerErrorException(
-        "Impossible d'enregistrer le feedback.",
-      );
-    } finally {
-      clearTimeout(timeout);
-    }
-  }
-
-  private buildNotionPayload(
-    databaseId: string,
-    userId: string,
-    sessionEmail: string | null,
-    profile: {
-      firstName: string | null;
-      lastName: string | null;
-    } | null,
-    payload: CreateFeedbackDto,
-  ) {
-    const firstName = profile?.firstName?.trim() || 'non renseigné';
-    const lastName = profile?.lastName?.trim() || 'non renseigné';
-    const email = sessionEmail?.trim() || 'non renseigné';
-    const platform = payload.context?.platform ?? 'unknown';
-    const route = payload.context?.route ?? '';
-
-    const bodyLines = [
-      payload.message,
-      '',
-      `Prénom: ${firstName}`,
-      `Nom: ${lastName}`,
-      `Email: ${email}`,
-      `User ID: ${userId}`,
-      `Plateforme: ${platform}`,
-      route ? `Route: ${route}` : '',
-      `Feedback type: ${payload.kind}`,
-      `Date: ${new Date().toISOString()}`,
-    ].filter(Boolean);
-
-    return {
-      parent: { database_id: databaseId },
-      properties: {
-        Name: {
-          title: [{ text: { content: payload.title } }],
-        },
-        Type: {
-          select: { name: FEEDBACK_KIND_TO_TICKET_TYPE[payload.kind] },
-        },
-        Status: {
-          status: { name: 'Backlog' },
-        },
-        Priority: {
-          select: { name: 'Low' },
-        },
-      },
-      children: [
-        {
-          object: 'block' as const,
-          type: 'paragraph' as const,
-          paragraph: {
-            rich_text: [
-              {
-                type: 'text' as const,
-                text: { content: bodyLines.join('\n') },
-              },
-            ],
-          },
-        },
-      ],
-    };
+    await this.postNotionPage(notionToken, notionPayload, 'feedback réglages');
   }
 }

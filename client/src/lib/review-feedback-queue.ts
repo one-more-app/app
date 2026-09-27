@@ -1,4 +1,7 @@
-import { submitReviewFeedback, type ReviewFeedbackPayload } from "@/lib/review-feedback-api";
+import {
+  submitReviewFeedback,
+  type ReviewFeedbackPayload,
+} from "@/lib/review-feedback-api";
 
 const QUEUE_KEY = "one-more-review-feedback-queue-v1";
 
@@ -23,9 +26,30 @@ function writeQueue(items: QueuedItem[]): void {
   localStorage.setItem(QUEUE_KEY, JSON.stringify(items));
 }
 
+/** Même session + mêmes chips + même message = un seul envoi en attente. */
+export function reviewFeedbackQueueKey(payload: ReviewFeedbackPayload): string {
+  const chips = [...payload.chips].sort().join(",");
+  const message = (payload.message ?? "").trim();
+  const session = payload.sessionId ?? "";
+  return `${session}|${chips}|${message}`;
+}
+
 export function enqueueReviewFeedback(payload: ReviewFeedbackPayload): void {
-  const queue = readQueue();
+  const key = reviewFeedbackQueueKey(payload);
+  const queue = readQueue().filter(
+    (item) => reviewFeedbackQueueKey(item) !== key,
+  );
   queue.push({ ...payload, queuedAtMs: Date.now() });
+  writeQueue(queue);
+}
+
+export function removeReviewFeedbackFromQueue(
+  payload: ReviewFeedbackPayload,
+): void {
+  const key = reviewFeedbackQueueKey(payload);
+  const queue = readQueue().filter(
+    (item) => reviewFeedbackQueueKey(item) !== key,
+  );
   writeQueue(queue);
 }
 
@@ -50,6 +74,7 @@ export async function flushReviewFeedbackQueue(): Promise<number> {
   return sent;
 }
 
+/** Au démarrage app / retour réseau uniquement (pas après chaque tap Envoyer). */
 export function installReviewFeedbackQueueFlush(): () => void {
   if (typeof window === "undefined") return () => {};
   const onOnline = () => {

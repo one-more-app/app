@@ -33,10 +33,10 @@ import {
 } from "@/lib/review-eligibility";
 import {
   enqueueReviewFeedback,
-  flushReviewFeedbackQueue,
+  installReviewFeedbackQueueFlush,
+  removeReviewFeedbackFromQueue,
 } from "@/lib/review-feedback-queue";
 import { submitReviewFeedback } from "@/lib/review-feedback-api";
-import { installReviewFeedbackQueueFlush } from "@/lib/review-feedback-queue";
 import { subscribeReviewPerfDrawerOpen } from "@/lib/review-perf-drawer-open";
 import { listenReviewSessionSyncErrors } from "@/lib/review-session-sync-error";
 import { useAuth } from "@/hooks/use-auth";
@@ -78,6 +78,7 @@ export function ReviewPromptHost() {
   const [step, setStep] = useState<Step>("pulse");
   const [selectedChips, setSelectedChips] = useState<ReviewChipKey[]>([]);
   const [message, setMessage] = useState("");
+  const [feedbackSending, setFeedbackSending] = useState(false);
   const [prExercise, setPrExercise] = useState<string | undefined>();
 
   const prevKindRef = useRef(current?.kind ?? null);
@@ -300,7 +301,8 @@ export function ReviewPromptHost() {
   };
 
   const sendFeedback = async () => {
-    if (!canSendFeedback) return;
+    if (!canSendFeedback || feedbackSending) return;
+    setFeedbackSending(true);
     const locale = getReviewLocale();
     const appVersion = await loadReviewAppVersion();
     const device = selectedChips.includes("bug")
@@ -319,22 +321,23 @@ export function ReviewPromptHost() {
     };
 
     const queued = typeof navigator !== "undefined" && !navigator.onLine;
-    if (queued) {
-      enqueueReviewFeedback(payload);
-      toast(copy.toast.feedbackQueued);
-      track(AnalyticsEvents.REVIEW_FEEDBACK_SENT, {
-        chips: selectedChips.join(","),
-        chip_count: selectedChips.length,
-        has_message: message.trim().length > 0,
-        message_length: message.trim().length,
-        queued: true,
-      });
-      closeDrawer();
-      return;
-    }
-
     try {
+      if (queued) {
+        enqueueReviewFeedback(payload);
+        toast(copy.toast.feedbackQueued);
+        track(AnalyticsEvents.REVIEW_FEEDBACK_SENT, {
+          chips: selectedChips.join(","),
+          chip_count: selectedChips.length,
+          has_message: message.trim().length > 0,
+          message_length: message.trim().length,
+          queued: true,
+        });
+        closeDrawer();
+        return;
+      }
+
       await submitReviewFeedback(payload);
+      removeReviewFeedbackFromQueue(payload);
       toast(copy.toast.feedbackSent);
       track(AnalyticsEvents.REVIEW_FEEDBACK_SENT, {
         chips: selectedChips.join(","),
@@ -343,6 +346,7 @@ export function ReviewPromptHost() {
         message_length: message.trim().length,
         queued: false,
       });
+      closeDrawer();
     } catch {
       enqueueReviewFeedback(payload);
       toast(copy.toast.feedbackQueued);
@@ -353,9 +357,10 @@ export function ReviewPromptHost() {
         message_length: message.trim().length,
         queued: true,
       });
+      closeDrawer();
+    } finally {
+      setFeedbackSending(false);
     }
-    void flushReviewFeedbackQueue();
-    closeDrawer();
   };
 
   const skipFeedback = () => {
@@ -473,7 +478,7 @@ export function ReviewPromptHost() {
               <div className="mt-4 flex flex-col gap-2">
                 <Button
                   className="w-full"
-                  disabled={!canSendFeedback}
+                  disabled={!canSendFeedback || feedbackSending}
                   onClick={() => void sendFeedback()}
                 >
                   {copy.negative.send}
