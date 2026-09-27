@@ -129,6 +129,7 @@ Le tracking open/close est **natif** dans `ui/dialog` et `ui/drawer`.
 | Steps onboarding | `lib/analytics/onboarding-tracking.ts` |
 | Record / promotion ligue | `lib/perf-notifications.ts` (déjà fait) |
 | Achat validé | `AnalyticsService` serveur (RevenueCat) |
+| Suppression de compte | `SettingsPage` → `account_deletion_requested` (`reason`, `has_comment`, `is_premium`) avant `DELETE /auth/account` |
 | Nouvel événement custom | Ajouter dans `events.ts` puis appeler `track()` |
 
 ## Social & parrainage

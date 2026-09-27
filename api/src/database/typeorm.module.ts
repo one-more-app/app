@@ -6,6 +6,7 @@ import {
   OAuthProvider,
 } from '../auth/entities/oauth-account.entity.js';
 import { SessionEntity } from '../auth/entities/session.entity.js';
+import { AccountDeletionFeedbackEntity } from '../auth/entities/account-deletion-feedback.entity.js';
 import { UserEntity } from '../auth/entities/user.entity.js';
 import { ExerciseCatalogEntity } from '../exercises/exercise-catalog.entity.js';
 import { PerformanceEntryEntity } from '../performance/performance-entry.entity.js';
@@ -30,6 +31,7 @@ import { EventActiveAttemptEntity } from '../event/entities/event-active-attempt
 
 export const TYPEORM_ENTITIES = [
   UserEntity,
+  AccountDeletionFeedbackEntity,
   UserProfileEntity,
   OAuthAccountEntity,
   SessionEntity,

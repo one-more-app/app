@@ -730,10 +730,18 @@ export const UI = {
   signOut: "Se déconnecter",
   deleteAccountLink: "Supprimer mon compte",
   deleteAccountConfirm:
-    "Pour supprimer ton compte, tu vas ouvrir un email pré-rempli à notre équipe. Continuer ?",
-  deleteAccountEmailSubject: "Demande de suppression de compte One More",
-  deleteAccountEmailBody:
-    "Bonjour,\n\nJe souhaite supprimer définitivement mon compte One More.\n\nEmail du compte : {email}\n\nMerci.",
+    "Cette action est définitive. Ton compte sera désactivé immédiatement.",
+  deleteAccountDialogTitle: "Supprimer mon compte",
+  deleteAccountDialogDescription:
+    "Dis-nous pourquoi tu pars si tu veux, ça nous aide à améliorer One More. Tu recevras un email de confirmation.",
+  deleteAccountCommentLabel: "Ton retour",
+  deleteAccountCommentPlaceholder: "Ce qui n’allait pas (optionnel)",
+  deleteAccountConfirmButton: "Supprimer définitivement",
+  deleteAccountCancelButton: "Annuler",
+  deleteAccountDeleting: "Suppression…",
+  deleteAccountSuccess:
+    "Compte supprimé. Un email de confirmation t’a été envoyé.",
+  deleteAccountError: "Impossible de supprimer le compte. Réessaie.",
   settingsBuildVersion: "Version",
   settingsBuildNumber: "Build",
   settingsBuildEnv: "Env",

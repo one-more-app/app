@@ -56,6 +56,10 @@ import { UserEntity } from '../auth/entities/user.entity.js';
     WeeklyRecapCron,
     NewUserD1Cron,
   ],
-  exports: [NotificationDispatchService, FriendTrainingAlertsService],
+  exports: [
+    NotificationDispatchService,
+    FriendTrainingAlertsService,
+    DeviceTokensService,
+  ],
 })
 export class NotificationsModule {}

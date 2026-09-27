@@ -28,6 +28,10 @@ export class UserEntity {
   @Column({ type: 'boolean', default: false })
   isPremium!: boolean;
 
+  /** Soft delete — le compte ne peut plus s’authentifier. */
+  @Column({ type: 'timestamptz', nullable: true })
+  deletedAt!: Date | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
