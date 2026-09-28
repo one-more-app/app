@@ -4,6 +4,7 @@ import { PageTracker } from "./PageTracker";
 import {
   AnalyticsEvents,
   clearAnalyticsUser,
+  getAttributionIdentifyProperties,
   getOnboardingLastStep,
   getOnboardingSignupMethod,
   identifyUser,
@@ -11,6 +12,7 @@ import {
   initGlobalAnalyticsProperties,
   isOpenPanelConfigured,
   resolvePageName,
+  syncPendingAttributionToOpenPanel,
   track,
 } from "@/lib/analytics";
 import { useAuth } from "@/hooks/use-auth";
@@ -37,6 +39,8 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isOpenPanelConfigured()) return;
     initGlobalAnalyticsProperties();
+    // OpenPanel est prêt : rejouer pending AF / UTM URL pour l’Overview Sources.
+    syncPendingAttributionToOpenPanel();
   }, []);
 
   useEffect(() => {
@@ -63,6 +67,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
         onboarding_last_step: getOnboardingLastStep(),
         onboarding_completed: isOnboardingMarkedDone(),
         signup_method: getOnboardingSignupMethod(),
+        ...getAttributionIdentifyProperties(),
       },
     });
     incrementUserProperty({
@@ -88,6 +93,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
         onboarding_last_step: getOnboardingLastStep(),
         onboarding_completed: isOnboardingMarkedDone(),
         signup_method: getOnboardingSignupMethod(),
+        ...getAttributionIdentifyProperties(),
       },
     });
   }, [auth.status, auth.user, access]);

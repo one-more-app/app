@@ -10,6 +10,7 @@ import {
   isAppsFlyerConfigured,
 } from "@/lib/appsflyer-config";
 import { setPendingInviteCode } from "@/lib/invite-code";
+import { applyAttributionToOpenPanel } from "@/lib/analytics/attribution";
 import { setPendingAttribution } from "@/lib/appsflyer-attribution";
 import { setRedditAdsMatch } from "@/lib/reddit-ads";
 
@@ -168,7 +169,10 @@ function registerAppsFlyerListeners(): void {
       applyInviteAttribution(deepLink);
 
       const attribution = extractAdsAttribution(deepLink);
-      if (attribution) setPendingAttribution(attribution);
+      if (attribution) {
+        setPendingAttribution(attribution);
+        applyAttributionToOpenPanel(attribution, { source: "appsflyer" });
+      }
       extractRedditAdsMatch(deepLink);
     }
   });
@@ -185,7 +189,10 @@ function registerAppsFlyerListeners(): void {
     applyInviteAttribution(data);
 
     const attribution = extractAdsAttribution(data);
-    if (attribution) setPendingAttribution(attribution);
+    if (attribution) {
+      setPendingAttribution(attribution);
+      applyAttributionToOpenPanel(attribution, { source: "appsflyer" });
+    }
     extractRedditAdsMatch(data);
   });
 }

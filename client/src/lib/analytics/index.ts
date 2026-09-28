@@ -64,6 +64,11 @@ export type {
   OnboardingStepProps,
 } from "./onboarding-tracking";
 export {
+  applyAttributionToOpenPanel,
+  getAttributionIdentifyProperties,
+  syncPendingAttributionToOpenPanel,
+} from "./attribution";
+export {
   clearAnalyticsUser,
   identifyUser,
   incrementUserProperty,

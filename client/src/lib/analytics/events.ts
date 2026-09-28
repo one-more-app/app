@@ -21,6 +21,7 @@ export const AnalyticsEvents = {
   ONBOARDING_COMPLETED: "onboarding_completed",
   DISCOVERY_SOURCE_SELECTED: "discovery_source_selected",
   DISCOVERY_SOURCE_SKIPPED: "discovery_source_skipped",
+  ATTRIBUTION_CAPTURED: "attribution_captured",
 
   // Exercices & performances
   EXERCISE_ADDED: "exercise_added",
