@@ -210,7 +210,7 @@ export function useUserProgressData() {
 }
 
 function mergeRemoteProfile(
-  remote: UserProfile | null,
+  remote: (UserProfile & { discoverySource?: string | null }) | null,
   local: UserProfile,
 ): UserProfile {
   if (!remote) return local;
@@ -218,10 +218,17 @@ function mergeRemoteProfile(
     weightKg: remote.weightKg,
     heightCm: remote.heightCm,
     gender: remote.gender,
+    ageYears: remote.ageYears ?? local.ageYears ?? null,
+    trainingGoal: remote.trainingGoal ?? local.trainingGoal ?? null,
+    trainingExperience:
+      remote.trainingExperience ?? local.trainingExperience ?? null,
+    sessionsPerWeek: remote.sessionsPerWeek ?? local.sessionsPerWeek ?? null,
     firstName: remote.firstName ?? local.firstName,
     lastName: remote.lastName ?? local.lastName,
     avatarUrl: remote.avatarUrl ?? null,
     username: remote.username ?? local.username,
+    isPremium: remote.isPremium ?? local.isPremium,
+    discoverySource: remote.discoverySource ?? local.discoverySource ?? null,
   };
 }
 

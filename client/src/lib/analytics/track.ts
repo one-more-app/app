@@ -47,6 +47,7 @@ export function identifyUser(params: {
   email?: string | null;
   firstName?: string;
   lastName?: string;
+  avatar?: string;
   properties?: AnalyticsProperties;
 }): void {
   const op = getOpenPanel();
@@ -56,6 +57,7 @@ export function identifyUser(params: {
     email: params.email ?? undefined,
     firstName: params.firstName,
     lastName: params.lastName,
+    avatar: params.avatar,
     properties: params.properties
       ? compactProps(params.properties)
       : undefined,

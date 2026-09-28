@@ -69,6 +69,10 @@ export {
   syncPendingAttributionToOpenPanel,
 } from "./attribution";
 export {
+  buildIdentifyTraits,
+  buildUsageIdentifyProperties,
+} from "./user-properties";
+export {
   clearAnalyticsUser,
   identifyUser,
   incrementUserProperty,

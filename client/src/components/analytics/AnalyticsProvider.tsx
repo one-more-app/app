@@ -3,10 +3,9 @@ import { AnalyticsContextProvider } from "./analytics-context";
 import { PageTracker } from "./PageTracker";
 import {
   AnalyticsEvents,
+  buildIdentifyTraits,
+  buildUsageIdentifyProperties,
   clearAnalyticsUser,
-  getAttributionIdentifyProperties,
-  getOnboardingLastStep,
-  getOnboardingSignupMethod,
   identifyUser,
   incrementUserProperty,
   initGlobalAnalyticsProperties,
@@ -17,7 +16,7 @@ import {
 } from "@/lib/analytics";
 import { useAuth } from "@/hooks/use-auth";
 import { useAccess } from "@/hooks/use-access";
-import { isOnboardingMarkedDone } from "@/lib/storage";
+import { useUserProfileData } from "@/hooks/use-api-data";
 import { useEffect, useMemo, useRef } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -28,6 +27,7 @@ import { useLocation } from "react-router-dom";
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const { access } = useAccess();
+  const { data: profile } = useUserProfileData();
   const location = useLocation();
   const identifiedRef = useRef<string | null>(null);
 
@@ -56,47 +56,33 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     }
 
     const userId = auth.user.id;
-    if (identifiedRef.current === userId) return;
+    const traits = buildIdentifyTraits(profile);
+    const properties = buildUsageIdentifyProperties({ access, profile });
 
+    if (identifiedRef.current !== userId) {
+      identifyUser({
+        profileId: userId,
+        email: auth.user.email,
+        ...traits,
+        properties,
+      });
+      incrementUserProperty({
+        profileId: userId,
+        property: "session_count",
+        value: 1,
+      });
+      identifiedRef.current = userId;
+      return;
+    }
+
+    // Refresh traits quand access / profil évoluent (premium, limites, etc.).
     identifyUser({
       profileId: userId,
       email: auth.user.email,
-      properties: {
-        exercise_limit: access?.exerciseLimit ?? "unknown",
-        referral_count: access?.referralCount ?? 0,
-        onboarding_last_step: getOnboardingLastStep(),
-        onboarding_completed: isOnboardingMarkedDone(),
-        signup_method: getOnboardingSignupMethod(),
-        ...getAttributionIdentifyProperties(),
-      },
+      ...traits,
+      properties,
     });
-    incrementUserProperty({
-      profileId: userId,
-      property: "session_count",
-      value: 1,
-    });
-    identifiedRef.current = userId;
-  }, [auth.status, auth.user, access?.exerciseLimit, access?.referralCount]);
-
-  useEffect(() => {
-    if (!isOpenPanelConfigured()) return;
-    if (auth.status !== "authenticated" || !auth.user || !access) return;
-
-    identifyUser({
-      profileId: auth.user.id,
-      email: auth.user.email,
-      properties: {
-        exercise_count: access.activeExerciseCount,
-        exercise_limit: access.exerciseLimit,
-        referral_count: access.referralCount,
-        has_used_referral_code: access.hasUsedReferralCode,
-        onboarding_last_step: getOnboardingLastStep(),
-        onboarding_completed: isOnboardingMarkedDone(),
-        signup_method: getOnboardingSignupMethod(),
-        ...getAttributionIdentifyProperties(),
-      },
-    });
-  }, [auth.status, auth.user, access]);
+  }, [auth.status, auth.user, access, profile]);
 
   return (
     <AnalyticsContextProvider value={pageContext}>
