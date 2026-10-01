@@ -14,6 +14,36 @@ export function monthKeyFromDate(date: Date): string {
   return `${y}-${mo}`;
 }
 
+/**
+ * Normalise une valeur DATE renvoyée par un raw SQL (string `YYYY-MM-DD`
+ * ou `Date` selon le driver) en clé mois `YYYY-MM`.
+ */
+export function monthKeyFromSqlDate(value: unknown): string | null {
+  if (value == null) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return monthKeyFromDate(value);
+  }
+  if (typeof value === 'string' && value.length >= 7) {
+    return value.slice(0, 7);
+  }
+  return null;
+}
+
+/** Jour ISO `YYYY-MM-DD` depuis un raw SQL DATE. */
+export function isoDayFromSqlDate(value: unknown): string | null {
+  if (value == null) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const y = value.getUTCFullYear();
+    const mo = String(value.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(value.getUTCDate()).padStart(2, '0');
+    return `${y}-${mo}-${d}`;
+  }
+  if (typeof value === 'string' && value.length >= 10) {
+    return value.slice(0, 10);
+  }
+  return null;
+}
+
 export function monthRangeBounds(monthKey: string): {
   start: string;
   end: string;

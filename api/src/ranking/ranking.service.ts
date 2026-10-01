@@ -9,6 +9,7 @@ import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { XpEventEntity } from '../progress/entities/xp-event.entity.js';
 import { FriendshipEntity } from '../social/entities/friendship.entity.js';
 import { getAcceptedFriendIds } from '../social/lib/accepted-friend-ids.js';
+import { loadPremiumByUserIds } from '../social/lib/premium-by-user-id.js';
 import type {
   RankingEntryDto,
   RankingListResponse,
@@ -66,8 +67,9 @@ export class RankingService {
   async listGymRanking(
     viewerId: string,
     month: string,
+    placeId?: string | null,
   ): Promise<RankingListResponse> {
-    const { result, meta } = await this.computeGym(viewerId, month);
+    const { result, meta } = await this.computeGym(viewerId, month, {}, placeId);
     return {
       month,
       entries: result.entries,
@@ -111,6 +113,7 @@ export class RankingService {
         userId: viewerId,
         month,
         rank: gymPayload.rank,
+        placeId: gym.meta.placeId ?? null,
         placeName: gym.meta.placeName ?? null,
       });
       if (awarded) {
@@ -158,6 +161,7 @@ export class RankingService {
     viewerId: string,
     month: string,
     options: Pick<BuildOptions, 'withGlobalRank' | 'listEntries'> = {},
+    placeIdOverride?: string | null,
   ): Promise<{
     result: RankingComputation;
     meta: NonNullable<RankingListResponse['meta']>;
@@ -166,8 +170,45 @@ export class RankingService {
       where: { userId: viewerId },
     });
 
+    const targetPlaceId = placeIdOverride?.trim() || null;
+    const foreignGym =
+      Boolean(targetPlaceId) &&
+      (!viewerGym || viewerGym.placeId !== targetPlaceId);
+
+    // Consultation d’une salle (deeplink badge) : liste des opt-in de ce placeId.
+    if (targetPlaceId && foreignGym) {
+      const members = await this.userGymsRepo.find({
+        where: { placeId: targetPlaceId, rankingOptIn: true },
+      });
+      const sample =
+        members[0] ??
+        (await this.userGymsRepo.findOne({ where: { placeId: targetPlaceId } }));
+      const ids = members.map((m) => m.userId);
+      const result = await this.buildForUserIds(
+        viewerId,
+        ids.length > 0 ? ids : [],
+        month,
+        {
+          ...options,
+          limit: GYM_RANKING_MAX_ENTRIES,
+          // Viewer hors salle : ne pas l’injecter dans le pool.
+          forceIncludeViewer: false,
+        },
+      );
+      return {
+        result,
+        meta: {
+          hasGym: true,
+          rankingOptIn: false,
+          placeId: targetPlaceId,
+          placeName: sample?.name ?? null,
+          placeAddress: sample?.address ?? null,
+          foreignGym: true,
+        },
+      };
+    }
+
     if (!viewerGym || !viewerGym.rankingOptIn) {
-      // Ne pas exposer la liste : seulement le score personnel.
       const result = await this.buildForUserIds(viewerId, [viewerId], month, {
         ...options,
         listEntries: false,
@@ -177,8 +218,10 @@ export class RankingService {
         meta: {
           hasGym: !!viewerGym,
           rankingOptIn: false,
+          placeId: viewerGym?.placeId ?? null,
           placeName: viewerGym?.name ?? null,
           placeAddress: viewerGym?.address ?? null,
+          foreignGym: false,
         },
       };
     }
@@ -196,8 +239,10 @@ export class RankingService {
       meta: {
         hasGym: true,
         rankingOptIn: true,
+        placeId: viewerGym.placeId,
         placeName: viewerGym.name,
         placeAddress: viewerGym.address ?? null,
+        foreignGym: false,
       },
     };
   }
@@ -206,15 +251,36 @@ export class RankingService {
     viewerId: string,
     candidateIds: string[],
     month: string,
-    options: BuildOptions = {},
+    options: BuildOptions & { forceIncludeViewer?: boolean } = {},
   ): Promise<RankingComputation> {
     const bounds = monthActivityDateBounds(month);
+    const forceIncludeViewer = options.forceIncludeViewer !== false;
 
-    const activeUsers = await this.usersRepo.find({
-      where: { id: In([...new Set(candidateIds)]), deletedAt: IsNull() },
-      select: ['id'],
-    });
-    const ids = [...new Set([viewerId, ...activeUsers.map((u) => u.id)])];
+    const uniqueCandidates = [...new Set(candidateIds)];
+    const activeUsers =
+      uniqueCandidates.length > 0
+        ? await this.usersRepo.find({
+            where: { id: In(uniqueCandidates), deletedAt: IsNull() },
+            select: ['id'],
+          })
+        : [];
+    let ids = activeUsers.map((u) => u.id);
+    if (forceIncludeViewer && !ids.includes(viewerId)) {
+      ids = [viewerId, ...ids];
+    }
+
+    if (ids.length === 0) {
+      return {
+        entries: [],
+        me: {
+          userId: viewerId,
+          xp: 0,
+          rank: 0,
+          globalRank: null,
+        },
+        total: 0,
+      };
+    }
 
     const raw = await this.xpRepo
       .createQueryBuilder('e')
@@ -242,7 +308,7 @@ export class RankingService {
     });
 
     const ranked = withRanks(rows);
-    const meRow = ranked.find((r) => r.userId === viewerId)!;
+    const meRow = ranked.find((r) => r.userId === viewerId);
 
     const listed =
       options.listEntries === false
@@ -251,15 +317,20 @@ export class RankingService {
           ? ranked.slice(0, options.limit)
           : ranked;
 
-    const profileIds = [...new Set([...listed.map((r) => r.userId), viewerId])];
+    const profileIds = [
+      ...new Set([
+        ...listed.map((r) => r.userId),
+        ...(meRow ? [viewerId] : []),
+      ]),
+    ];
     const profiles =
-      listed.length > 0
+      profileIds.length > 0
         ? await this.profilesRepo.find({ where: { userId: In(profileIds) } })
         : [];
     const profileByUser = new Map(profiles.map((p) => [p.userId, p]));
 
     const globalRankByUser = new Map<string, string | null>();
-    if (options.withGlobalRank !== false) {
+    if (options.withGlobalRank !== false && profileIds.length > 0) {
       await Promise.all(
         profileIds.map(async (userId) => {
           const summary = await this.leagueService.buildSummary(userId);
@@ -267,6 +338,11 @@ export class RankingService {
         }),
       );
     }
+
+    const premiumByUserId = await loadPremiumByUserIds(
+      this.usersRepo,
+      profileIds,
+    );
 
     const entries: RankingEntryDto[] = listed.map((r) => {
       const profile = profileByUser.get(r.userId);
@@ -279,17 +355,25 @@ export class RankingService {
         xp: r.xp,
         rank: r.rank,
         globalRank: globalRankByUser.get(r.userId) ?? null,
+        isPremium: premiumByUserId.get(r.userId) ?? false,
       };
     });
 
     return {
       entries,
-      me: {
-        userId: viewerId,
-        xp: meRow.xp,
-        rank: meRow.rank,
-        globalRank: globalRankByUser.get(viewerId) ?? null,
-      },
+      me: meRow
+        ? {
+            userId: viewerId,
+            xp: meRow.xp,
+            rank: meRow.rank,
+            globalRank: globalRankByUser.get(viewerId) ?? null,
+          }
+        : {
+            userId: viewerId,
+            xp: 0,
+            rank: 0,
+            globalRank: null,
+          },
       total: ranked.length,
     };
   }

@@ -338,6 +338,12 @@ export const UI = {
   homeTourNavHistoryTitle: "Historique",
   homeTourNavHistoryContent:
     "Retrouve toutes tes perfs jour par jour. Idéal pour revoir une séance ou corriger une entrée.",
+  homeTourNavRankingTitle: "Classement",
+  homeTourNavRankingContent:
+    "Compare ton XP du mois avec tes potes et ta salle. Visé le top pour gagner des badges.",
+  rankingTourTitle: "Nouveau : Classement",
+  rankingTourContent:
+    "Chaque mois, compare ton XP avec tes potes et les membres de ta salle. Ouvre l'onglet pour voir ton rang.",
   homeTourNavFriendsTitle: "Amis",
   homeTourNavFriendsContent:
     "Ajoute des potes, vois leur activité et envoie des défis. Plus tu parraines, plus tu débloques d'exercices.",

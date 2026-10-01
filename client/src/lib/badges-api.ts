@@ -13,3 +13,11 @@ export type UserBadgeDto = {
 export async function fetchMyBadges(): Promise<UserBadgeDto[]> {
   return apiFetch<UserBadgeDto[]>("/badges/me");
 }
+
+export async function fetchFriendBadges(
+  userId: string,
+): Promise<UserBadgeDto[]> {
+  return apiFetch<UserBadgeDto[]>(
+    `/badges/user/${encodeURIComponent(userId)}`,
+  );
+}

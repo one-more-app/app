@@ -22,6 +22,9 @@ describe('FriendsExerciseLeaderboardService', () => {
   let profilesRepo: {
     find: jest.MockedFunction<(...args: unknown[]) => Promise<unknown>>;
   };
+  let usersRepo: {
+    find: jest.MockedFunction<(...args: unknown[]) => Promise<unknown>>;
+  };
   let service: FriendsExerciseLeaderboardService;
 
   beforeEach(() => {
@@ -38,11 +41,15 @@ describe('FriendsExerciseLeaderboardService', () => {
     profilesRepo = {
       find: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
     };
+    usersRepo = {
+      find: jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue([]),
+    };
     service = new FriendsExerciseLeaderboardService(
       friendshipsRepo as never,
       trackedRepo as never,
       perfsRepo as never,
       profilesRepo as never,
+      usersRepo as never,
     );
   });
 

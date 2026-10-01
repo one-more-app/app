@@ -52,10 +52,12 @@ export class RankingController {
   async gym(
     @Req() req: { user: { sub: string } },
     @Query('month') month?: string,
+    @Query('placeId') placeId?: string,
   ) {
     return await this.rankingService.listGymRanking(
       req.user.sub,
       resolveMonth(month),
+      placeId?.trim() || null,
     );
   }
 

@@ -10,6 +10,7 @@ export type RankingEntryDto = {
   rank: number;
   /** RankId (ex. "gold_2") ou null */
   globalRank: string | null;
+  isPremium: boolean;
 };
 
 export type RankingListResponse = {
@@ -23,6 +24,9 @@ export type RankingListResponse = {
     hasGym?: boolean;
     placeName?: string | null;
     placeAddress?: string | null;
+    placeId?: string | null;
+    /** Classement d’une autre salle (via badge / deeplink). */
+    foreignGym?: boolean;
   };
 };
 
@@ -49,10 +53,13 @@ export async function fetchFriendsRanking(
 
 export async function fetchGymRanking(
   month: string,
+  options: { placeId?: string | null } = {},
 ): Promise<RankingListResponse> {
-  return apiFetch<RankingListResponse>(
-    `/ranking/gym?month=${encodeURIComponent(month)}`,
-  );
+  const params = new URLSearchParams({ month });
+  if (options.placeId?.trim()) {
+    params.set("placeId", options.placeId.trim());
+  }
+  return apiFetch<RankingListResponse>(`/ranking/gym?${params.toString()}`);
 }
 
 export async function fetchRankingRecap(

@@ -18,6 +18,7 @@ import { TrackedExercisesService } from '../tracked-exercises/tracked-exercises.
 import { FriendshipEntity } from './entities/friendship.entity.js';
 import { FriendshipStatus } from './entities/friendship-status.enum.js';
 import { getAcceptedFriendIds as listAcceptedFriendIds } from './lib/accepted-friend-ids.js';
+import { countMutualFriendIds } from './lib/mutual-friends-count.js';
 import { loadPremiumByUserIds } from './lib/premium-by-user-id.js';
 
 type FriendListItem = {
@@ -219,7 +220,14 @@ export class FriendsService {
     if (!profile) throw new NotFoundException('Profil introuvable');
 
     const friendship = await this.getFriendshipBetween(viewerId, targetUserId);
-    const progress = await this.progressService.getProgress(targetUserId);
+    const [progress, premiumByUserId, viewerFriendIds, targetFriendIds, activity] =
+      await Promise.all([
+        this.progressService.getProgress(targetUserId),
+        loadPremiumByUserIds(this.usersRepo, [targetUserId]),
+        listAcceptedFriendIds(this.friendshipsRepo, viewerId),
+        listAcceptedFriendIds(this.friendshipsRepo, targetUserId),
+        this.progressService.getActivity(targetUserId),
+      ]);
 
     return {
       userId: targetUserId,
@@ -227,8 +235,11 @@ export class FriendsService {
       lastName: profile.lastName,
       username: profile.username,
       avatarUrl: profile.avatarUrl,
+      isPremium: premiumByUserId.get(targetUserId) ?? false,
       level: progress.level,
       streakCurrent: progress.streak.current,
+      activeDaysThisMonth: activity.activeDayCount,
+      mutualFriendsCount: countMutualFriendIds(viewerFriendIds, targetFriendIds),
       friendshipStatus: friendship?.status ?? null,
       friendshipId: friendship?.id ?? null,
       friendshipDirection:

@@ -7,6 +7,7 @@ export type RankingEntryDto = {
   xp: number;
   rank: number;
   globalRank: string | null; // RankId or null
+  isPremium: boolean;
 };
 
 export type RankingListResponse = {
@@ -20,6 +21,9 @@ export type RankingListResponse = {
     hasGym?: boolean;
     placeName?: string | null;
     placeAddress?: string | null;
+    placeId?: string | null;
+    /** Classement d’une autre salle (via badge / deeplink). */
+    foreignGym?: boolean;
   };
 };
 

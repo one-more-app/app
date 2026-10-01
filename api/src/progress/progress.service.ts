@@ -31,6 +31,8 @@ import type {
 } from './dto/progress-response.dto.js';
 import {
   monthKeyFromDate,
+  monthKeyFromSqlDate,
+  isoDayFromSqlDate,
   monthRangeBounds,
   parseMonthKey,
 } from './lib/activity-month.js';
@@ -86,9 +88,11 @@ export class ProgressService {
       .andWhere('p.deletedAt IS NULL')
       .andWhere('p.date >= :start AND p.date <= :end', { start, end })
       .orderBy('p.date', 'ASC')
-      .getRawMany<{ date: string }>();
+      .getRawMany<{ date: unknown }>();
 
-    const activeDays = rows.map((r) => r.date);
+    const activeDays = rows
+      .map((r) => isoDayFromSqlDate(r.date))
+      .filter((d): d is string => d != null);
 
     const boundsRow = await this.perfRepo
       .createQueryBuilder('p')
@@ -96,12 +100,11 @@ export class ProgressService {
       .addSelect('MAX(p.date)', 'maxDate')
       .where('p.userId = :userId', { userId })
       .andWhere('p.deletedAt IS NULL')
-      .getRawOne<{ minDate: string | null; maxDate: string | null }>();
+      .getRawOne<{ minDate: unknown; maxDate: unknown }>();
 
     let earliestMonth = latestMonth;
-    if (boundsRow?.minDate) {
-      earliestMonth = boundsRow.minDate.slice(0, 7);
-    }
+    const fromMin = monthKeyFromSqlDate(boundsRow?.minDate);
+    if (fromMin) earliestMonth = fromMin;
 
     return {
       month,

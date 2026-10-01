@@ -1,4 +1,5 @@
 import { BottomNav } from '@/components/BottomNav'
+import { RankingTour } from '@/components/RankingTour'
 import { ConnectivityGate } from '@/components/ConnectivityGate'
 import { LeaguePromotionCelebrationHost } from '@/components/LeaguePromotionCelebration'
 import { ReviewPromptHost } from '@/components/review/ReviewPromptHost'
@@ -296,6 +297,7 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
                 {children}
             </div>
             {show ? <BottomNav /> : null}
+            {show ? <RankingTour navVisible /> : null}
         </div>
     )
 }

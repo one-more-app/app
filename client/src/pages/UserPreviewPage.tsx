@@ -2,11 +2,14 @@ import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallbac
 import { BackHeader } from "@/components/BackHeader";
 import { ProfileNameDisplay } from "@/components/profile/ProfileNameDisplay";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getOrCreateConversation } from "@/lib/messaging-api";
 import {
     getProfileDisplayName,
     getProfileInitials,
 } from "@/lib/profile-display";
+import { profileNestedClass } from "@/lib/profile-section";
 import {
     acceptFriendRequest,
     declineFriendRequest,
@@ -14,10 +17,40 @@ import {
     requestFriend,
 } from "@/lib/social-api";
 import { UI } from "@/lib/translations";
-import { MessageCircle, UserPlus } from "lucide-react";
+import { CalendarDays, Flame, MessageCircle, UserPlus } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import useSWR from "swr";
+
+function mutualFriendsLabel(count: number): string {
+    return count <= 1
+        ? UI.friendSuggestionMutualOne
+        : UI.friendSuggestionMutualMany.replace("{count}", String(count));
+}
+
+function UserPreviewSkeleton() {
+    return (
+        <div className="space-y-4" aria-busy="true" aria-label={UI.loading}>
+            <Card>
+                <CardContent className="flex flex-col items-center gap-3 pt-0">
+                    <Skeleton className="size-20 rounded-full" />
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-24" />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardContent className="pt-0">
+                    <div className="grid grid-cols-3 gap-3">
+                        <Skeleton className="h-[4.5rem] rounded-lg" />
+                        <Skeleton className="h-[4.5rem] rounded-lg" />
+                        <Skeleton className="h-[4.5rem] rounded-lg" />
+                    </div>
+                </CardContent>
+            </Card>
+            <Skeleton className="h-10 w-full rounded-lg" />
+        </div>
+    );
+}
 
 export default function UserPreviewPage() {
     const { userId } = useParams<{ userId: string }>();
@@ -68,7 +101,7 @@ export default function UserPreviewPage() {
             <div className="min-h-screen-app bg-background">
                 <BackHeader title={UI.profile} />
                 <main className="mx-auto max-w-2xl p-4">
-                    <p className="text-sm text-muted-foreground">{UI.loading}</p>
+                    <UserPreviewSkeleton />
                 </main>
             </div>
         );
@@ -85,57 +118,99 @@ export default function UserPreviewPage() {
         );
     }
 
-    const initials = getProfileInitials(
-        {
-            firstName: data.firstName ?? undefined,
-            lastName: data.lastName ?? undefined,
-            username: data.username ?? undefined,
-        },
-        null,
-    );
+    const profile = {
+        firstName: data.firstName ?? undefined,
+        lastName: data.lastName ?? undefined,
+        username: data.username ?? undefined,
+    };
+    const initials = getProfileInitials(profile, null);
 
     return (
         <div className="min-h-screen-app bg-background">
             <BackHeader title={name} />
-            <main className="mx-auto max-w-2xl space-y-6 p-4">
-                <div className="flex flex-col items-center gap-3 text-center">
-                    {data.avatarUrl ? (
-                        <img
-                            src={data.avatarUrl}
-                            alt=""
-                            className="size-20 rounded-full object-cover"
+            <main className="mx-auto max-w-2xl space-y-4 p-4">
+                <Card>
+                    <CardContent className="flex flex-col items-center gap-3 pt-0 text-center">
+                        {data.avatarUrl ? (
+                            <img
+                                src={data.avatarUrl}
+                                alt=""
+                                className="size-20 rounded-full object-cover"
+                            />
+                        ) : (
+                            <ProfileAvatarFallback
+                                initials={initials}
+                                className="size-20 rounded-full text-2xl"
+                            />
+                        )}
+                        <ProfileNameDisplay
+                            profile={profile}
+                            isPremium={data.isPremium}
+                            align="center"
                         />
-                    ) : (
-                        <ProfileAvatarFallback
-                            initials={initials}
-                            className="size-20 rounded-full text-2xl"
-                        />
-                    )}
-                    <ProfileNameDisplay
-                        profile={{
-                            firstName: data.firstName ?? undefined,
-                            lastName: data.lastName ?? undefined,
-                            username: data.username ?? undefined,
-                        }}
-                        align="center"
-                    />
-                    <div className="flex gap-4 text-sm text-muted-foreground">
-                        <span>
-                            {UI.profileLevelLabel} {data.level}
-                        </span>
-                        <span>
-                            {UI.profileStreakLabel}: {data.streakCurrent}
-                        </span>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="pt-0">
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className={`${profileNestedClass} p-3`}>
+                                <p className="text-xs text-muted-foreground">
+                                    {UI.profileLevelLabel}
+                                </p>
+                                <p className="mt-1 text-lg font-bold tabular-nums">
+                                    {data.level}
+                                </p>
+                            </div>
+                            <div className={`${profileNestedClass} p-3`}>
+                                <p className="text-xs text-muted-foreground">
+                                    {UI.profileStreakLabel}
+                                </p>
+                                <p className="mt-1 flex items-center gap-1 text-lg font-bold tabular-nums">
+                                    {data.streakCurrent > 0 ? (
+                                        <Flame
+                                            className="size-4 text-orange-500"
+                                            aria-hidden
+                                        />
+                                    ) : null}
+                                    {data.streakCurrent}
+                                </p>
+                            </div>
+                            <div className={`${profileNestedClass} p-3`}>
+                                <p className="text-xs text-muted-foreground">
+                                    {UI.profileActiveDaysThisMonth}
+                                </p>
+                                <p className="mt-1 flex items-center gap-1 text-lg font-bold tabular-nums">
+                                    <CalendarDays
+                                        className="size-4 shrink-0 text-muted-foreground"
+                                        aria-hidden
+                                    />
+                                    {data.activeDaysThisMonth}
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {data.mutualFriendsCount > 0 ? (
+                    <p className="text-center text-sm text-muted-foreground">
+                        {mutualFriendsLabel(data.mutualFriendsCount)}
+                    </p>
+                ) : null}
 
                 <div className="flex flex-col gap-2">
                     {data.friendshipStatus === "accepted" ? (
                         <>
                             <Button asChild className="w-full">
-                                <Link to={`/friends/${data.userId}`}>{UI.friendViewProfile}</Link>
+                                <Link to={`/friends/${data.userId}`}>
+                                    {UI.friendViewProfile}
+                                </Link>
                             </Button>
-                            <Button variant="secondary" className="w-full" onClick={handleMessage}>
+                            <Button
+                                variant="secondary"
+                                className="w-full"
+                                onClick={handleMessage}
+                            >
                                 <MessageCircle className="size-4" />
                                 {UI.messageOpenChat}
                             </Button>

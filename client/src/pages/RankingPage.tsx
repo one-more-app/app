@@ -26,9 +26,10 @@ import {
     hasSeenRankingRecap,
     markRankingRecapSeen,
 } from "@/lib/ranking-recap-seen";
+import { fetchFriendsList } from "@/lib/social-api";
 import { UI } from "@/lib/translations";
 import { Trophy, Users } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -46,6 +47,7 @@ export default function RankingPage() {
         isValidRankingMonth(rawMonth) && rawMonth <= currentMonth
             ? rawMonth
             : currentMonth;
+    const placeId = searchParams.get("placeId")?.trim() || null;
 
     const [optInBusy, setOptInBusy] = useState(false);
     const [optOutBusy, setOptOutBusy] = useState(false);
@@ -59,6 +61,10 @@ export default function RankingPage() {
             const params = new URLSearchParams(searchParams);
             params.set("tab", next.tab ?? tab);
             params.set("month", next.month ?? month);
+            // Changer d’onglet / mois hors deeplink badge → quitter la salle étrangère.
+            if (next.tab != null || next.month != null) {
+                params.delete("placeId");
+            }
             setSearchParams(params, { replace: true });
         },
         [searchParams, setSearchParams, tab, month],
@@ -69,9 +75,20 @@ export default function RankingPage() {
         ([, m]) => fetchFriendsRanking(m),
     );
     const gymSwr = useSWR(
-        tab === "gym" ? ["ranking-gym", month] : null,
-        ([, m]) => fetchGymRanking(m),
+        tab === "gym" ? ["ranking-gym", month, placeId] : null,
+        ([, m, pid]) =>
+            fetchGymRanking(m, {
+                placeId: typeof pid === "string" ? pid : null,
+            }),
     );
+    const { data: friendsList } = useSWR("friends-list", fetchFriendsList);
+    const friendUserIds = useMemo(() => {
+        const ids = new Set<string>();
+        for (const item of friendsList?.friends ?? []) {
+            if (item.status === "accepted") ids.add(item.userId);
+        }
+        return ids;
+    }, [friendsList]);
     const active = tab === "friends" ? friendsSwr : gymSwr;
     const { data, isLoading, error } = active;
 
@@ -150,8 +167,9 @@ export default function RankingPage() {
     };
 
     const gymMeta = tab === "gym" ? data?.meta : undefined;
+    const foreignGym = gymMeta?.foreignGym === true;
     const gymGate =
-        tab === "gym" && data
+        tab === "gym" && data && !foreignGym
             ? gymMeta?.hasGym === false
                 ? "no-gym"
                 : gymMeta?.rankingOptIn === false
@@ -159,11 +177,22 @@ export default function RankingPage() {
                   : null
             : null;
 
+    const showMeHeader =
+        Boolean(data) &&
+        !gymGate &&
+        (!foreignGym || (data?.me.rank ?? 0) > 0);
+
+    const hasList =
+        data &&
+        (foreignGym ? data.entries.length >= 1 : data.entries.length > 1);
+
     return (
         <div className="min-h-screen-app bg-background">
             <BackHeader title={UI.rankingTitle} />
             <main className="mx-auto max-w-2xl space-y-4 p-4">
-                {data && !gymGate ? <RankingMeHeader me={data.me} /> : null}
+                {showMeHeader && data ? (
+                    <RankingMeHeader me={data.me} />
+                ) : null}
                 <RankingMonthNav
                     month={month}
                     onChange={(next) => updateParams({ month: next })}
@@ -177,16 +206,21 @@ export default function RankingPage() {
                         placeName={gymMeta.placeName}
                         placeAddress={gymMeta.placeAddress}
                         myRank={
-                            gymMeta.rankingOptIn ? data?.me.rank : null
+                            !foreignGym && gymMeta.rankingOptIn
+                                ? data?.me.rank
+                                : null
                         }
                         total={
-                            gymMeta.rankingOptIn
+                            foreignGym || gymMeta.rankingOptIn
                                 ? (data?.total ?? data?.entries.length ?? null)
                                 : null
                         }
-                        showLeaveRanking={gymMeta.rankingOptIn === true}
+                        showLeaveRanking={
+                            !foreignGym && gymMeta.rankingOptIn === true
+                        }
                         leaveBusy={optOutBusy}
                         onLeaveRanking={handleOptOut}
+                        readOnly={foreignGym}
                         onGymSaved={async () => {
                             await gymSwr.mutate();
                         }}
@@ -229,10 +263,19 @@ export default function RankingPage() {
                             busy={optInBusy}
                             onOptIn={handleOptIn}
                         />
-                    ) : data && data.entries.length > 1 ? (
+                    ) : hasList && data ? (
                         <RankingList
                             entries={data.entries}
                             meUserId={data.me.userId}
+                            friendUserIds={
+                                tab === "friends"
+                                    ? new Set(
+                                          data.entries
+                                              .map((e) => e.userId)
+                                              .filter((id) => id !== data.me.userId),
+                                      )
+                                    : friendUserIds
+                            }
                         />
                     ) : data ? (
                         <EmptyState

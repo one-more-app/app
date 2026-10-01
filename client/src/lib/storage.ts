@@ -76,6 +76,8 @@ const EXERCISE_DETAIL_TOUR_COMPLETE_KEY =
   "one-more-exercise-detail-tour-complete-v1";
 const HOME_TOUR_COMPLETE_KEY = "one-more-home-tour-complete-v1";
 const HOME_TOUR_COMPLETE_EVENT = "one-more:home-tour-complete";
+const RANKING_TOUR_COMPLETE_KEY = "one-more-ranking-tour-complete-v1";
+const RANKING_TOUR_COMPLETE_EVENT = "one-more:ranking-tour-complete";
 const REST_COUNTER_TOUR_COMPLETE_EVENT =
   "one-more:rest-counter-tour-complete";
 const EXERCISE_CATALOG_TOUR_COMPLETE_EVENT =
@@ -1319,5 +1321,33 @@ export function subscribeHomeTourComplete(listener: () => void): () => void {
   window.addEventListener(HOME_TOUR_COMPLETE_EVENT, listener);
   return () => {
     window.removeEventListener(HOME_TOUR_COMPLETE_EVENT, listener);
+  };
+}
+
+export function isRankingTourComplete(): boolean {
+  try {
+    return localStorage.getItem(RANKING_TOUR_COMPLETE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setRankingTourComplete(complete: boolean): void {
+  if (complete) {
+    localStorage.setItem(RANKING_TOUR_COMPLETE_KEY, "1");
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent(RANKING_TOUR_COMPLETE_EVENT));
+    }
+  } else {
+    localStorage.removeItem(RANKING_TOUR_COMPLETE_KEY);
+  }
+}
+
+export function subscribeRankingTourComplete(
+  listener: () => void,
+): () => void {
+  window.addEventListener(RANKING_TOUR_COMPLETE_EVENT, listener);
+  return () => {
+    window.removeEventListener(RANKING_TOUR_COMPLETE_EVENT, listener);
   };
 }

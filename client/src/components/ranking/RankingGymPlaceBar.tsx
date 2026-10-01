@@ -13,6 +13,8 @@ type RankingGymPlaceBarProps = {
   leaveBusy?: boolean;
   onLeaveRanking?: () => void;
   onGymSaved?: () => void | Promise<void>;
+  /** Consultation d’une autre salle (badge) : pas d’édition / départ. */
+  readOnly?: boolean;
 };
 
 export function RankingGymPlaceBar({
@@ -24,6 +26,7 @@ export function RankingGymPlaceBar({
   leaveBusy = false,
   onLeaveRanking,
   onGymSaved,
+  readOnly = false,
 }: RankingGymPlaceBarProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -54,7 +57,7 @@ export function RankingGymPlaceBar({
             </p>
           ) : null}
         </div>
-        {showLeaveRanking ? (
+        {!readOnly && showLeaveRanking ? (
           <Button
             type="button"
             variant="ghost"
@@ -68,25 +71,29 @@ export function RankingGymPlaceBar({
             <LogOut className="size-4" aria-hidden />
           </Button>
         ) : null}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-8 shrink-0"
-          aria-label={UI.gymSettingsChange}
-          onClick={() => setPickerOpen(true)}
-        >
-          <Pencil className="size-4" aria-hidden />
-        </Button>
+        {!readOnly ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8 shrink-0"
+            aria-label={UI.gymSettingsChange}
+            onClick={() => setPickerOpen(true)}
+          >
+            <Pencil className="size-4" aria-hidden />
+          </Button>
+        ) : null}
       </div>
-      <GymChangeDialog
-        open={pickerOpen}
-        onOpenChange={setPickerOpen}
-        hasGym
-        onSaved={async () => {
-          await onGymSaved?.();
-        }}
-      />
+      {!readOnly ? (
+        <GymChangeDialog
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          hasGym
+          onSaved={async () => {
+            await onGymSaved?.();
+          }}
+        />
+      ) : null}
     </>
   );
 }

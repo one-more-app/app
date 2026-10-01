@@ -1,6 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { FriendshipEntity } from '../social/entities/friendship.entity.js';
+import { FriendshipStatus } from '../social/entities/friendship-status.enum.js';
 import {
   UserBadgeEntity,
   type RankingGymBadgeTier,
@@ -26,6 +31,8 @@ export class BadgesService {
   constructor(
     @InjectRepository(UserBadgeEntity)
     private readonly badgesRepo: Repository<UserBadgeEntity>,
+    @InjectRepository(FriendshipEntity)
+    private readonly friendshipsRepo: Repository<FriendshipEntity>,
   ) {}
 
   async listForUser(userId: string): Promise<UserBadgeDto[]> {
@@ -34,6 +41,34 @@ export class BadgesService {
       order: { earnedAt: 'DESC' },
     });
     return rows.map((r) => this.toDto(r));
+  }
+
+  /** Badges d’un ami accepté (profil public entre potes). */
+  async listForFriend(
+    viewerId: string,
+    targetUserId: string,
+  ): Promise<UserBadgeDto[]> {
+    if (viewerId === targetUserId) {
+      return this.listForUser(viewerId);
+    }
+    const friendship = await this.friendshipsRepo.findOne({
+      where: [
+        {
+          requesterId: viewerId,
+          addresseeId: targetUserId,
+          status: FriendshipStatus.ACCEPTED,
+        },
+        {
+          requesterId: targetUserId,
+          addresseeId: viewerId,
+          status: FriendshipStatus.ACCEPTED,
+        },
+      ],
+    });
+    if (!friendship) {
+      throw new ForbiddenException('Profil réservé aux amis.');
+    }
+    return this.listForUser(targetUserId);
   }
 
   /**
@@ -58,7 +93,28 @@ export class BadgesService {
         sourceKey,
       },
     });
-    if (existing) return this.toDto(existing);
+    if (existing) {
+      // Met à jour deeplink / meta placeId si manquant
+      const placeId =
+        params.placeId ??
+        (typeof existing.meta?.placeId === 'string'
+          ? existing.meta.placeId
+          : null);
+      const needsUpdate =
+        Boolean(placeId) &&
+        (existing.deeplink !== rankingGymDeeplink(params.month, placeId) ||
+          existing.meta?.placeId !== placeId);
+      if (needsUpdate && placeId) {
+        existing.meta = {
+          ...existing.meta,
+          placeId,
+          placeName: params.placeName ?? existing.meta?.placeName ?? null,
+        };
+        existing.deeplink = rankingGymDeeplink(params.month, placeId);
+        return this.toDto(await this.badgesRepo.save(existing));
+      }
+      return this.toDto(existing);
+    }
 
     const earnedAt = this.monthEndDate(params.month);
     const row = this.badgesRepo.create({
@@ -74,14 +130,13 @@ export class BadgesService {
         placeName: params.placeName ?? null,
         tier: tier as RankingGymBadgeTier,
       },
-      deeplink: rankingGymDeeplink(params.month),
+      deeplink: rankingGymDeeplink(params.month, params.placeId),
     });
 
     try {
       const saved = await this.badgesRepo.save(row);
       return this.toDto(saved);
     } catch {
-      // Course : un autre insert a gagné
       const again = await this.badgesRepo.findOne({
         where: {
           userId: params.userId,
@@ -95,19 +150,26 @@ export class BadgesService {
 
   private monthEndDate(month: string): Date {
     const [y, m] = month.split('-').map(Number);
-    // Dernier jour du mois UTC 23:59
     return new Date(Date.UTC(y!, m!, 0, 23, 59, 59, 999));
   }
 
   private toDto(row: UserBadgeEntity): UserBadgeDto {
+    const meta = row.meta ?? {};
+    const placeId =
+      typeof meta.placeId === 'string' && meta.placeId.trim()
+        ? meta.placeId
+        : null;
     return {
       id: row.id,
       kind: row.kind,
       tier: row.tier,
       sourceKey: row.sourceKey,
       earnedAt: row.earnedAt.toISOString(),
-      meta: row.meta ?? {},
-      deeplink: row.deeplink,
+      meta,
+      deeplink:
+        row.kind === 'ranking_gym'
+          ? rankingGymDeeplink(row.sourceKey, placeId)
+          : row.deeplink,
     };
   }
 }

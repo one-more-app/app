@@ -109,7 +109,7 @@ export function ProfileView({
                     leagueSummary={leagueSummary}
                     progress={progress}
                     performanceEntries={performanceEntries}
-                    badges={readOnly ? [] : badges}
+                    badges={badges}
                 />
 
                 <ProfileTopExercisesList ranked={topRanked} readOnly={readOnly} />

@@ -11,6 +11,16 @@ export function rankingGymTierFromRank(
   return null;
 }
 
-export function rankingGymDeeplink(month: string): string {
-  return `/ranking?tab=gym&month=${encodeURIComponent(month)}`;
+export function rankingGymDeeplink(
+  month: string,
+  placeId?: string | null,
+): string {
+  const params = new URLSearchParams({
+    tab: 'gym',
+    month,
+  });
+  if (placeId?.trim()) {
+    params.set('placeId', placeId.trim());
+  }
+  return `/ranking?${params.toString()}`;
 }

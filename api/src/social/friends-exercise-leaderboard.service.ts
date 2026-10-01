@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
+import { UserEntity } from '../auth/entities/user.entity.js';
 import { bestEstimatedOneRmFromEntries } from '../shared/best-estimated-one-rm.js';
 import {
   getLeagueInfo,
@@ -12,6 +13,7 @@ import { PerformanceEntryEntity } from '../performance/performance-entry.entity.
 import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
 import { FriendshipEntity } from './entities/friendship.entity.js';
 import { getAcceptedFriendIds } from './lib/accepted-friend-ids.js';
+import { loadPremiumByUserIds } from './lib/premium-by-user-id.js';
 
 export type FriendsExerciseLeaderboardEntry = {
   rank: number;
@@ -19,6 +21,7 @@ export type FriendsExerciseLeaderboardEntry = {
   username: string | null;
   avatarUrl: string | null;
   isMe: boolean;
+  isPremium: boolean;
   oneRM: number;
   sourceWeight: number;
   sourceReps: number;
@@ -52,6 +55,8 @@ export class FriendsExerciseLeaderboardService {
     private readonly perfsRepo: Repository<PerformanceEntryEntity>,
     @InjectRepository(UserProfileEntity)
     private readonly profilesRepo: Repository<UserProfileEntity>,
+    @InjectRepository(UserEntity)
+    private readonly usersRepo: Repository<UserEntity>,
   ) {}
 
   async getLeaderboard(
@@ -112,6 +117,10 @@ export class FriendsExerciseLeaderboardService {
             where: { userId: In(userIdsWithTracked) },
           });
     const profileByUserId = new Map(profiles.map((p) => [p.userId, p]));
+    const premiumByUserId = await loadPremiumByUserIds(
+      this.usersRepo,
+      userIdsWithTracked,
+    );
 
     const rankedRaw: Omit<FriendsExerciseLeaderboardEntry, 'rank'>[] = [];
 
@@ -166,6 +175,7 @@ export class FriendsExerciseLeaderboardService {
         firstName: profile?.firstName ?? null,
         lastName: profile?.lastName ?? null,
         isMe: userId === viewerId,
+        isPremium: premiumByUserId.get(userId) ?? false,
         oneRM: best.oneRM,
         sourceWeight: best.sourceWeight,
         sourceReps: best.sourceReps,

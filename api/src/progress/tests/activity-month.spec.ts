@@ -1,5 +1,7 @@
 import {
+  isoDayFromSqlDate,
   monthKeyFromDate,
+  monthKeyFromSqlDate,
   monthRangeBounds,
   parseMonthKey,
   shiftMonthKey,
@@ -21,5 +23,17 @@ describe('activity-month', () => {
 
   it('formats month key from date', () => {
     expect(monthKeyFromDate(new Date(Date.UTC(2024, 5, 15)))).toBe('2024-06');
+  });
+
+  it('monthKeyFromSqlDate accepts Date and string', () => {
+    expect(monthKeyFromSqlDate(new Date(Date.UTC(2024, 5, 15)))).toBe('2024-06');
+    expect(monthKeyFromSqlDate('2024-06-15')).toBe('2024-06');
+    expect(monthKeyFromSqlDate(null)).toBeNull();
+  });
+
+  it('isoDayFromSqlDate accepts Date and string', () => {
+    expect(isoDayFromSqlDate(new Date(Date.UTC(2024, 5, 15)))).toBe('2024-06-15');
+    expect(isoDayFromSqlDate('2024-06-15T00:00:00.000Z')).toBe('2024-06-15');
+    expect(isoDayFromSqlDate(null)).toBeNull();
   });
 });

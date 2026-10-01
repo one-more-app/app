@@ -2,6 +2,7 @@ import { FriendTrainingBell } from "@/components/friends/FriendTrainingBell";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { Button } from "@/components/ui/button";
 import { useFriendsPresence } from "@/hooks/use-friends-presence";
+import { fetchFriendBadges } from "@/lib/badges-api";
 import { getOrCreateConversation } from "@/lib/messaging-api";
 import {
   fetchFriendProfile,
@@ -21,6 +22,10 @@ export default function FriendProfilePage() {
   const { data, isLoading, error } = useSWR(
     userId ? ["friend-profile", userId] : null,
     () => fetchFriendProfile(userId!),
+  );
+  const { data: badges } = useSWR(
+    userId ? ["friend-badges", userId] : null,
+    () => fetchFriendBadges(userId!),
   );
 
   const presence = userId ? byUserId.get(userId) : undefined;
@@ -79,6 +84,7 @@ export default function FriendProfilePage() {
         performanceEntries: data?.performanceEntries ?? [],
         leagueSummary: data?.leagueSummary ?? null,
         topByLeague: data?.leagueSummary?.topByLeague,
+        badges: badges ?? [],
         isLoading,
         error: Boolean(error),
       }}

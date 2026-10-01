@@ -1,5 +1,6 @@
 import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallback";
 import { ProfileAvatarLink } from "@/components/profile/ProfileAvatarLink";
+import { ProBadge } from "@/components/profile/ProBadge";
 import { UsernameLine } from "@/components/profile/UsernameLine";
 import { RankBadge } from "@/components/RankBadge";
 import { Button } from "@/components/ui/button";
@@ -103,14 +104,17 @@ function LeaderboardRow({
           />
         )}
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">
-            {displayName}
-            {entry.isMe ? (
-              <span className="ml-1 text-xs font-normal text-muted-foreground">
-                {UI.rankingYouSuffix}
-              </span>
-            ) : null}
-          </p>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <p className="min-w-0 truncate font-medium">
+              {displayName}
+              {entry.isMe ? (
+                <span className="ml-1 text-xs font-normal text-muted-foreground">
+                  {UI.rankingYouSuffix}
+                </span>
+              ) : null}
+            </p>
+            {entry.isPremium ? <ProBadge /> : null}
+          </div>
           {showUsername && profile.username ? (
             <UsernameLine username={profile.username} />
           ) : null}

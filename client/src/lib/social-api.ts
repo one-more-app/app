@@ -154,6 +154,7 @@ export type FriendsExerciseLeaderboardEntry = {
   username: string | null;
   avatarUrl: string | null;
   isMe: boolean;
+  isPremium: boolean;
   oneRM: number;
   sourceWeight: number;
   sourceReps: number;
@@ -197,8 +198,11 @@ export type UserPreview = {
   lastName: string | null;
   username: string | null;
   avatarUrl: string | null;
+  isPremium: boolean;
   level: number;
   streakCurrent: number;
+  activeDaysThisMonth: number;
+  mutualFriendsCount: number;
   friendshipStatus: FriendListItem["status"] | null;
   friendshipId: string | null;
   friendshipDirection: "incoming" | "outgoing" | null;

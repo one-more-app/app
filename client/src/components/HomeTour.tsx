@@ -6,6 +6,7 @@ import {
   isOnboardingFirstExercisePending,
   isOnboardingTourComplete,
   setHomeTourComplete,
+  setRankingTourComplete,
 } from "@/lib/storage";
 import { UI } from "@/lib/translations";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -35,6 +36,8 @@ export function HomeTour({
     !isOtherAppTourActive();
 
   const dismissTour = useCallback(() => {
+    // Avant home complete : sinon RankingTour s’ouvre sur l’event home.
+    setRankingTourComplete(true);
     setHomeTourComplete(true);
     setTourComplete(true);
   }, []);
@@ -86,6 +89,16 @@ export function HomeTour({
         target: '[data-tour="nav-history"]',
         title: UI.homeTourNavHistoryTitle,
         content: UI.homeTourNavHistoryContent,
+        placement: "top",
+        skipScroll: true,
+        floatingOptions: {
+          shiftOptions: { padding: getJoyrideShiftPadding() },
+        },
+      },
+      {
+        target: '[data-tour="nav-ranking"]',
+        title: UI.homeTourNavRankingTitle,
+        content: UI.homeTourNavRankingContent,
         placement: "top",
         skipScroll: true,
         floatingOptions: {
