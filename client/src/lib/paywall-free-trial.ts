@@ -7,16 +7,45 @@ type PeriodUnit = "DAY" | "WEEK" | "MONTH" | "YEAR";
 
 function normalizePeriodUnit(unit: string | null | undefined): PeriodUnit | null {
   if (!unit) return null;
-  const normalized = unit.toUpperCase();
-  if (
-    normalized === "DAY" ||
-    normalized === "WEEK" ||
-    normalized === "MONTH" ||
-    normalized === "YEAR"
-  ) {
-    return normalized;
+  switch (unit.toUpperCase()) {
+    case "DAY":
+    case "DAYS":
+    case "D":
+      return "DAY";
+    case "WEEK":
+    case "WEEKS":
+    case "W":
+      return "WEEK";
+    case "MONTH":
+    case "MONTHS":
+    case "M":
+      return "MONTH";
+    case "YEAR":
+    case "YEARS":
+    case "Y":
+      return "YEAR";
+    default:
+      return null;
   }
-  return null;
+}
+
+function parseIsoPeriod(
+  iso: string | null | undefined,
+): { unit: PeriodUnit; count: number } | null {
+  if (!iso) return null;
+  const match = iso.trim().match(/^P(\d+)([DWMY])$/i);
+  if (!match) return null;
+  const count = Number(match[1]);
+  const unit = normalizePeriodUnit(match[2]);
+  if (!unit || !Number.isFinite(count) || count <= 0) return null;
+  return { unit, count };
+}
+
+function cyclesOf(cycles: number | null | undefined): number {
+  if (typeof cycles !== "number" || !Number.isFinite(cycles) || cycles < 1) {
+    return 1;
+  }
+  return cycles;
 }
 
 function formatFreeTrialLabel(unit: PeriodUnit, count: number): string | null {
@@ -42,33 +71,66 @@ function formatFreeTrialLabel(unit: PeriodUnit, count: number): string | null {
   }
 }
 
+function labelFromBillingPeriod(
+  period: {
+    unit?: string | null;
+    value?: number | null;
+    iso8601?: string | null;
+  } | null | undefined,
+  cycles: number | null | undefined,
+): string | null {
+  if (!period) return null;
+  const cycleCount = cyclesOf(cycles);
+  const unit = normalizePeriodUnit(period.unit);
+  if (unit && typeof period.value === "number" && period.value > 0) {
+    return formatFreeTrialLabel(unit, period.value * cycleCount);
+  }
+  const parsed = parseIsoPeriod(period.iso8601);
+  if (!parsed) return null;
+  return formatFreeTrialLabel(parsed.unit, parsed.count * cycleCount);
+}
+
+function labelFromIntro(intro: {
+  price: number;
+  cycles: number;
+  period: string;
+  periodUnit: string;
+  periodNumberOfUnits: number;
+}): string | null {
+  if (intro.price !== 0) return null;
+  const cycleCount = cyclesOf(intro.cycles);
+  const unit = normalizePeriodUnit(intro.periodUnit);
+  if (unit && intro.periodNumberOfUnits > 0) {
+    return formatFreeTrialLabel(unit, intro.periodNumberOfUnits * cycleCount);
+  }
+  const parsed = parseIsoPeriod(intro.period);
+  if (!parsed) return null;
+  return formatFreeTrialLabel(parsed.unit, parsed.count * cycleCount);
+}
+
 /**
- * Libellé d'essai gratuit si le produit store en propose un pour cet utilisateur.
- * iOS : `introPrice` à 0 €. Android : `defaultOption.freePhase`.
+ * Libellé d'essai gratuit uniquement si l'offre store en contient un.
+ * iOS : `introPrice` à 0. Android : `freePhase` de l'option par défaut ou d'une option d'offre.
+ * Retourne null quand l'info est absente.
  */
 export function getFreeTrialLabel(
   product: PurchasesStoreProduct | null | undefined,
 ): string | null {
   if (!product) return null;
 
-  const freePhase = product.defaultOption?.freePhase;
-  if (freePhase) {
-    const unit = normalizePeriodUnit(freePhase.billingPeriod.unit);
-    if (unit) {
-      const cycles = freePhase.billingCycleCount ?? 1;
-      const totalUnits = freePhase.billingPeriod.value * Math.max(1, cycles);
-      const label = formatFreeTrialLabel(unit, totalUnits);
-      if (label) return label;
-    }
+  const phases = [
+    product.defaultOption?.freePhase,
+    ...(product.subscriptionOptions ?? []).map((option) => option.freePhase),
+  ];
+  for (const phase of phases) {
+    if (!phase) continue;
+    const label = labelFromBillingPeriod(phase.billingPeriod, phase.billingCycleCount);
+    if (label) return label;
   }
 
-  const intro = product.introPrice;
-  if (intro && intro.price === 0) {
-    const unit = normalizePeriodUnit(intro.periodUnit);
-    if (unit) {
-      const totalUnits = intro.periodNumberOfUnits * Math.max(1, intro.cycles);
-      return formatFreeTrialLabel(unit, totalUnits);
-    }
+  if (product.introPrice) {
+    const label = labelFromIntro(product.introPrice);
+    if (label) return label;
   }
 
   return null;

@@ -146,6 +146,37 @@ export async function fetchFriendProfile(userId: string): Promise<FriendProfile>
   return await apiFetch<FriendProfile>(`/social/friends/${userId}/profile`);
 }
 
+export type FriendsExerciseLeaderboardEntry = {
+  rank: number;
+  userId: string;
+  username: string | null;
+  avatarUrl: string | null;
+  isMe: boolean;
+  oneRM: number;
+  sourceWeight: number;
+  sourceReps: number;
+  sourceDate: string;
+  rankId: string | null;
+};
+
+export type FriendsExerciseLeaderboardResponse = {
+  exerciseId: string;
+  entries: FriendsExerciseLeaderboardEntry[];
+  emptyReason: "no_friends_on_exercise" | null;
+};
+
+export function friendsExerciseLeaderboardSwrKey(exerciseId: string) {
+  return ["friends-exercise-leaderboard", exerciseId] as const;
+}
+
+export async function fetchFriendsExerciseLeaderboard(
+  exerciseId: string,
+): Promise<FriendsExerciseLeaderboardResponse> {
+  return await apiFetch<FriendsExerciseLeaderboardResponse>(
+    `/social/exercises/${encodeURIComponent(exerciseId)}/friends-leaderboard`,
+  );
+}
+
 export type UserSearchResult = {
   userId: string;
   firstName: string | null;

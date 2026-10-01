@@ -7,6 +7,11 @@ import { logAppsFlyerCommerce } from "@/lib/appsflyer-events";
 import { UI } from "@/lib/translations";
 import { getFreeTrialLabel } from "@/lib/paywall-free-trial";
 import {
+    describeAnnualDisplay,
+    formatGiftAmount,
+    readAnnualGiftsValue,
+} from "@/lib/paywall-pricing";
+import {
     getCurrentOffering,
     purchasePackage,
     type CurrentOffering,
@@ -27,8 +32,6 @@ const SUPPORT_URL = "mailto:admin@one-more.app";
 const CGV_URL = "https://site.one-more.app/cgv";
 const CGU_URL = "https://site.one-more.app/cgu";
 
-const ANNUAL_GIFTS_VALUE = 30;
-
 function pickBoolean(
     metadata: Record<string, unknown> | null | undefined,
     key: string,
@@ -42,43 +45,6 @@ function pickBoolean(
         if (/^(false|0|no)$/i.test(value)) return false;
     }
     return fallback;
-}
-
-function formatPricePerMonth(pkg: PurchasesPackage): string {
-    const product = pkg.product;
-    if (typeof product.pricePerMonthString === "string") {
-        return product.pricePerMonthString;
-    }
-    if (typeof product.pricePerMonth === "number") {
-        return new Intl.NumberFormat("fr-FR", {
-            style: "currency",
-            currency: product.currencyCode ?? "EUR",
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        }).format(product.pricePerMonth);
-    }
-    return product.priceString;
-}
-
-function formatPackagePrice(amount: number, currency: string): string {
-    return new Intl.NumberFormat("fr-FR", {
-        style: "currency",
-        currency,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    }).format(amount);
-}
-
-function formatAnnualDisplayPrice(pkg: PurchasesPackage): string {
-    const product = pkg.product;
-    const currency = product.currencyCode ?? "EUR";
-    if (typeof product.price === "number") {
-        return formatPackagePrice(
-            Math.max(0, product.price - ANNUAL_GIFTS_VALUE),
-            currency,
-        );
-    }
-    return product.priceString;
 }
 
 // Sépare le préfixe/suffixe de devise du nombre pour appliquer uniformément
@@ -191,6 +157,7 @@ export function CustomPaywallDrawer() {
         "showTshirtsSection",
         true,
     );
+    const giftsValue = showTshirtsSection ? readAnnualGiftsValue(metadata) : 0;
 
     const packages = useMemo(
         () => ({
@@ -296,6 +263,7 @@ export function CustomPaywallDrawer() {
                             selected={selected}
                             onSelect={handleSelect}
                             showTshirtsSection={showTshirtsSection}
+                            giftsValue={giftsValue}
                             isAnnualSelected={isAnnualSelected}
                             onPurchase={handlePurchase}
                             purchasing={purchasing}
@@ -338,6 +306,7 @@ type PaywallBodyProps = {
     selected: SelectedKey;
     onSelect: (key: SelectedKey) => void;
     showTshirtsSection: boolean;
+    giftsValue: number;
     isAnnualSelected: boolean;
     onPurchase: () => void;
     purchasing: boolean;
@@ -350,6 +319,7 @@ function PaywallBody({
     selected,
     onSelect,
     showTshirtsSection,
+    giftsValue,
     isAnnualSelected,
     onPurchase,
     purchasing,
@@ -358,6 +328,13 @@ function PaywallBody({
     const annualTrialLabel = getFreeTrialLabel(annual?.product);
     const monthlyTrialLabel = getFreeTrialLabel(monthly?.product);
     const selectedTrialLabel = getFreeTrialLabel(selectedPackage?.product);
+    const annualDisplay = annual
+        ? describeAnnualDisplay(annual.product, giftsValue)
+        : null;
+    const giftLabel = formatGiftAmount(
+        giftsValue,
+        annual?.product.currencyCode ?? "EUR",
+    );
 
     return (
         <div className="flex flex-col">
@@ -391,25 +368,25 @@ function PaywallBody({
                 </section>
 
                 {showTshirtsSection ? (
-                    <ConditionalTshirtsSection open={isAnnualSelected} />
+                    <ConditionalTshirtsSection
+                        open={isAnnualSelected}
+                        giftLabel={giftLabel}
+                    />
                 ) : null}
 
                 <section className="relative flex flex-col gap-2.5">
-                    {annual ? (
+                    {annual && annualDisplay ? (
                         <PackageCard
                             label={UI.paywallAnnualLabel}
-                            perMonth={
-                                <>
-                                    1 mois{" "}
-                                    <Price
-                                        value={formatPricePerMonth(annual)}
-                                    />
-                                </>
-                            }
-                            oldPrice={annual.product.priceString}
-                            price={formatAnnualDisplayPrice(annual)}
+                            perMonth={<PerMonthPrice price={annualDisplay.perMonth} />}
+                            oldPrice={annualDisplay.oldPrice}
+                            price={annualDisplay.price}
                             trailingLabel={UI.paywallFirstYear}
-                            badge={UI.paywallGiftBadge}
+                            badge={
+                                giftsValue > 0
+                                    ? UI.paywallGiftBadge.replace("{value}", giftLabel)
+                                    : undefined
+                            }
                             trialLabel={annualTrialLabel}
                             selected={selected === "annual"}
                             onSelect={() => onSelect("annual")}
@@ -420,12 +397,7 @@ function PaywallBody({
                         <PackageCard
                             label={UI.paywallMonthlyLabel}
                             perMonth={
-                                <>
-                                    1 mois{" "}
-                                    <Price
-                                        value={monthly.product.priceString}
-                                    />
-                                </>
+                                <PerMonthPrice price={monthly.product.priceString} />
                             }
                             price={monthly.product.priceString}
                             trailingLabel={UI.paywallPerMonthLabel}
@@ -498,6 +470,17 @@ function BilledLine({
     );
 }
 
+function PerMonthPrice({ price }: { price: string }) {
+    const [before, after] = UI.paywallPricePerMonth.split("{price}");
+    return (
+        <>
+            {before}
+            <Price value={price} />
+            {after}
+        </>
+    );
+}
+
 function PaywallCheckLine({ label }: { label: string }) {
     return (
         <li className="flex items-start gap-2 text-sm text-white/90">
@@ -507,7 +490,13 @@ function PaywallCheckLine({ label }: { label: string }) {
     );
 }
 
-function ConditionalTshirtsSection({ open }: { open: boolean }) {
+function ConditionalTshirtsSection({
+    open,
+    giftLabel,
+}: {
+    open: boolean;
+    giftLabel: string;
+}) {
     return (
         <div
             className={cn(
@@ -524,7 +513,9 @@ function ConditionalTshirtsSection({ open }: { open: boolean }) {
                         </p>
                         <div className="flex items-start gap-2 text-sm text-white/90">
                             <Check className="mt-0.5 size-4 shrink-0" />
-                            <span>{UI.paywallAnnualTshirts}</span>
+                            <span>
+                                {UI.paywallAnnualTshirts.replace("{value}", giftLabel)}
+                            </span>
                         </div>
                         <p className="pl-6 text-xs leading-snug text-white/50">
                             {UI.paywallAnnualTshirtsFineprint}

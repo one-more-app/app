@@ -42,12 +42,14 @@ Le reste du layout est stable : cliquer sur une card change les états visuels (
 
 ## A/B testing via `offering.metadata`
 
-L'offering RC expose `offering.metadata: Record<string, unknown>`. On lit ces clés (fallback = valeur par défaut hardcodée dans le drawer) :
+L'offering RC expose `offering.metadata: Record<string, unknown>`. On lit ces clés (fallback typé si la clé est absente) :
 
 | Clé metadata | Type | Défaut | Effet |
 |---|---|---|---|
-| `annualOldPrice` | `string` | `"59,99€"` | Prix barré affiché à côté du prix Annuel |
-| `showTshirtsSection` | `boolean` (ou `"true"`/`"false"`) | `true` | Affiche ou cache la section T-shirts |
+| `annualGiftsValue` | `number` (ou string numérique) | `30` | Valeur des cadeaux soustraite du prix annuel store. Le prix affiché et le « 1 mois » sont calculés sur ce net, au centime. Le prix barré reste le `priceString` store. |
+| `showTshirtsSection` | `boolean` (ou `"true"`/`"false"`) | `true` | Affiche ou cache la section T-shirts. Si `false`, aucune déduction cadeaux. |
+
+Le libellé d'essai (`N jours offerts`, etc.) vient uniquement du produit store (`introPrice` à 0, ou `freePhase` Android). Rien n'est affiché si l'offre n'a pas cette info. Le mensuel ne montre ce libellé que dans ce cas.
 
 Pour créer une variante A/B :
 1. Dans le dashboard RC → Experiments, dupliquer l'offering courant.

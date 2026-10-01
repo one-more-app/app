@@ -1,4 +1,5 @@
 export * from "./access-config.js";
+export * from "./best-estimated-one-rm.js";
 export * from "./exercise-zone.js";
 export * from "./league-aggregate.js";
 export * from "./personal-best.js";

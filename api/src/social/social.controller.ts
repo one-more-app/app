@@ -20,6 +20,7 @@ import { ReferralService } from './referral.service.js';
 import { ReferralRewardService } from './referral-reward.service.js';
 import { InviteCodeDto } from './dto/invite-code.dto.js';
 import { UserSearchService } from './user-search.service.js';
+import { FriendsExerciseLeaderboardService } from './friends-exercise-leaderboard.service.js';
 
 @Controller()
 export class SocialController {
@@ -31,6 +32,7 @@ export class SocialController {
     private readonly friendsService: FriendsService,
     private readonly friendSuggestionsService: FriendSuggestionsService,
     private readonly userSearchService: UserSearchService,
+    private readonly friendsExerciseLeaderboardService: FriendsExerciseLeaderboardService,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -175,6 +177,18 @@ export class SocialController {
     return await this.friendsService.getFriendProfile(
       req.user.sub,
       friendUserId,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/social/exercises/:exerciseId/friends-leaderboard')
+  async getFriendsExerciseLeaderboard(
+    @Req() req: { user: { sub: string } },
+    @Param('exerciseId') exerciseId: string,
+  ) {
+    return await this.friendsExerciseLeaderboardService.getLeaderboard(
+      req.user.sub,
+      exerciseId,
     );
   }
 }

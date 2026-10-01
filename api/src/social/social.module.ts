@@ -22,6 +22,9 @@ import { UsernameService } from './username.service.js';
 import { BillingModule } from '../billing/billing.module.js';
 import { RewardsModule } from '../rewards/rewards.module.js';
 import { ReferralProGrantEntity } from '../rewards/entities/referral-pro-grant.entity.js';
+import { FriendsExerciseLeaderboardService } from './friends-exercise-leaderboard.service.js';
+import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
+import { PerformanceEntryEntity } from '../performance/performance-entry.entity.js';
 
 @Module({
   imports: [
@@ -32,6 +35,8 @@ import { ReferralProGrantEntity } from '../rewards/entities/referral-pro-grant.e
       UserEntity,
       UserGymEntity,
       ReferralProGrantEntity,
+      TrackedExerciseEntity,
+      PerformanceEntryEntity,
     ]),
     ProgressModule,
     LeagueModule,
@@ -51,6 +56,7 @@ import { ReferralProGrantEntity } from '../rewards/entities/referral-pro-grant.e
     ReferralRewardService,
     UserSearchService,
     UsernameService,
+    FriendsExerciseLeaderboardService,
   ],
   exports: [
     AccessModule,

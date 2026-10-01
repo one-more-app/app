@@ -2,6 +2,7 @@ import { AddPerfDrawer } from '@/components/AddPerfDrawer'
 import { BackHeader } from '@/components/BackHeader'
 import { CustomExerciseMetadataFields } from '@/components/CustomExerciseMetadataFields'
 import { ExerciseCard } from '@/components/ExerciseCard'
+import { FriendsExerciseLeaderboard } from '@/components/FriendsExerciseLeaderboard'
 import { PerfEntryList } from '@/components/history/PerfEntryList'
 import { LeagueBadge } from '@/components/LeagueBadge'
 import { PerformanceChart } from '@/components/PerformanceChart'
@@ -717,6 +718,15 @@ export function ExerciseDetailPage() {
                         </CardContent>
                     </Card>
                 )}
+
+                {detailHeavyReady && exercise && (
+                    <FriendsExerciseLeaderboard
+                        catalogExerciseId={exercise.exerciseId}
+                        isCustom={exercise.isCustom}
+                        refreshToken={`${entries.length}:${personalBest?.weight ?? ''}:${personalBest?.reps ?? ''}:${lastPerf?.date ?? ''}`}
+                    />
+                )}
+
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between gap-2">
                         <CardTitle>{UI.options}</CardTitle>

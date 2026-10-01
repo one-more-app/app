@@ -517,10 +517,10 @@ export const UI = {
   paywallIncludedNoLimit: "Aucune limite d'exercice pour tes entraînements",
   paywallIncludedFuture: "Toutes les fonctionnalités futures",
   paywallAnnualSpecialTitle: "Offre spéciale pour l'annuel",
-  paywallAnnualTshirts: "2 T-shirts One More offerts (valeur totale 30€)",
+  paywallAnnualTshirts: "2 T-shirts One More offerts (valeur totale {value})",
   paywallAnnualTshirtsFineprint:
     "Livraison sous 1 à 2 semaines selon les stocks disponibles. Consulte les CGV.",
-  paywallGiftBadge: "30€ de cadeaux",
+  paywallGiftBadge: "{value} de cadeaux",
   paywallAnnualLabel: "Annuel",
   paywallMonthlyLabel: "Mensuel",
   paywallPricePerMonth: "1 mois {price}",
@@ -662,6 +662,16 @@ export const UI = {
   friendSuggestionMutualMany: "{count} amis en commun",
   friendsTrainingNow: "En ce moment",
   friendsTrainingGeneric: "En séance",
+  friendsExerciseLeaderboardTitle: "Classement potes",
+  friendsExerciseLeaderboardEmpty:
+    "Aucun pote sur cet exo pour l'instant. Invite tes potes pour comparer vos 1RM.",
+  friendsExerciseLeaderboardCatalogOnly:
+    "Le classement potes est dispo pour les exos du catalogue.",
+  friendsExerciseLeaderboardError: "Impossible de charger le classement.",
+  friendsExerciseLeaderboardCta: "Voir mes potes",
+  friendsExerciseLeaderboardYou: "Toi",
+  friendsExerciseLeaderboardSourceSet: "{weight} kg × {reps}",
+  friendsExerciseLeaderboardOneRm: "{oneRM} kg",
   messagesTitle: "Discussion",
   messagesEmpty:
     "Aucune conversation. Envoie un message à un pote depuis son profil.",

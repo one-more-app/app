@@ -82,6 +82,56 @@ describe("getFreeTrialLabel", () => {
     ).toBe("7 jours offerts");
   });
 
+  it("reads the trial from a subscription option when the base plan has none", () => {
+    expect(
+      getFreeTrialLabel(
+        product({
+          introPrice: null,
+          defaultOption: {
+            freePhase: null,
+          } as PurchasesStoreProduct["defaultOption"],
+          subscriptionOptions: [
+            {
+              freePhase: {
+                billingPeriod: {
+                  unit: "DAY",
+                  value: 14,
+                  iso8601: "P14D",
+                },
+                billingCycleCount: 1,
+                recurrenceMode: null,
+                price: {
+                  formatted: "0,00 €",
+                  amountMicros: 0,
+                  currencyCode: "EUR",
+                },
+                offerPaymentMode: null,
+              },
+            } as NonNullable<PurchasesStoreProduct["subscriptionOptions"]>[number],
+          ],
+        }),
+      ),
+    ).toBe("14 jours offerts");
+  });
+
+  it("falls back to the ISO period when the unit is missing", () => {
+    expect(
+      getFreeTrialLabel(
+        product({
+          introPrice: {
+            price: 0,
+            priceString: "0,00 €",
+            cycles: 1,
+            period: "P7D",
+            periodUnit: "UNKNOWN",
+            periodNumberOfUnits: 0,
+          },
+          defaultOption: null,
+        }),
+      ),
+    ).toBe("7 jours offerts");
+  });
+
   it("formats singular day", () => {
     expect(
       getFreeTrialLabel(
