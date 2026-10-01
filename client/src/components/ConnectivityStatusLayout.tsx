@@ -17,6 +17,8 @@ type ConnectivityStatusLayoutProps = {
         icon?: LucideIcon;
         onClick: () => void | Promise<void>;
     };
+    /** Force update : une seule action (store). Offline / maintenance gardent Réessayer. */
+    hideRetry?: boolean;
 };
 
 export function ConnectivityStatusLayout({
@@ -25,6 +27,7 @@ export function ConnectivityStatusLayout({
     hint,
     iconTone = "muted",
     primaryAction,
+    hideRetry = false,
 }: ConnectivityStatusLayoutProps) {
     const { retry } = useConnectivity();
     const [retrying, setRetrying] = useState(false);
@@ -75,18 +78,20 @@ export function ConnectivityStatusLayout({
                             {primaryAction.label}
                         </Button>
                     ) : null}
-                    <Button
-                        type="button"
-                        className="min-w-40"
-                        disabled={retrying}
-                        onClick={() => {
-                            setRetrying(true);
-                            void retry().finally(() => setRetrying(false));
-                        }}
-                    >
-                        <RefreshCw className={cn("size-4", retrying && "animate-spin")} aria-hidden />
-                        {retrying ? UI.loading : UI.connectivityRetry}
-                    </Button>
+                    {hideRetry ? null : (
+                        <Button
+                            type="button"
+                            className="min-w-40"
+                            disabled={retrying}
+                            onClick={() => {
+                                setRetrying(true);
+                                void retry().finally(() => setRetrying(false));
+                            }}
+                        >
+                            <RefreshCw className={cn("size-4", retrying && "animate-spin")} aria-hidden />
+                            {retrying ? UI.loading : UI.connectivityRetry}
+                        </Button>
+                    )}
                 </div>
             </div>
         </div>

@@ -10,6 +10,7 @@ export function ForceUpdatePage() {
       title={UI.forceUpdateTitle}
       hint={UI.forceUpdateHint}
       iconTone="accent"
+      hideRetry
       primaryAction={{
         label: UI.forceUpdateCta,
         icon: Download,
