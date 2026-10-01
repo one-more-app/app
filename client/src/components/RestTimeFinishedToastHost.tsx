@@ -10,6 +10,7 @@ import {
 import {
   cancelRestFinishedLocalNotification,
   clearRestFinishedToastSuppressionState,
+  isCurrentRestPeriodDismissed,
   shouldSkipRestFinishedToast,
 } from "@/lib/rest-timer-local-notifications";
 import { hapticNotificationSuccess } from "@/lib/haptics";
@@ -136,13 +137,22 @@ export function RestTimeFinishedToastHost() {
     if (!isRestSinceLastSetVisible(createdAt, now)) return;
     if (!isRestTargetComplete(elapsedMs, targetMs)) return;
     if (notifiedForCreatedAtRef.current === createdAt) return;
+    if (isCurrentRestPeriodDismissed(createdAt)) return;
     if (shouldSkipRestFinishedToast(exercise.id)) return;
 
     notifiedForCreatedAtRef.current = createdAt;
     void cancelRestFinishedLocalNotification();
+    const exercisePath = `/exercise/${exercise.id}`;
     showRestTimeFinishedToast({
       exerciseName: exercise.name,
-      onOpen: () => navigate(`/exercise/${exercise.id}`),
+      onOpen: () => {
+        // Lire le hash au clic (pas le pathname figé à la création du toast).
+        const currentPath = window.location.hash
+          .replace(/^#/, "")
+          .split("?")[0];
+        if (currentPath === exercisePath) return;
+        navigate(exercisePath);
+      },
     });
     playRestFinishedSound();
     void hapticNotificationSuccess();

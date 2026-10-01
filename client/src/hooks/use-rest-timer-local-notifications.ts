@@ -10,6 +10,7 @@ import {
   setRestTimerLifecycleEnabled,
   forceUpdateRestTimerNotificationParams,
   attachRestTimerLocalNotificationListeners,
+  isCurrentRestPeriodDismissed,
   type RestFinishedLocalNotificationParams,
 } from "@/lib/rest-timer-local-notifications";
 import { Capacitor } from "@capacitor/core";
@@ -41,6 +42,7 @@ export function useRestTimerLocalNotifications() {
     const entry = latestGlobalPerf?.entry;
     const exercise = latestGlobalPerf?.exercise;
     if (!entry || !exercise?.id) return null;
+    if (isCurrentRestPeriodDismissed(entry.createdAt)) return null;
     return {
       createdAt: entry.createdAt,
       targetMs,

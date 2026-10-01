@@ -5,6 +5,7 @@ import { RestTargetQuickEdit } from "@/components/RestTargetQuickEdit";
 import { useRestTimerEnabled } from "@/hooks/use-rest-timer-enabled";
 import { useRestSinceLastSet } from "@/hooks/use-rest-since-last-set";
 import { formatRestElapsedA11y } from "@/lib/format-rest-elapsed";
+import { dismissCurrentRestPeriod } from "@/lib/rest-timer-local-notifications";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { Check, X } from "lucide-react";
@@ -31,7 +32,11 @@ export function RestSinceLastSetBar({
   currentExerciseId,
 }: RestSinceLastSetBarProps) {
   const [dismissed, setDismissed] = useState(false);
-  const { enabled, setEnabled } = useRestTimerEnabled();
+  const { enabled } = useRestTimerEnabled();
+
+  useEffect(() => {
+    setDismissed(false);
+  }, [createdAt]);
 
   useEffect(() => {
     if (enabled) setDismissed(false);
@@ -139,8 +144,8 @@ export function RestSinceLastSetBar({
                 elapsedMs,
                 trackedExerciseId: sourceExercise?.id,
               });
+              if (createdAt) dismissCurrentRestPeriod(createdAt);
               setDismissed(true);
-              setEnabled(false);
             }}
             aria-label={UI.restSinceLastSetDismiss}
           >

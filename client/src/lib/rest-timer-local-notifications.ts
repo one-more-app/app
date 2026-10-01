@@ -27,6 +27,8 @@ let currentParams: RestFinishedLocalNotificationParams | null = null;
 let unsubscribeAppState: (() => void) | null = null;
 let syncInFlight: Promise<void> | null = null;
 let suppressedRestFinishedToastExerciseId: string | null = null;
+/** Repos masqué via la croix — jusqu'à la prochaine perf (`createdAt` différent). */
+let dismissedRestCreatedAt: string | null = null;
 
 function paramsKey(params: RestFinishedLocalNotificationParams | null): string {
   if (!params) return "";
@@ -88,8 +90,39 @@ export function consumeRestFinishedToastSuppression(exerciseId: string): boolean
   return readPersistedRestFinishedToastSuppression(exerciseId);
 }
 
-function navigateToRoute(route: string): void {
+function hashPathOnly(hash: string): string {
+  const full = hash.replace(/^#/, "");
+  const queryIndex = full.indexOf("?");
+  return queryIndex >= 0 ? full.slice(0, queryIndex) : full;
+}
+
+/** Remplace le hash courant sans pousser d'entrée d'historique (HashRouter). */
+function replaceLocationHash(route: string): void {
   const normalized = route.startsWith("/") ? route : `/${route}`;
+  const nextHash = `#${normalized}`;
+  if (window.location.hash === nextHash) return;
+  window.history.replaceState(
+    window.history.state,
+    "",
+    `${window.location.pathname}${window.location.search}${nextHash}`,
+  );
+}
+
+/**
+ * Navigue vers une route hash. Si on est déjà sur le même path (query différente
+ * ou identique), remplace l'entrée courante au lieu de pousser un doublon —
+ * sinon le bouton retour reste sur la même fiche exercice.
+ */
+export function navigateHashRoute(route: string): void {
+  const normalized = route.startsWith("/") ? route : `/${route}`;
+  const currentFull = window.location.hash.replace(/^#/, "");
+  const currentPath = hashPathOnly(currentFull);
+  const targetPath = hashPathOnly(normalized);
+
+  if (currentPath === targetPath) {
+    replaceLocationHash(normalized);
+    return;
+  }
   window.location.hash = `#${normalized}`;
 }
 
@@ -111,7 +144,7 @@ export function parseRestFinishedNotificationUrl(
     if (!match?.[1]) return null;
 
     return {
-      route: `${path}?${REST_TIMER_FINISHED_DEEP_LINK_PARAM}=1`,
+      route: path,
       exerciseId: match[1],
     };
   } catch {
@@ -124,7 +157,9 @@ function handleRestFinishedNotificationOpen(url: string): boolean {
   if (!parsed) return false;
 
   markRestFinishedOpenedFromNotification(parsed.exerciseId);
-  navigateToRoute(parsed.route);
+  // Route propre (sans ?restFinished=) : 1 push max. Si Cap a déjà ouvert
+  // l'URL avec le query, replace au lieu d'empiler un 2e retour fantôme.
+  navigateHashRoute(parsed.route);
   clearRestFinishedDeepLinkFromUrl();
   return true;
 }
@@ -157,7 +192,8 @@ export function clearRestFinishedDeepLinkFromUrl(): void {
   const query = params.toString();
   const nextHash = query ? `${path}?${query}` : path;
   if (nextHash === hash) return;
-  window.location.hash = `#${nextHash}`;
+  // replaceState : ne pas inventer un retour qui laisse sur la même fiche.
+  replaceLocationHash(nextHash);
 }
 
 export async function consumeNativeRestFinishedToastSuppression(
@@ -204,10 +240,29 @@ export async function cancelRestFinishedLocalNotification(): Promise<void> {
   await enqueueNative(() => cancelNative());
 }
 
+/**
+ * Masque le repos en cours (barre + toast + natif) sans désactiver le timer global.
+ * Le prochain `createdAt` (nouvelle série) réaffiche tout.
+ */
+export function dismissCurrentRestPeriod(createdAt: string): void {
+  if (!createdAt) return;
+  dismissedRestCreatedAt = createdAt;
+  // Empêche le listener app-state de relancer le natif pour ce repos.
+  currentParams = null;
+  void cancelRestFinishedLocalNotification();
+}
+
+export function isCurrentRestPeriodDismissed(
+  createdAt: string | null | undefined,
+): boolean {
+  return Boolean(createdAt && dismissedRestCreatedAt === createdAt);
+}
+
 export async function resetRestTimerLocalState(): Promise<void> {
   currentParams = null;
   lastSyncedKey = null;
   suppressedRestFinishedToastExerciseId = null;
+  dismissedRestCreatedAt = null;
   clearRestTimerExcludedPerformances();
   if (typeof sessionStorage !== "undefined") {
     sessionStorage.removeItem(REST_FINISHED_TOAST_SUPPRESS_KEY);
@@ -249,6 +304,11 @@ async function syncRestFinishedLocalNotificationInternal(
 
   const epoch = lifecycleEpoch;
   if (!isLifecycleCurrent(epoch)) return;
+
+  if (params && isCurrentRestPeriodDismissed(params.createdAt)) {
+    await cancelNative();
+    return;
+  }
 
   const key = paramsKey(params);
   if (key === lastSyncedKey) return;
@@ -384,6 +444,12 @@ export function updateRestTimerNotificationParams(
   if (!lifecycleEnabled) return;
 
   if (!params) {
+    void cancelRestFinishedLocalNotification();
+    return;
+  }
+
+  if (isCurrentRestPeriodDismissed(params.createdAt)) {
+    currentParams = null;
     void cancelRestFinishedLocalNotification();
     return;
   }
