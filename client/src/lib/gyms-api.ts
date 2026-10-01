@@ -18,6 +18,7 @@ export type UserGym = {
   radiusM: number;
   onboardingGymPending: boolean;
   geofenceEnabled: boolean;
+  rankingOptIn: boolean;
   updatedAt: string;
 };
 
@@ -84,6 +85,14 @@ export async function findGymFromLocation(
 
 export async function clearOnboardingGymPendingApi(): Promise<void> {
   await apiFetch("/gyms/me/clear-onboarding-pending", { method: "POST" });
+}
+
+export async function setGymRankingOptIn(enabled: boolean): Promise<UserGym> {
+  const data = await apiFetch<{ gym: UserGym }>("/gyms/me/ranking-opt-in", {
+    method: "PATCH",
+    body: JSON.stringify({ enabled }),
+  });
+  return data.gym;
 }
 
 export function haversineDistanceM(

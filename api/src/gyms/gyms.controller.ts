@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -12,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard.js';
 import { FromLocationDto } from './dto/from-location.dto.js';
+import { SetRankingOptInDto } from './dto/set-ranking-opt-in.dto.js';
 import { UpsertUserGymDto } from './dto/upsert-user-gym.dto.js';
 import { GymsService } from './gyms.service.js';
 
@@ -78,5 +80,18 @@ export class GymsController {
   async clearOnboardingPending(@Req() req: { user: { sub: string } }) {
     await this.gymsService.clearOnboardingGymPending(req.user.sub);
     return { ok: true };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('/me/ranking-opt-in')
+  async setRankingOptIn(
+    @Req() req: { user: { sub: string } },
+    @Body() body: SetRankingOptInDto,
+  ) {
+    const gym = await this.gymsService.setRankingOptIn(
+      req.user.sub,
+      body.enabled,
+    );
+    return { gym };
   }
 }

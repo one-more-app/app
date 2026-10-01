@@ -14,6 +14,7 @@ export type UserGymResponse = {
   radiusM: number;
   onboardingGymPending: boolean;
   geofenceEnabled: boolean;
+  rankingOptIn: boolean;
   updatedAt: string;
 };
 
@@ -35,6 +36,7 @@ export class GymsService {
       radiusM: entity.radiusM,
       onboardingGymPending: entity.onboardingGymPending,
       geofenceEnabled: entity.geofenceEnabled,
+      rankingOptIn: entity.rankingOptIn,
       updatedAt: entity.updatedAt.toISOString(),
     };
   }
@@ -103,5 +105,18 @@ export class GymsService {
     if (!entity || !entity.onboardingGymPending) return;
     entity.onboardingGymPending = false;
     await this.userGyms.save(entity);
+  }
+
+  async setRankingOptIn(
+    userId: string,
+    enabled: boolean,
+  ): Promise<UserGymResponse> {
+    const entity = await this.userGyms.findOne({ where: { userId } });
+    if (!entity) {
+      throw new NotFoundException('Aucune salle enregistrée.');
+    }
+    entity.rankingOptIn = enabled;
+    const saved = await this.userGyms.save(entity);
+    return this.toResponse(saved);
   }
 }

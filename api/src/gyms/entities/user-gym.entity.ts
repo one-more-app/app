@@ -46,6 +46,9 @@ export class UserGymEntity {
   @Column({ type: 'boolean', default: true })
   geofenceEnabled!: boolean;
 
+  @Column({ type: 'boolean', default: false })
+  rankingOptIn!: boolean;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
