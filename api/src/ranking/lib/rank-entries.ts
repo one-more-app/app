@@ -4,7 +4,7 @@ export type XpAggRow = {
   lastEarnedAt: Date | null;
 };
 
-export function sortXpAggRows(rows: XpAggRow[]): XpAggRow[] {
+export function sortXpAggRows<T extends XpAggRow>(rows: T[]): T[] {
   return [...rows].sort((a, b) => {
     if (b.xp !== a.xp) return b.xp - a.xp;
     const at = a.lastEarnedAt?.getTime() ?? 0;
