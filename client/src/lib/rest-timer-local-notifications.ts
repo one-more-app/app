@@ -210,13 +210,15 @@ export async function consumeNativeRestFinishedToastSuppression(
   }
 }
 
+/**
+ * Vérifie la permission déjà accordée. Ne la demande jamais :
+ * le prompt système est réservé aux actions explicites (onboarding, réglages).
+ */
 export async function ensureRestTimerNotificationPermission(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
   try {
     const current = await RestTimer.checkPermissions();
-    if (current.granted) return true;
-    const requested = await RestTimer.requestPermissions();
-    return requested.granted;
+    return current.granted;
   } catch {
     return false;
   }
