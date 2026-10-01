@@ -49,6 +49,7 @@ import FriendProfilePage from '@/pages/FriendProfilePage'
 import SessionPage from '@/pages/SessionPage'
 import FriendSearchPage from '@/pages/FriendSearchPage'
 import FriendsPage from '@/pages/FriendsPage'
+import RankingPage from '@/pages/RankingPage'
 import UserPreviewPage from '@/pages/UserPreviewPage'
 import { HistoryPage } from '@/pages/HistoryPage'
 import HomePage from '@/pages/HomePage'
@@ -428,6 +429,7 @@ function App() {
                                 <Route path="/rewards/tshirt/:rewardType" element={<TshirtClaimPage />} />
                                 <Route path="/invite/:code" element={<InviteLandingPage />} />
                                 <Route path="/friends" element={<FriendsPage />} />
+                                <Route path="/ranking" element={<RankingPage />} />
                                 <Route path="/friends/search" element={<FriendSearchPage />} />
                                 <Route path="/friends/chat/:conversationId" element={<ChatPage />} />
                                 <Route path="/friends/preview/:userId" element={<UserPreviewPage />} />

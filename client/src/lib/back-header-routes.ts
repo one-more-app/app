@@ -3,6 +3,7 @@ export function routeUsesBackHeader(pathname: string): boolean {
     return (
         pathname === '/profile' ||
         pathname === '/friends' ||
+        pathname === '/ranking' ||
         pathname === '/history' ||
         pathname === '/settings' ||
         pathname === '/exercises' ||
