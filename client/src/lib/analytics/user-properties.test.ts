@@ -29,6 +29,7 @@ const access: UserAccess = {
   isPremium: false,
   tshirtRewardEligible: false,
   referralsUntilTshirt: 3,
+  referralRewardKind: null,
 };
 
 describe("buildUsageIdentifyProperties", () => {
@@ -48,6 +49,7 @@ describe("buildUsageIdentifyProperties", () => {
       has_used_referral_code: true,
       tshirt_reward_eligible: false,
       referrals_until_tshirt: 3,
+      referral_reward_kind: null,
       onboarding_completed: true,
       signup_method: "email",
       utm_source: "reddit_int",

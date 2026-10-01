@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from '../auth/entities/user.entity.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
+import { TshirtRewardClaimEntity } from '../rewards/entities/tshirt-reward-claim.entity.js';
 import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
 import { AccessService } from './access.service.js';
 
@@ -11,6 +12,7 @@ import { AccessService } from './access.service.js';
       UserProfileEntity,
       TrackedExerciseEntity,
       UserEntity,
+      TshirtRewardClaimEntity,
     ]),
   ],
   providers: [AccessService],

@@ -84,21 +84,16 @@ export class RewardsService {
   }
 
   private async ensureReferralPendingReward(userId: string): Promise<void> {
-    const access = await this.accessService.getAccess(userId);
-    if (!access.tshirtRewardEligible) return;
+    // Les nouveaux unlocks donnent 1 mois PRO (ReferralRewardService).
+    // On ne crée plus de claims t-shirt referral — uniquement le legacy existant.
+    void userId;
+  }
 
+  async hasReferralTshirtClaim(userId: string): Promise<boolean> {
     const existing = await this.claimsRepo.findOne({
       where: { userId, rewardType: TshirtRewardType.ReferralLimited },
     });
-    if (existing) return;
-
-    await this.claimsRepo.save(
-      this.claimsRepo.create({
-        userId,
-        rewardType: TshirtRewardType.ReferralLimited,
-        status: TshirtRewardStatus.ClaimPending,
-      }),
-    );
+    return existing != null;
   }
 
   async grantAnnualClassicPackIfMissing(userId: string): Promise<boolean> {

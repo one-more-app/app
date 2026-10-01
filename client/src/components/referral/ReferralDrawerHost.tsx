@@ -102,6 +102,7 @@ export function ReferralDrawerHost() {
         referralCount,
         tshirtRewardEligible,
         referralsUntilTshirt,
+        referralRewardKind,
         isPremium,
     } = useAccess();
     const { available: purchasesAvailable, busy: purchasesBusy, subscribe } =
@@ -308,6 +309,7 @@ export function ReferralDrawerHost() {
                                         referralCount={referralCount}
                                         tshirtRewardEligible={tshirtRewardEligible}
                                         referralsUntilTshirt={referralsUntilTshirt}
+                                        referralRewardKind={referralRewardKind}
                                         claim={claimedReferralReward}
                                         onClaimTshirt={() => {
                                             navigate(tshirtClaimPath("referral_limited"));

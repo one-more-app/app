@@ -25,5 +25,6 @@ export function useAccess() {
     isPremium: data?.isPremium ?? false,
     tshirtRewardEligible: data?.tshirtRewardEligible ?? false,
     referralsUntilTshirt: data?.referralsUntilTshirt ?? REFERRALS_FOR_TSHIRT_REWARD,
+    referralRewardKind: data?.referralRewardKind ?? null,
   };
 }

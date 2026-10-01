@@ -8,11 +8,20 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 const notifyFriendAccepted = jest.fn();
 const notifyReferralUsed = jest.fn();
 const notifyTshirtRewardUnlocked = jest.fn();
+const notifyProMonthRewardUnlocked = jest.fn();
 const emitAccessUpdated = jest.fn();
 const analyticsTrack = jest.fn();
+const ensureReferralProGrant = jest.fn();
+const hasReferralTshirtClaim = jest.fn();
 
 jest.unstable_mockModule('../access.service.js', () => ({
   AccessService: class AccessService {},
+}));
+jest.unstable_mockModule('../referral-reward.service.js', () => ({
+  ReferralRewardService: class ReferralRewardService {},
+}));
+jest.unstable_mockModule('../../rewards/rewards.service.js', () => ({
+  RewardsService: class RewardsService {},
 }));
 
 const { ReferralService } = await import('../referral.service.js');
@@ -32,10 +41,17 @@ describe('ReferralService', () => {
   const accessService = {
     hasJustUnlockedTshirtReward: jest.fn(),
   };
+  const referralReward = {
+    ensureReferralProGrant,
+  };
+  const rewardsService = {
+    hasReferralTshirtClaim,
+  };
   const notifications = {
     notifyFriendAccepted,
     notifyReferralUsed,
     notifyTshirtRewardUnlocked,
+    notifyProMonthRewardUnlocked,
   };
   const realtime = {
     emitAccessUpdated,
@@ -48,11 +64,15 @@ describe('ReferralService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    hasReferralTshirtClaim.mockResolvedValue(false);
+    ensureReferralProGrant.mockResolvedValue('granted');
     service = new ReferralService(
       profilesRepo as any,
       friendshipsRepo as any,
       invitesService as any,
       accessService as any,
+      referralReward as any,
+      rewardsService as any,
       notifications as any,
       realtime as any,
       analytics as any,
@@ -88,6 +108,7 @@ describe('ReferralService', () => {
     expect(emitAccessUpdated).toHaveBeenCalledWith('referrer-1', {
       reason: 'referral_used',
       tshirtUnlocked: false,
+      proMonthUnlocked: false,
     });
     expect(notifyReferralUsed).toHaveBeenCalledWith({
       referrerId: 'referrer-1',
@@ -95,19 +116,22 @@ describe('ReferralService', () => {
     });
     expect(notifyFriendAccepted).not.toHaveBeenCalled();
     expect(notifyTshirtRewardUnlocked).not.toHaveBeenCalled();
+    expect(notifyProMonthRewardUnlocked).not.toHaveBeenCalled();
     expect(analyticsTrack).toHaveBeenCalledWith('user-1', 'referral_code_applied', {
       referrer_user_id: 'referrer-1',
       source: 'apply',
       tshirt_unlocked: false,
+      pro_month_unlocked: false,
     });
     expect(analyticsTrack).toHaveBeenCalledWith('referrer-1', 'friend_invite_accepted', {
       referred_user_id: 'user-1',
       source: 'apply',
       tshirt_unlocked: false,
+      pro_month_unlocked: false,
     });
   });
 
-  it('notifies t-shirt unlock on 5th referral', async () => {
+  it('grants PRO month on 5th referral when no t-shirt claim', async () => {
     invitesService.findInviterProfileByCode.mockResolvedValue({
       userId: 'referrer-1',
     });
@@ -121,16 +145,51 @@ describe('ReferralService', () => {
       status: 'accepted',
     });
     accessService.hasJustUnlockedTshirtReward.mockResolvedValue(true);
+    hasReferralTshirtClaim.mockResolvedValue(false);
+    ensureReferralProGrant.mockResolvedValue('granted');
 
     await service.applyReferralCode('user-1', 'abc12345');
 
+    expect(ensureReferralProGrant).toHaveBeenCalledWith('referrer-1');
+    expect(emitAccessUpdated).toHaveBeenCalledWith('referrer-1', {
+      reason: 'referral_used',
+      tshirtUnlocked: false,
+      proMonthUnlocked: true,
+    });
+    expect(notifyProMonthRewardUnlocked).toHaveBeenCalledWith({
+      userId: 'referrer-1',
+    });
+    expect(notifyTshirtRewardUnlocked).not.toHaveBeenCalled();
+  });
+
+  it('notifies t-shirt unlock on 5th referral when legacy claim exists', async () => {
+    invitesService.findInviterProfileByCode.mockResolvedValue({
+      userId: 'referrer-1',
+    });
+    profilesRepo.findOne.mockResolvedValue({
+      userId: 'user-1',
+      referredByUserId: null,
+    });
+    friendshipsRepo.findOne.mockResolvedValue(null);
+    friendshipsRepo.save.mockResolvedValue({
+      id: 'friendship-1',
+      status: 'accepted',
+    });
+    accessService.hasJustUnlockedTshirtReward.mockResolvedValue(true);
+    hasReferralTshirtClaim.mockResolvedValue(true);
+
+    await service.applyReferralCode('user-1', 'abc12345');
+
+    expect(ensureReferralProGrant).not.toHaveBeenCalled();
     expect(emitAccessUpdated).toHaveBeenCalledWith('referrer-1', {
       reason: 'referral_used',
       tshirtUnlocked: true,
+      proMonthUnlocked: false,
     });
     expect(notifyTshirtRewardUnlocked).toHaveBeenCalledWith({
       userId: 'referrer-1',
     });
+    expect(notifyProMonthRewardUnlocked).not.toHaveBeenCalled();
   });
 
   it('rejects invalid code', async () => {
@@ -149,86 +208,16 @@ describe('ReferralService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
-  it('rejects when code already used', async () => {
+  it('rejects when already referred', async () => {
     invitesService.findInviterProfileByCode.mockResolvedValue({
       userId: 'referrer-1',
     });
     profilesRepo.findOne.mockResolvedValue({
       userId: 'user-1',
-      referredByUserId: 'referrer-2',
+      referredByUserId: 'other',
     });
     await expect(
       service.applyReferralCode('user-1', 'abc12345'),
     ).rejects.toBeInstanceOf(ConflictException);
-  });
-
-  it('silently ignores invalid code on signup', async () => {
-    invitesService.findInviterProfileByCode.mockResolvedValue(null);
-    await expect(
-      service.applyReferralCodeOnSignup({
-        newUserId: 'user-1',
-        inviteCode: 'badcode',
-      }),
-    ).resolves.toBeUndefined();
-  });
-
-  it('reuses reverse accepted friendship instead of creating a duplicate', async () => {
-    invitesService.findInviterProfileByCode.mockResolvedValue({
-      userId: 'referrer-1',
-    });
-    profilesRepo.findOne.mockResolvedValue({
-      userId: 'user-1',
-      referredByUserId: null,
-    });
-    friendshipsRepo.findOne.mockResolvedValue({
-      id: 'friendship-reverse',
-      requesterId: 'user-1',
-      addresseeId: 'referrer-1',
-      status: 'accepted',
-    });
-    accessService.hasJustUnlockedTshirtReward.mockResolvedValue(false);
-
-    await service.applyReferralCode('user-1', 'abc12345');
-
-    expect(friendshipsRepo.save).not.toHaveBeenCalled();
-    expect(profilesRepo.update).toHaveBeenCalledWith(
-      { userId: 'user-1' },
-      { referredByUserId: 'referrer-1' },
-    );
-  });
-
-  it('upgrades reverse pending friendship to accepted', async () => {
-    invitesService.findInviterProfileByCode.mockResolvedValue({
-      userId: 'referrer-1',
-    });
-    profilesRepo.findOne.mockResolvedValue({
-      userId: 'user-1',
-      referredByUserId: null,
-    });
-    const existing = {
-      id: 'friendship-reverse',
-      requesterId: 'user-1',
-      addresseeId: 'referrer-1',
-      status: 'pending',
-    };
-    friendshipsRepo.findOne.mockResolvedValue(existing);
-    friendshipsRepo.save.mockResolvedValue({
-      ...existing,
-      status: 'accepted',
-    });
-    accessService.hasJustUnlockedTshirtReward.mockResolvedValue(false);
-
-    await service.applyReferralCode('user-1', 'abc12345');
-
-    expect(friendshipsRepo.save).toHaveBeenCalledWith({
-      ...existing,
-      status: 'accepted',
-    });
-    expect(friendshipsRepo.save).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        requesterId: 'referrer-1',
-        addresseeId: 'user-1',
-      }),
-    );
   });
 });

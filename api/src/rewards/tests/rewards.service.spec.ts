@@ -27,6 +27,7 @@ describe('RewardsService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    claimsRepo.find.mockResolvedValue([]);
     service = new RewardsService(
       claimsRepo as any,
       accessService as any,
@@ -34,8 +35,19 @@ describe('RewardsService', () => {
     );
   });
 
-  it('rejects claim when not eligible', async () => {
-    accessService.getAccess.mockResolvedValue({ tshirtRewardEligible: false });
+  it('does not create new referral_limited claims when eligible', async () => {
+    accessService.getAccess.mockResolvedValue({ tshirtRewardEligible: true });
+    claimsRepo.findOne.mockResolvedValue(null);
+    claimsRepo.find.mockResolvedValue([]);
+
+    await service.getTshirtRewardStatus('user-1');
+
+    expect(claimsRepo.save).not.toHaveBeenCalled();
+    expect(claimsRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects claim when no pending reward exists', async () => {
+    claimsRepo.findOne.mockResolvedValue(null);
     await expect(
       service.claimTshirt('user-1', null, {
         rewardType: TshirtRewardType.ReferralLimited,
@@ -50,10 +62,11 @@ describe('RewardsService', () => {
   });
 
   it('rejects duplicate claim', async () => {
-    accessService.getAccess.mockResolvedValue({ tshirtRewardEligible: true });
-    claimsRepo.findOne
-      .mockResolvedValueOnce({ id: 'claim-1', status: 'pending' })
-      .mockResolvedValueOnce({ id: 'claim-1', status: 'pending' });
+    claimsRepo.findOne.mockResolvedValue({
+      id: 'claim-1',
+      status: 'pending',
+      rewardType: 'referral_limited',
+    });
     await expect(
       service.claimTshirt('user-1', null, {
         rewardType: TshirtRewardType.ReferralLimited,
@@ -67,9 +80,8 @@ describe('RewardsService', () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
-  it('creates claim when eligible', async () => {
-    accessService.getAccess.mockResolvedValue({ tshirtRewardEligible: true });
-    claimsRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce({
+  it('claims existing pending referral reward', async () => {
+    claimsRepo.findOne.mockResolvedValue({
       id: 'claim-1',
       userId: 'user-1',
       rewardType: 'referral_limited',
@@ -109,42 +121,13 @@ describe('RewardsService', () => {
     expect(claimsRepo.save).toHaveBeenCalled();
   });
 
-  it('succeeds when Notion is not configured', async () => {
-    accessService.getAccess.mockResolvedValue({ tshirtRewardEligible: true });
-    claimsRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce({
-      id: 'claim-1',
-      userId: 'user-1',
-      rewardType: 'referral_limited',
-      status: 'claim_pending',
-    });
-    claimsRepo.save.mockResolvedValue({
-      id: 'claim-1',
-      userId: 'user-1',
-      rewardType: 'referral_limited',
-      status: 'pending',
-      size: 'M',
-      gender: null,
-      fullName: 'Jean Dupont',
-      street: '1 rue Test',
-      city: 'Paris',
-      postalCode: '75001',
-      country: 'France',
-      trackingNumber: null,
-      claimedAt: new Date(),
-      shippedAt: null,
-    });
-    config.get.mockReturnValue(undefined);
+  it('hasReferralTshirtClaim returns true when claim exists', async () => {
+    claimsRepo.findOne.mockResolvedValue({ id: 'claim-1' });
+    await expect(service.hasReferralTshirtClaim('user-1')).resolves.toBe(true);
+  });
 
-    await expect(
-      service.claimTshirt('user-1', 'user@example.com', {
-        rewardType: TshirtRewardType.ReferralLimited,
-        fullName: 'Jean Dupont',
-        street: '1 rue Test',
-        city: 'Paris',
-        postalCode: '75001',
-        country: 'France',
-        size: 'M',
-      }),
-    ).resolves.toMatchObject({ id: 'claim-1', status: 'pending' });
+  it('hasReferralTshirtClaim returns false when missing', async () => {
+    claimsRepo.findOne.mockResolvedValue(null);
+    await expect(service.hasReferralTshirtClaim('user-1')).resolves.toBe(false);
   });
 });

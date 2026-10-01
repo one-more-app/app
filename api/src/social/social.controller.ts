@@ -17,6 +17,7 @@ import { FriendSuggestionsService } from './friend-suggestions.service.js';
 import { FriendsService } from './friends.service.js';
 import { InvitesService } from './invites.service.js';
 import { ReferralService } from './referral.service.js';
+import { ReferralRewardService } from './referral-reward.service.js';
 import { InviteCodeDto } from './dto/invite-code.dto.js';
 import { UserSearchService } from './user-search.service.js';
 
@@ -26,6 +27,7 @@ export class SocialController {
     private readonly accessService: AccessService,
     private readonly invitesService: InvitesService,
     private readonly referralService: ReferralService,
+    private readonly referralRewardService: ReferralRewardService,
     private readonly friendsService: FriendsService,
     private readonly friendSuggestionsService: FriendSuggestionsService,
     private readonly userSearchService: UserSearchService,
@@ -34,7 +36,11 @@ export class SocialController {
   @UseGuards(JwtAuthGuard)
   @Get('/me/access')
   async getAccess(@Req() req: { user: { sub: string } }) {
-    return await this.accessService.getAccess(req.user.sub);
+    const access = await this.accessService.getAccess(req.user.sub);
+    if (access.referralRewardKind === 'pro_month' && !access.isPremium) {
+      void this.referralRewardService.ensureReferralProGrant(req.user.sub);
+    }
+    return access;
   }
 
   @UseGuards(JwtAuthGuard)

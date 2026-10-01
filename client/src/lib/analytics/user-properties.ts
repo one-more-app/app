@@ -35,6 +35,7 @@ export function buildUsageIdentifyProperties(params: {
     props.has_used_referral_code = access.hasUsedReferralCode;
     props.tshirt_reward_eligible = access.tshirtRewardEligible;
     props.referrals_until_tshirt = access.referralsUntilTshirt;
+    props.referral_reward_kind = access.referralRewardKind;
   }
 
   if (profile) {

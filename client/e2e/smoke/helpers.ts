@@ -411,6 +411,7 @@ export async function mockCoreAuthenticatedApi(
         isPremium: false,
         tshirtRewardEligible: false,
         referralsUntilTshirt: 3,
+        referralRewardKind: null,
       }),
     });
   });

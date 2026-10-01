@@ -9,6 +9,8 @@ import type { UserProgressState } from "@/types";
 
 export const ACCESS_SWR_KEY = "user-access";
 
+export type ReferralRewardKind = "tshirt" | "pro_month" | null;
+
 export type UserAccess = {
   exerciseLimit: number;
   activeExerciseCount: number;
@@ -20,6 +22,7 @@ export type UserAccess = {
   isPremium: boolean;
   tshirtRewardEligible: boolean;
   referralsUntilTshirt: number;
+  referralRewardKind: ReferralRewardKind;
 };
 
 export type InviteCode = {

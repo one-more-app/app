@@ -436,8 +436,8 @@ export const UI = {
   signupReferralCodeTitle: "Tu as un code de parrainage ?",
   signupReferralCodeLabel: "Code de parrainage (optionnel)",
   signupReferralCodeHint: "Tu as le code d'un pote ? Gagne +{bonus} exercices.",
-  profileReferralBannerTitle: "Gagne un t-shirt en édition limitée",
-  profileReferralBannerSubtitle: "5 potes parrainés = t-shirt One More offert",
+  profileReferralBannerTitle: "Gagne 1 mois de Pro",
+  profileReferralBannerSubtitle: "5 potes parrainés = 1 mois One More Pro offert",
   referralCodeApply: "Appliquer le code",
   referralCodeApplied: "Code de parrainage appliqué",
   referralCodeAlreadyUsed: "Tu as déjà utilisé un code de parrainage",
@@ -448,6 +448,8 @@ export const UI = {
   referralBonusPerInvite: "+{bonus} exercices pour toi et ton pote",
   referralTshirtEarned:
     "Bravo ! Tu as débloqué ton t-shirt One More grâce à tes parrainages.",
+  referralProEarned:
+    "Bravo ! 1 mois de One More Pro t’a été offert grâce à tes parrainages.",
   referralTshirtProgress:
     "Encore {count} parrainage(s) pour débloquer ton t-shirt One More.",
   referralTshirtHint: "5 parrainages = t-shirt One More offert.",
@@ -479,10 +481,15 @@ export const UI = {
   referralCountZero: "Aucun pote parrainé",
   referralCountOne: "1 pote parrainé",
   referralCountMany: "{count} potes parrainés",
-  referralBattlePassTitle: "Gagne ton t-shirt en édition limitée",
-  referralBattlePassRemaining: "Encore {count} parrainage(s) pour le t-shirt.",
-  referralBattlePassReward: "T-shirt",
+  referralBattlePassTitle: "Gagne 1 mois de Pro",
+  referralBattlePassTitleTshirt: "Gagne ton t-shirt en édition limitée",
+  referralBattlePassRemaining: "Encore {count} parrainage(s) pour 1 mois Pro.",
+  referralBattlePassRemainingTshirt: "Encore {count} parrainage(s) pour le t-shirt.",
+  referralBattlePassReward: "1 mois Pro",
+  referralBattlePassRewardTshirt: "T-shirt",
   referralBattlePassLegend:
+    "Chaque pote parrainé = +{bonus} exercices · 5 potes = 1 mois Pro",
+  referralBattlePassLegendTshirt:
     "Chaque pote parrainé = +{bonus} exercices · 5 potes = t-shirt offert",
   exerciseLimitViewReferral: "Voir mon parrainage",
 

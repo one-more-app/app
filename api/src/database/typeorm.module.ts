@@ -23,6 +23,7 @@ import { NotificationPreferencesEntity } from '../notifications/entities/notific
 import { NotificationDeliveryEntity } from '../notifications/entities/notification-delivery.entity.js';
 import { FriendTrainingAlertEntity } from '../notifications/entities/friend-training-alert.entity.js';
 import { TshirtRewardClaimEntity } from '../rewards/entities/tshirt-reward-claim.entity.js';
+import { ReferralProGrantEntity } from '../rewards/entities/referral-pro-grant.entity.js';
 import { UserGymEntity } from '../gyms/entities/user-gym.entity.js';
 import { SessionCommentEntity } from '../workout-sessions/entities/session-comment.entity.js';
 import { SessionReactionEntity } from '../workout-sessions/entities/session-reaction.entity.js';
@@ -49,6 +50,7 @@ export const TYPEORM_ENTITIES = [
   NotificationDeliveryEntity,
   FriendTrainingAlertEntity,
   TshirtRewardClaimEntity,
+  ReferralProGrantEntity,
   UserGymEntity,
   SessionCommentEntity,
   SessionReactionEntity,

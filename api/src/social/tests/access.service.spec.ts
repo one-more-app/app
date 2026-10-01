@@ -28,6 +28,16 @@ jest.unstable_mockModule('../../shared/access-config.js', () => ({
     referralCount >= 5,
   computeReferralsUntilTshirt: ({ referralCount }: { referralCount: number }) =>
     Math.max(0, 5 - referralCount),
+  computeReferralRewardKind: ({
+    referralCount,
+    hasReferralTshirtClaim,
+  }: {
+    referralCount: number;
+    hasReferralTshirtClaim: boolean;
+  }) => {
+    if (referralCount < 5) return null;
+    return hasReferralTshirtClaim ? 'tshirt' : 'pro_month';
+  },
 }));
 
 const { AccessService } = await import('../access.service.js');
@@ -43,16 +53,21 @@ describe('AccessService', () => {
   const usersRepo = {
     findOne: jest.fn(),
   };
+  const tshirtClaimsRepo = {
+    findOne: jest.fn(),
+  };
 
   let service: InstanceType<typeof AccessService>;
 
   beforeEach(() => {
     jest.clearAllMocks();
     usersRepo.findOne.mockResolvedValue({ isPremium: false });
+    tshirtClaimsRepo.findOne.mockResolvedValue(null);
     service = new AccessService(
       profilesRepo as any,
       trackedRepo as any,
       usersRepo as any,
+      tshirtClaimsRepo as any,
     );
   });
 
@@ -122,12 +137,26 @@ describe('AccessService', () => {
     expect(access.bonusFromReferrals).toBe(15 * EXERCISE_BONUS_PER_REFERRAL);
   });
 
-  it('marks t-shirt eligible with 5 referrals', async () => {
+  it('marks pro_month reward with 5 referrals and no t-shirt claim', async () => {
     profilesRepo.findOne.mockResolvedValue({ referredByUserId: null });
     trackedRepo.count.mockResolvedValue(0);
     profilesRepo.count.mockResolvedValue(5);
+    tshirtClaimsRepo.findOne.mockResolvedValue(null);
 
     const access = await service.getAccess('user-1');
+    expect(access.referralRewardKind).toBe('pro_month');
+    expect(access.tshirtRewardEligible).toBe(false);
+    expect(access.referralsUntilTshirt).toBe(0);
+  });
+
+  it('marks t-shirt eligible with 5 referrals and legacy claim', async () => {
+    profilesRepo.findOne.mockResolvedValue({ referredByUserId: null });
+    trackedRepo.count.mockResolvedValue(0);
+    profilesRepo.count.mockResolvedValue(5);
+    tshirtClaimsRepo.findOne.mockResolvedValue({ id: 'claim-1' });
+
+    const access = await service.getAccess('user-1');
+    expect(access.referralRewardKind).toBe('tshirt');
     expect(access.tshirtRewardEligible).toBe(true);
     expect(access.referralsUntilTshirt).toBe(0);
   });

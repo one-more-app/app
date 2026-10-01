@@ -123,6 +123,16 @@ export class NotificationDispatchService {
     });
   }
 
+  async notifyProMonthRewardUnlocked(params: { userId: string }) {
+    await this.deliver(params.userId, {
+      type: NotificationType.ProMonthRewardUnlocked,
+      title: '1 mois Pro offert',
+      body: 'Bravo ! Tes parrainages t’offrent 1 mois de One More Pro.',
+      route: '/settings?focus=referral',
+      dedupKey: 'referral:pro_month',
+    });
+  }
+
   async notifyReferralUsed(params: {
     referrerId: string;
     referredUserId: string;

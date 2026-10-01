@@ -3,17 +3,19 @@ import { BattlePassNode } from "@/components/referral/BattlePassNode";
 import { TshirtDeliveryStepper } from "@/components/referral/TshirtDeliveryStepper";
 import { Button } from "@/components/ui/button";
 import type { TshirtRewardClaim } from "@/lib/rewards-api";
+import type { ReferralRewardKind } from "@/lib/social-api";
 import { UI } from "@/lib/translations";
 import {
     EXERCISE_BONUS_PER_REFERRAL,
     REFERRALS_FOR_TSHIRT_REWARD,
 } from "@one-more/shared/access-config";
-import { Gift, Users } from "lucide-react";
+import { Crown, Gift, Users } from "lucide-react";
 
 type ReferralBattlePassProps = {
     referralCount: number;
     tshirtRewardEligible: boolean;
     referralsUntilTshirt: number;
+    referralRewardKind: ReferralRewardKind;
     claim: TshirtRewardClaim | null;
     onClaimTshirt: () => void;
 };
@@ -30,37 +32,60 @@ export function ReferralBattlePass({
     referralCount,
     tshirtRewardEligible,
     referralsUntilTshirt,
+    referralRewardKind,
     claim,
     onClaimTshirt,
 }: ReferralBattlePassProps) {
+    const showTshirtUi = referralRewardKind === "tshirt" || claim != null;
     const filledSegments = Math.min(referralCount, REFERRALS_FOR_TSHIRT_REWARD);
     const progressPct =
         REFERRALS_FOR_TSHIRT_REWARD > 0
             ? (filledSegments / REFERRALS_FOR_TSHIRT_REWARD) * 100
             : 0;
 
+    const rewardUnlocked =
+        referralRewardKind === "pro_month" ||
+        tshirtRewardEligible ||
+        claim != null;
+
     const rewardStatus: NodeStatus = claim
         ? "done"
-        : tshirtRewardEligible
+        : rewardUnlocked
             ? "current"
             : "locked";
 
     const statusMessage = claim
         ? null
-        : tshirtRewardEligible
-            ? UI.referralTshirtEarned
-            : UI.referralBattlePassRemaining.replace(
-                "{count}",
-                String(referralsUntilTshirt),
-            );
+        : referralRewardKind === "pro_month"
+            ? UI.referralProEarned
+            : tshirtRewardEligible
+                ? UI.referralTshirtEarned
+                : (showTshirtUi
+                    ? UI.referralBattlePassRemainingTshirt
+                    : UI.referralBattlePassRemaining
+                ).replace("{count}", String(referralsUntilTshirt));
 
     return (
         <div className="space-y-4 rounded-xl bg-card p-4">
             <p className="text-xs font-one-more uppercase italic text-foreground">
-                {UI.referralBattlePassTitle}
+                {showTshirtUi
+                    ? UI.referralBattlePassTitleTshirt
+                    : UI.referralBattlePassTitle}
             </p>
 
-            <TshirtRewardVisual highlight={tshirtRewardEligible && !claim} />
+            {showTshirtUi ? (
+                <TshirtRewardVisual highlight={tshirtRewardEligible && !claim} />
+            ) : (
+                <div className="flex justify-center py-4">
+                    <div
+                        className={`flex size-20 items-center justify-center rounded-full bg-accent/15 ${
+                            rewardUnlocked ? "ring-2 ring-accent" : ""
+                        }`}
+                    >
+                        <Crown className="size-10 text-accent" />
+                    </div>
+                </div>
+            )}
 
             <div className="space-y-3 pt-1">
                 <div className="relative px-1">
@@ -85,19 +110,29 @@ export function ReferralBattlePass({
                         })}
                         <BattlePassNode
                             label=""
-                            sublabel={UI.referralBattlePassReward}
+                            sublabel={
+                                showTshirtUi
+                                    ? UI.referralBattlePassRewardTshirt
+                                    : UI.referralBattlePassReward
+                            }
                             status={rewardStatus}
-                            icon={<Gift className="size-3.5" />}
+                            icon={
+                                showTshirtUi ? (
+                                    <Gift className="size-3.5" />
+                                ) : (
+                                    <Crown className="size-3.5" />
+                                )
+                            }
                             highlightSublabel
                         />
                     </div>
                 </div>
 
                 <p className="text-center text-xs text-muted-foreground">
-                    {UI.referralBattlePassLegend.replace(
-                        "{bonus}",
-                        String(EXERCISE_BONUS_PER_REFERRAL),
-                    )}
+                    {(showTshirtUi
+                        ? UI.referralBattlePassLegendTshirt
+                        : UI.referralBattlePassLegend
+                    ).replace("{bonus}", String(EXERCISE_BONUS_PER_REFERRAL))}
                 </p>
             </div>
 

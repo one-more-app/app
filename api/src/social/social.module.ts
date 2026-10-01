@@ -12,12 +12,16 @@ import { FriendSuggestionsService } from './friend-suggestions.service.js';
 import { FriendsService } from './friends.service.js';
 import { InvitesService } from './invites.service.js';
 import { ReferralService } from './referral.service.js';
+import { ReferralRewardService } from './referral-reward.service.js';
 import { UserSearchService } from './user-search.service.js';
 import { UserEntity } from '../auth/entities/user.entity.js';
 import { FriendshipEntity } from './entities/friendship.entity.js';
 import { UserGymEntity } from '../gyms/entities/user-gym.entity.js';
 import { SocialController } from './social.controller.js';
 import { UsernameService } from './username.service.js';
+import { BillingModule } from '../billing/billing.module.js';
+import { RewardsModule } from '../rewards/rewards.module.js';
+import { ReferralProGrantEntity } from '../rewards/entities/referral-pro-grant.entity.js';
 
 @Module({
   imports: [
@@ -27,11 +31,14 @@ import { UsernameService } from './username.service.js';
       UserProfileEntity,
       UserEntity,
       UserGymEntity,
+      ReferralProGrantEntity,
     ]),
     ProgressModule,
     LeagueModule,
     TrackedExercisesModule,
     PerformanceEntriesModule,
+    BillingModule,
+    RewardsModule,
     forwardRef(() => NotificationsModule),
     forwardRef(() => RealtimeModule),
   ],
@@ -41,6 +48,7 @@ import { UsernameService } from './username.service.js';
     FriendsService,
     FriendSuggestionsService,
     ReferralService,
+    ReferralRewardService,
     UserSearchService,
     UsernameService,
   ],
@@ -49,6 +57,7 @@ import { UsernameService } from './username.service.js';
     InvitesService,
     FriendsService,
     ReferralService,
+    ReferralRewardService,
     UsernameService,
   ],
 })

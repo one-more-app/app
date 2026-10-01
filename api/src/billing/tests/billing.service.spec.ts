@@ -177,6 +177,60 @@ describe('BillingService', () => {
     ).not.toHaveBeenCalled();
   });
 
+  it('grants promotional monthly premium entitlement', async () => {
+    usersRepo.findOne.mockResolvedValue(null);
+    const fetchMock = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        text: async () => '',
+      }),
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await service.grantPromotionalPremium('user-1');
+
+    expect(result).toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.revenuecat.com/v1/subscribers/user-1/entitlements/premium/promotional',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ duration: 'monthly' }),
+      }),
+    );
+    expect(usersRepo.update).toHaveBeenCalledWith(
+      { id: 'user-1' },
+      { isPremium: true },
+    );
+  });
+
+  it('returns ok:false when RC promotional grant fails', async () => {
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+        text: async () => 'boom',
+      }),
+    ) as unknown as typeof fetch;
+
+    const result = await service.grantPromotionalPremium('user-1');
+    expect(result).toEqual({ ok: false, error: 'RC 500' });
+    expect(usersRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('returns ok:false when API key missing for promotional grant', async () => {
+    config.get.mockImplementation((key: string) => {
+      if (key === 'REVENUECAT_PREMIUM_ENTITLEMENT_ID') return 'premium';
+      return undefined;
+    });
+
+    const result = await service.grantPromotionalPremium('user-1');
+    expect(result).toEqual({
+      ok: false,
+      error: 'REVENUECAT_API_KEY missing',
+    });
+  });
+
   it('syncs subscriber attributes to RevenueCat', async () => {
     usersRepo.findOne.mockResolvedValue({
       id: 'user-1',

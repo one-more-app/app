@@ -106,12 +106,18 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
 
     socket.on(
       "access:updated",
-      (payload: { reason: string; tshirtUnlocked?: boolean }) => {
+      (payload: {
+        reason: string;
+        tshirtUnlocked?: boolean;
+        proMonthUnlocked?: boolean;
+      }) => {
         void mutate(ACCESS_SWR_KEY);
         void mutate(TSHIRT_REWARD_SWR_KEY);
         if (payload.tshirtUnlocked) {
           closeReferralDrawer();
           navigate(tshirtClaimPath("referral_limited"));
+        } else if (payload.proMonthUnlocked) {
+          void mutate(ACCESS_SWR_KEY);
         }
       },
     );

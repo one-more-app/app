@@ -77,6 +77,48 @@ export class BillingService {
     void this.syncSubscriberAttributes(userId);
   }
 
+  /**
+   * Offre 1 mois d'entitlement premium via grant promotionnel RevenueCat.
+   * Le webhook TEMPORARY_ENTITLEMENT_GRANT confirmera ; setPremium accélère l'UX.
+   */
+  async grantPromotionalPremium(
+    userId: string,
+  ): Promise<{ ok: true } | { ok: false; error: string }> {
+    const apiKey = this.config.get<string>('REVENUECAT_API_KEY')?.trim();
+    if (!apiKey) {
+      return { ok: false, error: 'REVENUECAT_API_KEY missing' };
+    }
+
+    const entitlementId = encodeURIComponent(this.getPremiumEntitlementId());
+    const url = `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(userId)}/entitlements/${entitlementId}/promotional`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ duration: 'monthly' }),
+      });
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => '');
+        this.logger.warn(
+          `RC promo grant failed for ${userId}: ${response.status} ${body}`,
+        );
+        return { ok: false, error: `RC ${response.status}` };
+      }
+
+      await this.setPremium(userId, true);
+      return { ok: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'unknown error';
+      this.logger.warn(`RC promo grant error for ${userId}: ${message}`);
+      return { ok: false, error: message };
+    }
+  }
+
   private toSubscriberSnapshot(
     user: Pick<UserEntity, 'id' | 'email' | 'isPremium'>,
     profile: UserProfileEntity | null,

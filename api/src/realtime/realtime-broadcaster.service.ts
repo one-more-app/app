@@ -69,7 +69,11 @@ export class RealtimeBroadcaster {
 
   emitAccessUpdated(
     userId: string,
-    payload: { reason: 'referral_used'; tshirtUnlocked: boolean },
+    payload: {
+      reason: 'referral_used';
+      tshirtUnlocked: boolean;
+      proMonthUnlocked?: boolean;
+    },
   ) {
     this.emitToUser(userId, 'access:updated', payload);
   }

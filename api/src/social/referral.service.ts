@@ -16,6 +16,8 @@ import { FriendshipEntity } from './entities/friendship.entity.js';
 import { FriendshipStatus } from './entities/friendship-status.enum.js';
 import { AccessService } from './access.service.js';
 import { InvitesService } from './invites.service.js';
+import { ReferralRewardService } from './referral-reward.service.js';
+import { RewardsService } from '../rewards/rewards.service.js';
 
 export type ReferralApplySource = 'signup' | 'apply' | 'invite_landing';
 
@@ -28,6 +30,8 @@ export class ReferralService {
     private readonly friendshipsRepo: Repository<FriendshipEntity>,
     private readonly invitesService: InvitesService,
     private readonly access: AccessService,
+    private readonly referralReward: ReferralRewardService,
+    private readonly rewardsService: RewardsService,
     @Inject(forwardRef(() => NotificationDispatchService))
     private readonly notifications: NotificationDispatchService,
     private readonly realtime: RealtimeBroadcaster,
@@ -63,13 +67,39 @@ export class ReferralService {
 
     await this.ensureAcceptedFriendship(inviterProfile.userId, userId);
 
-    const tshirtUnlocked = await this.access.hasJustUnlockedTshirtReward(
+    const justUnlocked = await this.access.hasJustUnlockedTshirtReward(
       inviterProfile.userId,
     );
+
+    let tshirtUnlocked = false;
+    let proMonthUnlocked = false;
+
+    if (justUnlocked) {
+      const hasTshirtClaim = await this.rewardsService.hasReferralTshirtClaim(
+        inviterProfile.userId,
+      );
+      if (hasTshirtClaim) {
+        tshirtUnlocked = true;
+        void this.notifications.notifyTshirtRewardUnlocked({
+          userId: inviterProfile.userId,
+        });
+      } else {
+        const grantResult = await this.referralReward.ensureReferralProGrant(
+          inviterProfile.userId,
+        );
+        if (grantResult === 'granted' || grantResult === 'already') {
+          proMonthUnlocked = true;
+          void this.notifications.notifyProMonthRewardUnlocked({
+            userId: inviterProfile.userId,
+          });
+        }
+      }
+    }
 
     this.realtime.emitAccessUpdated(inviterProfile.userId, {
       reason: 'referral_used',
       tshirtUnlocked,
+      proMonthUnlocked,
     });
 
     void this.notifications.notifyReferralUsed({
@@ -77,21 +107,17 @@ export class ReferralService {
       referredUserId: userId,
     });
 
-    if (tshirtUnlocked) {
-      void this.notifications.notifyTshirtRewardUnlocked({
-        userId: inviterProfile.userId,
-      });
-    }
-
     void this.analytics.track(userId, 'referral_code_applied', {
       referrer_user_id: inviterProfile.userId,
       source,
       tshirt_unlocked: tshirtUnlocked,
+      pro_month_unlocked: proMonthUnlocked,
     });
     void this.analytics.track(inviterProfile.userId, 'friend_invite_accepted', {
       referred_user_id: userId,
       source,
       tshirt_unlocked: tshirtUnlocked,
+      pro_month_unlocked: proMonthUnlocked,
     });
 
     return { ok: true, referrerUserId: inviterProfile.userId };

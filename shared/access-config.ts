@@ -10,8 +10,10 @@ export const EXERCISE_BONUS_PER_REFERRAL = 10;
 /** Bonus d'exercices pour l'utilisateur qui utilise un code de parrainage (une seule fois). */
 export const EXERCISE_BONUS_FOR_USING_REFERRAL = 10;
 
-/** Parrainages requis pour débloquer le t-shirt. */
+/** Parrainages requis pour débloquer la récompense (PRO ou t-shirt legacy). */
 export const REFERRALS_FOR_TSHIRT_REWARD = 5;
+
+export type ReferralRewardKind = 'tshirt' | 'pro_month' | null;
 
 export function computeExerciseLimit(params: {
   referralCount: number;
@@ -38,4 +40,14 @@ export function computeReferralsUntilTshirt(params: {
   referralCount: number;
 }): number {
   return Math.max(0, REFERRALS_FOR_TSHIRT_REWARD - params.referralCount);
+}
+
+export function computeReferralRewardKind(params: {
+  referralCount: number;
+  hasReferralTshirtClaim: boolean;
+}): ReferralRewardKind {
+  if (params.referralCount < REFERRALS_FOR_TSHIRT_REWARD) {
+    return null;
+  }
+  return params.hasReferralTshirtClaim ? 'tshirt' : 'pro_month';
 }
