@@ -1,4 +1,10 @@
+import { App } from "@capacitor/app";
+import { Capacitor } from "@capacitor/core";
 import { getApiBaseUrl, setOnApiUnreachable } from "@/lib/api";
+import {
+  shouldForceUpdateFromHealth,
+  type HealthProbeBody,
+} from "@/lib/force-update-from-health";
 import {
   createContext,
   useCallback,
@@ -10,7 +16,12 @@ import {
   type ReactNode,
 } from "react";
 
-export type ConnectivityStatus = "ok" | "offline" | "maintenance" | "checking";
+export type ConnectivityStatus =
+  | "ok"
+  | "offline"
+  | "maintenance"
+  | "update_required"
+  | "checking";
 
 type ConnectivityContextValue = {
   status: ConnectivityStatus;
@@ -18,7 +29,7 @@ type ConnectivityContextValue = {
   reportApiUnreachable: () => void;
 };
 
-type ProbeResult = "ok" | "offline" | "maintenance";
+type ProbeResult = "ok" | "offline" | "maintenance" | "update_required";
 
 const ConnectivityContext = createContext<ConnectivityContextValue | null>(null);
 
@@ -27,6 +38,16 @@ const PROBE_INTERVAL_MS = 20_000;
 
 function isBrowserOnline(): boolean {
   return typeof navigator === "undefined" ? true : navigator.onLine;
+}
+
+async function readNativeMarketingVersion(): Promise<string> {
+  if (!Capacitor.isNativePlatform()) return "";
+  try {
+    const info = await App.getInfo();
+    return String(info.version ?? "").trim();
+  } catch {
+    return "";
+  }
 }
 
 async function probeHealth(): Promise<ProbeResult> {
@@ -42,11 +63,22 @@ async function probeHealth(): Promise<ProbeResult> {
     // Réponse reçue = réseau OK. Un statut/body mauvais ⇒ maintenance API.
     if (!res.ok) return "maintenance";
     const contentType = res.headers.get("content-type") ?? "";
+    let body: HealthProbeBody | null = null;
     if (contentType.includes("application/json")) {
-      const body = (await res.json().catch(() => null)) as { status?: unknown } | null;
+      body = (await res.json().catch(() => null)) as HealthProbeBody | null;
       if (body && typeof body === "object" && body.status != null && body.status !== "ok") {
         return "maintenance";
       }
+    }
+    if (
+      shouldForceUpdateFromHealth({
+        isNativePlatform: Capacitor.isNativePlatform(),
+        platform: Capacitor.getPlatform(),
+        currentVersion: await readNativeMarketingVersion(),
+        body,
+      })
+    ) {
+      return "update_required";
     }
     return "ok";
   } catch {
@@ -77,7 +109,12 @@ export function ConnectivityProvider({ children }: { children: ReactNode }) {
     }
 
     setStatus((previous) => {
-      if (previous === "ok" || previous === "maintenance" || previous === "offline") {
+      if (
+        previous === "ok" ||
+        previous === "maintenance" ||
+        previous === "offline" ||
+        previous === "update_required"
+      ) {
         return previous;
       }
       return "checking";
@@ -143,7 +180,7 @@ export function ConnectivityProvider({ children }: { children: ReactNode }) {
   }, [runProbe]);
 
   useEffect(() => {
-    if (status !== "maintenance" && status !== "offline") return;
+    if (status !== "maintenance" && status !== "offline" && status !== "update_required") return;
 
     const id = window.setInterval(() => {
       if (!isBrowserOnline()) {
