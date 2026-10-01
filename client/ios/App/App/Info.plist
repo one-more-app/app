@@ -7,7 +7,11 @@
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<false/>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>fr</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>One More</string>
 	<key>CFBundleExecutable</key>

@@ -17,6 +17,7 @@
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
 		A1B2C3D41FED79650016851F /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D31FED79650016851F /* GoogleService-Info.plist */; };
 		A2B3C4D61FED79650016851F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A2B3C4D51FED79650016851F /* PrivacyInfo.xcprivacy */; };
+		FRL0C0011FED79650016851F /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = FRL0C0031FED79650016851F /* InfoPlist.strings */; };
 		FE7AD2672FD8020A00DEC54F /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = FE7AD2662FD8020A00DEC54F /* FirebaseAnalytics */; };
 		FE7AD2692FD8020A00DEC54F /* FirebaseInAppMessaging-Beta in Frameworks */ = {isa = PBXBuildFile; productRef = FE7AD2682FD8020A00DEC54F /* FirebaseInAppMessaging-Beta */; };
 		FE7AD26B2FD8020A00DEC54F /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = FE7AD26A2FD8020A00DEC54F /* FirebaseMessaging */; };
@@ -64,6 +65,7 @@
 		504EC30E1FED79650016851F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FRL0C0021FED79650016851F /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		A1B2C3D31FED79650016851F /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "../GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -148,6 +150,7 @@
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
 				504EC3131FED79650016851F /* Info.plist */,
+				FRL0C0031FED79650016851F /* InfoPlist.strings */,
 				2FAD9762203C412B000D30F8 /* config.xml */,
 				50B271D01FEDC1A000F3C39B /* public */,
 			);
@@ -240,10 +243,10 @@
 			};
 			buildConfigurationList = 504EC2FF1FED79650016851F /* Build configuration list for PBXProject "App" */;
 			compatibilityVersion = "Xcode 8.0";
-			developmentRegion = en;
+			developmentRegion = fr;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
+				fr,
 				Base,
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
@@ -274,6 +277,7 @@
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
 				A1B2C3D41FED79650016851F /* GoogleService-Info.plist in Resources */,
 				A2B3C4D61FED79650016851F /* PrivacyInfo.xcprivacy in Resources */,
+				FRL0C0011FED79650016851F /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -383,6 +387,14 @@
 				504EC3111FED79650016851F /* Base */,
 			);
 			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+		FRL0C0031FED79650016851F /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				FRL0C0021FED79650016851F /* fr */,
+			);
+			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -505,6 +517,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_LANGUAGE = fr;
 				DEVELOPMENT_TEAM = 7N362A27Z4;
 				FACEBOOK_APP_ID = 1761494881722245;
 				FACEBOOK_CLIENT_TOKEN = a40926d083aa63abfc0edef9d084f448;
@@ -538,6 +551,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/AppRelease.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_LANGUAGE = fr;
 				DEVELOPMENT_TEAM = 7N362A27Z4;
 				FACEBOOK_APP_ID = 1761494881722245;
 				FACEBOOK_CLIENT_TOKEN = a40926d083aa63abfc0edef9d084f448;
@@ -567,6 +581,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_LANGUAGE = fr;
 				DEVELOPMENT_TEAM = 7N362A27Z4;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = OneMoreRestTimer/Info.plist;
@@ -590,6 +605,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_LANGUAGE = fr;
 				DEVELOPMENT_TEAM = 7N362A27Z4;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = OneMoreRestTimer/Info.plist;

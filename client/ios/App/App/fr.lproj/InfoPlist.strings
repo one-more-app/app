@@ -1,0 +1,6 @@
+/* Localisation française du bundle. Déclare l'app comme FR auprès d'iOS et de l'App Store. */
+"CFBundleDisplayName" = "One More";
+"CFBundleName" = "One More";
+"NSLocationWhenInUseUsageDescription" = "One More utilise ta position pour détecter quand tu es à ta salle et te rappeler d'enregistrer tes perfs.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "One More surveille l'entrée dans ta salle même quand l'app est fermée, pour te prévenir au bon moment.";
+"NSUserTrackingUsageDescription" = "One More utilise l’identifiant publicitaire pour mesurer l’efficacité des campagnes (App Store, Instagram, Reddit) et améliorer les publicités que tu vois.";
