@@ -1198,6 +1198,9 @@ export const UI = {
   sessionReactionToggleMine: "Retirer ta réaction {emoji}",
   sessionReactionToggleAdd: "Réagir avec {emoji}",
   sessionReactionError: "Impossible d'envoyer la réaction.",
+  sessionReactionPeopleTitle: "Réagi avec {emoji}",
+  sessionReactionPeopleEmpty: "Plus personne n’a réagi.",
+  sessionReactionYou: "Toi",
   sessionViewDay: "Voir la séance",
 
   // Stand événement (leaderboard web)

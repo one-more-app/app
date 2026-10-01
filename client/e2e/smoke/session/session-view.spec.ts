@@ -96,7 +96,22 @@ test("historique vers page séance", async ({ page }) => {
           setCount: 1,
           reactions: [],
           reactionsByExerciseId: {
-            [tracked.id]: [{ emoji: "💪", count: 1, reactedByMe: false }],
+            [tracked.id]: [
+              {
+                emoji: "💪",
+                count: 1,
+                reactedByMe: false,
+                users: [
+                  {
+                    userId: "friend-1",
+                    firstName: "Alex",
+                    lastName: null,
+                    username: "alex",
+                    avatarUrl: null,
+                  },
+                ],
+              },
+            ],
           },
         }),
       });
@@ -112,7 +127,29 @@ test("historique vers page séance", async ({ page }) => {
           target: {
             targetType: "exercise",
             trackedExerciseId: tracked.id,
-            reactions: [{ emoji: "💪", count: 2, reactedByMe: true }],
+            reactions: [
+              {
+                emoji: "💪",
+                count: 2,
+                reactedByMe: true,
+                users: [
+                  {
+                    userId: "friend-1",
+                    firstName: "Alex",
+                    lastName: null,
+                    username: "alex",
+                    avatarUrl: null,
+                  },
+                  {
+                    userId: mockSession.user.id,
+                    firstName: "Vince",
+                    lastName: null,
+                    username: "vince",
+                    avatarUrl: null,
+                  },
+                ],
+              },
+            ],
           },
         }),
       });

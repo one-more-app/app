@@ -431,6 +431,22 @@ describe('WorkoutSessionsService', () => {
         createdAt: new Date('2026-07-13T10:01:00Z'),
       },
     ]);
+    profilesRepo.find.mockResolvedValue([
+      {
+        userId: 'viewer-1',
+        firstName: 'Alice',
+        lastName: null,
+        username: 'alice',
+        avatarUrl: null,
+      },
+      {
+        userId: 'owner-1',
+        firstName: 'Bob',
+        lastName: null,
+        username: 'bob',
+        avatarUrl: null,
+      },
+    ]);
 
     const result = await service.toggleReaction(
       'viewer-1',
@@ -442,7 +458,27 @@ describe('WorkoutSessionsService', () => {
 
     expect(result.added).toBe(true);
     expect(result.target.reactions).toEqual([
-      { emoji: '🔥', count: 2, reactedByMe: true },
+      {
+        emoji: '🔥',
+        count: 2,
+        reactedByMe: true,
+        users: [
+          {
+            userId: 'viewer-1',
+            firstName: 'Alice',
+            lastName: null,
+            username: 'alice',
+            avatarUrl: null,
+          },
+          {
+            userId: 'owner-1',
+            firstName: 'Bob',
+            lastName: null,
+            username: 'bob',
+            avatarUrl: null,
+          },
+        ],
+      },
     ]);
   });
 
@@ -456,6 +492,7 @@ describe('WorkoutSessionsService', () => {
       trackedExerciseId: null,
     });
     reactionsRepo.find.mockResolvedValue([]);
+    profilesRepo.find.mockResolvedValue([]);
 
     const result = await service.toggleReaction(
       'viewer-1',
@@ -543,6 +580,22 @@ describe('WorkoutSessionsService', () => {
         createdAt: new Date('2026-07-13T10:01:00Z'),
       },
     ]);
+    profilesRepo.find.mockResolvedValue([
+      {
+        userId: 'viewer-1',
+        firstName: 'Alice',
+        lastName: null,
+        username: 'alice',
+        avatarUrl: null,
+      },
+      {
+        userId: 'owner-1',
+        firstName: 'Bob',
+        lastName: null,
+        username: 'bob',
+        avatarUrl: null,
+      },
+    ]);
 
     const result = await service.getSession(
       'viewer-1',
@@ -551,10 +604,36 @@ describe('WorkoutSessionsService', () => {
     );
 
     expect(result.reactions).toEqual([
-      { emoji: '🔥', count: 1, reactedByMe: true },
+      {
+        emoji: '🔥',
+        count: 1,
+        reactedByMe: true,
+        users: [
+          {
+            userId: 'viewer-1',
+            firstName: 'Alice',
+            lastName: null,
+            username: 'alice',
+            avatarUrl: null,
+          },
+        ],
+      },
     ]);
     expect(result.reactionsByExerciseId['te-1']).toEqual([
-      { emoji: '💪', count: 1, reactedByMe: false },
+      {
+        emoji: '💪',
+        count: 1,
+        reactedByMe: false,
+        users: [
+          {
+            userId: 'owner-1',
+            firstName: 'Bob',
+            lastName: null,
+            username: 'bob',
+            avatarUrl: null,
+          },
+        ],
+      },
     ]);
   });
 });

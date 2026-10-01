@@ -44,6 +44,7 @@ export type ReactionBubbleDto = {
   emoji: string;
   count: number;
   reactedByMe: boolean;
+  users: SessionCommentAuthorDto[];
 };
 
 export type SessionReactionTargetDto = {
@@ -183,14 +184,20 @@ export class WorkoutSessionsService {
   private aggregateReactionRows(
     rows: SessionReactionEntity[],
     viewerId: string,
+    authors: Map<string, UserProfileEntity | null>,
   ): ReactionBubbleDto[] {
-    const byEmoji = new Map<string, { count: number; reactedByMe: boolean }>();
+    const byEmoji = new Map<
+      string,
+      { count: number; reactedByMe: boolean; userIds: string[] }
+    >();
     for (const row of rows) {
       const current = byEmoji.get(row.emoji) ?? {
         count: 0,
         reactedByMe: false,
+        userIds: [],
       };
       current.count += 1;
+      current.userIds.push(row.authorUserId);
       if (row.authorUserId === viewerId) current.reactedByMe = true;
       byEmoji.set(row.emoji, current);
     }
@@ -199,6 +206,9 @@ export class WorkoutSessionsService {
         emoji,
         count: value.count,
         reactedByMe: value.reactedByMe,
+        users: value.userIds.map((userId) =>
+          this.mapAuthor(authors.get(userId) ?? null, userId),
+        ),
       }))
       .sort((a, b) => b.count - a.count || a.emoji.localeCompare(b.emoji));
   }
@@ -215,9 +225,14 @@ export class WorkoutSessionsService {
       where: { ownerUserId, sessionDate: date },
       order: { createdAt: 'ASC' },
     });
+    const authors = await this.loadAuthors(rows.map((row) => row.authorUserId));
 
     const sessionRows = rows.filter((row) => row.targetType === 'session');
-    const reactions = this.aggregateReactionRows(sessionRows, viewerId);
+    const reactions = this.aggregateReactionRows(
+      sessionRows,
+      viewerId,
+      authors,
+    );
 
     const reactionsByExerciseId: Record<string, ReactionBubbleDto[]> = {};
     const exerciseRows = rows.filter(
@@ -234,6 +249,7 @@ export class WorkoutSessionsService {
       reactionsByExerciseId[trackedExerciseId] = this.aggregateReactionRows(
         list,
         viewerId,
+        authors,
       );
     }
 
@@ -324,13 +340,16 @@ export class WorkoutSessionsService {
       },
       order: { createdAt: 'ASC' },
     });
+    const authors = await this.loadAuthors(
+      targetRows.map((row) => row.authorUserId),
+    );
 
     return {
       added,
       target: {
         targetType,
         trackedExerciseId: resolvedTrackedId,
-        reactions: this.aggregateReactionRows(targetRows, viewerId),
+        reactions: this.aggregateReactionRows(targetRows, viewerId, authors),
       },
     };
   }

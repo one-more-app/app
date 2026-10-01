@@ -272,6 +272,7 @@ export default function SessionPage() {
                                         entryInsights={entryInsights}
                                         readOnly={!isOwner}
                                         reactionsEnabled
+                                        currentUserId={currentUserId}
                                         reactionsByExerciseId={
                                             session?.reactionsByExerciseId ?? {}
                                         }

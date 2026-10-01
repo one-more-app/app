@@ -14,10 +14,19 @@ export type SessionReactionEmoji = (typeof SESSION_REACTION_EMOJIS)[number];
 
 export type SessionReactionTargetType = "session" | "exercise";
 
+export type SessionCommentAuthor = {
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+};
+
 export type ReactionBubble = {
   emoji: string;
   count: number;
   reactedByMe: boolean;
+  users: SessionCommentAuthor[];
 };
 
 export type SessionReactionTarget = {
@@ -51,14 +60,6 @@ export type WorkoutSession = {
   setCount: number;
   reactions: ReactionBubble[];
   reactionsByExerciseId: Record<string, ReactionBubble[]>;
-};
-
-export type SessionCommentAuthor = {
-  userId: string;
-  firstName: string | null;
-  lastName: string | null;
-  username: string | null;
-  avatarUrl: string | null;
 };
 
 export type SessionComment = {

@@ -28,6 +28,7 @@ type HistoryDaySectionProps = {
     reactionsByExerciseId?: Record<string, ReactionBubble[]>
     onToggleExerciseReaction?: (trackedExerciseId: string, emoji: string) => void
     reactionsEnabled?: boolean
+    currentUserId?: string | null
 }
 
 export function HistoryDaySection({
@@ -48,6 +49,7 @@ export function HistoryDaySection({
     reactionsByExerciseId,
     onToggleExerciseReaction,
     reactionsEnabled = false,
+    currentUserId = null,
 }: HistoryDaySectionProps) {
     const entriesForTiming = useMemo(
         () =>
@@ -125,6 +127,7 @@ export function HistoryDaySection({
                             surface={surface}
                             reactionsEnabled={reactionsEnabled}
                             reactions={reactionsByExerciseId?.[trackedExerciseId] ?? []}
+                            currentUserId={currentUserId}
                             onToggleReaction={
                                 onToggleExerciseReaction
                                     ? (emoji) =>
