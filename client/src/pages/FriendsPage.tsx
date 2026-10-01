@@ -12,7 +12,7 @@ import { useUnreadMessagesCount } from "@/hooks/use-mark-conversation-read";
 import { CONVERSATIONS_SWR_KEY } from "@/hooks/use-realtime";
 import { fetchFriendsList } from "@/lib/social-api";
 import { UI } from "@/lib/translations";
-import { UserPlus } from "lucide-react";
+import { Trophy, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import useSWR, { useSWRConfig } from "swr";
@@ -45,6 +45,12 @@ export default function FriendsPage() {
                     <Link to="/friends/search">
                         <UserPlus className="size-4" />
                         {UI.friendsAddTitle}
+                    </Link>
+                </Button>
+                <Button variant="secondary" className="w-full" asChild>
+                    <Link to="/ranking">
+                        <Trophy className="size-4" />
+                        {UI.rankingTitle}
                     </Link>
                 </Button>
                 <FriendsTabToggle

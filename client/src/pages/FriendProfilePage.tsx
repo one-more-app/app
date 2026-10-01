@@ -3,13 +3,16 @@ import { ProfileView } from "@/components/profile/ProfileView";
 import { Button } from "@/components/ui/button";
 import { useFriendsPresence } from "@/hooks/use-friends-presence";
 import { getOrCreateConversation } from "@/lib/messaging-api";
+import { fetchFriendsRanking } from "@/lib/ranking-api";
+import { getCurrentRankingMonth } from "@/lib/ranking-month";
 import {
   fetchFriendProfile,
   removeFriend,
 } from "@/lib/social-api";
 import { getProfileDisplayName } from "@/lib/profile-display";
 import { UI } from "@/lib/translations";
-import { MessageCircle, UserMinus } from "lucide-react";
+import { MessageCircle, Trophy, UserMinus } from "lucide-react";
+import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -22,6 +25,22 @@ export default function FriendProfilePage() {
     userId ? ["friend-profile", userId] : null,
     () => fetchFriendProfile(userId!),
   );
+
+  const currentMonth = getCurrentRankingMonth();
+  const { data: friendsRanking } = useSWR(
+    userId ? ["ranking-friends", currentMonth] : null,
+    ([, month]) => fetchFriendsRanking(month),
+  );
+
+  const friendRankLabel = useMemo(() => {
+    if (!userId || !friendsRanking?.entries.length) return null;
+    const entry = friendsRanking.entries.find((e) => e.userId === userId);
+    if (!entry) return null;
+    const total = friendsRanking.entries.length;
+    return UI.rankingFriendRank
+      .replace("{rank}", String(entry.rank))
+      .replace("{total}", String(total));
+  }, [userId, friendsRanking]);
 
   const presence = userId ? byUserId.get(userId) : undefined;
   const pageTitle = data?.profile
@@ -54,7 +73,14 @@ export default function FriendProfilePage() {
   };
 
   const headerActions = userId ? (
-    <div className="flex gap-2">
+    <div className="space-y-3">
+      {friendRankLabel ? (
+        <p className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
+          <Trophy className="size-4 shrink-0" aria-hidden />
+          <span>{friendRankLabel}</span>
+        </p>
+      ) : null}
+      <div className="flex gap-2">
       <FriendTrainingBell friendId={userId} />
       <Button variant="secondary" className="flex-1" onClick={handleMessage}>
         <MessageCircle className="size-4" />
@@ -64,6 +90,7 @@ export default function FriendProfilePage() {
         <UserMinus className="size-4" />
         {UI.friendRemove}
       </Button>
+      </div>
     </div>
   ) : null;
 

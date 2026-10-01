@@ -2,6 +2,8 @@ import { GymOnboardingPermissionRow } from "@/components/onboarding/GymOnboardin
 import { GymChangeDialog } from "@/components/settings/GymChangeDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useMutateUserGym, useUserGymData } from "@/hooks/use-user-gym-data";
 import { subscribeAppStateChange } from "@/lib/app-state-listener";
 import {
@@ -13,7 +15,7 @@ import {
     registerGymGeofenceIfPermitted,
     unregisterGymGeofence,
 } from "@/lib/gym-geofence";
-import { deleteUserGym, upsertUserGym } from "@/lib/gyms-api";
+import { deleteUserGym, setGymRankingOptIn, upsertUserGym } from "@/lib/gyms-api";
 import { isGymPermissionsDevWebPreview } from "@/lib/onboarding-gym-dev";
 import {
     isPushPermissionGranted,
@@ -24,7 +26,7 @@ import { UI } from "@/lib/translations";
 import { Capacitor } from "@capacitor/core";
 import { Bell, Loader2, MapPin } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 export function GymSettingsCard() {
@@ -40,6 +42,7 @@ export function GymSettingsCard() {
     const [locationOn, setLocationOn] = useState(false);
     const [busyNotifications, setBusyNotifications] = useState(false);
     const [busyLocation, setBusyLocation] = useState(false);
+    const [busyRankingOptIn, setBusyRankingOptIn] = useState(false);
     const [geofenceNeedsSettings, setGeofenceNeedsSettings] = useState(false);
     const wasBackgroundedRef = useRef(false);
 
@@ -203,6 +206,19 @@ export function GymSettingsCard() {
         }
     };
 
+    const handleRankingOptInToggle = async (checked: boolean) => {
+        if (busyRankingOptIn) return;
+        setBusyRankingOptIn(true);
+        try {
+            await setGymRankingOptIn(checked);
+            await mutateUserGym();
+        } catch {
+            toast.error(UI.gymSettingsUpdateError);
+        } finally {
+            setBusyRankingOptIn(false);
+        }
+    };
+
     const handleRemove = async () => {
         if (!window.confirm(UI.gymSettingsRemoveConfirm)) return;
         try {
@@ -271,6 +287,30 @@ export function GymSettingsCard() {
                         </Button>
                     ) : null}
                 </div>
+
+                {gym ? (
+                    <div className="space-y-2 border-t border-border/60 pt-4">
+                        <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 px-3 py-3">
+                            <Label
+                                htmlFor="gym-ranking-opt-in"
+                                className="min-w-0 flex-1 text-sm font-normal leading-snug"
+                            >
+                                {UI.gymSettingsRankingOptIn}
+                            </Label>
+                            <Switch
+                                id="gym-ranking-opt-in"
+                                checked={gym.rankingOptIn}
+                                disabled={busyRankingOptIn}
+                                onCheckedChange={(checked) =>
+                                    void handleRankingOptInToggle(checked)
+                                }
+                            />
+                        </div>
+                        <Button variant="link" className="h-auto p-0" asChild>
+                            <Link to="/ranking?tab=gym">{UI.gymSettingsRankingView}</Link>
+                        </Button>
+                    </div>
+                ) : null}
 
                 {showRemindersBlock ? (
                     <div className="space-y-2 border-t border-border/60 pt-4">
