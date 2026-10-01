@@ -205,6 +205,22 @@ export async function mockExerciseWorkflowApi(
     await route.fallback();
   });
 
+  await page.route("**/social/exercises/**/friends-leaderboard**", async (route) => {
+    if (route.request().method() !== "GET") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        exerciseId: e2eCatalogExercise.id,
+        entries: [],
+        emptyReason: "no_friends_on_exercise",
+      }),
+    });
+  });
+
   await page.route("**/performance-entries**", async (route) => {
     const method = route.request().method();
     const url = route.request().url();

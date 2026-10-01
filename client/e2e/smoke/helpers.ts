@@ -16,6 +16,7 @@ export const TOUR_COMPLETE_KEYS = [
   "one-more-exercise-detail-tour-complete-v1",
   "one-more-rest-counter-tour-complete-v1",
   "one-more-home-tour-complete-v1",
+  "one-more-ranking-tour-complete-v1",
 ] as const;
 
 export const mockGymPlace = {

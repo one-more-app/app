@@ -164,8 +164,9 @@ export function FriendsExerciseLeaderboard({
     () => fetchFriendsExerciseLeaderboard(catalogExerciseId!),
   );
 
-  const hasComparableFriends =
-    !!data && data.entries.some((entry) => !entry.isMe);
+  const entries = Array.isArray(data?.entries) ? data.entries : null;
+  const leaderboardError = Boolean(error) || (data != null && entries == null);
+  const hasComparableFriends = entries?.some((entry) => !entry.isMe) ?? false;
 
   return (
     <Card
@@ -185,7 +186,7 @@ export function FriendsExerciseLeaderboard({
           />
         ) : isLoading && !data ? (
           <p className="py-4 text-center text-sm text-muted-foreground">…</p>
-        ) : error ? (
+        ) : leaderboardError ? (
           <div className="flex flex-col items-center gap-2 py-4">
             <p className="text-sm text-muted-foreground">
               {UI.friendsExerciseLeaderboardError}
@@ -200,9 +201,9 @@ export function FriendsExerciseLeaderboard({
           </div>
         ) : !hasComparableFriends ? (
           <div className="flex flex-col gap-3">
-            {data?.entries.length ? (
+            {entries?.length ? (
               <ul className="space-y-2">
-                {data.entries.map((entry) => (
+                {(entries ?? []).map((entry) => (
                   <li key={entry.userId}>
                     <LeaderboardRow
                       entry={entry}
@@ -226,7 +227,7 @@ export function FriendsExerciseLeaderboard({
           </div>
         ) : (
           <ul className="space-y-2">
-            {data.entries.map((entry) => (
+            {(entries ?? []).map((entry) => (
               <li key={entry.userId}>
                 <LeaderboardRow
                   entry={entry}
