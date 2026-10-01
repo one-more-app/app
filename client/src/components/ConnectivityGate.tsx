@@ -1,6 +1,7 @@
 import { SplashScreen } from "@/components/SplashScreen";
 import { SPLASH_MIN_DURATION_MS } from "@/components/OneMoreLogoMark";
 import { useConnectivity } from "@/hooks/use-connectivity";
+import { ForceUpdatePage } from "@/pages/ForceUpdatePage";
 import { MaintenancePage } from "@/pages/MaintenancePage";
 import { OfflinePage } from "@/pages/OfflinePage";
 import { useEffect, useState, type ReactNode } from "react";
@@ -40,6 +41,10 @@ export function ConnectivityGate({ children }: { children: ReactNode }) {
 
   if (status === "maintenance") {
     return <MaintenancePage />;
+  }
+
+  if (status === "update_required") {
+    return <ForceUpdatePage />;
   }
 
   return <>{children}</>;

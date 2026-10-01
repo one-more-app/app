@@ -12,6 +12,11 @@ type ConnectivityStatusLayoutProps = {
     hint: string;
     /** Teinte discrète de l'icône (accent maintenance, muted offline). */
     iconTone?: "muted" | "accent";
+    primaryAction?: {
+        label: string;
+        icon?: LucideIcon;
+        onClick: () => void | Promise<void>;
+    };
 };
 
 export function ConnectivityStatusLayout({
@@ -19,6 +24,7 @@ export function ConnectivityStatusLayout({
     title,
     hint,
     iconTone = "muted",
+    primaryAction,
 }: ConnectivityStatusLayoutProps) {
     const { retry } = useConnectivity();
     const [retrying, setRetrying] = useState(false);
@@ -54,18 +60,34 @@ export function ConnectivityStatusLayout({
                     <p className="text-sm leading-relaxed text-muted-foreground">{hint}</p>
                 </div>
 
-                <Button
-                    type="button"
-                    className="min-w-40"
-                    disabled={retrying}
-                    onClick={() => {
-                        setRetrying(true);
-                        void retry().finally(() => setRetrying(false));
-                    }}
-                >
-                    <RefreshCw className={cn("size-4", retrying && "animate-spin")} aria-hidden />
-                    {retrying ? UI.loading : UI.connectivityRetry}
-                </Button>
+                <div className="flex flex-col items-center gap-3">
+                    {primaryAction ? (
+                        <Button
+                            type="button"
+                            className="min-w-40"
+                            onClick={() => {
+                                void primaryAction.onClick();
+                            }}
+                        >
+                            {primaryAction.icon ? (
+                                <primaryAction.icon className="size-4" aria-hidden />
+                            ) : null}
+                            {primaryAction.label}
+                        </Button>
+                    ) : null}
+                    <Button
+                        type="button"
+                        className="min-w-40"
+                        disabled={retrying}
+                        onClick={() => {
+                            setRetrying(true);
+                            void retry().finally(() => setRetrying(false));
+                        }}
+                    >
+                        <RefreshCw className={cn("size-4", retrying && "animate-spin")} aria-hidden />
+                        {retrying ? UI.loading : UI.connectivityRetry}
+                    </Button>
+                </div>
             </div>
         </div>
     );
