@@ -1,12 +1,12 @@
+import { ProRewardVisual } from "@/components/referral/ProRewardVisual";
 import { useAccess } from "@/hooks/use-access";
 import { useReferralDrawer } from "@/hooks/use-referral-drawer";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
-import { ChevronRight, Crown } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 const TSHIRT_IMAGES = {
     dark: "/images/rewards/tshirt-black.png",
-    light: "/images/rewards/tshirt-white.png",
 } as const;
 
 export function ReferralTshirtBanner({ className }: { className?: string }) {
@@ -50,8 +50,8 @@ export function ReferralTshirtBanner({ className }: { className?: string }) {
                             />
                         </div>
                     ) : (
-                        <div className="flex w-16 shrink-0 items-center justify-center">
-                            <Crown className="size-8 text-accent-foreground" />
+                        <div className="shrink-0">
+                            <ProRewardVisual compact />
                         </div>
                     )}
 

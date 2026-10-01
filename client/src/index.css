@@ -381,6 +381,12 @@
   .league-promo-nudge-anim {
     animation: none !important;
   }
+
+  .referral-pro-emerge-anim {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @keyframes league-promo-nudge {
@@ -399,6 +405,26 @@
 
 .league-promo-nudge-anim {
   animation: league-promo-nudge 0.65s ease-in-out 3 alternate;
+}
+
+/* Aligné sur league-promo-trophy : ease-out court + overshoot soft */
+@keyframes referral-pro-emerge {
+  0% {
+    transform: scale(0.85) rotate(-4deg);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(1.06) rotate(2deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.referral-pro-emerge-anim {
+  animation: referral-pro-emerge 0.7s ease-out both;
 }
 
 @keyframes streak-flame-pulse {

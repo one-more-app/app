@@ -450,6 +450,9 @@ export const UI = {
     "Bravo ! Tu as débloqué ton t-shirt One More grâce à tes parrainages.",
   referralProEarned:
     "Bravo ! 1 mois de One More Pro t’a été offert grâce à tes parrainages.",
+  referralProVisualTitle: "1 mois offert",
+  referralProVisualSubtitle: "Exercices illimités · toutes les features Pro",
+  referralProVisualAlt: "Récompense One More Pro",
   referralTshirtProgress:
     "Encore {count} parrainage(s) pour débloquer ton t-shirt One More.",
   referralTshirtHint: "5 parrainages = t-shirt One More offert.",

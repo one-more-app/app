@@ -1,5 +1,6 @@
 import { TshirtRewardVisual } from "@/components/profile/TshirtRewardVisual";
 import { BattlePassNode } from "@/components/referral/BattlePassNode";
+import { ProRewardVisual } from "@/components/referral/ProRewardVisual";
 import { TshirtDeliveryStepper } from "@/components/referral/TshirtDeliveryStepper";
 import { Button } from "@/components/ui/button";
 import type { TshirtRewardClaim } from "@/lib/rewards-api";
@@ -9,7 +10,7 @@ import {
     EXERCISE_BONUS_PER_REFERRAL,
     REFERRALS_FOR_TSHIRT_REWARD,
 } from "@one-more/shared/access-config";
-import { Crown, Gift, Users } from "lucide-react";
+import { Gift, Users } from "lucide-react";
 
 type ReferralBattlePassProps = {
     referralCount: number;
@@ -76,15 +77,7 @@ export function ReferralBattlePass({
             {showTshirtUi ? (
                 <TshirtRewardVisual highlight={tshirtRewardEligible && !claim} />
             ) : (
-                <div className="flex justify-center py-4">
-                    <div
-                        className={`flex size-20 items-center justify-center rounded-full bg-accent/15 ${
-                            rewardUnlocked ? "ring-2 ring-accent" : ""
-                        }`}
-                    >
-                        <Crown className="size-10 text-accent" />
-                    </div>
-                </div>
+                <ProRewardVisual highlight={rewardUnlocked} />
             )}
 
             <div className="space-y-3 pt-1">
@@ -116,13 +109,7 @@ export function ReferralBattlePass({
                                     : UI.referralBattlePassReward
                             }
                             status={rewardStatus}
-                            icon={
-                                showTshirtUi ? (
-                                    <Gift className="size-3.5" />
-                                ) : (
-                                    <Crown className="size-3.5" />
-                                )
-                            }
+                            icon={<Gift className="size-3.5" />}
                             highlightSublabel
                         />
                     </div>
