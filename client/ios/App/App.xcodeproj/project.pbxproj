@@ -22,6 +22,7 @@
 		FE7AD26B2FD8020A00DEC54F /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = FE7AD26A2FD8020A00DEC54F /* FirebaseMessaging */; };
 		FE7AD26D2FD8020A00DEC54F /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = FE7AD26C2FD8020A00DEC54F /* FirebaseCore */; };
 		FED841512FF7F6CC001573E5 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FED841502FF7F6CC001573E5 /* StoreKit.framework */; };
+		FEF7D77830696AA1000BAC96 /* tst_rc.storekit in Resources */ = {isa = PBXBuildFile; fileRef = FEF7D77730696AA1000BAC96 /* tst_rc.storekit */; };
 		RTMR1001A1B2C3D4E5F60001 /* OneMoreRestTimer.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = RTMR1000A1B2C3D4E5F60001 /* OneMoreRestTimer.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		RTMR1002A1B2C3D4E5F60002 /* OneMoreRestTimerBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = RTMR1000A1B2C3D4E5F60002 /* OneMoreRestTimerBundle.swift */; };
 		RTMR1002A1B2C3D4E5F60003 /* OneMoreRestTimerLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = RTMR1000A1B2C3D4E5F60003 /* OneMoreRestTimerLiveActivity.swift */; };
@@ -70,8 +71,8 @@
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
-		FED8414F2FF7E657001573E5 /* test_storekit.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = test_storekit.storekit; sourceTree = "<group>"; };
 		FED841502FF7F6CC001573E5 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		FEF7D77730696AA1000BAC96 /* tst_rc.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = tst_rc.storekit; sourceTree = "<group>"; };
 		RTMR1000A1B2C3D4E5F60001 /* OneMoreRestTimer.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OneMoreRestTimer.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		RTMR1000A1B2C3D4E5F60002 /* OneMoreRestTimerBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OneMoreRestTimerBundle.swift; sourceTree = "<group>"; };
 		RTMR1000A1B2C3D4E5F60003 /* OneMoreRestTimerLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OneMoreRestTimerLiveActivity.swift; sourceTree = "<group>"; };
@@ -117,7 +118,7 @@
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
-				FED8414F2FF7E657001573E5 /* test_storekit.storekit */,
+				FEF7D77730696AA1000BAC96 /* tst_rc.storekit */,
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
 				RTMR1005A1B2C3D4E5F60001 /* OneMoreRestTimer */,
@@ -269,6 +270,7 @@
 				504EC30F1FED79650016851F /* Assets.xcassets in Resources */,
 				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
+				FEF7D77830696AA1000BAC96 /* tst_rc.storekit in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
 				A1B2C3D41FED79650016851F /* GoogleService-Info.plist in Resources */,
 				A2B3C4D61FED79650016851F /* PrivacyInfo.xcprivacy in Resources */,
@@ -502,7 +504,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 7N362A27Z4;
 				FACEBOOK_APP_ID = 1761494881722245;
 				FACEBOOK_CLIENT_TOKEN = a40926d083aa63abfc0edef9d084f448;
@@ -535,7 +537,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = App/AppRelease.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 7N362A27Z4;
 				FACEBOOK_APP_ID = 1761494881722245;
 				FACEBOOK_CLIENT_TOKEN = a40926d083aa63abfc0edef9d084f448;

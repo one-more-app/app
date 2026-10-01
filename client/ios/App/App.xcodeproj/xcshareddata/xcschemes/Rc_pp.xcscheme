@@ -52,7 +52,7 @@
          </BuildableReference>
       </BuildableProductRunnable>
       <StoreKitConfigurationFileReference
-         identifier = "../test_storekit.storekit">
+         identifier = "../tst_rc.storekit">
       </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
