@@ -18,6 +18,8 @@ type ConnectivityContextValue = {
   reportApiUnreachable: () => void;
 };
 
+type ProbeResult = "ok" | "offline" | "maintenance";
+
 const ConnectivityContext = createContext<ConnectivityContextValue | null>(null);
 
 const PROBE_TIMEOUT_MS = 5_000;
@@ -27,7 +29,7 @@ function isBrowserOnline(): boolean {
   return typeof navigator === "undefined" ? true : navigator.onLine;
 }
 
-async function probeHealth(): Promise<boolean> {
+async function probeHealth(): Promise<ProbeResult> {
   const baseUrl = getApiBaseUrl();
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
@@ -37,17 +39,19 @@ async function probeHealth(): Promise<boolean> {
       signal: controller.signal,
       cache: "no-store",
     });
-    if (!res.ok) return false;
+    // Réponse reçue = réseau OK. Un statut/body mauvais ⇒ maintenance API.
+    if (!res.ok) return "maintenance";
     const contentType = res.headers.get("content-type") ?? "";
     if (contentType.includes("application/json")) {
       const body = (await res.json().catch(() => null)) as { status?: unknown } | null;
       if (body && typeof body === "object" && body.status != null && body.status !== "ok") {
-        return false;
+        return "maintenance";
       }
     }
-    return true;
+    return "ok";
   } catch {
-    return false;
+    // Timeout / DNS / Failed to fetch = pas de joignabilité réelle.
+    return "offline";
   } finally {
     window.clearTimeout(timer);
   }
@@ -60,6 +64,8 @@ export function ConnectivityProvider({ children }: { children: ReactNode }) {
   const probeInFlight = useRef<Promise<void> | null>(null);
 
   const runProbe = useCallback(async () => {
+    // navigator.onLine=false est un signal fiable « offline ».
+    // navigator.onLine=true ne l'est pas : on probe toujours l'API.
     if (!isBrowserOnline()) {
       setStatus("offline");
       return;
@@ -71,17 +77,19 @@ export function ConnectivityProvider({ children }: { children: ReactNode }) {
     }
 
     setStatus((previous) => {
-      if (previous === "ok" || previous === "maintenance") return previous;
+      if (previous === "ok" || previous === "maintenance" || previous === "offline") {
+        return previous;
+      }
       return "checking";
     });
 
     probeInFlight.current = (async () => {
-      const ok = await probeHealth();
+      const result = await probeHealth();
       if (!isBrowserOnline()) {
         setStatus("offline");
         return;
       }
-      setStatus(ok ? "ok" : "maintenance");
+      setStatus(result);
     })();
 
     try {
@@ -92,14 +100,13 @@ export function ConnectivityProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const reportApiUnreachable = useCallback(() => {
-    if (!isBrowserOnline()) {
-      setStatus("offline");
-      return;
-    }
+    // Échec réseau immédiat → offline tout de suite, puis probe pour
+    // affiner (maintenance si l'API répond unhealthy).
     setStatus((previous) =>
-      previous === "ok" || previous === "checking" ? "maintenance" : previous,
+      previous === "ok" || previous === "checking" ? "offline" : previous,
     );
-  }, []);
+    void runProbe();
+  }, [runProbe]);
 
   const retry = useCallback(async () => {
     await runProbe();
@@ -119,12 +126,19 @@ export function ConnectivityProvider({ children }: { children: ReactNode }) {
     const onOffline = () => {
       setStatus("offline");
     };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void runProbe();
+      }
+    };
 
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [runProbe]);
 

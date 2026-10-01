@@ -53,7 +53,6 @@ export function setOnApiUnreachable(listener: ApiUnreachableListener | null): vo
 }
 
 function notifyApiUnreachable(): void {
-  if (typeof navigator !== "undefined" && !navigator.onLine) return;
   onApiUnreachable?.();
 }
 
@@ -135,6 +134,7 @@ export async function refreshAccessToken(): Promise<StoredAuthSession> {
         AUTH_REFRESH_TIMEOUT_MS,
       );
     } catch (error) {
+      notifyApiUnreachable();
       if (isAbortError(error)) {
         throw new ApiError(
           `Délai dépassé en joignant l'API (${baseUrl}/auth/refresh).`,
@@ -142,7 +142,6 @@ export async function refreshAccessToken(): Promise<StoredAuthSession> {
           null,
         );
       }
-      notifyApiUnreachable();
       const reason = error instanceof Error ? error.message : String(error);
       throw new ApiError(
         `Impossible de joindre l'API (${baseUrl}). Vérifie le déploiement backend et la route /auth/refresh. ${reason}`,
@@ -235,6 +234,7 @@ export async function apiFetch<T>(
       API_FETCH_TIMEOUT_MS,
     );
   } catch (error) {
+    notifyApiUnreachable();
     if (isAbortError(error)) {
       throw new ApiError(
         `Délai dépassé en joignant l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}.`,
@@ -242,7 +242,6 @@ export async function apiFetch<T>(
         null,
       );
     }
-    notifyApiUnreachable();
     const reason = error instanceof Error ? error.message : String(error);
     throw new ApiError(
       `Impossible de joindre l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}. ${reason}`,
@@ -277,6 +276,7 @@ export async function apiFetch<T>(
           API_FETCH_TIMEOUT_MS,
         );
       } catch (error) {
+        notifyApiUnreachable();
         if (isAbortError(error)) {
           throw new ApiError(
             `Délai dépassé en joignant l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}.`,
@@ -284,7 +284,6 @@ export async function apiFetch<T>(
             null,
           );
         }
-        notifyApiUnreachable();
         const reason = error instanceof Error ? error.message : String(error);
         throw new ApiError(
           `Impossible de joindre l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}. ${reason}`,
@@ -350,6 +349,7 @@ export async function apiFetchFormData<T>(
       API_FETCH_TIMEOUT_MS,
     );
   } catch (error) {
+    notifyApiUnreachable();
     if (isAbortError(error)) {
       throw new ApiError(
         `Délai dépassé en joignant l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}.`,
@@ -357,7 +357,6 @@ export async function apiFetchFormData<T>(
         null,
       );
     }
-    notifyApiUnreachable();
     const reason = error instanceof Error ? error.message : String(error);
     throw new ApiError(
       `Impossible de joindre l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}. ${reason}`,
@@ -387,6 +386,7 @@ export async function apiFetchFormData<T>(
           API_FETCH_TIMEOUT_MS,
         );
       } catch (error) {
+        notifyApiUnreachable();
         if (isAbortError(error)) {
           throw new ApiError(
             `Délai dépassé en joignant l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}.`,
@@ -394,7 +394,6 @@ export async function apiFetchFormData<T>(
             null,
           );
         }
-        notifyApiUnreachable();
         const reason = error instanceof Error ? error.message : String(error);
         throw new ApiError(
           `Impossible de joindre l'API (${baseUrl}). Vérifie le déploiement backend et la route ${path}. ${reason}`,
