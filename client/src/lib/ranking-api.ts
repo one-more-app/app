@@ -13,6 +13,8 @@ export type RankingEntryDto = {
 export type RankingListResponse = {
   month: string;
   entries: RankingEntryDto[];
+  /** Nombre total de participants (avant plafonnement de la liste). */
+  total?: number;
   me: { userId: string; xp: number; rank: number; globalRank: string | null };
   meta?: {
     rankingOptIn?: boolean;
@@ -33,9 +35,11 @@ export type RankingTab = "friends" | "gym";
 
 export async function fetchFriendsRanking(
   month: string,
+  options: { lite?: boolean } = {},
 ): Promise<RankingListResponse> {
+  const lite = options.lite ? "&lite=1" : "";
   return apiFetch<RankingListResponse>(
-    `/ranking/friends?month=${encodeURIComponent(month)}`,
+    `/ranking/friends?month=${encodeURIComponent(month)}${lite}`,
   );
 }
 

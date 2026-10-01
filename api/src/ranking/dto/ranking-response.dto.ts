@@ -10,6 +10,8 @@ export type RankingEntryDto = {
 export type RankingListResponse = {
   month: string;
   entries: RankingEntryDto[];
+  /** Nombre total de participants (avant plafonnement de la liste). */
+  total?: number;
   me: { userId: string; xp: number; rank: number; globalRank: string | null };
   meta?: {
     rankingOptIn?: boolean;

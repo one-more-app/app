@@ -28,15 +28,15 @@ export default function FriendProfilePage() {
 
   const currentMonth = getCurrentRankingMonth();
   const { data: friendsRanking } = useSWR(
-    userId ? ["ranking-friends", currentMonth] : null,
-    ([, month]) => fetchFriendsRanking(month),
+    userId ? ["ranking-friends-lite", currentMonth] : null,
+    ([, month]) => fetchFriendsRanking(month, { lite: true }),
   );
 
   const friendRankLabel = useMemo(() => {
     if (!userId || !friendsRanking?.entries.length) return null;
     const entry = friendsRanking.entries.find((e) => e.userId === userId);
     if (!entry) return null;
-    const total = friendsRanking.entries.length;
+    const total = friendsRanking.total ?? friendsRanking.entries.length;
     return UI.rankingFriendRank
       .replace("{rank}", String(entry.rank))
       .replace("{total}", String(total));

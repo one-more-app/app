@@ -17,7 +17,10 @@ function currentUtcMonth(): string {
   return `${now.getUTCFullYear()}-${m}`;
 }
 
-function resolveMonth(month: string | undefined): string {
+export function resolveMonth(month: unknown): string {
+  if (month !== undefined && typeof month !== 'string') {
+    throw new BadRequestException('Paramètre month invalide (YYYY-MM).');
+  }
   const value = month?.trim() || currentUtcMonth();
   try {
     parseYearMonth(value);
@@ -36,10 +39,12 @@ export class RankingController {
   async friends(
     @Req() req: { user: { sub: string } },
     @Query('month') month?: string,
+    @Query('lite') lite?: string,
   ) {
     return await this.rankingService.listFriendsRanking(
       req.user.sub,
       resolveMonth(month),
+      { lite: lite === '1' || lite === 'true' },
     );
   }
 

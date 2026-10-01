@@ -108,6 +108,49 @@ describe('RankingService', () => {
     });
   });
 
+  describe('friends options', () => {
+    it('skips leagueService when lite (withGlobalRank false)', async () => {
+      friendshipsRepo.find.mockResolvedValue([accepted('me', 'f1')]);
+      xpRepo.createQueryBuilder.mockReturnValue(
+        makeQb({
+          rawMany: [
+            { userId: 'f1', xp: '9', lastEarnedAt: new Date('2026-09-01') },
+          ],
+        }),
+      );
+
+      const res = await service.listFriendsRanking('me', '2026-09', {
+        lite: true,
+      });
+
+      expect(leagueService.buildSummary).not.toHaveBeenCalled();
+      expect(res.entries.every((e) => e.globalRank === null)).toBe(true);
+      expect(res.me.globalRank).toBeNull();
+      expect(res.total).toBe(2);
+    });
+
+    it('caps friends list at 100 but keeps accurate me rank and total', async () => {
+      const others = Array.from({ length: 120 }, (_, i) => `u${i}`);
+      friendshipsRepo.find.mockResolvedValue(
+        others.map((id) => accepted('me', id)),
+      );
+      const rows: RawRow[] = others.map((userId, i) => ({
+        userId,
+        xp: String(1000 - i),
+        lastEarnedAt: new Date('2026-09-01'),
+      }));
+      rows.push({ userId: 'me', xp: '1', lastEarnedAt: new Date('2026-09-01') });
+      xpRepo.createQueryBuilder.mockReturnValue(makeQb({ rawMany: rows }));
+
+      const res = await service.listFriendsRanking('me', '2026-09');
+
+      expect(res.entries).toHaveLength(100);
+      expect(res.entries.find((e) => e.userId === 'me')).toBeUndefined();
+      expect(res.me.rank).toBe(121);
+      expect(res.total).toBe(121);
+    });
+  });
+
   describe('listGymRanking', () => {
     it('returns empty entries with hasGym=false when viewer has no gym', async () => {
       userGymsRepo.findOne.mockResolvedValue(null);
@@ -226,6 +269,7 @@ describe('RankingService', () => {
         expect.stringContaining('COUNT(DISTINCT'),
         'activeDays',
       );
+      expect(leagueService.buildSummary).not.toHaveBeenCalled();
       expect(res).toEqual({
         month: '2026-09',
         xp: 20,

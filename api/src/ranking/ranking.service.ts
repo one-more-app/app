@@ -17,6 +17,15 @@ import { monthActivityDateBounds } from './lib/month-bounds.js';
 import { withRanks, type XpAggRow } from './lib/rank-entries.js';
 
 export const GYM_RANKING_MAX_ENTRIES = 100;
+/** Plafond de la liste amis (même soft cap que la salle). */
+export const FRIENDS_RANKING_MAX_ENTRIES = GYM_RANKING_MAX_ENTRIES;
+
+type BuildOptions = {
+  limit?: number;
+  listEntries?: boolean;
+  /** Enrichit avec le rang de ligue global (défaut true). */
+  withGlobalRank?: boolean;
+};
 
 type RankingComputation = {
   entries: RankingEntryDto[];
@@ -44,9 +53,12 @@ export class RankingService {
   async listFriendsRanking(
     viewerId: string,
     month: string,
+    options: { lite?: boolean } = {},
   ): Promise<RankingListResponse> {
-    const { entries, me } = await this.computeFriends(viewerId, month);
-    return { month, entries, me };
+    const { entries, me, total } = await this.computeFriends(viewerId, month, {
+      withGlobalRank: !options.lite,
+    });
+    return { month, entries, me, total };
   }
 
   async listGymRanking(
@@ -76,8 +88,15 @@ export class RankingService {
       .andWhere('e.activityDate <= :end', { end: bounds.end })
       .getRawOne<{ xp: string | null; activeDays: string | null }>();
 
-    const friends = await this.computeFriends(viewerId, month);
-    const gym = await this.computeGym(viewerId, month);
+    // Recap : rang + total uniquement, sans badges de ligue ni liste.
+    const friends = await this.computeFriends(viewerId, month, {
+      withGlobalRank: false,
+      listEntries: false,
+    });
+    const gym = await this.computeGym(viewerId, month, {
+      withGlobalRank: false,
+      listEntries: false,
+    });
 
     return {
       month,
@@ -93,17 +112,22 @@ export class RankingService {
   private async computeFriends(
     viewerId: string,
     month: string,
+    options: BuildOptions = {},
   ): Promise<RankingComputation> {
     const friendIds = await getAcceptedFriendIds(
       this.friendshipsRepo,
       viewerId,
     );
-    return this.buildForUserIds(viewerId, [viewerId, ...friendIds], month);
+    return this.buildForUserIds(viewerId, [viewerId, ...friendIds], month, {
+      limit: FRIENDS_RANKING_MAX_ENTRIES,
+      ...options,
+    });
   }
 
   private async computeGym(
     viewerId: string,
     month: string,
+    options: Pick<BuildOptions, 'withGlobalRank' | 'listEntries'> = {},
   ): Promise<{
     result: RankingComputation;
     meta: NonNullable<RankingListResponse['meta']>;
@@ -115,6 +139,7 @@ export class RankingService {
     if (!viewerGym || !viewerGym.rankingOptIn) {
       // Ne pas exposer la liste : seulement le score personnel.
       const result = await this.buildForUserIds(viewerId, [viewerId], month, {
+        ...options,
         listEntries: false,
       });
       return {
@@ -133,6 +158,7 @@ export class RankingService {
     const ids = [viewerId, ...members.map((m) => m.userId)];
     const result = await this.buildForUserIds(viewerId, ids, month, {
       limit: GYM_RANKING_MAX_ENTRIES,
+      ...options,
     });
     return {
       result,
@@ -148,7 +174,7 @@ export class RankingService {
     viewerId: string,
     candidateIds: string[],
     month: string,
-    options: { limit?: number; listEntries?: boolean } = {},
+    options: BuildOptions = {},
   ): Promise<RankingComputation> {
     const bounds = monthActivityDateBounds(month);
 
@@ -194,18 +220,21 @@ export class RankingService {
           : ranked;
 
     const profileIds = [...new Set([...listed.map((r) => r.userId), viewerId])];
-    const profiles = await this.profilesRepo.find({
-      where: { userId: In(profileIds) },
-    });
+    const profiles =
+      listed.length > 0
+        ? await this.profilesRepo.find({ where: { userId: In(profileIds) } })
+        : [];
     const profileByUser = new Map(profiles.map((p) => [p.userId, p]));
 
     const globalRankByUser = new Map<string, string | null>();
-    await Promise.all(
-      profileIds.map(async (userId) => {
-        const summary = await this.leagueService.buildSummary(userId);
-        globalRankByUser.set(userId, summary?.globalRank ?? null);
-      }),
-    );
+    if (options.withGlobalRank !== false) {
+      await Promise.all(
+        profileIds.map(async (userId) => {
+          const summary = await this.leagueService.buildSummary(userId);
+          globalRankByUser.set(userId, summary?.globalRank ?? null);
+        }),
+      );
+    }
 
     const entries: RankingEntryDto[] = listed.map((r) => {
       const profile = profileByUser.get(r.userId);
