@@ -3,7 +3,6 @@ import { searchBrowseableExercises } from "@/lib/exercise-search";
 import { inferBodyPartFromTarget } from "@/lib/infer-body-part-from-target";
 import {
   buildTargetsByBodyPart,
-  orderedMuscleGroups,
   type MuscleSelection,
 } from "@/lib/muscle-filter";
 import type { ExerciseDBExercise, TrackedExercise } from "@/types";
@@ -163,12 +162,12 @@ export function countByZone(
     if (!z) continue;
     counts.set(z, (counts.get(z) ?? 0) + 1);
   }
-  const groups = orderedMuscleGroups(
-    Object.fromEntries([...counts.keys()].map((k) => [k, []])),
-  );
-  return groups
-    .filter((z) => counts.has(z))
-    .map((zone) => ({ zone, count: counts.get(zone)! }));
+  return [...counts.entries()]
+    .sort(([a, ca], [b, cb]) => {
+      if (cb !== ca) return cb - ca;
+      return a.localeCompare(b, "fr", { sensitivity: "base" });
+    })
+    .map(([zone, count]) => ({ zone, count }));
 }
 
 export function countByTarget(
@@ -184,7 +183,10 @@ export function countByTarget(
     counts.set(t, (counts.get(t) ?? 0) + 1);
   }
   return [...counts.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([a, ca], [b, cb]) => {
+      if (cb !== ca) return cb - ca;
+      return a.localeCompare(b, "fr", { sensitivity: "base" });
+    })
     .map(([target, count]) => ({ target, count }));
 }
 
@@ -211,10 +213,11 @@ export function countByEquipment(
     counts.set(UNSPECIFIED_EQUIPMENT, unspecified);
   }
   return [...counts.entries()]
-    .sort(([a], [b]) => {
+    .sort(([a, ca], [b, cb]) => {
       if (a === UNSPECIFIED_EQUIPMENT) return 1;
       if (b === UNSPECIFIED_EQUIPMENT) return -1;
-      return a.localeCompare(b);
+      if (cb !== ca) return cb - ca;
+      return a.localeCompare(b, "fr", { sensitivity: "base" });
     })
     .map(([equipment, count]) => ({ equipment, count }));
 }
