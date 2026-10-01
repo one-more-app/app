@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { shouldForceUpdateFromHealth } from "./force-update-from-health";
+import {
+  minVersionForPlatform,
+  shouldForceUpdateFromHealth,
+} from "./force-update-from-health";
 
 describe("shouldForceUpdateFromHealth", () => {
   it("ignore web", () => {
@@ -44,5 +47,18 @@ describe("shouldForceUpdateFromHealth", () => {
         body: { status: "ok" },
       }),
     ).toBe(false);
+  });
+});
+
+describe("minVersionForPlatform", () => {
+  const body = { minVersion: { ios: "1.4.0", android: "1.3.0" } };
+  it("retourne le min par plateforme", () => {
+    expect(minVersionForPlatform(body, "ios")).toBe("1.4.0");
+    expect(minVersionForPlatform(body, "android")).toBe("1.3.0");
+  });
+  it("undefined si absent ou plateforme inconnue", () => {
+    expect(minVersionForPlatform(body, "web")).toBeUndefined();
+    expect(minVersionForPlatform({ minVersion: {} }, "ios")).toBeUndefined();
+    expect(minVersionForPlatform(null, "ios")).toBeUndefined();
   });
 });

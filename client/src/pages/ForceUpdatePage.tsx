@@ -13,7 +13,9 @@ export function ForceUpdatePage() {
       primaryAction={{
         label: UI.forceUpdateCta,
         icon: Download,
-        onClick: () => openAppStoreForUpdate(),
+        onClick: () => {
+          void openAppStoreForUpdate().catch(() => {});
+        },
       }}
     />
   );

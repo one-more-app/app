@@ -10,6 +10,20 @@ export type HealthProbeBody = {
   minVersion?: HealthMinVersion | null;
 };
 
+/** Version minimale pour la plateforme courante (undefined si aucune). */
+export function minVersionForPlatform(
+  body: HealthProbeBody | null,
+  platform: string,
+): string | undefined {
+  const min =
+    platform === "ios"
+      ? body?.minVersion?.ios
+      : platform === "android"
+        ? body?.minVersion?.android
+        : undefined;
+  return typeof min === "string" && min ? min : undefined;
+}
+
 export function shouldForceUpdateFromHealth(input: {
   isNativePlatform: boolean;
   platform: string; // "ios" | "android" | ...
@@ -17,12 +31,7 @@ export function shouldForceUpdateFromHealth(input: {
   body: HealthProbeBody | null;
 }): boolean {
   if (!input.isNativePlatform) return false;
-  const min =
-    input.platform === "ios"
-      ? input.body?.minVersion?.ios
-      : input.platform === "android"
-        ? input.body?.minVersion?.android
-        : undefined;
+  const min = minVersionForPlatform(input.body, input.platform);
   if (!min) return false;
   return isBelowMinVersion(input.currentVersion, min);
 }

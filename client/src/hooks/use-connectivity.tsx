@@ -2,6 +2,7 @@ import { App } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import { getApiBaseUrl, setOnApiUnreachable } from "@/lib/api";
 import {
+  minVersionForPlatform,
   shouldForceUpdateFromHealth,
   type HealthProbeBody,
 } from "@/lib/force-update-from-health";
@@ -43,10 +44,18 @@ function isBrowserOnline(): boolean {
 async function readNativeMarketingVersion(): Promise<string> {
   if (!Capacitor.isNativePlatform()) return "";
   try {
-    const info = await App.getInfo();
+    const info = await Promise.race([
+      App.getInfo(),
+      new Promise<never>((_, reject) =>
+        window.setTimeout(
+          () => reject(new Error("App.getInfo timeout")),
+          PROBE_TIMEOUT_MS,
+        ),
+      ),
+    ]);
     return String(info.version ?? "").trim();
   } catch {
-    return "";
+    return ""; // fail-open
   }
 }
 
@@ -70,15 +79,21 @@ async function probeHealth(): Promise<ProbeResult> {
         return "maintenance";
       }
     }
-    if (
-      shouldForceUpdateFromHealth({
-        isNativePlatform: Capacitor.isNativePlatform(),
-        platform: Capacitor.getPlatform(),
-        currentVersion: await readNativeMarketingVersion(),
-        body,
-      })
-    ) {
-      return "update_required";
+    const isNativePlatform = Capacitor.isNativePlatform();
+    const platform = Capacitor.getPlatform();
+    // Lecture de la version native seulement si un min existe (lazy).
+    if (isNativePlatform && minVersionForPlatform(body, platform)) {
+      const currentVersion = await readNativeMarketingVersion();
+      if (
+        shouldForceUpdateFromHealth({
+          isNativePlatform,
+          platform,
+          currentVersion,
+          body,
+        })
+      ) {
+        return "update_required";
+      }
     }
     return "ok";
   } catch {
