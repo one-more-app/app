@@ -149,6 +149,8 @@ export async function fetchFriendProfile(userId: string): Promise<FriendProfile>
 export type FriendsExerciseLeaderboardEntry = {
   rank: number;
   userId: string;
+  firstName: string | null;
+  lastName: string | null;
   username: string | null;
   avatarUrl: string | null;
   isMe: boolean;

@@ -20,6 +20,7 @@ describe('RankingService', () => {
   const profilesRepo = { find: jest.fn() };
   const usersRepo = { find: jest.fn() };
   const leagueService = { buildSummary: jest.fn() };
+  const badgesService = { ensureRankingGymBadge: jest.fn() };
 
   let service: RankingService;
 
@@ -34,6 +35,8 @@ describe('RankingService', () => {
     profilesRepo.find.mockImplementation(async (args: any) =>
       (args.where.userId.value as string[]).map((userId) => ({
         userId,
+        firstName: `First-${userId}`,
+        lastName: `Last-${userId}`,
         username: `name-${userId}`,
         avatarUrl: null,
       })),
@@ -42,6 +45,7 @@ describe('RankingService', () => {
       (args.where.id.value as string[]).map((id) => ({ id })),
     );
     leagueService.buildSummary.mockResolvedValue({ globalRank: 'silver' });
+    badgesService.ensureRankingGymBadge.mockResolvedValue(null);
     service = new RankingService(
       xpRepo as any,
       friendshipsRepo as any,
@@ -49,6 +53,7 @@ describe('RankingService', () => {
       profilesRepo as any,
       usersRepo as any,
       leagueService as any,
+      badgesService as any,
     );
   });
 
@@ -276,6 +281,7 @@ describe('RankingService', () => {
         activeDays: 3,
         friends: { rank: 1, total: 2 },
         gym: null,
+        badge: null,
       });
     });
 
@@ -298,11 +304,31 @@ describe('RankingService', () => {
       xpRepo.createQueryBuilder
         .mockReturnValueOnce(recapQb)
         .mockReturnValue(listQb);
+      badgesService.ensureRankingGymBadge.mockResolvedValue({
+        id: 'b1',
+        kind: 'ranking_gym',
+        tier: 'top3',
+        sourceKey: '2026-09',
+        earnedAt: '2026-09-30T23:59:59.999Z',
+        meta: {},
+        deeplink: '/ranking?tab=gym&month=2026-09',
+      });
 
       const res = await service.recap('me', '2026-09');
 
       expect(res.gym).toEqual({ rank: 2, total: 2 });
       expect(res.friends).toEqual({ rank: 1, total: 1 });
+      expect(badgesService.ensureRankingGymBadge).toHaveBeenCalledWith({
+        userId: 'me',
+        month: '2026-09',
+        rank: 2,
+        placeName: 'Gym',
+      });
+      expect(res.badge).toEqual({
+        kind: 'ranking_gym',
+        tier: 'top3',
+        deeplink: '/ranking?tab=gym&month=2026-09',
+      });
     });
   });
 });

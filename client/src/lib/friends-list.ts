@@ -2,20 +2,7 @@ import { getProfileDisplayName } from "@/lib/profile-display";
 import type { FriendListItem } from "@/lib/social-api";
 import { getLocalDateKey } from "@/lib/local-date";
 import { UI } from "@/lib/translations";
-import type { FriendPresence, PresenceStatus } from "@/types";
 import { daysWithoutActivitySince } from "@one-more/shared";
-
-function presenceSortRank(status: PresenceStatus | undefined): number {
-  if (status === "training") return 0;
-  if (status === "online") return 1;
-  return 2;
-}
-
-function heartbeatTimestamp(presence: FriendPresence | undefined): number {
-  if (!presence?.lastHeartbeatAt) return 0;
-  const ts = new Date(presence.lastHeartbeatAt).getTime();
-  return Number.isNaN(ts) ? 0 : ts;
-}
 
 function friendDisplayName(item: FriendListItem): string {
   return getProfileDisplayName(
@@ -28,20 +15,41 @@ function friendDisplayName(item: FriendListItem): string {
   );
 }
 
-export function compareFriendsByPresence(
+function messageTimestamp(iso: string | null | undefined): number {
+  if (!iso) return 0;
+  const ts = new Date(iso).getTime();
+  return Number.isNaN(ts) ? 0 : ts;
+}
+
+function lastActiveTimestamp(date: string | null | undefined): number {
+  if (!date) return 0;
+  const ts = Date.parse(`${date}T00:00:00.000Z`);
+  return Number.isNaN(ts) ? 0 : ts;
+}
+
+/**
+ * Tri liste amis unifiée : dernier message desc, sinon dernière séance desc,
+ * puis nom alphabétique FR.
+ */
+export function compareFriendsByRecentActivity(
   a: FriendListItem,
   b: FriendListItem,
-  presenceByUserId: Map<string, FriendPresence>,
+  lastMessageAtByUserId: Map<string, string | null | undefined>,
 ): number {
-  const aPresence = presenceByUserId.get(a.userId);
-  const bPresence = presenceByUserId.get(b.userId);
-  const rankDiff =
-    presenceSortRank(aPresence?.status) - presenceSortRank(bPresence?.status);
-  if (rankDiff !== 0) return rankDiff;
+  const aMsg = messageTimestamp(lastMessageAtByUserId.get(a.userId));
+  const bMsg = messageTimestamp(lastMessageAtByUserId.get(b.userId));
+  const aHasMsg = aMsg > 0;
+  const bHasMsg = bMsg > 0;
 
-  const heartbeatDiff =
-    heartbeatTimestamp(bPresence) - heartbeatTimestamp(aPresence);
-  if (heartbeatDiff !== 0) return heartbeatDiff;
+  if (aHasMsg && bHasMsg) {
+    if (bMsg !== aMsg) return bMsg - aMsg;
+    return friendDisplayName(a).localeCompare(friendDisplayName(b), "fr");
+  }
+  if (aHasMsg !== bHasMsg) return aHasMsg ? -1 : 1;
+
+  const aActive = lastActiveTimestamp(a.lastActiveDate);
+  const bActive = lastActiveTimestamp(b.lastActiveDate);
+  if (bActive !== aActive) return bActive - aActive;
 
   return friendDisplayName(a).localeCompare(friendDisplayName(b), "fr");
 }

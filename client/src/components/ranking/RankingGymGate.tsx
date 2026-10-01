@@ -1,11 +1,15 @@
+import { GymChangeDialog } from "@/components/settings/GymChangeDialog";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { UI } from "@/lib/translations";
 import { Dumbbell, MapPin } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
 
 type RankingGymGateProps =
-    | { variant: "no-gym" }
+    | {
+          variant: "no-gym";
+          onGymSaved?: () => void | Promise<void>;
+      }
     | {
           variant: "opt-in";
           placeName?: string | null;
@@ -14,19 +18,32 @@ type RankingGymGateProps =
       };
 
 export function RankingGymGate(props: RankingGymGateProps) {
+    const [pickerOpen, setPickerOpen] = useState(false);
+
     if (props.variant === "no-gym") {
         return (
-            <EmptyState
-                icon={MapPin}
-                title={UI.rankingGymNoGymTitle}
-                description={UI.rankingGymNoGymDescription}
-            >
-                <Button className="w-full" asChild>
-                    <Link to="/settings#gym-settings">
+            <>
+                <EmptyState
+                    icon={MapPin}
+                    title={UI.rankingGymNoGymTitle}
+                    description={UI.rankingGymNoGymDescription}
+                >
+                    <Button
+                        className="w-full"
+                        onClick={() => setPickerOpen(true)}
+                    >
                         {UI.rankingGymNoGymCta}
-                    </Link>
-                </Button>
-            </EmptyState>
+                    </Button>
+                </EmptyState>
+                <GymChangeDialog
+                    open={pickerOpen}
+                    onOpenChange={setPickerOpen}
+                    hasGym={false}
+                    onSaved={async () => {
+                        await props.onGymSaved?.();
+                    }}
+                />
+            </>
         );
     }
 

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
 import { UserEntity } from '../auth/entities/user.entity.js';
+import { BadgesService } from '../badges/badges.service.js';
 import { LeagueService } from '../league/league.service.js';
 import { UserGymEntity } from '../gyms/entities/user-gym.entity.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
@@ -48,6 +49,7 @@ export class RankingService {
     @InjectRepository(UserEntity)
     private readonly usersRepo: Repository<UserEntity>,
     private readonly leagueService: LeagueService,
+    private readonly badgesService: BadgesService,
   ) {}
 
   async listFriendsRanking(
@@ -70,6 +72,7 @@ export class RankingService {
       month,
       entries: result.entries,
       me: result.me,
+      total: result.total,
       meta,
     };
   }
@@ -98,15 +101,42 @@ export class RankingService {
       listEntries: false,
     });
 
+    const gymPayload = gym.meta.rankingOptIn
+      ? { rank: gym.result.me.rank, total: gym.result.total }
+      : null;
+
+    let badge: RankingRecapResponse['badge'] = null;
+    if (gymPayload && this.isClosedMonth(month)) {
+      const awarded = await this.badgesService.ensureRankingGymBadge({
+        userId: viewerId,
+        month,
+        rank: gymPayload.rank,
+        placeName: gym.meta.placeName ?? null,
+      });
+      if (awarded) {
+        badge = {
+          kind: awarded.kind,
+          tier: awarded.tier,
+          deeplink: awarded.deeplink,
+        };
+      }
+    }
+
     return {
       month,
       xp: Number(raw?.xp ?? 0),
       activeDays: Number(raw?.activeDays ?? 0),
       friends: { rank: friends.me.rank, total: friends.total },
-      gym: gym.meta.rankingOptIn
-        ? { rank: gym.result.me.rank, total: gym.result.total }
-        : null,
+      gym: gymPayload,
+      badge,
     };
+  }
+
+  /** Mois strictement antérieur au mois UTC courant. */
+  private isClosedMonth(month: string): boolean {
+    const now = new Date();
+    const current = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+    return month < current;
   }
 
   private async computeFriends(
@@ -148,6 +178,7 @@ export class RankingService {
           hasGym: !!viewerGym,
           rankingOptIn: false,
           placeName: viewerGym?.name ?? null,
+          placeAddress: viewerGym?.address ?? null,
         },
       };
     }
@@ -166,6 +197,7 @@ export class RankingService {
         hasGym: true,
         rankingOptIn: true,
         placeName: viewerGym.name,
+        placeAddress: viewerGym.address ?? null,
       },
     };
   }
@@ -240,6 +272,8 @@ export class RankingService {
       const profile = profileByUser.get(r.userId);
       return {
         userId: r.userId,
+        firstName: profile?.firstName ?? null,
+        lastName: profile?.lastName ?? null,
         username: profile?.username ?? null,
         avatarUrl: profile?.avatarUrl ?? null,
         xp: r.xp,

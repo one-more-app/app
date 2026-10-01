@@ -8,7 +8,9 @@ import {
 } from "@/hooks/use-api-data";
 import { useAuth } from "@/hooks/use-auth";
 import { useHomeData } from "@/hooks/use-home-data";
+import { fetchMyBadges } from "@/lib/badges-api";
 import { UI } from "@/lib/translations";
+import useSWR from "swr";
 
 export default function ProfilePage() {
   const auth = useAuth();
@@ -17,6 +19,10 @@ export default function ProfilePage() {
   const { data: progress } = useUserProgressData();
   const { data: performanceEntries } = usePerformanceEntriesData();
   const { data: leagueSummary } = useLeagueSummaryData();
+  const { data: badges } = useSWR(
+    auth.status === "authenticated" ? "badges-me" : null,
+    () => fetchMyBadges(),
+  );
 
   return (
     <ProfileView
@@ -28,6 +34,7 @@ export default function ProfilePage() {
         performanceEntries: performanceEntries ?? [],
         leagueSummary: leagueSummary ?? null,
         topByLeague: leagueSummary?.topByLeague,
+        badges: badges ?? [],
         isLoading: !hasLoaded,
       }}
       headerActions={<ReferralTshirtBanner />}

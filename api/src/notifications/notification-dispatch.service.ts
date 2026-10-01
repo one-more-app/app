@@ -14,7 +14,7 @@ import { isStreakAtRisk } from '../progress/lib/streak-dates.js';
 import { DeviceTokensService } from './device-tokens.service.js';
 import { FriendTrainingAlertsService } from './friend-training-alerts.service.js';
 import { formatUserDisplayName } from './lib/display-name.js';
-import { localDateKey, localWeekKey } from './lib/timezone.js';
+import { localDateKey, localWeekKey, formatFrenchMonthLabel, previousLocalMonthKey } from './lib/timezone.js';
 import type { NewUserD1TrainingHour } from './lib/new-user-d1.js';
 import { NotificationFeedService } from './notification-feed.service.js';
 import { NotificationPreferencesService } from './notification-preferences.service.js';
@@ -480,6 +480,34 @@ export class NotificationDispatchService {
       body: `${sessionCount} séance${sessionCount > 1 ? 's' : ''}, +${xpTotal} XP, série ${streak}`,
       route: '/history',
       dedupKey: `recap:${weekKey}`,
+    });
+  }
+
+  async sendMonthlyRankingRecapForUser(userId: string, timezone: string) {
+    const month = previousLocalMonthKey(timezone);
+    const [y, m] = month.split('-').map(Number);
+    const start = `${month}-01`;
+    const lastDay = new Date(Date.UTC(y!, m!, 0)).getUTCDate();
+    const end = `${month}-${String(lastDay).padStart(2, '0')}`;
+
+    const xpRow = await this.xpRepo
+      .createQueryBuilder('x')
+      .select('COALESCE(SUM(x.amount), 0)', 'total')
+      .where('x.userId = :userId', { userId })
+      .andWhere('x.activityDate >= :start', { start })
+      .andWhere('x.activityDate <= :end', { end })
+      .getRawOne<{ total: string }>();
+
+    const xpTotal = Number.parseInt(xpRow?.total ?? '0', 10);
+    if (xpTotal <= 0) return;
+
+    const monthLabel = formatFrenchMonthLabel(month);
+    await this.deliver(userId, {
+      type: NotificationType.MonthlyRankingRecap,
+      title: `Classement de ${monthLabel}`,
+      body: `Ton récap est prêt : +${xpTotal} XP. Découvre ton rang.`,
+      route: `/ranking?recap=${encodeURIComponent(month)}`,
+      dedupKey: `ranking_recap:${month}`,
     });
   }
 }

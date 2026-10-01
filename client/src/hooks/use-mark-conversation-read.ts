@@ -39,6 +39,7 @@ export function useUnreadMessagesCount(): number {
 export type UnreadByUserEntry = {
   unreadCount: number;
   lastMessageBody: string | null;
+  lastMessageAt: string | null;
   conversationId: string;
 };
 
@@ -52,6 +53,7 @@ export function useUnreadByUserId(): Map<string, UnreadByUserEntry> {
       map.set(conversation.otherUser.userId, {
         unreadCount: conversation.unreadCount,
         lastMessageBody: conversation.lastMessage?.body ?? null,
+        lastMessageAt: conversation.lastMessage?.createdAt ?? null,
         conversationId: conversation.id,
       });
     }

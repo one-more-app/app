@@ -1,4 +1,5 @@
 import { RankBadge } from "@/components/RankBadge";
+import { ProfileBadgesSection } from "@/components/profile/ProfileBadgesSection";
 import { StreakFlameCount } from "@/components/StreakFlameCount";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -6,6 +7,7 @@ import {
     useUserProgressData,
 } from "@/hooks/use-api-data";
 import { getCurrentMonthKey } from "@/lib/activity-calendar";
+import type { UserBadgeDto } from "@/lib/badges-api";
 import type { GlobalLeagueSummary } from "@/lib/muscle-league-stats";
 import {
     countActiveDaysInMonth,
@@ -23,10 +25,12 @@ export function ProfileHighlightsCard({
     leagueSummary,
     progress: progressProp,
     performanceEntries: performanceEntriesProp,
+    badges = [],
 }: {
     leagueSummary: GlobalLeagueSummary | null;
     progress?: UserProgressState;
     performanceEntries?: PerformanceEntry[];
+    badges?: UserBadgeDto[];
 }) {
     const { data: progressFromHook } = useUserProgressData();
     const { data: performanceEntriesFromHook } = usePerformanceEntriesData();
@@ -161,6 +165,12 @@ export function ProfileHighlightsCard({
                             {activeDaysThisMonth}
                         </p>
                     </div>
+
+                    {badges.length > 0 ? (
+                        <div className="col-span-2">
+                            <ProfileBadgesSection badges={badges} nested />
+                        </div>
+                    ) : null}
                 </div>
             </CardContent>
         </Card>

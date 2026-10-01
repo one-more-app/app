@@ -12,7 +12,7 @@ import { useReferralDrawer } from "@/hooks/use-referral-drawer";
 import { hapticImpact } from "@/lib/haptics";
 import { getOrCreateConversation } from "@/lib/messaging-api";
 import {
-    compareFriendsByPresence,
+    compareFriendsByRecentActivity,
     formatFriendLastSessionAgo,
 } from "@/lib/friends-list";
 import {
@@ -36,6 +36,7 @@ import { toast } from "sonner";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import {
+    useConversationUnreadActions,
     useUnreadByUserId,
     type UnreadByUserEntry,
 } from "@/hooks/use-mark-conversation-read";
@@ -65,12 +66,16 @@ function AcceptedFriendRow({
         item.username && (item.firstName || item.lastName);
     const hasUnread = (unread?.unreadCount ?? 0) > 0;
     const navigate = useNavigate();
+    const { markAsRead } = useConversationUnreadActions();
     const lastSessionLabel = formatFriendLastSessionAgo(item.lastActiveDate);
 
     const openConversation = () => {
         void (async () => {
             try {
                 const conversation = await getOrCreateConversation(item.userId);
+                if (hasUnread) {
+                    void markAsRead(conversation.id);
+                }
                 navigate(`/friends/chat/${conversation.id}`);
             } catch {
                 toast.error(UI.friendActionError);
@@ -79,26 +84,18 @@ function AcceptedFriendRow({
     };
 
     return (
-        <Card
-            className="cursor-pointer py-0"
-            onClick={() => {
-                void hapticImpact();
-                openConversation();
-            }}
-        >
+        <Card className="py-0">
             <CardContent className="flex items-center gap-3 p-3">
                 <ProfileAvatarLink
                     userId={item.userId}
                     avatarUrl={item.avatarUrl}
                     initials={initials}
                     linkOptions={{ friendshipStatus: "accepted" }}
-                    stopPropagation
                 />
                 <Link
                     to={`/friends/${item.userId}`}
                     className="min-w-0 flex-1"
-                    onClick={(event) => {
-                        event.stopPropagation();
+                    onClick={() => {
                         void hapticImpact();
                     }}
                 >
@@ -106,7 +103,7 @@ function AcceptedFriendRow({
                         <p className="min-w-0 truncate font-medium">{name}</p>
                         {item.isPremium ? <ProBadge /> : null}
                     </div>
-                    {hasUnread && unread?.lastMessageBody ? (
+                    {unread?.lastMessageBody ? (
                         <p className="truncate text-xs text-muted-foreground">
                             {unread.lastMessageBody}
                         </p>
@@ -118,11 +115,10 @@ function AcceptedFriendRow({
                         <UsernameLine username={item.username} />
                     ) : null}
                 </Link>
-                <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+                <div className="flex shrink-0 items-center justify-end gap-2">
                     {presence?.status === "training" ? (
                         <Link
                             to={`/session/${item.userId}/${getLocalDateKey()}`}
-                            onClick={(event) => event.stopPropagation()}
                             className="shrink-0"
                         >
                             <PresenceBadge presence={presence} />
@@ -130,7 +126,15 @@ function AcceptedFriendRow({
                     ) : (
                         <PresenceBadge presence={presence} />
                     )}
-                    <span className="relative shrink-0">
+                    <button
+                        type="button"
+                        className="relative shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        aria-label={UI.messageOpenChat}
+                        onClick={() => {
+                            void hapticImpact();
+                            openConversation();
+                        }}
+                    >
                         <MessageCircle
                             className={cn(
                                 "size-4",
@@ -141,10 +145,10 @@ function AcceptedFriendRow({
                         {hasUnread ? (
                             <UnreadCountBadge
                                 count={unread!.unreadCount}
-                                className="absolute -right-1.5 -top-1.5"
+                                className="absolute -right-0.5 -top-0.5"
                             />
                         ) : null}
-                    </span>
+                    </button>
                 </div>
             </CardContent>
         </Card>
@@ -254,14 +258,14 @@ export function FriendsListTab({
 
     const sortedFriends = useMemo(() => {
         const friends = data?.friends ?? [];
-        return [...friends].sort((a, b) => {
-            const aUnread = unreadByUserId.get(a.userId)?.unreadCount ?? 0;
-            const bUnread = unreadByUserId.get(b.userId)?.unreadCount ?? 0;
-            if (aUnread > 0 && bUnread === 0) return -1;
-            if (aUnread === 0 && bUnread > 0) return 1;
-            return compareFriendsByPresence(a, b, byUserId);
-        });
-    }, [data?.friends, unreadByUserId, byUserId]);
+        const lastMessageAtByUserId = new Map<string, string | null>();
+        for (const [userId, entry] of unreadByUserId) {
+            lastMessageAtByUserId.set(userId, entry.lastMessageAt);
+        }
+        return [...friends].sort((a, b) =>
+            compareFriendsByRecentActivity(a, b, lastMessageAtByUserId),
+        );
+    }, [data?.friends, unreadByUserId]);
 
     const refreshAll = async () => {
         await Promise.all([

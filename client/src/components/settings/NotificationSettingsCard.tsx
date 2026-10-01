@@ -25,7 +25,9 @@ import {
     type ReminderSlot,
 } from "@/lib/reminder-schedule";
 import { UI } from "@/lib/translations";
+import { cn } from "@/lib/utils";
 import { Capacitor } from "@capacitor/core";
+import { ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -80,6 +82,7 @@ export function NotificationSettingsCard() {
         "notification-preferences",
         fetchNotificationPreferences,
     );
+    const [expanded, setExpanded] = useState(false);
     const [busyKey, setBusyKey] = useState<BusyKey | null>(null);
     const [scheduleOpen, setScheduleOpen] = useState(false);
     const [draftSlots, setDraftSlots] = useState<ReminderSlot[]>(DEFAULT_REMINDER_SLOTS);
@@ -150,78 +153,96 @@ export function NotificationSettingsCard() {
     };
 
     useEffect(() => {
-        if (!isNative) return;
+        if (!isNative || !expanded) return;
         void requestPushPermission();
-    }, [isNative]);
+    }, [isNative, expanded]);
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle>{UI.notifications}</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                    {UI.notificationsDescription}
-                </p>
+            <CardHeader className="px-0">
+                <button
+                    type="button"
+                    className="flex w-full items-start gap-3 px-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    aria-expanded={expanded}
+                    onClick={() => setExpanded((prev) => !prev)}
+                >
+                    <div className="min-w-0 flex-1 space-y-2">
+                        <CardTitle>{UI.notifications}</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                            {UI.notificationsDescription}
+                        </p>
+                    </div>
+                    <ChevronDown
+                        className={cn(
+                            "mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform",
+                            expanded && "rotate-180",
+                        )}
+                        aria-hidden
+                    />
+                </button>
             </CardHeader>
-            <CardContent className="space-y-2">
-                {isNative ? (
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        className="mb-2 w-full"
-                        onClick={() => {
-                            void requestPushPermission();
-                        }}
-                    >
-                        {UI.notificationsEnablePush}
-                    </Button>
-                ) : (
-                    <p className="mb-2 text-xs text-muted-foreground">
-                        {UI.notificationsNativeOnly}
-                    </p>
-                )}
-                {isLoading && !data ? (
-                    <p className="text-sm text-muted-foreground">{UI.loading}</p>
-                ) : (
-                    TOGGLE_ITEMS.map((item) => (
-                        <div key={item.key} className="space-y-2">
-                            <NotificationToggle
-                                id={`notif-${item.key}`}
-                                label={item.label}
-                                checked={
-                                    data?.[item.key] ??
-                                    DEFAULT_NOTIFICATION_PREFERENCES[item.key]
-                                }
-                                disabled={busyKey === item.key}
-                                onChange={(next) => {
-                                    void handleToggle(item.key, next);
-                                }}
-                            />
-                            {item.key === "streakReminders" && streakOn ? (
-                                <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-3">
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-medium">
-                                            {UI.notifPrefReminderSchedule}
-                                        </p>
-                                        <p className="truncate text-sm text-muted-foreground">
-                                            {savedSummary || UI.notifPrefReminderNone}
-                                        </p>
+            {expanded ? (
+                <CardContent className="space-y-2">
+                    {isNative ? (
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            className="mb-2 w-full"
+                            onClick={() => {
+                                void requestPushPermission();
+                            }}
+                        >
+                            {UI.notificationsEnablePush}
+                        </Button>
+                    ) : (
+                        <p className="mb-2 text-xs text-muted-foreground">
+                            {UI.notificationsNativeOnly}
+                        </p>
+                    )}
+                    {isLoading && !data ? (
+                        <p className="text-sm text-muted-foreground">{UI.loading}</p>
+                    ) : (
+                        TOGGLE_ITEMS.map((item) => (
+                            <div key={item.key} className="space-y-2">
+                                <NotificationToggle
+                                    id={`notif-${item.key}`}
+                                    label={item.label}
+                                    checked={
+                                        data?.[item.key] ??
+                                        DEFAULT_NOTIFICATION_PREFERENCES[item.key]
+                                    }
+                                    disabled={busyKey === item.key}
+                                    onChange={(next) => {
+                                        void handleToggle(item.key, next);
+                                    }}
+                                />
+                                {item.key === "streakReminders" && streakOn ? (
+                                    <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-3">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium">
+                                                {UI.notifPrefReminderSchedule}
+                                            </p>
+                                            <p className="truncate text-sm text-muted-foreground">
+                                                {savedSummary || UI.notifPrefReminderNone}
+                                            </p>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="shrink-0"
+                                            data-analytics-label="reminder_schedule_edit"
+                                            onClick={openSchedule}
+                                        >
+                                            {UI.notifPrefReminderEdit}
+                                        </Button>
                                     </div>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        className="shrink-0"
-                                        data-analytics-label="reminder_schedule_edit"
-                                        onClick={openSchedule}
-                                    >
-                                        {UI.notifPrefReminderEdit}
-                                    </Button>
-                                </div>
-                            ) : null}
-                        </div>
-                    ))
-                )}
-            </CardContent>
+                                ) : null}
+                            </div>
+                        ))
+                    )}
+                </CardContent>
+            ) : null}
 
             <Dialog
                 open={scheduleOpen}

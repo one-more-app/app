@@ -21,6 +21,7 @@ export function RankingMonthNav({ month, onChange }: RankingMonthNavProps) {
             <Button
                 variant="secondary"
                 size="icon"
+                className="bg-card hover:bg-card/80"
                 aria-label={UI.rankingMonthPrev}
                 onClick={() => {
                     void hapticImpact();
@@ -35,6 +36,7 @@ export function RankingMonthNav({ month, onChange }: RankingMonthNavProps) {
             <Button
                 variant="secondary"
                 size="icon"
+                className="bg-card hover:bg-card/80"
                 aria-label={UI.rankingMonthNext}
                 disabled={isCurrentOrFuture}
                 onClick={() => {

@@ -1,5 +1,6 @@
 import { BackHeader } from "@/components/BackHeader";
 import { RankingGymGate } from "@/components/ranking/RankingGymGate";
+import { RankingGymPlaceBar } from "@/components/ranking/RankingGymPlaceBar";
 import { RankingList } from "@/components/ranking/RankingList";
 import { RankingMeHeader } from "@/components/ranking/RankingMeHeader";
 import { RankingMonthNav } from "@/components/ranking/RankingMonthNav";
@@ -27,13 +28,13 @@ import {
 } from "@/lib/ranking-recap-seen";
 import { UI } from "@/lib/translations";
 import { Trophy, Users } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import useSWR from "swr";
 
 function parseTab(value: string | null): RankingTab {
-    return value === "gym" ? "gym" : "friends";
+    return value === "friends" ? "friends" : "gym";
 }
 
 export default function RankingPage() {
@@ -47,9 +48,11 @@ export default function RankingPage() {
             : currentMonth;
 
     const [optInBusy, setOptInBusy] = useState(false);
+    const [optOutBusy, setOptOutBusy] = useState(false);
     const [recap, setRecap] = useState<RankingRecapResponse | null>(null);
     const [recapOpen, setRecapOpen] = useState(false);
     const [recapMonth, setRecapMonth] = useState<string | null>(null);
+    const recapRequestedRef = useRef<string | null>(null);
 
     const updateParams = useCallback(
         (next: { tab?: RankingTab; month?: string }) => {
@@ -72,23 +75,37 @@ export default function RankingPage() {
     const active = tab === "friends" ? friendsSwr : gymSwr;
     const { data, isLoading, error } = active;
 
-    // Récap du mois précédent : une seule fois par mois, à partir du 2 du mois.
+    const forceRecapParam = searchParams.get("recap");
+
+    // Récap du mois précédent : dès le 1er, ou forcé via ?recap=YYYY-MM (notif).
     useEffect(() => {
-        const now = new Date();
-        if (now.getDate() < 2) return;
-        const prevMonth = shiftRankingMonth(getCurrentRankingMonth(now), -1);
-        if (hasSeenRankingRecap(prevMonth)) return;
+        const prevMonth = shiftRankingMonth(getCurrentRankingMonth(), -1);
+        const fromNotification = isValidRankingMonth(forceRecapParam);
+        const targetMonth =
+            fromNotification && forceRecapParam! < currentMonth
+                ? forceRecapParam!
+                : prevMonth;
+
+        if (recapRequestedRef.current === targetMonth) return;
+        if (!fromNotification && hasSeenRankingRecap(targetMonth)) return;
+        recapRequestedRef.current = targetMonth;
+
+        if (fromNotification) {
+            const params = new URLSearchParams(searchParams);
+            params.delete("recap");
+            setSearchParams(params, { replace: true });
+        }
 
         let cancelled = false;
-        void fetchRankingRecap(prevMonth)
+        void fetchRankingRecap(targetMonth)
             .then((result) => {
                 if (cancelled) return;
                 if (result.xp <= 0) {
-                    markRankingRecapSeen(prevMonth);
+                    markRankingRecapSeen(targetMonth);
                     return;
                 }
                 setRecap(result);
-                setRecapMonth(prevMonth);
+                setRecapMonth(targetMonth);
                 setRecapOpen(true);
             })
             .catch(() => {
@@ -97,7 +114,7 @@ export default function RankingPage() {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [forceRecapParam, currentMonth, searchParams, setSearchParams]);
 
     const dismissRecap = () => {
         if (recapMonth) markRankingRecapSeen(recapMonth);
@@ -118,6 +135,20 @@ export default function RankingPage() {
         })();
     };
 
+    const handleOptOut = () => {
+        void (async () => {
+            setOptOutBusy(true);
+            try {
+                await setGymRankingOptIn(false);
+                await gymSwr.mutate();
+            } catch {
+                toast.error(UI.rankingGymOptOutError);
+            } finally {
+                setOptOutBusy(false);
+            }
+        })();
+    };
+
     const gymMeta = tab === "gym" ? data?.meta : undefined;
     const gymGate =
         tab === "gym" && data
@@ -130,18 +161,9 @@ export default function RankingPage() {
 
     return (
         <div className="min-h-screen-app bg-background">
-            <header
-                data-sticky-app-header
-                className="sticky-top-safe z-100 border-b border-border bg-card"
-            >
-                <BackHeader title={UI.rankingTitle} embedded />
-                {data && !gymGate ? (
-                    <div className="mx-auto max-w-2xl px-4 pb-3">
-                        <RankingMeHeader me={data.me} />
-                    </div>
-                ) : null}
-            </header>
+            <BackHeader title={UI.rankingTitle} />
             <main className="mx-auto max-w-2xl space-y-4 p-4">
+                {data && !gymGate ? <RankingMeHeader me={data.me} /> : null}
                 <RankingMonthNav
                     month={month}
                     onChange={(next) => updateParams({ month: next })}
@@ -150,6 +172,26 @@ export default function RankingPage() {
                     value={tab}
                     onChange={(next) => updateParams({ tab: next })}
                 />
+                {tab === "gym" && gymMeta?.hasGym && gymMeta.placeName ? (
+                    <RankingGymPlaceBar
+                        placeName={gymMeta.placeName}
+                        placeAddress={gymMeta.placeAddress}
+                        myRank={
+                            gymMeta.rankingOptIn ? data?.me.rank : null
+                        }
+                        total={
+                            gymMeta.rankingOptIn
+                                ? (data?.total ?? data?.entries.length ?? null)
+                                : null
+                        }
+                        showLeaveRanking={gymMeta.rankingOptIn === true}
+                        leaveBusy={optOutBusy}
+                        onLeaveRanking={handleOptOut}
+                        onGymSaved={async () => {
+                            await gymSwr.mutate();
+                        }}
+                    />
+                ) : null}
                 <div
                     role="tabpanel"
                     id={`ranking-panel-${tab}`}
@@ -174,7 +216,12 @@ export default function RankingPage() {
                             </Button>
                         </EmptyState>
                     ) : gymGate === "no-gym" ? (
-                        <RankingGymGate variant="no-gym" />
+                        <RankingGymGate
+                            variant="no-gym"
+                            onGymSaved={async () => {
+                                await gymSwr.mutate();
+                            }}
+                        />
                     ) : gymGate === "opt-in" ? (
                         <RankingGymGate
                             variant="opt-in"

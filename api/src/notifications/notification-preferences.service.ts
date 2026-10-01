@@ -141,6 +141,7 @@ export class NotificationPreferencesService {
       case NotificationType.FriendPr:
         return prefs.friendRecords;
       case NotificationType.WeeklyRecap:
+      case NotificationType.MonthlyRankingRecap:
         return prefs.weeklyRecap;
       case NotificationType.ReferralUsed:
         return prefs.friendAccepted;

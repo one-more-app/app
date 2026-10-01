@@ -22,6 +22,8 @@ const buttonVariants = cva(
                     "rounded-lg font-medium border bg-background hover:bg-secondary hover:text-secondary-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
                 secondary:
                     "rounded-lg font-medium bg-secondary text-secondary-foreground hover:bg-secondary",
+                card:
+                    "rounded-lg font-medium bg-card text-card-foreground hover:bg-card/80",
                 ghost:
                     "rounded-lg font-medium hover:bg-secondary hover:text-secondary-foreground",
                 link: "font-medium text-primary underline-offset-4 hover:underline",

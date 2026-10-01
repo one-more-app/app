@@ -26,6 +26,7 @@ import { PublicStatsModule } from './public-stats/public-stats.module.js';
 import { EventModule } from './event/event.module.js';
 import { FeedbackModule } from './feedback/feedback.module.js';
 import { RankingModule } from './ranking/ranking.module.js';
+import { BadgesModule } from './badges/badges.module.js';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { RankingModule } from './ranking/ranking.module.js';
     EventModule,
     FeedbackModule,
     RankingModule,
+    BadgesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

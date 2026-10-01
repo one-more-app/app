@@ -1,4 +1,4 @@
-import { History, Home, User, Users } from 'lucide-react'
+import { History, Home, Trophy, User, Users } from 'lucide-react'
 import type { JSX } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
@@ -17,6 +17,7 @@ const NAV_ITEMS: Array<{
         { to: '/home', label: 'Accueil', Icon: Home },
         { to: '/profile', label: UI.profile, tourId: 'nav-profile', Icon: User },
         { to: '/history', label: UI.history, tourId: 'nav-history', Icon: History },
+        { to: '/ranking', label: UI.rankingTitle, tourId: 'nav-ranking', Icon: Trophy },
         { to: '/friends', label: UI.friendsTitle, tourId: 'nav-friends', Icon: Users },
     ]
 

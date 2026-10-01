@@ -62,8 +62,9 @@ export class GymsService {
     body: UpsertUserGymDto,
   ): Promise<UserGymResponse> {
     let entity = await this.userGyms.findOne({ where: { userId } });
+    const isNew = !entity;
     if (!entity) {
-      entity = this.userGyms.create({ userId });
+      entity = this.userGyms.create({ userId, rankingOptIn: true });
     }
 
     entity.placeId = body.placeId;
@@ -72,6 +73,9 @@ export class GymsService {
     entity.lat = body.lat;
     entity.lng = body.lng;
     entity.radiusM = body.radiusM ?? 120;
+    if (isNew) {
+      entity.rankingOptIn = true;
+    }
     if (body.onboardingGymPending !== undefined) {
       entity.onboardingGymPending = body.onboardingGymPending;
     }

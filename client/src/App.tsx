@@ -283,6 +283,7 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
         location.pathname === '/profile' ||
         location.pathname === '/stats' ||
         location.pathname === '/history' ||
+        location.pathname === '/ranking' ||
         location.pathname === '/friends' ||
         location.pathname.startsWith('/friends/preview')
 

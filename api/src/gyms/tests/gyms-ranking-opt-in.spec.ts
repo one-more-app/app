@@ -66,3 +66,71 @@ describe('GymsService.setRankingOptIn', () => {
     expect(result.rankingOptIn).toBe(false);
   });
 });
+
+describe('GymsService.upsertUserGym rankingOptIn', () => {
+  const userGymsRepo = {
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+  };
+  const googlePlaces = {};
+  let service: GymsService;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    service = new GymsService(userGymsRepo as any, googlePlaces as any);
+  });
+
+  it('opts in by default when creating a gym', async () => {
+    userGymsRepo.findOne.mockResolvedValue(null);
+    const entity: Record<string, unknown> = {
+      userId: 'user-1',
+      rankingOptIn: true,
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+    };
+    userGymsRepo.create.mockReturnValue(entity);
+    userGymsRepo.save.mockImplementation((e) => Promise.resolve(e));
+
+    const result = await service.upsertUserGym('user-1', {
+      placeId: 'p1',
+      name: 'Gym',
+      lat: 1,
+      lng: 2,
+    } as any);
+
+    expect(userGymsRepo.create).toHaveBeenCalledWith({
+      userId: 'user-1',
+      rankingOptIn: true,
+    });
+    expect(entity.rankingOptIn).toBe(true);
+    expect(result.rankingOptIn).toBe(true);
+  });
+
+  it('keeps existing opt-in when updating a gym', async () => {
+    const entity = {
+      userId: 'user-1',
+      placeId: 'old',
+      name: 'Old',
+      address: null,
+      lat: 0,
+      lng: 0,
+      radiusM: 120,
+      onboardingGymPending: false,
+      geofenceEnabled: true,
+      rankingOptIn: false,
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+    };
+    userGymsRepo.findOne.mockResolvedValue(entity);
+    userGymsRepo.save.mockImplementation((e) => Promise.resolve(e));
+
+    const result = await service.upsertUserGym('user-1', {
+      placeId: 'p2',
+      name: 'New',
+      lat: 3,
+      lng: 4,
+    } as any);
+
+    expect(entity.rankingOptIn).toBe(false);
+    expect(result.rankingOptIn).toBe(false);
+  });
+});

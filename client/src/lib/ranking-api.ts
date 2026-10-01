@@ -2,6 +2,8 @@ import { apiFetch } from "@/lib/api";
 
 export type RankingEntryDto = {
   userId: string;
+  firstName: string | null;
+  lastName: string | null;
   username: string | null;
   avatarUrl: string | null;
   xp: number;
@@ -20,6 +22,7 @@ export type RankingListResponse = {
     rankingOptIn?: boolean;
     hasGym?: boolean;
     placeName?: string | null;
+    placeAddress?: string | null;
   };
 };
 
@@ -29,6 +32,7 @@ export type RankingRecapResponse = {
   activeDays: number;
   friends: { rank: number; total: number } | null;
   gym: { rank: number; total: number } | null;
+  badge?: { kind: string; tier: string; deeplink: string | null } | null;
 };
 
 export type RankingTab = "friends" | "gym";

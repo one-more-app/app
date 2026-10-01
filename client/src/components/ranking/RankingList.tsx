@@ -1,8 +1,13 @@
 import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallback";
 import { ProfileAvatarLink } from "@/components/profile/ProfileAvatarLink";
+import { UsernameLine } from "@/components/profile/UsernameLine";
 import { RankBadge } from "@/components/RankBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { RankingEntryDto } from "@/lib/ranking-api";
+import {
+    getProfileDisplayName,
+    getProfileInitials,
+} from "@/lib/profile-display";
 import type { RankId } from "@/lib/strength-standards";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
@@ -19,16 +24,27 @@ function RankingRow({
     entry: RankingEntryDto;
     isMe: boolean;
 }) {
-    const name = entry.username ? `@${entry.username}` : UI.rankingNoUsername;
-    const initials = (entry.username ?? UI.rankingNoUsername)
-        .slice(0, 2)
-        .toUpperCase();
+    const profile = {
+        firstName: entry.firstName ?? undefined,
+        lastName: entry.lastName ?? undefined,
+        username: entry.username ?? undefined,
+    };
+    const displayName = getProfileDisplayName(profile, null);
+    const initials = getProfileInitials(profile, null);
+    const showUsername = Boolean(
+        entry.username && (entry.firstName || entry.lastName),
+    );
 
     return (
-        <Card className={cn("py-0", isMe && "ring-2 ring-primary/40")}>
+        <Card className={cn("py-0", isMe && "bg-secondary ring-1 ring-foreground/20")}>
             <CardContent className="flex items-center gap-3 p-3">
-                <span className="w-8 shrink-0 text-center text-sm font-semibold tabular-nums text-muted-foreground">
-                    {UI.rankingRankLabel.replace("{rank}", String(entry.rank))}
+                <span
+                    className={cn(
+                        "w-6 shrink-0 text-center text-sm font-semibold tabular-nums",
+                        isMe ? "text-foreground" : "text-muted-foreground",
+                    )}
+                >
+                    {entry.rank}
                 </span>
                 {isMe ? (
                     entry.avatarUrl ? (
@@ -52,23 +68,31 @@ function RankingRow({
                 )}
                 <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">
-                        {name}
+                        {displayName}
                         {isMe ? (
                             <span className="ml-1 text-xs font-normal text-muted-foreground">
                                 {UI.rankingYouSuffix}
                             </span>
                         ) : null}
                     </p>
-                    <p className="text-xs tabular-nums text-muted-foreground">
+                    {showUsername && entry.username ? (
+                        <UsernameLine username={entry.username} />
+                    ) : null}
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                    <p className="text-sm font-semibold tabular-nums">
                         {UI.rankingXpShort.replace(
                             "{xp}",
                             entry.xp.toLocaleString("fr-FR"),
                         )}
                     </p>
+                    {entry.globalRank ? (
+                        <RankBadge
+                            rankId={entry.globalRank as RankId}
+                            size="xs"
+                        />
+                    ) : null}
                 </div>
-                {entry.globalRank ? (
-                    <RankBadge rankId={entry.globalRank as RankId} size="xs" />
-                ) : null}
             </CardContent>
         </Card>
     );

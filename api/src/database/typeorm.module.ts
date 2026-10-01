@@ -29,6 +29,7 @@ import { SessionCommentEntity } from '../workout-sessions/entities/session-comme
 import { SessionReactionEntity } from '../workout-sessions/entities/session-reaction.entity.js';
 import { EventEntryEntity } from '../event/entities/event-entry.entity.js';
 import { EventActiveAttemptEntity } from '../event/entities/event-active-attempt.entity.js';
+import { UserBadgeEntity } from '../badges/entities/user-badge.entity.js';
 
 export const TYPEORM_ENTITIES = [
   UserEntity,
@@ -56,6 +57,7 @@ export const TYPEORM_ENTITIES = [
   SessionReactionEntity,
   EventEntryEntity,
   EventActiveAttemptEntity,
+  UserBadgeEntity,
 ] as const;
 
 const getDatabaseUrl = (config: ConfigService): string => {

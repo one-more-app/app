@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from '../auth/entities/user.entity.js';
+import { BadgesModule } from '../badges/badges.module.js';
 import { UserGymEntity } from '../gyms/entities/user-gym.entity.js';
 import { LeagueModule } from '../league/league.module.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
@@ -19,6 +20,7 @@ import { RankingService } from './ranking.service.js';
       UserEntity,
     ]),
     LeagueModule,
+    BadgesModule,
   ],
   controllers: [RankingController],
   providers: [RankingService],

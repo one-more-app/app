@@ -8,6 +8,7 @@ import { ProfilePageSkeleton } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { ExerciseWithPerf } from "@/hooks/use-home-data";
+import type { UserBadgeDto } from "@/lib/badges-api";
 import type { TopExerciseByLeague } from "@/lib/league-types";
 import type { GlobalLeagueSummary } from "@/lib/muscle-league-stats";
 import { topExerciseToHighlight } from "@/lib/profile-highlights";
@@ -24,6 +25,7 @@ export type ProfileViewData = {
     performanceEntries: PerformanceEntry[];
     leagueSummary?: GlobalLeagueSummary | null;
     topByLeague?: TopExerciseByLeague[];
+    badges?: UserBadgeDto[];
     isLoading: boolean;
     error?: boolean;
 };
@@ -52,6 +54,7 @@ export function ProfileView({
         performanceEntries,
         leagueSummary = null,
         topByLeague,
+        badges = [],
         isLoading,
         error,
     } = data;
@@ -106,6 +109,7 @@ export function ProfileView({
                     leagueSummary={leagueSummary}
                     progress={progress}
                     performanceEntries={performanceEntries}
+                    badges={readOnly ? [] : badges}
                 />
 
                 <ProfileTopExercisesList ranked={topRanked} readOnly={readOnly} />

@@ -24,6 +24,8 @@ export type FriendsExerciseLeaderboardEntry = {
   sourceReps: number;
   sourceDate: string;
   rankId: RankId | null;
+  firstName: string | null;
+  lastName: string | null;
 };
 
 export type FriendsExerciseLeaderboardResponse = {
@@ -161,6 +163,8 @@ export class FriendsExerciseLeaderboardService {
         userId,
         username: profile?.username ?? null,
         avatarUrl: profile?.avatarUrl ?? null,
+        firstName: profile?.firstName ?? null,
+        lastName: profile?.lastName ?? null,
         isMe: userId === viewerId,
         oneRM: best.oneRM,
         sourceWeight: best.sourceWeight,
