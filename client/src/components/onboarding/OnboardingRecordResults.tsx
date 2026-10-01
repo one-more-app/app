@@ -96,18 +96,23 @@ export function OnboardingRankReveal({
     const [landed, setLanded] = useState(false)
     const [detailsReady, setDetailsReady] = useState(false)
     const nextId = league.nextRankId ?? getNextRankId(league.rankId)
-    const remainingKg =
+    const isReps = league.metric === "reps"
+    const remaining =
         league.progressToNext < 1
             ? Math.max(0, league.weightToReach - league.oneRM)
             : 0
-    const showNextTarget = remainingKg > 0 && nextId != null
+    const showNextTarget = remaining > 0 && nextId != null
     const progressFill = LEAGUE_ACCENT[league.tier]
     const accentClass = LEAGUE_ACCENT_CLASS[league.tier]
     const youAreParts = UI.onboardingRankYouAre.split("{rank}")
     const rankGapParts = showNextTarget
-        ? UI.onboardingRankGap
-            .replace("{kg}", formatKg(remainingKg))
-            .split("{next}")
+        ? (isReps
+              ? UI.onboardingRankGapReps.replace(
+                    "{reps}",
+                    String(Math.ceil(remaining)),
+                )
+              : UI.onboardingRankGap.replace("{kg}", formatKg(remaining))
+          ).split("{next}")
         : null
     const upcomingIds = RANK_ORDER.slice(
         getRankIndex(league.rankId) + 1,

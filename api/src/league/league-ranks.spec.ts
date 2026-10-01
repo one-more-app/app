@@ -89,6 +89,92 @@ describe('getLeagueInfo', () => {
     });
     expect(league?.rankId).toBe('legend');
     expect(league?.subRank).toBeNull();
+    expect(league?.metric).toBe('kg');
+  });
+});
+
+describe('bodyweight dual mode (reps vs weighted)', () => {
+  const pushMeta = { equipment: 'body weight', target: 'pectorals' };
+  const pullMeta = { equipment: 'body weight', target: 'lats' };
+  const dipMeta = { equipment: 'body weight', target: 'pectorals' };
+
+  it('ranks unweighted push-ups by reps (20 reps is not legend)', () => {
+    const league = getLeagueInfo({
+      weight: 0,
+      reps: 20,
+      bodyWeightKg: 75,
+      gender: 'male',
+      exerciseName: 'push-up',
+      exerciseMetadata: pushMeta,
+    });
+    expect(league).not.toBeNull();
+    expect(league!.metric).toBe('reps');
+    expect(league!.oneRM).toBe(20);
+    expect(league!.rankId).not.toBe('legend');
+    expect(league!.tier).toBe('gold');
+  });
+
+  it('reaches legend at 70 unweighted push-ups', () => {
+    const league = getLeagueInfo({
+      weight: 0,
+      reps: 70,
+      bodyWeightKg: 75,
+      gender: 'male',
+      exerciseName: 'push-up',
+      exerciseMetadata: pushMeta,
+    });
+    expect(league?.rankId).toBe('legend');
+    expect(league?.metric).toBe('reps');
+  });
+
+  it('ranks unweighted pull-ups by reps around gold/platinum at 10', () => {
+    const league = getLeagueInfo({
+      weight: 0,
+      reps: 10,
+      bodyWeightKg: 75,
+      gender: 'male',
+      exerciseName: 'pull-up',
+      exerciseMetadata: pullMeta,
+    });
+    expect(league).not.toBeNull();
+    expect(league!.metric).toBe('reps');
+    expect(['gold', 'platinum']).toContain(league!.tier);
+  });
+
+  it('ranks unweighted dips by reps', () => {
+    const league = getLeagueInfo({
+      weight: 0,
+      reps: 15,
+      bodyWeightKg: 75,
+      gender: 'male',
+      exerciseName: 'chest dip',
+      exerciseMetadata: dipMeta,
+    });
+    expect(league).not.toBeNull();
+    expect(league!.metric).toBe('reps');
+    expect(league!.rankId).not.toBe('legend');
+  });
+
+  it('uses kg metric for weighted push-ups', () => {
+    const league = getLeagueInfo({
+      weight: 20,
+      reps: 10,
+      bodyWeightKg: 75,
+      gender: 'male',
+      exerciseName: 'push-up',
+      exerciseMetadata: pushMeta,
+    });
+    expect(league).not.toBeNull();
+    expect(league!.metric).toBe('kg');
+    expect(league!.oneRM).toBeGreaterThan(0);
+  });
+
+  it('returns rep ladder from getAllTiers for bodyweight exercises', () => {
+    const tiers = getAllTiers(75, 'male', 'push-up', pushMeta);
+    expect(tiers).not.toBeNull();
+    expect(tiers![0]!.metric).toBe('reps');
+    const legend = tiers!.find((t) => t.rankId === 'legend');
+    expect(legend?.weightMin).toBe(70);
   });
 });
 

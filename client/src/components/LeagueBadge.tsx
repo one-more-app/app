@@ -8,10 +8,15 @@ interface LeagueBadgeProps {
     league: LeagueInfo
     showNextTarget?: boolean
     compact?: boolean
+    /** Override du suffixe (ex. haltères). Ignoré en mode reps. */
     weightSuffix?: string
 }
 
 const DEFAULT_WEIGHT_SUFFIX = ' kg'
+
+function formatScore(value: number, metric: LeagueInfo['metric']): string {
+    return metric === 'reps' ? String(Math.round(value)) : value.toFixed(1)
+}
 
 export function LeagueBadge({
     league,
@@ -19,6 +24,8 @@ export function LeagueBadge({
     compact = false,
     weightSuffix = DEFAULT_WEIGHT_SUFFIX,
 }: LeagueBadgeProps) {
+    const isReps = league.metric === 'reps'
+    const scoreSuffix = isReps ? UI.repsSuffix : weightSuffix
     const oneRMStyle = LEAGUE_1RM_STYLES[league.tier] ?? 'border border-muted bg-muted/20'
     const nextRankId = league.nextRankId ?? getNextRankId(league.rankId)
     const nextTier = nextRankId != null ? parseRankId(nextRankId).tier : null
@@ -27,9 +34,15 @@ export function LeagueBadge({
         return <RankBadge league={league} size="sm" />
     }
 
-    const remainingKg =
+    const remaining =
         league.progressToNext < 1
-            ? Math.max(0, league.weightToReach - league.oneRM).toFixed(1)
+            ? Math.max(0, league.weightToReach - league.oneRM)
+            : null
+    const remainingLabel =
+        remaining != null
+            ? isReps
+                ? String(Math.ceil(remaining))
+                : remaining.toFixed(1)
             : null
 
     return (
@@ -42,32 +55,38 @@ export function LeagueBadge({
             </div>
 
             <div className={`rounded-lg p-3 ${oneRMStyle}`}>
-                <span className="text-sm text-muted-foreground">{UI.your1RM}</span>
+                <span className="text-sm text-muted-foreground">
+                    {isReps ? UI.yourRepMax : UI.your1RM}
+                </span>
                 <div className="flex items-center gap-2">
                     <span className="font-one-more block text-2xl font-bold italic text-foreground">
-                        {league.oneRM.toFixed(1)}
+                        {formatScore(league.oneRM, league.metric)}
                     </span>
-                    <span className="text-sm text-muted-foreground">{weightSuffix}</span>
+                    <span className="text-sm text-muted-foreground">{scoreSuffix}</span>
                 </div>
             </div>
 
             {showNextTarget && league.progressToNext < 1 && (
                 <div className="space-y-3">
-                    {remainingKg && Number(remainingKg) > 0 && nextRankId && nextTier && (
+                    {remainingLabel && Number(remainingLabel) > 0 && nextRankId && nextTier && (
                         <p className="flex items-center gap-1.5 text-xs font-medium text-foreground flex-wrap">
-                            {UI.remainingForNext.replace('{kg}', remainingKg)}
+                            {isReps
+                                ? UI.remainingForNextReps.replace('{reps}', remainingLabel)
+                                : UI.remainingForNext.replace('{kg}', remainingLabel)}
                             <RankBadge rankId={nextRankId} size="xs" />
                         </p>
                     )}
                     <div className="flex justify-between items-center gap-2 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1.5">
-                            {league.weightTierStart.toFixed(1)}{weightSuffix}
+                            {formatScore(league.weightTierStart, league.metric)}
+                            {scoreSuffix}
                             <RankBadge league={league} size="xs" />
                         </span>
                         <span className="flex items-center gap-1.5">
                             {league.weightTierEnd != null ? (
                                 <>
-                                    {league.weightTierEnd.toFixed(1)}{weightSuffix}
+                                    {formatScore(league.weightTierEnd, league.metric)}
+                                    {scoreSuffix}
                                     {nextRankId && nextTier && (
                                         <RankBadge rankId={nextRankId} size="xs" />
                                     )}

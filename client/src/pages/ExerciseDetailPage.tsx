@@ -559,18 +559,21 @@ export function ExerciseDetailPage() {
                                 league={leagueInfo}
                                 showNextTarget
                                 weightSuffix={
-                                    exercise &&
-                                        isDumbbellExercise(
-                                            exercise.originalName ?? exercise.name,
-                                            exercise.equipment && exercise.target
-                                                ? { equipment: exercise.equipment, target: exercise.target }
-                                                : undefined
-                                        )
-                                        ? ' kg (par haltère)'
-                                        : ' kg'
+                                    leagueInfo.metric === 'reps'
+                                        ? UI.repsSuffix
+                                        : exercise &&
+                                            isDumbbellExercise(
+                                                exercise.originalName ?? exercise.name,
+                                                exercise.equipment && exercise.target
+                                                    ? { equipment: exercise.equipment, target: exercise.target }
+                                                    : undefined
+                                            )
+                                          ? ' kg (par haltère)'
+                                          : ' kg'
                                 }
                             />
                             {exercise &&
+                                leagueInfo.metric !== 'reps' &&
                                 isDumbbellExercise(
                                     exercise.originalName ?? exercise.name,
                                     exercise.equipment && exercise.target
@@ -599,8 +602,10 @@ export function ExerciseDetailPage() {
                                     {showAllTiers && (
                                         <ul className="mt-2 space-y-1.5">
                                             {allTiers.map((tier) => {
-                                                const weightSuffix =
-                                                    exercise &&
+                                                const isReps = tier.metric === 'reps'
+                                                const weightSuffix = isReps
+                                                    ? UI.repsSuffix
+                                                    : exercise &&
                                                         isDumbbellExercise(
                                                             exercise.originalName ?? exercise.name,
                                                             exercise.equipment && exercise.target
@@ -610,8 +615,10 @@ export function ExerciseDetailPage() {
                                                                 }
                                                                 : undefined
                                                         )
-                                                        ? ' kg (par haltère)'
-                                                        : ' kg'
+                                                      ? ' kg (par haltère)'
+                                                      : ' kg'
+                                                const formatBound = (value: number) =>
+                                                    isReps ? String(Math.round(value)) : value.toFixed(1)
                                                 return (
                                                     <li
                                                         key={tier.rankId}
@@ -623,8 +630,8 @@ export function ExerciseDetailPage() {
                                                         />
                                                         <span className="text-muted-foreground">
                                                             {tier.weightMax != null
-                                                                ? `${tier.weightMin.toFixed(1)} → ${tier.weightMax.toFixed(1)}${weightSuffix}`
-                                                                : `≥ ${tier.weightMin.toFixed(1)}${weightSuffix}`}
+                                                                ? `${formatBound(tier.weightMin)} → ${formatBound(tier.weightMax)}${weightSuffix}`
+                                                                : `≥ ${formatBound(tier.weightMin)}${weightSuffix}`}
                                                         </span>
                                                     </li>
                                                 )

@@ -65,12 +65,18 @@ const TIER_FR_LABELS: Record<LeagueTier, string> = {
   legend: "Légende",
 };
 
+export type LeagueMetric = "kg" | "reps";
+
 export interface LeagueInfo {
   rankId: RankId;
   tier: LeagueTier;
   subRank: 1 | 2 | 3 | null;
   label: string;
   tierLabel: string;
+  /**
+   * Score affiché : 1RM (kg) ou reps selon `metric`.
+   * En mode bodyweight sans lest, c’est le nombre de reps de la série.
+   */
   oneRM: number;
   weightTierStart: number;
   weightTierEnd: number | null;
@@ -81,6 +87,8 @@ export interface LeagueInfo {
   percentileEstimate: number;
   /** Prochain rang (null si déjà Légende). */
   nextRankId: RankId | null;
+  /** Unité des champs score / bornes / cible (`kg` ou `reps`). */
+  metric: LeagueMetric;
 }
 
 type RatioTier = { ratio: number; label: string; rankId: RankId };
@@ -461,8 +469,8 @@ const STANDARDS_BY_EQUIPMENT_TARGET: Record<string, LegacyStandardsEntry> = {
     female: tiers([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5]),
   },
   "body weight_pectorals_pushup": {
-    male: tiers([0, 0.03, 0.06, 0.09, 0.12, 0.15, 0.18, 0.21, 0.24, 0.28]),
-    female: tiers([0, 0.02, 0.04, 0.06, 0.08, 0.1, 0.12, 0.14, 0.16, 0.2]),
+    male: tiers([0, 0.08, 0.16, 0.25, 0.35, 0.45, 0.55, 0.7, 0.85, 1.0]),
+    female: tiers([0, 0.05, 0.1, 0.16, 0.22, 0.29, 0.36, 0.45, 0.55, 0.65]),
   },
   "body weight_pectorals_dips": {
     male: tiers([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1]),
@@ -1274,12 +1282,69 @@ const BODYWEIGHT_STANDARDS_KEYS = new Set([
   "weighted_lats",
 ]);
 
+/**
+ * Seuils de reps (10 ancres legacy) pour le mode endurance (sans lest).
+ * Expandus en 16 rangs via `expandLegacyTiersToRankTiers` (ratio = reps).
+ */
+const BODYWEIGHT_REP_ANCHORS: Record<
+  string,
+  { male: number[]; female: number[] }
+> = {
+  "body weight_pectorals_pushup": {
+    male: [1, 5, 10, 15, 22, 30, 40, 50, 60, 70],
+    female: [1, 3, 6, 10, 14, 18, 25, 35, 42, 50],
+  },
+  "body weight_pectorals_dips": {
+    male: [1, 3, 5, 8, 10, 12, 15, 20, 25, 35],
+    female: [1, 2, 4, 6, 7, 8, 11, 14, 18, 25],
+  },
+  "body weight_triceps": {
+    male: [1, 3, 5, 8, 10, 12, 15, 20, 25, 35],
+    female: [1, 2, 4, 6, 7, 8, 11, 14, 18, 25],
+  },
+  lever_triceps: {
+    male: [1, 3, 5, 8, 10, 12, 15, 20, 25, 35],
+    female: [1, 2, 4, 6, 7, 8, 11, 14, 18, 25],
+  },
+  "body weight_lats": {
+    male: [1, 2, 4, 6, 8, 10, 12, 15, 18, 25],
+    female: [1, 1, 3, 4, 6, 7, 8, 11, 13, 18],
+  },
+  "leverage machine_lats": {
+    male: [1, 2, 4, 6, 8, 10, 12, 15, 18, 25],
+    female: [1, 1, 3, 4, 6, 7, 8, 11, 13, 18],
+  },
+  weighted_lats: {
+    male: [1, 2, 4, 6, 8, 10, 12, 15, 18, 25],
+    female: [1, 1, 3, 4, 6, 7, 8, 11, 13, 18],
+  },
+  "body weight_upper back": {
+    male: [1, 3, 5, 8, 10, 14, 18, 22, 28, 40],
+    female: [1, 2, 4, 6, 7, 10, 13, 15, 20, 28],
+  },
+};
+
+const BODYWEIGHT_REP_TIERS_CACHE = new Map<string, StandardsEntry>();
+
 function isBodyweightAdditiveKey(key: string | null): boolean {
   return key !== null && BODYWEIGHT_STANDARDS_KEYS.has(key);
 }
 
 function isDumbbellStandardsKey(key: string | null): boolean {
   return key !== null && DUMBBELL_STANDARDS_KEYS.has(key);
+}
+
+function getBodyweightRepStandards(key: string): StandardsEntry | null {
+  const anchors = BODYWEIGHT_REP_ANCHORS[key];
+  if (!anchors) return null;
+  const cached = BODYWEIGHT_REP_TIERS_CACHE.get(key);
+  if (cached) return cached;
+  const entry = expandStandardsEntry({
+    male: tiers(anchors.male),
+    female: tiers(anchors.female),
+  });
+  BODYWEIGHT_REP_TIERS_CACHE.set(key, entry);
+  return entry;
 }
 
 export function estimate1RM(weight: number, reps: number): number {
@@ -1296,6 +1361,122 @@ export interface TierInfo {
   tierLabel: string;
   weightMin: number;
   weightMax: number | null;
+  metric: LeagueMetric;
+}
+
+function resolveStandardsAndKey(
+  exerciseName: string,
+  exerciseMetadata?: ExerciseMetadata,
+): {
+  standards: StandardsEntry | null;
+  key: string | null;
+} {
+  const equipment = exerciseMetadata?.equipment;
+  const target = exerciseMetadata?.target;
+
+  let standards: StandardsEntry | null = null;
+  let resolvedEquipment = equipment;
+  let resolvedTarget = target;
+
+  if (equipment && target) {
+    standards = getStandards(equipment, target, exerciseName);
+  }
+  if (!standards) {
+    const fallback = getEquipmentTargetFromName(exerciseName);
+    if (fallback) {
+      resolvedEquipment = resolvedEquipment ?? fallback.equipment;
+      resolvedTarget = resolvedTarget ?? fallback.target;
+      standards = getStandards(
+        fallback.equipment,
+        fallback.target,
+        exerciseName,
+      );
+    }
+  }
+
+  const key =
+    resolvedEquipment && resolvedTarget
+      ? getStandardsKey(resolvedEquipment, resolvedTarget, exerciseName)
+      : null;
+
+  return { standards, key };
+}
+
+function rankIndexForScore(tiers: RatioTier[], score: number): number {
+  let rankIndex = 0;
+  for (let i = tiers.length - 1; i >= 0; i--) {
+    if (score >= tiers[i]!.ratio) {
+      rankIndex = i;
+      break;
+    }
+  }
+  return rankIndex;
+}
+
+function buildLeagueInfo(params: {
+  tiers: RatioTier[];
+  rankIndex: number;
+  /** Valeur affichée (1RM kg ou reps). */
+  displayScore: number;
+  /** Valeur comparée aux seuils (`ratio` en kg, `reps` en endurance). */
+  compareScore: number;
+  metric: LeagueMetric;
+  /** Pour metric=kg : convertit un ratio en kg. Ignoré en reps. */
+  bodyWeightKg?: number;
+}): LeagueInfo {
+  const {
+    tiers,
+    rankIndex,
+    displayScore,
+    compareScore,
+    metric,
+    bodyWeightKg = 0,
+  } = params;
+  const rankId = tiers[rankIndex]!.rankId;
+  const { tier, subRank } = parseRankId(rankId);
+  const nextIndex = Math.min(rankIndex + 1, tiers.length - 1);
+  const ratioMin = tiers[rankIndex]!.ratio;
+  const ratioNext =
+    rankIndex >= tiers.length - 1 ? Infinity : tiers[nextIndex]!.ratio;
+
+  const toDisplay =
+    metric === "kg"
+      ? (ratio: number) => Math.round(bodyWeightKg * ratio * 10) / 10
+      : (ratio: number) => Math.round(ratio);
+
+  const weightToReach =
+    rankIndex >= tiers.length - 1
+      ? displayScore
+      : metric === "kg"
+        ? Math.ceil(bodyWeightKg * ratioNext * 10) / 10
+        : Math.ceil(ratioNext);
+
+  const span = ratioNext - ratioMin;
+  const progressToNext =
+    span > 0 && ratioNext < Infinity
+      ? Math.min(1, Math.max(0, (compareScore - ratioMin) / span))
+      : 1;
+
+  const percentileEstimate = percentileForRankIndex(rankIndex, progressToNext);
+
+  return {
+    rankId,
+    tier,
+    subRank,
+    label: tiers[rankIndex]!.label,
+    tierLabel: leagueTierToFrenchLabel(tier),
+    oneRM: displayScore,
+    weightTierStart: toDisplay(ratioMin),
+    weightTierEnd:
+      rankIndex >= tiers.length - 1 ? null : toDisplay(ratioNext),
+    ratioMin,
+    ratioNext,
+    weightToReach,
+    progressToNext,
+    nextRankId: getNextRankId(rankId),
+    percentileEstimate: Math.min(99, Math.max(1, percentileEstimate)),
+    metric,
+  };
 }
 
 export function getAllTiers(
@@ -1304,23 +1485,35 @@ export function getAllTiers(
   exerciseName: string,
   exerciseMetadata?: ExerciseMetadata,
 ): TierInfo[] | null {
-  const equipment = exerciseMetadata?.equipment;
-  const target = exerciseMetadata?.target;
+  const { standards, key } = resolveStandardsAndKey(
+    exerciseName,
+    exerciseMetadata,
+  );
+  if (!standards) return null;
 
-  let standards: StandardsEntry | null = null;
-  if (equipment && target) {
-    standards = getStandards(equipment, target, exerciseName);
+  if (isBodyweightAdditiveKey(key)) {
+    const repStandards = getBodyweightRepStandards(key!);
+    if (!repStandards) return null;
+    const rankTiers = repStandards[gender];
+    return rankTiers.map((s, i) => {
+      const { tier, subRank } = parseRankId(s.rankId);
+      return {
+        rankId: s.rankId,
+        tier,
+        subRank,
+        label: s.label,
+        tierLabel: leagueTierToFrenchLabel(tier),
+        weightMin: Math.round(s.ratio),
+        weightMax:
+          i < rankTiers.length - 1
+            ? Math.round(rankTiers[i + 1]!.ratio)
+            : null,
+        metric: "reps" as const,
+      };
+    });
   }
-  if (!standards) {
-    const fallback = getEquipmentTargetFromName(exerciseName);
-    if (fallback)
-      standards = getStandards(
-        fallback.equipment,
-        fallback.target,
-        exerciseName,
-      );
-  }
-  if (!standards || bodyWeightKg <= 0) return null;
+
+  if (bodyWeightKg <= 0) return null;
 
   const rankTiers = standards[gender];
   return rankTiers.map((s, i) => {
@@ -1336,6 +1529,7 @@ export function getAllTiers(
         i < rankTiers.length - 1
           ? Math.round(bodyWeightKg * rankTiers[i + 1]!.ratio * 10) / 10
           : null,
+      metric: "kg" as const,
     };
   });
 }
@@ -1381,30 +1575,32 @@ export interface LeagueInput {
 }
 
 export function getLeagueInfo(input: LeagueInput): LeagueInfo | null {
-  const equipment = input.exerciseMetadata?.equipment;
-  const target = input.exerciseMetadata?.target;
-
-  let standards: StandardsEntry | null = null;
-  if (equipment && target) {
-    standards = getStandards(equipment, target, input.exerciseName);
-  }
-  if (!standards) {
-    const fallback = getEquipmentTargetFromName(input.exerciseName);
-    if (fallback)
-      standards = getStandards(
-        fallback.equipment,
-        fallback.target,
-        input.exerciseName,
-      );
-  }
+  const { standards, key } = resolveStandardsAndKey(
+    input.exerciseName,
+    input.exerciseMetadata,
+  );
   if (!standards) return null;
 
-  const tiers = standards[input.gender];
-  const key =
-    equipment && target
-      ? getStandardsKey(equipment, target, input.exerciseName)
-      : null;
   const isBodyweight = isBodyweightAdditiveKey(key);
+
+  // Mode endurance : bodyweight sans lest → paliers en reps.
+  if (isBodyweight && input.weight <= 0) {
+    if (input.reps <= 0 || !key) return null;
+    const repStandards = getBodyweightRepStandards(key);
+    if (!repStandards) return null;
+    const tiers = repStandards[input.gender];
+    const score = input.reps;
+    const rankIndex = rankIndexForScore(tiers, score);
+    return buildLeagueInfo({
+      tiers,
+      rankIndex,
+      displayScore: score,
+      compareScore: score,
+      metric: "reps",
+    });
+  }
+
+  const tiers = standards[input.gender];
   // Exos poids du corps : on estime le 1RM total (corps + lest), puis on affiche uniquement le 1RM lesté (total - BW).
   let oneRM: number;
   if (isBodyweight && input.bodyWeightKg > 0) {
@@ -1418,54 +1614,16 @@ export function getLeagueInfo(input: LeagueInput): LeagueInfo | null {
     oneRM = estimate1RM(input.weight, input.reps);
   }
   const ratio = input.bodyWeightKg > 0 ? oneRM / input.bodyWeightKg : 0;
+  const rankIndex = rankIndexForScore(tiers, ratio);
 
-  let rankIndex = 0;
-  for (let i = tiers.length - 1; i >= 0; i--) {
-    if (ratio >= tiers[i]!.ratio) {
-      rankIndex = i;
-      break;
-    }
-  }
-
-  const rankId = tiers[rankIndex]!.rankId;
-  const { tier, subRank } = parseRankId(rankId);
-  const nextIndex = Math.min(rankIndex + 1, tiers.length - 1);
-  const ratioMin = tiers[rankIndex]!.ratio;
-  const ratioNext =
-    rankIndex >= tiers.length - 1 ? Infinity : tiers[nextIndex]!.ratio;
-  const weightToReach =
-    rankIndex >= tiers.length - 1
-      ? oneRM
-      : Math.ceil(input.bodyWeightKg * ratioNext * 10) / 10;
-  const weightTierStart = input.bodyWeightKg * ratioMin;
-  const weightTierEnd =
-    rankIndex >= tiers.length - 1
-      ? null
-      : Math.round(input.bodyWeightKg * ratioNext * 10) / 10;
-  const span = ratioNext - ratioMin;
-  const progressToNext =
-    span > 0 && ratioNext < Infinity
-      ? Math.min(1, Math.max(0, (ratio - ratioMin) / span))
-      : 1;
-
-  const percentileEstimate = percentileForRankIndex(rankIndex, progressToNext);
-
-  return {
-    rankId,
-    tier,
-    subRank,
-    label: tiers[rankIndex]!.label,
-    tierLabel: leagueTierToFrenchLabel(tier),
-    oneRM,
-    weightTierStart,
-    weightTierEnd,
-    ratioMin,
-    ratioNext,
-    weightToReach,
-    progressToNext,
-    nextRankId: getNextRankId(rankId),
-    percentileEstimate: Math.min(99, Math.max(1, percentileEstimate)),
-  };
+  return buildLeagueInfo({
+    tiers,
+    rankIndex,
+    displayScore: oneRM,
+    compareScore: ratio,
+    metric: "kg",
+    bodyWeightKg: input.bodyWeightKg,
+  });
 }
 
 /** Muscle cible pour regrouper les stats (métadonnées ou inférence depuis le nom). */
