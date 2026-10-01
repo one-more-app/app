@@ -36,3 +36,4 @@ client/plugins/**/android/build/
 client/plugins/**/android/.gradle/
 client/plugins/**/ios/build/
 client/ios/App/build-debug-verify/*.worktrees/
+.worktrees/
