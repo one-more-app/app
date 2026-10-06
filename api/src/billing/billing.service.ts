@@ -6,6 +6,7 @@ import { AnalyticsService } from '../analytics/analytics.service.js';
 import { UserEntity } from '../auth/entities/user.entity.js';
 import { RewardsService } from '../rewards/rewards.service.js';
 import { extractRevenueFromRevenueCatEvent } from './lib/revenuecat-event-revenue.js';
+import { revenueCatEventHasPremiumEntitlement } from './lib/revenuecat-premium-entitlement.js';
 import {
   buildRevenueCatSubscriberAttributes,
   type RevenueCatSubscriberSnapshot,
@@ -33,9 +34,15 @@ type RevenueCatSubscriberResponse = {
   };
 };
 
+type PremiumEntitlementRecord = {
+  expires_date: string | null;
+  product_identifier?: string;
+};
+
 @Injectable()
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
+  private readonly attributeSyncInFlight = new Map<string, Promise<void>>();
 
   constructor(
     @InjectRepository(UserEntity)
@@ -53,20 +60,29 @@ export class BillingService {
 
   private getPremiumEntitlementId(): string {
     return (
-      this.config.get<string>('REVENUECAT_PREMIUM_ENTITLEMENT_ID') ?? 'premium'
+      this.config.get<string>('REVENUECAT_PREMIUM_ENTITLEMENT_ID') ??
+      'One More Pro'
     );
   }
 
+  private findPremiumEntitlementRecord(
+    entitlements: Record<string, PremiumEntitlementRecord> | undefined,
+  ): PremiumEntitlementRecord | undefined {
+    if (!entitlements) return undefined;
+    const configured = this.getPremiumEntitlementId();
+    const exact = entitlements[configured];
+    if (exact) return exact;
+    const normalized = configured.trim().toLowerCase();
+    for (const [key, value] of Object.entries(entitlements)) {
+      if (key.trim().toLowerCase() === normalized) return value;
+    }
+    return undefined;
+  }
+
   private hasActivePremiumEntitlement(
-    entitlements:
-      | Record<
-          string,
-          { expires_date: string | null; product_identifier?: string }
-        >
-      | undefined,
+    entitlements: Record<string, PremiumEntitlementRecord> | undefined,
   ): boolean {
-    if (!entitlements) return false;
-    const entitlement = entitlements[this.getPremiumEntitlementId()];
+    const entitlement = this.findPremiumEntitlementRecord(entitlements);
     if (!entitlement) return false;
     if (!entitlement.expires_date) return true;
     return new Date(entitlement.expires_date).getTime() > Date.now();
@@ -143,6 +159,17 @@ export class BillingService {
   }
 
   async syncSubscriberAttributes(userId: string): Promise<void> {
+    const inFlight = this.attributeSyncInFlight.get(userId);
+    if (inFlight) return inFlight;
+
+    const task = this.syncSubscriberAttributesOnce(userId).finally(() => {
+      this.attributeSyncInFlight.delete(userId);
+    });
+    this.attributeSyncInFlight.set(userId, task);
+    return task;
+  }
+
+  private async syncSubscriberAttributesOnce(userId: string): Promise<void> {
     const apiKey = this.config.get<string>('REVENUECAT_API_KEY');
     if (!apiKey?.trim()) return;
 
@@ -171,8 +198,22 @@ export class BillingService {
     );
 
     if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      const detail = body.trim().slice(0, 240);
+      if (response.status === 404) {
+        this.logger.debug(
+          `RevenueCat attribute sync skipped for ${userId}: subscriber not found (404)`,
+        );
+        return;
+      }
+      if (response.status === 529) {
+        this.logger.warn(
+          `RevenueCat attribute sync rate-limited for ${userId} (529)`,
+        );
+        return;
+      }
       this.logger.warn(
-        `RevenueCat attribute sync failed for ${userId}: ${response.status}`,
+        `RevenueCat attribute sync failed for ${userId}: ${response.status}${detail ? ` — ${detail}` : ''}`,
       );
     }
   }
@@ -217,7 +258,7 @@ export class BillingService {
 
     if (isPremium) {
       const productId =
-        entitlements?.[this.getPremiumEntitlementId()]?.product_identifier;
+        this.findPremiumEntitlementRecord(entitlements)?.product_identifier;
       if (productId && this.isAnnualProduct(productId)) {
         await this.rewardsService.grantAnnualClassicPackIfMissing(userId);
       }
@@ -247,9 +288,10 @@ export class BillingService {
     }
 
     if (PREMIUM_ACTIVE_EVENTS.has(type)) {
-      const entitlementIds = event.entitlement_ids as string[] | undefined;
-      const hasPremiumEntitlement =
-        entitlementIds?.includes(this.getPremiumEntitlementId()) ?? false;
+      const hasPremiumEntitlement = revenueCatEventHasPremiumEntitlement(
+        event,
+        this.getPremiumEntitlementId(),
+      );
 
       if (hasPremiumEntitlement || type === 'NON_RENEWING_PURCHASE') {
         await this.setPremium(appUserId, true);
@@ -260,15 +302,29 @@ export class BillingService {
         if (this.isAnnualProduct(productId)) {
           await this.rewardsService.grantAnnualClassicPackIfMissing(appUserId);
         }
-        if (revenue) {
-          void this.analytics.trackValidatedPurchase({
+        if (revenue && revenue.amount > 0) {
+          await this.analytics.trackValidatedPurchase({
             profileId: appUserId,
             amount: revenue.amount,
             currency: revenue.currency,
             productId,
-            properties: { event_type: type },
+            properties: {
+              event_type: type,
+              period_type:
+                typeof event.period_type === 'string'
+                  ? event.period_type
+                  : undefined,
+              transaction_id:
+                typeof event.transaction_id === 'string'
+                  ? event.transaction_id
+                  : undefined,
+            },
           });
         }
+      } else {
+        this.logger.warn(
+          `RevenueCat webhook: entitlement mismatch for ${appUserId} (type=${type}, entitlement_ids=${JSON.stringify(event.entitlement_ids)}, expected=${this.getPremiumEntitlementId()})`,
+        );
       }
       return;
     }

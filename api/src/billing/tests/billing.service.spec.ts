@@ -78,6 +78,64 @@ describe('BillingService', () => {
     ).not.toHaveBeenCalled();
   });
 
+  it('tracks Play Store monthly when entitlement is One More Pro', async () => {
+    config.get.mockImplementation((key: string) => {
+      if (key === 'REVENUECAT_PREMIUM_ENTITLEMENT_ID') return 'One More Pro';
+      if (key === 'REVENUECAT_API_KEY') return 'rc-test-key';
+      return undefined;
+    });
+    service = new BillingService(
+      usersRepo as any,
+      profilesRepo as any,
+      config as unknown as ConfigService,
+      analytics as any,
+      rewardsService as any,
+    );
+    usersRepo.findOne.mockResolvedValue({
+      id: '9dd173e1-b902-42dd-a484-ae767f49ad1c',
+    });
+    await service.handleRevenueCatWebhook({
+      event: {
+        type: 'INITIAL_PURCHASE',
+        app_user_id: '9dd173e1-b902-42dd-a484-ae767f49ad1c',
+        entitlement_ids: ['One More Pro'],
+        product_id: 'starter_mensual_v2:mensual',
+        price: 3.35,
+        price_in_purchased_currency: 2.99,
+        currency: 'EUR',
+        period_type: 'NORMAL',
+        transaction_id: 'GPA.3320-4354-0464-86136',
+      },
+    });
+    expect(analytics.trackValidatedPurchase).toHaveBeenCalledWith({
+      profileId: '9dd173e1-b902-42dd-a484-ae767f49ad1c',
+      amount: 2.99,
+      currency: 'EUR',
+      productId: 'starter_mensual_v2:mensual',
+      properties: {
+        event_type: 'INITIAL_PURCHASE',
+        period_type: 'NORMAL',
+        transaction_id: 'GPA.3320-4354-0464-86136',
+      },
+    });
+  });
+
+  it('does not track revenue when entitlement id env does not match RC', async () => {
+    usersRepo.findOne.mockResolvedValue({ id: 'user-1' });
+    await service.handleRevenueCatWebhook({
+      event: {
+        type: 'INITIAL_PURCHASE',
+        app_user_id: 'user-1',
+        entitlement_ids: ['One More Pro'],
+        product_id: 'starter_mensual_v2:mensual',
+        price_in_purchased_currency: 2.99,
+        currency: 'EUR',
+      },
+    });
+    expect(usersRepo.update).not.toHaveBeenCalled();
+    expect(analytics.trackValidatedPurchase).not.toHaveBeenCalled();
+  });
+
   it('grants annual reward on annual purchase', async () => {
     usersRepo.findOne.mockResolvedValue({ id: 'user-1' });
     await service.handleRevenueCatWebhook({
@@ -183,7 +241,7 @@ describe('BillingService', () => {
       Promise.resolve({
         ok: true,
         status: 200,
-        text: async () => '',
+        text: jest.fn().mockResolvedValue(''),
       }),
     );
     global.fetch = fetchMock as unknown as typeof fetch;
@@ -209,7 +267,7 @@ describe('BillingService', () => {
       Promise.resolve({
         ok: false,
         status: 500,
-        text: async () => 'boom',
+        text: jest.fn().mockResolvedValue('boom'),
       }),
     ) as unknown as typeof fetch;
 
