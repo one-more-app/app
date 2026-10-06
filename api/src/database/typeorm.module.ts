@@ -30,6 +30,10 @@ import { SessionReactionEntity } from '../workout-sessions/entities/session-reac
 import { EventEntryEntity } from '../event/entities/event-entry.entity.js';
 import { EventActiveAttemptEntity } from '../event/entities/event-active-attempt.entity.js';
 import { UserBadgeEntity } from '../badges/entities/user-badge.entity.js';
+import { EmailSuppressionEntity } from '../outbound/entities/email-suppression.entity.js';
+import { MessageTemplateEntity } from '../outbound/entities/message-template.entity.js';
+import { OutboundDispatchEntity } from '../outbound/entities/outbound-dispatch.entity.js';
+import { OutboundMessageEntity } from '../outbound/entities/outbound-message.entity.js';
 
 export const TYPEORM_ENTITIES = [
   UserEntity,
@@ -58,6 +62,10 @@ export const TYPEORM_ENTITIES = [
   EventEntryEntity,
   EventActiveAttemptEntity,
   UserBadgeEntity,
+  EmailSuppressionEntity,
+  MessageTemplateEntity,
+  OutboundDispatchEntity,
+  OutboundMessageEntity,
 ] as const;
 
 const getDatabaseUrl = (config: ConfigService): string => {

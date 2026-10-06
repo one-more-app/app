@@ -38,7 +38,7 @@ type ToggleKey = Exclude<
 >;
 type BusyKey = ToggleKey | "reminderSchedule";
 
-const TOGGLE_ITEMS: Array<{ key: ToggleKey; label: string }> = [
+const PUSH_TOGGLE_ITEMS: Array<{ key: ToggleKey; label: string }> = [
     { key: "streakReminders", label: UI.notifPrefStreak },
     { key: "friendRequests", label: UI.notifPrefFriendRequests },
     { key: "friendAccepted", label: UI.notifPrefFriendAccepted },
@@ -47,6 +47,10 @@ const TOGGLE_ITEMS: Array<{ key: ToggleKey; label: string }> = [
     { key: "friendTraining", label: UI.notifPrefFriendTraining },
     { key: "friendRecords", label: UI.notifPrefFriendRecords },
     { key: "weeklyRecap", label: UI.notifPrefWeeklyRecap },
+];
+
+const EMAIL_TOGGLE_ITEMS: Array<{ key: ToggleKey; label: string }> = [
+    { key: "marketingEmail", label: UI.notifPrefMarketingEmail },
 ];
 
 function NotificationToggle({
@@ -202,7 +206,7 @@ export function NotificationSettingsCard() {
                     {isLoading && !data ? (
                         <p className="text-sm text-muted-foreground">{UI.loading}</p>
                     ) : (
-                        TOGGLE_ITEMS.map((item) => (
+                        PUSH_TOGGLE_ITEMS.map((item) => (
                             <div key={item.key} className="space-y-2">
                                 <NotificationToggle
                                     id={`notif-${item.key}`}
@@ -241,6 +245,24 @@ export function NotificationSettingsCard() {
                             </div>
                         ))
                     )}
+                    <p className="pt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        {UI.notifPrefEmailSection}
+                    </p>
+                    {EMAIL_TOGGLE_ITEMS.map((item) => (
+                        <NotificationToggle
+                            key={item.key}
+                            id={`notif-${item.key}`}
+                            label={item.label}
+                            checked={
+                                data?.[item.key] ??
+                                DEFAULT_NOTIFICATION_PREFERENCES[item.key]
+                            }
+                            disabled={busyKey === item.key}
+                            onChange={(next) => {
+                                void handleToggle(item.key, next);
+                            }}
+                        />
+                    ))}
                 </CardContent>
             ) : null}
 

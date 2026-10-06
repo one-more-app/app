@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { OutboundSendService } from '../outbound/dispatch/outbound-send.service.js';
+import { MarketingMessageVarsService } from '../outbound/lib/marketing-message-vars.service.js';
 import { DeviceTokensService } from './device-tokens.service.js';
 import { isSundayEvening } from './lib/timezone.js';
-import { NotificationDispatchService } from './notification-dispatch.service.js';
 
 @Injectable()
 export class WeeklyRecapCron {
@@ -10,7 +11,8 @@ export class WeeklyRecapCron {
 
   constructor(
     private readonly deviceTokens: DeviceTokensService,
-    private readonly dispatch: NotificationDispatchService,
+    private readonly outboundSend: OutboundSendService,
+    private readonly marketingVars: MarketingMessageVarsService,
   ) {}
 
   @Cron('0 * * * *')
@@ -21,7 +23,17 @@ export class WeeklyRecapCron {
         if (!isSundayEvening(timezone)) continue;
         const userIds = await this.deviceTokens.listUserIdsByTimezone(timezone);
         for (const userId of userIds) {
-          await this.dispatch.sendWeeklyRecapForUser(userId, timezone);
+          const vars = await this.marketingVars.weeklyRecapVariables(
+            userId,
+            timezone,
+          );
+          await this.outboundSend.queueSend({
+            userId,
+            templateKey: 'weekly_recap',
+            variables: vars,
+            channel: 'push',
+            idempotencyKey: `recap:${vars.weekKey}`,
+          });
         }
       }
     } catch (err) {

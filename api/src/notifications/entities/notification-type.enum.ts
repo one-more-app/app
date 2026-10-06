@@ -18,4 +18,5 @@ export enum NotificationType {
   NewUserD1MiddayTrain = 'new_user_d1_midday_train',
   NewUserD1Referral = 'new_user_d1_referral',
   NewUserD1Evening = 'new_user_d1_evening',
+  OutboundMarketing = 'outbound_marketing',
 }

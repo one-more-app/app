@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { OutboundSendService } from '../outbound/dispatch/outbound-send.service.js';
+import { MarketingMessageVarsService } from '../outbound/lib/marketing-message-vars.service.js';
 import { DeviceTokensService } from './device-tokens.service.js';
 import { isMonthlyRankingRecapWindow } from './lib/timezone.js';
-import { NotificationDispatchService } from './notification-dispatch.service.js';
 
 @Injectable()
 export class MonthlyRankingRecapCron {
@@ -10,7 +11,8 @@ export class MonthlyRankingRecapCron {
 
   constructor(
     private readonly deviceTokens: DeviceTokensService,
-    private readonly dispatch: NotificationDispatchService,
+    private readonly outboundSend: OutboundSendService,
+    private readonly marketingVars: MarketingMessageVarsService,
   ) {}
 
   @Cron('0 * * * *')
@@ -21,7 +23,18 @@ export class MonthlyRankingRecapCron {
         if (!isMonthlyRankingRecapWindow(timezone)) continue;
         const userIds = await this.deviceTokens.listUserIdsByTimezone(timezone);
         for (const userId of userIds) {
-          await this.dispatch.sendMonthlyRankingRecapForUser(userId, timezone);
+          const vars = await this.marketingVars.monthlyRankingRecapVariables(
+            userId,
+            timezone,
+          );
+          if (!vars) continue;
+          await this.outboundSend.queueSend({
+            userId,
+            templateKey: 'monthly_ranking_recap',
+            variables: vars,
+            channel: 'push',
+            idempotencyKey: `ranking_recap:${vars.month}`,
+          });
         }
       }
     } catch (err) {

@@ -78,6 +78,7 @@ async function bootstrap() {
       'X-Requested-With',
       'X-Admin-Api-Key',
       'X-Event-Admin-Password',
+      'X-Outbound-Api-Key',
     ],
   });
   app.useGlobalPipes(

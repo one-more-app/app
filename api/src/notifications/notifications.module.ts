@@ -1,4 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { OutboundModule } from '../outbound/outbound.module.js';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FriendshipEntity } from '../social/entities/friendship.entity.js';
@@ -43,6 +44,7 @@ import { UserEntity } from '../auth/entities/user.entity.js';
       UserEntity,
     ]),
     forwardRef(() => RealtimeModule),
+    forwardRef(() => OutboundModule),
   ],
   controllers: [NotificationsController],
   providers: [
@@ -62,6 +64,9 @@ import { UserEntity } from '../auth/entities/user.entity.js';
     NotificationDispatchService,
     FriendTrainingAlertsService,
     DeviceTokensService,
+    NotificationPreferencesService,
+    NotificationFeedService,
+    PushNotificationService,
   ],
 })
 export class NotificationsModule {}

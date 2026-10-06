@@ -15,6 +15,7 @@ export type NotificationPreferences = {
   friendTraining: boolean;
   friendRecords: boolean;
   weeklyRecap: boolean;
+  marketingEmail: boolean;
   reminderWeekdays: number[];
   reminderHour: number;
   reminderMinute: number;
@@ -30,6 +31,7 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   friendTraining: true,
   friendRecords: true,
   weeklyRecap: true,
+  marketingEmail: true,
   reminderWeekdays: [],
   reminderHour: 18,
   reminderMinute: 0,

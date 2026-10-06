@@ -44,6 +44,7 @@ export class NotificationPreferencesService {
       friendTraining: entity.friendTraining,
       friendRecords: entity.friendRecords,
       weeklyRecap: entity.weeklyRecap,
+      marketingEmail: entity.marketingEmail,
       reminderSlots,
       ...legacy,
     };
@@ -162,6 +163,8 @@ export class NotificationPreferencesService {
       case NotificationType.NewUserD1Referral:
       case NotificationType.NewUserD1Evening:
         return true;
+      case NotificationType.OutboundMarketing:
+        return prefs.marketingEmail;
       default:
         return false;
     }
