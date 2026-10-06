@@ -56,6 +56,9 @@ export class TshirtRewardClaimEntity {
   @Column({ type: 'varchar', length: 80, nullable: true })
   trackingNumber!: string | null;
 
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  notionPageId!: string | null;
+
   @Column({ type: 'timestamptz', nullable: true })
   claimedAt!: Date | null;
 

@@ -11,6 +11,8 @@ export enum NotificationType {
   TrainingReminder = 'training_reminder',
   ReferralUsed = 'referral_used',
   TshirtRewardUnlocked = 'tshirt_reward_unlocked',
+  TshirtRewardShipped = 'tshirt_reward_shipped',
+  TshirtRewardDelivered = 'tshirt_reward_delivered',
   ProMonthRewardUnlocked = 'pro_month_reward_unlocked',
   NewUserD1Morning = 'new_user_d1_morning',
   NewUserD1MiddayTrain = 'new_user_d1_midday_train',

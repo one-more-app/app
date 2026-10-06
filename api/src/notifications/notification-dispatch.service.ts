@@ -14,7 +14,12 @@ import { isStreakAtRisk } from '../progress/lib/streak-dates.js';
 import { DeviceTokensService } from './device-tokens.service.js';
 import { FriendTrainingAlertsService } from './friend-training-alerts.service.js';
 import { formatUserDisplayName } from './lib/display-name.js';
-import { localDateKey, localWeekKey, formatFrenchMonthLabel, previousLocalMonthKey } from './lib/timezone.js';
+import {
+  localDateKey,
+  localWeekKey,
+  formatFrenchMonthLabel,
+  previousLocalMonthKey,
+} from './lib/timezone.js';
 import type { NewUserD1TrainingHour } from './lib/new-user-d1.js';
 import { NotificationFeedService } from './notification-feed.service.js';
 import { NotificationPreferencesService } from './notification-preferences.service.js';
@@ -22,6 +27,8 @@ import { NotificationType } from './entities/notification-type.enum.js';
 import type { PushPayload } from './dto/push-payload.dto.js';
 import { PushNotificationService } from './push-notification.service.js';
 import { RealtimeBroadcaster } from '../realtime/realtime-broadcaster.service.js';
+import { TshirtRewardStatus } from '../rewards/entities/tshirt-reward-status.enum.js';
+import type { TshirtRewardType } from '../rewards/entities/tshirt-reward-type.enum.js';
 
 const PRESENCE_STALE_MS = 90_000;
 
@@ -121,6 +128,34 @@ export class NotificationDispatchService {
       route: '/rewards/tshirt/referral_limited',
       dedupKey: 'tshirt:referral_limited',
     });
+  }
+
+  async notifyTshirtRewardStatusUpdated(params: {
+    userId: string;
+    claimId: string;
+    rewardType: TshirtRewardType;
+    status: TshirtRewardStatus;
+  }) {
+    const route = `/rewards/tshirt/${params.rewardType}`;
+    if (params.status === TshirtRewardStatus.Shipped) {
+      await this.deliver(params.userId, {
+        type: NotificationType.TshirtRewardShipped,
+        title: 'T-shirt expédié',
+        body: 'Ton t-shirt One More est en route.',
+        route,
+        dedupKey: `tshirt:${params.claimId}:shipped`,
+      });
+      return;
+    }
+    if (params.status === TshirtRewardStatus.Delivered) {
+      await this.deliver(params.userId, {
+        type: NotificationType.TshirtRewardDelivered,
+        title: 'T-shirt livré',
+        body: 'Ton t-shirt One More est arrivé.',
+        route,
+        dedupKey: `tshirt:${params.claimId}:delivered`,
+      });
+    }
   }
 
   async notifyProMonthRewardUnlocked(params: { userId: string }) {
@@ -487,7 +522,7 @@ export class NotificationDispatchService {
     const month = previousLocalMonthKey(timezone);
     const [y, m] = month.split('-').map(Number);
     const start = `${month}-01`;
-    const lastDay = new Date(Date.UTC(y!, m!, 0)).getUTCDate();
+    const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
     const end = `${month}-${String(lastDay).padStart(2, '0')}`;
 
     const xpRow = await this.xpRepo

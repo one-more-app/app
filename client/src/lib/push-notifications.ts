@@ -10,7 +10,19 @@ import {
 } from "@/lib/notifications-api";
 import { UI } from "@/lib/translations";
 import { toast } from "sonner";
+import { TSHIRT_REWARD_SWR_KEY } from "@/lib/rewards-api";
 import { mutate } from "swr";
+
+const TSHIRT_STATUS_PUSH_TYPES = new Set([
+  "tshirt_reward_shipped",
+  "tshirt_reward_delivered",
+]);
+
+function refreshTshirtRewardIfNeeded(type: unknown) {
+  if (typeof type === "string" && TSHIRT_STATUS_PUSH_TYPES.has(type)) {
+    void mutate(TSHIRT_REWARD_SWR_KEY);
+  }
+}
 
 /** Doit correspondre à `android.notification.channelId` côté API + meta Manifest. */
 export const ANDROID_PUSH_CHANNEL_ID = "one-more-push";
@@ -115,6 +127,7 @@ export function attachPushNotificationListeners() {
     "pushNotificationReceived",
     (notification: PushNotificationSchema) => {
       void mutate(NOTIFICATION_FEED_SWR_KEY);
+      refreshTshirtRewardIfNeeded(notification.data?.type);
       const title = notification.title ?? UI.notificationDefaultTitle;
       const body = notification.body ?? "";
       const route = notification.data?.route;
@@ -136,6 +149,7 @@ export function attachPushNotificationListeners() {
   const actionHandle = PushNotifications.addListener(
     "pushNotificationActionPerformed",
     (action) => {
+      refreshTshirtRewardIfNeeded(action.notification.data?.type);
       const route = action.notification.data?.route;
       if (typeof route === "string" && route.length > 0) {
         navigateToRoute(route);

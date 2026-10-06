@@ -61,8 +61,13 @@ export class NotificationPreferencesService {
     userId: string,
     patch: UpdateNotificationPreferencesDto,
   ): Promise<NotificationPreferencesDto> {
-    const { reminderSlots, reminderWeekdays, reminderHour, reminderMinute, ...rest } =
-      patch;
+    const {
+      reminderSlots,
+      reminderWeekdays,
+      reminderHour,
+      reminderMinute,
+      ...rest
+    } = patch;
     const row = await this.repo.findOne({ where: { userId } });
     const entity =
       row ??
@@ -147,6 +152,9 @@ export class NotificationPreferencesService {
         return prefs.friendAccepted;
       case NotificationType.TshirtRewardUnlocked:
         return prefs.friendAccepted;
+      case NotificationType.TshirtRewardShipped:
+      case NotificationType.TshirtRewardDelivered:
+        return true;
       case NotificationType.ProMonthRewardUnlocked:
         return prefs.friendAccepted;
       case NotificationType.NewUserD1Morning:
