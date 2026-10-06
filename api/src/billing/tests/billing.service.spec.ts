@@ -8,6 +8,8 @@ jest.unstable_mockModule('../../rewards/rewards.service.js', () => ({
   RewardsService: class MockRewardsService {},
 }));
 
+const { resetAttributeSyncGuardState } =
+  await import('../lib/revenuecat-attribute-sync-guard.js');
 const { BillingService } = await import('../billing.service.js');
 
 describe('BillingService', () => {
@@ -35,6 +37,7 @@ describe('BillingService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    resetAttributeSyncGuardState();
     config.get.mockImplementation((key: string) => {
       if (key === 'REVENUECAT_PREMIUM_ENTITLEMENT_ID') return 'premium';
       if (key === 'REVENUECAT_API_KEY') return 'rc-test-key';
@@ -50,7 +53,7 @@ describe('BillingService', () => {
   });
 
   it('sets premium on INITIAL_PURCHASE with entitlement', async () => {
-    usersRepo.findOne.mockResolvedValue({ id: 'user-1' });
+    usersRepo.findOne.mockResolvedValue({ id: 'user-1', isPremium: false });
     await service.handleRevenueCatWebhook({
       event: {
         type: 'INITIAL_PURCHASE',
@@ -93,6 +96,7 @@ describe('BillingService', () => {
     );
     usersRepo.findOne.mockResolvedValue({
       id: '9dd173e1-b902-42dd-a484-ae767f49ad1c',
+      isPremium: false,
     });
     await service.handleRevenueCatWebhook({
       event: {
@@ -121,7 +125,7 @@ describe('BillingService', () => {
   });
 
   it('does not track revenue when entitlement id env does not match RC', async () => {
-    usersRepo.findOne.mockResolvedValue({ id: 'user-1' });
+    usersRepo.findOne.mockResolvedValue({ id: 'user-1', isPremium: false });
     await service.handleRevenueCatWebhook({
       event: {
         type: 'INITIAL_PURCHASE',
@@ -136,8 +140,27 @@ describe('BillingService', () => {
     expect(analytics.trackValidatedPurchase).not.toHaveBeenCalled();
   });
 
+  it('webhook does not sync RevenueCat attributes', async () => {
+    usersRepo.findOne.mockResolvedValue({ id: 'user-1', isPremium: false });
+    const fetchMock = jest.fn();
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    await service.handleRevenueCatWebhook({
+      event: {
+        type: 'INITIAL_PURCHASE',
+        app_user_id: 'user-1',
+        entitlement_ids: ['premium'],
+        product_id: 'monthly',
+        price_in_purchased_currency: 9.99,
+        currency: 'EUR',
+      },
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('grants annual reward on annual purchase', async () => {
-    usersRepo.findOne.mockResolvedValue({ id: 'user-1' });
+    usersRepo.findOne.mockResolvedValue({ id: 'user-1', isPremium: false });
     await service.handleRevenueCatWebhook({
       event: {
         type: 'INITIAL_PURCHASE',
@@ -152,7 +175,7 @@ describe('BillingService', () => {
   });
 
   it('clears premium on EXPIRATION', async () => {
-    usersRepo.findOne.mockResolvedValue({ id: 'user-1' });
+    usersRepo.findOne.mockResolvedValue({ id: 'user-1', isPremium: true });
     await service.handleRevenueCatWebhook({
       event: {
         type: 'EXPIRATION',
@@ -195,6 +218,7 @@ describe('BillingService', () => {
       }),
     );
     global.fetch = fetchMock as unknown as typeof fetch;
+    usersRepo.findOne.mockResolvedValue({ isPremium: false });
 
     const result = await service.syncPremiumFromRevenueCat('user-1');
 
@@ -206,6 +230,32 @@ describe('BillingService', () => {
     expect(rewardsService.grantAnnualClassicPackIfMissing).toHaveBeenCalledWith(
       'user-1',
     );
+  });
+
+  it('skips DB update when syncPremium finds unchanged premium status', async () => {
+    const fetchMock = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            subscriber: {
+              entitlements: {
+                premium: {
+                  expires_date: new Date(Date.now() + 86_400_000).toISOString(),
+                  product_identifier: 'start_mensual',
+                },
+              },
+            },
+          }),
+      }),
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+    usersRepo.findOne.mockResolvedValue({ isPremium: true });
+
+    const result = await service.syncPremiumFromRevenueCat('user-1');
+
+    expect(result).toEqual({ isPremium: true });
+    expect(usersRepo.update).not.toHaveBeenCalled();
   });
 
   it('does not grant annual reward when syncing a monthly subscription', async () => {
@@ -226,6 +276,7 @@ describe('BillingService', () => {
       }),
     );
     global.fetch = fetchMock as unknown as typeof fetch;
+    usersRepo.findOne.mockResolvedValue({ isPremium: false });
 
     const result = await service.syncPremiumFromRevenueCat('user-1');
 
@@ -236,7 +287,7 @@ describe('BillingService', () => {
   });
 
   it('grants promotional monthly premium entitlement', async () => {
-    usersRepo.findOne.mockResolvedValue(null);
+    usersRepo.findOne.mockResolvedValue({ id: 'user-1', isPremium: false });
     const fetchMock = jest.fn(() =>
       Promise.resolve({
         ok: true,
@@ -337,5 +388,41 @@ describe('BillingService', () => {
     };
     expect(body.attributes.$email).toEqual({ value: 'alex@example.com' });
     expect(body.attributes.$displayName).toEqual({ value: 'Alex Martin' });
+  });
+
+  it('skips duplicate attribute sync within ttl when fingerprint unchanged', async () => {
+    usersRepo.findOne.mockResolvedValue({
+      id: 'user-1',
+      email: 'alex@example.com',
+      isPremium: false,
+    });
+    profilesRepo.findOne.mockResolvedValue({
+      userId: 'user-1',
+      firstName: 'Alex',
+      lastName: null,
+      username: null,
+      gender: null,
+      weightKg: null,
+      heightCm: null,
+      afMediaSource: null,
+      afCampaign: null,
+      afAdset: null,
+      afAdgroup: null,
+      afKeywords: null,
+      afSub1: null,
+    });
+
+    const fetchMock = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({}),
+      }),
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    await service.syncSubscriberAttributes('user-1');
+    await service.syncSubscriberAttributes('user-1');
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

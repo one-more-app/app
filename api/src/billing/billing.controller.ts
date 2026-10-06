@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard.js';
 import { BillingService } from './billing.service.js';
 import { RevenueCatWebhookGuard } from './guards/revenuecat-webhook.guard.js';
@@ -16,7 +16,13 @@ export class BillingController {
 
   @UseGuards(JwtAuthGuard)
   @Post('/me/billing/sync')
-  async syncPremium(@Req() req: { user: { sub: string } }) {
-    return await this.billingService.syncPremiumFromRevenueCat(req.user.sub);
+  async syncPremium(
+    @Req() req: { user: { sub: string } },
+    @Query('force') force?: string,
+  ) {
+    const forceLookup = force === '1' || force === 'true';
+    return await this.billingService.syncPremiumFromRevenueCat(req.user.sub, {
+      force: forceLookup,
+    });
   }
 }

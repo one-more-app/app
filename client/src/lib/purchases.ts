@@ -183,7 +183,7 @@ export async function restorePurchases(): Promise<void> {
   const purchases = await getPurchases();
   if (!purchases) return;
   await purchases.Purchases.restorePurchases();
-  await syncPremiumStatus();
+  await syncPremiumStatus({ force: true });
   await refreshBillingCaches();
 }
 
@@ -210,7 +210,7 @@ export async function purchasePackage(
 
   try {
     await purchases.Purchases.purchasePackage({ aPackage });
-    await syncPremiumStatus();
+    await syncPremiumStatus({ force: true });
     await refreshBillingCaches();
     return "purchased";
   } catch (error) {
@@ -230,18 +230,24 @@ function isUserCancelledError(error: unknown): boolean {
   return false;
 }
 
-export async function syncPurchasesAfterLogin(
+/** Une fois par session utilisateur : statut premium serveur + cache client. */
+export async function syncPurchasesSessionOnLogin(
   userId: string,
-  subscriber?: RevenueCatSubscriberInfo,
 ): Promise<void> {
   if (!isPurchasesAvailable()) return;
   await configurePurchases(userId);
   const purchases = await getPurchases();
   if (!purchases) return;
-  if (subscriber) {
-    await syncRevenueCatSubscriberInfo(subscriber);
-  }
   await purchases.Purchases.getCustomerInfo();
   await syncPremiumStatus();
   await refreshBillingCaches();
+}
+
+/** Attributs RC côté SDK uniquement (fingerprint dans syncRevenueCatSubscriberInfo). */
+export async function syncPurchasesSubscriberAttributes(
+  subscriber: RevenueCatSubscriberInfo,
+): Promise<void> {
+  if (!isPurchasesAvailable()) return;
+  await configurePurchases(subscriber.userId);
+  await syncRevenueCatSubscriberInfo(subscriber);
 }
