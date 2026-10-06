@@ -6,6 +6,7 @@ Variables :
 - `NOTION_REWARDS_DB_ID` (base [Rewards CRM](https://app.notion.com/p/3e8351ddcd2180a79c3fdd8b9927ce32), sous Databases)
 - `NOTION_REWARDS_STATUS` (optionnel, défaut `À traiter`)
 - `NOTION_WEBHOOK_VERIFICATION_TOKEN` (secret handshake webhook Notion, distinct de `NOTION_TOKEN`)
+- `NOTION_REWARDS_STATUS_DEBOUNCE_MINUTES` (optionnel, défaut `5`) — délai avant sync + push
 
 ## Déclencheur
 
@@ -56,7 +57,8 @@ Webhook intégration Notion, événement **`page.properties_updated`** uniquemen
 1. Notion appelle le webhook (signature `X-Notion-Signature`).
 2. L’API relit la page via `NOTION_TOKEN` (le corps du webhook n’est jamais source de vérité).
 3. Liaison claim : `notionPageId` en base, ou **Claim ID** pour les pages créées avant cette version.
-4. Mise à jour Postgres + push utilisateur si passage **vers l’avant** uniquement.
+4. **Anti miss-clic** : le nouveau statut doit rester stable **5 minutes** (configurable). Retour au statut déjà en base avant ce délai → annulation, rien en DB ni push.
+5. Après le délai : mise à jour Postgres + push si passage **vers l’avant** uniquement (cron chaque minute + webhook).
 
 | Statut Notion | Statut app | Push |
 |---------------|------------|------|

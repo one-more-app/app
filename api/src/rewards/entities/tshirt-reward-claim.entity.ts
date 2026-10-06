@@ -59,6 +59,16 @@ export class TshirtRewardClaimEntity {
   @Column({ type: 'varchar', length: 36, nullable: true })
   notionPageId!: string | null;
 
+  @Column({
+    type: 'enum',
+    enum: TshirtRewardStatus,
+    nullable: true,
+  })
+  notionPendingStatus!: TshirtRewardStatus | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  notionPendingSince!: Date | null;
+
   @Column({ type: 'timestamptz', nullable: true })
   claimedAt!: Date | null;
 

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { NotificationDispatchService } from '../notifications/notification-dispatch.service.js';
 import { TshirtRewardClaimEntity } from './entities/tshirt-reward-claim.entity.js';
 import { TshirtRewardStatus } from './entities/tshirt-reward-status.enum.js';
@@ -15,14 +15,20 @@ import {
   notionRewardStatusToClaimStatus,
 } from './lib/map-notion-reward-status.js';
 import {
-  fetchNotionRewardsPage,
-  notionIdsEqual,
-} from './lib/notion-rewards-page.js';
-import { verifyNotionWebhookSignature } from './lib/notion-webhook-signature.js';
-import {
   readNotionEnv,
   readRewardsNotionDatabaseId,
 } from './lib/notion-env.js';
+import {
+  fetchNotionRewardsPage,
+  notionIdsEqual,
+  type ParsedRewardsNotionPage,
+} from './lib/notion-rewards-page.js';
+import {
+  readNotionStatusDebounceMinutes,
+  reconcileNotionClaimStatus,
+  type NotionStatusReconcileResult,
+} from './lib/notion-rewards-status-reconcile.js';
+import { verifyNotionWebhookSignature } from './lib/notion-webhook-signature.js';
 
 type NotionWebhookBody = {
   verification_token?: string;
@@ -84,6 +90,22 @@ export class NotionRewardsWebhookService {
     return { ok: true as const };
   }
 
+  async flushDuePendingStatuses(): Promise<void> {
+    const pendingClaims = await this.claimsRepo.find({
+      where: { notionPendingStatus: Not(IsNull()) },
+    });
+    for (const claim of pendingClaims) {
+      if (!claim.notionPageId) continue;
+      await this.syncClaimFromNotionPage(claim.notionPageId);
+    }
+  }
+
+  private debounceMinutes(): number {
+    return readNotionStatusDebounceMinutes(
+      readNotionEnv(this.config, 'NOTION_REWARDS_STATUS_DEBOUNCE_MINUTES'),
+    );
+  }
+
   private async syncClaimFromNotionPage(pageId: string): Promise<void> {
     const notionToken = readNotionEnv(this.config, 'NOTION_TOKEN');
     const rewardsDbId = readRewardsNotionDatabaseId(this.config);
@@ -112,31 +134,64 @@ export class NotionRewardsWebhookService {
       return;
     }
 
+    await this.reconcileClaimWithNotionPage(claim, parsed);
+  }
+
+  private async reconcileClaimWithNotionPage(
+    claim: TshirtRewardClaimEntity,
+    parsed: ParsedRewardsNotionPage,
+  ): Promise<void> {
     const nextStatus = notionRewardStatusToClaimStatus(parsed.statusName);
-    if (!nextStatus) return;
+    const result = reconcileNotionClaimStatus(
+      claim,
+      nextStatus,
+      new Date(),
+      this.debounceMinutes(),
+    );
+    await this.applyReconcileResult(claim, result);
+  }
 
-    if (
-      claim.status === TshirtRewardStatus.ClaimPending ||
-      claim.status === nextStatus
-    ) {
-      return;
-    }
-
-    const previousStatus = claim.status;
-    claim.status = nextStatus;
-    if (nextStatus === TshirtRewardStatus.Shipped && claim.shippedAt == null) {
-      claim.shippedAt = new Date();
-    }
-
-    const saved = await this.claimsRepo.save(claim);
-
-    if (isForwardStatusTransition(previousStatus, nextStatus)) {
-      void this.notifications.notifyTshirtRewardStatusUpdated({
-        userId: saved.userId,
-        claimId: saved.id,
-        rewardType: saved.rewardType,
-        status: nextStatus,
-      });
+  private async applyReconcileResult(
+    claim: TshirtRewardClaimEntity,
+    result: NotionStatusReconcileResult,
+  ): Promise<void> {
+    switch (result.kind) {
+      case 'noop':
+        return;
+      case 'cancel_pending':
+        claim.notionPendingStatus = null;
+        claim.notionPendingSince = null;
+        await this.claimsRepo.save(claim);
+        return;
+      case 'start_pending':
+        claim.notionPendingStatus = result.pendingStatus;
+        claim.notionPendingSince = result.pendingSince;
+        await this.claimsRepo.save(claim);
+        return;
+      case 'apply': {
+        const previousStatus = result.previousStatus;
+        claim.status = result.nextStatus;
+        claim.notionPendingStatus = null;
+        claim.notionPendingSince = null;
+        if (
+          result.nextStatus === TshirtRewardStatus.Shipped &&
+          claim.shippedAt == null
+        ) {
+          claim.shippedAt = new Date();
+        }
+        const saved = await this.claimsRepo.save(claim);
+        if (isForwardStatusTransition(previousStatus, result.nextStatus)) {
+          void this.notifications.notifyTshirtRewardStatusUpdated({
+            userId: saved.userId,
+            claimId: saved.id,
+            rewardType: saved.rewardType,
+            status: result.nextStatus,
+          });
+        }
+        return;
+      }
+      default:
+        return;
     }
   }
 

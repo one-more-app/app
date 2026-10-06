@@ -4,6 +4,7 @@ import { NotificationsModule } from '../notifications/notifications.module.js';
 import { AccessModule } from '../social/access.module.js';
 import { TshirtRewardClaimEntity } from './entities/tshirt-reward-claim.entity.js';
 import { AdminApiKeyGuard } from './guards/admin-api-key.guard.js';
+import { NotionRewardsStatusCron } from './notion-rewards-status.cron.js';
 import { NotionRewardsWebhookController } from './notion-rewards-webhook.controller.js';
 import { NotionRewardsWebhookService } from './notion-rewards-webhook.service.js';
 import {
@@ -23,7 +24,12 @@ import { RewardsService } from './rewards.service.js';
     AdminRewardsController,
     NotionRewardsWebhookController,
   ],
-  providers: [RewardsService, AdminApiKeyGuard, NotionRewardsWebhookService],
+  providers: [
+    RewardsService,
+    AdminApiKeyGuard,
+    NotionRewardsWebhookService,
+    NotionRewardsStatusCron,
+  ],
   exports: [RewardsService],
 })
 export class RewardsModule {}

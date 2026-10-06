@@ -11,6 +11,7 @@ const notifyTshirtRewardStatusUpdated = jest.fn();
 describe('NotionRewardsWebhookService', () => {
   const claimsRepo = {
     findOne: jest.fn(),
+    find: jest.fn(),
     save: jest.fn((row: unknown) => row),
     update: jest.fn(),
   };
@@ -20,6 +21,7 @@ describe('NotionRewardsWebhookService', () => {
       if (key === 'NOTION_WEBHOOK_VERIFICATION_TOKEN') return 'secret_wh';
       if (key === 'NOTION_TOKEN') return 'ntn_test';
       if (key === 'NOTION_REWARDS_DB_ID') return 'db-rewards';
+      if (key === 'NOTION_REWARDS_STATUS_DEBOUNCE_MINUTES') return '5';
       return undefined;
     }),
   } as unknown as ConfigService;
@@ -67,13 +69,15 @@ describe('NotionRewardsWebhookService', () => {
     );
   });
 
-  it('syncs shipped status and notifies once on forward transition', async () => {
+  it('starts pending instead of immediate shipped sync', async () => {
     const claim = {
       id: 'claim-1',
       userId: 'user-1',
       rewardType: TshirtRewardType.ReferralLimited,
       status: TshirtRewardStatus.Pending,
       notionPageId: 'page-1',
+      notionPendingStatus: null,
+      notionPendingSince: null,
       shippedAt: null,
     };
     claimsRepo.findOne.mockResolvedValue(claim);
@@ -103,14 +107,13 @@ describe('NotionRewardsWebhookService', () => {
     await service.handle(raw, signature);
 
     expect(claimsRepo.save).toHaveBeenCalledWith(
-      expect.objectContaining({ status: TshirtRewardStatus.Shipped }),
+      expect.objectContaining({
+        status: TshirtRewardStatus.Pending,
+        notionPendingStatus: TshirtRewardStatus.Shipped,
+        notionPendingSince: expect.any(Date),
+      }),
     );
-    expect(notifyTshirtRewardStatusUpdated).toHaveBeenCalledWith({
-      userId: 'user-1',
-      claimId: 'claim-1',
-      rewardType: TshirtRewardType.ReferralLimited,
-      status: TshirtRewardStatus.Shipped,
-    });
+    expect(notifyTshirtRewardStatusUpdated).not.toHaveBeenCalled();
   });
 
   it('refuses sync when Claim ID does not match', async () => {
@@ -148,14 +151,16 @@ describe('NotionRewardsWebhookService', () => {
     expect(notifyTshirtRewardStatusUpdated).not.toHaveBeenCalled();
   });
 
-  it('does not notify on backward status change', async () => {
+  it('cancels pending when status reverts before debounce', async () => {
     claimsRepo.findOne.mockResolvedValue({
       id: 'claim-1',
       userId: 'user-1',
       rewardType: TshirtRewardType.ReferralLimited,
-      status: TshirtRewardStatus.Shipped,
+      status: TshirtRewardStatus.Pending,
       notionPageId: 'page-1',
-      shippedAt: new Date(),
+      notionPendingStatus: TshirtRewardStatus.Shipped,
+      notionPendingSince: new Date(),
+      shippedAt: null,
     });
 
     fetchMock.mockResolvedValue({
@@ -183,7 +188,11 @@ describe('NotionRewardsWebhookService', () => {
     await service.handle(raw, signature);
 
     expect(claimsRepo.save).toHaveBeenCalledWith(
-      expect.objectContaining({ status: TshirtRewardStatus.Pending }),
+      expect.objectContaining({
+        status: TshirtRewardStatus.Pending,
+        notionPendingStatus: null,
+        notionPendingSince: null,
+      }),
     );
     expect(notifyTshirtRewardStatusUpdated).not.toHaveBeenCalled();
   });
