@@ -12,6 +12,9 @@ hero:
       text: Outbound & n8n
       link: /outbound-n8n-reference
     - theme: alt
+      text: AWS SES
+      link: /outbound-ses-setup
+    - theme: alt
       text: WebSocket / déploiement
       link: /WEBSOCKET
 

@@ -1,7 +1,8 @@
 # Outbound marketing — référence n8n
 
 Guide opérationnel pour appeler l’API One More (segments, templates, exemples).  
-Architecture et décisions : [`superpowers/specs/2026-10-06-outbound-marketing-design.md`](superpowers/specs/2026-10-06-outbound-marketing-design.md).
+Architecture et décisions : [`superpowers/specs/2026-10-06-outbound-marketing-design.md`](superpowers/specs/2026-10-06-outbound-marketing-design.md).  
+Setup AWS SES, secrets, tracking OpenPanel : [`outbound-ses-setup.md`](outbound-ses-setup.md).
 
 ## Authentification
 
@@ -148,6 +149,8 @@ Désinscription : page API `GET/POST /u/:token` (pas le client React).
 ## Variables d’environnement (rappel)
 
 Voir `api/.env.example` : `OUTBOUND_API_KEY`, `PUBLIC_API_URL`, `OUTBOUND_MAX_RECIPIENTS`, bloc SES, bloc SMTP.
+
+Runbook SES (identité DKIM, Configuration Set, SNS → `/webhooks/ses`, events OpenPanel `email_sent` / `email_opened` / `email_clicked`) : [`outbound-ses-setup.md`](outbound-ses-setup.md). Sans SES, repli SMTP : pas d’open/click.
 
 ---
 

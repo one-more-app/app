@@ -89,6 +89,7 @@ export default defineConfig({
         text: 'Guides',
         items: [
           { text: 'Outbound & n8n', link: '/outbound-n8n-reference' },
+          { text: 'AWS SES (emails)', link: '/outbound-ses-setup' },
           { text: 'WebSocket', link: '/WEBSOCKET' },
           { text: 'Push notifications', link: '/push-notifications-setup' },
           { text: 'Quality gates', link: '/quality-gates' },

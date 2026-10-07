@@ -18,9 +18,16 @@ function readTag(
   tags: Record<string, string[]> | undefined,
   name: string,
 ): string | null {
-  const values = tags?.[name];
-  if (!values?.length) return null;
-  return values[0] ?? null;
+  if (!tags) return null;
+  const exact = tags[name];
+  if (exact?.length) return exact[0] ?? null;
+  const lower = name.toLowerCase();
+  for (const [key, values] of Object.entries(tags)) {
+    if (key.toLowerCase() === lower && values?.length) {
+      return values[0] ?? null;
+    }
+  }
+  return null;
 }
 
 @Controller('webhooks/ses')

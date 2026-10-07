@@ -65,6 +65,8 @@ Filtre envoi marketing : `marketingEmail` + absence dans `email_suppressions`. T
 
 [`docs/outbound-n8n-reference.md`](../../outbound-n8n-reference.md) — exemples JSON, segments, templates seed, consentement.
 
+[`docs/outbound-ses-setup.md`](../../outbound-ses-setup.md) — console AWS, secrets, Configuration Set, SNS, OpenPanel.
+
 ## Références code existant
 
 - Layout email : `api/src/emails/transactional-layout.ts`
