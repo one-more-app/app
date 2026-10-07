@@ -1,0 +1,161 @@
+import { workflow, node, trigger, sticky, ifElse, expr } from '@n8n/workflow-sdk';
+
+const everyTuesday = trigger({
+  type: 'n8n-nodes-base.scheduleTrigger',
+  version: 1.4,
+  config: {
+    name: 'Chaque mardi 10:00 (Paris)',
+    parameters: {
+      rule: {
+        interval: [{ field: 'weeks', weeksInterval: 1, triggerAtDay: [2], triggerAtHour: 10, triggerAtMinute: 0 }],
+      },
+    },
+    position: [0, 300],
+  },
+  output: [{ timestamp: '2026-10-13T10:00:00.000+02:00' }],
+});
+
+const campaignParams = node({
+  type: 'n8n-nodes-base.set',
+  version: 3.5,
+  config: {
+    name: 'Paramètres campagne',
+    parameters: {
+      mode: 'manual',
+      includeOtherFields: false,
+      assignments: {
+        assignments: [
+          { id: 'cp-segment', name: 'segmentKey', value: 'inactive_since', type: 'string' },
+          { id: 'cp-params', name: 'params', value: expr('{{ { days: 14 } }}'), type: 'object' },
+          { id: 'cp-template', name: 'templateKey', value: 'winback_inactive_14d', type: 'string' },
+          { id: 'cp-channel', name: 'channel', value: 'email', type: 'string' },
+          { id: 'cp-campaign', name: 'campaignKey', value: expr('winback-14d-{{ $now.setZone("Europe/Paris").toFormat("yyyy-MM") }}'), type: 'string' },
+          { id: 'cp-idempotency', name: 'idempotencyKey', value: expr('n8n:winback-14d:{{ $now.setZone("Europe/Paris").toFormat("yyyy-MM") }}'), type: 'string' },
+          { id: 'cp-confirm', name: 'confirmLargeAudience', value: false, type: 'boolean' },
+        ],
+      },
+    },
+    position: [240, 300],
+  },
+  output: [{ segmentKey: 'inactive_since', params: { days: 14 }, templateKey: 'winback_inactive_14d', channel: 'email', campaignKey: 'winback-14d-2026-10', idempotencyKey: 'n8n:winback-14d:2026-10', confirmLargeAudience: false }],
+});
+
+const fetchCatalog = node({
+  type: 'n8n-nodes-base.executeWorkflow',
+  version: 1.4,
+  config: {
+    name: 'Lire le catalogue',
+    parameters: {
+      mode: 'once',
+      source: 'database',
+      workflowId: { __rl: true, mode: 'id', value: 'iQYqQdhUqtZuw4gA', cachedResultName: 'One More · Outbound · [Sub] Appel API' },
+      workflowInputs: {
+        mappingMode: 'defineBelow',
+        value: {
+          method: 'GET',
+          path: '/internal/outbound/catalog',
+          body: expr('{{ {} }}'),
+        },
+        matchingColumns: [],
+        schema: [
+          { id: 'method', displayName: 'method', required: false, defaultMatch: false, display: true, canBeUsedToMatch: true, type: 'string' },
+          { id: 'path', displayName: 'path', required: false, defaultMatch: false, display: true, canBeUsedToMatch: true, type: 'string' },
+          { id: 'body', displayName: 'body', required: false, defaultMatch: false, display: true, canBeUsedToMatch: true, type: 'object' },
+        ],
+        attemptToConvertTypes: false,
+      },
+      options: { waitForSubWorkflow: true },
+    },
+    position: [480, 300],
+  },
+  output: [{ segments: [], templates: [{ key: 'winback_inactive_14d', category: 'marketing', channel: 'email', variables: [], isActive: true, version: 1 }], endpoints: {} }],
+});
+
+const templateReady = ifElse({
+  version: 2.3,
+  config: {
+    name: 'Template prêt pour le dispatch ?',
+    parameters: {
+      conditions: {
+        combinator: 'and',
+        options: { caseSensitive: true, leftValue: '', typeValidation: 'loose', version: 2 },
+        conditions: [
+          {
+            leftValue: expr('{{ $json.templates.some(t => t.key === $("Paramètres campagne").first().json.templateKey && t.isActive && t.category === "marketing" && ["email", "both"].includes(t.channel) && (t.variables || []).length === 0) }}'),
+            rightValue: true,
+            operator: { type: 'boolean', operation: 'true', singleValue: true },
+          },
+        ],
+      },
+    },
+    position: [720, 300],
+  },
+});
+
+const runDispatch = node({
+  type: 'n8n-nodes-base.executeWorkflow',
+  version: 1.4,
+  config: {
+    name: 'Dispatch inactifs 14 j',
+    parameters: {
+      mode: 'once',
+      source: 'database',
+      workflowId: { __rl: true, mode: 'id', value: 'b0KcWFM96bSwLfQL', cachedResultName: 'One More · Outbound · [Sub] Dispatch segment' },
+      workflowInputs: {
+        mappingMode: 'defineBelow',
+        value: {
+          segmentKey: expr('{{ $("Paramètres campagne").first().json.segmentKey }}'),
+          params: expr('{{ $("Paramètres campagne").first().json.params }}'),
+          templateKey: expr('{{ $("Paramètres campagne").first().json.templateKey }}'),
+          channel: expr('{{ $("Paramètres campagne").first().json.channel }}'),
+          campaignKey: expr('{{ $("Paramètres campagne").first().json.campaignKey }}'),
+          idempotencyKey: expr('{{ $("Paramètres campagne").first().json.idempotencyKey }}'),
+          confirmLargeAudience: expr('{{ $("Paramètres campagne").first().json.confirmLargeAudience }}'),
+        },
+        matchingColumns: [],
+        schema: [
+          { id: 'segmentKey', displayName: 'segmentKey', required: false, defaultMatch: false, display: true, canBeUsedToMatch: true, type: 'string' },
+          { id: 'params', displayName: 'params', required: false, defaultMatch: false, display: true, canBeUsedToMatch: true, type: 'object' },
+          { id: 'templateKey', displayName: 'templateKey', required: false, defaultMatch: false, display: true, canBeUsedToMatch: true, type: 'string' },
+          { id: 'channel', displayName: 'channel', required: false, defaultMatch: false, display: true, canBeUsedToMatch: true, type: 'string' },
+          { id: 'campaignKey', displayName: 'campaignKey', required: false, defaultMatch: false, display: true, canBeUsedToMatch: true, type: 'string' },
+          { id: 'idempotencyKey', displayName: 'idempotencyKey', required: false, defaultMatch: false, display: true, canBeUsedToMatch: true, type: 'string' },
+          { id: 'confirmLargeAudience', displayName: 'confirmLargeAudience', required: false, defaultMatch: false, display: true, canBeUsedToMatch: true, type: 'boolean' },
+        ],
+        attemptToConvertTypes: false,
+      },
+      options: { waitForSubWorkflow: true },
+    },
+    position: [960, 200],
+  },
+  output: [{ dispatchId: 'dispatch-uuid', status: 'completed', segmentKey: 'inactive_since', templateKey: 'winback_inactive_14d', recipientCount: 42, queuedCount: 42 }],
+});
+
+const templateMissing = node({
+  type: 'n8n-nodes-base.stopAndError',
+  version: 1,
+  config: {
+    name: 'Erreur : template non prêt',
+    parameters: {
+      errorType: 'errorMessage',
+      errorMessage: expr('Template "{{ $("Paramètres campagne").first().json.templateKey }}" absent, inactif, non marketing, sans canal email ou avec des variables. Le créer dans message_templates (voir n8n/outbound/README.md) puis relancer « Catalogue (manuel) ».'),
+    },
+    position: [960, 400],
+  },
+});
+
+const note = sticky(
+  '## Winback inactifs 14 j (email marketing)\n' +
+    'Segment `inactive_since` (days 14) → template `winback_inactive_14d`, canal email.\n\n' +
+    'Tourne chaque mardi, mais `idempotencyKey` est **mensuelle** : un utilisateur reçoit au plus 1 winback par mois.\n\n' +
+    'Consentement (`marketingEmail`) et suppressions filtrés côté API. Template requis : `category: marketing`, `variables: []`.',
+  [campaignParams, templateReady],
+  { color: 6 },
+);
+
+export default workflow('one-more-outbound-campaign-winback-14d', 'One More · Outbound · Campagne · Winback inactifs 14 j (email)')
+  .add(everyTuesday)
+  .to(campaignParams)
+  .to(fetchCatalog)
+  .to(templateReady.onTrue(runDispatch).onFalse(templateMissing))
+  .add(note);

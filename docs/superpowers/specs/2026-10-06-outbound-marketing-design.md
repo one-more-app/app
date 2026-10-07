@@ -44,6 +44,7 @@ Filtre envoi marketing : `marketingEmail` + absence dans `email_suppressions`. T
 | POST | `/internal/outbound/send` | `X-Outbound-Api-Key` |
 | POST | `/internal/outbound/dispatch` | idem |
 | GET | `/internal/outbound/dispatch/:id` | idem |
+| GET | `/internal/outbound/catalog` | idem (segments + templates en base) |
 | POST | `/webhooks/ses` | Signature SNS AWS |
 | GET/POST | `/u/:token` | Public |
 
@@ -59,6 +60,10 @@ Filtre envoi marketing : `marketingEmail` + absence dans `email_suppressions`. T
 2. Templates + send unitaire  
 3. SES + feedback OpenPanel + worker  
 4. Segments + dispatch + migration crons marketing  
+
+## Doc opérationnelle n8n
+
+[`docs/outbound-n8n-reference.md`](../../outbound-n8n-reference.md) — exemples JSON, segments, templates seed, consentement.
 
 ## Références code existant
 

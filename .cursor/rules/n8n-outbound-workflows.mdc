@@ -1,0 +1,36 @@
+---
+description: Garde n8n/outbound/*.workflow.ts synchronisé avec n8n et avec le contrat API /internal/outbound/*. Clé API jamais commitée.
+globs: n8n/**/*,api/src/outbound/**/*.ts,docs/outbound-n8n-reference.md
+alwaysApply: false
+---
+
+# Workflows n8n Outbound
+
+Procédure complète : skill [`.cursor/skills/n8n-outbound-workflows/SKILL.md`](../skills/n8n-outbound-workflows/SKILL.md). Registre des IDs : [`n8n/outbound/README.md`](../../n8n/outbound/README.md).
+
+## Quand tu modifies `n8n/outbound/*.workflow.ts`
+
+- Pousser le changement sur n8n via le MCP (`validate_workflow` puis `update_workflow`) dans la même tâche. Un fichier modifié mais pas poussé = dérive.
+- `outboundApiKey` reste `TO_CHANGE` dans le repo. Jamais la vraie clé.
+- Mettre à jour le registre du README si un workflow est créé, renommé, publié ou archivé.
+
+## Quand tu modifies `api/src/outbound/`
+
+Si le changement touche le contrat consommé par n8n, mettre à jour les workflows dans la même tâche :
+
+| Changement API | À répercuter |
+|----------------|--------------|
+| `dto/outbound-send.dto.ts` (champs send/dispatch) | `02-sub-send`, `03-sub-dispatch` (inputs + `body`) et les `schema` des appelants |
+| Réponse de `outbound-internal.controller.ts` | Nodes qui lisent `dispatchId`, `recipients`, `status`, `queuedCount` (`03-sub-dispatch`) |
+| `segments/segment-catalog.ts` (clé ou params) | `Paramètres campagne` des campagnes `1x` qui utilisent ce segment |
+| Nouveau cron lifecycle côté API | Vérifier qu'aucune campagne n8n n'envoie déjà le même template |
+| Auth (`guards/outbound-api-key.guard.ts`) | `01-sub-api-call` (header `X-Outbound-Api-Key`) |
+
+Toujours mettre à jour `docs/outbound-n8n-reference.md` en même temps.
+
+## Interdits
+
+- Appel HTTP direct à `api.one-more.app` hors de `[Sub] Appel API`.
+- Recréer dans n8n un envoi déjà fait par un cron API (`weekly_recap`, `streak_at_risk`, `training_reminder`, `monthly_ranking_recap`, `new_user_d1_*`).
+- Dispatch d'un template qui déclare des `variables` (le dispatch n'en transmet pas).
+- Publier une campagne sans demande explicite.

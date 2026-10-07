@@ -8,6 +8,7 @@ import { UserProgressEntity } from '../progress/entities/user-progress.entity.js
 import { XpEventEntity } from '../progress/entities/xp-event.entity.js';
 import { NotificationsModule } from '../notifications/notifications.module.js';
 import { NotificationPreferencesEntity } from '../notifications/entities/notification-preferences.entity.js';
+import { OutboundCatalogService } from './catalog/outbound-catalog.service.js';
 import { ConsentService } from './consent/consent.service.js';
 import { UnsubscribeController } from './consent/unsubscribe.controller.js';
 import { OutboundDispatchService } from './dispatch/outbound-dispatch.service.js';
@@ -54,6 +55,7 @@ import { TemplateService } from './templates/template.service.js';
   ],
   providers: [
     ConsentService,
+    OutboundCatalogService,
     TemplateService,
     TemplateRendererService,
     OutboundSendService,

@@ -12,6 +12,7 @@ import {
   OutboundDispatchDto,
   OutboundSendDto,
 } from './dto/outbound-send.dto.js';
+import { OutboundCatalogService } from './catalog/outbound-catalog.service.js';
 import { OutboundDispatchService } from './dispatch/outbound-dispatch.service.js';
 import { OutboundSendService } from './dispatch/outbound-send.service.js';
 import { OutboundApiKeyGuard } from './guards/outbound-api-key.guard.js';
@@ -22,7 +23,13 @@ export class OutboundInternalController {
   constructor(
     private readonly send: OutboundSendService,
     private readonly dispatch: OutboundDispatchService,
+    private readonly catalog: OutboundCatalogService,
   ) {}
+
+  @Get('catalog')
+  getCatalog() {
+    return this.catalog.getCatalog();
+  }
 
   @Post('send')
   @HttpCode(202)

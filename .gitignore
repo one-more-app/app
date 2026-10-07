@@ -16,6 +16,10 @@ blob-report
 /icons
 dist
 dist-ssr
+docs/.vitepress/cache
+docs/.vitepress/dist
+docs/cursor-rules/*.md
+!docs/cursor-rules/README.md
 *.local
 .env
 .env.local
