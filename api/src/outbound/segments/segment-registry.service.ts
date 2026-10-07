@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../../auth/entities/user.entity.js';
+import { activeWithEmailSegment } from './active-with-email.segment.js';
 import { inactiveSinceSegment } from './inactive-since.segment.js';
 import { signedUpDaysAgoSegment } from './signed-up-days-ago.segment.js';
 import { streakAtRiskSegment } from './streak-at-risk.segment.js';
@@ -16,6 +17,7 @@ export class SegmentRegistryService {
     private readonly usersRepo: Repository<UserEntity>,
   ) {
     const list = [
+      activeWithEmailSegment,
       inactiveSinceSegment,
       signedUpDaysAgoSegment,
       streakAtRiskSegment,

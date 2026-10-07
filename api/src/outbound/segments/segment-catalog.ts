@@ -16,6 +16,12 @@ export type SegmentCatalogEntry = {
 
 export const SEGMENT_CATALOG: SegmentCatalogEntry[] = [
   {
+    key: 'active_with_email',
+    description:
+      'Comptes actifs (non supprimés) qui ont une adresse email. Pour les envois one-shot d’information (ex. mise à jour CGU).',
+    params: [],
+  },
+  {
     key: 'inactive_since',
     description:
       'Utilisateurs avec email, compte actif, sans performance enregistrée sur les N derniers jours calendaires (UTC date côté SQL).',

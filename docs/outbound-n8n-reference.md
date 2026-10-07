@@ -81,6 +81,7 @@ Utiliser ce GET dans n8n pour ne pas dupliquer la doc à la main.
 
 | `segmentKey` | `params` | Description |
 |--------------|----------|-------------|
+| `active_with_email` | — | Comptes actifs avec email (one-shot d’info, ex. CGU) |
 | `inactive_since` | `days?` (défaut **7**) | Email + compte actif, aucune perf sur les N derniers jours |
 | `signed_up_days_ago` | `days?` (défaut **1**), **`timezone`** (requis) | Inscription il y a N jours dans le fuseau IANA |
 | `streak_at_risk` | **`timezone`** (requis) | Série en danger aujourd’hui, pas de perf aujourd’hui |
@@ -106,7 +107,14 @@ Après migrations, ces clés existent en base (push / lifecycle) :
 
 Placeholders dans le contenu : `{{nomVariable}}` (liste strictement déclarée dans `variables`).
 
-### Templates email marketing
+### Templates email seedés (migrations 213 / 214)
+
+| `templateKey` | `category` | `channel` | Usage |
+|---------------|------------|-----------|--------|
+| `winback_inactive_14d` | marketing | email | Winback inactifs 14 j |
+| `cgu_update_emails_notice` | transactional | email | One-shot CGU + info emails One More |
+
+### Templates email marketing additionnels
 
 Non seedés. Insérer dans `message_templates` avec :
 
@@ -123,6 +131,7 @@ Schéma TypeScript : `api/src/outbound/entities/message-template.entity.ts`.
 | Type | Filtre |
 |------|--------|
 | Email **marketing** | `marketingEmail` + pas dans `email_suppressions` |
+| Email **transactionnel** (ex. CGU) | Compte actif + email, **sans** filtre `marketingEmail` |
 | Push lifecycle (ex. weekly_recap) | Préférences push existantes (weeklyRecap, streakReminders, etc.) |
 
 Désinscription : page API `GET/POST /u/:token` (pas le client React).
@@ -144,7 +153,7 @@ Voir `api/.env.example` : `OUTBOUND_API_KEY`, `PUBLIC_API_URL`, `OUTBOUND_MAX_RE
 
 ## Workflows n8n en place
 
-Code source et registre des IDs : [`n8n/outbound/`](../n8n/outbound/README.md). Maintenance : skill `n8n-outbound-workflows`.
+Code source et registre des IDs : [`n8n/outbound/`](../n8n/outbound/README.md) (`subs/` + `campaigns/`). Maintenance : skill `n8n-outbound-workflows`.
 
 | Workflow | Rôle |
 |----------|------|
@@ -152,6 +161,7 @@ Code source et registre des IDs : [`n8n/outbound/`](../n8n/outbound/README.md). 
 | `[Sub] Envoi unitaire` | `POST /send` validé, réutilisable par d’autres workflows |
 | `[Sub] Dispatch segment` | `POST /dispatch` puis sondage `GET /dispatch/:id` jusqu’à `completed` / `failed` |
 | `Catalogue (manuel)` | Test de connexion + liste des templates utilisables |
+| `Campagne · Mise à jour CGU (email)` | Manuel one-shot, `active_with_email` → `cgu_update_emails_notice` |
 | `Campagne · Winback inactifs 14 j (email)` | Mardi 10:00, `inactive_since` 14 j → `winback_inactive_14d`, max 1/mois/utilisateur |
 
-Nouvelle campagne : partir de `n8n/outbound/10-campaign-winback-14d.workflow.ts`, ne jamais appeler l’API en HTTP direct.
+Nouvelle campagne : partir de `n8n/outbound/campaigns/10-campaign-winback-14d.workflow.ts`, ne jamais appeler l’API en HTTP direct.

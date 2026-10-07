@@ -36,8 +36,11 @@ describe('OutboundCatalogService', () => {
     const service = module.get(OutboundCatalogService);
     const catalog = await service.getCatalog();
 
-    expect(catalog.segments.length).toBeGreaterThanOrEqual(3);
+    expect(catalog.segments.length).toBeGreaterThanOrEqual(4);
     expect(catalog.segments.some((s) => s.key === 'inactive_since')).toBe(true);
+    expect(catalog.segments.some((s) => s.key === 'active_with_email')).toBe(
+      true,
+    );
     expect(catalog.templates).toHaveLength(1);
     expect(catalog.endpoints.catalog.path).toBe('/internal/outbound/catalog');
   });

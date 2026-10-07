@@ -9,7 +9,7 @@ description: Crée, modifie et maintient à jour les workflows n8n Outbound de O
 
 | Quoi | Où |
 |------|----|
-| Code des workflows (Workflow SDK) | `n8n/outbound/*.workflow.ts` |
+| Code des workflows (Workflow SDK) | `n8n/outbound/subs/*.workflow.ts`, `n8n/outbound/campaigns/*.workflow.ts` |
 | Registre (IDs n8n, statut publié, SQL templates) | `n8n/outbound/README.md` |
 | Contrat API | `docs/outbound-n8n-reference.md` + `api/src/outbound/` |
 | Templates et segments live | `GET /internal/outbound/catalog` (workflow « Catalogue (manuel) ») |
@@ -29,7 +29,7 @@ Le fichier du repo et le workflow n8n doivent rester identiques. On édite **d'a
 ## Conventions
 
 - Nom n8n : `One More · Outbound · <Type> · <Nom>` ; types : `[Sub]`, `Campagne`, ou outil (`Catalogue (manuel)`).
-- Fichier : `NN-<slug>.workflow.ts` ; `0x` briques, `1x` campagnes.
+- Fichier : `subs/0N-…` (briques) ou `campaigns/1N-…` (campagnes). Le MCP n8n de cette instance ne crée pas de dossiers : préfixe de nom + tags.
 - `workflow('<id-stable>', '<nom n8n>')` avec id `one-more-outbound-<slug>`.
 - Noms de nodes en français, explicites (« Paramètres campagne », « Lire le catalogue »).
 - Tags : `one-more`, `outbound` (+ `campagne` pour les campagnes). Fuseau workflow `Europe/Paris` dès qu'il y a un schedule.
@@ -59,7 +59,7 @@ Le fichier du repo et le workflow n8n doivent rester identiques. On édite **d'a
 
 **Créer une campagne**
 
-1. Copier `10-campaign-winback-14d.workflow.ts` → `1N-campaign-<slug>.workflow.ts`.
+1. Copier `campaigns/10-campaign-winback-14d.workflow.ts` → `campaigns/1N-campaign-<slug>.workflow.ts`.
 2. Adapter `Paramètres campagne` (segment, params, templateKey, channel, clés), le schedule et le garde-fou (catégorie/canal attendus).
 3. `validate_workflow` → `create_workflow_from_code` (avec `description` et `versionName`) → `update_workflow` : `setWorkflowSettings { timezone: 'Europe/Paris' }` + `addTags`.
 4. Ajouter la ligne au registre et le SQL du template au README si le template n'existe pas.

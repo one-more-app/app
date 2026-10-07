@@ -5,26 +5,38 @@ Contrat API : [`docs/outbound-n8n-reference.md`](../../docs/outbound-n8n-referen
 
 Ces fichiers sont la **source de vérité**. Toute modification passe par le fichier puis par le MCP n8n (voir le skill [`.cursor/skills/n8n-outbound-workflows/SKILL.md`](../../.cursor/skills/n8n-outbound-workflows/SKILL.md)).
 
+## Arborescence
+
+```text
+n8n/outbound/
+  README.md
+  subs/          briques réutilisables (0x)
+  campaigns/     campagnes (1x)
+```
+
+Le MCP n8n de cette instance **ne crée pas de dossiers** (`search_folders` absent). Le rangement n8n passe par le préfixe `One More · Outbound · …` et les tags `one-more` / `outbound` / `campagne`. Tu peux glisser les workflows dans un dossier « One More · Outbound » dans l'UI.
+
 ## Registre
 
 Instance : `https://tools-n8nwithpostgres-d94398-34-155-156-83.traefik.me` · projet personnel « Team Zilton » · tags `one-more`, `outbound`.
 
 | Fichier | Workflow n8n | ID | Type | Publié |
 |---------|--------------|----|------|--------|
-| `01-sub-api-call.workflow.ts` | One More · Outbound · [Sub] Appel API | `iQYqQdhUqtZuw4gA` | Sous-workflow | Non |
-| `02-sub-send.workflow.ts` | One More · Outbound · [Sub] Envoi unitaire | `Ezmos0oPn6u0jUFQ` | Sous-workflow | Non |
-| `03-sub-dispatch.workflow.ts` | One More · Outbound · [Sub] Dispatch segment | `b0KcWFM96bSwLfQL` | Sous-workflow | Non |
-| `04-catalog.workflow.ts` | One More · Outbound · Catalogue (manuel) | `MLNFVu8WU5MPXLwZ` | Manuel, lecture seule | Non |
-| `10-campaign-winback-14d.workflow.ts` | One More · Outbound · Campagne · Winback inactifs 14 j (email) | `lv86eX1eUwf8sJAt` | Planifié (mardi 10:00 Paris) | Non |
+| `subs/01-sub-api-call.workflow.ts` | One More · Outbound · [Sub] Appel API | `iQYqQdhUqtZuw4gA` | Sous-workflow | Non |
+| `subs/02-sub-send.workflow.ts` | One More · Outbound · [Sub] Envoi unitaire | `Ezmos0oPn6u0jUFQ` | Sous-workflow | Non |
+| `subs/03-sub-dispatch.workflow.ts` | One More · Outbound · [Sub] Dispatch segment | `b0KcWFM96bSwLfQL` | Sous-workflow | Non |
+| `subs/04-catalog.workflow.ts` | One More · Outbound · Catalogue (manuel) | `MLNFVu8WU5MPXLwZ` | Manuel, lecture seule | Non |
+| `campaigns/10-campaign-winback-14d.workflow.ts` | One More · Outbound · Campagne · Winback inactifs 14 j (email) | `lv86eX1eUwf8sJAt` | Planifié (mardi 10:00 Paris) | Non |
+| `campaigns/11-campaign-cgu-update.workflow.ts` | One More · Outbound · Campagne · Mise à jour CGU (email) | `EQChL8mE8x0uKOj0` | Manuel, one-shot | Non |
 
-Numérotation : `0x` = briques (sous-workflows, outils), `1x` = campagnes planifiées.
+Numérotation : `0x` = briques, `1x` = campagnes.
 
 ## Architecture
 
 ```text
-Campagne (schedule) ──► [Sub] Dispatch segment ──► [Sub] Appel API ──► POST /internal/outbound/dispatch
-        │                        └─ sondage ─────► [Sub] Appel API ──► GET  /internal/outbound/dispatch/:id
-        └─ garde-fou ───────────────────────────► [Sub] Appel API ──► GET  /internal/outbound/catalog
+Campagne (schedule ou manuel) ──► [Sub] Dispatch segment ──► [Sub] Appel API ──► POST /internal/outbound/dispatch
+        │                                └─ sondage ─────► [Sub] Appel API ──► GET  /internal/outbound/dispatch/:id
+        └─ garde-fou ───────────────────────────────────► [Sub] Appel API ──► GET  /internal/outbound/catalog
 
 Autre workflow ──► [Sub] Envoi unitaire ──► [Sub] Appel API ──► POST /internal/outbound/send
 ```
@@ -37,49 +49,40 @@ Autre workflow ──► [Sub] Envoi unitaire ──► [Sub] Appel API ──�
 1. Ouvrir **[Sub] Appel API** → node `Config API One More` → remplacer `outboundApiKey = TO_CHANGE` par la valeur de `OUTBOUND_API_KEY` (`api/.env` prod). Pour tester sur staging, mettre aussi `apiBaseUrl = https://api.staging.one-more.app`.
 2. Publier les 3 sous-workflows (01, 02, 03).
 3. Lancer **Catalogue (manuel)** : doit renvoyer segments + templates. Une 401 = mauvaise clé.
-4. Déployer l'API (la migration 2130 crée `winback_inactive_14d`), relancer le catalogue : la clé doit apparaître dans `templatesEmailMarketing` et `templatesUtilisablesEnDispatch`.
-5. Publier **Campagne · Winback inactifs 14 j**.
+4. Déployer l'API (migrations 2130 `winback_inactive_14d` et 2140 `cgu_update_emails_notice`), relancer le catalogue.
+5. **One-shot CGU** : lancer manuellement **Campagne · Mise à jour CGU** (avant le winback).
+6. Publier **Campagne · Winback inactifs 14 j** seulement après.
 
-## Template requis : `winback_inactive_14d`
+## Template : `cgu_update_emails_notice`
 
-Créé par la migration `api/src/database/migrations/2130000000000-outbound-winback-template.ts` (appliquée au démarrage du conteneur API via `typeorm:migrate:prod`). Le SQL ci-dessous sert seulement si on doit l'insérer à la main.
+Créé par `api/src/database/migrations/2140000000000-outbound-cgu-update-template.ts`.
 
-Contraintes imposées par l'API :
+- `category = 'transactional'` → **pas** de filtre `marketingEmail` (tous les comptes avec email). C'est volontaire : info légale + explication du soft opt-in.
+- `variables = '{}'` → le dispatch n'en transmet pas.
+- CTA : [https://one-more.app/legal/conditions-generales](https://one-more.app/legal/conditions-generales)
+- Copy : tutoiement, pas de `--` ni `—`.
+
+Le désabonnement marketing se fait dans Réglages → Notifications (mentionné dans le mail). Les emails marketing suivants portent le lien RFC 8058.
+
+## Template : `winback_inactive_14d`
+
+Créé par `api/src/database/migrations/2130000000000-outbound-winback-template.ts`.
+
+Contraintes :
 
 - `category = 'marketing'` → filtrage consentement `marketingEmail` + `email_suppressions` + lien de désinscription automatique.
-- `variables = '{}'` → le dispatch ne transmet aucune variable. Le prénom est injecté par le layout email, pas besoin de variable.
-- Copy : pas de `--` ni `—` (règle `copywriting-french`), tutoiement.
+- `variables = '{}'`
+- Copy : pas de `--` ni `—`, tutoiement.
 
-```sql
-INSERT INTO message_templates (key, category, channel, variables, content)
-VALUES (
-  'winback_inactive_14d',
-  'marketing',
-  'email',
-  '{}',
-  '{
-    "email": {
-      "subject": "Ta prochaine séance t''attend",
-      "preheader": "Deux semaines sans séance. On reprend tranquille ?",
-      "eyebrow": "One More",
-      "title": "On reprend ?",
-      "bodyHtml": "<p>Ça fait deux semaines qu''on ne t''a pas vu passer. Pas de pression : une séance courte suffit pour relancer la machine.</p><p>Tes records et ta progression sont toujours là.</p>",
-      "bodyText": "Ça fait deux semaines qu''on ne t''a pas vu passer. Pas de pression : une séance courte suffit pour relancer la machine. Tes records et ta progression sont toujours là.",
-      "cta": { "label": "Reprendre l''entraînement", "href": "https://one-more.app/#/home" }
-    }
-  }'::jsonb
-)
-ON CONFLICT (key) DO NOTHING;
-```
-
-Désactiver la campagne sans toucher n8n : `UPDATE message_templates SET "isActive" = false WHERE key = 'winback_inactive_14d';` (le garde-fou du workflow s'arrête alors en erreur explicite).
+Désactiver sans toucher n8n : `UPDATE message_templates SET "isActive" = false WHERE key = 'winback_inactive_14d';`
 
 ## Clés d'idempotence
 
-Format : `n8n:<campagne>:<période>`. La période fixe la fréquence max par utilisateur, indépendamment de la fréquence du schedule.
+Format : `n8n:<campagne>:<période>`. La période fixe la fréquence max par utilisateur.
 
 | Campagne | Clé | Effet |
 |----------|-----|-------|
+| CGU + emails One More | `n8n:cgu-update:2026-10` | 1 email max, définitif |
 | Winback 14 j | `n8n:winback-14d:yyyy-MM` | 1 email max par utilisateur et par mois |
 
 Côté API, la déduplication réelle est `idempotencyKey:userId` (table `outbound_messages`).

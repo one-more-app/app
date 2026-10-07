@@ -8,7 +8,7 @@ alwaysApply: false
 
 Procédure complète : skill [`.cursor/skills/n8n-outbound-workflows/SKILL.md`](../skills/n8n-outbound-workflows/SKILL.md). Registre des IDs : [`n8n/outbound/README.md`](../../n8n/outbound/README.md).
 
-## Quand tu modifies `n8n/outbound/*.workflow.ts`
+## Quand tu modifies `n8n/outbound/**/*.workflow.ts`
 
 - Pousser le changement sur n8n via le MCP (`validate_workflow` puis `update_workflow`) dans la même tâche. Un fichier modifié mais pas poussé = dérive.
 - `outboundApiKey` reste `TO_CHANGE` dans le repo. Jamais la vraie clé.
