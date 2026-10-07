@@ -37,10 +37,12 @@ Autre workflow ──► [Sub] Envoi unitaire ──► [Sub] Appel API ──�
 1. Ouvrir **[Sub] Appel API** → node `Config API One More` → remplacer `outboundApiKey = TO_CHANGE` par la valeur de `OUTBOUND_API_KEY` (`api/.env` prod). Pour tester sur staging, mettre aussi `apiBaseUrl = https://api.staging.one-more.app`.
 2. Publier les 3 sous-workflows (01, 02, 03).
 3. Lancer **Catalogue (manuel)** : doit renvoyer segments + templates. Une 401 = mauvaise clé.
-4. Créer le template `winback_inactive_14d` (SQL ci-dessous), relancer le catalogue : la clé doit apparaître dans `templatesEmailMarketing` et `templatesUtilisablesEnDispatch`.
+4. Déployer l'API (la migration 2130 crée `winback_inactive_14d`), relancer le catalogue : la clé doit apparaître dans `templatesEmailMarketing` et `templatesUtilisablesEnDispatch`.
 5. Publier **Campagne · Winback inactifs 14 j**.
 
 ## Template requis : `winback_inactive_14d`
+
+Créé par la migration `api/src/database/migrations/2130000000000-outbound-winback-template.ts` (appliquée au démarrage du conteneur API via `typeorm:migrate:prod`). Le SQL ci-dessous sert seulement si on doit l'insérer à la main.
 
 Contraintes imposées par l'API :
 
