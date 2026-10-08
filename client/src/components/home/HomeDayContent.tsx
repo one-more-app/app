@@ -19,6 +19,8 @@ type HomeDayContentProps = {
   /** Dernier jour avec séance (avant ou à aujourd'hui), s'il existe. */
   lastSessionDay: string | null;
   onSelectDay: (dayKey: string) => void;
+  /** Ouvre le parcours d'ajout d'un exercice (catalogue ou tiroir parrainage). */
+  onAddExercise: () => void;
 };
 
 export function HomeDayContent({
@@ -29,6 +31,7 @@ export function HomeDayContent({
   dayEntries,
   lastSessionDay,
   onSelectDay,
+  onAddExercise,
 }: HomeDayContentProps) {
   if (kind === "live" && ownerUserId) {
     return (
@@ -36,6 +39,7 @@ export function HomeDayContent({
         ownerUserId={ownerUserId}
         dayKey={dayKey}
         todayEntries={dayEntries}
+        onAddExercise={onAddExercise}
       />
     );
   }

@@ -205,6 +205,7 @@ function HomePage() {
                         dayEntries={dayEntries}
                         lastSessionDay={lastSessionDay}
                         onSelectDay={handleJumpToDay}
+                        onAddExercise={goToAddExercise}
                     />
                 )}
             </main>

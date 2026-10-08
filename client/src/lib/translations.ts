@@ -408,7 +408,9 @@ export const UI = {
   homeRecapCta: "Voir le récap",
   homeRecapAria: "Voir le récap de la séance du {day}",
   homeStartSession: "Démarrer une séance",
-  homeViewLiveSession: "Voir la séance",
+  homeLiveSeriesOne: "1 série",
+  homeLiveOpenExerciseAria: "Voir la fiche de {name}",
+  homeLiveAddSetAria: "Ajouter une série à {name}",
   homeTourWeekTitle: "Ta semaine",
   homeTourWeekContent:
     "Touche un jour pour revoir ta séance. La flamme marque les jours où tu t'es entraîné.",
