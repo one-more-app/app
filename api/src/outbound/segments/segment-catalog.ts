@@ -69,4 +69,67 @@ export const SEGMENT_CATALOG: SegmentCatalogEntry[] = [
       },
     ],
   },
+  {
+    key: 'registered_no_exercise',
+    description:
+      'Compte actif avec email, inscrit depuis au moins days/hours, sans exo réel (l’exo unique de l’onboarding ne compte pas).',
+    params: [
+      {
+        name: 'days',
+        type: 'number',
+        required: false,
+        description:
+          'Jours depuis l’inscription. Combiné avec hours. Total ≥ 1 h.',
+      },
+      {
+        name: 'hours',
+        type: 'number',
+        required: false,
+        description:
+          'Heures depuis l’inscription. Combiné avec days. Total ≥ 1 h.',
+      },
+    ],
+  },
+  {
+    key: 'registered_no_push',
+    description:
+      'Compte actif avec email, inscrit depuis au moins days/hours, sans token push (notifications OS jamais activées).',
+    params: [
+      {
+        name: 'days',
+        type: 'number',
+        required: false,
+        description:
+          'Jours depuis l’inscription. Combiné avec hours. Total ≥ 1 h.',
+      },
+      {
+        name: 'hours',
+        type: 'number',
+        required: false,
+        description:
+          'Heures depuis l’inscription. Combiné avec days. Total ≥ 1 h.',
+      },
+    ],
+  },
+  {
+    key: 'lapsed_after_session',
+    description:
+      'A fait une séance réelle (hors exo d’onboarding) et n’est pas revenu sur l’app depuis days/hours (session, token push ou perf).',
+    params: [
+      {
+        name: 'days',
+        type: 'number',
+        required: false,
+        description:
+          'Jours depuis la dernière activité app. Combiné avec hours. Total ≥ 1 h.',
+      },
+      {
+        name: 'hours',
+        type: 'number',
+        required: false,
+        description:
+          'Heures depuis la dernière activité app. Combiné avec days. Total ≥ 1 h.',
+      },
+    ],
+  },
 ];

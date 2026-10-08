@@ -4,6 +4,9 @@ import { Repository } from 'typeorm';
 import { UserEntity } from '../../auth/entities/user.entity.js';
 import { activeWithEmailSegment } from './active-with-email.segment.js';
 import { inactiveSinceSegment } from './inactive-since.segment.js';
+import { lapsedAfterSessionSegment } from './lapsed-after-session.segment.js';
+import { registeredNoExerciseSegment } from './registered-no-exercise.segment.js';
+import { registeredNoPushSegment } from './registered-no-push.segment.js';
 import { signedUpDaysAgoSegment } from './signed-up-days-ago.segment.js';
 import { streakAtRiskSegment } from './streak-at-risk.segment.js';
 import type { OutboundSegment } from './segment.types.js';
@@ -21,6 +24,9 @@ export class SegmentRegistryService {
       inactiveSinceSegment,
       signedUpDaysAgoSegment,
       streakAtRiskSegment,
+      registeredNoExerciseSegment,
+      registeredNoPushSegment,
+      lapsedAfterSessionSegment,
     ];
     this.segments = new Map(list.map((s) => [s.key, s]));
   }

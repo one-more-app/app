@@ -78,14 +78,97 @@ Utiliser ce GET dans n8n pour ne pas dupliquer la doc à la main.
 
 ---
 
-## Segments (code)
+## Segments
 
-| `segmentKey` | `params` | Description |
-|--------------|----------|-------------|
-| `active_with_email` | — | Comptes actifs avec email (one-shot d’info, ex. CGU) |
-| `inactive_since` | `days?` (défaut **7**) | Email + compte actif, aucune perf sur les N derniers jours |
-| `signed_up_days_ago` | `days?` (défaut **1**), **`timezone`** (requis) | Inscription il y a N jours dans le fuseau IANA |
-| `streak_at_risk` | **`timezone`** (requis) | Série en danger aujourd’hui, pas de perf aujourd’hui |
+Les segments **ne sont pas une liste stockée**. Aucun cron API ne les « met à jour ». Au `POST /internal/outbound/dispatch`, l’API exécute le SQL **à cet instant** et file les `userId` dans `outbound_messages`.
+
+- **Qui** = prédicat SQL (`api/src/outbound/segments/`).
+- **Quand / quelle fréquence** = le trigger n8n (schedule ou manuel). L’API n’a pas de fréquence par segment marketing.
+- **Anti-doublon** = `idempotencyKey` (ex. une clé par mois `n8n:winback-14d:2026-10`).
+
+Le catalogue live (`GET /internal/outbound/catalog`) reflète ce tableau.
+
+### Fréquence actuelle
+
+| `segmentKey` | Déclencheur | Fréquence |
+|--------------|-------------|-----------|
+| `inactive_since` | n8n **Campagne · Winback inactifs 14 j** | Mardi 10:00 Paris, `days: 14`, 1×/mois/`idempotencyKey` |
+| `active_with_email` | n8n **Campagne · Mise à jour CGU** | Manuel, one-shot |
+| `registered_no_exercise` | n8n (à brancher) | Tu choisis hours/days dans le trigger |
+| `registered_no_push` | n8n (à brancher) | Idem |
+| `lapsed_after_session` | n8n (à brancher) | Idem |
+| `signed_up_days_ago` | **Pas n8n.** Cron API `new-user-d1` | Toutes les minutes, **push** D+1 (ne pas recréer dans n8n) |
+| `streak_at_risk` | **Pas n8n.** Cron API `streak-reminder` | Toutes les heures, **push** |
+
+Worker d’envoi (file `pending` → SES) : toutes les **5 secondes**, indépendant des segments.
+
+### Catalogue
+
+| `segmentKey` | `params` | Qui est dedans |
+|--------------|----------|----------------|
+| `active_with_email` | — | Compte actif + email (info légale, ex. CGU) |
+| `inactive_since` | `days?` (défaut **7**) | Email, actif, **aucune** perf (y compris onboarding) sur les N jours calendaires UTC |
+| `signed_up_days_ago` | `days?` (défaut **1**), **`timezone`** | Device token dans ce fuseau, inscrit il y a N jours (date locale) |
+| `streak_at_risk` | **`timezone`** | Série en danger aujourd’hui, pas de perf aujourd’hui |
+| `registered_no_exercise` | **`days` et/ou `hours`** (total ≥ 1 h) | Inscrit depuis au moins ce délai, **pas d’exo réel** |
+| `registered_no_push` | **`days` et/ou `hours`** (total ≥ 1 h) | Inscrit depuis au moins ce délai, **aucun** `device_tokens` (push OS jamais activé) |
+| `lapsed_after_session` | **`days` et/ou `hours`** (total ≥ 1 h) | A une **séance réelle**, plus d’activité app depuis ce délai |
+
+`days` + `hours` s’additionnent. Exemples : `{ "hours": 24 }`, `{ "days": 2 }`, `{ "days": 1, "hours": 12 }` → 36 h.
+
+### Exo / séance « réelle » (hors onboarding)
+
+Pas de colonne `source` sur les perfs. Heuristique :
+
+- onboarding = au plus **1** exercice suivi et **1** performance ;
+- séance réelle = **2+** exercices **ou** **2+** perfs.
+
+Un user qui a skip l’onboarding et n’a loggé **qu’un** set ressemble à de l’onboarding : il reste dans `registered_no_exercise`.
+
+### « Pas revenu sur l’app »
+
+`lapsed_after_session` prend le max de :
+
+- `sessions.lastSeenAt` (refresh auth) ;
+- `device_tokens.lastSeenAt` (re-register FCM) ;
+- `performance_entries.updatedAt`.
+
+Ce n’est pas OpenPanel. Un user qui ouvre l’app sans refresh ni push peut rester « lapsed ».
+
+### Exemples dispatch
+
+```json
+{
+  "segmentKey": "registered_no_exercise",
+  "params": { "hours": 24 },
+  "templateKey": "ton_template",
+  "channel": "email",
+  "campaignKey": "no-exo-24h",
+  "idempotencyKey": "n8n:no-exo-24h:2026-10-08"
+}
+```
+
+```json
+{
+  "segmentKey": "registered_no_push",
+  "params": { "days": 1 },
+  "templateKey": "ton_template",
+  "channel": "email",
+  "campaignKey": "no-push-d1",
+  "idempotencyKey": "n8n:no-push-d1:2026-10-08"
+}
+```
+
+```json
+{
+  "segmentKey": "lapsed_after_session",
+  "params": { "days": 3, "hours": 0 },
+  "templateKey": "ton_template",
+  "channel": "email",
+  "campaignKey": "lapsed-3d",
+  "idempotencyKey": "n8n:lapsed-3d:2026-10-08"
+}
+```
 
 Implémentation : `api/src/outbound/segments/*.segment.ts`.
 
