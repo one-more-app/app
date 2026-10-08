@@ -255,6 +255,61 @@ Runbook SES (identité DKIM, Configuration Set, SNS → `/webhooks/ses`, events 
 
 ---
 
+## Tracking OpenPanel (email vs push)
+
+Détail SES → OpenPanel : [`outbound-ses-setup.md`](outbound-ses-setup.md) §6. Résumé pour les dashboards campagnes.
+
+### Email (oui)
+
+| Event | Quand | Props OpenPanel |
+|-------|--------|-----------------|
+| `email_sent` | Worker, après `MessageId` SES/SMTP | `template_key`, `channel: "email"`, `campaign_key`, `segment_key` (outbound) |
+| `email_opened` | Webhook SES `Open` (pixel) | idem (tags SES) |
+| `email_clicked` | Webhook SES `Click` (lien réécrit) | idem |
+
+`outbound_messages.openedAt` / `clickedAt` sont aussi remplis. Bounce/complaint → suppressions SQL, **pas** d’event OpenPanel.
+
+Les tags SES portent `campaignKey` / `segmentKey` depuis `outbound_dispatches` (plus l’UUID du dispatch). Envoi one-shot sans dispatch : `campaign_key = single`, pas de `segment_key`.
+
+### Push
+
+| Event | Quand | Props OpenPanel |
+|-------|--------|-----------------|
+| `push_sent` | API, après multicast FCM avec ≥1 succès | `type`, `channel: "push"`, + outbound : `template_key`, `campaign_key`, `segment_key` |
+| `push_clicked` | Client : tap bandeau OS, toast « Voir », item cloche | `type`, `channel: "push"`, `source` (`os` \| `toast` \| `feed`), + outbound si présent |
+
+Pas de `push_opened` (FCM ne remonte pas l’affichage OS). Le payload FCM `data` inclut les clés outbound en snake_case ; la cloche lit `notification_deliveries.analytics` (jsonb).
+
+Lifecycle (amis, recap, …) : `type` + `source` suffisent ; pas de `push_sent` si prefs off, pas de token, ou Firebase indisponible.
+
+Opt-in push : `push_notification_enabled` / `push_notification_disabled` (inchangé).
+
+### Dashboards possibles **maintenant**
+
+Dans OpenPanel, reports sur email **et** push :
+
+- breakdown `template_key` / `campaign_key` / `segment_key` / `type` / `channel` ;
+- email : funnel `email_sent` → `email_opened` → `email_clicked` (Apple Mail Privacy gonfle les opens) ;
+- push : CTR ≈ `push_clicked` / `push_sent` (profils uniques) ; `source` pour distinguer OS vs cloche vs toast.
+
+Dans SQL (plus riche que OpenPanel) :
+
+```sql
+SELECT d."campaignKey", d."segmentKey", m.channel, m."templateKey",
+       count(*) FILTER (WHERE m.status = 'sent') AS sent,
+       count(*) FILTER (WHERE m."openedAt" IS NOT NULL) AS opened,
+       count(*) FILTER (WHERE m."clickedAt" IS NOT NULL) AS clicked
+FROM outbound_messages m
+LEFT JOIN outbound_dispatches d ON d.id = m."dispatchId"
+GROUP BY 1, 2, 3, 4;
+```
+
+`opened` / `clicked` ne sont fiables que pour `channel = 'email'`. Pour le push : volume d’envoi seulement.
+
+Pour un vrai dashboard push (open/tap par wf / segment), il faudrait poser `template_key` + `campaign_key` dans le `data` FCM, tracker le tap client, et aligner les props `email_*` (hors scope tant que ce n’est pas demandé).
+
+---
+
 ## Workflows n8n en place
 
 Code source et registre des IDs : [`n8n/outbound/`](../n8n/outbound/README.md) (`subs/` + `campaigns/`). Maintenance : skill `n8n-outbound-workflows`.

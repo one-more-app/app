@@ -43,4 +43,7 @@ export class NotificationDeliveryEntity {
 
   @Column({ type: 'timestamptz', nullable: true })
   readAt!: Date | null;
+
+  @Column({ type: 'jsonb', default: () => "'{}'" })
+  analytics!: Record<string, string>;
 }

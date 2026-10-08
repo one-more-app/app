@@ -104,6 +104,13 @@ export async function disableTrainingAlert(friendId: string) {
   );
 }
 
+export type NotificationFeedAnalytics = {
+  templateKey?: string;
+  campaignKey?: string;
+  segmentKey?: string;
+  outboundMessageId?: string;
+};
+
 export type NotificationFeedItem = {
   id: string;
   type: string;
@@ -112,6 +119,7 @@ export type NotificationFeedItem = {
   route: string | null;
   sentAt: string;
   readAt: string | null;
+  analytics?: NotificationFeedAnalytics;
 };
 
 export type NotificationFeedResponse = {

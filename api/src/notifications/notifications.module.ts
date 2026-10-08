@@ -1,4 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { AnalyticsModule } from '../analytics/analytics.module.js';
 import { OutboundModule } from '../outbound/outbound.module.js';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -45,6 +46,7 @@ import { UserEntity } from '../auth/entities/user.entity.js';
     ]),
     forwardRef(() => RealtimeModule),
     forwardRef(() => OutboundModule),
+    AnalyticsModule,
   ],
   controllers: [NotificationsController],
   providers: [

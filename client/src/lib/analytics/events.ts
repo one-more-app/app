@@ -82,6 +82,13 @@ export const AnalyticsEvents = {
   // Notifications
   PUSH_NOTIFICATION_ENABLED: "push_notification_enabled",
   PUSH_NOTIFICATION_DISABLED: "push_notification_disabled",
+  /** Émis côté serveur après envoi FCM réussi */
+  PUSH_SENT: "push_sent",
+  /** Tap bandeau OS, toast « Voir », ou item cloche in-app */
+  PUSH_CLICKED: "push_clicked",
+  EMAIL_SENT: "email_sent",
+  EMAIL_OPENED: "email_opened",
+  EMAIL_CLICKED: "email_clicked",
 } as const;
 
 export type AnalyticsEventName =

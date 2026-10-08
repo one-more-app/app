@@ -131,6 +131,18 @@ Le tracking open/close est **natif** dans `ui/dialog` et `ui/drawer`.
 | Achat validé | `AnalyticsService` serveur (RevenueCat) |
 | Suppression de compte | `SettingsPage` → `account_deletion_requested` (`reason`, `has_comment`, `is_premium`) avant `DELETE /auth/account` |
 | Nouvel événement custom | Ajouter dans `events.ts` puis appeler `track()` |
+| Clic push (OS / toast / cloche) | `lib/analytics/push-tracking.ts` → `trackPushClicked` (`push_clicked`) |
+
+## Notifications outbound (email + push)
+
+| Event | Où | Props clés |
+|-------|----|------------|
+| `email_sent` | **serveur** worker outbound | `template_key`, `channel`, `campaign_key`, `segment_key` |
+| `email_opened` / `email_clicked` | **serveur** webhook SES | idem (tags SES) |
+| `push_sent` | **serveur** `PushNotificationService` après FCM OK | `type`, `channel`, + outbound |
+| `push_clicked` | `push-notifications.ts` (`os`, `toast`) ; `NotificationFeedDrawer` (`feed`) | `type`, `channel`, `source`, + outbound |
+
+**Ne pas** tracker `pushNotificationReceived` (foreground ≠ engagement). `readAt` cloche ≠ open OS.
 
 ## Social & parrainage
 

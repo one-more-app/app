@@ -90,6 +90,8 @@ export class SesWebhookController {
     const userId = readTag(tags, 'userId');
     const outboundMessageId = readTag(tags, 'outboundMessageId');
     const templateKey = readTag(tags, 'templateKey');
+    const campaignKey = readTag(tags, 'campaignKey');
+    const segmentKey = readTag(tags, 'segmentKey');
 
     if (eventType === 'Bounce') {
       const bounce = sesEvent.bounce as { bounceType?: string } | undefined;
@@ -119,6 +121,9 @@ export class SesWebhookController {
         });
         await this.analytics.track(userId, 'email_opened', {
           template_key: templateKey ?? undefined,
+          channel: 'email',
+          ...(campaignKey ? { campaign_key: campaignKey } : {}),
+          ...(segmentKey ? { segment_key: segmentKey } : {}),
         });
       }
       if (eventType === 'Click') {
@@ -127,6 +132,9 @@ export class SesWebhookController {
         });
         await this.analytics.track(userId, 'email_clicked', {
           template_key: templateKey ?? undefined,
+          channel: 'email',
+          ...(campaignKey ? { campaign_key: campaignKey } : {}),
+          ...(segmentKey ? { segment_key: segmentKey } : {}),
         });
       }
     }

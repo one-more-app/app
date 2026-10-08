@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { NotificationType } from '../entities/notification-type.enum.js';
 
-const { NotificationFeedService } = await import(
-  '../notification-feed.service.js'
-);
+const { NotificationFeedService } =
+  await import('../notification-feed.service.js');
 
 describe('NotificationFeedService', () => {
   const deliveriesRepo = {
@@ -30,7 +29,7 @@ describe('NotificationFeedService', () => {
       dedupKey: 'request:f1',
       sentAt: new Date('2026-01-01T12:00:00Z'),
       title: "Demande d'ami",
-      body: 'Alice veut t\'ajouter en ami',
+      body: "Alice veut t'ajouter en ami",
       route: '/friends',
       readAt: null,
     };
@@ -39,7 +38,7 @@ describe('NotificationFeedService', () => {
     const result = await service.record('u1', {
       type: NotificationType.FriendRequest,
       title: "Demande d'ami",
-      body: 'Alice veut t\'ajouter en ami',
+      body: "Alice veut t'ajouter en ami",
       route: '/friends',
       dedupKey: 'request:f1',
     });
@@ -47,6 +46,59 @@ describe('NotificationFeedService', () => {
     expect(result.created).toBe(true);
     expect(result.entity.id).toBe('n1');
     expect(deliveriesRepo.save).toHaveBeenCalled();
+  });
+
+  it('persists and returns analytics on record and list', async () => {
+    const sentAt = new Date('2026-03-01T09:00:00Z');
+    const saved = {
+      id: 'n2',
+      userId: 'u1',
+      type: NotificationType.OutboundMarketing,
+      dedupKey: 'out:1',
+      sentAt,
+      title: 'Rappel',
+      body: 'Corps',
+      route: '/home',
+      readAt: null,
+      analytics: {
+        templateKey: 'registered_no_exo_d1',
+        campaignKey: 'n8n:no-exo',
+        segmentKey: 'registered_no_exercise',
+      },
+    };
+    deliveriesRepo.save.mockResolvedValue(saved);
+
+    await service.record('u1', {
+      type: NotificationType.OutboundMarketing,
+      title: 'Rappel',
+      body: 'Corps',
+      route: '/home',
+      dedupKey: 'out:1',
+      analytics: {
+        templateKey: 'registered_no_exo_d1',
+        campaignKey: 'n8n:no-exo',
+        segmentKey: 'registered_no_exercise',
+      },
+    });
+
+    expect(deliveriesRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        analytics: {
+          templateKey: 'registered_no_exo_d1',
+          campaignKey: 'n8n:no-exo',
+          segmentKey: 'registered_no_exercise',
+        },
+      }),
+    );
+
+    deliveriesRepo.find.mockResolvedValue([saved]);
+    deliveriesRepo.count.mockResolvedValue(0);
+    const feed = await service.list('u1');
+    expect(feed.items[0]?.analytics).toEqual({
+      templateKey: 'registered_no_exo_d1',
+      campaignKey: 'n8n:no-exo',
+      segmentKey: 'registered_no_exercise',
+    });
   });
 
   it('returns existing row on dedup conflict', async () => {

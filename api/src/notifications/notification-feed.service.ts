@@ -3,10 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Not, Repository } from 'typeorm';
 import type { PushPayload } from './dto/push-payload.dto.js';
 import type {
+  NotificationFeedAnalyticsDto,
   NotificationFeedItemDto,
   NotificationFeedResponseDto,
 } from './dto/notification-feed.dto.js';
 import { NotificationDeliveryEntity } from './entities/notification-delivery.entity.js';
+import { compactPushAnalytics } from './push-analytics.js';
 
 export type RecordResult = {
   created: boolean;
@@ -20,7 +22,33 @@ export class NotificationFeedService {
     private readonly deliveriesRepo: Repository<NotificationDeliveryEntity>,
   ) {}
 
+  private analyticsFromEntity(
+    raw: Record<string, string> | null | undefined,
+  ): NotificationFeedAnalyticsDto | undefined {
+    if (!raw || typeof raw !== 'object') return undefined;
+    const dto: NotificationFeedAnalyticsDto = {};
+    if (raw.templateKey) dto.templateKey = raw.templateKey;
+    if (raw.campaignKey) dto.campaignKey = raw.campaignKey;
+    if (raw.segmentKey) dto.segmentKey = raw.segmentKey;
+    if (raw.outboundMessageId) dto.outboundMessageId = raw.outboundMessageId;
+    return Object.keys(dto).length > 0 ? dto : undefined;
+  }
+
+  private analyticsToStorage(payload: PushPayload): Record<string, string> {
+    const compact = compactPushAnalytics(payload.analytics);
+    if (!compact) return {};
+    const stored: Record<string, string> = {};
+    if (compact.templateKey) stored.templateKey = compact.templateKey;
+    if (compact.campaignKey) stored.campaignKey = compact.campaignKey;
+    if (compact.segmentKey) stored.segmentKey = compact.segmentKey;
+    if (compact.outboundMessageId) {
+      stored.outboundMessageId = compact.outboundMessageId;
+    }
+    return stored;
+  }
+
   private toItem(entity: NotificationDeliveryEntity): NotificationFeedItemDto {
+    const analytics = this.analyticsFromEntity(entity.analytics);
     return {
       id: entity.id,
       type: entity.type,
@@ -29,6 +57,7 @@ export class NotificationFeedService {
       route: entity.route,
       sentAt: entity.sentAt.toISOString(),
       readAt: entity.readAt ? entity.readAt.toISOString() : null,
+      ...(analytics ? { analytics } : {}),
     };
   }
 
@@ -44,6 +73,7 @@ export class NotificationFeedService {
           body: payload.body,
           route: payload.route,
           readAt: null,
+          analytics: this.analyticsToStorage(payload),
         }),
       );
       return { created: true, entity };

@@ -12,6 +12,7 @@ import { UI } from "@/lib/translations";
 import { toast } from "sonner";
 import { TSHIRT_REWARD_SWR_KEY } from "@/lib/rewards-api";
 import { mutate } from "swr";
+import { trackPushClicked } from "@/lib/analytics/push-tracking";
 
 const TSHIRT_STATUS_PUSH_TYPES = new Set([
   "tshirt_reward_shipped",
@@ -130,7 +131,8 @@ export function attachPushNotificationListeners() {
       refreshTshirtRewardIfNeeded(notification.data?.type);
       const title = notification.title ?? UI.notificationDefaultTitle;
       const body = notification.body ?? "";
-      const route = notification.data?.route;
+      const data = notification.data;
+      const route = data?.route;
       if (!body) return;
       toast(title, {
         description: body,
@@ -138,7 +140,14 @@ export function attachPushNotificationListeners() {
           ? {
               action: {
                 label: UI.notificationSeeAction,
-                onClick: () => navigateToRoute(route),
+                onClick: () => {
+                  trackPushClicked("toast", {
+                    type:
+                      typeof data?.type === "string" ? data.type : "unknown",
+                    fcmData: data as Record<string, unknown> | undefined,
+                  });
+                  navigateToRoute(route);
+                },
               },
             }
           : {}),
@@ -149,8 +158,13 @@ export function attachPushNotificationListeners() {
   const actionHandle = PushNotifications.addListener(
     "pushNotificationActionPerformed",
     (action) => {
-      refreshTshirtRewardIfNeeded(action.notification.data?.type);
-      const route = action.notification.data?.route;
+      const data = action.notification.data;
+      refreshTshirtRewardIfNeeded(data?.type);
+      trackPushClicked("os", {
+        type: typeof data?.type === "string" ? data.type : "unknown",
+        fcmData: data as Record<string, unknown> | undefined,
+      });
+      const route = data?.route;
       if (typeof route === "string" && route.length > 0) {
         navigateToRoute(route);
       }

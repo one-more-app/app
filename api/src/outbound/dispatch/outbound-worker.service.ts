@@ -7,7 +7,13 @@ import { NotificationFeedService } from '../../notifications/notification-feed.s
 import { NotificationPreferencesService } from '../../notifications/notification-preferences.service.js';
 import { PushNotificationService } from '../../notifications/push-notification.service.js';
 import { ConsentService } from '../consent/consent.service.js';
+import { OutboundDispatchEntity } from '../entities/outbound-dispatch.entity.js';
 import { OutboundMessageEntity } from '../entities/outbound-message.entity.js';
+import {
+  outboundEmailOpenPanelProps,
+  outboundEmailSesTags,
+  outboundPushAnalytics,
+} from '../outbound-analytics-props.js';
 import { EmailFontService } from '../providers/email-font.service.js';
 import { OutboundMailerService } from '../providers/outbound-mailer.service.js';
 import { TemplateService } from '../templates/template.service.js';
@@ -49,6 +55,8 @@ export class OutboundWorkerService {
   constructor(
     @InjectRepository(OutboundMessageEntity)
     private readonly messagesRepo: Repository<OutboundMessageEntity>,
+    @InjectRepository(OutboundDispatchEntity)
+    private readonly dispatchesRepo: Repository<OutboundDispatchEntity>,
     private readonly templates: TemplateService,
     private readonly renderer: TemplateRendererService,
     private readonly send: OutboundSendService,
@@ -108,8 +116,22 @@ export class OutboundWorkerService {
     return true;
   }
 
+  private async loadDispatch(
+    row: OutboundMessageEntity,
+  ): Promise<Pick<
+    OutboundDispatchEntity,
+    'campaignKey' | 'segmentKey'
+  > | null> {
+    if (!row.dispatchId) return null;
+    return this.dispatchesRepo.findOne({
+      where: { id: row.dispatchId },
+      select: ['campaignKey', 'segmentKey'],
+    });
+  }
+
   private async deliverOne(row: OutboundMessageEntity): Promise<void> {
     const template = await this.templates.getActiveByKey(row.templateKey);
+    const dispatch = await this.loadDispatch(row);
 
     if (row.channel === 'push') {
       const notificationType = pushNotificationTypeForTemplate(row.templateKey);
@@ -118,6 +140,11 @@ export class OutboundWorkerService {
         variables: row.variables,
         dedupKey: row.dedupKey,
         notificationType,
+      });
+      payload.analytics = outboundPushAnalytics({
+        templateKey: row.templateKey,
+        outboundMessageId: row.id,
+        dispatch,
       });
       const { created } = await this.feed.record(row.userId, payload);
       if (!created) {
@@ -186,12 +213,12 @@ export class OutboundWorkerService {
       html: rendered.html,
       text: rendered.text,
       unsubscribeToken: template.category === 'marketing' ? token : null,
-      tags: {
+      tags: outboundEmailSesTags({
         userId: row.userId,
         templateKey: row.templateKey,
         outboundMessageId: row.id,
-        campaignKey: row.dispatchId ?? 'single',
-      },
+        dispatch,
+      }),
     });
 
     if (!messageId) {
@@ -209,8 +236,10 @@ export class OutboundWorkerService {
     });
 
     await this.analytics.track(row.userId, 'email_sent', {
-      template_key: row.templateKey,
-      channel: 'email',
+      ...outboundEmailOpenPanelProps({
+        templateKey: row.templateKey,
+        dispatch,
+      }),
     });
   }
 }
