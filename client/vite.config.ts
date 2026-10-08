@@ -34,6 +34,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webp}'],
         globIgnores: ['**/images/rewards/tshirt-*.png'],
+        // Bundle unique proche de 2 MiB : relever la limite de précache Workbox.
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       },
     })
   ],

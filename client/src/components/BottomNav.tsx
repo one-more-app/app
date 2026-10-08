@@ -1,4 +1,4 @@
-import { History, Home, Trophy, User, Users } from 'lucide-react'
+import { Activity, History, Home, User, Users } from 'lucide-react'
 import type { JSX } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
@@ -17,7 +17,7 @@ const NAV_ITEMS: Array<{
         { to: '/home', label: 'Accueil', Icon: Home },
         { to: '/profile', label: UI.profile, tourId: 'nav-profile', Icon: User },
         { to: '/history', label: UI.history, tourId: 'nav-history', Icon: History },
-        { to: '/ranking', label: UI.rankingTitle, tourId: 'nav-ranking', Icon: Trophy },
+        { to: '/social', label: UI.navSocial, tourId: 'nav-social', Icon: Activity },
         { to: '/friends', label: UI.friendsTitle, tourId: 'nav-friends', Icon: Users },
     ]
 
@@ -34,7 +34,10 @@ function BottomNav() {
         >
             <div className="mx-auto flex pt-2 max-w-2xl items-center justify-around px-4">
                 {NAV_ITEMS.map((item) => {
-                    const active = activeTo === item.to
+                    const active =
+                        activeTo === item.to ||
+                        // Le classement s'ouvre depuis Social : l'onglet reste actif.
+                        (item.to === '/social' && activeTo === '/ranking')
                     const showUnreadBadge =
                         item.to === '/friends' && friendsBadge > 0
                     return (

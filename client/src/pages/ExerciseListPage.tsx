@@ -666,6 +666,9 @@ export function ExerciseListPage() {
                     <ExerciseCatalogBrowse
                         exercises={catalogExercises}
                         browse={browse}
+                        pageTitle={
+                            onboardingRecordPick ? undefined : UI.browseYourExercisesTitle
+                        }
                         searchQuery={searchQuery}
                         trackedIds={trackedIds}
                         viewAll={viewAll}

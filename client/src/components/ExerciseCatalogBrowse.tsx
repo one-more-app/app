@@ -26,6 +26,8 @@ export interface ExerciseCatalogBrowseProps {
     onSelectExercise: (ex: ExerciseDBExercise) => void
     onAddExercise: (ex: ExerciseDBExercise) => void
     tourAddButtonIndex?: number
+    /** Titre au-dessus de l'étape zone (ex. « Tes exercices »). */
+    pageTitle?: string
 }
 
 function ExerciseCatalogGrid({
@@ -151,6 +153,7 @@ export function ExerciseCatalogBrowse({
     onSelectExercise,
     onAddExercise,
     tourAddButtonIndex = 0,
+    pageTitle,
 }: ExerciseCatalogBrowseProps) {
     const browseable = exercises.map(catalogToBrowseable)
     const idToCatalog = new Map(exercises.map((ex) => [ex.id, ex]))
@@ -168,6 +171,8 @@ export function ExerciseCatalogBrowse({
             onPickEquipment={onPickEquipment}
             onGoToStep={onGoToStep}
             leafSort="popularity"
+            pageTitle={pageTitle}
+            isTracked={(ex) => trackedIds.has(`api-${ex.id}`)}
             renderExerciseList={(items) => (
                 <ExerciseCatalogGrid
                     exercises={items

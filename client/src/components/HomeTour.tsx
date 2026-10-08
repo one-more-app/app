@@ -117,9 +117,9 @@ export function HomeTour({
         },
       },
       {
-        target: '[data-tour="nav-ranking"]',
-        title: UI.homeTourNavRankingTitle,
-        content: UI.homeTourNavRankingContent,
+        target: '[data-tour="nav-social"]',
+        title: UI.homeTourNavSocialTitle,
+        content: UI.homeTourNavSocialContent,
         placement: "top",
         skipScroll: true,
         floatingOptions: {

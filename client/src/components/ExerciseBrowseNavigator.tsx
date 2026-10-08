@@ -17,6 +17,8 @@ import {
     countByZone,
     exercisesForBrowsePath,
     exercisesForBrowseScope,
+    exerciseZone,
+    UNSPECIFIED_EQUIPMENT,
     filterBrowseableBySearch,
     sortBrowseableByLatestPerf,
     type BrowseableExercise,
@@ -58,8 +60,21 @@ export interface ExerciseBrowseNavigatorProps<T extends BrowseableExercise> {
     /** Titre principal au-dessus du sous-titre d'étape (ex. accueil, étape zone). */
     pageTitle?: string
     leafSort?: 'popularity' | 'latestPerf' | 'none'
+    /**
+     * Si fourni, les tuiles affichent « n suivis / n disponibles »
+     * (catalogue mélangé avec les exercices suivis).
+     */
+    isTracked?: (exercise: T) => boolean
     /** Paliers médians par étape du parcours (accueil uniquement). */
     browseLeagueLookups?: BrowseLeagueLookups
+}
+
+/** `undefined` si le suivi n'est pas branché (tuile = total simple). */
+function trackedFor(
+    counts: Map<string, number> | undefined,
+    key: string,
+): number | undefined {
+    return counts ? (counts.get(key.toLowerCase()) ?? 0) : undefined
 }
 
 export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
@@ -81,6 +96,7 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
     pageTitle,
     leafSort = 'popularity',
     browseLeagueLookups,
+    isTracked,
 }: ExerciseBrowseNavigatorProps<T>) {
     const isSearchMode = searchQuery.trim().length > 0
 
@@ -113,6 +129,32 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
                 : [],
         [pool, browse.zone, browse.target],
     )
+
+    const trackedCounts = useMemo(() => {
+        if (!isTracked) return null
+        const byZone = new Map<string, number>()
+        const byTarget = new Map<string, number>()
+        const byEquipment = new Map<string, number>()
+        const zoneKey = browse.zone?.toLowerCase() ?? null
+        const targetKey = browse.target?.toLowerCase() ?? null
+        const bump = (map: Map<string, number>, key: string) =>
+            map.set(key, (map.get(key) ?? 0) + 1)
+        for (const ex of pool) {
+            if (!isTracked(ex)) continue
+            const zone = exerciseZone(ex)
+            if (!zone) continue
+            bump(byZone, zone)
+            if (zone !== zoneKey) continue
+            const target = (ex.target ?? '').toLowerCase()
+            if (!target) continue
+            bump(byTarget, target)
+            if (target !== targetKey) continue
+            const equipment =
+                (ex.equipment ?? '').trim().toLowerCase() || UNSPECIFIED_EQUIPMENT
+            bump(byEquipment, equipment)
+        }
+        return { byZone, byTarget, byEquipment }
+    }, [pool, isTracked, browse.zone, browse.target])
 
     const leafExercises = useMemo(() => {
         if (browse.step !== 'list' || !browse.zone || !browse.target || !browse.beq) {
@@ -255,6 +297,7 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
                             <BrowseTile
                                 label={translateBodyPart(zone)}
                                 count={count}
+                                trackedCount={trackedFor(trackedCounts?.byZone, zone)}
                                 leagueLevel={browseLeagueLookups?.byZone.get(
                                     zone.toLowerCase(),
                                 )}
@@ -278,6 +321,7 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
                             <BrowseTile
                                 label={translateTarget(target)}
                                 count={count}
+                                trackedCount={trackedFor(trackedCounts?.byTarget, target)}
                                 leagueLevel={browseLeagueLookups?.targetInZone
                                     .get(browse.zone.toLowerCase())
                                     ?.get(target.toLowerCase())}
@@ -304,6 +348,7 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
                             <BrowseTile
                                 label={translateEquipment(equipment)}
                                 count={count}
+                                trackedCount={trackedFor(trackedCounts?.byEquipment, equipment)}
                                 leagueLevel={browseLeagueLookups?.equipmentInPath.get(
                                     browseEquipmentLeagueKey(
                                         browse.zone,

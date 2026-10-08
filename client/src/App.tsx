@@ -53,6 +53,7 @@ import SessionPage from '@/pages/SessionPage'
 import FriendSearchPage from '@/pages/FriendSearchPage'
 import FriendsPage from '@/pages/FriendsPage'
 import RankingPage from '@/pages/RankingPage'
+import SocialPage from '@/pages/SocialPage'
 import UserPreviewPage from '@/pages/UserPreviewPage'
 import { HistoryPage } from '@/pages/HistoryPage'
 import HomePage from '@/pages/HomePage'
@@ -292,6 +293,7 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
         location.pathname === '/stats' ||
         location.pathname === '/history' ||
         location.pathname === '/ranking' ||
+        location.pathname === '/social' ||
         location.pathname === '/friends' ||
         location.pathname.startsWith('/friends/preview')
 
@@ -450,6 +452,7 @@ function App() {
                                 <Route path="/invite/:code" element={<InviteLandingPage />} />
                                 <Route path="/friends" element={<FriendsPage />} />
                                 <Route path="/ranking" element={<RankingPage />} />
+                                <Route path="/social" element={<SocialPage />} />
                                 <Route path="/friends/search" element={<FriendSearchPage />} />
                                 <Route path="/friends/chat/:conversationId" element={<ChatPage />} />
                                 <Route path="/friends/preview/:userId" element={<UserPreviewPage />} />
