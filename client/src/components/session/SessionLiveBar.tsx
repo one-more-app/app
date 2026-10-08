@@ -28,7 +28,12 @@ import { hapticImpact } from "@/lib/haptics";
 import { resolveTrackedExercise } from "@/lib/history-entries";
 import { notifyPerfMilestones } from "@/lib/perf-notifications";
 import { dismissCurrentRestPeriod } from "@/lib/rest-timer-local-notifications";
-import { sessionSwrKey } from "@/lib/session-api";
+import {
+  endSession,
+  sessionRecapPath,
+  sessionSwrKey,
+  type WorkoutSession,
+} from "@/lib/session-api";
 import { getPersonalBest, savePerformanceAndWait } from "@/lib/storage";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
@@ -37,6 +42,7 @@ import type { TrackedExercise } from "@/types";
 import { Clock, Plus } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 
 /** Variable CSS (sur `html`) : hauteur occupée par la barre, pour le padding bas des pages. */
@@ -213,6 +219,7 @@ export function SessionLiveBar({ navVisible }: SessionLiveBarProps) {
 
   const [addOpen, setAddOpen] = useState(false);
   const [endStats, setEndStats] = useState<EndSessionStats | null>(null);
+  const [ending, setEnding] = useState(false);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const visible = live != null;
@@ -264,11 +271,25 @@ export function SessionLiveBar({ navVisible }: SessionLiveBarProps) {
     });
   };
 
-  const handleConfirmEnd = () => {
-    // Lot 3 : navigation seule vers la page séance du jour.
-    // Lot 4 : appeler l'API de fin de séance ici, puis ouvrir la route récap.
-    setEndStats(null);
-    if (ownerUserId) navigate(`/session/${ownerUserId}/${live.dayKey}`);
+  const handleConfirmEnd = async () => {
+    if (!ownerUserId || ending) return;
+    setEnding(true);
+    try {
+      const { endedAt } = await endSession(ownerUserId, live.dayKey);
+      // Met le cache à jour tout de suite : la barre disparaît sans attendre un refetch.
+      await mutate(
+        sessionSwrKey(ownerUserId, live.dayKey),
+        (current: WorkoutSession | undefined) =>
+          current ? { ...current, endedAt, isLive: false } : current,
+        { revalidate: true },
+      );
+      setEndStats(null);
+      navigate(sessionRecapPath(ownerUserId, live.dayKey));
+    } catch {
+      toast.error(UI.endSessionError);
+    } finally {
+      setEnding(false);
+    }
   };
 
   const handleSaveSet = (weight: number, reps: number) => {
@@ -411,6 +432,7 @@ export function SessionLiveBar({ navVisible }: SessionLiveBarProps) {
           endStats ?? { exerciseCount: 0, setCount: 0, durationMs: 0 }
         }
         onConfirm={handleConfirmEnd}
+        confirmLoading={ending}
       />
     </>
   );

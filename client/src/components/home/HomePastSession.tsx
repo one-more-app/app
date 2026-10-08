@@ -48,8 +48,9 @@ export function HomePastSession({
       computeSessionTiming(dayEntries, {
         dayKey,
         todayKey: getLocalDateKey(),
+        endedAt: session?.endedAt,
       }),
-    [dayEntries, dayKey],
+    [dayEntries, dayKey, session?.endedAt],
   );
 
   const sessionEntries = useMemo(() => session?.entries ?? [], [session]);

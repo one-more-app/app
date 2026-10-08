@@ -181,9 +181,34 @@ export function formatMidnightCountdown(ms: number): string {
   return `${hours} h ${String(minutes).padStart(2, "0")}`;
 }
 
-function entryVolume(entry: PerformanceEntry): number {
+/** Volume d'une série (poids × reps, poids du corps compté pour 1). */
+export function entryVolume(entry: PerformanceEntry): number {
   const load = entry.weight > 0 ? entry.weight : 1;
   return load * entry.reps;
+}
+
+export type VolumeSessionBar = { dayKey: string; volume: number };
+
+/**
+ * Volume (poids × reps) des dernières séances jusqu'à `dayKey` inclus,
+ * du plus ancien au plus récent, avec le jour de chaque barre.
+ */
+export function buildRecentVolumeSessions(
+  entries: PerformanceEntry[],
+  dayKey: string,
+  maxBars = 6,
+): VolumeSessionBar[] {
+  const byDay = new Map<string, number>();
+  for (const entry of entries) {
+    if (entry.deletedAt) continue;
+    const day = getActivityDayKey(entry);
+    if (day > dayKey) continue;
+    byDay.set(day, (byDay.get(day) ?? 0) + entryVolume(entry));
+  }
+  return [...byDay.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-maxBars)
+    .map(([day, volume]) => ({ dayKey: day, volume }));
 }
 
 /**
@@ -195,15 +220,7 @@ export function buildRecentVolumeBars(
   dayKey: string,
   maxBars = 6,
 ): number[] {
-  const byDay = new Map<string, number>();
-  for (const entry of entries) {
-    if (entry.deletedAt) continue;
-    const day = getActivityDayKey(entry);
-    if (day > dayKey) continue;
-    byDay.set(day, (byDay.get(day) ?? 0) + entryVolume(entry));
-  }
-  return [...byDay.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-maxBars)
-    .map(([, volume]) => volume);
+  return buildRecentVolumeSessions(entries, dayKey, maxBars).map(
+    (bar) => bar.volume,
+  );
 }

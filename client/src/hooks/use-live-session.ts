@@ -1,5 +1,6 @@
 import { usePerformanceEntriesData } from "@/hooks/use-api-data";
 import { useLocalPerformanceEntries } from "@/hooks/use-local-data-store";
+import { useOwnSessionEndedAt } from "@/hooks/use-session-ended-at";
 import { useSessionTiming } from "@/hooks/use-session-timing";
 import {
   getActivityDayKey,
@@ -42,7 +43,8 @@ export function useLiveSession(): LiveSession | null {
     [remoteEntries, localEntries, dayKey],
   );
 
-  const { timing } = useSessionTiming(entries, { dayKey });
+  const endedAt = useOwnSessionEndedAt(dayKey, entries.length > 0);
+  const { timing } = useSessionTiming(entries, { dayKey, endedAt });
 
   return useMemo(() => {
     if (!timing?.isInProgress) return null;

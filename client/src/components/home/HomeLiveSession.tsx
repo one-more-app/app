@@ -112,7 +112,10 @@ export function HomeLiveSession({
   const { data: session } = useHomeDaySession(ownerUserId, dayKey);
   useSessionLive(ownerUserId, dayKey);
 
-  const { timing } = useSessionTiming(todayEntries, { dayKey });
+  const { timing } = useSessionTiming(todayEntries, {
+    dayKey,
+    endedAt: session?.endedAt,
+  });
 
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [addFor, setAddFor] = useState<string | null>(null);

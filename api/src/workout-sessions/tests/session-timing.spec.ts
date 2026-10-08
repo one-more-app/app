@@ -87,4 +87,33 @@ describe('session-timing', () => {
     expect(formatSessionDuration(65 * 60 * 1000)).toBe('1 h 05');
     expect(formatSessionDuration(45 * 60 * 1000)).toBe('45 min');
   });
+  it('respecte endedAt explicite pendant l idle window', () => {
+    const first = new Date(NOW - 40 * 60 * 1000).toISOString();
+    const last = new Date(NOW - 5 * 60 * 1000).toISOString();
+    const endedAt = new Date(NOW - 60 * 1000).toISOString();
+    const timing = computeSessionTiming([entry(first), entry(last)], {
+      now: NOW,
+      dayKey: TODAY,
+      todayKey: TODAY,
+      isPresenceTraining: true,
+      endedAt,
+    });
+    expect(timing?.isInProgress).toBe(false);
+    expect(timing?.endedAt).toBe(endedAt);
+    expect(timing?.durationMs).toBe(39 * 60 * 1000);
+  });
+
+  it('ignore endedAt antérieur à la dernière série', () => {
+    const first = new Date(NOW - 40 * 60 * 1000).toISOString();
+    const last = new Date(NOW - 2 * 60 * 1000).toISOString();
+    const endedAt = new Date(NOW - 20 * 60 * 1000).toISOString();
+    const timing = computeSessionTiming([entry(first), entry(last)], {
+      now: NOW,
+      dayKey: TODAY,
+      todayKey: TODAY,
+      endedAt,
+    });
+    expect(timing?.isInProgress).toBe(true);
+    expect(timing?.endedAt).toBeNull();
+  });
 });

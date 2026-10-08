@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/hooks/use-auth'
 import { useLocalPerformanceEntries } from '@/hooks/use-local-data-store'
 import { useReferralDrawer } from '@/hooks/use-referral-drawer'
+import { useOwnSessionEndedAt } from '@/hooks/use-session-ended-at'
 import { useSessionTiming } from '@/hooks/use-session-timing'
 import {
     buildWeekCells,
@@ -77,8 +78,10 @@ function HomePage() {
         () => entries.filter((entry) => getActivityDayKey(entry) === todayKey),
         [entries, todayKey],
     )
+    const todayEndedAt = useOwnSessionEndedAt(todayKey, todayEntries.length > 0)
     const { timing: todayTiming } = useSessionTiming(todayEntries, {
         dayKey: todayKey,
+        endedAt: todayEndedAt,
     })
     const hasLiveSession = todayTiming?.isInProgress === true
 

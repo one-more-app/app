@@ -52,6 +52,10 @@ export type WorkoutSession = {
   owner: SessionOwner;
   date: string;
   isLive: boolean;
+  /** Fin explicite de la séance (ISO), `null` si non terminée à la main. */
+  endedAt: string | null;
+  /** XP gagné par le propriétaire ce jour-là. */
+  xpEarned: number;
   exercises: TrackedExerciseWithPerformance[];
   entries: PerformanceEntryWithLeagueInsight[];
   highlights: SessionHighlight[];
@@ -156,6 +160,23 @@ export async function fetchSession(
   return await apiFetch<WorkoutSession>(
     `/sessions/${ownerUserId}/${encodeURIComponent(date)}`,
   );
+}
+
+export type EndSessionResponse = { date: string; endedAt: string };
+
+/** Termine la séance du jour (propriétaire uniquement). */
+export async function endSession(
+  ownerUserId: string,
+  date: string,
+): Promise<EndSessionResponse> {
+  return await apiFetch<EndSessionResponse>(
+    `/sessions/${ownerUserId}/${encodeURIComponent(date)}/end`,
+    { method: "POST" },
+  );
+}
+
+export function sessionRecapPath(ownerUserId: string, date: string) {
+  return `/session/${ownerUserId}/${date}/recap`;
 }
 
 export async function fetchSessionComments(

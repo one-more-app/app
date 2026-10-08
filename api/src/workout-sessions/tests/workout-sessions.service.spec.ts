@@ -17,6 +17,9 @@ jest.unstable_mockModule(
     TrackedExercisesService: class TrackedExercisesService {},
   }),
 );
+jest.unstable_mockModule('../../progress/progress.service.js', () => ({
+  ProgressService: class ProgressService {},
+}));
 jest.unstable_mockModule('../../presence/presence.service.js', () => ({
   PresenceService: class PresenceService {},
 }));
@@ -62,11 +65,23 @@ describe('WorkoutSessionsService', () => {
     getPresence: jest.fn(),
   };
 
+  const endsRepo = {
+    findOne: jest.fn(),
+    create: jest.fn((value) => value),
+    save: jest.fn(),
+  };
+  const progressService = {
+    getDailyXpTotal: jest.fn(),
+  };
+
   let service: InstanceType<typeof WorkoutSessionsService>;
 
   beforeEach(() => {
     jest.clearAllMocks();
     reactionsRepo.find.mockResolvedValue([]);
+    endsRepo.findOne.mockResolvedValue(null);
+    endsRepo.save.mockImplementation((value) => Promise.resolve(value));
+    progressService.getDailyXpTotal.mockResolvedValue(0);
     service = new WorkoutSessionsService(
       commentsRepo as any,
       reactionsRepo as any,
@@ -75,6 +90,8 @@ describe('WorkoutSessionsService', () => {
       performanceEntriesService as any,
       trackedExercisesService as any,
       presenceService as any,
+      endsRepo as any,
+      progressService as any,
     );
   });
 
@@ -178,6 +195,145 @@ describe('WorkoutSessionsService', () => {
     const result = await service.getSession('owner-1', 'owner-1', '2026-07-13');
 
     expect(result.isLive).toBe(false);
+  });
+
+  function mockOwnerWithEntries(createdAt: string) {
+    profilesRepo.findOne.mockResolvedValue({
+      userId: 'owner-1',
+      firstName: 'Bob',
+      lastName: null,
+      username: 'bob',
+      avatarUrl: null,
+    });
+    performanceEntriesService.list.mockResolvedValue([
+      {
+        id: 'perf-1',
+        trackedExerciseId: 'te-1',
+        date: '2026-07-13',
+        weight: 60,
+        reps: 8,
+        createdAt,
+        deletedAt: null,
+      },
+    ]);
+    trackedExercisesService.listWithPerformance.mockResolvedValue([]);
+    commentsRepo.count.mockResolvedValue(0);
+  }
+
+  it('n est pas isLive si endedAt posé, même avec présence training', async () => {
+    const lastSet = new Date(Date.now() - 5 * 60 * 1000);
+    mockOwnerWithEntries(lastSet.toISOString());
+    presenceService.getPresence.mockResolvedValue({ status: 'training' });
+    const endedAt = new Date(Date.now() - 60 * 1000);
+    endsRepo.findOne.mockResolvedValue({ endedAt });
+
+    const result = await service.getSession('owner-1', 'owner-1', '2026-07-13');
+
+    expect(result.isLive).toBe(false);
+    expect(result.endedAt).toBe(endedAt.toISOString());
+  });
+
+  it('rouvre la séance si une série suit endedAt', async () => {
+    const endedAt = new Date(Date.now() - 10 * 60 * 1000);
+    const lastSet = new Date(Date.now() - 2 * 60 * 1000);
+    mockOwnerWithEntries(lastSet.toISOString());
+    presenceService.getPresence.mockResolvedValue({ status: 'offline' });
+    endsRepo.findOne.mockResolvedValue({ endedAt });
+
+    const result = await service.getSession('owner-1', 'owner-1', '2026-07-13');
+
+    expect(result.isLive).toBe(true);
+    expect(result.endedAt).toBeNull();
+  });
+
+  it('expose l XP du jour', async () => {
+    mockOwnerWithEntries(new Date(Date.now() - 60 * 60 * 1000).toISOString());
+    presenceService.getPresence.mockResolvedValue({ status: 'offline' });
+    progressService.getDailyXpTotal.mockResolvedValue(340);
+
+    const result = await service.getSession('owner-1', 'owner-1', '2026-07-13');
+
+    expect(result.xpEarned).toBe(340);
+    expect(progressService.getDailyXpTotal).toHaveBeenCalledWith(
+      'owner-1',
+      '2026-07-13',
+    );
+  });
+
+  describe('endSession', () => {
+    it('persiste endedAt pour le propriétaire', async () => {
+      mockOwnerWithEntries(new Date(Date.now() - 60 * 1000).toISOString());
+
+      const result = await service.endSession(
+        'owner-1',
+        'owner-1',
+        '2026-07-13',
+      );
+
+      expect(endsRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ownerUserId: 'owner-1',
+          sessionDate: '2026-07-13',
+        }),
+      );
+      expect(new Date(result.endedAt).getTime()).toBeGreaterThan(
+        Date.now() - 5000,
+      );
+    });
+
+    it('est idempotent si endedAt déjà posé', async () => {
+      const lastSet = new Date(Date.now() - 10 * 60 * 1000);
+      const endedAt = new Date(Date.now() - 5 * 60 * 1000);
+      mockOwnerWithEntries(lastSet.toISOString());
+      endsRepo.findOne.mockResolvedValue({ endedAt });
+
+      const result = await service.endSession(
+        'owner-1',
+        'owner-1',
+        '2026-07-13',
+      );
+
+      expect(endsRepo.save).not.toHaveBeenCalled();
+      expect(result.endedAt).toBe(endedAt.toISOString());
+    });
+
+    it('met à jour endedAt si une série a suivi la fin précédente', async () => {
+      const endedAt = new Date(Date.now() - 20 * 60 * 1000);
+      const lastSet = new Date(Date.now() - 2 * 60 * 1000);
+      mockOwnerWithEntries(lastSet.toISOString());
+      endsRepo.findOne.mockResolvedValue({ endedAt });
+
+      const result = await service.endSession(
+        'owner-1',
+        'owner-1',
+        '2026-07-13',
+      );
+
+      expect(endsRepo.save).toHaveBeenCalled();
+      expect(new Date(result.endedAt).getTime()).toBeGreaterThan(
+        lastSet.getTime(),
+      );
+    });
+
+    it('refuse un autre utilisateur', async () => {
+      await expect(
+        service.endSession('viewer-1', 'owner-1', '2026-07-13'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('refuse un jour sans série', async () => {
+      performanceEntriesService.list.mockResolvedValue([]);
+
+      await expect(
+        service.endSession('owner-1', 'owner-1', '2026-07-13'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('rejette une date invalide', async () => {
+      await expect(
+        service.endSession('owner-1', 'owner-1', 'nope'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
   });
 
   it('autorise l accès à sa propre séance', async () => {

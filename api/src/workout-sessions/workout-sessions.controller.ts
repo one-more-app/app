@@ -40,6 +40,19 @@ export class WorkoutSessionsController {
     );
   }
 
+  @Post(':ownerUserId/:date/end')
+  async endSession(
+    @Req() req: { user: { sub: string } },
+    @Param('ownerUserId', ParseUUIDPipe) ownerUserId: string,
+    @Param('date') date: string,
+  ) {
+    return await this.sessionsService.endSession(
+      req.user.sub,
+      ownerUserId,
+      date,
+    );
+  }
+
   @Get(':ownerUserId/:date/comments')
   async listComments(
     @Req() req: { user: { sub: string } },

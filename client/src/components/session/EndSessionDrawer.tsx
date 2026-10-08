@@ -21,8 +21,7 @@ type EndSessionDrawerProps = {
   stats: EndSessionStats;
   /**
    * Confirmation "Terminer et voir mon récap".
-   * Lot 3 : navigation vers la page séance. Lot 4 : appel API de fin de séance
-   * puis navigation vers le récap.
+   * Appelle l'API de fin de séance puis navigue vers le récap.
    */
   onConfirm: () => void | Promise<void>;
   confirmLoading?: boolean;

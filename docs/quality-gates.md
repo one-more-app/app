@@ -31,6 +31,7 @@ Deux filets automatiques pour limiter les régressions sans multiplier les tests
   - page séance by id + commentaires / réactions (`client/e2e/smoke/session/session-view.spec.ts`)
   - partage story depuis le récap hybride (`client/e2e/smoke/session/recap-share-story.spec.ts`)
   - barre de séance live (`client/e2e/smoke/session/session-live-bar.spec.ts`)
+  - fin de séance : « Terminer » appelle l'API puis ouvre le récap de séance
   - landing store web (CTA unique vers le OneLink AppsFlyer)
 
 Durée typique : ~1 à 2 min (typecheck + build API + lint + smoke Playwright).

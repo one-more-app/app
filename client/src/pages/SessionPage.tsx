@@ -76,6 +76,7 @@ export default function SessionPage() {
     const { label: sessionTimingLabel } = useSessionTiming(entries, {
         dayKey: date ?? "",
         isPresenceTraining: session?.isLive,
+        endedAt: session?.endedAt,
     });
 
     useEffect(() => {

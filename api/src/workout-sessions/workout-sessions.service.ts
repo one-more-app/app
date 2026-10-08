@@ -13,8 +13,13 @@ import { PresenceStatus } from '../presence/entities/presence-status.enum.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { FriendsService } from '../social/friends.service.js';
 import { TrackedExercisesService } from '../tracked-exercises/tracked-exercises.service.js';
-import { SESSION_ACTIVE_IDLE_MS } from '../shared/session-timing.js';
+import { ProgressService } from '../progress/progress.service.js';
+import {
+  resolveExplicitSessionEnd,
+  SESSION_ACTIVE_IDLE_MS,
+} from '../shared/session-timing.js';
 import { SessionCommentEntity } from './entities/session-comment.entity.js';
+import { SessionEndEntity } from './entities/session-end.entity.js';
 import {
   SESSION_REACTION_EMOJIS,
   SessionReactionEntity,
@@ -66,6 +71,9 @@ export class WorkoutSessionsService {
     private readonly performanceEntriesService: PerformanceEntriesService,
     private readonly trackedExercisesService: TrackedExercisesService,
     private readonly presenceService: PresenceService,
+    @InjectRepository(SessionEndEntity)
+    private readonly endsRepo: Repository<SessionEndEntity>,
+    private readonly progressService: ProgressService,
   ) {}
 
   private assertValidDate(date: string) {
@@ -138,13 +146,27 @@ export class WorkoutSessionsService {
       },
       null,
     );
+    const endRow = await this.endsRepo.findOne({
+      where: { ownerUserId, sessionDate: date },
+    });
+    // Une série ajoutée après la fin explicite rouvre la séance.
+    const endedAt = resolveExplicitSessionEnd(
+      entries,
+      endRow?.endedAt.toISOString() ?? null,
+    );
     const now = Date.now();
     const isLive =
+      endedAt == null &&
       date === today &&
       (presence?.status === PresenceStatus.TRAINING ||
         (lastEntry != null &&
           now - new Date(lastEntry.createdAt).getTime() <
             SESSION_ACTIVE_IDLE_MS));
+
+    const xpEarned = await this.progressService.getDailyXpTotal(
+      ownerUserId,
+      date,
+    );
 
     const commentCount = await this.commentsRepo.count({
       where: {
@@ -170,6 +192,8 @@ export class WorkoutSessionsService {
       },
       date,
       isLive,
+      endedAt,
+      xpEarned,
       exercises,
       entries,
       highlights,
@@ -179,6 +203,47 @@ export class WorkoutSessionsService {
       reactions,
       reactionsByExerciseId,
     };
+  }
+
+  /**
+   * Termine la séance du jour : persiste `endedAt = now` (idempotent tant
+   * qu'aucune série n'a été ajoutée depuis). Réservé au propriétaire.
+   */
+  async endSession(
+    viewerId: string,
+    ownerUserId: string,
+    date: string,
+  ): Promise<{ date: string; endedAt: string }> {
+    this.assertValidDate(date);
+    if (viewerId !== ownerUserId) {
+      throw new ForbiddenException(
+        'Seul le propriétaire peut terminer la séance',
+      );
+    }
+
+    const allEntries = await this.performanceEntriesService.list(ownerUserId);
+    const entries = allEntries.filter((e) => e.date === date && !e.deletedAt);
+    if (entries.length === 0) {
+      throw new NotFoundException('Aucune séance pour ce jour');
+    }
+
+    const existing = await this.endsRepo.findOne({
+      where: { ownerUserId, sessionDate: date },
+    });
+    const effective = resolveExplicitSessionEnd(
+      entries,
+      existing?.endedAt.toISOString() ?? null,
+    );
+    if (existing && effective) {
+      return { date, endedAt: effective };
+    }
+
+    const endedAt = new Date();
+    const row =
+      existing ?? this.endsRepo.create({ ownerUserId, sessionDate: date });
+    row.endedAt = endedAt;
+    await this.endsRepo.save(row);
+    return { date, endedAt: endedAt.toISOString() };
   }
 
   private aggregateReactionRows(
