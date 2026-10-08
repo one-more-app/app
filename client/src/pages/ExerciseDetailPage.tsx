@@ -29,6 +29,7 @@ import {
 import { useCelebrationQueueActive } from '@/hooks/use-celebration-queue-active'
 import { useExercisePresence } from '@/hooks/use-exercise-presence'
 import { useLatestGlobalPerf } from '@/hooks/use-latest-global-perf'
+import { useLiveSession } from '@/hooks/use-live-session'
 import { usePerformance } from '@/hooks/use-performance'
 import { useRestTimerEnabled } from '@/hooks/use-rest-timer-enabled'
 import { useTheme } from '@/hooks/use-theme'
@@ -128,6 +129,7 @@ export function ExerciseDetailPage() {
     } = usePerformance(id ?? null)
     const { data: profile } = useUserProfileData()
     const latestGlobalPerf = useLatestGlobalPerf()
+    const liveSession = useLiveSession()
     const { enabled: restTimerEnabled, setEnabled: setRestTimerEnabled } =
         useRestTimerEnabled()
     const leagueFromApi: LeagueInfo | null =
@@ -499,7 +501,8 @@ export function ExerciseDetailPage() {
                         </Button>
                     }
                 />
-                {detailHeavyReady ? (
+                {/* Barre de séance (SessionLiveBar) remplace le repos fin pendant une séance live. */}
+                {detailHeavyReady && !liveSession ? (
                     <RestSinceLastSetBar
                         key={latestGlobalPerf?.entry.createdAt ?? 'none'}
                         createdAt={latestGlobalPerf?.entry.createdAt ?? null}

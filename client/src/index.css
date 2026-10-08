@@ -257,8 +257,13 @@
     pointer-events: none;
   }
 
+  /* `--session-bar-height` : posée par SessionLiveBar (barre de séance en cours), absente sinon. */
   .pb-bottom-nav-host {
-    padding-bottom: var(--bottom-nav-height);
+    padding-bottom: calc(var(--bottom-nav-height) + var(--session-bar-height, 0px));
+  }
+
+  .pb-session-bar {
+    padding-bottom: var(--session-bar-height, 0px);
   }
 
   /* Coquille app mobile : le document ne scroll pas, chaque écran a son viewport. */

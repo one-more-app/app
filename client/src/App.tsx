@@ -6,6 +6,7 @@ import { ReviewPromptHost } from '@/components/review/ReviewPromptHost'
 import { NativeBackNavigation } from '@/components/NativeBackNavigation'
 import { ProfileUsernameSetupHost } from '@/components/profile/ProfileUsernameSetupHost'
 import { RestTimeFinishedToastHost } from '@/components/RestTimeFinishedToastHost'
+import { SessionLiveBar } from '@/components/session/SessionLiveBar'
 import { Toaster } from '@/components/ui/sonner'
 import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider'
 import { PageSection } from '@/components/analytics/PageSection'
@@ -288,14 +289,23 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
         location.pathname === '/friends' ||
         location.pathname.startsWith('/friends/preview')
 
+    // Barre "séance en cours" : accueil + fiche exercice (s'affiche seulement si séance live).
+    const showSessionBar =
+        location.pathname === '/home' ||
+        location.pathname.startsWith('/exercise/')
+
     return (
         <div className="flex min-h-0 flex-1 flex-col">
             <div
                 key={location.pathname}
-                className={cn('app-scroll-viewport', show && 'pb-bottom-nav-host')}
+                className={cn(
+                    'app-scroll-viewport',
+                    show ? 'pb-bottom-nav-host' : 'pb-session-bar',
+                )}
             >
                 {children}
             </div>
+            {showSessionBar ? <SessionLiveBar navVisible={show} /> : null}
             {show ? <BottomNav /> : null}
             {show ? <RankingTour navVisible /> : null}
         </div>

@@ -14,6 +14,7 @@ import { useHomeDaySession } from "@/hooks/use-home-day-session";
 import { useSessionLive } from "@/hooks/use-session-live";
 import { useSessionTiming } from "@/hooks/use-session-timing";
 import { CARDIO_EQUIPMENT, getExerciseImageUrl } from "@/lib/exercisedb";
+import { formatSessionChrono } from "@/lib/format-session-chrono";
 import { hapticImpact } from "@/lib/haptics";
 import {
   chronologicalPerfOrder,
@@ -76,17 +77,6 @@ function groupTodayByExercise(entries: PerformanceEntry[]): ExerciseGroup[] {
     );
 }
 
-/** Chrono de séance `m:ss` (ou `h:mm:ss` au-delà d'une heure), mis à jour chaque seconde. */
-function formatChrono(ms: number): string {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  const ss = String(seconds).padStart(2, "0");
-  if (hours > 0) return `${hours}:${String(minutes).padStart(2, "0")}:${ss}`;
-  return `${minutes}:${ss}`;
-}
-
 function LiveChrono({ startedAt }: { startedAt: number }) {
   const [now, setNow] = useState(() => Date.now());
 
@@ -97,7 +87,7 @@ function LiveChrono({ startedAt }: { startedAt: number }) {
 
   return (
     <span className="font-one-more text-lg italic tabular-nums">
-      {formatChrono(now - startedAt)}
+      {formatSessionChrono(now - startedAt)}
     </span>
   );
 }

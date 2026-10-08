@@ -23,6 +23,9 @@ import { useEffect, useState } from "react";
 
 type RestTargetQuickEditProps = {
   className?: string;
+  /** Côté d'ouverture du popover (`top` quand le trigger est collé en bas d'écran). */
+  side?: "top" | "bottom";
+  align?: "start" | "center" | "end";
 };
 
 type RestTargetQuickEditPanelBodyProps = {
@@ -99,7 +102,11 @@ function RestTargetQuickEditPanelBody({
   );
 }
 
-export function RestTargetQuickEdit({ className }: RestTargetQuickEditProps) {
+export function RestTargetQuickEdit({
+  className,
+  side = "bottom",
+  align = "start",
+}: RestTargetQuickEditProps) {
   const { targetMs, setTargetMs } = useRestTargetMs();
   const [open, setOpen] = useState(false);
   const formatted = formatRestElapsed(targetMs);
@@ -155,8 +162,8 @@ export function RestTargetQuickEdit({ className }: RestTargetQuickEditProps) {
           </button>
         </PopoverTrigger>
         <PopoverContent
-          align="start"
-          side="bottom"
+          align={align}
+          side={side}
           data-tour="rest-counter-target-panel"
           className="z-[130] w-64 space-y-3 p-3"
           onClick={(event) => event.stopPropagation()}
