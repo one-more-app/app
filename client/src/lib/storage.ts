@@ -57,6 +57,8 @@ const ONBOARDING_RECORD_DESTINATION_KEY =
 const POST_AUTH_FLOW_DESTINATION_KEY =
   "one-more-post-auth-flow-destination-v1";
 const NOTIFICATIONS_EDU_DONE_KEY = "one-more-notifications-edu-done-v1";
+/** Parcours post-inscription « Ta première séance » terminé (ne plus l'afficher). */
+const FIRST_SESSION_FLOW_DONE_KEY = "one-more-first-session-flow-done-v1";
 const ONBOARDING_GYM_PENDING_KEY = "one-more-onboarding-gym-pending-v1";
 const GYM_ONBOARDING_IN_ZONE_KEY = "one-more-gym-onboarding-in-zone-v1";
 const GYM_ONBOARDING_NAME_KEY = "one-more-gym-onboarding-name-v1";
@@ -879,6 +881,26 @@ export function setNotificationsEduDone(done: boolean): void {
       localStorage.setItem(NOTIFICATIONS_EDU_DONE_KEY, "1");
     } else {
       localStorage.removeItem(NOTIFICATIONS_EDU_DONE_KEY);
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function isFirstSessionFlowDone(): boolean {
+  try {
+    return localStorage.getItem(FIRST_SESSION_FLOW_DONE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setFirstSessionFlowDone(done: boolean): void {
+  try {
+    if (done) {
+      localStorage.setItem(FIRST_SESSION_FLOW_DONE_KEY, "1");
+    } else {
+      localStorage.removeItem(FIRST_SESSION_FLOW_DONE_KEY);
     }
   } catch {
     // ignore

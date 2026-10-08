@@ -12,6 +12,9 @@ import { OnboardingGymPermissionsStep } from '@/components/onboarding/Onboarding
 import { OnboardingGymStep } from '@/components/onboarding/OnboardingGymStep';
 import { OnboardingGymWaitStep } from '@/components/onboarding/OnboardingGymWaitStep';
 import { OnboardingIntro } from '@/components/onboarding/OnboardingIntro';
+import { OnboardingFirstSessionConfirm } from '@/components/onboarding/OnboardingFirstSessionConfirm';
+import { OnboardingFirstSessionReminder } from '@/components/onboarding/OnboardingFirstSessionReminder';
+import { OnboardingFirstSessionStart } from '@/components/onboarding/OnboardingFirstSessionStart';
 import { OnboardingNotificationsStep } from '@/components/onboarding/OnboardingNotificationsStep';
 import { OnboardingRankReveal } from '@/components/onboarding/OnboardingRecordResults';
 import { OnboardingRulerPicker } from '@/components/onboarding/OnboardingRulerPicker';
@@ -54,10 +57,15 @@ import {
     type OnboardingStarterExercise,
 } from '@/lib/onboarding-starter-exercises';
 import {
+    ONBOARDING_FIRST_NOTED_PATH,
+    ONBOARDING_FIRST_REMINDER_PATH,
+    ONBOARDING_FIRST_SESSION_PATH,
     ONBOARDING_NOTIFICATIONS_STEP_ENABLED,
     continueAfterOnboardingDiscovery,
     continueAfterOnboardingNotifications,
+    finishFirstSessionFlow,
     isPostAuthOnboardingFlowPath,
+    leaveFirstSessionFlowForGym,
     postAuthNavigateOptions,
     resolvePostAuthNavigation,
 } from '@/lib/post-auth-navigation';
@@ -163,6 +171,12 @@ function OnboardingPage() {
                                     ? 'discovery'
                                     : normalizedStep === 'notifications'
                                         ? 'notifications'
+                                        : normalizedStep === 'first-session'
+                                            ? 'first-session'
+                                            : normalizedStep === 'first-reminder'
+                                                ? 'first-reminder'
+                                                : normalizedStep === 'first-noted'
+                                                    ? 'first-noted'
                                         : normalizedStep === 'rank'
                                             ? 'rank'
                                             : normalizedStep === '1rm'
@@ -181,6 +195,9 @@ function OnboardingPage() {
         normalizedStep,
         searchParams.get('reselect'),
     )
+    const gymFromFirstSession = searchParams.get('from') === 'first-session'
+    /** Parcours rappel rouvert depuis la carte « Ta première séance » de l'accueil. */
+    const firstSessionFromHome = searchParams.get('from') === 'home'
     const bodyQ = Math.min(
         BODY_TOTAL - 1,
         Math.max(0, Number.parseInt(bodyQRaw ?? '0', 10) || 0),
@@ -218,6 +235,9 @@ function OnboardingPage() {
             step === 'account' ||
             step === 'discovery' ||
             step === 'notifications' ||
+            step === 'first-session' ||
+            step === 'first-reminder' ||
+            step === 'first-noted' ||
             step === 'intro'
             ? null
             : viewedStep,
@@ -237,10 +257,6 @@ function OnboardingPage() {
 
     const goIntent = (q = 0) => {
         navigate(`/onboarding?step=intent&intentQ=${q}`, { replace: true })
-    }
-
-    const goAccount = () => {
-        navigate('/onboarding?step=account', { replace: true })
     }
 
     const [weightKg, setWeightKg] = useState(75)
@@ -692,6 +708,68 @@ function OnboardingPage() {
         navigate(nextPath, postAuthNavigateOptions(nextPath))
     }
 
+    const goFirstSessionPath = (path: string) => {
+        navigate(path, { replace: true })
+    }
+
+    const leaveFirstSession = (to: 'exercises' | 'home') => {
+        const destination = finishFirstSessionFlow(to)
+        navigate(destination, postAuthNavigateOptions(destination))
+    }
+
+    const startFirstSession = () => {
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.FIRST_SESSION,
+            action: 'start',
+        })
+        leaveFirstSession('exercises')
+    }
+
+    const laterFirstSession = () => {
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.FIRST_SESSION,
+            action: 'later',
+        })
+        goFirstSessionPath(ONBOARDING_FIRST_REMINDER_PATH)
+    }
+
+    const skipFirstSessionReminder = () => {
+        trackOnboardingStepSkipped({
+            step: OnboardingSteps.FIRST_SESSION_REMINDER,
+            reason: 'skipped',
+        })
+        leaveFirstSession('home')
+    }
+
+    const pickGymFromFirstSession = () => {
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.FIRST_SESSION_REMINDER,
+            reminder_mode: 'gym',
+        })
+        if (firstSessionFromHome) {
+            // Onboarding terminé : on passe par le sélecteur de salle des Réglages.
+            navigate('/onboarding?step=gym&from=settings', { replace: true })
+            return
+        }
+        goFirstSessionPath(leaveFirstSessionFlowForGym())
+    }
+
+    const startNowFromFirstSessionConfirm = () => {
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.FIRST_SESSION_CONFIRM,
+            action: 'start_now',
+        })
+        leaveFirstSession('exercises')
+    }
+
+    const homeFromFirstSessionConfirm = () => {
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.FIRST_SESSION_CONFIRM,
+            action: 'home',
+        })
+        leaveFirstSession('home')
+    }
+
     const navigateToResolvedGymStep = (
         resolved: ReturnType<typeof resolveGymOnboardingStep>,
     ) => {
@@ -749,7 +827,10 @@ function OnboardingPage() {
             step === 'gym-wait' ||
             step === 'account' ||
             step === 'discovery' ||
-            step === 'notifications'
+            step === 'notifications' ||
+            step === 'first-session' ||
+            step === 'first-reminder' ||
+            step === 'first-noted'
         ) {
             return
         }
@@ -807,7 +888,13 @@ function OnboardingPage() {
     }, [step, auth.status, navigate, searchParams])
 
     return (
-        <OnboardingShell bleedTop={step === 'intro' || step === 'account'}>
+        <OnboardingShell
+            bleedTop={
+                step === 'intro' ||
+                step === 'account' ||
+                step === 'first-session'
+            }
+        >
             {step === 'intro' ? (
                 <OnboardingIntro
                     onContinue={() => {
@@ -1078,7 +1165,13 @@ function OnboardingPage() {
                     startAtSearch={gymReselect}
                     onSearchBack={
                         gymReselect
-                            ? () => navigate('/onboarding?step=gym-permissions', { replace: true })
+                            ? () =>
+                                navigate(
+                                    gymFromFirstSession
+                                        ? ONBOARDING_FIRST_REMINDER_PATH
+                                        : '/onboarding?step=gym-permissions',
+                                    { replace: true },
+                                )
                             : undefined
                     }
                     onCancel={
@@ -1126,6 +1219,42 @@ function OnboardingPage() {
                 <OnboardingNotificationsStep
                     onContinue={() => completeNotificationsStep('enabled')}
                     onSkip={() => completeNotificationsStep('skipped')}
+                />
+            ) : step === 'first-session' ? (
+                <OnboardingFirstSessionStart
+                    onStart={startFirstSession}
+                    onLater={laterFirstSession}
+                />
+            ) : step === 'first-reminder' ? (
+                <OnboardingFirstSessionReminder
+                    onBack={() =>
+                        goFirstSessionPath(
+                            firstSessionFromHome
+                                ? '/home'
+                                : ONBOARDING_FIRST_SESSION_PATH,
+                        )
+                    }
+                    onSkip={skipFirstSessionReminder}
+                    onSaved={() =>
+                        goFirstSessionPath(
+                            firstSessionFromHome
+                                ? `${ONBOARDING_FIRST_NOTED_PATH}&from=home`
+                                : ONBOARDING_FIRST_NOTED_PATH,
+                        )
+                    }
+                    onPickGym={pickGymFromFirstSession}
+                />
+            ) : step === 'first-noted' ? (
+                <OnboardingFirstSessionConfirm
+                    onBack={() =>
+                        goFirstSessionPath(
+                            firstSessionFromHome
+                                ? `${ONBOARDING_FIRST_REMINDER_PATH}&from=home`
+                                : ONBOARDING_FIRST_REMINDER_PATH,
+                        )
+                    }
+                    onStartNow={startNowFromFirstSessionConfirm}
+                    onHome={homeFromFirstSessionConfirm}
                 />
             ) : null}
         </OnboardingShell>

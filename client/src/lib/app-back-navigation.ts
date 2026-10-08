@@ -126,6 +126,8 @@ export function resolveOnboardingBackTarget(
   );
   const fromSettings = params.get("from") === "settings";
   const reselect = params.get("reselect") === "1";
+  const fromFirstSession = params.get("from") === "first-session";
+  const fromHome = params.get("from") === "home";
 
   if (step === "intro") return { kind: "stay" };
   if (step === "record") {
@@ -152,8 +154,25 @@ export function resolveOnboardingBackTarget(
   if (step === "notifications") {
     return { kind: "path", to: "/onboarding?step=rank" };
   }
+  // Post-inscription « Ta première séance » : point de non-retour sur le premier écran.
+  if (step === "first-session") return { kind: "stay" };
+  if (step === "first-reminder") {
+    if (fromHome) return { kind: "path", to: "/home" };
+    return { kind: "path", to: "/onboarding?step=first-session" };
+  }
+  if (step === "first-noted") {
+    return {
+      kind: "path",
+      to: fromHome
+        ? "/onboarding?step=first-reminder&from=home"
+        : "/onboarding?step=first-reminder",
+    };
+  }
   if (step === "gym") {
     if (fromSettings) return { kind: "path", to: "/settings" };
+    if (reselect && fromFirstSession) {
+      return { kind: "path", to: "/onboarding?step=first-reminder" };
+    }
     if (reselect) return { kind: "path", to: "/onboarding?step=gym-permissions" };
     return { kind: "path", to: "/onboarding?step=rank" };
   }

@@ -1,3 +1,4 @@
+import { HomeFirstSessionCard } from "@/components/home/HomeFirstSessionCard";
 import { HomeDayTitle } from "@/components/home/HomeDayTitle";
 import { HomeLastSessionBlock } from "@/components/home/HomeLastSessionBlock";
 import { HomeLiveSession } from "@/components/home/HomeLiveSession";
@@ -21,6 +22,8 @@ type HomeDayContentProps = {
   onSelectDay: (dayKey: string) => void;
   /** Ouvre le parcours d'ajout d'un exercice (catalogue ou tiroir parrainage). */
   onAddExercise: () => void;
+  /** Nouvel inscrit (aucun exercice suivi, aucune perf) : carte « Ta première séance ». */
+  isNewUser?: boolean;
 };
 
 export function HomeDayContent({
@@ -32,6 +35,7 @@ export function HomeDayContent({
   lastSessionDay,
   onSelectDay,
   onAddExercise,
+  isNewUser = false,
 }: HomeDayContentProps) {
   if (kind === "live" && ownerUserId) {
     return (
@@ -64,6 +68,10 @@ export function HomeDayContent({
         onSelectDay={onSelectDay}
       />
     ) : null;
+
+  if (kind === "today-empty" && isNewUser) {
+    return <HomeFirstSessionCard />;
+  }
 
   if (kind === "today-empty") {
     return (

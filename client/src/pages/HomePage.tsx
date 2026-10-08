@@ -7,6 +7,7 @@ import { ExerciseCardSkeletonList } from '@/components/skeletons'
 import { useAccess } from '@/hooks/use-access'
 import {
     usePerformanceEntriesData,
+    useTrackedExercisesData,
     useUserProgressData,
 } from '@/hooks/use-api-data'
 import { useAuth } from '@/hooks/use-auth'
@@ -44,6 +45,8 @@ function HomePage() {
     const { data: progress } = useUserProgressData()
     const { data: remoteEntries, isLoading: remoteEntriesLoading } =
         usePerformanceEntriesData()
+    const { data: trackedExercises, isLoading: trackedLoading } =
+        useTrackedExercisesData()
     const localEntries = useLocalPerformanceEntries()
     const { canAddExercise } = useAccess()
     const navigate = useNavigate()
@@ -68,6 +71,13 @@ function HomePage() {
         [remoteEntries, localEntries],
     )
     const isLoading = remoteEntriesLoading && entries.length === 0
+
+    // Nouvel inscrit : ni perf ni exercice suivi (une fois les données chargées).
+    const isNewUser =
+        !isLoading &&
+        !trackedLoading &&
+        entries.length === 0 &&
+        !(trackedExercises ?? []).some((exercise) => !exercise.deletedAt)
 
     const activeDays = useMemo(
         () => collectActiveDayKeysFromEntries(entries),
@@ -209,6 +219,7 @@ function HomePage() {
                         lastSessionDay={lastSessionDay}
                         onSelectDay={handleJumpToDay}
                         onAddExercise={goToAddExercise}
+                        isNewUser={isNewUser}
                     />
                 )}
             </main>

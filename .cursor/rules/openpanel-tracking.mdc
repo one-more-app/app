@@ -54,6 +54,7 @@ Helper : `trackOnboardingStepViewed` / `Completed` / `Skipped` / `trackOnboardin
 | `account_login` | `AuthPage` | + `user_logged_in` (`method=email\|google\|apple`) |
 | `account_register_*` | `AuthPage` | un substep par carte ; submit → `user_registered` |
 | `discovery` / `notifications` | steps post-auth | viewed / completed / skipped |
+| `first_session` / `first_session_reminder` / `first_session_confirm` | `OnboardingFirstSession*` (`?step=first-session\|first-reminder\|first-noted`) | viewed au mount ; completed avec `action` (`start`, `later`, `start_now`, `home`) ou `reminder_mode` (`days`, `gym`) ; skip du rappel → `onboarding_step_skipped` |
 | `gym_question` / `gym_locating` / `gym_confirm` / `gym_search` | `OnboardingGymStep` | URL gelée, viewed sur le state interne |
 | `gym_permissions` | `OnboardingGymPermissionsStep` | skip → `onboarding_step_skipped` ; toggles push |
 | `gym_wait` | `OnboardingGymWaitStep` | completed sur unlock |

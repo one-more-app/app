@@ -2,9 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   clampReminderHour,
   clampReminderMinute,
+  formatNextReminderDay,
+  formatReminderClock,
+  formatReminderScheduleShort,
   formatReminderSchedule,
   formatReminderTime,
   normalizeReminderSlots,
+  resolveNextReminder,
   setReminderSlotTime,
   toggleReminderSlot,
 } from "./reminder-schedule";
@@ -104,5 +108,51 @@ describe("reminder-schedule", () => {
         { weekday: 3, hour: 19, minute: 30 },
       ]),
     ).toBe("Lun 18h00 · Mer 19h30");
+  });
+});
+
+describe("prochain rappel", () => {
+  const slots = [
+    { weekday: 1 as const, hour: 18, minute: 30 },
+    { weekday: 5 as const, hour: 18, minute: 30 },
+  ];
+
+  it("formate l'heure en horloge", () => {
+    expect(formatReminderClock(7, 5)).toBe("07:05");
+    expect(formatReminderClock(18, 30)).toBe("18:30");
+  });
+
+  it("retourne null sans créneau", () => {
+    expect(resolveNextReminder([], new Date(2026, 9, 8, 10, 0))).toBeNull();
+  });
+
+  it("trouve le prochain jour choisi (jeudi 8 oct 2026 -> vendredi)", () => {
+    const next = resolveNextReminder(slots, new Date(2026, 9, 8, 10, 0));
+    expect(next).toEqual({ weekday: 5, hour: 18, minute: 30, daysAhead: 1 });
+    expect(formatNextReminderDay(next!)).toBe("demain");
+  });
+
+  it("garde aujourd'hui si l'heure n'est pas passée", () => {
+    const next = resolveNextReminder(slots, new Date(2026, 9, 9, 10, 0));
+    expect(next?.daysAhead).toBe(0);
+    expect(formatNextReminderDay(next!)).toBe("aujourd'hui");
+  });
+
+  it("saute au prochain créneau si l'heure est passée", () => {
+    const next = resolveNextReminder(slots, new Date(2026, 9, 9, 19, 0));
+    expect(next).toEqual({ weekday: 1, hour: 18, minute: 30, daysAhead: 3 });
+    expect(formatNextReminderDay(next!)).toBe("lundi");
+  });
+});
+
+describe("formatReminderScheduleShort", () => {
+  it("abrège les jours avec une heure commune", () => {
+    expect(
+      formatReminderScheduleShort([
+        { weekday: 1, hour: 18, minute: 30 },
+        { weekday: 3, hour: 18, minute: 30 },
+        { weekday: 5, hour: 18, minute: 30 },
+      ]),
+    ).toBe("lun, mer et ven à 18:30");
   });
 });

@@ -82,6 +82,20 @@ describe("resolveOnboardingStepFromLocation", () => {
   });
 });
 
+describe("first session steps", () => {
+  it("maps the post-signup first session query params", () => {
+    expect(
+      resolveOnboardingStepFromLocation("/onboarding", "?step=first-session"),
+    ).toBe(OnboardingSteps.FIRST_SESSION);
+    expect(
+      resolveOnboardingStepFromLocation("/onboarding", "?step=first-reminder"),
+    ).toBe(OnboardingSteps.FIRST_SESSION_REMINDER);
+    expect(
+      resolveOnboardingStepFromLocation("/onboarding", "?step=first-noted"),
+    ).toBe(OnboardingSteps.FIRST_SESSION_CONFIRM);
+  });
+});
+
 describe("body and gym step helpers", () => {
   it("maps bodyQ, intentQ and gym substeps", () => {
     expect(bodyStepFromQuestion(0)).toBe(OnboardingSteps.BODY_GENDER);

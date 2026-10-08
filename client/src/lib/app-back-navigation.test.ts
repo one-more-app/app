@@ -157,6 +157,36 @@ describe("resolveOnboardingBackTarget", () => {
       ),
     ).toEqual({ kind: "path", to: "/settings" });
   });
+
+  it("remonte le parcours première séance", () => {
+    expect(
+      resolveOnboardingBackTarget("/onboarding", "?step=first-session"),
+    ).toEqual({ kind: "stay" });
+    expect(
+      resolveOnboardingBackTarget("/onboarding", "?step=first-reminder"),
+    ).toEqual({ kind: "path", to: "/onboarding?step=first-session" });
+    expect(
+      resolveOnboardingBackTarget("/onboarding", "?step=first-noted"),
+    ).toEqual({ kind: "path", to: "/onboarding?step=first-reminder" });
+    expect(
+      resolveOnboardingBackTarget(
+        "/onboarding",
+        "?step=gym&reselect=1&from=first-session",
+      ),
+    ).toEqual({ kind: "path", to: "/onboarding?step=first-reminder" });
+    expect(
+      resolveOnboardingBackTarget(
+        "/onboarding",
+        "?step=first-reminder&from=home",
+      ),
+    ).toEqual({ kind: "path", to: "/home" });
+    expect(
+      resolveOnboardingBackTarget("/onboarding", "?step=first-noted&from=home"),
+    ).toEqual({
+      kind: "path",
+      to: "/onboarding?step=first-reminder&from=home",
+    });
+  });
 });
 
 describe("resolveAppBackAction", () => {

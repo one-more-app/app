@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { UI } from "../../../src/lib/translations";
 import {
-  mockAuthenticatedApi,
   seedAuthenticatedSession,
   seedOnboardingDone,
   trackPageErrors,
 } from "../helpers";
+import { mockExerciseWorkflowApi } from "../workflow-api";
 
 test("accueil : semaine, état vide du jour et CTA démarrer une séance", async ({
   page,
@@ -13,7 +13,8 @@ test("accueil : semaine, état vide du jour et CTA démarrer une séance", async
   const pageErrors = trackPageErrors(page);
   await seedOnboardingDone(page);
   await seedAuthenticatedSession(page);
-  await mockAuthenticatedApi(page);
+  // Utilisateur avec un exercice suivi : pas de carte « Ta première séance ».
+  await mockExerciseWorkflowApi(page, { seedTrackedExercise: true });
 
   await page.goto("/#/home");
 

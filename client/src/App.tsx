@@ -170,7 +170,12 @@ function AccessGate({ children }: { children: React.ReactNode }) {
     if (
         auth.status === 'authenticated' &&
         isOnboardingRoute &&
-        (onboardingStep === 'notifications' || onboardingStep === 'discovery')
+        (onboardingStep === 'notifications' ||
+            onboardingStep === 'discovery' ||
+            // « Ta première séance » : aussi accessible depuis la carte de l'accueil.
+            onboardingStep === 'first-session' ||
+            onboardingStep === 'first-reminder' ||
+            onboardingStep === 'first-noted')
     ) {
         return <>{children}</>
     }
