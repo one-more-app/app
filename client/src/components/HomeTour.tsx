@@ -15,7 +15,10 @@ import type { Step } from "react-joyride";
 type HomeTourProps = {
   pageReady: boolean;
   progressReady: boolean;
-  hasTodaySection: boolean;
+  /** Séance du jour en cours affichée (cible `home-today`). */
+  hasLiveSession: boolean;
+  /** CTA « Démarrer une séance » affiché (cible `home-start-session`). */
+  hasStartCta: boolean;
 };
 
 function isOtherAppTourActive(): boolean {
@@ -25,7 +28,8 @@ function isOtherAppTourActive(): boolean {
 export function HomeTour({
   pageReady,
   progressReady,
-  hasTodaySection,
+  hasLiveSession,
+  hasStartCta,
 }: HomeTourProps) {
   const [tourComplete, setTourComplete] = useState(isHomeTourComplete);
 
@@ -57,7 +61,18 @@ export function HomeTour({
       },
     ];
 
-    if (hasTodaySection) {
+    nextSteps.push({
+      target: '[data-tour="home-week"]',
+      title: UI.homeTourWeekTitle,
+      content: UI.homeTourWeekContent,
+      placement: "bottom",
+      skipScroll: true,
+      floatingOptions: {
+        shiftOptions: { padding: getJoyrideShiftPadding() },
+      },
+    });
+
+    if (hasLiveSession) {
       nextSteps.push({
         target: '[data-tour="home-today"]',
         title: UI.homeTourTodayTitle,
@@ -67,14 +82,20 @@ export function HomeTour({
       });
     }
 
-    nextSteps.push(
-      {
-        target: '[data-tour="home-browse"]',
-        title: UI.homeTourBrowseTitle,
-        content: UI.homeTourBrowseContent,
+    if (hasStartCta) {
+      nextSteps.push({
+        target: '[data-tour="home-start-session"]',
+        title: UI.homeTourCtaTitle,
+        content: UI.homeTourCtaContent,
         placement: "top",
-        scrollOffset,
-      },
+        skipScroll: true,
+        floatingOptions: {
+          shiftOptions: { padding: getJoyrideShiftPadding() },
+        },
+      });
+    }
+
+    nextSteps.push(
       {
         target: '[data-tour="nav-profile"]',
         title: UI.homeTourNavProfileTitle,
@@ -118,7 +139,7 @@ export function HomeTour({
     );
 
     return nextSteps;
-  }, [hasTodaySection]);
+  }, [hasLiveSession, hasStartCta]);
 
   const targets = useMemo(
     () => steps.map((step) => step.target as string),

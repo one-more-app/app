@@ -1,57 +1,52 @@
-import { BrowsePageTitle, BrowseSectionTitle } from '@/components/exercise-browse-ui'
-import { ExerciseBrowseNavigator } from '@/components/ExerciseBrowseNavigator'
-import { ExerciseCard } from '@/components/ExerciseCard'
+import { HomeDayContent } from '@/components/home/HomeDayContent'
+import { HomeHeader } from '@/components/home/HomeHeader'
+import { HomeProgressWeekCard } from '@/components/home/HomeProgressWeekCard'
+import { HomeStartSessionCta } from '@/components/home/HomeStartSessionCta'
 import { HomeTour } from '@/components/HomeTour'
-import { SessionTimingLabel } from '@/components/session/SessionTimingLabel'
 import { ExerciseCardSkeletonList } from '@/components/skeletons'
-import { Button } from '@/components/ui/button'
-import { EmptyState } from '@/components/ui/empty-state'
-import { Input } from '@/components/ui/input'
-import { UserProgressBanner } from '@/components/UserProgressBanner'
 import { useAccess } from '@/hooks/use-access'
 import {
-    useLeagueBrowseLookupsData,
-    usePerformanceDataRefresh,
-    usePerformanceEntriesData, useUserProgressData
+    usePerformanceEntriesData,
+    useUserProgressData,
 } from '@/hooks/use-api-data'
 import { useAuth } from '@/hooks/use-auth'
-import { useExerciseCatalogBrowse } from '@/hooks/use-exercise-catalog-browse'
-import { useExerciseFilters } from '@/hooks/use-exercise-filters'
-import { useHomeData, type ExerciseWithPerf } from '@/hooks/use-home-data'
+import { useLocalPerformanceEntries } from '@/hooks/use-local-data-store'
 import { useReferralDrawer } from '@/hooks/use-referral-drawer'
+import { useSessionTiming } from '@/hooks/use-session-timing'
+import {
+    buildWeekCells,
+    getWeekStartDateKey,
+    shiftWeekStartDateKey,
+} from '@/lib/activity-calendar'
+import {
+    collectActiveDayKeysFromEntries,
+    getActivityDayKey,
+    mergePerformanceEntriesById,
+} from '@/lib/activity-from-performances'
+import { requestAdsTrackingWhenAppActive } from '@/lib/ads-tracking'
 import { readStoredSession } from '@/lib/auth'
 import {
-    sortBrowseableByLatestPerf,
-    trackedToBrowseable,
-} from '@/lib/exercise-catalog-browse'
-import { CARDIO_EQUIPMENT, getExerciseImageUrl } from '@/lib/exercisedb'
-import { filterExercisesDoneToday } from '@/lib/home-today-exercises'
-import { getLocalDateKey, isPerformanceOnLocalDay } from '@/lib/local-date'
-import { browseLookupsToMaps } from '@/lib/muscle-league-stats'
-import { notifyPerfMilestones } from '@/lib/perf-notifications'
-import {
-    getLatestPerformanceCreatedAt,
-    getPersonalBest,
-    savePerformanceAndWait,
-} from '@/lib/storage'
-import { requestAdsTrackingWhenAppActive } from '@/lib/ads-tracking'
-import { UI } from '@/lib/translations'
-import { notifyXpGrants } from '@/lib/xp-notifications'
-import { ChevronRight, Dumbbell, Plus, Search } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+    classifyHomeDay,
+    findLastSessionDay,
+    resolveDefaultHomeDay,
+    resolveHomeStreak,
+    resolveLastActiveDate,
+} from '@/lib/home-day'
+import { getLocalDateKey } from '@/lib/local-date'
+import { resolveStreakXpBonus } from '@/lib/streak-xp-display'
+import { cn } from '@/lib/utils'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 function HomePage() {
     const auth = useAuth()
-    const { exercises, hasLoaded } = useHomeData()
     const { data: progress } = useUserProgressData()
-    const { data: performanceEntries = [] } = usePerformanceEntriesData()
-    const refreshAfterPerfChange = usePerformanceDataRefresh()
-    const { data: browseLookupsRaw } = useLeagueBrowseLookupsData()
+    const { data: remoteEntries, isLoading: remoteEntriesLoading } =
+        usePerformanceEntriesData()
+    const localEntries = useLocalPerformanceEntries()
     const { canAddExercise } = useAccess()
     const navigate = useNavigate()
     const { openReferralDrawer } = useReferralDrawer()
-    const location = useLocation()
 
     const ownerUserId = useMemo(() => {
         if (auth.status === 'authenticated' && auth.user?.id) return auth.user.id
@@ -64,279 +59,163 @@ function HomePage() {
         void requestAdsTrackingWhenAppActive()
     }, [])
 
-    const todayEntries = useMemo(
+    const entries = useMemo(
         () =>
-            performanceEntries.filter(
-                (entry) => !entry.deletedAt && isPerformanceOnLocalDay(entry, todayKey),
+            mergePerformanceEntriesById(remoteEntries ?? [], localEntries).filter(
+                (entry) => !entry.deletedAt,
             ),
-        [performanceEntries, todayKey],
+        [remoteEntries, localEntries],
+    )
+    const isLoading = remoteEntriesLoading && entries.length === 0
+
+    const activeDays = useMemo(
+        () => collectActiveDayKeysFromEntries(entries),
+        [entries],
     )
 
-    const addExerciseLinkSearch = useMemo(() => {
-        const q = new URLSearchParams(location.search).get('q')
-        return q ? `?q=${encodeURIComponent(q)}` : ''
-    }, [location.search])
+    const todayEntries = useMemo(
+        () => entries.filter((entry) => getActivityDayKey(entry) === todayKey),
+        [entries, todayKey],
+    )
+    const { timing: todayTiming } = useSessionTiming(todayEntries, {
+        dayKey: todayKey,
+    })
+    const hasLiveSession = todayTiming?.isInProgress === true
+
+    const defaultDay = useMemo(
+        () => resolveDefaultHomeDay({ todayKey, activeDays, hasLiveSession }),
+        [todayKey, activeDays, hasLiveSession],
+    )
+
+    // Choix explicite de l'utilisateur ; sinon le jour par défaut suit les données.
+    const [pickedDay, setPickedDay] = useState<string | null>(null)
+    const [weekStartOverride, setWeekStartOverride] = useState<string | null>(null)
+
+    const selectedDay = pickedDay ?? defaultDay
+    const weekStart = weekStartOverride ?? getWeekStartDateKey(selectedDay)
+    const currentWeekStart = getWeekStartDateKey(todayKey)
+
+    const weekCells = buildWeekCells(activeDays, weekStart, todayKey)
+
+    const earliestWeekStart = useMemo(
+        () => getWeekStartDateKey(activeDays[0] ?? todayKey),
+        [activeDays, todayKey],
+    )
+    const canGoPrev = weekStart > earliestWeekStart
+    const canGoNext = weekStart < shiftWeekStartDateKey(currentWeekStart, 1)
+
+    const handleSelectDay = useCallback((dayKey: string) => {
+        setPickedDay(dayKey)
+    }, [])
+
+    const handleJumpToDay = useCallback((dayKey: string) => {
+        setPickedDay(dayKey)
+        setWeekStartOverride(null)
+    }, [])
+
+    const handleShiftWeek = useCallback(
+        (delta: number) => {
+            const nextWeekStart = shiftWeekStartDateKey(weekStart, delta)
+            const cells = buildWeekCells(activeDays, nextWeekStart, todayKey)
+            const todayCell = cells.find((cell) => cell.isToday)
+            const lastActive = [...cells].reverse().find((cell) => cell.active)
+            setWeekStartOverride(nextWeekStart)
+            setPickedDay((todayCell ?? lastActive ?? cells[0]).date)
+        },
+        [weekStart, activeDays, todayKey],
+    )
+
+    const dayKind = classifyHomeDay({
+        dayKey: selectedDay,
+        todayKey,
+        activeDays,
+        hasLiveSession,
+    })
+
+    const dayEntries = useMemo(
+        () => entries.filter((entry) => getActivityDayKey(entry) === selectedDay),
+        [entries, selectedDay],
+    )
+
+    const lastSessionDay = useMemo(
+        () => findLastSessionDay(activeDays, todayKey),
+        [activeDays, todayKey],
+    )
+
+    const streakCurrent = progress?.streak.current ?? 0
+    const serverLastActiveDate = progress?.lastActiveDate
+    const streak = useMemo(
+        () =>
+            resolveHomeStreak({
+                streakCurrent,
+                lastActiveDate: resolveLastActiveDate(
+                    serverLastActiveDate,
+                    activeDays,
+                    todayKey,
+                ),
+                todayKey,
+            }),
+        [streakCurrent, serverLastActiveDate, activeDays, todayKey],
+    )
+    const bonusPercent = progress ? resolveStreakXpBonus(progress).bonusPercent : 0
 
     const goToAddExercise = useCallback(() => {
         if (!canAddExercise) {
             openReferralDrawer('limit')
             return
         }
-        navigate(`/exercises${addExerciseLinkSearch}`)
-    }, [canAddExercise, navigate, addExerciseLinkSearch, openReferralDrawer])
+        navigate('/exercises')
+    }, [canAddExercise, navigate, openReferralDrawer])
 
-    const { searchInput, searchQuery, handleSearchChange } = useExerciseFilters()
-
-    const nonCardioExercises = useMemo(
-        () =>
-            exercises.filter(
-                (ex) =>
-                    (ex.bodyPart || ex.target) !== 'cardio' &&
-                    !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment)),
-            ),
-        [exercises],
-    )
-
-    const browseableExercises = useMemo(
-        () => nonCardioExercises.map(trackedToBrowseable),
-        [nonCardioExercises],
-    )
-
-    const exerciseById = useMemo(
-        () => new Map(nonCardioExercises.map((ex) => [ex.id, ex])),
-        [nonCardioExercises],
-    )
-
-    const {
-        browse,
-        viewAll,
-        pickZone,
-        pickTarget,
-        pickEquipment,
-        goToStep,
-        toggleViewAll,
-    } = useExerciseCatalogBrowse()
-
-    const isSearchMode = searchQuery.trim().length > 0
-    const showTodaySection = !isSearchMode && browse.step === 'zone'
-    const prevSearchQueryRef = useRef(searchQuery)
-
-    useEffect(() => {
-        const prev = prevSearchQueryRef.current.trim()
-        const next = searchQuery.trim()
-        if (prev && !next) {
-            goToStep('zone', { replace: true })
-        }
-        prevSearchQueryRef.current = searchQuery
-    }, [searchQuery, goToStep])
-
-    useEffect(() => {
-        if (isSearchMode) return
-        if (browse.step === 'list' && (!browse.zone || !browse.target || !browse.beq)) {
-            goToStep('zone', { replace: true })
-        } else if (
-            browse.step === 'equipment' &&
-            (!browse.zone || !browse.target)
-        ) {
-            goToStep(browse.zone ? 'muscle' : 'zone', { replace: true })
-        } else if (browse.step === 'muscle' && !browse.zone) {
-            goToStep('zone', { replace: true })
-        }
-    }, [browse.step, browse.zone, browse.target, browse.beq, goToStep, isSearchMode])
-
-    const getLatestPerfAt = useCallback(
-        (id: string) => getLatestPerformanceCreatedAt(id),
-        [],
-    )
-
-    const browseLeagueLookups = useMemo(() => {
-        if (!browseLookupsRaw) return undefined
-        return browseLookupsToMaps(browseLookupsRaw)
-    }, [browseLookupsRaw])
-
-    const todayExercises = useMemo(
-        () =>
-            sortBrowseableByLatestPerf(
-                filterExercisesDoneToday(nonCardioExercises),
-                getLatestPerfAt,
-            ),
-        [nonCardioExercises, getLatestPerfAt, performanceEntries],
-    )
-
-    const renderExerciseCard = useCallback(
-        (ex: ExerciseWithPerf) => {
-            const leagueInfo = ex.league ?? null
-            return (
-                <ExerciseCard
-                    compact
-                    exercise={ex}
-                    lastPerf={ex.lastPerf}
-                    personalBest={ex.personalBest}
-                    leagueInfo={leagueInfo}
-                    onClick={() => navigate(`/exercise/${ex.id}`, { replace: false })}
-                    onSavePerf={(weight, reps) => {
-                        const prevPB = ex.personalBest ?? null
-                        void (async () => {
-                            try {
-                                const { xp } = await savePerformanceAndWait(
-                                    ex.id,
-                                    weight,
-                                    reps,
-                                )
-                                notifyXpGrants(xp)
-                                const nextPB = getPersonalBest(ex.id) ?? null
-                                notifyPerfMilestones({
-                                    exerciseName: ex.name,
-                                    prevPB,
-                                    nextPB,
-                                    savedWeight: weight,
-                                    savedReps: reps,
-                                    league: xp?.league,
-                                    exerciseImageUrl:
-                                        getExerciseImageUrl(ex.gifUrl) || undefined,
-                                    bodyPart: ex.bodyPart,
-                                    target: ex.target,
-                                })
-                                navigate(`/exercise/${ex.id}`)
-                            } finally {
-                                void refreshAfterPerfChange()
-                            }
-                        })()
-                    }}
-                />
-            )
-        },
-        [navigate, refreshAfterPerfChange],
-    )
-
-    const renderExerciseList = useCallback(
-        (items: { id: string }[]) => (
-            <ul className="space-y-3">
-                {items.map((item) => {
-                    const ex = exerciseById.get(item.id)
-                    if (!ex) return null
-                    return <li key={ex.id}>{renderExerciseCard(ex)}</li>
-                })}
-            </ul>
-        ),
-        [exerciseById, renderExerciseCard],
-    )
-
-    const hasTodaySection = todayExercises.length > 0
-
-    const todaySection =
-        hasTodaySection ? (
-            <div data-tour="home-today">
-                <div className="mb-1.5 flex items-start justify-between gap-2">
-                    <div className="flex flex-col">
-                        <BrowsePageTitle className="mb-0.5">{UI.homeDoneToday}</BrowsePageTitle>
-                        <BrowseSectionTitle className="mb-0">
-                            {UI.homeDoneTodaySubtitle}
-                        </BrowseSectionTitle>
-                    </div>
-                    {ownerUserId ? (
-                        <button
-                            type="button"
-                            onClick={() =>
-                                navigate(`/session/${ownerUserId}/${todayKey}`)
-                            }
-                            className="flex shrink-0 flex-col items-end gap-0.5 text-right"
-                        >
-                            <SessionTimingLabel
-                                entries={todayEntries}
-                                dayKey={todayKey}
-                                className="text-[11px]"
-                            />
-                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-                                {UI.sessionViewDay}
-                                <ChevronRight className="size-3.5" aria-hidden />
-                            </span>
-                        </button>
-                    ) : (
-                        <SessionTimingLabel
-                            entries={todayEntries}
-                            dayKey={todayKey}
-                            className="text-[11px]"
-                        />
-                    )}
-                </div>
-                <ul className="space-y-3">
-                    {todayExercises.map((ex) => (
-                        <li key={ex.id}>{renderExerciseCard(ex)}</li>
-                    ))}
-                </ul>
-            </div>
-        ) : null
+    const showStartCta = !isLoading && !hasLiveSession
 
     return (
         <div className="min-h-screen-app bg-background">
-            <main className="mx-auto max-w-2xl p-4 pt-safe-top">
-                <UserProgressBanner dataTour="home-progress-banner" />
+            <main
+                className={cn(
+                    'mx-auto max-w-2xl p-4 pt-safe-top',
+                    showStartCta && 'pb-28',
+                )}
+            >
+                <HomeHeader ownerUserId={ownerUserId} />
 
-                {hasLoaded && nonCardioExercises.length > 0 ? (
-                    <div className="mb-4 flex flex-col gap-3">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                                type="search"
-                                placeholder={UI.searchExercise}
-                                value={searchInput}
-                                onChange={(e) => handleSearchChange(e.target.value)}
-                                className="bg-card pl-9"
-                            />
-                        </div>
-
-                    </div>
+                {progress ? (
+                    <HomeProgressWeekCard
+                        progress={progress}
+                        streak={streak}
+                        bonusPercent={bonusPercent}
+                        weekCells={weekCells}
+                        selectedDay={selectedDay}
+                        onSelectDay={handleSelectDay}
+                        onPrevWeek={() => handleShiftWeek(-1)}
+                        onNextWeek={() => handleShiftWeek(1)}
+                        canGoPrev={canGoPrev}
+                        canGoNext={canGoNext}
+                    />
                 ) : null}
-                <Button className="w-full mb-4" onClick={goToAddExercise}>
-                    <Plus className="mr-2 size-4" />
-                    {UI.addExercise}
-                </Button>
-                {!hasLoaded ? (
-                    <ExerciseCardSkeletonList count={5} compact className="mt-2" />
-                ) : nonCardioExercises.length === 0 ? (
-                    <EmptyState
-                        className="mt-4"
-                        icon={Dumbbell}
-                        title={UI.noTrackedExercises}
-                        description={UI.noTrackedDescription}
-                    >
-                        <Button className="mt-2 w-full" onClick={goToAddExercise}>
-                            <Plus className="mr-2 size-4" />
-                            {UI.addExercise}
-                        </Button>
-                    </EmptyState>
+
+                {isLoading ? (
+                    <ExerciseCardSkeletonList count={3} compact />
                 ) : (
-                    <>
-                        {showTodaySection && todaySection ? (
-                            <div className="mb-4">{todaySection}</div>
-                        ) : null}
-                        <div data-tour="home-browse">
-                            <ExerciseBrowseNavigator
-                                exercises={browseableExercises}
-                                browse={browse}
-                                pageTitle={UI.homeExercisesTitle}
-                                searchQuery={searchQuery}
-                                searchSort="latestPerf"
-                                getLatestPerfAt={getLatestPerfAt}
-                                viewAll={viewAll}
-                                onToggleViewAll={toggleViewAll}
-                                onPickZone={pickZone}
-                                onPickTarget={pickTarget}
-                                onPickEquipment={pickEquipment}
-                                onGoToStep={goToStep}
-                                leafSort="latestPerf"
-                                browseLeagueLookups={browseLeagueLookups}
-                                renderExerciseList={renderExerciseList}
-                            />
-                        </div>
-                    </>
+                    <HomeDayContent
+                        kind={dayKind}
+                        dayKey={selectedDay}
+                        ownerUserId={ownerUserId}
+                        entries={entries}
+                        dayEntries={dayEntries}
+                        lastSessionDay={lastSessionDay}
+                        onSelectDay={handleJumpToDay}
+                    />
                 )}
             </main>
+
+            {showStartCta ? <HomeStartSessionCta onClick={goToAddExercise} /> : null}
+
             <HomeTour
-                pageReady={hasLoaded && nonCardioExercises.length > 0}
+                pageReady={!isLoading}
                 progressReady={progress != null}
-                hasTodaySection={hasTodaySection}
+                hasLiveSession={hasLiveSession && dayKind === 'live'}
+                hasStartCta={showStartCta}
             />
         </div>
     )
