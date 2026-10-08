@@ -7,6 +7,7 @@ describe('parseSegmentDelayParams', () => {
       days: 1,
       hours: 12,
       totalHours: 36,
+      maxTotalHours: null,
     });
   });
 
@@ -31,5 +32,20 @@ describe('parseSegmentDelayParams', () => {
     expect(
       parseSegmentDelayParams({ days: '1', hours: '6' }, 'seg').totalHours,
     ).toBe(30);
+  });
+
+  it('accepts an optional max window greater than the min', () => {
+    expect(
+      parseSegmentDelayParams({ hours: 1, maxHours: 24 }, 'seg').maxTotalHours,
+    ).toBe(24);
+    expect(
+      parseSegmentDelayParams({ days: 1, maxDays: 3 }, 'seg').maxTotalHours,
+    ).toBe(72);
+  });
+
+  it('rejects a max window shorter than or equal to the min', () => {
+    expect(() =>
+      parseSegmentDelayParams({ hours: 24, maxHours: 24 }, 'seg'),
+    ).toThrow(/maxHours|maxDays|fenêtre/);
   });
 });

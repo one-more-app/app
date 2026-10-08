@@ -5,7 +5,7 @@ import type { OutboundSegment } from './segment.types.js';
 export const lapsedAfterSessionSegment: OutboundSegment = {
   key: 'lapsed_after_session',
   async resolveUserIds(_qb, ctx) {
-    const { totalHours } = parseSegmentDelayParams(
+    const { totalHours, maxTotalHours } = parseSegmentDelayParams(
       ctx.params,
       'lapsed_after_session',
     );
@@ -19,8 +19,12 @@ export const lapsedAfterSessionSegment: OutboundSegment = {
         AND btrim(u.email) <> ''
         AND ${SQL_HAS_REAL_SESSION}
         AND ${SQL_LAST_APP_ACTIVITY} <= NOW() - ($1::int * INTERVAL '1 hour')
+        AND (
+          $2::int IS NULL
+          OR ${SQL_LAST_APP_ACTIVITY} > NOW() - ($2::int * INTERVAL '1 hour')
+        )
     `,
-      [totalHours],
+      [totalHours, maxTotalHours],
     );
     return rows.map((r) => r.userId);
   },

@@ -5,7 +5,7 @@ import type { OutboundSegment } from './segment.types.js';
 export const registeredNoExerciseSegment: OutboundSegment = {
   key: 'registered_no_exercise',
   async resolveUserIds(_qb, ctx) {
-    const { totalHours } = parseSegmentDelayParams(
+    const { totalHours, maxTotalHours } = parseSegmentDelayParams(
       ctx.params,
       'registered_no_exercise',
     );
@@ -18,9 +18,10 @@ export const registeredNoExerciseSegment: OutboundSegment = {
         AND u.email IS NOT NULL
         AND btrim(u.email) <> ''
         AND u."createdAt" <= NOW() - ($1::int * INTERVAL '1 hour')
+        AND ($2::int IS NULL OR u."createdAt" > NOW() - ($2::int * INTERVAL '1 hour'))
         AND NOT ${SQL_HAS_REAL_SESSION}
     `,
-      [totalHours],
+      [totalHours, maxTotalHours],
     );
     return rows.map((r) => r.userId);
   },

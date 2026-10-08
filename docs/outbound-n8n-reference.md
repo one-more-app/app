@@ -94,9 +94,9 @@ Le catalogue live (`GET /internal/outbound/catalog`) reflète ce tableau.
 |--------------|-------------|-----------|
 | `inactive_since` | n8n **Campagne · Winback inactifs 14 j** | Mardi 10:00 Paris, `days: 14`, 1×/mois/`idempotencyKey` |
 | `active_with_email` | n8n **Campagne · Mise à jour CGU** | Manuel, one-shot |
-| `registered_no_exercise` | n8n (à brancher) | Tu choisis hours/days dans le trigger |
-| `registered_no_push` | n8n (à brancher) | Idem |
-| `lapsed_after_session` | n8n (à brancher) | Idem |
+| `registered_no_exercise` | n8n **Campagne · Pas d'exo réel** | 1 h / 24 h / 3 j / 7 j / 30 j, push + email, 1×/palier/vie |
+| `registered_no_push` | n8n (à brancher) | Tu choisis hours/days dans le trigger |
+| `lapsed_after_session` | n8n **Campagne · Lapsed après séance** | 48 h / 3 j / 7 j / 30 j, push + email, 1×/palier/mois |
 | `signed_up_days_ago` | **Pas n8n.** Cron API `new-user-d1` | Toutes les minutes, **push** D+1 (ne pas recréer dans n8n) |
 | `streak_at_risk` | **Pas n8n.** Cron API `streak-reminder` | Toutes les heures, **push** |
 
@@ -110,11 +110,13 @@ Worker d’envoi (file `pending` → SES) : toutes les **5 secondes**, indépend
 | `inactive_since` | `days?` (défaut **7**) | Email, actif, **aucune** perf (y compris onboarding) sur les N jours calendaires UTC |
 | `signed_up_days_ago` | `days?` (défaut **1**), **`timezone`** | Device token dans ce fuseau, inscrit il y a N jours (date locale) |
 | `streak_at_risk` | **`timezone`** | Série en danger aujourd’hui, pas de perf aujourd’hui |
-| `registered_no_exercise` | **`days` et/ou `hours`** (total ≥ 1 h) | Inscrit depuis au moins ce délai, **pas d’exo réel** |
-| `registered_no_push` | **`days` et/ou `hours`** (total ≥ 1 h) | Inscrit depuis au moins ce délai, **aucun** `device_tokens` (push OS jamais activé) |
-| `lapsed_after_session` | **`days` et/ou `hours`** (total ≥ 1 h) | A une **séance réelle**, plus d’activité app depuis ce délai |
+| `registered_no_exercise` | **`days` et/ou `hours`** (total ≥ 1 h) ; optionnel **`maxDays`/`maxHours`** | Inscrit depuis au moins ce délai, **pas d’exo réel** |
+| `registered_no_push` | **`days` et/ou `hours`** (total ≥ 1 h) ; optionnel **`maxDays`/`maxHours`** | Inscrit depuis au moins ce délai, **aucun** `device_tokens` (push OS jamais activé) |
+| `lapsed_after_session` | **`days` et/ou `hours`** (total ≥ 1 h) ; optionnel **`maxDays`/`maxHours`** | A une **séance réelle**, plus d’activité app depuis ce délai |
 
 `days` + `hours` s’additionnent. Exemples : `{ "hours": 24 }`, `{ "days": 2 }`, `{ "days": 1, "hours": 12 }` → 36 h.
+
+`maxDays`/`maxHours` (optionnel) ferme la fenêtre : min **inclus**, max **exclus**. Sans max, tout le monde au-delà du min est ciblé. Les drips n8n posent toujours un max pour qu’un inscrit depuis 30 j ne reçoive pas le palier 1 h. Ex. palier 1 h : `{ "hours": 1, "maxHours": 24 }`.
 
 ### Exo / séance « réelle » (hors onboarding)
 
@@ -140,11 +142,11 @@ Ce n’est pas OpenPanel. Un user qui ouvre l’app sans refresh ni push peut re
 ```json
 {
   "segmentKey": "registered_no_exercise",
-  "params": { "hours": 24 },
-  "templateKey": "ton_template",
+  "params": { "hours": 24, "maxDays": 3 },
+  "templateKey": "registered_no_exercise_24h",
   "channel": "email",
   "campaignKey": "no-exo-24h",
-  "idempotencyKey": "n8n:no-exo-24h:2026-10-08"
+  "idempotencyKey": "n8n:no-exo:24h:email"
 }
 ```
 
@@ -162,11 +164,11 @@ Ce n’est pas OpenPanel. Un user qui ouvre l’app sans refresh ni push peut re
 ```json
 {
   "segmentKey": "lapsed_after_session",
-  "params": { "days": 3, "hours": 0 },
-  "templateKey": "ton_template",
+  "params": { "days": 3, "maxDays": 7 },
+  "templateKey": "lapsed_after_session_3d",
   "channel": "email",
-  "campaignKey": "lapsed-3d",
-  "idempotencyKey": "n8n:lapsed-3d:2026-10-08"
+  "campaignKey": "lapsed-3j-2026-10",
+  "idempotencyKey": "n8n:lapsed:3j:email:2026-10"
 }
 ```
 
@@ -197,6 +199,22 @@ Placeholders dans le contenu : `{{nomVariable}}` (liste strictement déclarée d
 |---------------|------------|-----------|--------|
 | `winback_inactive_14d` | marketing | email | Winback inactifs 14 j |
 | `cgu_update_emails_notice` | transactional | email | One-shot CGU + info emails One More |
+
+### Templates drip (migration 215)
+
+| `templateKey` | `category` | `channel` | Palier |
+|---------------|------------|-----------|--------|
+| `registered_no_exercise_1h` | marketing | both | Inscrit, pas d’exo réel, 1–24 h |
+| `registered_no_exercise_24h` | marketing | both | 24 h–3 j |
+| `registered_no_exercise_3d` | marketing | both | 3–7 j |
+| `registered_no_exercise_7d` | marketing | both | 7–30 j |
+| `registered_no_exercise_30d` | marketing | both | 30–45 j |
+| `lapsed_after_session_48h` | marketing | both | Séance réelle, inactif 48 h–3 j |
+| `lapsed_after_session_3d` | marketing | both | 3–7 j |
+| `lapsed_after_session_7d` | marketing | both | 7–30 j |
+| `lapsed_after_session_30d` | marketing | both | 30–45 j |
+
+Copy FR tutoiement, CTA `https://one-more.app/#/home`, push route `/home`. `variables: []`.
 
 ### Templates email marketing additionnels
 
@@ -249,5 +267,7 @@ Code source et registre des IDs : [`n8n/outbound/`](../n8n/outbound/README.md) (
 | `Catalogue (manuel)` | Test de connexion + liste des templates utilisables |
 | `Campagne · Mise à jour CGU (email)` | Manuel one-shot, `active_with_email` → `cgu_update_emails_notice` |
 | `Campagne · Winback inactifs 14 j (email)` | Mardi 10:00, `inactive_since` 14 j → `winback_inactive_14d`, max 1/mois/utilisateur |
+| `Campagne · Pas d'exo réel (push + email)` | 1 h / 24 h / 3 j / 7 j / 30 j, `registered_no_exercise` fenêtres exclusives, 2 dispatchs, 1×/palier/vie. Brouillon. |
+| `Campagne · Lapsed après séance (push + email)` | 48 h / 3 j / 7 j / 30 j, `lapsed_after_session` fenêtres exclusives, 2 dispatchs, 1×/palier/mois. Brouillon. |
 
 Nouvelle campagne : partir de `n8n/outbound/campaigns/10-campaign-winback-14d.workflow.ts`, ne jamais appeler l’API en HTTP direct.

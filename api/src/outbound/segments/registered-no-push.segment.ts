@@ -4,7 +4,7 @@ import type { OutboundSegment } from './segment.types.js';
 export const registeredNoPushSegment: OutboundSegment = {
   key: 'registered_no_push',
   async resolveUserIds(_qb, ctx) {
-    const { totalHours } = parseSegmentDelayParams(
+    const { totalHours, maxTotalHours } = parseSegmentDelayParams(
       ctx.params,
       'registered_no_push',
     );
@@ -17,11 +17,12 @@ export const registeredNoPushSegment: OutboundSegment = {
         AND u.email IS NOT NULL
         AND btrim(u.email) <> ''
         AND u."createdAt" <= NOW() - ($1::int * INTERVAL '1 hour')
+        AND ($2::int IS NULL OR u."createdAt" > NOW() - ($2::int * INTERVAL '1 hour'))
         AND NOT EXISTS (
           SELECT 1 FROM device_tokens dt WHERE dt."userId" = u.id
         )
     `,
-      [totalHours],
+      [totalHours, maxTotalHours],
     );
     return rows.map((r) => r.userId);
   },

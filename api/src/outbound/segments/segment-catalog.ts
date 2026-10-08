@@ -88,6 +88,19 @@ export const SEGMENT_CATALOG: SegmentCatalogEntry[] = [
         description:
           'Heures depuis l’inscription. Combiné avec days. Total ≥ 1 h.',
       },
+      {
+        name: 'maxDays',
+        type: 'number',
+        required: false,
+        description:
+          'Plafond optionnel (jours). Âge strictement inférieur. Combiné avec maxHours.',
+      },
+      {
+        name: 'maxHours',
+        type: 'number',
+        required: false,
+        description: 'Plafond optionnel (heures). Fenêtre : min ≤ âge < max.',
+      },
     ],
   },
   {
@@ -109,6 +122,19 @@ export const SEGMENT_CATALOG: SegmentCatalogEntry[] = [
         description:
           'Heures depuis l’inscription. Combiné avec days. Total ≥ 1 h.',
       },
+      {
+        name: 'maxDays',
+        type: 'number',
+        required: false,
+        description:
+          'Plafond optionnel (jours). Âge strictement inférieur. Combiné avec maxHours.',
+      },
+      {
+        name: 'maxHours',
+        type: 'number',
+        required: false,
+        description: 'Plafond optionnel (heures). Fenêtre : min ≤ âge < max.',
+      },
     ],
   },
   {
@@ -129,6 +155,20 @@ export const SEGMENT_CATALOG: SegmentCatalogEntry[] = [
         required: false,
         description:
           'Heures depuis la dernière activité app. Combiné avec days. Total ≥ 1 h.',
+      },
+      {
+        name: 'maxDays',
+        type: 'number',
+        required: false,
+        description:
+          'Plafond optionnel (jours). Inactivité strictement inférieure. Combiné avec maxHours.',
+      },
+      {
+        name: 'maxHours',
+        type: 'number',
+        required: false,
+        description:
+          'Plafond optionnel (heures). Fenêtre : min ≤ inactivité < max.',
       },
     ],
   },

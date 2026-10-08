@@ -28,6 +28,8 @@ Instance : `https://tools-n8nwithpostgres-d94398-34-155-156-83.traefik.me` · pr
 | `subs/04-catalog.workflow.ts` | One More · Outbound · Catalogue (manuel) | `MLNFVu8WU5MPXLwZ` | Manuel, lecture seule | Non |
 | `campaigns/10-campaign-winback-14d.workflow.ts` | One More · Outbound · Campagne · Winback inactifs 14 j (email) | `lv86eX1eUwf8sJAt` | Planifié (mardi 10:00 Paris) | Non |
 | `campaigns/11-campaign-cgu-update.workflow.ts` | One More · Outbound · Campagne · Mise à jour CGU (email) | `EQChL8mE8x0uKOj0` | Manuel, one-shot | Non |
+| `campaigns/12-campaign-registered-no-exercise.workflow.ts` | One More · Outbound · Campagne · Pas d'exo réel (push + email) | `sXZkJAv9OJAOEFar` | Planifié (1h / 24h / 3j / 7j / 30j) | Non |
+| `campaigns/13-campaign-lapsed-after-session.workflow.ts` | One More · Outbound · Campagne · Lapsed après séance (push + email) | `30Ke7oWrXboCczLf` | Planifié (48h / 3j / 7j / 30j) | Non |
 
 Numérotation : `0x` = briques, `1x` = campagnes.
 
@@ -52,6 +54,7 @@ Autre workflow ──► [Sub] Envoi unitaire ──► [Sub] Appel API ──�
 4. Déployer l'API (migrations 2130 `winback_inactive_14d` et 2140 `cgu_update_emails_notice`), relancer le catalogue.
 5. **One-shot CGU** : lancer manuellement **Campagne · Mise à jour CGU** (avant le winback).
 6. Publier **Campagne · Winback inactifs 14 j** seulement après.
+7. Déployer l’API staging (parser `maxDays`/`maxHours` + migration `2150` des templates drip) avant de publier les campagnes 12 et 13. Relancer **Catalogue (manuel)** : les 9 clés `registered_no_exercise_*` et `lapsed_after_session_*` doivent apparaître, `channel: both`, `category: marketing`, `variables: []`.
 
 ## Template : `cgu_update_emails_notice`
 
@@ -76,6 +79,15 @@ Contraintes :
 
 Désactiver sans toucher n8n : `UPDATE message_templates SET "isActive" = false WHERE key = 'winback_inactive_14d';`
 
+## Templates drip (migration 215)
+
+Créés par `api/src/database/migrations/2150000000000-outbound-drip-templates.ts`. Neuf templates `category: marketing`, `channel: both`, `variables: []`.
+
+- Pas d’exo : `registered_no_exercise_{1h,24h,3d,7d,30d}` — fenêtres 1–24 h / 24 h–3 j / 3–7 j / 7–30 j / 30–45 j.
+- Lapsed : `lapsed_after_session_{48h,3d,7d,30d}` — fenêtres 48 h–3 j / 3–7 j / 7–30 j / 30–45 j.
+
+Chaque palier lance **deux** dispatchs (`channel: email` puis `push`) parce que l’API n’envoie qu’un canal par dispatch et que le dédup ignore le canal.
+
 ## Clés d'idempotence
 
 Format : `n8n:<campagne>:<période>`. La période fixe la fréquence max par utilisateur.
@@ -84,5 +96,7 @@ Format : `n8n:<campagne>:<période>`. La période fixe la fréquence max par uti
 |----------|-----|-------|
 | CGU + emails One More | `n8n:cgu-update:2026-10` | 1 email max, définitif |
 | Winback 14 j | `n8n:winback-14d:yyyy-MM` | 1 email max par utilisateur et par mois |
+| Pas d’exo réel | `n8n:no-exo:<palier>:email` et `:push` | 1 email + 1 push max **à vie** par palier |
+| Lapsed après séance | `n8n:lapsed:<palier>:email:yyyy-MM` et `:push:yyyy-MM` | 1 email + 1 push max **par mois** par palier |
 
 Côté API, la déduplication réelle est `idempotencyKey:userId` (table `outbound_messages`).

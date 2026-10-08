@@ -46,9 +46,10 @@ export type SegmentDelay = {
   days: number;
   hours: number;
   totalHours: number;
+  maxTotalHours: number | null;
 };
 
-/** `days` et/ou `hours` depuis n8n. Total ≥ 1 heure. */
+/** Min `days`/`hours` obligatoire. `maxDays`/`maxHours` optionnel (fenêtre exclusive). */
 export function parseSegmentDelayParams(
   params: Record<string, unknown>,
   label: string,
@@ -59,5 +60,18 @@ export function parseSegmentDelayParams(
   if (totalHours < 1) {
     throw new Error(`${label}: fournir days et/ou hours (≥ 1 h au total)`);
   }
-  return { days, hours, totalHours };
+  const maxDays = parseNonNegInt(params.maxDays, 0, label, 'maxDays');
+  const maxHours = parseNonNegInt(params.maxHours, 0, label, 'maxHours');
+  const maxTotalHours = maxDays * 24 + maxHours;
+  if (maxTotalHours > 0 && maxTotalHours <= totalHours) {
+    throw new Error(
+      `${label}: maxDays/maxHours doit être strictement plus grand que days/hours`,
+    );
+  }
+  return {
+    days,
+    hours,
+    totalHours,
+    maxTotalHours: maxTotalHours > 0 ? maxTotalHours : null,
+  };
 }
