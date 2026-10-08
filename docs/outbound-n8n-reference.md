@@ -110,7 +110,7 @@ Worker d’envoi (file `pending` → SES) : toutes les **5 secondes**, indépend
 | `inactive_since` | `days?` (défaut **7**) | Email, actif, **aucune** perf (y compris onboarding) sur les N jours calendaires UTC |
 | `signed_up_days_ago` | `days?` (défaut **1**), **`timezone`** | Device token dans ce fuseau, inscrit il y a N jours (date locale) |
 | `streak_at_risk` | **`timezone`** | Série en danger aujourd’hui, pas de perf aujourd’hui |
-| `registered_no_exercise` | **`days` et/ou `hours`** (total ≥ 1 h) ; optionnel **`maxDays`/`maxHours`** | Inscrit depuis au moins ce délai, **pas d’exo réel** |
+| `registered_no_exercise` | **`days` et/ou `hours`** (total ≥ 1 h) ; optionnel **`maxDays`/`maxHours`** ; optionnel **`activationHook`** | Inscrit depuis au moins ce délai, **pas d’exo réel** ; filtre levier d’activation (voir ci-dessous) |
 | `registered_no_push` | **`days` et/ou `hours`** (total ≥ 1 h) ; optionnel **`maxDays`/`maxHours`** | Inscrit depuis au moins ce délai, **aucun** `device_tokens` (push OS jamais activé) |
 | `lapsed_after_session` | **`days` et/ou `hours`** (total ≥ 1 h) ; optionnel **`maxDays`/`maxHours`** | A une **séance réelle**, plus d’activité app depuis ce délai |
 
@@ -126,6 +126,32 @@ Pas de colonne `source` sur les perfs. Heuristique :
 - séance réelle = **2+** exercices **ou** **2+** perfs.
 
 Un user qui a skip l’onboarding et n’a loggé **qu’un** set ressemble à de l’onboarding : il reste dans `registered_no_exercise`.
+
+### `activationHook` (`registered_no_exercise`)
+
+Param optionnel string pour cibler les users **sans séance réelle** qui ont (ou non) configuré un rappel ou l’arrivée salle. Utile pour des mails du type « pourquoi tu seras prévenu à l’arrivée en salle ».
+
+| Valeur | Signification SQL |
+|--------|-------------------|
+| `training_reminder` | `notification_preferences.streakReminders` + au moins un jour dans `reminderSlots` (ou legacy `reminderWeekdays`) — même logique que le cron rappel séance, sans filtrer l’heure du jour |
+| `gym_arrival` | Ligne `user_gyms` avec `placeId`, `geofenceEnabled = true`, **et** au moins un `device_tokens` (push enregistré) |
+| `any` | L’un **ou** l’autre |
+| `both` | Les **deux** |
+| `none` | **Ni** rappel configuré **ni** trio salle+géofence+push |
+| `not_training_reminder` | **Pas** de rappel séance configuré (peut avoir la salle) |
+
+Omettre `activationHook` = pas de filtre (comportement historique).
+
+Ex. dispatch n8n :
+
+```json
+{
+  "segmentKey": "registered_no_exercise",
+  "segmentParams": { "hours": 24, "maxHours": 72, "activationHook": "gym_arrival" },
+  "templateKey": "…",
+  "channel": "email"
+}
+```
 
 ### « Pas revenu sur l’app »
 
@@ -322,7 +348,8 @@ Code source et registre des IDs : [`n8n/outbound/`](../n8n/outbound/README.md) (
 | `Catalogue (manuel)` | Test de connexion + liste des templates utilisables |
 | `Campagne · Mise à jour CGU (email)` | Manuel one-shot, `active_with_email` → `cgu_update_emails_notice` |
 | `Campagne · Winback inactifs 14 j (email)` | Mardi 10:00, `inactive_since` 14 j → `winback_inactive_14d`, max 1/mois/utilisateur |
-| `Campagne · Pas d'exo réel (push + email)` | 1 h / 24 h / 3 j / 7 j / 30 j, `registered_no_exercise` fenêtres exclusives, 2 dispatchs, 1×/palier/vie. Brouillon. |
+| `Campagne · Pas d'exo réel (push + email)` | 1 h / 24 h / 3 j / 7 j / 30 j, `activationHook: not_training_reminder`, 2 dispatchs, 1×/palier/vie. Brouillon. |
+| `Campagne · Pas d'exo · rappel activé` | 2 h / 24 h / 7 j / 30 j, `activationHook: training_reminder`, templates `registered_no_exercise_reminder_*`, migration 2161. Brouillon. |
 | `Campagne · Lapsed après séance (push + email)` | 48 h / 3 j / 7 j / 30 j, `lapsed_after_session` fenêtres exclusives, 2 dispatchs, 1×/palier/mois. Brouillon. |
 
 Nouvelle campagne : partir de `n8n/outbound/campaigns/10-campaign-winback-14d.workflow.ts`, ne jamais appeler l’API en HTTP direct.

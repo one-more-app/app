@@ -1,4 +1,8 @@
 import { parseSegmentDelayParams } from './parse-segment-params.js';
+import {
+  parseActivationHookFilter,
+  sqlActivationHookPredicate,
+} from './segment-activation-hook.js';
 import { SQL_HAS_REAL_SESSION } from './segment-sql.js';
 import type { OutboundSegment } from './segment.types.js';
 
@@ -9,6 +13,13 @@ export const registeredNoExerciseSegment: OutboundSegment = {
       ctx.params,
       'registered_no_exercise',
     );
+    const activationHook = parseActivationHookFilter(
+      ctx.params,
+      'registered_no_exercise',
+    );
+    const hookSql = activationHook
+      ? `AND ${sqlActivationHookPredicate(activationHook)}`
+      : '';
 
     const rows = await _qb.connection.query<Array<{ userId: string }>>(
       `
@@ -20,6 +31,7 @@ export const registeredNoExerciseSegment: OutboundSegment = {
         AND u."createdAt" <= NOW() - ($1::int * INTERVAL '1 hour')
         AND ($2::int IS NULL OR u."createdAt" > NOW() - ($2::int * INTERVAL '1 hour'))
         AND NOT ${SQL_HAS_REAL_SESSION}
+        ${hookSql}
     `,
       [totalHours, maxTotalHours],
     );

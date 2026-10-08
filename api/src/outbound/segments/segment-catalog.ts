@@ -101,6 +101,13 @@ export const SEGMENT_CATALOG: SegmentCatalogEntry[] = [
         required: false,
         description: 'Plafond optionnel (heures). Fenêtre : min ≤ âge < max.',
       },
+      {
+        name: 'activationHook',
+        type: 'string',
+        required: false,
+        description:
+          'Filtre levier d’activation : training_reminder, not_training_reminder (pas de rappel configuré), gym_arrival, any, both, none. Omis = pas de filtre.',
+      },
     ],
   },
   {
