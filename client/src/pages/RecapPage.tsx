@@ -3,7 +3,10 @@ import {
   RecapRecordCard,
   type RecapRecord,
 } from "@/components/session/recap/RecapRecordCard";
+import { RecapShareDrawer } from "@/components/session/recap/RecapShareDrawer";
+import { RecapShareSection } from "@/components/session/recap/RecapShareSection";
 import { RecapVolumeCard } from "@/components/session/recap/RecapVolumeCard";
+import type { SessionRecapShareVariant } from "@/components/share/SessionRecapShareCard";
 import { HistoryPageSkeleton } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
 import { usePerformanceEntriesData } from "@/hooks/use-api-data";
@@ -18,11 +21,11 @@ import {
   formatHomeDayTitle,
 } from "@/lib/home-day";
 import { fetchSession, sessionSwrKey, type WorkoutSession } from "@/lib/session-api";
+import { buildSessionRecapSharePayload } from "@/lib/session-recap-share-data";
 import { UI } from "@/lib/translations";
 import { Share2 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Navigate, useParams } from "react-router-dom";
-import { toast } from "sonner";
 import useSWR from "swr";
 
 const MAX_BARS = 6;
@@ -66,8 +69,8 @@ function buildRecords(session: WorkoutSession): RecapRecord[] {
 }
 
 /**
- * Récap de séance (captures 40 et 41). Le partage en story arrive au lot 5 :
- * les boutons de partage sont des emplacements qui affichent "Bientôt".
+ * Récap de séance (captures 40 et 41). Le partage en story (capture 42) s'ouvre
+ * depuis le bouton d'en-tête, les miniatures et le CTA du bas.
  */
 export default function RecapPage() {
   const { ownerUserId, date } = useParams<{
@@ -115,13 +118,43 @@ export default function RecapPage() {
 
   const records = useMemo(() => (session ? buildRecords(session) : []), [session]);
 
+  const [shareVariant, setShareVariant] =
+    useState<SessionRecapShareVariant>("stats");
+  const [shareOpen, setShareOpen] = useState(false);
+
+  const dateLabel = date ? formatHomeDayTitle(date) : "";
+  const sharePayload = useMemo(
+    () =>
+      session
+        ? buildSessionRecapSharePayload(session, {
+            dateLabel: date
+              ? new Date(`${date}T12:00:00`)
+                  .toLocaleDateString("fr-FR", {
+                    day: "numeric",
+                    month: "short",
+                  })
+                  .replace(/\.$/, "")
+              : "",
+            volume: totalVolume,
+            durationLabel: timing
+              ? formatCompactDuration(timing.durationMs)
+              : "–",
+          })
+        : null,
+    [session, date, totalVolume, timing],
+  );
+
+  const openShare = (variant: SessionRecapShareVariant) => {
+    setShareVariant(variant);
+    setShareOpen(true);
+  };
+
   if (!ownerUserId || !date) return <Navigate to="/home" replace />;
   // Le récap est personnel : un ami retombe sur la séance partagée.
   if (auth.status === "authenticated" && currentUserId !== ownerUserId) {
     return <Navigate to={`/session/${ownerUserId}/${date}`} replace />;
   }
 
-  const dateLabel = formatHomeDayTitle(date);
   const subtitle = timing
     ? timing.endedAt
       ? UI.recapDateRange
@@ -133,11 +166,6 @@ export default function RecapPage() {
           .replace("{start}", formatClock(timing.startedAt))
     : dateLabel;
 
-  const handleShare = () => {
-    // Lot 5 : ouverture du tiroir de partage en story.
-    toast(UI.recapShareSoon);
-  };
-
   return (
     <div className="min-h-screen-app bg-background pb-8">
       <BackHeader
@@ -147,7 +175,8 @@ export default function RecapPage() {
           <Button
             variant="secondary"
             size="icon"
-            onClick={handleShare}
+            onClick={() => openShare("stats")}
+            disabled={!sharePayload}
             aria-label={UI.recapShareAria}
             data-analytics-label="recap_share_header"
           >
@@ -177,6 +206,10 @@ export default function RecapPage() {
               ]}
             />
 
+            {sharePayload ? (
+              <RecapShareSection payload={sharePayload} onOpen={openShare} />
+            ) : null}
+
             {records.length > 0 ? (
               <section className="space-y-3">
                 <h2 className="font-one-more text-sm font-bold uppercase italic">
@@ -199,7 +232,7 @@ export default function RecapPage() {
               type="button"
               variant="accent"
               className="h-12 w-full font-bold uppercase italic"
-              onClick={handleShare}
+              onClick={() => openShare("stats")}
               data-analytics-label="recap_share_cta"
             >
               <Share2 className="size-4" aria-hidden />
@@ -208,6 +241,15 @@ export default function RecapPage() {
           </>
         )}
       </main>
+
+      {sharePayload ? (
+        <RecapShareDrawer
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          payload={sharePayload}
+          initialVariant={shareVariant}
+        />
+      ) : null}
     </div>
   );
 }
