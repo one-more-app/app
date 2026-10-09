@@ -1,5 +1,10 @@
 import { Capacitor } from "@capacitor/core";
 import { syncPremiumStatus } from "@/lib/billing-api";
+import {
+  getMockCurrentOffering,
+  isPaywallWebMockEnabled,
+  mockPurchasePackage,
+} from "@/lib/paywall-web-mock";
 import { resolveProfileName } from "@/lib/profile-display";
 import { TSHIRT_REWARD_SWR_KEY } from "@/lib/rewards-api";
 import { ACCESS_SWR_KEY } from "@/lib/social-api";
@@ -144,6 +149,7 @@ async function getPurchases(): Promise<PurchasesModule | null> {
 }
 
 export function isPurchasesAvailable(): boolean {
+  if (isPaywallWebMockEnabled()) return true;
   return Capacitor.isNativePlatform() && getRevenueCatApiKey() != null;
 }
 
@@ -180,6 +186,7 @@ async function refreshBillingCaches(): Promise<void> {
 }
 
 export async function restorePurchases(): Promise<void> {
+  if (isPaywallWebMockEnabled()) return;
   const purchases = await getPurchases();
   if (!purchases) return;
   await purchases.Purchases.restorePurchases();
@@ -188,6 +195,10 @@ export async function restorePurchases(): Promise<void> {
 }
 
 export async function getCurrentOffering(): Promise<CurrentOffering | null> {
+  if (isPaywallWebMockEnabled()) {
+    return getMockCurrentOffering();
+  }
+
   const purchases = await getPurchases();
   if (!purchases) return null;
 
@@ -205,6 +216,10 @@ export async function getCurrentOffering(): Promise<CurrentOffering | null> {
 export async function purchasePackage(
   aPackage: PurchasesPackage,
 ): Promise<PurchaseOutcome> {
+  if (isPaywallWebMockEnabled()) {
+    return mockPurchasePackage();
+  }
+
   const purchases = await getPurchases();
   if (!purchases) return "error";
 
@@ -235,6 +250,7 @@ export async function syncPurchasesAfterLogin(
   subscriber?: RevenueCatSubscriberInfo,
 ): Promise<void> {
   if (!isPurchasesAvailable()) return;
+  if (isPaywallWebMockEnabled()) return;
   await configurePurchases(userId);
   const purchases = await getPurchases();
   if (!purchases) return;

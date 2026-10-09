@@ -7,9 +7,8 @@ import { logAppsFlyerCommerce } from "@/lib/appsflyer-events";
 import { UI } from "@/lib/translations";
 import { getFreeTrialLabel } from "@/lib/paywall-free-trial";
 import {
+    annualSavingsPercent,
     describeAnnualDisplay,
-    formatGiftAmount,
-    readAnnualGiftsValue,
 } from "@/lib/paywall-pricing";
 import {
     getCurrentOffering,
@@ -32,21 +31,6 @@ const SUPPORT_URL = "mailto:admin@one-more.app";
 const CGV_URL = "https://site.one-more.app/cgv";
 const CGU_URL = "https://site.one-more.app/cgu";
 
-function pickBoolean(
-    metadata: Record<string, unknown> | null | undefined,
-    key: string,
-    fallback: boolean,
-): boolean {
-    if (!metadata) return fallback;
-    const value = metadata[key];
-    if (typeof value === "boolean") return value;
-    if (typeof value === "string") {
-        if (/^(true|1|yes)$/i.test(value)) return true;
-        if (/^(false|0|no)$/i.test(value)) return false;
-    }
-    return fallback;
-}
-
 // Sépare le préfixe/suffixe de devise du nombre pour appliquer uniformément
 // la police One More sur toute la chaîne (les glyphes manquants dans le woff2
 // tombent naturellement sur la fallback italic bold sans casser le rendu).
@@ -67,21 +51,13 @@ function parsePrice(priceString: string): {
 function Price({
     value,
     className,
-    strike = false,
 }: {
     value: string;
     className?: string;
-    strike?: boolean;
 }) {
     const { prefix, number, suffix } = parsePrice(value);
     return (
-        <span
-            className={cn(
-                "font-one-more italic",
-                strike && "line-through",
-                className,
-            )}
-        >
+        <span className={cn("font-one-more italic", className)}>
             {prefix ? <span>{prefix}</span> : null}
             <span>{number}</span>
             {suffix ? <span>{suffix}</span> : null}
@@ -147,17 +123,6 @@ export function CustomPaywallDrawer() {
             setSelected("annual");
         };
     }, [open, source, track]);
-
-    const metadata = (offering?.offering.metadata ?? null) as
-        | Record<string, unknown>
-        | null;
-
-    const showTshirtsSection = pickBoolean(
-        metadata,
-        "showTshirtsSection",
-        true,
-    );
-    const giftsValue = showTshirtsSection ? readAnnualGiftsValue(metadata) : 0;
 
     const packages = useMemo(
         () => ({
@@ -262,8 +227,6 @@ export function CustomPaywallDrawer() {
                             monthly={packages.monthly}
                             selected={selected}
                             onSelect={handleSelect}
-                            showTshirtsSection={showTshirtsSection}
-                            giftsValue={giftsValue}
                             isAnnualSelected={isAnnualSelected}
                             onPurchase={handlePurchase}
                             purchasing={purchasing}
@@ -305,8 +268,6 @@ type PaywallBodyProps = {
     monthly: PurchasesPackage | null;
     selected: SelectedKey;
     onSelect: (key: SelectedKey) => void;
-    showTshirtsSection: boolean;
-    giftsValue: number;
     isAnnualSelected: boolean;
     onPurchase: () => void;
     purchasing: boolean;
@@ -318,8 +279,6 @@ function PaywallBody({
     monthly,
     selected,
     onSelect,
-    showTshirtsSection,
-    giftsValue,
     isAnnualSelected,
     onPurchase,
     purchasing,
@@ -329,12 +288,19 @@ function PaywallBody({
     const monthlyTrialLabel = getFreeTrialLabel(monthly?.product);
     const selectedTrialLabel = getFreeTrialLabel(selectedPackage?.product);
     const annualDisplay = annual
-        ? describeAnnualDisplay(annual.product, giftsValue)
+        ? describeAnnualDisplay(annual.product)
         : null;
-    const giftLabel = formatGiftAmount(
-        giftsValue,
-        annual?.product.currencyCode ?? "EUR",
-    );
+    const savingsPercent =
+        annual && monthly
+            ? annualSavingsPercent(annual.product.price, monthly.product.price)
+            : null;
+    const annualSaveBadge =
+        savingsPercent != null
+            ? UI.paywallAnnualSaveBadge.replace(
+                  "{percent}",
+                  String(savingsPercent),
+              )
+            : undefined;
 
     return (
         <div className="flex flex-col">
@@ -367,26 +333,14 @@ function PaywallBody({
                     </ul>
                 </section>
 
-                {showTshirtsSection ? (
-                    <ConditionalTshirtsSection
-                        open={isAnnualSelected}
-                        giftLabel={giftLabel}
-                    />
-                ) : null}
-
                 <section className="relative flex flex-col gap-2.5">
                     {annual && annualDisplay ? (
                         <PackageCard
                             label={UI.paywallAnnualLabel}
                             perMonth={<PerMonthPrice price={annualDisplay.perMonth} />}
-                            oldPrice={annualDisplay.oldPrice}
                             price={annualDisplay.price}
                             trailingLabel={UI.paywallFirstYear}
-                            badge={
-                                giftsValue > 0
-                                    ? UI.paywallGiftBadge.replace("{value}", giftLabel)
-                                    : undefined
-                            }
+                            badge={annualSaveBadge}
                             trialLabel={annualTrialLabel}
                             selected={selected === "annual"}
                             onSelect={() => onSelect("annual")}
@@ -490,54 +444,10 @@ function PaywallCheckLine({ label }: { label: string }) {
     );
 }
 
-function ConditionalTshirtsSection({
-    open,
-    giftLabel,
-}: {
-    open: boolean;
-    giftLabel: string;
-}) {
-    return (
-        <div
-            className={cn(
-                "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
-                open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
-            )}
-            aria-hidden={!open}
-        >
-            <div className="min-h-0 overflow-hidden">
-                <section className="flex items-start gap-3">
-                    <div className="flex flex-1 flex-col gap-2">
-                        <p className="text-sm font-semibold text-white">
-                            {UI.paywallAnnualSpecialTitle}
-                        </p>
-                        <div className="flex items-start gap-2 text-sm text-white/90">
-                            <Check className="mt-0.5 size-4 shrink-0" />
-                            <span>
-                                {UI.paywallAnnualTshirts.replace("{value}", giftLabel)}
-                            </span>
-                        </div>
-                        <p className="pl-6 text-xs leading-snug text-white/50">
-                            {UI.paywallAnnualTshirtsFineprint}
-                        </p>
-                    </div>
-                    <img
-                        src="/images/abonnement mensual t shirts.png"
-                        alt=""
-                        className="w-24 shrink-0 self-center select-none object-contain sm:w-28"
-                        draggable={false}
-                    />
-                </section>
-            </div>
-        </div>
-    );
-}
-
 type PackageCardProps = {
     label: string;
     perMonth: ReactNode;
     price: string;
-    oldPrice?: string;
     trailingLabel: string;
     badge?: string;
     trialLabel?: string | null;
@@ -549,7 +459,6 @@ function PackageCard({
     label,
     perMonth,
     price,
-    oldPrice,
     trailingLabel,
     badge,
     trialLabel,
@@ -564,7 +473,7 @@ function PackageCard({
             className={cn(
                 "relative flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-3 text-left text-black transition",
                 selected
-                    ? "shadow-[0_0_0_3px_#0a0a0a,0_12px_28px_-10px_color-mix(in_oklab,var(--accent)_55%,transparent)]"
+                    ? "shadow-[0_0_0_3px_#0a0a0a]"
                     : "shadow-[0_0_0_1px_rgba(0,0,0,0.06)]",
                 "active:scale-[0.99]",
             )}
@@ -588,19 +497,10 @@ function PackageCard({
                     ) : null}
                 </div>
                 <div className="flex flex-col items-end">
-                    <div className="flex items-baseline gap-1.5">
-                        {oldPrice ? (
-                            <Price
-                                value={oldPrice}
-                                strike
-                                className="text-sm text-black/40"
-                            />
-                        ) : null}
-                        <Price
-                            value={price}
-                            className="text-base font-semibold"
-                        />
-                    </div>
+                    <Price
+                        value={price}
+                        className="text-base font-semibold"
+                    />
                     <span className="text-xs text-black/60">{trailingLabel}</span>
                 </div>
             </div>

@@ -1,5 +1,5 @@
 ---
-description: Paywall custom One More — architecture, source de données RC, A/B testing via offering.metadata, points d'entrée
+description: Paywall custom One More — architecture, source de données RC, points d'entrée
 globs: client/src/**/*.{ts,tsx}
 alwaysApply: false
 ---
@@ -18,7 +18,7 @@ Le paywall d'abonnement est **100% custom React** (rendu dans la WebView Capacit
 | Wrapper qui déclenche le paywall | [`client/src/hooks/use-purchases.tsx`](../../client/src/hooks/use-purchases.tsx) (`subscribe(source)`) |
 | Copy | [`client/src/lib/translations.ts`](../../client/src/lib/translations.ts) (préfixe `paywall*`) |
 | Montage global | [`client/src/App.tsx`](../../client/src/App.tsx) via `<PaywallProvider>` + `<CustomPaywallDrawer />` |
-| Assets | `client/public/images/marcus.png` (hero), `client/public/images/abonnement mensual t shirts.png` (T-shirts) |
+| Assets | `client/public/images/marcus.png` (hero) |
 
 ## Ouvrir le paywall
 
@@ -34,29 +34,17 @@ if (success) {
 
 Ne PAS appeler `Purchases.purchasePackage` en dehors de [`purchases.ts`](../../client/src/lib/purchases.ts). Toujours passer par le drawer pour garder la même UX, les mêmes toasts et le même tracking.
 
-## Comportement conditionnel
+## Offre annuelle
 
-Il n'y a qu'une seule règle conditionnelle côté UI : la section **« Offre spéciale pour l'annuel »** (2 T-shirts) est affichée UNIQUEMENT quand le package Annuel est sélectionné (`selected === "annual"` → `PACKAGE_TYPE.ANNUAL`). L'animation d'apparition utilise un wrapper `grid` (`grid-rows-[0fr]` → `grid-rows-[1fr]`) pour un transition CSS pur, aucune dépendance framer-motion.
+Sur le **paywall récent**, l'annuel est **l'abonnement seul** : pas de t-shirts, pas de déduction cadeaux, pas de metadata RC (`showTshirtsSection` / `annualGiftsValue` n'existent plus côté app). Le prix affiché est le prix store brut + équivalent mensuel.
 
-Le reste du layout est stable : cliquer sur une card change les états visuels (radio, bordure jaune, prix "Facturé...") mais ne réordonne pas la structure.
+Le layout reste stable : cliquer sur une card change les états visuels (radio, bordure, prix "Facturé...") sans réordonner la structure.
 
-## A/B testing via `offering.metadata`
-
-L'offering RC expose `offering.metadata: Record<string, unknown>`. On lit ces clés (fallback typé si la clé est absente) :
-
-| Clé metadata | Type | Défaut | Effet |
-|---|---|---|---|
-| `annualGiftsValue` | `number` (ou string numérique) | `30` | Valeur des cadeaux soustraite du prix annuel store. Le prix affiché et le « 1 mois » sont calculés sur ce net, au centime. Le prix barré reste le `priceString` store. |
-| `showTshirtsSection` | `boolean` (ou `"true"`/`"false"`) | `true` | Affiche ou cache la section T-shirts. Si `false`, aucune déduction cadeaux. |
+**Compat builds anciennes** : le backend **continue** de grant `annual_classic_pack` sur achat / sync annuel (webhook RC). Les vieilles apps qui montrent encore les t-shirts peuvent claim sans erreur. Le flow claim adresse + gate `App.tsx` restent actifs pour tout pending (referral legacy + pack annuel). Ne pas retirer le grant tant que ces builds sont en circulation.
 
 Le libellé d'essai (`N jours offerts`, etc.) vient uniquement du produit store (`introPrice` à 0, ou `freePhase` Android). Rien n'est affiché si l'offre n'a pas cette info. Le mensuel ne montre ce libellé que dans ce cas.
 
-Pour créer une variante A/B :
-1. Dans le dashboard RC → Experiments, dupliquer l'offering courant.
-2. Modifier `metadata` sur la variante (par ex. `showTshirtsSection: false`).
-3. Créer l'expérience et l'activer. RC route l'user vers l'offering variant, `getCurrentOffering()` renvoie l'offering assigné, et `PAYWALL_VIEWED` remonte `offering: <identifier>` pour segmenter dans OpenPanel.
-
-Ne PAS coder de logique de variant en dur dans le composant : tout doit passer par `metadata` avec un fallback typé.
+`PAYWALL_VIEWED` remonte `offering: <identifier>` pour segmenter dans OpenPanel si plusieurs offerings RC existent.
 
 ## Ajouter / modifier un package
 
@@ -93,6 +81,21 @@ Ne PAS réinstaller `@revenuecat/purchases-capacitor-ui` : le rendu Compose de `
 
 Toute chaîne visible côté user respecte [`copywriting-french.mdc`](./copywriting-french.mdc) : aucun `--` ni `—`, séparateurs `.` / `,` / `:` / `·` uniquement. Les strings vivent dans `UI.paywall*` de [`translations.ts`](../../client/src/lib/translations.ts).
 
+## Mock web local (DEV)
+
+En `npm run dev` (Vite DEV, hors Capacitor), un mock active le paywall sans RevenueCat :
+
+| Fichier | Rôle |
+|---|---|
+| [`client/src/lib/paywall-web-mock.ts`](../../client/src/lib/paywall-web-mock.ts) | Offres fictives annuel / mensuel + achat simulé |
+| [`client/src/lib/purchases.ts`](../../client/src/lib/purchases.ts) | Branche mock dans `isPurchasesAvailable` / `getCurrentOffering` / `purchasePackage` |
+
+- ON par défaut en DEV web. OFF : `VITE_PAYWALL_WEB_MOCK=false` dans `client/.env`.
+- Jamais en build prod / preview Playwright (`import.meta.env.DEV === false`).
+- L'achat mock ne passe pas par RC ni le webhook : toast succès + fermeture drawer, pas de vrai premium.
+
+Ouvrir via Paramètres → abonnement, ou tout `subscribe("…")` quand `available` est true.
+
 ## E2E
 
-Le paywall n'est pas activé côté web (`isPurchasesAvailable()` renvoie `false` hors Capacitor natif). Les E2E Playwright existants ne le rencontrent donc pas. Si un smoke paywall devient nécessaire, injecter un stub `getCurrentOffering` via `page.addInitScript` avant l'appel `subscribe`, plutôt que de mocker `Purchases.getOfferings` (dynamic import). Cf. [`e2e-tests.mdc`](./e2e-tests.mdc).
+Le paywall n'est pas activé en preview Playwright (build prod). Les smoke existants ne le rencontrent donc pas. Si un smoke paywall devient nécessaire, injecter un stub `getCurrentOffering` via `page.addInitScript` avant l'appel `subscribe`, plutôt que de mocker `Purchases.getOfferings` (dynamic import). Cf. [`e2e-tests.mdc`](./e2e-tests.mdc).

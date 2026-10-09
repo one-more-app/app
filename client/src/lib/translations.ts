@@ -522,12 +522,8 @@ export const UI = {
   paywallIncludedTitle: "Inclus dans l'abonnement",
   paywallIncludedNoLimit: "Aucune limite d'exercice pour tes entraînements",
   paywallIncludedFuture: "Toutes les fonctionnalités futures",
-  paywallAnnualSpecialTitle: "Offre spéciale pour l'annuel",
-  paywallAnnualTshirts: "2 T-shirts One More offerts (valeur totale {value})",
-  paywallAnnualTshirtsFineprint:
-    "Livraison sous 1 à 2 semaines selon les stocks disponibles. Consulte les CGV.",
-  paywallGiftBadge: "{value} de cadeaux",
   paywallAnnualLabel: "Annuel",
+  paywallAnnualSaveBadge: "Économise -{percent}%",
   paywallMonthlyLabel: "Mensuel",
   paywallPricePerMonth: "1 mois {price}",
   paywallFirstYear: "Première année",

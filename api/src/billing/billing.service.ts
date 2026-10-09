@@ -47,6 +47,11 @@ export class BillingService {
     private readonly rewardsService: RewardsService,
   ) {}
 
+  /**
+   * Conservé pour les builds app qui montrent encore les t-shirts sur l'annuel :
+   * le webhook / sync doit créer le claim sinon le claim adresse échoue.
+   * Le paywall récent n'affiche plus les t-shirts, mais le grant reste.
+   */
   private isAnnualProduct(productId: string): boolean {
     return /(annual|year|yearly)/i.test(productId);
   }

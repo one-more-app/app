@@ -78,7 +78,7 @@ describe('BillingService', () => {
     ).not.toHaveBeenCalled();
   });
 
-  it('grants annual reward on annual purchase', async () => {
+  it('grants annual reward on annual purchase for legacy app paywalls', async () => {
     usersRepo.findOne.mockResolvedValue({ id: 'user-1' });
     await service.handleRevenueCatWebhook({
       event: {
@@ -183,7 +183,7 @@ describe('BillingService', () => {
       Promise.resolve({
         ok: true,
         status: 200,
-        text: async () => '',
+        text: () => Promise.resolve(''),
       }),
     );
     global.fetch = fetchMock as unknown as typeof fetch;
@@ -209,7 +209,7 @@ describe('BillingService', () => {
       Promise.resolve({
         ok: false,
         status: 500,
-        text: async () => 'boom',
+        text: () => Promise.resolve('boom'),
       }),
     ) as unknown as typeof fetch;
 
