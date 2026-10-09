@@ -1,12 +1,8 @@
 import { AddPerfDrawer } from "@/components/AddPerfDrawer";
-import { ExerciseImage } from "@/components/ExerciseImage";
-import { ExerciseTitle } from "@/components/ExerciseTitle";
 import { HomeDayTitle } from "@/components/home/HomeDayTitle";
-import { RankBadge } from "@/components/RankBadge";
-import { ReactionBubbles } from "@/components/session/ReactionBubbles";
+import { HomeExerciseList } from "@/components/home/HomeExerciseList";
 import { SessionCommentsThread } from "@/components/session/SessionCommentsThread";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { usePerformanceDataRefresh } from "@/hooks/use-api-data";
 import { useHomeData } from "@/hooks/use-home-data";
@@ -19,7 +15,6 @@ import { hapticImpact } from "@/lib/haptics";
 import {
   chronologicalPerfOrder,
   entryInsightsFromPerformances,
-  formatPerfLabel,
   resolveTrackedExercise,
 } from "@/lib/history-entries";
 import { notifyPerfMilestones } from "@/lib/perf-notifications";
@@ -34,10 +29,9 @@ import {
   updatePerformanceAndWait,
 } from "@/lib/storage";
 import { UI } from "@/lib/translations";
-import { cn } from "@/lib/utils";
 import { notifyXpGrants } from "@/lib/xp-notifications";
 import type { PerformanceEntry, TrackedExercise } from "@/types";
-import { Pencil, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -117,7 +111,6 @@ export function HomeLiveSession({
     endedAt: session?.endedAt,
   });
 
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [addFor, setAddFor] = useState<string | null>(null);
   const [editEntry, setEditEntry] = useState<PerformanceEntry | null>(null);
 
@@ -187,16 +180,6 @@ export function HomeLiveSession({
     [ownerUserId, dayKey, mutate],
   );
 
-  const toggleExpanded = (trackedExerciseId: string) => {
-    void hapticImpact();
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(trackedExerciseId)) next.delete(trackedExerciseId);
-      else next.add(trackedExerciseId);
-      return next;
-    });
-  };
-
   const addExercise = addFor ? resolveExercise(addFor) : undefined;
   const editExercise = editEntry
     ? resolveExercise(editEntry.trackedExerciseId)
@@ -232,133 +215,43 @@ export function HomeLiveSession({
           {UI.homeSessionInProgress}
         </HomeDayTitle>
 
-        <Card className="gap-0 py-0">
-          <ul className="divide-y divide-border">
-            {groups.map(({ trackedExerciseId, items }) => {
-              const exercise = resolveExercise(trackedExerciseId);
-              const name = exercise?.name ?? UI.exerciseNotFound;
-              const league = resolveLeague(trackedExerciseId);
-              const isOpen = expanded.has(trackedExerciseId);
-              const panelId = `home-live-sets-${trackedExerciseId}`;
-              const seriesLabel =
-                items.length === 1
-                  ? UI.homeLiveSeriesOne
-                  : UI.historySeriesCount.replace(
-                      "{count}",
-                      String(items.length),
-                    );
-
-              return (
-                <li key={trackedExerciseId} className="p-3">
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void hapticImpact();
-                        navigate(`/exercise/${trackedExerciseId}`);
-                      }}
-                      aria-label={UI.homeLiveOpenExerciseAria.replace(
-                        "{name}",
-                        name,
-                      )}
-                      className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted"
-                    >
-                      <ExerciseImage
-                        gifUrl={exercise?.gifUrl}
-                        isCustom={exercise?.isCustom}
-                        bodyPart={exercise?.bodyPart}
-                        target={exercise?.target}
-                        className="size-full"
-                        imgClassName="size-full object-cover"
-                        fallbackIconClassName="size-7 text-muted-foreground"
-                      />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => toggleExpanded(trackedExerciseId)}
-                      aria-expanded={isOpen}
-                      aria-controls={panelId}
-                      className="min-w-0 flex-1 text-left"
-                    >
-                      <ExerciseTitle className="block">{name}</ExerciseTitle>
-                      <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                        <span className="inline-flex h-5 items-center rounded-full bg-muted px-2 text-xs text-muted-foreground">
-                          {seriesLabel}
-                        </span>
-                        {league ? <RankBadge league={league} size="xs" /> : null}
-                      </span>
-                    </button>
-
-                    <Button
-                      type="button"
-                      size="icon"
-                      onClick={() => {
-                        void hapticImpact();
-                        setAddFor(trackedExerciseId);
-                      }}
-                      disabled={!exercise}
-                      aria-label={UI.homeLiveAddSetAria.replace("{name}", name)}
-                      className="size-11 shrink-0 rounded-full bg-black text-white hover:bg-black/85 dark:bg-white dark:text-black dark:hover:bg-white/85"
-                    >
-                      <Plus className="size-5" aria-hidden />
-                    </Button>
-                  </div>
-
-                  {isOpen ? (
-                    <ol id={panelId} className="mt-3 space-y-2">
-                      {items.map((entry, index) => {
-                        const insight = entryInsights.get(entry.id);
-                        return (
-                          <li
-                            key={entry.id}
-                            className="flex items-center gap-3 rounded-xl bg-secondary/60 px-3 py-2.5"
-                          >
-                            <span className="w-4 shrink-0 text-xs font-medium text-muted-foreground tabular-nums">
-                              {index + 1}
-                            </span>
-                            <span className="min-w-0 flex-1 font-one-more text-sm font-semibold uppercase italic tracking-tight">
-                              {formatPerfLabel(entry.weight, entry.reps)}
-                            </span>
-                            {insight?.isRecord ? (
-                              <span className="accent-text shrink-0 rounded-full py-0.5 text-[11px] font-semibold dark:bg-accent/15 dark:px-2">
-                                {UI.record}
-                              </span>
-                            ) : null}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              disabled={!exercise}
-                              onClick={() => setEditEntry(entry)}
-                              aria-label={UI.modifyPerf}
-                              className="size-8 shrink-0 rounded-full bg-background"
-                            >
-                              <Pencil className="size-4" aria-hidden />
-                            </Button>
-                          </li>
-                        );
-                      })}
-                    </ol>
-                  ) : null}
-
-                  {session?.reactionsByExerciseId?.[trackedExerciseId]
-                    ?.length ? (
-                    <ReactionBubbles
-                      reactions={session.reactionsByExerciseId[trackedExerciseId]!}
-                      currentUserId={currentUserId}
-                      onToggle={(emoji) => {
-                        void hapticImpact();
-                        void handleToggleReaction(trackedExerciseId, emoji);
-                      }}
-                      className={cn("pt-2")}
-                    />
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        </Card>
+        <HomeExerciseList
+          mode="live"
+          groups={groups.map(({ trackedExerciseId, items }) => {
+            const exercise = resolveExercise(trackedExerciseId);
+            const seriesLabel =
+              items.length === 1
+                ? UI.homeLiveSeriesOne
+                : UI.historySeriesCount.replace(
+                    "{count}",
+                    String(items.length),
+                  );
+            return {
+              trackedExerciseId,
+              items,
+              exercise,
+              league: resolveLeague(trackedExerciseId),
+              seriesLabel,
+              reactions:
+                session?.reactionsByExerciseId?.[trackedExerciseId],
+            };
+          })}
+          entryInsights={entryInsights}
+          onOpenExercise={(id) => {
+            void hapticImpact();
+            navigate(`/exercise/${id}`);
+          }}
+          onAddSet={(id) => {
+            void hapticImpact();
+            setAddFor(id);
+          }}
+          onEditEntry={setEditEntry}
+          currentUserId={currentUserId}
+          onToggleReaction={(id, emoji) => {
+            void hapticImpact();
+            void handleToggleReaction(id, emoji);
+          }}
+        />
       </div>
 
       <Button
