@@ -21,6 +21,7 @@ type HomeRecapTeaserProps = {
 };
 
 const MAX_BAR_HEIGHT_PX = 52;
+const RECAP_HERO_SRC = "/images/first-session-hero.jpg";
 
 function headline(records: number, exercises: number): string {
   if (records > 0) {
@@ -60,9 +61,21 @@ export function HomeRecapTeaser({
       }}
       data-analytics-label="home_recap_teaser"
       aria-label={UI.homeRecapAria.replace("{day}", formatHomeDayTitle(dayKey))}
-      className="dark flex items-center gap-4 rounded-2xl bg-black p-4 text-white outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="dark relative flex min-h-[112px] items-center gap-4 overflow-hidden rounded-2xl bg-[#0a0a0a] p-4 text-white outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <span className="flex min-w-0 flex-1 flex-col gap-2">
+      <img
+        src={RECAP_HERO_SRC}
+        alt=""
+        className="absolute inset-0 size-full select-none object-cover object-[50%_35%] opacity-50"
+        draggable={false}
+        loading="lazy"
+        decoding="async"
+      />
+      <span
+        aria-hidden
+        className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/85 to-[#0a0a0a]/40"
+      />
+      <span className="relative z-10 flex min-w-0 flex-1 flex-col gap-2">
         <span className="accent-text font-one-more text-[11px] font-bold uppercase italic tracking-wide">
           {UI.homeRecapLabel}
         </span>
@@ -77,7 +90,7 @@ export function HomeRecapTeaser({
       {bars.length > 0 ? (
         <span
           aria-hidden
-          className="flex h-[52px] shrink-0 items-end gap-1"
+          className="relative z-10 flex h-[52px] shrink-0 items-end gap-1"
         >
           {bars.map((height, index) => (
             <span
