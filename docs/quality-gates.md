@@ -22,6 +22,7 @@ Deux filets automatiques pour limiter les régressions sans multiplier les tests
   - post-inscription : discovery, notifications, puis « Ta première séance » (`client/e2e/smoke/onboarding/post-auth-discovery-notifications.spec.ts`)
   - accueil nouvel inscrit : carte « Ta première séance » et modification du rappel (`client/e2e/smoke/home/home-first-session-card.spec.ts`)
   - exercices : zones avec « n suivis / n disponibles » (`client/e2e/smoke/exercises/browse-zone-counts.spec.ts`)
+  - exercices : perf depuis la liste suivis ouvre la fiche (`client/e2e/smoke/exercises/tracked-list-log-perf.spec.ts`)
   - onglet Social : classement, amis, en séance, dernières séances (`client/e2e/smoke/social/social-tab.spec.ts`)
   - bottom nav : 4 onglets Accueil · Exercices · Social · Réglages (`client/e2e/smoke/nav/bottom-nav.spec.ts`)
   - cloche notifications sur l'accueil (drawer vide)
