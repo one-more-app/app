@@ -1,5 +1,5 @@
-import { HistoryDaySection } from "@/components/history/HistoryDaySection";
 import { HomeDayTitle } from "@/components/home/HomeDayTitle";
+import { HomeExerciseList } from "@/components/home/HomeExerciseList";
 import { HomeRecapTeaser } from "@/components/home/HomeRecapTeaser";
 import { SessionCommentsThread } from "@/components/session/SessionCommentsThread";
 import { ExerciseCardSkeletonList } from "@/components/skeletons";
@@ -17,6 +17,7 @@ import { UI } from "@/lib/translations";
 import type { PerformanceEntry } from "@/types";
 import { computeSessionTiming } from "@one-more/shared/session-timing";
 import { useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 
 type HomePastSessionProps = {
   ownerUserId: string;
@@ -27,14 +28,13 @@ type HomePastSessionProps = {
   allEntries: PerformanceEntry[];
 };
 
-const noop = () => {};
-
 export function HomePastSession({
   ownerUserId,
   dayKey,
   dayEntries,
   allEntries,
 }: HomePastSessionProps) {
+  const navigate = useNavigate();
   const auth = useAuth();
   const currentUserId =
     auth.status === "authenticated" ? (auth.user?.id ?? null) : null;
@@ -94,6 +94,35 @@ export function HomePastSession({
     [sessionExercises],
   );
 
+  const pastGroups = useMemo(
+    () =>
+      dayGroups.flatMap(({ exercises }) =>
+        exercises.map(({ trackedExerciseId, items }) => {
+          const fromSession = sessionExercises.find(
+            (exercise) => exercise.id === trackedExerciseId,
+          );
+          const seriesLabel =
+            items.length === 1
+              ? UI.homeLiveSeriesOne
+              : UI.historySeriesCount.replace(
+                  "{count}",
+                  String(items.length),
+                );
+
+          return {
+            trackedExerciseId,
+            items,
+            exercise: resolveExercise(trackedExerciseId),
+            league: fromSession?.league ?? null,
+            seriesLabel,
+            reactions:
+              session?.reactionsByExerciseId?.[trackedExerciseId],
+          };
+        }),
+      ),
+    [dayGroups, resolveExercise, session, sessionExercises],
+  );
+
   const exerciseCount = useMemo(
     () => new Set(dayEntries.map((entry) => entry.trackedExerciseId)).size,
     [dayEntries],
@@ -134,26 +163,15 @@ export function HomePastSession({
       ) : error && !session ? (
         <p className="text-sm text-muted-foreground">{UI.sessionUnavailable}</p>
       ) : (
-        <ul className="space-y-3">
-          {dayGroups.map(({ date, exercises }) => (
-            <HistoryDaySection
-              key={date}
-              dayKey={date}
-              hideDayHeading
-              readOnly
-              exercises={exercises}
-              resolveExercise={resolveExercise}
-              isTrackedActive={(trackedId) =>
-                sessionExercises.some(
-                  (exercise) => exercise.id === trackedId && !exercise.deletedAt,
-                )
-              }
-              entryInsights={entryInsights}
-              onEditEntry={noop}
-              onDeleteEntry={noop}
-            />
-          ))}
-        </ul>
+        <HomeExerciseList
+          mode="past"
+          groups={pastGroups}
+          entryInsights={entryInsights}
+          onOpenExercise={(id) => {
+            void navigate(`/exercise/${id}`);
+          }}
+          currentUserId={currentUserId}
+        />
       )}
 
       {session && session.commentCount > 0 ? (
