@@ -75,7 +75,7 @@ Utiliser ce GET dans n8n pour ne pas dupliquer la doc à la main.
 ```
 
 - Au-delà de `OUTBOUND_MAX_RECIPIENTS` (défaut 5000), l’API refuse sans `"confirmLargeAudience": true`.
-- **Staging / dev** : `OUTBOUND_STAGING_RECIPIENT_IDS` (UUID séparés par des virgules) force l’audience de chaque `dispatch` vers cette liste, sans tenir compte du segment. Ignoré si `NODE_ENV=production`. N’affecte pas `POST /send`.
+- **Staging QA** : `OUTBOUND_STAGING_RECIPIENT_IDS` (UUID séparés par des virgules) force l’audience de chaque `dispatch` vers cette liste. Variables **runtime** (pas build-args). Si l’hôte tourne avec `NODE_ENV=production`, ajouter `OUTBOUND_STAGING_RECIPIENT_OVERRIDE=true`. Idempotence : un dispatch déjà créé avec `recipientCount: 0` ne se rejoue pas — changer `idempotencyKey` n8n ou supprimer la ligne `outbound_dispatches`. N’affecte pas `POST /send`.
 
 ---
 

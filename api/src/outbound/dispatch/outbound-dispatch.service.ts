@@ -6,6 +6,7 @@ import { SegmentRegistryService } from '../segments/segment-registry.service.js'
 import { OutboundSendService } from './outbound-send.service.js';
 import {
   isOutboundStagingRecipientOverrideActive,
+  isOutboundStagingRecipientOverrideConfiguredButInactive,
   resolveDispatchRecipientIds,
 } from './outbound-staging-recipients.js';
 
@@ -50,7 +51,11 @@ export class OutboundDispatchService {
       params.params ?? {},
     );
     const userIds = resolveDispatchRecipientIds(segmentUserIds);
-    if (isOutboundStagingRecipientOverrideActive()) {
+    if (isOutboundStagingRecipientOverrideConfiguredButInactive()) {
+      this.logger.warn(
+        `OUTBOUND_STAGING_RECIPIENT_IDS is set but override is inactive (NODE_ENV=${process.env.NODE_ENV ?? 'undefined'}). Set OUTBOUND_STAGING_RECIPIENT_OVERRIDE=true on staging, or use runtime env (not build-only). Dispatch ${params.idempotencyKey} used segment only → ${userIds.length} recipient(s).`,
+      );
+    } else if (isOutboundStagingRecipientOverrideActive()) {
       this.logger.log(
         `Staging recipient override: ${params.idempotencyKey} → ${userIds.length} user(s) (segment had ${segmentUserIds.length})`,
       );
