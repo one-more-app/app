@@ -296,7 +296,7 @@
    *   200 : Drawer / Dialog (overlay + content, voir components/ui/{drawer,dialog}.tsx)
    *   210 : Select / Popover portés (components/ui/{select,popover}.tsx), au-dessus des modales
    * Un overlay modal (drawer, dialog) DOIT rester au-dessus des .sticky-top-safe,
-   * sinon un header sticky (ex. RestSinceLastSetBar) passe par-dessus l'overlay
+   * sinon un header sticky passe par-dessus l'overlay
    * une fois qu'il s'ouvre au niveau du header.
    */
   .sticky-top-safe {
@@ -630,6 +630,38 @@
   animation: rank-copy-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* SessionLiveBar : lift court + fade (pro, discret) */
+@keyframes session-bar-rise {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.session-bar-rise-anim {
+  animation: session-bar-rise 0.28s ease-out both;
+}
+
+/* Rangée repos : même geste, un peu plus court */
+@keyframes session-rest-pop {
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.session-rest-pop-anim {
+  animation: session-rest-pop 0.22s ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .streak-flame-anim,
   .streak-count-anim,
@@ -644,7 +676,9 @@
   .event-live-rank-rise,
   .event-leaderboard-ticker,
   .rank-reel-lock,
-  .rank-copy-up {
+  .rank-copy-up,
+  .session-bar-rise-anim,
+  .session-rest-pop-anim {
     animation: none;
   }
 }

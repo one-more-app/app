@@ -4,16 +4,14 @@ import { HomeProgressWeekCard } from '@/components/home/HomeProgressWeekCard'
 import { HomeStartSessionCta } from '@/components/home/HomeStartSessionCta'
 import { HomeTour } from '@/components/HomeTour'
 import { ExerciseCardSkeletonList } from '@/components/skeletons'
-import { useAccess } from '@/hooks/use-access'
 import {
     usePerformanceEntriesData,
     useTrackedExercisesData,
     useUserProgressData,
 } from '@/hooks/use-api-data'
 import { useAuth } from '@/hooks/use-auth'
-import { useLocalPerformanceEntries } from '@/hooks/use-local-data-store'
-import { useReferralDrawer } from '@/hooks/use-referral-drawer'
 import { useDaySessions } from '@/hooks/use-day-sessions'
+import { useLocalPerformanceEntries } from '@/hooks/use-local-data-store'
 import { useSessionTiming } from '@/hooks/use-session-timing'
 import {
     buildWeekCells,
@@ -48,9 +46,7 @@ function HomePage() {
     const { data: trackedExercises, isLoading: trackedLoading } =
         useTrackedExercisesData()
     const localEntries = useLocalPerformanceEntries()
-    const { canAddExercise } = useAccess()
     const navigate = useNavigate()
-    const { openReferralDrawer } = useReferralDrawer()
 
     const ownerUserId = useMemo(() => {
         if (auth.status === 'authenticated' && auth.user?.id) return auth.user.id
@@ -97,7 +93,7 @@ function HomePage() {
     const todayEndedAt =
         todayLive == null
             ? (todayDaySessions?.items[todayDaySessions.items.length - 1]
-                  ?.endedAt ?? null)
+                ?.endedAt ?? null)
             : null
     const { timing: todayTiming } = useSessionTiming(todayEntries, {
         dayKey: todayKey,
@@ -192,12 +188,8 @@ function HomePage() {
     }, [navigate])
 
     const goToAddExercise = useCallback(() => {
-        if (!canAddExercise) {
-            openReferralDrawer('limit')
-            return
-        }
         navigate('/exercises')
-    }, [canAddExercise, navigate, openReferralDrawer])
+    }, [navigate])
 
     const showStartCta = !isLoading && !hasLiveSession
 

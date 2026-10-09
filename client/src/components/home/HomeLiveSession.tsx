@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { usePerformanceDataRefresh } from "@/hooks/use-api-data";
 import { useAuth } from "@/hooks/use-auth";
 import {
+    pickPrimaryDaySession,
     useDaySessions,
     useHomeSessionById,
-    pickPrimaryDaySession,
 } from "@/hooks/use-day-sessions";
 import { useHomeData } from "@/hooks/use-home-data";
 import { useSessionLiveById } from "@/hooks/use-session-live";
@@ -22,14 +22,15 @@ import {
     resolveTrackedExercise,
 } from "@/lib/history-entries";
 import { notifyPerfMilestones } from "@/lib/perf-notifications";
+import { scopeDayEntriesToSession } from "@/lib/scope-session-entries";
 import {
     applySessionReactionTarget,
     daySessionsSwrKey,
     sessionSwrKeyById,
     toggleSessionReactionById,
 } from "@/lib/session-api";
-import { scopeDayEntriesToSession } from "@/lib/scope-session-entries";
 import {
+    deletePerformanceAndWait,
     getPersonalBest,
     savePerformanceAndWait,
     updatePerformanceAndWait,
@@ -237,10 +238,6 @@ export function HomeLiveSession({
                         ) : null
                     }
                 >
-                    <span
-                        aria-hidden
-                        className="size-2.5 shrink-0 animate-pulse rounded-full bg-accent motion-reduce:animate-none"
-                    />
                     {UI.homeSessionInProgress}
                 </HomeDayTitle>
 
@@ -252,9 +249,9 @@ export function HomeLiveSession({
                             items.length === 1
                                 ? UI.homeLiveSeriesOne
                                 : UI.historySeriesCount.replace(
-                                      "{count}",
-                                      String(items.length),
-                                  );
+                                    "{count}",
+                                    String(items.length),
+                                );
                         return {
                             trackedExerciseId,
                             items,
@@ -273,13 +270,21 @@ export function HomeLiveSession({
                         setAddFor(id);
                     }}
                     onEditEntry={setEditEntry}
+                    onDeleteEntry={(entry) => {
+                        if (!confirm(UI.confirmDeletePerf)) return;
+                        void (async () => {
+                            await deletePerformanceAndWait(entry.id);
+                            await refreshSession();
+                            await refreshAfterPerfChange();
+                        })();
+                    }}
                 />
             </div>
 
             <Button
                 type="button"
                 onClick={onAddExercise}
-                className="h-12 w-full rounded-xl bg-black font-one-more text-sm font-semibold uppercase italic tracking-tight text-white hover:bg-black/85 dark:bg-white dark:text-black dark:hover:bg-white/85"
+                className="w-full"
             >
                 <Plus className="size-4" aria-hidden />
                 {UI.addExercise}

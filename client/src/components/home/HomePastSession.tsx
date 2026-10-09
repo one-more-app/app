@@ -40,6 +40,7 @@ type HomePastSessionProps = {
   allEntries: PerformanceEntry[];
   /** Titre optionnel (multi-séances le même jour). */
   title?: string;
+  recapVariant?: "default" | "compact";
 };
 
 export function HomePastSession({
@@ -49,6 +50,7 @@ export function HomePastSession({
   dayEntries,
   allEntries,
   title,
+  recapVariant = "default",
 }: HomePastSessionProps) {
   const navigate = useNavigate();
   const { mutate } = useSWRConfig();
@@ -198,6 +200,7 @@ export function HomePastSession({
         sessionId={sessionId}
         entries={allEntries}
         exerciseCount={exerciseCount}
+        variant={recapVariant}
       />
 
       {isLoading && !session ? (

@@ -16,7 +16,7 @@ export type LatestGlobalPerf = {
 /**
  * Dernière performance loggée, tous exercices confondus + exo source résolu.
  *
- * Utilisé pour alimenter le compteur global de repos (RestSinceLastSetBar)
+ * Utilisé pour alimenter le compteur global de repos (SessionLiveBar, toast, notif)
  * afin qu'il reste visible même quand l'utilisateur change d'exercice, et
  * permette de rouvrir l'exo source d'un tap.
  */

@@ -474,12 +474,13 @@ export function ExerciseListPage() {
                         bodyPart: ex.bodyPart,
                         target: ex.target,
                     })
+                    navigate(`/exercise/${trackedId}`)
                 } finally {
                     void refreshAfterPerfChange()
                 }
             })()
         },
-        [refreshAfterPerfChange],
+        [navigate, refreshAfterPerfChange],
     )
 
     const handleAddWithPerfSubmit = async () => {

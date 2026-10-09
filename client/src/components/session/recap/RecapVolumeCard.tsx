@@ -3,8 +3,8 @@ import type { VolumeSessionBar } from "@/lib/home-day";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 
-const MAX_BAR_HEIGHT_PX = 120;
-const MIN_BAR_HEIGHT_PX = 24;
+const MAX_BAR_HEIGHT_PX = 72;
+const MIN_BAR_HEIGHT_PX = 16;
 
 export function formatRecapNumber(value: number): string {
   return Math.round(value).toLocaleString("fr-FR");
@@ -15,6 +15,24 @@ function formatBarDay(dayKey: string): string {
   return new Date(`${dayKey}T12:00:00`)
     .toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
     .replace(/\.$/, "");
+}
+
+/** Heure locale courte pour distinguer deux séances le même jour. */
+function formatBarTime(startedAt: string): string {
+  return new Date(startedAt).toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function barLabel(
+  bar: VolumeSessionBar,
+  dayCounts: Map<string, number>,
+): string {
+  if ((dayCounts.get(bar.dayKey) ?? 0) > 1) {
+    return formatBarTime(bar.startedAt);
+  }
+  return formatBarDay(bar.dayKey);
 }
 
 type RecapStat = { label: string; value: string };
@@ -34,23 +52,27 @@ export function RecapVolumeCard({
 }: RecapVolumeCardProps) {
   const max = Math.max(...bars.map((bar) => bar.volume), 1);
   const lastIndex = bars.length - 1;
+  const dayCounts = new Map<string, number>();
+  for (const bar of bars) {
+    dayCounts.set(bar.dayKey, (dayCounts.get(bar.dayKey) ?? 0) + 1);
+  }
 
   return (
     <Card className="py-0">
-      <CardContent className="space-y-4 p-4">
-        <h2 className="font-one-more text-sm font-bold uppercase italic">
+      <CardContent className="space-y-3 p-3">
+        <h2 className="font-one-more text-xs font-bold uppercase italic">
           {UI.recapVolumeTitle}
         </h2>
-        <p className="flex items-baseline gap-2">
-          <span className="font-one-more text-5xl font-bold italic leading-none tabular-nums">
+        <p className="flex items-baseline gap-1.5">
+          <span className="font-one-more text-3xl font-bold italic leading-none tabular-nums">
             {formatRecapNumber(totalVolume)}
           </span>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {UI.recapVolumeUnit}
           </span>
         </p>
 
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {bars.length > 1
             ? UI.recapLastSessions.replace("{count}", String(bars.length))
             : UI.recapOnlySession}
@@ -58,7 +80,7 @@ export function RecapVolumeCard({
 
         <ul
           aria-label={UI.recapVolumeChartA11y}
-          className="flex items-end justify-between gap-2 border-b border-border pb-2"
+          className="flex items-end justify-between gap-1.5 border-b border-border pb-1.5"
         >
           {bars.map((bar, index) => {
             const isLast = index === lastIndex;
@@ -68,12 +90,12 @@ export function RecapVolumeCard({
             );
             return (
               <li
-                key={bar.dayKey}
-                className="flex min-w-0 flex-1 flex-col items-center gap-1.5"
+                key={bar.sessionKey}
+                className="flex min-w-0 flex-1 flex-col items-center gap-1"
               >
                 <span
                   className={cn(
-                    "font-one-more text-[11px] font-bold italic tabular-nums",
+                    "font-one-more text-[10px] font-bold italic tabular-nums",
                     isLast
                       ? "rounded-sm bg-accent px-1 py-0.5 text-accent-foreground"
                       : "text-muted-foreground",
@@ -85,28 +107,28 @@ export function RecapVolumeCard({
                   aria-hidden
                   style={{ height }}
                   className={cn(
-                    "w-full max-w-10 rounded-t-md",
+                    "w-full max-w-8 rounded-t-md",
                     isLast ? "bg-black dark:bg-white" : "bg-muted",
                   )}
                 />
                 <span
                   className={cn(
-                    "text-[11px] text-muted-foreground",
+                    "text-[10px] text-muted-foreground",
                     isLast && "font-bold text-foreground",
                   )}
                 >
-                  {formatBarDay(bar.dayKey)}
+                  {barLabel(bar, dayCounts)}
                 </span>
               </li>
             );
           })}
         </ul>
 
-        <dl className="grid grid-cols-4 gap-2">
+        <dl className="grid grid-cols-4 gap-1.5">
           {stats.map((stat) => (
             <div key={stat.label} className="min-w-0">
-              <dt className="text-xs text-muted-foreground">{stat.label}</dt>
-              <dd className="font-one-more text-base font-bold uppercase italic tabular-nums">
+              <dt className="text-[11px] text-muted-foreground">{stat.label}</dt>
+              <dd className="font-one-more text-sm font-bold uppercase italic tabular-nums">
                 {stat.value}
               </dd>
             </div>

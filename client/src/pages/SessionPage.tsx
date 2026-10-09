@@ -7,7 +7,6 @@ import { HistoryPageSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useSessionLiveById } from "@/hooks/use-session-live";
-import { useSessionTiming } from "@/hooks/use-session-timing";
 import { getExerciseImageUrl } from "@/lib/exercisedb";
 import {
     entryInsightsFromPerformances,
@@ -74,12 +73,6 @@ export default function SessionPage() {
     const entries = session?.entries ?? [];
     const exercises = session?.exercises ?? [];
 
-    const { label: sessionTimingLabel } = useSessionTiming(entries, {
-        dayKey: date ?? "",
-        isPresenceTraining: session?.isLive,
-        endedAt: session?.endedAt,
-    });
-
     useEffect(() => {
         if (!isOwner || !date || session?.isLive) return;
         void maybeRequestNativeReviewOnRecap({
@@ -88,15 +81,6 @@ export default function SessionPage() {
             todayDateKey: date,
         });
     }, [isOwner, date, session?.isLive]);
-
-    const sessionSummaryLine = useMemo(() => {
-        if (!session) return "";
-        const base = UI.sessionSummary
-            .replace("{exercises}", String(session.exerciseCount))
-            .replace("{records}", String(session.highlights.length));
-        if (!sessionTimingLabel) return base;
-        return `${base} · ${sessionTimingLabel}`;
-    }, [session, sessionTimingLabel]);
 
     const dayGroups = useMemo(
         () => groupByDayThenExercise(entries),
@@ -241,12 +225,6 @@ export default function SessionPage() {
                     <p className="text-sm text-destructive">{UI.sessionUnavailable}</p>
                 ) : (
                     <>
-                        {session ? (
-                            <p className="text-xs text-muted-foreground">
-                                {sessionSummaryLine}
-                            </p>
-                        ) : null}
-
                         {showRecap && session ? (
                             <div className="space-y-6">
                                 <SessionRecapBlocks session={session} />

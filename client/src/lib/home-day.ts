@@ -187,33 +187,109 @@ export function entryVolume(entry: PerformanceEntry): number {
   return load * entry.reps;
 }
 
-export type VolumeSessionBar = { dayKey: string; volume: number };
+export type VolumeSessionBar = {
+  sessionKey: string;
+  dayKey: string;
+  volume: number;
+  startedAt: string;
+};
+
+/** Clé de regroupement : séance first-class, sinon bucket jour legacy. */
+export function volumeSessionKeyForEntry(entry: PerformanceEntry): string {
+  return entry.workoutSessionId ?? `day:${getActivityDayKey(entry)}`;
+}
+
+export type BuildRecentVolumeSessionsOptions = {
+  /** Fin de fenêtre inclusive (récap d'une séance précise). */
+  throughSessionKey?: string;
+  /** Garantit / surcharge la barre de la séance affichée. */
+  anchor?: {
+    sessionKey: string;
+    dayKey: string;
+    volume: number;
+    startedAt?: string;
+  };
+};
+
+type VolumeBucket = {
+  sessionKey: string;
+  dayKey: string;
+  volume: number;
+  startedAt: string;
+};
 
 /**
  * Volume (poids × reps) des dernières séances jusqu'à `dayKey` inclus,
- * du plus ancien au plus récent, avec le jour de chaque barre.
+ * une barre = une séance (`workoutSessionId`, sinon bucket jour).
  */
 export function buildRecentVolumeSessions(
   entries: PerformanceEntry[],
   dayKey: string,
   maxBars = 6,
+  options?: BuildRecentVolumeSessionsOptions,
 ): VolumeSessionBar[] {
-  const byDay = new Map<string, number>();
+  const buckets = new Map<string, VolumeBucket>();
+
   for (const entry of entries) {
     if (entry.deletedAt) continue;
     const day = getActivityDayKey(entry);
     if (day > dayKey) continue;
-    byDay.set(day, (byDay.get(day) ?? 0) + entryVolume(entry));
+    const sessionKey = volumeSessionKeyForEntry(entry);
+    const existing = buckets.get(sessionKey);
+    const volume = entryVolume(entry);
+    if (!existing) {
+      buckets.set(sessionKey, {
+        sessionKey,
+        dayKey: day,
+        volume,
+        startedAt: entry.createdAt,
+      });
+      continue;
+    }
+    existing.volume += volume;
+    if (entry.createdAt < existing.startedAt) {
+      existing.startedAt = entry.createdAt;
+    }
   }
-  return [...byDay.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-maxBars)
-    .map(([day, volume]) => ({ dayKey: day, volume }));
+
+  const anchor = options?.anchor;
+  if (anchor) {
+    const existing = buckets.get(anchor.sessionKey);
+    buckets.set(anchor.sessionKey, {
+      sessionKey: anchor.sessionKey,
+      dayKey: anchor.dayKey,
+      volume: anchor.volume,
+      startedAt:
+        anchor.startedAt ??
+        existing?.startedAt ??
+        `${anchor.dayKey}T12:00:00.000Z`,
+    });
+  }
+
+  const sorted = [...buckets.values()].sort((a, b) => {
+    const byStart = a.startedAt.localeCompare(b.startedAt);
+    if (byStart !== 0) return byStart;
+    return a.sessionKey.localeCompare(b.sessionKey);
+  });
+
+  const throughSessionKey =
+    options?.throughSessionKey ?? anchor?.sessionKey ?? null;
+  let windowed = sorted;
+  if (throughSessionKey) {
+    const endIndex = sorted.findIndex(
+      (bar) => bar.sessionKey === throughSessionKey,
+    );
+    if (endIndex >= 0) {
+      windowed = sorted.slice(0, endIndex + 1);
+    }
+  }
+
+  return windowed.slice(-maxBars);
 }
 
 /**
- * Volume (poids × reps) des dernières séances jusqu'à `dayKey` inclus,
- * du plus ancien au plus récent. Sert au mini graphique du teaser récap.
+ * Volumes seuls des dernières séances jusqu'à `dayKey` inclus.
+ * Sert au mini graphique du teaser récap.
  */
 export function buildRecentVolumeBars(
   entries: PerformanceEntry[],

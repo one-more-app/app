@@ -74,7 +74,7 @@ Pas de nouvelle lib d'animation (Framer Motion, etc.) sans décision explicite.
 Toujours respecter `prefers-reduced-motion: reduce` :
 
 - Désactiver ou raccourcir les keyframes custom (voir `@media` dans `index.css`).
-- En TSX : tester `window.matchMedia('(prefers-reduced-motion: reduce)')` avant transitions longues (ex. [`RestSinceLastSetBar.tsx`](client/src/components/RestSinceLastSetBar.tsx)).
+- En TSX : tester `window.matchMedia('(prefers-reduced-motion: reduce)')` avant transitions longues (ex. rangée repos dans [`SessionLiveBar.tsx`](client/src/components/session/SessionLiveBar.tsx)).
 - Si `reduce` : garder le contenu visible sans stagger ni slide.
 
 ## Où animer (et où s'abstenir)
