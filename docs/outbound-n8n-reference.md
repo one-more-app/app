@@ -75,6 +75,7 @@ Utiliser ce GET dans n8n pour ne pas dupliquer la doc à la main.
 ```
 
 - Au-delà de `OUTBOUND_MAX_RECIPIENTS` (défaut 5000), l’API refuse sans `"confirmLargeAudience": true`.
+- **Staging / dev** : `OUTBOUND_STAGING_RECIPIENT_IDS` (UUID séparés par des virgules) force l’audience de chaque `dispatch` vers cette liste, sans tenir compte du segment. Ignoré si `NODE_ENV=production`. N’affecte pas `POST /send`.
 
 ---
 

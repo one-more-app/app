@@ -4,6 +4,10 @@ import { Repository } from 'typeorm';
 import { OutboundDispatchEntity } from '../entities/outbound-dispatch.entity.js';
 import { SegmentRegistryService } from '../segments/segment-registry.service.js';
 import { OutboundSendService } from './outbound-send.service.js';
+import {
+  isOutboundStagingRecipientOverrideActive,
+  resolveDispatchRecipientIds,
+} from './outbound-staging-recipients.js';
 
 function maxRecipients(): number {
   const raw = process.env.OUTBOUND_MAX_RECIPIENTS?.trim() ?? '5000';
@@ -41,10 +45,16 @@ export class OutboundDispatchService {
       };
     }
 
-    const userIds = await this.segments.resolveUserIds(
+    const segmentUserIds = await this.segments.resolveUserIds(
       params.segmentKey,
       params.params ?? {},
     );
+    const userIds = resolveDispatchRecipientIds(segmentUserIds);
+    if (isOutboundStagingRecipientOverrideActive()) {
+      this.logger.log(
+        `Staging recipient override: ${params.idempotencyKey} → ${userIds.length} user(s) (segment had ${segmentUserIds.length})`,
+      );
+    }
 
     const limit = maxRecipients();
     if (userIds.length > limit && !params.confirmLargeAudience) {

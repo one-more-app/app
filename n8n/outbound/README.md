@@ -30,7 +30,7 @@ Instance : `https://tools-n8nwithpostgres-d94398-34-155-156-83.traefik.me` · pr
 | `campaigns/11-campaign-cgu-update.workflow.ts` | One More · Outbound · Campagne · Mise à jour CGU (email) | `EQChL8mE8x0uKOj0` | Manuel, one-shot | Non |
 | `campaigns/12-campaign-registered-no-exercise.workflow.ts` | One More · Outbound · Campagne · Pas d'exo réel (push + email) | `sXZkJAv9OJAOEFar` | Planifié (1h / 24h / 3j / 7j / 30j), `activationHook: not_training_reminder` | Non |
 | `campaigns/13-campaign-lapsed-after-session.workflow.ts` | One More · Outbound · Campagne · Lapsed après séance (push + email) | `30Ke7oWrXboCczLf` | Planifié (48h / 3j / 7j / 30j) | Non |
-| `campaigns/14-campaign-registered-no-exercise-reminder.workflow.ts` | One More · Outbound · Campagne · Pas d'exo · rappel activé (push + email) | *(à pousser n8n)* | Planifié (2h / 24h / 7j / 30j) | Non |
+| `campaigns/14-campaign-registered-no-exercise-reminder.workflow.ts` | One More · Outbound · Campagne · Pas d'exo · rappel activé (push + email) | `GX7Ttr7NsyoFB0Ms` | Planifié (2h / 24h / 7j / 30j), `activationHook: training_reminder` | Non |
 
 Numérotation : `0x` = briques, `1x` = campagnes.
 
