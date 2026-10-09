@@ -32,6 +32,9 @@ export class UserEntity {
   @Column({ type: 'timestamptz', nullable: true })
   deletedAt!: Date | null;
 
+  @Column({ type: 'uuid', unique: true, default: () => 'gen_random_uuid()' })
+  unsubscribeToken!: string;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 

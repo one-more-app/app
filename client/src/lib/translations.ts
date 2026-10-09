@@ -776,6 +776,8 @@ export const UI = {
   authTermsOfUse: "conditions d'utilisation",
   authLegalAnd: "et la",
   authPrivacyPolicy: "politique de confidentialité",
+  authLegalEmails:
+    "Tu peux recevoir nos emails One More ; tu pourras te désinscrire à tout moment.",
   firstNameTitle: "Quel est ton prénom ?",
   firstName: "Prénom",
   lastNameTitle: "Quel est ton nom de famille ?",
@@ -1231,6 +1233,8 @@ export const UI = {
   notifPrefFriendTraining: "Séances d'amis",
   notifPrefFriendRecords: "Records d'amis",
   notifPrefWeeklyRecap: "Récaps (hebdo & classement mensuel)",
+  notifPrefEmailSection: "Emails",
+  notifPrefMarketingEmail: "Emails One More (conseils, nouveautés)",
   notifPrefSaveError: "Impossible de sauvegarder les préférences",
   notifFriendTrainingBellOn: "Être notifié quand cet ami s'entraîne",
   notifFriendTrainingBellOff: "Ne plus être notifié pour les séances",

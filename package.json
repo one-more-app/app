@@ -6,6 +6,10 @@
   "scripts": {
     "check:fast": "npm run typecheck:gate --prefix client && npm run build --prefix api",
     "check:smoke": "npm run test:smoke --prefix client",
+    "docs:sync-rules": "node scripts/sync-cursor-rules.mjs",
+    "docs:dev": "npm run docs:sync-rules && vitepress dev docs",
+    "docs:build": "npm run docs:sync-rules && vitepress build docs",
+    "docs:preview": "vitepress preview docs",
     "prepare": "husky"
   },
   "repository": {
@@ -15,6 +19,7 @@
   "license": "ISC",
   "devDependencies": {
     "husky": "^9.1.7",
-    "lint-staged": "^15.5.2"
+    "lint-staged": "^15.5.2",
+    "vitepress": "^1.6.3"
   }
 }

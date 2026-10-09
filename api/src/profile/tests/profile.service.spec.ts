@@ -29,7 +29,7 @@ describe('ProfileService', () => {
     normalizePublicObjectUrl: jest.fn((url: string | null) => url),
   };
   const billingService = {
-    syncSubscriberAttributes: jest.fn(),
+    scheduleSubscriberAttributesSync: jest.fn(),
   };
 
   beforeEach(() => {

@@ -4,6 +4,11 @@ import type { App } from 'firebase-admin/app';
 import type { Messaging } from 'firebase-admin/messaging';
 import type { PushPayload } from './dto/push-payload.dto.js';
 import { DeviceTokensService } from './device-tokens.service.js';
+import {
+  pushAnalyticsToFcmData,
+  toPushAnalyticsOpenPanelProps,
+} from './push-analytics.js';
+import { AnalyticsService } from '../analytics/analytics.service.js';
 
 /**
  * Sends FCM only. Feed persistence / dedup lives in NotificationFeedService
@@ -18,6 +23,7 @@ export class PushNotificationService implements OnModuleInit {
   constructor(
     private readonly config: ConfigService,
     private readonly deviceTokens: DeviceTokensService,
+    private readonly analytics: AnalyticsService,
   ) {}
 
   onModuleInit() {
@@ -48,12 +54,13 @@ export class PushNotificationService implements OnModuleInit {
     }
   }
 
-  async sendToUser(userId: string, payload: PushPayload) {
-    if (!this.messaging) return;
+  async sendToUser(userId: string, payload: PushPayload): Promise<boolean> {
+    if (!this.messaging) return false;
 
     const tokens = await this.deviceTokens.listForUser(userId);
-    if (tokens.length === 0) return;
+    if (tokens.length === 0) return false;
 
+    const analyticsData = pushAnalyticsToFcmData(payload.analytics);
     const message = {
       notification: {
         title: payload.title,
@@ -62,6 +69,7 @@ export class PushNotificationService implements OnModuleInit {
       data: {
         type: payload.type,
         route: payload.route,
+        ...analyticsData,
       },
       android: {
         priority: 'high' as const,
@@ -94,21 +102,34 @@ export class PushNotificationService implements OnModuleInit {
 
     try {
       const result = await this.messaging.sendEachForMulticast(message);
+      let successCount = 0;
       result.responses.forEach((res, idx) => {
-        if (!res.success) {
-          const token = tokens[idx]?.token;
-          const code = res.error?.code ?? '';
-          if (
-            token &&
-            (code === 'messaging/registration-token-not-registered' ||
-              code === 'messaging/invalid-registration-token')
-          ) {
-            void this.deviceTokens.removeInvalidToken(token);
-          }
+        if (res.success) {
+          successCount += 1;
+          return;
+        }
+        const token = tokens[idx]?.token;
+        const code = res.error?.code ?? '';
+        if (
+          token &&
+          (code === 'messaging/registration-token-not-registered' ||
+            code === 'messaging/invalid-registration-token')
+        ) {
+          void this.deviceTokens.removeInvalidToken(token);
         }
       });
+      if (successCount > 0) {
+        await this.analytics.track(userId, 'push_sent', {
+          type: payload.type,
+          channel: 'push',
+          ...toPushAnalyticsOpenPanelProps(payload.analytics),
+        });
+        return true;
+      }
+      return false;
     } catch (err) {
       this.logger.warn(`Push send failed for ${userId}: ${String(err)}`);
+      return false;
     }
   }
 }

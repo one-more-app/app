@@ -13,6 +13,7 @@ export type NotificationPreferencesDto = {
   friendTraining: boolean;
   friendRecords: boolean;
   weeklyRecap: boolean;
+  marketingEmail: boolean;
   reminderWeekdays: number[];
   reminderHour: number;
   reminderMinute: number;

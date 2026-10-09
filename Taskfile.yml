@@ -10,8 +10,9 @@ tasks:
       - task --list
 
   install:
-    desc: Installe les dépendances (client + api)
+    desc: Installe les dépendances (racine, client, api — inclut VitePress)
     cmds:
+      - "{{.NPM}} install"
       - task: install:client
       - task: install:api
 
@@ -42,6 +43,21 @@ tasks:
     dir: api
     cmds:
       - "{{.NPM}} run start:dev"
+
+  dev:docs:
+    desc: Documentation VitePress (port libre à partir de 5199)
+    cmds:
+      - "{{.NPM}} run docs:dev"
+
+  docs:build:
+    desc: Build statique de la documentation (docs/.vitepress/dist)
+    cmds:
+      - "{{.NPM}} run docs:build"
+
+  docs:preview:
+    desc: Prévisualise le build documentation (port libre à partir de 5199)
+    cmds:
+      - "{{.NPM}} run docs:preview"
 
   build:
     desc: Build production du client (PWA / Capacitor)

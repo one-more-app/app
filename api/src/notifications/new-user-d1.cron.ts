@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { OutboundSendService } from '../outbound/dispatch/outbound-send.service.js';
+import { MarketingMessageVarsService } from '../outbound/lib/marketing-message-vars.service.js';
 import { DeviceTokensService } from './device-tokens.service.js';
 import {
   isNewUserD1ReferralDue,
@@ -7,7 +9,6 @@ import {
   previousLocalDateKey,
 } from './lib/new-user-d1.js';
 import { localHour, normalizeLocalHour } from './lib/timezone.js';
-import { NotificationDispatchService } from './notification-dispatch.service.js';
 
 @Injectable()
 export class NewUserD1Cron {
@@ -15,7 +16,8 @@ export class NewUserD1Cron {
 
   constructor(
     private readonly deviceTokens: DeviceTokensService,
-    private readonly dispatch: NotificationDispatchService,
+    private readonly outboundSend: OutboundSendService,
+    private readonly marketingVars: MarketingMessageVarsService,
   ) {}
 
   @Cron('* * * * *')
@@ -36,19 +38,39 @@ export class NewUserD1Cron {
         if (cohortIds.length === 0) continue;
 
         if (trainingHour !== null) {
-          for (const userId of cohortIds) {
-            await this.dispatch.sendNewUserD1TrainingForUser(
-              userId,
-              timezone,
-              trainingHour,
-            );
+          const templateByHour: Record<number, string> = {
+            7: 'new_user_d1_morning',
+            11: 'new_user_d1_midday_train',
+            16: 'new_user_d1_evening',
+          };
+          const templateKey = templateByHour[trainingHour];
+          if (templateKey) {
+            for (const userId of cohortIds) {
+              const eligible =
+                await this.marketingVars.trainingReminderEligible(
+                  userId,
+                  timezone,
+                );
+              if (!eligible) continue;
+              await this.outboundSend.queueSend({
+                userId,
+                templateKey,
+                channel: 'push',
+                idempotencyKey: `${templateKey}:${userId}`,
+              });
+            }
           }
         }
 
         if (!inMiddayWindow) continue;
         for (const userId of cohortIds) {
           if (!isNewUserD1ReferralDue(userId, timezone)) continue;
-          await this.dispatch.sendNewUserD1ReferralForUser(userId);
+          await this.outboundSend.queueSend({
+            userId,
+            templateKey: 'new_user_d1_referral',
+            channel: 'push',
+            idempotencyKey: `new_user_d1_referral:${userId}`,
+          });
         }
       }
     } catch (err) {

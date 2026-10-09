@@ -27,6 +27,7 @@ import { EventModule } from './event/event.module.js';
 import { FeedbackModule } from './feedback/feedback.module.js';
 import { RankingModule } from './ranking/ranking.module.js';
 import { BadgesModule } from './badges/badges.module.js';
+import { OutboundModule } from './outbound/outbound.module.js';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { BadgesModule } from './badges/badges.module.js';
     FeedbackModule,
     RankingModule,
     BadgesModule,
+    OutboundModule,
   ],
   controllers: [AppController],
   providers: [AppService],

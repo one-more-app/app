@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { OutboundSendService } from '../outbound/dispatch/outbound-send.service.js';
+import { MarketingMessageVarsService } from '../outbound/lib/marketing-message-vars.service.js';
 import { DeviceTokensService } from './device-tokens.service.js';
 import { isEveningWindow } from './lib/timezone.js';
-import { NotificationDispatchService } from './notification-dispatch.service.js';
 
 @Injectable()
 export class StreakReminderCron {
@@ -10,7 +11,8 @@ export class StreakReminderCron {
 
   constructor(
     private readonly deviceTokens: DeviceTokensService,
-    private readonly dispatch: NotificationDispatchService,
+    private readonly outboundSend: OutboundSendService,
+    private readonly marketingVars: MarketingMessageVarsService,
   ) {}
 
   @Cron('0 * * * *')
@@ -21,7 +23,18 @@ export class StreakReminderCron {
         if (!isEveningWindow(timezone, 18, 20)) continue;
         const userIds = await this.deviceTokens.listUserIdsByTimezone(timezone);
         for (const userId of userIds) {
-          await this.dispatch.sendStreakAtRiskForUser(userId, timezone);
+          const vars = await this.marketingVars.streakAtRiskVariables(
+            userId,
+            timezone,
+          );
+          if (!vars) continue;
+          await this.outboundSend.queueSend({
+            userId,
+            templateKey: 'streak_at_risk',
+            variables: vars,
+            channel: 'push',
+            idempotencyKey: `streak:${vars.today}`,
+          });
         }
       }
     } catch (err) {

@@ -138,7 +138,7 @@ export class ProfileService {
 
     profile.username = username;
     await this.profilesRepo.save(profile);
-    void this.billingService.syncSubscriberAttributes(userId);
+    void this.billingService.scheduleSubscriberAttributesSync(userId);
     return await this.toProfileDto(profile);
   }
 
@@ -182,7 +182,7 @@ export class ProfileService {
     const profile = await this.profilesRepo.findOneOrFail({
       where: { userId },
     });
-    void this.billingService.syncSubscriberAttributes(userId);
+    void this.billingService.scheduleSubscriberAttributesSync(userId);
     return await this.toProfileDto(profile);
   }
 
@@ -213,7 +213,7 @@ export class ProfileService {
     profile.attributionRecordedAt = now;
 
     await this.profilesRepo.save(profile);
-    void this.billingService.syncSubscriberAttributes(userId);
+    void this.billingService.scheduleSubscriberAttributesSync(userId);
     return { ok: true };
   }
 
@@ -282,7 +282,7 @@ export class ProfileService {
 
     await this.profilesRepo.upsert({ userId, avatarUrl }, ['userId']);
     const saved = await this.profilesRepo.findOneOrFail({ where: { userId } });
-    void this.billingService.syncSubscriberAttributes(userId);
+    void this.billingService.scheduleSubscriberAttributesSync(userId);
     return this.toProfileDto(saved);
   }
 }

@@ -10,7 +10,20 @@ import {
 } from "@/lib/notifications-api";
 import { UI } from "@/lib/translations";
 import { toast } from "sonner";
+import { TSHIRT_REWARD_SWR_KEY } from "@/lib/rewards-api";
 import { mutate } from "swr";
+import { trackPushClicked } from "@/lib/analytics/push-tracking";
+
+const TSHIRT_STATUS_PUSH_TYPES = new Set([
+  "tshirt_reward_shipped",
+  "tshirt_reward_delivered",
+]);
+
+function refreshTshirtRewardIfNeeded(type: unknown) {
+  if (typeof type === "string" && TSHIRT_STATUS_PUSH_TYPES.has(type)) {
+    void mutate(TSHIRT_REWARD_SWR_KEY);
+  }
+}
 
 /** Doit correspondre à `android.notification.channelId` côté API + meta Manifest. */
 export const ANDROID_PUSH_CHANNEL_ID = "one-more-push";
@@ -115,9 +128,11 @@ export function attachPushNotificationListeners() {
     "pushNotificationReceived",
     (notification: PushNotificationSchema) => {
       void mutate(NOTIFICATION_FEED_SWR_KEY);
+      refreshTshirtRewardIfNeeded(notification.data?.type);
       const title = notification.title ?? UI.notificationDefaultTitle;
       const body = notification.body ?? "";
-      const route = notification.data?.route;
+      const data = notification.data;
+      const route = data?.route;
       if (!body) return;
       toast(title, {
         description: body,
@@ -125,7 +140,14 @@ export function attachPushNotificationListeners() {
           ? {
               action: {
                 label: UI.notificationSeeAction,
-                onClick: () => navigateToRoute(route),
+                onClick: () => {
+                  trackPushClicked("toast", {
+                    type:
+                      typeof data?.type === "string" ? data.type : "unknown",
+                    fcmData: data as Record<string, unknown> | undefined,
+                  });
+                  navigateToRoute(route);
+                },
               },
             }
           : {}),
@@ -136,7 +158,13 @@ export function attachPushNotificationListeners() {
   const actionHandle = PushNotifications.addListener(
     "pushNotificationActionPerformed",
     (action) => {
-      const route = action.notification.data?.route;
+      const data = action.notification.data;
+      refreshTshirtRewardIfNeeded(data?.type);
+      trackPushClicked("os", {
+        type: typeof data?.type === "string" ? data.type : "unknown",
+        fcmData: data as Record<string, unknown> | undefined,
+      });
+      const route = data?.route;
       if (typeof route === "string" && route.length > 0) {
         navigateToRoute(route);
       }

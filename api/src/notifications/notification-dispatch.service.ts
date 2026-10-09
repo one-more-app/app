@@ -2,26 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
-import { PerformanceEntryEntity } from '../performance/performance-entry.entity.js';
-import { UserProgressEntity } from '../progress/entities/user-progress.entity.js';
-import { XpEventEntity } from '../progress/entities/xp-event.entity.js';
 import { PresenceStatus } from '../presence/entities/presence-status.enum.js';
 import { UserPresenceEntity } from '../presence/entities/user-presence.entity.js';
 import { FriendshipEntity } from '../social/entities/friendship.entity.js';
 import { FriendshipStatus } from '../social/entities/friendship-status.enum.js';
-import { applyStreakExpiry } from '../progress/lib/streak-dates.js';
-import { isStreakAtRisk } from '../progress/lib/streak-dates.js';
 import { DeviceTokensService } from './device-tokens.service.js';
 import { FriendTrainingAlertsService } from './friend-training-alerts.service.js';
 import { formatUserDisplayName } from './lib/display-name.js';
-import { localDateKey, localWeekKey, formatFrenchMonthLabel, previousLocalMonthKey } from './lib/timezone.js';
-import type { NewUserD1TrainingHour } from './lib/new-user-d1.js';
+import { localDateKey } from './lib/timezone.js';
 import { NotificationFeedService } from './notification-feed.service.js';
 import { NotificationPreferencesService } from './notification-preferences.service.js';
 import { NotificationType } from './entities/notification-type.enum.js';
 import type { PushPayload } from './dto/push-payload.dto.js';
 import { PushNotificationService } from './push-notification.service.js';
 import { RealtimeBroadcaster } from '../realtime/realtime-broadcaster.service.js';
+import { TshirtRewardStatus } from '../rewards/entities/tshirt-reward-status.enum.js';
+import type { TshirtRewardType } from '../rewards/entities/tshirt-reward-type.enum.js';
 
 const PRESENCE_STALE_MS = 90_000;
 
@@ -30,12 +26,6 @@ export class NotificationDispatchService {
   constructor(
     @InjectRepository(UserProfileEntity)
     private readonly profilesRepo: Repository<UserProfileEntity>,
-    @InjectRepository(UserProgressEntity)
-    private readonly progressRepo: Repository<UserProgressEntity>,
-    @InjectRepository(PerformanceEntryEntity)
-    private readonly perfRepo: Repository<PerformanceEntryEntity>,
-    @InjectRepository(XpEventEntity)
-    private readonly xpRepo: Repository<XpEventEntity>,
     private readonly prefs: NotificationPreferencesService,
     private readonly feed: NotificationFeedService,
     private readonly push: PushNotificationService,
@@ -121,6 +111,34 @@ export class NotificationDispatchService {
       route: '/rewards/tshirt/referral_limited',
       dedupKey: 'tshirt:referral_limited',
     });
+  }
+
+  async notifyTshirtRewardStatusUpdated(params: {
+    userId: string;
+    claimId: string;
+    rewardType: TshirtRewardType;
+    status: TshirtRewardStatus;
+  }) {
+    const route = `/rewards/tshirt/${params.rewardType}`;
+    if (params.status === TshirtRewardStatus.Shipped) {
+      await this.deliver(params.userId, {
+        type: NotificationType.TshirtRewardShipped,
+        title: 'T-shirt expédié',
+        body: 'Ton t-shirt One More est en route.',
+        route,
+        dedupKey: `tshirt:${params.claimId}:shipped`,
+      });
+      return;
+    }
+    if (params.status === TshirtRewardStatus.Delivered) {
+      await this.deliver(params.userId, {
+        type: NotificationType.TshirtRewardDelivered,
+        title: 'T-shirt livré',
+        body: 'Ton t-shirt One More est arrivé.',
+        route,
+        dedupKey: `tshirt:${params.claimId}:delivered`,
+      });
+    }
   }
 
   async notifyProMonthRewardUnlocked(params: { userId: string }) {
@@ -318,196 +336,5 @@ export class NotificationDispatchService {
         dedupKey: `pr:${params.athleteUserId}:${today}:${Date.now()}`,
       });
     }
-  }
-
-  async sendStreakAtRiskForUser(userId: string, timezone: string) {
-    const progress = await this.progressRepo.findOne({ where: { userId } });
-    if (!progress || progress.currentStreak <= 0 || !progress.lastActiveDate) {
-      return;
-    }
-
-    const today = localDateKey(timezone);
-    if (
-      !isStreakAtRisk(progress.lastActiveDate, progress.currentStreak, today)
-    ) {
-      return;
-    }
-
-    const hadPerfToday = await this.perfRepo
-      .createQueryBuilder('p')
-      .where('p.userId = :userId', { userId })
-      .andWhere('p.date = :today', { today })
-      .andWhere('p.deletedAt IS NULL')
-      .getCount();
-    if (hadPerfToday > 0) return;
-
-    const streak = applyStreakExpiry(
-      progress.lastActiveDate,
-      progress.currentStreak,
-      today,
-    );
-
-    await this.deliver(userId, {
-      type: NotificationType.StreakAtRisk,
-      title: 'Série en danger',
-      body: `Ta série de ${streak} jours expire ce soir. Une séance suffit !`,
-      route: '/home',
-      dedupKey: `streak:${today}`,
-    });
-  }
-
-  async sendTrainingReminderForUser(userId: string, timezone: string) {
-    const today = localDateKey(timezone);
-    const hadPerfToday = await this.perfRepo
-      .createQueryBuilder('p')
-      .where('p.userId = :userId', { userId })
-      .andWhere('p.date = :today', { today })
-      .andWhere('p.deletedAt IS NULL')
-      .getCount();
-    if (hadPerfToday > 0) return;
-
-    await this.deliver(userId, {
-      type: NotificationType.TrainingReminder,
-      title: "C'est l'heure",
-      body: "Ta séance t'attend. Une rep de plus.",
-      route: '/home',
-      dedupKey: `training_reminder:${today}`,
-    });
-  }
-
-  private async hadPerfOnLocalDate(
-    userId: string,
-    localDate: string,
-  ): Promise<boolean> {
-    const count = await this.perfRepo
-      .createQueryBuilder('p')
-      .where('p.userId = :userId', { userId })
-      .andWhere('p.date = :localDate', { localDate })
-      .andWhere('p.deletedAt IS NULL')
-      .getCount();
-    return count > 0;
-  }
-
-  async sendNewUserD1TrainingForUser(
-    userId: string,
-    timezone: string,
-    hour: NewUserD1TrainingHour,
-  ) {
-    const today = localDateKey(timezone);
-    if (await this.hadPerfOnLocalDate(userId, today)) return;
-
-    if (hour === 7) {
-      await this.deliver(userId, {
-        type: NotificationType.NewUserD1Morning,
-        title: 'One More',
-        body: "N'oublie pas de t'entraîner aujourd'hui.",
-        route: '/home',
-        dedupKey: `new_user_d1_morning:${userId}`,
-      });
-      return;
-    }
-
-    if (hour === 11) {
-      await this.deliver(userId, {
-        type: NotificationType.NewUserD1MiddayTrain,
-        title: 'Note ta séance',
-        body: 'Une minute pour logger ta perf.',
-        route: '/home',
-        dedupKey: `new_user_d1_midday_train:${userId}`,
-      });
-      return;
-    }
-
-    await this.deliver(userId, {
-      type: NotificationType.NewUserD1Evening,
-      title: 'Encore le temps',
-      body: 'Termine ta journée avec une séance.',
-      route: '/home',
-      dedupKey: `new_user_d1_evening:${userId}`,
-    });
-  }
-
-  async sendNewUserD1ReferralForUser(userId: string) {
-    await this.deliver(userId, {
-      type: NotificationType.NewUserD1Referral,
-      title: 'Invite un pote',
-      body: 'Parraine et gagne un t-shirt One More.',
-      route: '/settings?focus=referral',
-      dedupKey: `new_user_d1_referral:${userId}`,
-    });
-  }
-
-  async sendWeeklyRecapForUser(userId: string, timezone: string) {
-    const today = localDateKey(timezone);
-    const weekKey = localWeekKey(timezone);
-    const weekStart = new Date(`${today}T12:00:00Z`);
-    weekStart.setUTCDate(weekStart.getUTCDate() - 6);
-    const startDate = localDateKey(timezone, weekStart);
-
-    const sessions = await this.perfRepo
-      .createQueryBuilder('p')
-      .select('COUNT(DISTINCT p.date)', 'count')
-      .where('p.userId = :userId', { userId })
-      .andWhere('p.date >= :startDate', { startDate })
-      .andWhere('p.date <= :today', { today })
-      .andWhere('p.deletedAt IS NULL')
-      .getRawOne<{ count: string }>();
-
-    const xpRow = await this.xpRepo
-      .createQueryBuilder('x')
-      .select('COALESCE(SUM(x.amount), 0)', 'total')
-      .where('x.userId = :userId', { userId })
-      .andWhere('x.activityDate >= :startDate', { startDate })
-      .andWhere('x.activityDate <= :today', { today })
-      .getRawOne<{ total: string }>();
-
-    const progress = await this.progressRepo.findOne({ where: { userId } });
-    const streak =
-      progress && progress.lastActiveDate
-        ? applyStreakExpiry(
-            progress.lastActiveDate,
-            progress.currentStreak,
-            today,
-          )
-        : 0;
-
-    const sessionCount = Number.parseInt(sessions?.count ?? '0', 10);
-    const xpTotal = Number.parseInt(xpRow?.total ?? '0', 10);
-
-    await this.deliver(userId, {
-      type: NotificationType.WeeklyRecap,
-      title: 'Récap de la semaine',
-      body: `${sessionCount} séance${sessionCount > 1 ? 's' : ''}, +${xpTotal} XP, série ${streak}`,
-      route: '/history',
-      dedupKey: `recap:${weekKey}`,
-    });
-  }
-
-  async sendMonthlyRankingRecapForUser(userId: string, timezone: string) {
-    const month = previousLocalMonthKey(timezone);
-    const [y, m] = month.split('-').map(Number);
-    const start = `${month}-01`;
-    const lastDay = new Date(Date.UTC(y!, m!, 0)).getUTCDate();
-    const end = `${month}-${String(lastDay).padStart(2, '0')}`;
-
-    const xpRow = await this.xpRepo
-      .createQueryBuilder('x')
-      .select('COALESCE(SUM(x.amount), 0)', 'total')
-      .where('x.userId = :userId', { userId })
-      .andWhere('x.activityDate >= :start', { start })
-      .andWhere('x.activityDate <= :end', { end })
-      .getRawOne<{ total: string }>();
-
-    const xpTotal = Number.parseInt(xpRow?.total ?? '0', 10);
-    if (xpTotal <= 0) return;
-
-    const monthLabel = formatFrenchMonthLabel(month);
-    await this.deliver(userId, {
-      type: NotificationType.MonthlyRankingRecap,
-      title: `Classement de ${monthLabel}`,
-      body: `Ton récap est prêt : +${xpTotal} XP. Découvre ton rang.`,
-      route: `/ranking?recap=${encodeURIComponent(month)}`,
-      dedupKey: `ranking_recap:${month}`,
-    });
   }
 }

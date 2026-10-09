@@ -170,5 +170,13 @@ Génération des icônes / splash : `npm run assets:generate` (client).
 
 ## Documentation complémentaire
 
+Site de doc local (VitePress, port libre à partir de **5199**) :
+
+```bash
+task dev:docs
+# ou : npm run docs:dev
+```
+
+- [`docs/outbound-n8n-reference.md`](docs/outbound-n8n-reference.md) — outbound marketing & n8n
 - [`docs/ANALYSE_MAPPING_LIGUES.md`](docs/ANALYSE_MAPPING_LIGUES.md) — mapping ligues / ExerciseDB
 - [`api/README.md`](api/README.md) — boilerplate NestJS (peu spécifique au projet)

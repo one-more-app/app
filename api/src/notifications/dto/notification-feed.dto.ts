@@ -1,5 +1,12 @@
 import type { NotificationType } from '../entities/notification-type.enum.js';
 
+export type NotificationFeedAnalyticsDto = {
+  templateKey?: string;
+  campaignKey?: string;
+  segmentKey?: string;
+  outboundMessageId?: string;
+};
+
 export type NotificationFeedItemDto = {
   id: string;
   type: NotificationType | string;
@@ -8,6 +15,7 @@ export type NotificationFeedItemDto = {
   route: string | null;
   sentAt: string;
   readAt: string | null;
+  analytics?: NotificationFeedAnalyticsDto;
 };
 
 export type NotificationFeedResponseDto = {

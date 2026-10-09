@@ -15,6 +15,7 @@ export type NotificationPreferences = {
   friendTraining: boolean;
   friendRecords: boolean;
   weeklyRecap: boolean;
+  marketingEmail: boolean;
   reminderWeekdays: number[];
   reminderHour: number;
   reminderMinute: number;
@@ -30,6 +31,7 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   friendTraining: true,
   friendRecords: true,
   weeklyRecap: true,
+  marketingEmail: true,
   reminderWeekdays: [],
   reminderHour: 18,
   reminderMinute: 0,
@@ -102,6 +104,13 @@ export async function disableTrainingAlert(friendId: string) {
   );
 }
 
+export type NotificationFeedAnalytics = {
+  templateKey?: string;
+  campaignKey?: string;
+  segmentKey?: string;
+  outboundMessageId?: string;
+};
+
 export type NotificationFeedItem = {
   id: string;
   type: string;
@@ -110,6 +119,7 @@ export type NotificationFeedItem = {
   route: string | null;
   sentAt: string;
   readAt: string | null;
+  analytics?: NotificationFeedAnalytics;
 };
 
 export type NotificationFeedResponse = {

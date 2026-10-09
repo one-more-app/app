@@ -12,6 +12,7 @@ import { useNotificationFeed } from "@/hooks/use-notification-feed";
 import { hapticImpact } from "@/lib/haptics";
 import type { NotificationFeedItem } from "@/lib/notifications-api";
 import { UI } from "@/lib/translations";
+import { trackPushClicked } from "@/lib/analytics/push-tracking";
 import { cn } from "@/lib/utils";
 import { Bell } from "lucide-react";
 import { useCallback, useState } from "react";
@@ -123,6 +124,10 @@ export function NotificationFeedControl() {
   const handleSelect = useCallback(
     async (item: NotificationFeedItem) => {
       void hapticImpact();
+      trackPushClicked("feed", {
+        type: item.type,
+        feedAnalytics: item.analytics,
+      });
       handleOpenChange(false);
       if (item.route) {
         navigate(item.route);

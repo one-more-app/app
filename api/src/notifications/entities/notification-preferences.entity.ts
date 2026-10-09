@@ -42,6 +42,9 @@ export class NotificationPreferencesEntity {
   @Column({ type: 'boolean', default: true })
   weeklyRecap!: boolean;
 
+  @Column({ type: 'boolean', default: true })
+  marketingEmail!: boolean;
+
   @Column({ type: 'smallint', array: true, default: () => "'{}'" })
   reminderWeekdays!: number[];
 

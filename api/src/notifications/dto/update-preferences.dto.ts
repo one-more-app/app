@@ -61,6 +61,10 @@ export class UpdateNotificationPreferencesDto {
   weeklyRecap?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  marketingEmail?: boolean;
+
+  @IsOptional()
   @IsArray()
   @IsInt({ each: true })
   @Min(1, { each: true })

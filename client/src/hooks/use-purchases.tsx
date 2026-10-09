@@ -5,11 +5,12 @@ import {
   isPurchasesAvailable,
   logOutPurchases,
   restorePurchases,
-  syncPurchasesAfterLogin,
+  syncPurchasesSessionOnLogin,
+  syncPurchasesSubscriberAttributes,
   type RevenueCatSubscriberInfo,
 } from "@/lib/purchases";
 import { UI } from "@/lib/translations";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 export function usePurchases() {
@@ -18,6 +19,14 @@ export function usePurchases() {
   const { data: profile } = useUserProfileData();
   const [available] = useState(isPurchasesAvailable);
   const [restoring, setRestoring] = useState(false);
+  const billingSyncedForUserId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (auth.status !== "authenticated" || !auth.user?.id) return;
+    if (billingSyncedForUserId.current === auth.user.id) return;
+    billingSyncedForUserId.current = auth.user.id;
+    void syncPurchasesSessionOnLogin(auth.user.id);
+  }, [auth.status, auth.user?.id]);
 
   useEffect(() => {
     if (auth.status !== "authenticated" || !auth.user?.id) return;
@@ -31,7 +40,7 @@ export function usePurchases() {
       weightKg: profile?.weightKg ?? null,
       heightCm: profile?.heightCm ?? null,
     };
-    void syncPurchasesAfterLogin(subscriberInfo.userId, subscriberInfo);
+    void syncPurchasesSubscriberAttributes(subscriberInfo);
   }, [
     auth.status,
     auth.user?.id,
@@ -46,6 +55,7 @@ export function usePurchases() {
 
   useEffect(() => {
     if (auth.status === "authenticated") return;
+    billingSyncedForUserId.current = null;
     void logOutPurchases();
   }, [auth.status]);
 

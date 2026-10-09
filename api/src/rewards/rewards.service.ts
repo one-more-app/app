@@ -15,25 +15,19 @@ import { TshirtRewardType } from './entities/tshirt-reward-type.enum.js';
 import { buildTshirtNotionPayload } from './lib/build-tshirt-notion-payload.js';
 import { NOTION_REWARD_STATUS_DEFAULT } from './lib/notion-rewards-constants.js';
 import { ensureRewardsNotionDatabaseSchema } from './lib/notion-rewards-schema-sync.js';
+import {
+  readNotionEnv,
+  readRewardsNotionDatabaseId,
+} from './lib/notion-env.js';
 import { buildTshirtOpsWebhookPayload } from './lib/tshirt-ops-webhook.js';
 
 const NOTION_API_BASE = 'https://api.notion.com/v1';
 const NOTION_VERSION = '2022-06-28';
 
-function readNotionEnv(config: ConfigService, key: string): string {
-  const raw = config.get<string>(key)?.trim() ?? '';
-  if (
-    (raw.startsWith('"') && raw.endsWith('"')) ||
-    (raw.startsWith("'") && raw.endsWith("'"))
-  ) {
-    return raw.slice(1, -1).trim();
-  }
-  return raw;
-}
-
-export function readRewardsNotionDatabaseId(config: ConfigService): string {
-  return readNotionEnv(config, 'NOTION_REWARDS_DB_ID');
-}
+export {
+  readNotionEnv,
+  readRewardsNotionDatabaseId,
+} from './lib/notion-env.js';
 
 export type TshirtRewardClaimDto = {
   id: string;
@@ -83,7 +77,7 @@ export class RewardsService {
     };
   }
 
-  private async ensureReferralPendingReward(userId: string): Promise<void> {
+  private ensureReferralPendingReward(userId: string): void {
     // Les nouveaux unlocks donnent 1 mois PRO (ReferralRewardService).
     // On ne crée plus de claims t-shirt referral — uniquement le legacy existant.
     void userId;
@@ -115,7 +109,7 @@ export class RewardsService {
   async getTshirtRewardStatus(
     userId: string,
   ): Promise<TshirtRewardStatusResponse> {
-    await this.ensureReferralPendingReward(userId);
+    this.ensureReferralPendingReward(userId);
     const claims = await this.claimsRepo.find({
       where: { userId },
       order: { createdAt: 'ASC' },
@@ -136,7 +130,7 @@ export class RewardsService {
     dto: ClaimTshirtDto,
   ): Promise<TshirtRewardClaimDto> {
     if (dto.rewardType === TshirtRewardType.ReferralLimited) {
-      await this.ensureReferralPendingReward(userId);
+      this.ensureReferralPendingReward(userId);
     }
     const reward = await this.claimsRepo.findOne({
       where: { userId, rewardType: dto.rewardType },
@@ -232,6 +226,16 @@ export class RewardsService {
         const text = await response.text();
         this.logger.warn(
           `Notion rewards claim failed (${response.status}): ${text}`,
+        );
+        return;
+      }
+
+      const created = (await response.json()) as { id?: string };
+      const pageId = created.id?.trim();
+      if (pageId) {
+        await this.claimsRepo.update(
+          { id: claim.id },
+          { notionPageId: pageId },
         );
       }
     } catch (error) {

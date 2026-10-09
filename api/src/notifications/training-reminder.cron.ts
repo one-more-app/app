@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { OutboundSendService } from '../outbound/dispatch/outbound-send.service.js';
+import { MarketingMessageVarsService } from '../outbound/lib/marketing-message-vars.service.js';
 import { DeviceTokensService } from './device-tokens.service.js';
 import {
   localHour,
@@ -7,7 +9,6 @@ import {
   localMinute,
   normalizeLocalHour,
 } from './lib/timezone.js';
-import { NotificationDispatchService } from './notification-dispatch.service.js';
 import { NotificationPreferencesService } from './notification-preferences.service.js';
 
 @Injectable()
@@ -17,7 +18,8 @@ export class TrainingReminderCron {
   constructor(
     private readonly deviceTokens: DeviceTokensService,
     private readonly prefs: NotificationPreferencesService,
-    private readonly dispatch: NotificationDispatchService,
+    private readonly outboundSend: OutboundSendService,
+    private readonly marketingVars: MarketingMessageVarsService,
   ) {}
 
   @Cron('* * * * *')
@@ -39,7 +41,18 @@ export class TrainingReminderCron {
         );
         for (const userId of dueIds) {
           if (!tokenUserIds.has(userId)) continue;
-          await this.dispatch.sendTrainingReminderForUser(userId, timezone);
+          const vars = await this.marketingVars.trainingReminderEligible(
+            userId,
+            timezone,
+          );
+          if (!vars) continue;
+          await this.outboundSend.queueSend({
+            userId,
+            templateKey: 'training_reminder',
+            variables: vars,
+            channel: 'push',
+            idempotencyKey: `training_reminder:${vars.today}`,
+          });
         }
       }
     } catch (err) {

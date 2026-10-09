@@ -856,7 +856,7 @@ export function AuthPage({ embedded = false }: AuthPageProps) {
                                 >
                                     {UI.authPrivacyPolicy}
                                 </a>
-                                .
+                                . {UI.authLegalEmails}
                             </p>
                         </div>
                     </footer>
