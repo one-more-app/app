@@ -146,7 +146,9 @@ export function HomeProgressWeekCard({
             canGoPrev={canGoPrev}
             canGoNext={canGoNext}
             todayAtRisk={streak.kind === "risk"}
-            streakLost={streak.kind === "none"}
+            streakLost={
+              streak.kind === "none" && weekCells.some((cell) => cell.isToday)
+            }
           />
           <StreakNote streak={streak} />
         </div>

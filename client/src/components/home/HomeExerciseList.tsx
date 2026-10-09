@@ -128,6 +128,8 @@ export function HomeExerciseList({
                     <button
                       type="button"
                       onClick={() => toggleExpanded(trackedExerciseId)}
+                      aria-hidden
+                      tabIndex={-1}
                       aria-expanded={isOpen}
                       aria-controls={panelId}
                       className="flex size-11 shrink-0 items-center justify-center rounded-full"
