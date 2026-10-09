@@ -22,18 +22,11 @@ test("barre de séance : repos, passer, terminer, visible sur la fiche exercice"
   await page.goto("/#/home");
 
   // `data-session-live-bar` : éviter le `<section>` accueil aussi nommé « Séance en cours ».
+  // Sur l'accueil, la rangée exo n'est pas dans la barre (seulement repos / séance).
   const bar = page.locator("[data-session-live-bar]").getByRole("region", {
     name: UI.sessionBarA11y,
   });
   await expect(bar).toBeVisible({ timeout: 10_000 });
-  await expect(
-    bar.getByRole("button", {
-      name: UI.homeLiveOpenExerciseAria.replace(
-        "{name}",
-        e2eCatalogExercise.name,
-      ),
-    }),
-  ).toBeVisible();
 
   // Une série vient d'être enregistrée : la rangée repos est affichée.
   await expect(bar.getByText(UI.restSinceLastSet, { exact: true })).toBeVisible();
