@@ -48,26 +48,25 @@ export type ComputeSessionTimingOpts = {
   todayKey?: string;
   isPresenceTraining?: boolean;
   /**
-   * Fin explicite de séance (API `POST /sessions/:owner/:date/end`), ISO.
-   * Ignorée si une série a été ajoutée après (la séance reprend).
+   * Fin explicite de séance (API end), ISO.
+   * Une série postérieure n'invalide plus cette fin (multi-séances).
    */
   endedAt?: string | null;
 };
 
 /**
- * Retourne la fin explicite si elle clôt bien la séance
- * (valide et pas antérieure à la dernière série), sinon `null`.
+ * Retourne la fin explicite si elle est une date ISO valide.
+ * Ne « rouvre » plus la séance quand une série est postérieure :
+ * multi-séances = nouvelle séance, pas de reprise du même id.
+ * `entries` est conservé pour compatibilité d'appel.
  */
 export function resolveExplicitSessionEnd(
-  entries: SessionEntryLike[],
+  _entries: SessionEntryLike[],
   endedAt: string | null | undefined,
 ): string | null {
   if (!endedAt) return null;
-  const bounds = getSessionBounds(entries);
-  if (!bounds) return null;
   const endedMs = new Date(endedAt).getTime();
   if (Number.isNaN(endedMs)) return null;
-  if (endedMs < new Date(bounds.last.createdAt).getTime()) return null;
   return endedAt;
 }
 

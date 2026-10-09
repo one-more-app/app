@@ -28,6 +28,7 @@ import { UserGymEntity } from '../gyms/entities/user-gym.entity.js';
 import { SessionCommentEntity } from '../workout-sessions/entities/session-comment.entity.js';
 import { SessionReactionEntity } from '../workout-sessions/entities/session-reaction.entity.js';
 import { SessionEndEntity } from '../workout-sessions/entities/session-end.entity.js';
+import { WorkoutSessionEntity } from '../workout-sessions/entities/workout-session.entity.js';
 import { EventEntryEntity } from '../event/entities/event-entry.entity.js';
 import { EventActiveAttemptEntity } from '../event/entities/event-active-attempt.entity.js';
 import { UserBadgeEntity } from '../badges/entities/user-badge.entity.js';
@@ -57,6 +58,7 @@ export const TYPEORM_ENTITIES = [
   SessionCommentEntity,
   SessionReactionEntity,
   SessionEndEntity,
+  WorkoutSessionEntity,
   EventEntryEntity,
   EventActiveAttemptEntity,
   UserBadgeEntity,

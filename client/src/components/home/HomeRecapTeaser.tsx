@@ -1,9 +1,10 @@
-import { useHomeDaySession } from "@/hooks/use-home-day-session";
+import { useHomeSessionById } from "@/hooks/use-day-sessions";
 import {
   buildRecentVolumeBars,
   formatHomeDayTitle,
 } from "@/lib/home-day";
 import { hapticImpact } from "@/lib/haptics";
+import { sessionPath } from "@/lib/session-api";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import type { PerformanceEntry } from "@/types";
@@ -14,9 +15,11 @@ import { Link } from "react-router-dom";
 type HomeRecapTeaserProps = {
   ownerUserId: string;
   dayKey: string;
+  /** Séance first-class (lien + highlights scoppés). */
+  sessionId?: string;
   /** Toutes les perfs locales, pour le mini graphique de volume. */
   entries: PerformanceEntry[];
-  /** Exercices distincts du jour (affiché si aucun record). */
+  /** Exercices distincts (affiché si aucun record). */
   exerciseCount: number;
 };
 
@@ -34,14 +37,15 @@ function headline(records: number, exercises: number): string {
     : UI.homeRecapExercises.replace("{count}", String(exercises));
 }
 
-/** Teaser de récap : mène vers la séance en attendant le vrai récap. */
+/** Teaser de récap : mène vers la séance (by id si connu). */
 export function HomeRecapTeaser({
   ownerUserId,
   dayKey,
+  sessionId,
   entries,
   exerciseCount,
 }: HomeRecapTeaserProps) {
-  const { data: session } = useHomeDaySession(ownerUserId, dayKey);
+  const { data: session } = useHomeSessionById(sessionId);
   const records = session?.highlights.length ?? 0;
   const exercises = session?.exerciseCount ?? exerciseCount;
 
@@ -53,9 +57,15 @@ export function HomeRecapTeaser({
     );
   }, [entries, dayKey]);
 
+  const to = sessionId
+    ? sessionPath(sessionId)
+    : session?.id
+      ? sessionPath(session.id)
+      : `/session/${ownerUserId}/${dayKey}`;
+
   return (
     <Link
-      to={`/session/${ownerUserId}/${dayKey}`}
+      to={to}
       onClick={() => {
         void hapticImpact();
       }}

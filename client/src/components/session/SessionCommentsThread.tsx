@@ -4,10 +4,14 @@ import { ReactionBubbles } from "@/components/session/ReactionBubbles";
 import { Card } from "@/components/ui/card";
 import {
   fetchSessionComments,
+  fetchSessionCommentsById,
   mergeSessionComment,
   postSessionComment,
+  postSessionCommentById,
   sessionCommentsSwrKey,
+  sessionCommentsSwrKeyById,
   updateSessionComment,
+  updateSessionCommentById,
   type ReactionBubble,
   type SessionComment,
 } from "@/lib/session-api";
@@ -16,8 +20,11 @@ import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 
 type SessionCommentsThreadProps = {
+  /** Nouveau contrat : commentaires scoped session. */
+  sessionId?: string;
   ownerUserId: string;
-  date: string;
+  /** @deprecated Requis seulement sans sessionId (facade jour). */
+  date?: string;
   currentUserId: string | null;
   reactions?: ReactionBubble[];
   onToggleReaction?: (emoji: string) => void;
@@ -25,6 +32,7 @@ type SessionCommentsThreadProps = {
 };
 
 export function SessionCommentsThread({
+  sessionId,
   ownerUserId,
   date,
   currentUserId,
@@ -33,21 +41,23 @@ export function SessionCommentsThread({
   reactionsDisabled = false,
 }: SessionCommentsThreadProps) {
   const { mutate } = useSWRConfig();
-  const commentsKey = sessionCommentsSwrKey(ownerUserId, date);
+  const useById = Boolean(sessionId);
+  const commentsKey = useById
+    ? sessionCommentsSwrKeyById(sessionId!)
+    : sessionCommentsSwrKey(ownerUserId, date!);
   const { data, isLoading } = useSWR(commentsKey, () =>
-    fetchSessionComments(ownerUserId, date),
+    useById
+      ? fetchSessionCommentsById(sessionId!)
+      : fetchSessionComments(ownerUserId, date!),
   );
 
   const items = data?.items ?? [];
 
   const handleCreate = async (body: string, parentId?: string) => {
     try {
-      const { comment } = await postSessionComment(
-        ownerUserId,
-        date,
-        body,
-        parentId,
-      );
+      const { comment } = useById
+        ? await postSessionCommentById(sessionId!, body, parentId)
+        : await postSessionComment(ownerUserId, date!, body, parentId);
       await mutate(
         commentsKey,
         (current: { items: SessionComment[] } | undefined) => {
@@ -63,12 +73,9 @@ export function SessionCommentsThread({
 
   const handleEdit = async (commentId: string, body: string) => {
     try {
-      const { comment } = await updateSessionComment(
-        ownerUserId,
-        date,
-        commentId,
-        body,
-      );
+      const { comment } = useById
+        ? await updateSessionCommentById(sessionId!, commentId, body)
+        : await updateSessionComment(ownerUserId, date!, commentId, body);
       await mutate(
         commentsKey,
         (current: { items: SessionComment[] } | undefined) => {

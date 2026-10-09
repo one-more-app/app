@@ -25,6 +25,8 @@ import {
   SessionReactionEntity,
   type SessionReactionTargetType,
 } from './entities/session-reaction.entity.js';
+import type { WorkoutSessionEntity } from './entities/workout-session.entity.js';
+import { SessionLifecycleService } from './session-lifecycle.service.js';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -74,6 +76,7 @@ export class WorkoutSessionsService {
     @InjectRepository(SessionEndEntity)
     private readonly endsRepo: Repository<SessionEndEntity>,
     private readonly progressService: ProgressService,
+    private readonly lifecycle: SessionLifecycleService,
   ) {}
 
   private assertValidDate(date: string) {
@@ -88,6 +91,158 @@ export class WorkoutSessionsService {
     if (!friendIds.includes(ownerUserId)) {
       throw new ForbiddenException('Séance non accessible');
     }
+  }
+
+  /** Liste résumée des séances d'un jour (nouveau client). */
+  async listDaySessions(viewerId: string, ownerUserId: string, date: string) {
+    this.assertValidDate(date);
+    await this.assertCanViewSession(viewerId, ownerUserId);
+    const sessions = await this.lifecycle.listForDay(ownerUserId, date);
+    const today = localDateKey('UTC');
+    const presence = await this.presenceService.getPresence(ownerUserId);
+    const isPresenceTraining = presence?.status === PresenceStatus.TRAINING;
+
+    const items: Array<{
+      id: string;
+      date: string;
+      startedAt: string;
+      endedAt: string | null;
+      isLive: boolean;
+    }> = [];
+    for (const raw of sessions) {
+      const session = await this.lifecycle.lazyCloseIfIdle(raw);
+      const lastSetAt = await this.lifecycle.getLastSetAt(session.id);
+      const isLive = this.lifecycle.isSessionLive(session, {
+        todayKey: today,
+        isPresenceTraining,
+        lastSetAt,
+      });
+      items.push({
+        id: session.id,
+        date: session.sessionDate,
+        startedAt: session.startedAt.toISOString(),
+        endedAt: session.endedAt?.toISOString() ?? null,
+        isLive,
+      });
+    }
+    return { items };
+  }
+
+  /** Détail séance by id (nouveau client). */
+  async getSessionById(viewerId: string, sessionId: string) {
+    let session = await this.lifecycle.findById(sessionId);
+    await this.assertCanViewSession(viewerId, session.ownerUserId);
+    session = await this.lifecycle.lazyCloseIfIdle(session);
+    return await this.buildSessionPayload(viewerId, session);
+  }
+
+  async endSessionById(
+    viewerId: string,
+    sessionId: string,
+  ): Promise<{ id: string; date: string; endedAt: string }> {
+    const session = await this.lifecycle.findById(sessionId);
+    if (viewerId !== session.ownerUserId) {
+      throw new ForbiddenException(
+        'Seul le propriétaire peut terminer la séance',
+      );
+    }
+    const closed = await this.lifecycle.endSessionNow(session);
+    return {
+      id: closed.id,
+      date: closed.sessionDate,
+      endedAt: closed.endedAt!.toISOString(),
+    };
+  }
+
+  private async buildSessionPayload(
+    viewerId: string,
+    session: WorkoutSessionEntity,
+  ) {
+    const ownerUserId = session.ownerUserId;
+    const date = session.sessionDate;
+
+    const profile = await this.profilesRepo.findOne({
+      where: { userId: ownerUserId },
+    });
+    if (!profile) throw new NotFoundException('Profil introuvable');
+
+    const allEntries = await this.performanceEntriesService.list(ownerUserId, {
+      withLeagueInsights: true,
+    });
+    const scoped = allEntries.filter((e) => !e.deletedAt);
+    const bySessionId = scoped.filter(
+      (e) =>
+        (e as { workoutSessionId?: string | null }).workoutSessionId ===
+        session.id,
+    );
+    const sessionEntries =
+      bySessionId.length > 0
+        ? bySessionId
+        : scoped.filter((e) => e.date === date);
+
+    const trackedExerciseIds = [
+      ...new Set(sessionEntries.map((e) => e.trackedExerciseId)),
+    ];
+    const allExercises =
+      await this.trackedExercisesService.listWithPerformance(ownerUserId);
+    const exercises = allExercises.filter((ex) =>
+      trackedExerciseIds.includes(ex.id),
+    );
+
+    const highlights = sessionEntries
+      .filter((e) => {
+        if (!('leagueInsight' in e)) return false;
+        const insight = e.leagueInsight as { isRecord?: boolean } | undefined;
+        return insight?.isRecord === true;
+      })
+      .map((e) => ({ entryId: e.id, type: 'pr' as const }));
+
+    const today = localDateKey('UTC');
+    const presence = await this.presenceService.getPresence(ownerUserId);
+    const lastSetAt = await this.lifecycle.getLastSetAt(session.id);
+    const isLive = this.lifecycle.isSessionLive(session, {
+      todayKey: today,
+      isPresenceTraining: presence?.status === PresenceStatus.TRAINING,
+      lastSetAt,
+    });
+
+    const xpEarned = await this.progressService.getDailyXpTotal(
+      ownerUserId,
+      date,
+    );
+
+    const commentCount = await this.commentsRepo.count({
+      where: {
+        workoutSessionId: session.id,
+        deletedAt: IsNull(),
+      },
+    });
+
+    const { reactions, reactionsByExerciseId } =
+      await this.aggregateReactionsBySession(viewerId, session.id);
+
+    return {
+      id: session.id,
+      owner: {
+        userId: ownerUserId,
+        firstName: profile.firstName ?? null,
+        lastName: profile.lastName ?? null,
+        username: profile.username ?? null,
+        avatarUrl: profile.avatarUrl ?? null,
+      },
+      date,
+      isLive,
+      endedAt: session.endedAt?.toISOString() ?? null,
+      xpEarned,
+      exercises,
+      entries: sessionEntries,
+      highlights,
+      commentCount,
+      exerciseCount: exercises.length,
+      setCount: sessionEntries.length,
+      reactions,
+      reactionsByExerciseId,
+    };
   }
 
   private mapAuthor(
@@ -149,19 +304,55 @@ export class WorkoutSessionsService {
     const endRow = await this.endsRepo.findOne({
       where: { ownerUserId, sessionDate: date },
     });
-    // Une série ajoutée après la fin explicite rouvre la séance.
-    const endedAt = resolveExplicitSessionEnd(
-      entries,
-      endRow?.endedAt.toISOString() ?? null,
-    );
-    const now = Date.now();
-    const isLive =
-      endedAt == null &&
-      date === today &&
-      (presence?.status === PresenceStatus.TRAINING ||
-        (lastEntry != null &&
-          now - new Date(lastEntry.createdAt).getTime() <
-            SESSION_ACTIVE_IDLE_MS));
+
+    const daySessionsRaw = await this.lifecycle.listForDay(ownerUserId, date);
+    for (const raw of daySessionsRaw) {
+      await this.lifecycle.lazyCloseIfIdle(raw);
+    }
+    const daySessions = await this.lifecycle.listForDay(ownerUserId, date);
+    const isPresenceTraining = presence?.status === PresenceStatus.TRAINING;
+    let isLive = false;
+    let liveSessionId: string | undefined;
+    for (const sessionRow of daySessions) {
+      const lastSetAt = await this.lifecycle.getLastSetAt(sessionRow.id);
+      if (
+        this.lifecycle.isSessionLive(sessionRow, {
+          todayKey: today,
+          isPresenceTraining,
+          lastSetAt,
+        })
+      ) {
+        isLive = true;
+        liveSessionId = sessionRow.id;
+        break;
+      }
+    }
+    // Legacy sans workout_sessions : idle jour, sauf fin explicite déjà posée.
+    if (!isLive && daySessions.length === 0 && date === today && lastEntry) {
+      const legacyEnded = resolveExplicitSessionEnd(
+        entries,
+        endRow?.endedAt.toISOString() ?? null,
+      );
+      if (!legacyEnded) {
+        const idleMs = Date.now() - new Date(lastEntry.createdAt).getTime();
+        isLive = isPresenceTraining || idleMs < SESSION_ACTIVE_IDLE_MS;
+      }
+    }
+
+    const primary =
+      (liveSessionId
+        ? daySessions.find((s) => s.id === liveSessionId)
+        : null) ??
+      daySessions.find((s) => !s.endedAt) ??
+      daySessions[daySessions.length - 1];
+
+    const endedAt = isLive
+      ? null
+      : (primary?.endedAt?.toISOString() ??
+        resolveExplicitSessionEnd(
+          entries,
+          endRow?.endedAt.toISOString() ?? null,
+        ));
 
     const xpEarned = await this.progressService.getDailyXpTotal(
       ownerUserId,
@@ -183,6 +374,7 @@ export class WorkoutSessionsService {
     );
 
     return {
+      id: primary?.id,
       owner: {
         userId: ownerUserId,
         firstName: profile.firstName ?? null,
@@ -206,8 +398,8 @@ export class WorkoutSessionsService {
   }
 
   /**
-   * Termine la séance du jour : persiste `endedAt = now` (idempotent tant
-   * qu'aucune série n'a été ajoutée depuis). Réservé au propriétaire.
+   * @deprecated Facade jour : clôture la session **ouverte** du jour.
+   * Réservé au propriétaire.
    */
   async endSession(
     viewerId: string,
@@ -227,6 +419,13 @@ export class WorkoutSessionsService {
       throw new NotFoundException('Aucune séance pour ce jour');
     }
 
+    const open = await this.lifecycle.findOpenSession(ownerUserId);
+    if (open && open.sessionDate === date) {
+      const closed = await this.lifecycle.endSessionNow(open);
+      return { date, endedAt: closed.endedAt!.toISOString() };
+    }
+
+    // Fallback legacy ends table (idempotent si déjà fini).
     const existing = await this.endsRepo.findOne({
       where: { ownerUserId, sessionDate: date },
     });
@@ -236,6 +435,16 @@ export class WorkoutSessionsService {
     );
     if (existing && effective) {
       return { date, endedAt: effective };
+    }
+
+    const daySessions = await this.lifecycle.listForDay(ownerUserId, date);
+    const latest = daySessions[daySessions.length - 1];
+    if (latest && !latest.endedAt) {
+      const closed = await this.lifecycle.endSessionNow(latest);
+      return { date, endedAt: closed.endedAt!.toISOString() };
+    }
+    if (latest?.endedAt) {
+      return { date, endedAt: latest.endedAt.toISOString() };
     }
 
     const endedAt = new Date();
@@ -290,6 +499,30 @@ export class WorkoutSessionsService {
       where: { ownerUserId, sessionDate: date },
       order: { createdAt: 'ASC' },
     });
+    return this.partitionReactionRows(viewerId, rows);
+  }
+
+  private async aggregateReactionsBySession(
+    viewerId: string,
+    workoutSessionId: string,
+  ): Promise<{
+    reactions: ReactionBubbleDto[];
+    reactionsByExerciseId: Record<string, ReactionBubbleDto[]>;
+  }> {
+    const rows = await this.reactionsRepo.find({
+      where: { workoutSessionId },
+      order: { createdAt: 'ASC' },
+    });
+    return this.partitionReactionRows(viewerId, rows);
+  }
+
+  private async partitionReactionRows(
+    viewerId: string,
+    rows: SessionReactionEntity[],
+  ): Promise<{
+    reactions: ReactionBubbleDto[];
+    reactionsByExerciseId: Record<string, ReactionBubbleDto[]>;
+  }> {
     const authors = await this.loadAuthors(rows.map((row) => row.authorUserId));
 
     const sessionRows = rows.filter((row) => row.targetType === 'session');
@@ -378,6 +611,11 @@ export class WorkoutSessionsService {
       },
     });
 
+    const workoutSessionId = await this.resolveSessionIdForDay(
+      ownerUserId,
+      date,
+    );
+
     let added = false;
     if (existing) {
       await this.reactionsRepo.remove(existing);
@@ -386,6 +624,7 @@ export class WorkoutSessionsService {
         this.reactionsRepo.create({
           ownerUserId,
           sessionDate: date,
+          workoutSessionId,
           authorUserId: viewerId,
           emoji,
           targetType,
@@ -527,10 +766,16 @@ export class WorkoutSessionsService {
       parentAuthorUserId = parent.authorUserId;
     }
 
+    const workoutSessionId = await this.resolveSessionIdForDay(
+      ownerUserId,
+      date,
+    );
+
     const entity = await this.commentsRepo.save(
       this.commentsRepo.create({
         ownerUserId,
         sessionDate: date,
+        workoutSessionId,
         authorUserId: viewerId,
         parentId: effectiveParentId,
         body: trimmed,
@@ -541,6 +786,229 @@ export class WorkoutSessionsService {
     return {
       comment: this.toCommentDto(entity, authors),
       parentAuthorUserId,
+    };
+  }
+
+  private async resolveSessionIdForDay(
+    ownerUserId: string,
+    date: string,
+  ): Promise<string | null> {
+    const open = await this.lifecycle.findOpenSession(ownerUserId);
+    if (open && open.sessionDate === date) return open.id;
+    const daySessions = await this.lifecycle.listForDay(ownerUserId, date);
+    return daySessions[daySessions.length - 1]?.id ?? null;
+  }
+
+  async listCommentsBySessionId(
+    viewerId: string,
+    sessionId: string,
+  ): Promise<{ items: SessionCommentDto[] }> {
+    const session = await this.lifecycle.findById(sessionId);
+    await this.assertCanViewSession(viewerId, session.ownerUserId);
+
+    const comments = await this.commentsRepo.find({
+      where: {
+        workoutSessionId: sessionId,
+        deletedAt: IsNull(),
+      },
+      order: { createdAt: 'ASC' },
+    });
+
+    const roots = comments.filter((c) => !c.parentId);
+    const repliesByParent = new Map<string, SessionCommentEntity[]>();
+    for (const comment of comments) {
+      if (!comment.parentId) continue;
+      const list = repliesByParent.get(comment.parentId) ?? [];
+      list.push(comment);
+      repliesByParent.set(comment.parentId, list);
+    }
+
+    const authors = await this.loadAuthors(comments.map((c) => c.authorUserId));
+    const items = roots.map((root) =>
+      this.toCommentDto(
+        root,
+        authors,
+        (repliesByParent.get(root.id) ?? []).map((reply) =>
+          this.toCommentDto(reply, authors),
+        ),
+      ),
+    );
+    return { items };
+  }
+
+  async createCommentBySessionId(
+    viewerId: string,
+    sessionId: string,
+    body: string,
+    parentId?: string,
+  ): Promise<{
+    comment: SessionCommentDto;
+    parentAuthorUserId: string | null;
+  }> {
+    const session = await this.lifecycle.findById(sessionId);
+    await this.assertCanViewSession(viewerId, session.ownerUserId);
+
+    const trimmed = body.trim();
+    if (!trimmed) throw new BadRequestException('Message vide');
+
+    let parentAuthorUserId: string | null = null;
+    let effectiveParentId: string | null = parentId ?? null;
+    if (parentId) {
+      const parent = await this.commentsRepo.findOne({
+        where: {
+          id: parentId,
+          workoutSessionId: sessionId,
+          deletedAt: IsNull(),
+        },
+      });
+      if (!parent)
+        throw new NotFoundException('Commentaire parent introuvable');
+      if (parent.parentId) {
+        effectiveParentId = parent.parentId;
+      }
+      parentAuthorUserId = parent.authorUserId;
+    }
+
+    const entity = await this.commentsRepo.save(
+      this.commentsRepo.create({
+        ownerUserId: session.ownerUserId,
+        sessionDate: session.sessionDate,
+        workoutSessionId: sessionId,
+        authorUserId: viewerId,
+        parentId: effectiveParentId,
+        body: trimmed,
+      }),
+    );
+
+    const authors = await this.loadAuthors([viewerId]);
+    return {
+      comment: this.toCommentDto(entity, authors),
+      parentAuthorUserId,
+    };
+  }
+
+  async updateCommentBySessionId(
+    viewerId: string,
+    sessionId: string,
+    commentId: string,
+    body: string,
+  ): Promise<SessionCommentDto> {
+    const session = await this.lifecycle.findById(sessionId);
+    await this.assertCanViewSession(viewerId, session.ownerUserId);
+
+    const trimmed = body.trim();
+    if (!trimmed) throw new BadRequestException('Message vide');
+
+    const comment = await this.commentsRepo.findOne({
+      where: {
+        id: commentId,
+        workoutSessionId: sessionId,
+        deletedAt: IsNull(),
+      },
+    });
+    if (!comment) throw new NotFoundException('Commentaire introuvable');
+    if (comment.authorUserId !== viewerId) {
+      throw new ForbiddenException('Modification non autorisée');
+    }
+
+    comment.body = trimmed;
+    const entity = await this.commentsRepo.save(comment);
+    const authors = await this.loadAuthors([viewerId]);
+    return this.toCommentDto(entity, authors);
+  }
+
+  async deleteCommentBySessionId(
+    viewerId: string,
+    sessionId: string,
+    commentId: string,
+  ) {
+    const session = await this.lifecycle.findById(sessionId);
+    await this.assertCanViewSession(viewerId, session.ownerUserId);
+
+    const comment = await this.commentsRepo.findOne({
+      where: {
+        id: commentId,
+        workoutSessionId: sessionId,
+        deletedAt: IsNull(),
+      },
+    });
+    if (!comment) throw new NotFoundException('Commentaire introuvable');
+    if (comment.authorUserId !== viewerId) {
+      throw new ForbiddenException('Suppression non autorisée');
+    }
+
+    comment.deletedAt = new Date();
+    await this.commentsRepo.save(comment);
+    return { ok: true };
+  }
+
+  async toggleReactionBySessionId(
+    viewerId: string,
+    sessionId: string,
+    emoji: string,
+    targetType: SessionReactionTargetType,
+    trackedExerciseId?: string,
+  ): Promise<{
+    target: SessionReactionTargetDto;
+    added: boolean;
+  }> {
+    const session = await this.lifecycle.findById(sessionId);
+    await this.assertCanViewSession(viewerId, session.ownerUserId);
+    this.assertAllowedEmoji(emoji);
+    const resolvedTrackedId = this.assertReactionTarget(
+      targetType,
+      trackedExerciseId,
+    );
+
+    const existing = await this.reactionsRepo.findOne({
+      where: {
+        workoutSessionId: sessionId,
+        authorUserId: viewerId,
+        emoji,
+        targetType,
+        trackedExerciseId:
+          resolvedTrackedId === null ? IsNull() : resolvedTrackedId,
+      },
+    });
+
+    let added = false;
+    if (existing) {
+      await this.reactionsRepo.remove(existing);
+    } else {
+      await this.reactionsRepo.save(
+        this.reactionsRepo.create({
+          ownerUserId: session.ownerUserId,
+          sessionDate: session.sessionDate,
+          workoutSessionId: sessionId,
+          authorUserId: viewerId,
+          emoji,
+          targetType,
+          trackedExerciseId: resolvedTrackedId,
+        }),
+      );
+      added = true;
+    }
+
+    const targetRows = await this.reactionsRepo.find({
+      where: {
+        workoutSessionId: sessionId,
+        targetType,
+        trackedExerciseId:
+          resolvedTrackedId === null ? IsNull() : resolvedTrackedId,
+      },
+      order: { createdAt: 'ASC' },
+    });
+    const authors = await this.loadAuthors(
+      targetRows.map((row) => row.authorUserId),
+    );
+
+    return {
+      added,
+      target: {
+        targetType,
+        trackedExerciseId: resolvedTrackedId,
+        reactions: this.aggregateReactionRows(targetRows, viewerId, authors),
+      },
     };
   }
 

@@ -7,9 +7,16 @@ import {
   seedOnboardingDone,
   trackPageErrors,
 } from "../helpers";
-import { mockExerciseWorkflowApi } from "../workflow-api";
+import {
+  E2E_WORKOUT_SESSION_ID,
+  mockExerciseWorkflowApi,
+} from "../workflow-api";
 
-test("terminer la séance appelle l'API puis ouvre le récap", async ({ page }) => {
+const SESSION_ID = E2E_WORKOUT_SESSION_ID;
+
+test("terminer la séance appelle l'API puis ouvre le récap hybride", async ({
+  page,
+}) => {
   const pageErrors = trackPageErrors(page);
   await seedOnboardingDone(page);
   await seedAuthenticatedSession(page);
@@ -34,7 +41,26 @@ test("terminer la séance appelle l'API puis ouvre le récap", async ({ page }) 
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ date: today, endedAt }),
+        body: JSON.stringify({ id: SESSION_ID, date: today, endedAt }),
+      });
+      return;
+    }
+
+    if (method === "GET" && url.includes("/day/")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          items: [
+            {
+              id: SESSION_ID,
+              date: today,
+              startedAt: perfCreatedAt,
+              endedAt,
+              isLive: endedAt == null,
+            },
+          ],
+        }),
       });
       return;
     }
@@ -44,6 +70,7 @@ test("terminer la séance appelle l'API puis ouvre le récap", async ({ page }) 
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
+          id: SESSION_ID,
           owner: {
             userId: mockSession.user.id,
             firstName: null,
@@ -68,6 +95,7 @@ test("terminer la séance appelle l'API puis ouvre le récap", async ({ page }) 
               id: "e2e-perf-1",
               trackedExerciseId: tracked.id,
               date: today,
+              workoutSessionId: SESSION_ID,
               weight: 60,
               reps: 8,
               createdAt: perfCreatedAt,
@@ -106,16 +134,13 @@ test("terminer la séance appelle l'API puis ouvre le récap", async ({ page }) 
   await expect(drawer).toBeVisible();
   await drawer.getByRole("button", { name: UI.endSessionConfirm }).click();
 
-  await expect(page).toHaveURL(
-    new RegExp(`/#/session/${mockSession.user.id}/${today}/recap$`),
-  );
+  await expect(page).toHaveURL(new RegExp(`/#/session/${SESSION_ID}$`));
   expect(endCalls).toBe(1);
 
   await expect(page.getByText(UI.recapTitle, { exact: true })).toBeVisible({
     timeout: 10_000,
   });
   await expect(page.getByText(UI.recapVolumeTitle)).toBeVisible();
-  // 60 kg x 8 reps
   await expect(page.getByText("480", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("+40")).toBeVisible();
   await expect(

@@ -4,7 +4,8 @@ import { HomeRecapTeaser } from "@/components/home/HomeRecapTeaser";
 import { SessionCommentsThread } from "@/components/session/SessionCommentsThread";
 import { ExerciseCardSkeletonList } from "@/components/skeletons";
 import { useAuth } from "@/hooks/use-auth";
-import { useHomeDaySession } from "@/hooks/use-home-day-session";
+import { useHomeSessionById } from "@/hooks/use-day-sessions";
+import { useSessionLiveById } from "@/hooks/use-session-live";
 import {
   entryInsightsFromPerformances,
   formatTimeOnly,
@@ -16,9 +17,10 @@ import { formatCompactDuration, formatHomeDayTitle } from "@/lib/home-day";
 import { getLocalDateKey } from "@/lib/local-date";
 import {
   applySessionReactionTarget,
-  sessionSwrKey,
-  toggleSessionReaction,
+  sessionSwrKeyById,
+  toggleSessionReactionById,
 } from "@/lib/session-api";
+import { scopeDayEntriesToSession } from "@/lib/scope-session-entries";
 import { UI } from "@/lib/translations";
 import type { PerformanceEntry } from "@/types";
 import { computeSessionTiming } from "@one-more/shared/session-timing";
@@ -30,39 +32,51 @@ import { useSWRConfig } from "swr";
 type HomePastSessionProps = {
   ownerUserId: string;
   dayKey: string;
-  /** Perfs locales du jour (affichage immédiat des horaires et de la durée). */
+  /** Id séance first-class (affichage scoppé, pas toute la journée). */
+  sessionId: string;
+  /** Perfs locales du jour (filtrées ensuite sur sessionId). */
   dayEntries: PerformanceEntry[];
   /** Toutes les perfs locales (mini graphique du teaser). */
   allEntries: PerformanceEntry[];
+  /** Titre optionnel (multi-séances le même jour). */
+  title?: string;
 };
 
 export function HomePastSession({
   ownerUserId,
   dayKey,
+  sessionId,
   dayEntries,
   allEntries,
+  title,
 }: HomePastSessionProps) {
   const navigate = useNavigate();
   const { mutate } = useSWRConfig();
   const auth = useAuth();
   const currentUserId =
     auth.status === "authenticated" ? (auth.user?.id ?? null) : null;
-  const { data: session, isLoading, error } = useHomeDaySession(
-    ownerUserId,
-    dayKey,
+  const { data: session, isLoading, error } = useHomeSessionById(sessionId);
+  useSessionLiveById(sessionId);
+
+  const scopedEntries = useMemo(
+    () => scopeDayEntriesToSession(dayEntries, sessionId),
+    [dayEntries, sessionId],
   );
 
   const timing = useMemo(
     () =>
-      computeSessionTiming(dayEntries, {
+      computeSessionTiming(scopedEntries, {
         dayKey,
         todayKey: getLocalDateKey(),
         endedAt: session?.endedAt,
       }),
-    [dayEntries, dayKey, session?.endedAt],
+    [scopedEntries, dayKey, session?.endedAt],
   );
 
-  const sessionEntries = useMemo(() => session?.entries ?? [], [session]);
+  const sessionEntries = useMemo(() => {
+    if (session?.entries?.length) return session.entries;
+    return scopedEntries;
+  }, [session?.entries, scopedEntries]);
   const sessionExercises = useMemo(
     () => session?.exercises ?? [],
     [session],
@@ -133,12 +147,12 @@ export function HomePastSession({
   const handleToggleReaction = useCallback(
     async (emoji: string) => {
       try {
-        const { target } = await toggleSessionReaction(ownerUserId, dayKey, {
+        const { target } = await toggleSessionReactionById(sessionId, {
           emoji,
           targetType: "session",
         });
         void mutate(
-          sessionSwrKey(ownerUserId, dayKey),
+          sessionSwrKeyById(sessionId),
           (current) =>
             current ? applySessionReactionTarget(current, target) : current,
           { revalidate: false },
@@ -147,12 +161,12 @@ export function HomePastSession({
         toast.error(UI.sessionReactionError);
       }
     },
-    [ownerUserId, dayKey, mutate],
+    [sessionId, mutate],
   );
 
   const exerciseCount = useMemo(
-    () => new Set(dayEntries.map((entry) => entry.trackedExerciseId)).size,
-    [dayEntries],
+    () => new Set(scopedEntries.map((entry) => entry.trackedExerciseId)).size,
+    [scopedEntries],
   );
 
   return (
@@ -175,12 +189,13 @@ export function HomePastSession({
           ) : null
         }
       >
-        {formatHomeDayTitle(dayKey)}
+        {title ?? formatHomeDayTitle(dayKey)}
       </HomeDayTitle>
 
       <HomeRecapTeaser
         ownerUserId={ownerUserId}
         dayKey={dayKey}
+        sessionId={sessionId}
         entries={allEntries}
         exerciseCount={exerciseCount}
       />
@@ -202,6 +217,7 @@ export function HomePastSession({
 
       {session && session.commentCount > 0 ? (
         <SessionCommentsThread
+          sessionId={sessionId}
           ownerUserId={ownerUserId}
           date={dayKey}
           currentUserId={currentUserId}

@@ -11,6 +11,8 @@ import { TrackedExercisesModule } from '../tracked-exercises/tracked-exercises.m
 import { SessionCommentEntity } from './entities/session-comment.entity.js';
 import { SessionEndEntity } from './entities/session-end.entity.js';
 import { SessionReactionEntity } from './entities/session-reaction.entity.js';
+import { WorkoutSessionEntity } from './entities/workout-session.entity.js';
+import { SessionLifecycleModule } from './session-lifecycle.module.js';
 import { WorkoutSessionsController } from './workout-sessions.controller.js';
 import { WorkoutSessionsService } from './workout-sessions.service.js';
 
@@ -20,8 +22,10 @@ import { WorkoutSessionsService } from './workout-sessions.service.js';
       SessionCommentEntity,
       SessionReactionEntity,
       SessionEndEntity,
+      WorkoutSessionEntity,
       UserProfileEntity,
     ]),
+    SessionLifecycleModule,
     SocialModule,
     PerformanceEntriesModule,
     TrackedExercisesModule,
@@ -32,6 +36,6 @@ import { WorkoutSessionsService } from './workout-sessions.service.js';
   ],
   controllers: [WorkoutSessionsController],
   providers: [WorkoutSessionsService],
-  exports: [WorkoutSessionsService],
+  exports: [WorkoutSessionsService, SessionLifecycleModule],
 })
 export class WorkoutSessionsModule {}

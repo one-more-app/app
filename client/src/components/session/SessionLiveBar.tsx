@@ -30,8 +30,11 @@ import { notifyPerfMilestones } from "@/lib/perf-notifications";
 import { dismissCurrentRestPeriod } from "@/lib/rest-timer-local-notifications";
 import {
   endSession,
-  sessionRecapPath,
+  endSessionById,
+  sessionPath,
+  daySessionsSwrKey,
   sessionSwrKey,
+  sessionSwrKeyById,
   type WorkoutSession,
 } from "@/lib/session-api";
 import { getPersonalBest, savePerformanceAndWait } from "@/lib/storage";
@@ -285,16 +288,30 @@ export function SessionLiveBar({ navVisible }: SessionLiveBarProps) {
     if (!ownerUserId || ending) return;
     setEnding(true);
     try {
-      const { endedAt } = await endSession(ownerUserId, live.dayKey);
-      // Met le cache à jour tout de suite : la barre disparaît sans attendre un refetch.
+      const result = live.sessionId
+        ? await endSessionById(live.sessionId)
+        : await endSession(ownerUserId, live.dayKey);
+      const endedAt = result.endedAt;
+      const nextSessionId = result.id ?? live.sessionId;
+      if (nextSessionId) {
+        await mutate(
+          sessionSwrKeyById(nextSessionId),
+          (current: WorkoutSession | undefined) =>
+            current ? { ...current, endedAt, isLive: false } : current,
+          { revalidate: true },
+        );
+      }
       await mutate(
         sessionSwrKey(ownerUserId, live.dayKey),
         (current: WorkoutSession | undefined) =>
           current ? { ...current, endedAt, isLive: false } : current,
         { revalidate: true },
       );
+      await mutate(daySessionsSwrKey(ownerUserId, live.dayKey));
       setEndStats(null);
-      navigate(sessionRecapPath(ownerUserId, live.dayKey));
+      if (nextSessionId) {
+        navigate(sessionPath(nextSessionId));
+      }
     } catch {
       toast.error(UI.endSessionError);
     } finally {

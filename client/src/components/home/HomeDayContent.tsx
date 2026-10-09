@@ -1,8 +1,8 @@
 import { HomeFirstSessionCard } from "@/components/home/HomeFirstSessionCard";
 import { HomeDayTitle } from "@/components/home/HomeDayTitle";
+import { HomeDaySessions } from "@/components/home/HomeDaySessions";
 import { HomeLastSessionBlock } from "@/components/home/HomeLastSessionBlock";
 import { HomeLiveSession } from "@/components/home/HomeLiveSession";
-import { HomePastSession } from "@/components/home/HomePastSession";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatHomeDayTitle, type HomeDayKind } from "@/lib/home-day";
 import { UI } from "@/lib/translations";
@@ -50,7 +50,7 @@ export function HomeDayContent({
 
   if ((kind === "session" || kind === "live") && ownerUserId) {
     return (
-      <HomePastSession
+      <HomeDaySessions
         ownerUserId={ownerUserId}
         dayKey={dayKey}
         dayEntries={dayEntries}

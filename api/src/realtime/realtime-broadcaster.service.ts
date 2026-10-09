@@ -80,11 +80,17 @@ export class RealtimeBroadcaster {
 
   emitSessionPerf(
     friendIds: string[],
-    payload: { ownerUserId: string; date: string; entry: unknown },
+    payload: {
+      ownerUserId: string;
+      date: string;
+      sessionId?: string;
+      entry: unknown;
+    },
   ) {
     this.emitToUsers(friendIds, 'session:perf', payload);
   }
 
+  /** @deprecated Room jour — préférer emitSessionCommentById */
   emitSessionComment(ownerUserId: string, date: string, comment: unknown) {
     if (!this.server) return;
     this.server
@@ -92,10 +98,25 @@ export class RealtimeBroadcaster {
       .emit('session:comment', { ownerUserId, date, comment });
   }
 
+  emitSessionCommentById(sessionId: string, comment: unknown) {
+    if (!this.server) return;
+    this.server
+      .to(`session:${sessionId}`)
+      .emit('session:comment', { sessionId, comment });
+  }
+
+  /** @deprecated Room jour — préférer emitSessionReactionById */
   emitSessionReaction(ownerUserId: string, date: string, target: unknown) {
     if (!this.server) return;
     this.server
       .to(`session:${ownerUserId}:${date}`)
       .emit('session:reaction', { ownerUserId, date, target });
+  }
+
+  emitSessionReactionById(sessionId: string, target: unknown) {
+    if (!this.server) return;
+    this.server
+      .to(`session:${sessionId}`)
+      .emit('session:reaction', { sessionId, target });
   }
 }

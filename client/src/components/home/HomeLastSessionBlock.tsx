@@ -1,8 +1,13 @@
 import { HomeDayTitle } from "@/components/home/HomeDayTitle";
 import { HomeRecapTeaser } from "@/components/home/HomeRecapTeaser";
+import {
+  pickPrimaryDaySession,
+  useDaySessions,
+} from "@/hooks/use-day-sessions";
 import { getActivityDayKey } from "@/lib/activity-from-performances";
 import { formatCompactDuration, formatHomeDayShort } from "@/lib/home-day";
 import { getLocalDateKey } from "@/lib/local-date";
+import { scopeDayEntriesToSession } from "@/lib/scope-session-entries";
 import { UI } from "@/lib/translations";
 import type { PerformanceEntry } from "@/types";
 import { computeSessionTiming } from "@one-more/shared/session-timing";
@@ -22,20 +27,30 @@ export function HomeLastSessionBlock({
   entries,
   onSelectDay,
 }: HomeLastSessionBlockProps) {
+  const { data: dayList } = useDaySessions(ownerUserId, dayKey);
+  const primary = useMemo(
+    () => pickPrimaryDaySession(dayList?.items ?? []),
+    [dayList?.items],
+  );
+
   const { durationLabel, exerciseCount } = useMemo(() => {
     const dayEntries = entries.filter(
       (entry) => !entry.deletedAt && getActivityDayKey(entry) === dayKey,
     );
-    const timing = computeSessionTiming(dayEntries, {
+    const scoped = primary?.id
+      ? scopeDayEntriesToSession(dayEntries, primary.id)
+      : dayEntries;
+    const timing = computeSessionTiming(scoped, {
       dayKey,
       todayKey: getLocalDateKey(),
+      endedAt: primary?.endedAt,
     });
     return {
       durationLabel: timing ? formatCompactDuration(timing.durationMs) : null,
-      exerciseCount: new Set(dayEntries.map((entry) => entry.trackedExerciseId))
+      exerciseCount: new Set(scoped.map((entry) => entry.trackedExerciseId))
         .size,
     };
-  }, [entries, dayKey]);
+  }, [entries, dayKey, primary]);
 
   const linkLabel = durationLabel
     ? UI.homeLastSessionLink
@@ -62,6 +77,7 @@ export function HomeLastSessionBlock({
       <HomeRecapTeaser
         ownerUserId={ownerUserId}
         dayKey={dayKey}
+        sessionId={primary?.id}
         entries={entries}
         exerciseCount={exerciseCount}
       />

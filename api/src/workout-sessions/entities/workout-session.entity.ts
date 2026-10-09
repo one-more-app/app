@@ -2,18 +2,19 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
-  Unique,
 } from 'typeorm';
 import type { Relation } from 'typeorm';
 import { UserEntity } from '../../auth/entities/user.entity.js';
 
-/** Fin explicite d'une séance (un jour d'un utilisateur). */
-@Entity({ name: 'workout_session_ends' })
-@Unique('UQ_workout_session_ends_owner_date', ['ownerUserId', 'sessionDate'])
-export class SessionEndEntity {
+/** Séance d'entraînement first-class (plusieurs possibles le même jour). */
+@Entity({ name: 'workout_sessions' })
+@Index('IDX_workout_sessions_owner_date', ['ownerUserId', 'sessionDate'])
+@Index('IDX_workout_sessions_owner_ended', ['ownerUserId', 'endedAt'])
+export class WorkoutSessionEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
@@ -27,12 +28,12 @@ export class SessionEndEntity {
   @Column({ type: 'date' })
   sessionDate!: string;
 
-  /** Lié à la séance first-class (legacy ends conservés). */
-  @Column({ type: 'uuid', nullable: true })
-  workoutSessionId!: string | null;
-
   @Column({ type: 'timestamptz' })
-  endedAt!: Date;
+  startedAt!: Date;
+
+  /** Null = séance encore ouverte. */
+  @Column({ type: 'timestamptz', nullable: true })
+  endedAt!: Date | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;

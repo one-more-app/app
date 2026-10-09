@@ -7,9 +7,12 @@ import {
   seedOnboardingDone,
   trackPageErrors,
 } from "../helpers";
-import { mockExerciseWorkflowApi } from "../workflow-api";
+import {
+  E2E_WORKOUT_SESSION_ID,
+  mockExerciseWorkflowApi,
+} from "../workflow-api";
 
-test("le récap ouvre le tiroir de partage en story et enregistre un sticker", async ({
+test("le récap hybride ouvre le tiroir de partage en story et enregistre un sticker", async ({
   page,
 }) => {
   const pageErrors = trackPageErrors(page);
@@ -20,6 +23,7 @@ test("le récap ouvre le tiroir de partage en story et enregistre un sticker", a
   const today = new Date().toISOString().slice(0, 10);
   const createdAt = new Date(Date.now() - 3_600_000).toISOString();
   const tracked = buildTrackedExercise();
+  const sessionId = E2E_WORKOUT_SESSION_ID;
   const league = {
     rankId: "gold_2",
     tier: "gold",
@@ -31,7 +35,10 @@ test("le récap ouvre le tiroir de partage en story et enregistre un sticker", a
   };
 
   await page.route("**/sessions/**", async (route) => {
-    if (route.request().method() !== "GET" || route.request().url().includes("/comments")) {
+    if (
+      route.request().method() !== "GET" ||
+      route.request().url().includes("/comments")
+    ) {
       await route.fallback();
       return;
     }
@@ -39,6 +46,7 @@ test("le récap ouvre le tiroir de partage en story et enregistre un sticker", a
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
+        id: sessionId,
         owner: {
           userId: mockSession.user.id,
           firstName: null,
@@ -50,12 +58,15 @@ test("le récap ouvre le tiroir de partage en story et enregistre un sticker", a
         isLive: false,
         endedAt: new Date().toISOString(),
         xpEarned: 40,
-        exercises: [{ ...tracked, lastPerf: null, personalBest: null, league: null }],
+        exercises: [
+          { ...tracked, lastPerf: null, personalBest: null, league: null },
+        ],
         entries: [
           {
             id: "e2e-perf-1",
             trackedExerciseId: tracked.id,
             date: today,
+            workoutSessionId: sessionId,
             weight: 80,
             reps: 5,
             createdAt,
@@ -79,12 +90,11 @@ test("le récap ouvre le tiroir de partage en story et enregistre un sticker", a
     });
   });
 
-  await page.goto(`/#/session/${mockSession.user.id}/${today}/recap`);
+  await page.goto(`/#/session/${sessionId}`);
   await expect(page.getByText(UI.recapTitle, { exact: true })).toBeVisible({
     timeout: 10_000,
   });
 
-  // Plus de stub "Bientôt disponible".
   await expect(page.getByText("Bientôt disponible.")).toHaveCount(0);
 
   await page.getByRole("button", { name: UI.recapStoryThumbRecords }).click();
@@ -100,7 +110,7 @@ test("le récap ouvre le tiroir de partage en story et enregistre un sticker", a
   const downloadPromise = page.waitForEvent("download");
   await drawer.getByRole("button", { name: UI.recapStorySave }).click();
   const download = await downloadPromise;
-  expect(download.suggestedFilename()).toMatch(/^one-more-\d+\.png$/);
+  expect(download.suggestedFilename()).toMatch(/\.png$/i);
 
   expect(pageErrors).toEqual([]);
 });

@@ -258,7 +258,7 @@ export const UI = {
   xpGainedToast: "+{amount} XP",
   xpLevelLabel: "Niveau {level}",
   xpProgressAria: "Progression vers le niveau suivant",
-  xpProgressHint: "{current} / {total} XP vers le prochain niveau",
+  xpProgressHint: "{current} / {total} XP",
   xpBannerGoToProfile: "Voir mon profil",
   xpTotalLabel: "{xp} XP au total",
   progressCardTitle: "Progression",

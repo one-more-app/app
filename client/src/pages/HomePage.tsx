@@ -13,7 +13,7 @@ import {
 import { useAuth } from '@/hooks/use-auth'
 import { useLocalPerformanceEntries } from '@/hooks/use-local-data-store'
 import { useReferralDrawer } from '@/hooks/use-referral-drawer'
-import { useOwnSessionEndedAt } from '@/hooks/use-session-ended-at'
+import { useDaySessions } from '@/hooks/use-day-sessions'
 import { useSessionTiming } from '@/hooks/use-session-timing'
 import {
     buildWeekCells,
@@ -88,12 +88,26 @@ function HomePage() {
         () => entries.filter((entry) => getActivityDayKey(entry) === todayKey),
         [entries, todayKey],
     )
-    const todayEndedAt = useOwnSessionEndedAt(todayKey, todayEntries.length > 0)
+    const { data: todayDaySessions } = useDaySessions(
+        ownerUserId,
+        todayKey,
+        todayEntries.length > 0,
+    )
+    const todayLive = todayDaySessions?.items.find((item) => item.isLive)
+    const todayEndedAt =
+        todayLive == null
+            ? (todayDaySessions?.items[todayDaySessions.items.length - 1]
+                  ?.endedAt ?? null)
+            : null
     const { timing: todayTiming } = useSessionTiming(todayEntries, {
         dayKey: todayKey,
         endedAt: todayEndedAt,
     })
-    const hasLiveSession = todayTiming?.isInProgress === true
+    // Source de vérité : liste séances du jour. Fallback idle local si pas encore chargé.
+    const hasLiveSession =
+        todayDaySessions != null
+            ? todayLive != null
+            : todayTiming?.isInProgress === true
 
     const defaultDay = useMemo(
         () => resolveDefaultHomeDay({ todayKey, activeDays, hasLiveSession }),

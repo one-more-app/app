@@ -14,6 +14,7 @@ import { RealtimeBroadcaster } from '../realtime/realtime-broadcaster.service.js
 import { getAcceptedFriendIds } from '../social/lib/accepted-friend-ids.js';
 import { FriendshipEntity } from '../social/entities/friendship.entity.js';
 import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
+import { SessionLifecycleService } from '../workout-sessions/session-lifecycle.service.js';
 import { PerformanceEntryEntity } from './performance-entry.entity.js';
 import type {
   CreatePerformanceEntryDto,
@@ -39,6 +40,7 @@ export class PerformanceEntriesService {
     @Inject(forwardRef(() => NotificationDispatchService))
     private readonly notifications: NotificationDispatchService,
     private readonly realtime: RealtimeBroadcaster,
+    private readonly sessionLifecycle: SessionLifecycleService,
   ) {}
 
   async list(
@@ -69,6 +71,7 @@ export class PerformanceEntriesService {
       id: e.clientId,
       trackedExerciseId: e.trackedExercise.clientId,
       date: e.date,
+      workoutSessionId: e.workoutSessionId ?? null,
       weight: e.weight,
       reps: e.reps,
       createdAt: e.updatedAt.toISOString(),
@@ -131,6 +134,14 @@ export class PerformanceEntriesService {
       relations: { trackedExercise: true },
     });
 
+    const workoutSession = await this.sessionLifecycle.attachOrCreateSession(
+      userId,
+      activityDate,
+      entity.updatedAt,
+    );
+    entity.workoutSessionId = workoutSession.id;
+    await this.perfRepo.save(entity);
+
     const xp = await this.progressService.processPerformanceAdded({
       userId,
       perfClientId: body.id,
@@ -164,6 +175,7 @@ export class PerformanceEntriesService {
       id: entity.clientId,
       trackedExerciseId: entity.trackedExercise.clientId,
       date: entity.date,
+      workoutSessionId: entity.workoutSessionId,
       weight: entity.weight,
       reps: entity.reps,
       createdAt: entity.updatedAt.toISOString(),
@@ -177,6 +189,7 @@ export class PerformanceEntriesService {
       this.realtime.emitSessionPerf(friendIds, {
         ownerUserId: userId,
         date: entity.date,
+        sessionId: entity.workoutSessionId ?? undefined,
         entry: result,
       });
     }

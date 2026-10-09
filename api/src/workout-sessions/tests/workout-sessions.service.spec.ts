@@ -73,6 +73,17 @@ describe('WorkoutSessionsService', () => {
   const progressService = {
     getDailyXpTotal: jest.fn(),
   };
+  const lifecycle = {
+    listForDay: jest.fn(),
+    findById: jest.fn(),
+    findOpenSession: jest.fn(),
+    getLastSetAt: jest.fn(),
+    lazyCloseIfIdle: jest.fn((s: unknown) => Promise.resolve(s)),
+    endSessionNow: jest.fn(),
+    attachOrCreateSession: jest.fn(),
+    syncLegacyEnd: jest.fn(),
+    isSessionLive: jest.fn(() => false),
+  };
 
   let service: InstanceType<typeof WorkoutSessionsService>;
 
@@ -82,6 +93,10 @@ describe('WorkoutSessionsService', () => {
     endsRepo.findOne.mockResolvedValue(null);
     endsRepo.save.mockImplementation((value) => Promise.resolve(value));
     progressService.getDailyXpTotal.mockResolvedValue(0);
+    lifecycle.listForDay.mockResolvedValue([]);
+    lifecycle.findOpenSession.mockResolvedValue(null);
+    lifecycle.getLastSetAt.mockResolvedValue(null);
+    lifecycle.isSessionLive.mockReturnValue(false);
     service = new WorkoutSessionsService(
       commentsRepo as any,
       reactionsRepo as any,
@@ -92,6 +107,7 @@ describe('WorkoutSessionsService', () => {
       presenceService as any,
       endsRepo as any,
       progressService as any,
+      lifecycle as any,
     );
   });
 
@@ -233,7 +249,7 @@ describe('WorkoutSessionsService', () => {
     expect(result.endedAt).toBe(endedAt.toISOString());
   });
 
-  it('rouvre la séance si une série suit endedAt', async () => {
+  it('ne rouvre pas la séance si une série suit endedAt (multi-séances)', async () => {
     const endedAt = new Date(Date.now() - 10 * 60 * 1000);
     const lastSet = new Date(Date.now() - 2 * 60 * 1000);
     mockOwnerWithEntries(lastSet.toISOString());
@@ -242,8 +258,8 @@ describe('WorkoutSessionsService', () => {
 
     const result = await service.getSession('owner-1', 'owner-1', '2026-07-13');
 
-    expect(result.isLive).toBe(true);
-    expect(result.endedAt).toBeNull();
+    expect(result.isLive).toBe(false);
+    expect(result.endedAt).toBe(endedAt.toISOString());
   });
 
   it('expose l XP du jour', async () => {
@@ -261,8 +277,21 @@ describe('WorkoutSessionsService', () => {
   });
 
   describe('endSession', () => {
-    it('persiste endedAt pour le propriétaire', async () => {
+    it('clôture la session ouverte du jour', async () => {
       mockOwnerWithEntries(new Date(Date.now() - 60 * 1000).toISOString());
+      const endedAt = new Date();
+      lifecycle.findOpenSession.mockResolvedValue({
+        id: 'sess-1',
+        ownerUserId: 'owner-1',
+        sessionDate: '2026-07-13',
+        endedAt: null,
+      });
+      lifecycle.endSessionNow.mockResolvedValue({
+        id: 'sess-1',
+        ownerUserId: 'owner-1',
+        sessionDate: '2026-07-13',
+        endedAt,
+      });
 
       const result = await service.endSession(
         'owner-1',
@@ -270,37 +299,23 @@ describe('WorkoutSessionsService', () => {
         '2026-07-13',
       );
 
-      expect(endsRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          ownerUserId: 'owner-1',
-          sessionDate: '2026-07-13',
-        }),
-      );
-      expect(new Date(result.endedAt).getTime()).toBeGreaterThan(
-        Date.now() - 5000,
-      );
-    });
-
-    it('est idempotent si endedAt déjà posé', async () => {
-      const lastSet = new Date(Date.now() - 10 * 60 * 1000);
-      const endedAt = new Date(Date.now() - 5 * 60 * 1000);
-      mockOwnerWithEntries(lastSet.toISOString());
-      endsRepo.findOne.mockResolvedValue({ endedAt });
-
-      const result = await service.endSession(
-        'owner-1',
-        'owner-1',
-        '2026-07-13',
-      );
-
-      expect(endsRepo.save).not.toHaveBeenCalled();
+      expect(lifecycle.endSessionNow).toHaveBeenCalled();
       expect(result.endedAt).toBe(endedAt.toISOString());
     });
 
-    it('met à jour endedAt si une série a suivi la fin précédente', async () => {
-      const endedAt = new Date(Date.now() - 20 * 60 * 1000);
-      const lastSet = new Date(Date.now() - 2 * 60 * 1000);
+    it('est idempotent si endedAt déjà posé (fallback ends)', async () => {
+      const lastSet = new Date(Date.now() - 10 * 60 * 1000);
+      const endedAt = new Date(Date.now() - 5 * 60 * 1000);
       mockOwnerWithEntries(lastSet.toISOString());
+      lifecycle.findOpenSession.mockResolvedValue(null);
+      lifecycle.listForDay.mockResolvedValue([
+        {
+          id: 'sess-1',
+          ownerUserId: 'owner-1',
+          sessionDate: '2026-07-13',
+          endedAt,
+        },
+      ]);
       endsRepo.findOne.mockResolvedValue({ endedAt });
 
       const result = await service.endSession(
@@ -309,10 +324,8 @@ describe('WorkoutSessionsService', () => {
         '2026-07-13',
       );
 
-      expect(endsRepo.save).toHaveBeenCalled();
-      expect(new Date(result.endedAt).getTime()).toBeGreaterThan(
-        lastSet.getTime(),
-      );
+      expect(lifecycle.endSessionNow).not.toHaveBeenCalled();
+      expect(result.endedAt).toBe(endedAt.toISOString());
     });
 
     it('refuse un autre utilisateur', async () => {

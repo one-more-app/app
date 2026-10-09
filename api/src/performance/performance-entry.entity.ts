@@ -44,6 +44,10 @@ export class PerformanceEntryEntity {
   @Column({ type: 'date' })
   date!: string;
 
+  /** Séance first-class (nullable pendant legacy / soft-delete orphelin). */
+  @Column({ type: 'uuid', nullable: true })
+  workoutSessionId!: string | null;
+
   @Column({ type: 'double precision' })
   weight!: number;
 

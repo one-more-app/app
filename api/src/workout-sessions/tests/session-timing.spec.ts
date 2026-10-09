@@ -103,7 +103,7 @@ describe('session-timing', () => {
     expect(timing?.durationMs).toBe(39 * 60 * 1000);
   });
 
-  it('ignore endedAt antérieur à la dernière série', () => {
+  it('respecte endedAt même si une série est postérieure (multi-séances)', () => {
     const first = new Date(NOW - 40 * 60 * 1000).toISOString();
     const last = new Date(NOW - 2 * 60 * 1000).toISOString();
     const endedAt = new Date(NOW - 20 * 60 * 1000).toISOString();
@@ -113,7 +113,7 @@ describe('session-timing', () => {
       todayKey: TODAY,
       endedAt,
     });
-    expect(timing?.isInProgress).toBe(true);
-    expect(timing?.endedAt).toBeNull();
+    expect(timing?.isInProgress).toBe(false);
+    expect(timing?.endedAt).toBe(endedAt);
   });
 });

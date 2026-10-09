@@ -122,9 +122,15 @@ export class RealtimeGateway
   @SubscribeMessage('session:join')
   async onSessionJoin(
     @ConnectedSocket() client: Socket,
-    @MessageBody() body: { ownerUserId: string; date: string },
+    @MessageBody()
+    body: { ownerUserId?: string; date?: string; sessionId?: string },
   ) {
     const userId = requireSocketUser(client).sub;
+    if (body.sessionId) {
+      // Join by session id — auth via later GET; room is opaque UUID.
+      await client.join(`session:${body.sessionId}`);
+      return { ok: true };
+    }
     if (!body.ownerUserId || !body.date) return { ok: false };
     if (body.ownerUserId !== userId) {
       const friendIds = await this.friendsService.getAcceptedFriendIds(userId);
@@ -138,8 +144,13 @@ export class RealtimeGateway
   @SubscribeMessage('session:leave')
   async onSessionLeave(
     @ConnectedSocket() client: Socket,
-    @MessageBody() body: { ownerUserId: string; date: string },
+    @MessageBody()
+    body: { ownerUserId?: string; date?: string; sessionId?: string },
   ) {
+    if (body.sessionId) {
+      await client.leave(`session:${body.sessionId}`);
+      return { ok: true };
+    }
     if (!body.ownerUserId || !body.date) return { ok: false };
     await client.leave(`session:${body.ownerUserId}:${body.date}`);
     return { ok: true };

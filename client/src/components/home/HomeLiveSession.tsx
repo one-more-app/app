@@ -5,9 +5,13 @@ import { SessionCommentsThread } from "@/components/session/SessionCommentsThrea
 import { Button } from "@/components/ui/button";
 import { usePerformanceDataRefresh } from "@/hooks/use-api-data";
 import { useAuth } from "@/hooks/use-auth";
+import {
+    useDaySessions,
+    useHomeSessionById,
+    pickPrimaryDaySession,
+} from "@/hooks/use-day-sessions";
 import { useHomeData } from "@/hooks/use-home-data";
-import { useHomeDaySession } from "@/hooks/use-home-day-session";
-import { useSessionLive } from "@/hooks/use-session-live";
+import { useSessionLiveById } from "@/hooks/use-session-live";
 import { useSessionTiming } from "@/hooks/use-session-timing";
 import { CARDIO_EQUIPMENT, getExerciseImageUrl } from "@/lib/exercisedb";
 import { formatSessionChrono } from "@/lib/format-session-chrono";
@@ -20,9 +24,11 @@ import {
 import { notifyPerfMilestones } from "@/lib/perf-notifications";
 import {
     applySessionReactionTarget,
-    sessionSwrKey,
-    toggleSessionReaction,
+    daySessionsSwrKey,
+    sessionSwrKeyById,
+    toggleSessionReactionById,
 } from "@/lib/session-api";
+import { scopeDayEntriesToSession } from "@/lib/scope-session-entries";
 import {
     getPersonalBest,
     savePerformanceAndWait,
@@ -51,7 +57,7 @@ type ExerciseGroup = {
     items: PerformanceEntry[];
 };
 
-/** Exercices dans l'ordre de première série du jour (stable quand on ajoute une série). */
+/** Exercices dans l'ordre de première série (stable quand on ajoute une série). */
 function groupTodayByExercise(entries: PerformanceEntry[]): ExerciseGroup[] {
     const map = new Map<string, PerformanceEntry[]>();
     for (const entry of entries) {
@@ -87,8 +93,8 @@ function LiveChrono({ startedAt }: { startedAt: number }) {
 }
 
 /**
- * Séance du jour en cours : liste des exercices du jour, séries dépliables,
- * ajout et modification de perf via le tiroir, commentaires s'il y en a.
+ * Séance en cours : uniquement les perfs de la séance live (pas les séances
+ * terminées plus tôt le même jour).
  */
 export function HomeLiveSession({
     ownerUserId,
@@ -103,12 +109,25 @@ export function HomeLiveSession({
     const { mutate } = useSWRConfig();
     const { exercises: homeExercises } = useHomeData();
     const refreshAfterPerfChange = usePerformanceDataRefresh();
-    const { data: session } = useHomeDaySession(ownerUserId, dayKey);
-    useSessionLive(ownerUserId, dayKey);
 
-    const { timing } = useSessionTiming(todayEntries, {
+    const { data: dayList } = useDaySessions(ownerUserId, dayKey);
+    const liveSummary = useMemo(() => {
+        const items = dayList?.items ?? [];
+        return items.find((item) => item.isLive) ?? pickPrimaryDaySession(items);
+    }, [dayList?.items]);
+    const sessionId = liveSummary?.id;
+    const { data: session } = useHomeSessionById(sessionId);
+    useSessionLiveById(sessionId);
+
+    const liveEntries = useMemo(() => {
+        if (!sessionId) return todayEntries;
+        return scopeDayEntriesToSession(todayEntries, sessionId);
+    }, [todayEntries, sessionId]);
+
+    const { timing } = useSessionTiming(liveEntries, {
         dayKey,
         endedAt: session?.endedAt,
+        isPresenceTraining: session?.isLive,
     });
 
     const [addFor, setAddFor] = useState<string | null>(null);
@@ -116,8 +135,11 @@ export function HomeLiveSession({
 
     const sessionExercises = useMemo(() => session?.exercises ?? [], [session]);
     const entryInsights = useMemo(
-        () => entryInsightsFromPerformances(session?.entries ?? []),
-        [session],
+        () =>
+            entryInsightsFromPerformances(
+                session?.entries?.length ? session.entries : liveEntries,
+            ),
+        [session, liveEntries],
     );
 
     const resolveExercise = useCallback(
@@ -141,7 +163,7 @@ export function HomeLiveSession({
 
     const groups = useMemo(
         () =>
-            groupTodayByExercise(todayEntries).filter(({ trackedExerciseId }) => {
+            groupTodayByExercise(liveEntries).filter(({ trackedExerciseId }) => {
                 const ex = resolveExercise(trackedExerciseId);
                 if (!ex) return true;
                 return (
@@ -149,34 +171,38 @@ export function HomeLiveSession({
                     !(ex.equipment && CARDIO_EQUIPMENT.has(ex.equipment))
                 );
             }),
-        [todayEntries, resolveExercise],
+        [liveEntries, resolveExercise],
     );
 
     const refreshSession = useCallback(async () => {
         await Promise.all([
-            mutate(sessionSwrKey(ownerUserId, dayKey)),
+            sessionId ? mutate(sessionSwrKeyById(sessionId)) : Promise.resolve(),
+            mutate(daySessionsSwrKey(ownerUserId, dayKey)),
             refreshAfterPerfChange(),
         ]);
-    }, [mutate, ownerUserId, dayKey, refreshAfterPerfChange]);
+    }, [mutate, sessionId, ownerUserId, dayKey, refreshAfterPerfChange]);
 
     const handleToggleReaction = useCallback(
         async (emoji: string) => {
+            if (!sessionId) return;
             try {
-                const { target } = await toggleSessionReaction(ownerUserId, dayKey, {
+                const { target } = await toggleSessionReactionById(sessionId, {
                     emoji,
                     targetType: "session",
                 });
                 void mutate(
-                    sessionSwrKey(ownerUserId, dayKey),
+                    sessionSwrKeyById(sessionId),
                     (current) =>
-                        current ? applySessionReactionTarget(current, target) : current,
+                        current
+                            ? applySessionReactionTarget(current, target)
+                            : current,
                     { revalidate: false },
                 );
             } catch {
                 toast.error(UI.sessionReactionError);
             }
         },
-        [ownerUserId, dayKey, mutate],
+        [sessionId, mutate],
     );
 
     const addExercise = addFor ? resolveExercise(addFor) : undefined;
@@ -204,7 +230,11 @@ export function HomeLiveSession({
             <div>
                 <HomeDayTitle
                     right={
-                        timing ? <LiveChrono startedAt={new Date(timing.startedAt).getTime()} /> : null
+                        timing ? (
+                            <LiveChrono
+                                startedAt={new Date(timing.startedAt).getTime()}
+                            />
+                        ) : null
                     }
                 >
                     <span
@@ -222,9 +252,9 @@ export function HomeLiveSession({
                             items.length === 1
                                 ? UI.homeLiveSeriesOne
                                 : UI.historySeriesCount.replace(
-                                    "{count}",
-                                    String(items.length),
-                                );
+                                      "{count}",
+                                      String(items.length),
+                                  );
                         return {
                             trackedExerciseId,
                             items,
@@ -255,8 +285,9 @@ export function HomeLiveSession({
                 {UI.addExercise}
             </Button>
 
-            {hasComments ? (
+            {hasComments && sessionId ? (
                 <SessionCommentsThread
+                    sessionId={sessionId}
                     ownerUserId={ownerUserId}
                     date={dayKey}
                     currentUserId={currentUserId}
@@ -301,7 +332,8 @@ export function HomeLiveSession({
                                     savedReps: reps,
                                     league: xp?.league,
                                     exerciseImageUrl:
-                                        getExerciseImageUrl(addExercise.gifUrl) || undefined,
+                                        getExerciseImageUrl(addExercise.gifUrl) ||
+                                        undefined,
                                     bodyPart: addExercise.bodyPart,
                                     target: addExercise.target,
                                 });

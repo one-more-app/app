@@ -48,7 +48,7 @@ import { ExerciseDetailPage } from '@/pages/ExerciseDetailPage'
 import { ExerciseListPage } from '@/pages/ExerciseListPage'
 import ChatPage from '@/pages/ChatPage'
 import FriendProfilePage from '@/pages/FriendProfilePage'
-import RecapPage from '@/pages/RecapPage'
+import SessionLegacyRedirectPage from '@/pages/SessionLegacyRedirectPage'
 import SessionPage from '@/pages/SessionPage'
 import FriendSearchPage from '@/pages/FriendSearchPage'
 import FriendsPage from '@/pages/FriendsPage'
@@ -444,8 +444,9 @@ function App() {
                                 <Route path="/stats" element={<StatsRedirect />} />
                                 <Route path="/profile" element={<ProfilePage />} />
                                 <Route path="/history" element={<HistoryPage />} />
-                                <Route path="/session/:ownerUserId/:date" element={<SessionPage />} />
-                                <Route path="/session/:ownerUserId/:date/recap" element={<RecapPage />} />
+                                <Route path="/session/:sessionId" element={<SessionPage />} />
+                                <Route path="/session/:ownerUserId/:date" element={<SessionLegacyRedirectPage />} />
+                                <Route path="/session/:ownerUserId/:date/recap" element={<SessionLegacyRedirectPage />} />
                                 <Route path="/auth" element={<AuthPage />} />
                                 <Route path="/exercises" element={<ExerciseListPage />} />
                                 <Route path="/exercise/:id" element={<ExerciseDetailPage />} />

@@ -2,10 +2,11 @@ import { AddPerfDrawer } from "@/components/AddPerfDrawer";
 import { BackHeader } from "@/components/BackHeader";
 import { HistoryDaySection } from "@/components/history/HistoryDaySection";
 import { SessionCommentsThread } from "@/components/session/SessionCommentsThread";
+import { SessionRecapBlocks } from "@/components/session/recap/SessionRecapBlocks";
 import { HistoryPageSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
-import { useSessionLive } from "@/hooks/use-session-live";
+import { useSessionLiveById } from "@/hooks/use-session-live";
 import { useSessionTiming } from "@/hooks/use-session-timing";
 import { getExerciseImageUrl } from "@/lib/exercisedb";
 import {
@@ -18,9 +19,9 @@ import { notifyPerfMilestones } from "@/lib/perf-notifications";
 import { getProfileDisplayName } from "@/lib/profile-display";
 import {
     applySessionReactionTarget,
-    fetchSession,
-    sessionSwrKey,
-    toggleSessionReaction,
+    fetchSessionById,
+    sessionSwrKeyById,
+    toggleSessionReactionById,
 } from "@/lib/session-api";
 import {
     deletePerformanceAndWait,
@@ -44,21 +45,22 @@ import { useParams } from "react-router-dom";
 import useSWR, { useSWRConfig } from "swr";
 
 export default function SessionPage() {
-    const { ownerUserId, date } = useParams<{
-        ownerUserId: string;
-        date: string;
-    }>();
+    const { sessionId } = useParams<{ sessionId: string }>();
     const auth = useAuth();
     const { mutate } = useSWRConfig();
     const currentUserId = auth.status === "authenticated" ? auth.user?.id ?? null : null;
-    const isOwner = Boolean(currentUserId && ownerUserId === currentUserId);
 
     const { data: session, isLoading, error } = useSWR(
-        ownerUserId && date ? sessionSwrKey(ownerUserId, date) : null,
-        () => fetchSession(ownerUserId!, date!),
+        sessionId ? sessionSwrKeyById(sessionId) : null,
+        () => fetchSessionById(sessionId!),
     );
 
-    useSessionLive(ownerUserId, date);
+    const ownerUserId = session?.owner.userId;
+    const date = session?.date;
+    const isOwner = Boolean(currentUserId && ownerUserId === currentUserId);
+    const showRecap = Boolean(isOwner && session && !session.isLive);
+
+    useSessionLiveById(sessionId);
 
     const [editEntry, setEditEntry] = useState<PerformanceEntry | null>(null);
     const [addPerf, setAddPerf] = useState<{
@@ -173,24 +175,28 @@ export default function SessionPage() {
         )
         : UI.sessionTitle;
 
-    const pageTitle = isOwner ? UI.sessionTitleMine : UI.sessionTitleFriend.replace("{name}", ownerName);
+    const pageTitle = showRecap
+        ? UI.recapTitle
+        : isOwner
+          ? UI.sessionTitleMine
+          : UI.sessionTitleFriend.replace("{name}", ownerName);
     const dateLabel = date ? formatDayHeading(date) : "";
 
     const refreshSession = useCallback(async () => {
-        if (!ownerUserId || !date) return;
-        await mutate(sessionSwrKey(ownerUserId, date));
-    }, [ownerUserId, date, mutate]);
+        if (!sessionId) return;
+        await mutate(sessionSwrKeyById(sessionId));
+    }, [sessionId, mutate]);
 
     const handleToggleReaction = useCallback(
         async (emoji: string) => {
-            if (!ownerUserId || !date) return;
+            if (!sessionId) return;
             try {
-                const { target } = await toggleSessionReaction(ownerUserId, date, {
+                const { target } = await toggleSessionReactionById(sessionId, {
                     emoji,
                     targetType: "session",
                 });
                 void mutate(
-                    sessionSwrKey(ownerUserId, date),
+                    sessionSwrKeyById(sessionId),
                     (current) =>
                         current ? applySessionReactionTarget(current, target) : current,
                     { revalidate: false },
@@ -199,10 +205,10 @@ export default function SessionPage() {
                 toast.error(UI.sessionReactionError);
             }
         },
-        [ownerUserId, date, mutate],
+        [sessionId, mutate],
     );
 
-    if (!ownerUserId || !date) {
+    if (!sessionId) {
         return (
             <div className="min-h-screen-app bg-background">
                 <BackHeader title={UI.sessionTitle} />
@@ -239,6 +245,12 @@ export default function SessionPage() {
                             <p className="text-xs text-muted-foreground">
                                 {sessionSummaryLine}
                             </p>
+                        ) : null}
+
+                        {showRecap && session ? (
+                            <div className="space-y-6">
+                                <SessionRecapBlocks session={session} />
+                            </div>
                         ) : null}
 
                         {isOwner &&
@@ -292,15 +304,18 @@ export default function SessionPage() {
                             <p className="text-sm text-muted-foreground">{UI.sessionEmpty}</p>
                         )}
 
-                        <SessionCommentsThread
-                            ownerUserId={ownerUserId}
-                            date={date}
-                            currentUserId={currentUserId}
-                            reactions={session?.reactions ?? []}
-                            onToggleReaction={(emoji) => {
-                                void handleToggleReaction(emoji);
-                            }}
-                        />
+                        {ownerUserId && date ? (
+                            <SessionCommentsThread
+                                sessionId={sessionId}
+                                ownerUserId={ownerUserId}
+                                date={date}
+                                currentUserId={currentUserId}
+                                reactions={session?.reactions ?? []}
+                                onToggleReaction={(emoji) => {
+                                    void handleToggleReaction(emoji);
+                                }}
+                            />
+                        ) : null}
                     </>
                 )}
             </main>
