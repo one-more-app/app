@@ -332,21 +332,18 @@ export const UI = {
   homeTourBrowseTitle: "Parcourir tes exercices",
   homeTourBrowseContent:
     "Filtre par zone du corps, muscle puis matériel. Tu retrouves aussi le mode « tout voir » pour la liste complète.",
-  homeTourNavProfileTitle: "Profil",
-  homeTourNavProfileContent:
-    "Niveau, XP, stats, ligues par muscle et réglages du compte. C'est ton tableau de bord perso.",
-  homeTourNavHistoryTitle: "Historique",
-  homeTourNavHistoryContent:
-    "Retrouve toutes tes perfs jour par jour. Idéal pour revoir une séance ou corriger une entrée.",
+  homeTourNavExercisesTitle: "Exercices",
+  homeTourNavExercisesContent:
+    "Retrouve tes exercices suivis et le catalogue par zone du corps.",
   homeTourNavSocialTitle: "Social",
   homeTourNavSocialContent:
     "Ton classement du mois, tes potes et leur activité au même endroit. Vise le top pour gagner des badges.",
   rankingTourTitle: "Nouveau : Social",
   rankingTourContent:
     "Retrouve ton rang du mois, tes potes en séance et leurs dernières séances dans l'onglet Social.",
-  homeTourNavFriendsTitle: "Amis",
-  homeTourNavFriendsContent:
-    "Ajoute des potes, vois leur activité et envoie des défis. Plus tu parraines, plus tu débloques d'exercices.",
+  homeTourNavSettingsTitle: "Réglages",
+  homeTourNavSettingsContent:
+    "Compte, notifications, salle, temps de repos et apparence.",
   options: "Options",
   rename: "Renommer",
   renameExercise: "Renommer l'exercice",
@@ -379,6 +376,8 @@ export const UI = {
   browseAvailableCountOne: "{count} disponible",
   browseAvailableCountMany: "{count} disponibles",
   browseYourExercisesTitle: "Tes exercices",
+  browseCatalogTitle: "Catalogue",
+  browseNotYetTracked: "Pas encore suivi",
   browseBreadcrumbZones: "Zones",
   browseBreadcrumbLabel: "Parcours de sélection",
   browseSearchResults: "Résultats de recherche",
@@ -739,7 +738,10 @@ export const UI = {
     "Aucun pote dans le classement. Ajoute des amis pour te comparer chaque mois.",
   rankingEmptyGym: "Personne d'autre dans le classement de ta salle ce mois-ci.",
   rankingLoadError: "Impossible de charger le classement.",
+  navHome: "Accueil",
+  navExercises: "Exercices",
   navSocial: "Social",
+  navSettings: "Réglages",
   socialTitle: "Social",
   socialAddFriendsAria: "Ajouter des amis",
   socialRankingCardLabel: "Classement",

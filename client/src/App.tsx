@@ -289,6 +289,8 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
     const location = useLocation()
     const show =
         location.pathname === '/home' ||
+        location.pathname === '/exercises' ||
+        location.pathname === '/settings' ||
         location.pathname === '/profile' ||
         location.pathname === '/stats' ||
         location.pathname === '/history' ||

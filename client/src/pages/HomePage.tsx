@@ -172,6 +172,11 @@ function HomePage() {
     )
     const bonusPercent = progress ? resolveStreakXpBonus(progress).bonusPercent : 0
 
+    // Limite atteinte : bloquer l'ajout, pas le démarrage (exercices déjà suivis OK).
+    const goToStartSession = useCallback(() => {
+        navigate('/exercises')
+    }, [navigate])
+
     const goToAddExercise = useCallback(() => {
         if (!canAddExercise) {
             openReferralDrawer('limit')
@@ -224,7 +229,7 @@ function HomePage() {
                 )}
             </main>
 
-            {showStartCta ? <HomeStartSessionCta onClick={goToAddExercise} /> : null}
+            {showStartCta ? <HomeStartSessionCta onClick={goToStartSession} /> : null}
 
             <HomeTour
                 pageReady={!isLoading}

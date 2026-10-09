@@ -2,7 +2,6 @@ import { ExerciseImage } from '@/components/ExerciseImage'
 import { HistoryCollapsedHighlights } from '@/components/history/HistoryCollapsedHighlights'
 import { PerfEntryList } from '@/components/history/PerfEntryList'
 import { ExerciseTitle } from '@/components/ExerciseTitle'
-import { ReactionBubbles } from '@/components/session/ReactionBubbles'
 import { Card, CardTitle } from '@/components/ui/card'
 import { hapticImpact } from '@/lib/haptics'
 import {
@@ -10,7 +9,6 @@ import {
     type HistoryEntryInsight,
 } from '@/lib/history-entries'
 import { profileNestedClass } from '@/lib/profile-section'
-import { type ReactionBubble } from '@/lib/session-api'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import type { PerformanceEntry, TrackedExercise } from '@/types'
@@ -32,10 +30,6 @@ type HistoryExerciseCollapsibleProps = {
     readOnly?: boolean
     /** Sur le profil : fond secondary au lieu d’une Card imbriquée. */
     surface?: 'card' | 'profile'
-    reactions?: ReactionBubble[]
-    onToggleReaction?: (emoji: string) => void
-    reactionsEnabled?: boolean
-    currentUserId?: string | null
 }
 
 export function HistoryExerciseCollapsible({
@@ -49,14 +43,9 @@ export function HistoryExerciseCollapsible({
     onAddEntry,
     readOnly = false,
     surface = 'card',
-    reactions,
-    onToggleReaction,
-    reactionsEnabled = false,
-    currentUserId = null,
 }: HistoryExerciseCollapsibleProps) {
     const title = exercise?.name ?? UI.exerciseNotFound
     const canEdit = !!exercise
-    const canReact = reactionsEnabled && !!onToggleReaction
 
     const Shell = surface === 'profile' ? 'div' : Card
     const shellClass =
@@ -150,17 +139,6 @@ export function HistoryExerciseCollapsible({
                     </Collapsible.Content>
                 </Shell>
             </Collapsible.Root>
-            {canReact ? (
-                <ReactionBubbles
-                    reactions={reactions ?? []}
-                    currentUserId={currentUserId}
-                    onToggle={(emoji) => {
-                        void hapticImpact()
-                        onToggleReaction?.(emoji)
-                    }}
-                    className="px-1 pt-1.5"
-                />
-            ) : null}
         </li>
     )
 }

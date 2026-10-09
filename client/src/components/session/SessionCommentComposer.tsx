@@ -43,7 +43,7 @@ export function SessionCommentComposer({
             <div className="flex gap-2">
                 <Input
                     value={draft}
-                    className="bg-card"
+                    className="h-9 border-border bg-background"
                     onChange={(event) => setDraft(event.target.value)}
                     placeholder={placeholder}
                     maxLength={500}
@@ -66,6 +66,8 @@ export function SessionCommentComposer({
                 />
                 <Button
                     type="button"
+                    variant="default"
+                    className="h-9 shrink-0 bg-black px-3.5 text-white hover:bg-black/85 dark:bg-white dark:text-black dark:hover:bg-white/85"
                     onClick={handleSubmit}
                     disabled={sending || !draft.trim()}
                 >

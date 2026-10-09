@@ -24,7 +24,10 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAccess } from '@/hooks/use-access'
-import { usePerformanceDataRefresh } from '@/hooks/use-api-data'
+import {
+    useHomeExercisesData,
+    usePerformanceDataRefresh,
+} from '@/hooks/use-api-data'
 import { useBack } from '@/hooks/use-back'
 import { useExerciseCatalogBrowse } from '@/hooks/use-exercise-catalog-browse'
 import { useExerciseFilters } from '@/hooks/use-exercise-filters'
@@ -92,6 +95,7 @@ export function ExerciseListPage() {
         isExerciseCatalogTourComplete,
     )
     const { exercises: tracked, addExercise } = useTrackedExercises()
+    const { data: homeExercises = [] } = useHomeExercisesData()
     const [targets, setTargets] = useState<string[]>([])
     const [equipmentOptions, setEquipmentOptions] = useState<string[]>([])
     const { searchInput, searchQuery, handleSearchChange } = useExerciseFilters({
@@ -159,6 +163,17 @@ export function ExerciseListPage() {
     const trackedIds = new Set(
         tracked.map((e) => (e.isCustom ? e.exerciseId : `api-${e.exerciseId}`))
     )
+    const trackedByExerciseId = useMemo(() => {
+        const map = new Map<
+            string,
+            (typeof homeExercises)[number]
+        >()
+        for (const exercise of homeExercises) {
+            if (exercise.deletedAt || exercise.isCustom) continue
+            map.set(exercise.exerciseId, exercise)
+        }
+        return map
+    }, [homeExercises])
 
     const { data: catalogData, error: catalogError, isLoading: isLoadingCatalog } = useSWR(
         'exercise-catalog-full',
@@ -434,6 +449,39 @@ export function ExerciseListPage() {
         })
     }
 
+    const saveTrackedPerf = useCallback(
+        (ex: ExerciseDBExercise, weight: number, reps: number) => {
+            const trackedId = `api-${ex.id}`
+            const prevPB = getPersonalBest(trackedId) ?? null
+            void (async () => {
+                try {
+                    const { xp } = await savePerformanceAndWait(
+                        trackedId,
+                        weight,
+                        reps,
+                    )
+                    notifyXpGrants(xp)
+                    const nextPB = getPersonalBest(trackedId) ?? null
+                    notifyPerfMilestones({
+                        exerciseName: ex.name,
+                        prevPB,
+                        nextPB,
+                        savedWeight: weight,
+                        savedReps: reps,
+                        league: xp?.league,
+                        exerciseImageUrl:
+                            getExerciseImageUrl(ex.gifUrl) || undefined,
+                        bodyPart: ex.bodyPart,
+                        target: ex.target,
+                    })
+                } finally {
+                    void refreshAfterPerfChange()
+                }
+            })()
+        },
+        [refreshAfterPerfChange],
+    )
+
     const handleAddWithPerfSubmit = async () => {
         if (!addWithPerfExercise || perfReps <= 0 || isSubmittingFirstPerf) return
         const ex = addWithPerfExercise
@@ -671,6 +719,7 @@ export function ExerciseListPage() {
                         }
                         searchQuery={searchQuery}
                         trackedIds={trackedIds}
+                        trackedByExerciseId={trackedByExerciseId}
                         viewAll={viewAll}
                         onToggleViewAll={toggleViewAll}
                         onPickZone={pickZone}
@@ -678,7 +727,11 @@ export function ExerciseListPage() {
                         onPickEquipment={pickEquipment}
                         onGoToStep={goToStep}
                         onSelectExercise={setSelectedExercise}
+                        onOpenTrackedExercise={(ex) => {
+                            navigate(`/exercise/api-${ex.id}`)
+                        }}
                         onAddExercise={openAddWithPerf}
+                        onSaveTrackedPerf={saveTrackedPerf}
                     />
                 )}
 

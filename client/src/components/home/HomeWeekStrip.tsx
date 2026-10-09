@@ -31,12 +31,12 @@ function DayBubble({
   lost: boolean;
 }) {
   const base =
-    "flex size-9 items-center justify-center rounded-full text-xs font-semibold tabular-nums";
+    "grid size-7 shrink-0 place-items-center rounded-full text-[0.65rem] font-semibold leading-none tabular-nums";
 
   if (cell.active && lost) {
     return (
       <span className={cn(base, "bg-accent text-accent-foreground")}>
-        <Check className="size-4" strokeWidth={3} aria-hidden />
+        <Check className="size-3 stroke-[2.5]" aria-hidden />
       </span>
     );
   }
@@ -56,13 +56,13 @@ function DayBubble({
         {cell.active || atRisk ? (
           <Flame
             className={cn(
-              "size-4 text-orange-500",
+              "size-3.5 text-orange-500",
               cell.active && "fill-orange-500",
             )}
             aria-hidden
           />
         ) : (
-          <span className="font-one-more italic">{dayNumber(cell.date)}</span>
+          dayNumber(cell.date)
         )}
       </span>
     );
@@ -71,7 +71,10 @@ function DayBubble({
   if (cell.active) {
     return (
       <span className={cn(base, "bg-orange-500/15")}>
-        <Flame className="size-4 fill-orange-500 text-orange-500" aria-hidden />
+        <Flame
+          className="size-3.5 fill-orange-500 text-orange-500"
+          aria-hidden
+        />
       </span>
     );
   }
@@ -84,14 +87,14 @@ function DayBubble({
           "border border-dashed border-border text-muted-foreground/70",
         )}
       >
-        <span className="font-one-more italic">{dayNumber(cell.date)}</span>
+        {dayNumber(cell.date)}
       </span>
     );
   }
 
   return (
     <span className={cn(base, "bg-secondary text-secondary-foreground")}>
-      <span className="font-one-more italic">{dayNumber(cell.date)}</span>
+      {dayNumber(cell.date)}
     </span>
   );
 }

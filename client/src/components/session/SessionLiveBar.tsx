@@ -89,14 +89,16 @@ function BottomRow({
 }: BottomRowProps) {
   const [dismissed, setDismissed] = useState(false);
   const { enabled } = useRestTimerEnabled();
-  const { visible, elapsedMs, targetMs, targetComplete } =
+  const { visible, elapsedMs, targetMs, targetComplete, progress01 } =
     useRestSinceLastSet(restCreatedAt);
 
   useEffect(() => {
     if (enabled) setDismissed(false);
   }, [enabled]);
 
-  const resting = visible && enabled && !dismissed;
+  // Une fois la cible atteinte : plus de rangée repos (comme le prototype),
+  // on revient à séance + Terminer. Le toast fin de repos reste géré à part.
+  const resting = visible && enabled && !dismissed && !targetComplete;
 
   if (!resting) {
     return (
@@ -125,17 +127,16 @@ function BottomRow({
   }
 
   const remainingMs = Math.max(0, targetMs - elapsedMs);
-  const countdown = targetComplete
-    ? `+${formatRestElapsed(elapsedMs - targetMs)}`
-    : formatRestElapsed(Math.ceil(remainingMs / 1000) * 1000);
-  const a11yLabel = (
-    targetComplete ? UI.sessionBarRestOverA11y : UI.sessionBarRestRemainingA11y
-  ).replace(
+  const countdown = formatRestElapsed(Math.ceil(remainingMs / 1000) * 1000);
+  const a11yLabel = UI.sessionBarRestRemainingA11y.replace(
     "{time}",
-    formatRestElapsedA11y(targetComplete ? elapsedMs - targetMs : remainingMs),
+    formatRestElapsedA11y(remainingMs),
   );
   const minuteBucket =
     elapsedMs >= 60_000 ? Math.floor(elapsedMs / 60_000) : null;
+  const reducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   return (
     <>
@@ -143,15 +144,24 @@ function BottomRow({
         data-tour="rest-counter"
         role="status"
         aria-label={a11yLabel}
-        className="flex items-center gap-3 bg-accent px-3 py-2.5 text-accent-foreground"
+        className="relative flex items-center gap-3 overflow-hidden bg-accent px-3 py-2.5 text-accent-foreground"
       >
+        {/* Remplissage gauche → droite comme sur la maquette (overlay sombre sur lime). */}
         <span
           aria-hidden
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-black/10"
+          className={cn(
+            "absolute inset-y-0 left-0 bg-black/10",
+            !reducedMotion && "transition-[width] duration-1000 ease-linear",
+          )}
+          style={{ width: `${progress01 * 100}%` }}
+        />
+        <span
+          aria-hidden
+          className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-black/10"
         >
           <Clock className="size-5" />
         </span>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="relative flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-[0.6875rem] font-medium uppercase leading-none tracking-wide opacity-70">
             {UI.restSinceLastSet}
           </span>
@@ -165,11 +175,11 @@ function BottomRow({
         <RestTargetQuickEdit
           side="top"
           align="end"
-          className="h-8 gap-1.5 border-transparent bg-white/70 px-3 text-sm font-semibold text-black hover:bg-white/90"
+          className="relative h-8 gap-1.5 border-transparent bg-white/70 px-3 text-sm font-semibold text-black hover:bg-white/90"
         />
         <Button
           type="button"
-          className="h-10 rounded-xl bg-black px-4 text-sm font-semibold normal-case tracking-normal text-white hover:bg-black/85 dark:bg-black dark:text-white"
+          className="relative h-10 rounded-xl bg-black px-4 text-sm font-semibold normal-case tracking-normal text-white hover:bg-black/85 dark:bg-black dark:text-white"
           onClick={(event) => {
             event.stopPropagation();
             trackRestTimerDismissed({
@@ -347,7 +357,7 @@ export function SessionLiveBar({ navVisible }: SessionLiveBarProps) {
         <div
           role="region"
           aria-label={UI.sessionBarA11y}
-          className="pointer-events-auto mx-auto max-w-2xl overflow-hidden rounded-2xl bg-black text-white shadow-lg ring-1 ring-white/10"
+          className="pointer-events-auto mx-auto max-w-2xl overflow-hidden rounded-2xl bg-black text-white ring-1 ring-white/10"
         >
           <div className="flex items-center gap-3 px-3 py-2.5">
             <button

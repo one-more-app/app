@@ -258,35 +258,54 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
             {pageTitle && browse.step === 'zone' && !showingViewAll ? (
                 <BrowsePageTitle className="mb-0.5">{pageTitle}</BrowsePageTitle>
             ) : null}
-            <div className="mb-2 flex flex-wrap items-center justify-between align-center gap-x-2 gap-y-1">
-                <BrowseSectionTitle
-                    className="mb-0"
-                    data-tour="first-exercise-browse-anchor"
-                >
-                    {stepTitle}
-                </BrowseSectionTitle>
-                {canToggleViewAll ? (
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        className="h-6 shrink-0 px-2 text-[10px]"
-                        onClick={onToggleViewAll}
+            {/* Avec séparation suivis / catalogue, les titres de section sont dans la liste. */}
+            {showingViewAll && isTracked ? (
+                canToggleViewAll ? (
+                    <div className="mb-2 flex justify-end">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-6 shrink-0 px-2 text-[10px]"
+                            onClick={onToggleViewAll}
+                            data-tour="first-exercise-browse-anchor"
+                        >
+                            <LayoutGrid className="mr-1 size-3.5" />
+                            {UI.browseViewByCategory}
+                        </Button>
+                    </div>
+                ) : null
+            ) : (
+                <div className="mb-2 flex flex-wrap items-center justify-between align-center gap-x-2 gap-y-1">
+                    <BrowseSectionTitle
+                        className="mb-0"
+                        data-tour="first-exercise-browse-anchor"
                     >
-                        {viewAll ? (
-                            <>
-                                <LayoutGrid className="mr-1 size-3.5" />
-                                {UI.browseViewByCategory}
-                            </>
-                        ) : (
-                            <>
-                                <List className="mr-1 size-3.5" />
-                                {UI.browseViewAll}
-                            </>
-                        )}
-                    </Button>
-                ) : null}
-            </div>
+                        {stepTitle}
+                    </BrowseSectionTitle>
+                    {canToggleViewAll ? (
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-6 shrink-0 px-2 text-[10px]"
+                            onClick={onToggleViewAll}
+                        >
+                            {viewAll ? (
+                                <>
+                                    <LayoutGrid className="mr-1 size-3.5" />
+                                    {UI.browseViewByCategory}
+                                </>
+                            ) : (
+                                <>
+                                    <List className="mr-1 size-3.5" />
+                                    {UI.browseViewAll}
+                                </>
+                            )}
+                        </Button>
+                    ) : null}
+                </div>
+            )}
 
             {showingViewAll ? renderExerciseList(scopeExercises) : null}
 

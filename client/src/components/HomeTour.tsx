@@ -97,19 +97,9 @@ export function HomeTour({
 
     nextSteps.push(
       {
-        target: '[data-tour="nav-profile"]',
-        title: UI.homeTourNavProfileTitle,
-        content: UI.homeTourNavProfileContent,
-        placement: "top",
-        skipScroll: true,
-        floatingOptions: {
-          shiftOptions: { padding: getJoyrideShiftPadding() },
-        },
-      },
-      {
-        target: '[data-tour="nav-history"]',
-        title: UI.homeTourNavHistoryTitle,
-        content: UI.homeTourNavHistoryContent,
+        target: '[data-tour="nav-exercises"]',
+        title: UI.homeTourNavExercisesTitle,
+        content: UI.homeTourNavExercisesContent,
         placement: "top",
         skipScroll: true,
         floatingOptions: {
@@ -127,9 +117,9 @@ export function HomeTour({
         },
       },
       {
-        target: '[data-tour="nav-friends"]',
-        title: UI.homeTourNavFriendsTitle,
-        content: UI.homeTourNavFriendsContent,
+        target: '[data-tour="nav-settings"]',
+        title: UI.homeTourNavSettingsTitle,
+        content: UI.homeTourNavSettingsContent,
         placement: "top",
         skipScroll: true,
         floatingOptions: {

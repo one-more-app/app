@@ -11,13 +11,21 @@ import {
   groupByDayThenExercise,
   resolveTrackedExercise,
 } from "@/lib/history-entries";
+import { hapticImpact } from "@/lib/haptics";
 import { formatCompactDuration, formatHomeDayTitle } from "@/lib/home-day";
 import { getLocalDateKey } from "@/lib/local-date";
+import {
+  applySessionReactionTarget,
+  sessionSwrKey,
+  toggleSessionReaction,
+} from "@/lib/session-api";
 import { UI } from "@/lib/translations";
 import type { PerformanceEntry } from "@/types";
 import { computeSessionTiming } from "@one-more/shared/session-timing";
 import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useSWRConfig } from "swr";
 
 type HomePastSessionProps = {
   ownerUserId: string;
@@ -35,6 +43,7 @@ export function HomePastSession({
   allEntries,
 }: HomePastSessionProps) {
   const navigate = useNavigate();
+  const { mutate } = useSWRConfig();
   const auth = useAuth();
   const currentUserId =
     auth.status === "authenticated" ? (auth.user?.id ?? null) : null;
@@ -115,12 +124,30 @@ export function HomePastSession({
             exercise: resolveExercise(trackedExerciseId),
             league: fromSession?.league ?? null,
             seriesLabel,
-            reactions:
-              session?.reactionsByExerciseId?.[trackedExerciseId],
           };
         }),
       ),
-    [dayGroups, resolveExercise, session, sessionExercises],
+    [dayGroups, resolveExercise, sessionExercises],
+  );
+
+  const handleToggleReaction = useCallback(
+    async (emoji: string) => {
+      try {
+        const { target } = await toggleSessionReaction(ownerUserId, dayKey, {
+          emoji,
+          targetType: "session",
+        });
+        void mutate(
+          sessionSwrKey(ownerUserId, dayKey),
+          (current) =>
+            current ? applySessionReactionTarget(current, target) : current,
+          { revalidate: false },
+        );
+      } catch {
+        toast.error(UI.sessionReactionError);
+      }
+    },
+    [ownerUserId, dayKey, mutate],
   );
 
   const exerciseCount = useMemo(
@@ -170,7 +197,6 @@ export function HomePastSession({
           onOpenExercise={(id) => {
             void navigate(`/exercise/${id}`);
           }}
-          currentUserId={currentUserId}
         />
       )}
 
@@ -179,6 +205,11 @@ export function HomePastSession({
           ownerUserId={ownerUserId}
           date={dayKey}
           currentUserId={currentUserId}
+          reactions={session.reactions ?? []}
+          onToggleReaction={(emoji) => {
+            void hapticImpact();
+            void handleToggleReaction(emoji);
+          }}
         />
       ) : null}
     </section>

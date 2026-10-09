@@ -21,7 +21,6 @@ import {
     fetchSession,
     sessionSwrKey,
     toggleSessionReaction,
-    type SessionReactionTargetType,
 } from "@/lib/session-api";
 import {
     deletePerformanceAndWait,
@@ -183,17 +182,12 @@ export default function SessionPage() {
     }, [ownerUserId, date, mutate]);
 
     const handleToggleReaction = useCallback(
-        async (
-            emoji: string,
-            targetType: SessionReactionTargetType,
-            trackedExerciseId?: string,
-        ) => {
+        async (emoji: string) => {
             if (!ownerUserId || !date) return;
             try {
                 const { target } = await toggleSessionReaction(ownerUserId, date, {
                     emoji,
-                    targetType,
-                    trackedExerciseId,
+                    targetType: "session",
                 });
                 void mutate(
                     sessionSwrKey(ownerUserId, date),
@@ -272,18 +266,6 @@ export default function SessionPage() {
                                         }
                                         entryInsights={entryInsights}
                                         readOnly={!isOwner}
-                                        reactionsEnabled
-                                        currentUserId={currentUserId}
-                                        reactionsByExerciseId={
-                                            session?.reactionsByExerciseId ?? {}
-                                        }
-                                        onToggleExerciseReaction={(trackedExerciseId, emoji) =>
-                                            void handleToggleReaction(
-                                                emoji,
-                                                "exercise",
-                                                trackedExerciseId,
-                                            )
-                                        }
                                         onEditEntry={isOwner ? setEditEntry : () => { }}
                                         onDeleteEntry={
                                             isOwner
@@ -314,6 +296,10 @@ export default function SessionPage() {
                             ownerUserId={ownerUserId}
                             date={date}
                             currentUserId={currentUserId}
+                            reactions={session?.reactions ?? []}
+                            onToggleReaction={(emoji) => {
+                                void handleToggleReaction(emoji);
+                            }}
                         />
                     </>
                 )}

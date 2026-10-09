@@ -101,14 +101,14 @@ export function BrowseTile({
                     <span className="size-12 shrink-0 rounded-lg bg-muted" />
                 )}
                 <span className="min-w-0 flex-1">
-                    <CardTitle>
-                        {label}
-                    </CardTitle>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                        <BrowseTileCounts count={count} trackedCount={trackedCount} />
+                    <span className="flex flex-wrap items-center gap-2">
+                        <CardTitle>{label}</CardTitle>
                         {leagueLevel ? (
                             <RankBadge rankId={leagueLevel} size="xs" />
                         ) : null}
+                    </span>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <BrowseTileCounts count={count} trackedCount={trackedCount} />
                     </div>
                 </span>
                 <ChevronRight

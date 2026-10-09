@@ -94,25 +94,23 @@ test("historique vers page séance", async ({ page }) => {
           commentCount: 0,
           exerciseCount: 1,
           setCount: 1,
-          reactions: [],
-          reactionsByExerciseId: {
-            [tracked.id]: [
-              {
-                emoji: "💪",
-                count: 1,
-                reactedByMe: false,
-                users: [
-                  {
-                    userId: "friend-1",
-                    firstName: "Alex",
-                    lastName: null,
-                    username: "alex",
-                    avatarUrl: null,
-                  },
-                ],
-              },
-            ],
-          },
+          reactions: [
+            {
+              emoji: "💪",
+              count: 1,
+              reactedByMe: false,
+              users: [
+                {
+                  userId: "friend-1",
+                  firstName: "Alex",
+                  lastName: null,
+                  username: "alex",
+                  avatarUrl: null,
+                },
+              ],
+            },
+          ],
+          reactionsByExerciseId: {},
         }),
       });
       return;
@@ -125,8 +123,8 @@ test("historique vers page séance", async ({ page }) => {
         body: JSON.stringify({
           added: true,
           target: {
-            targetType: "exercise",
-            trackedExerciseId: tracked.id,
+            targetType: "session",
+            trackedExerciseId: null,
             reactions: [
               {
                 emoji: "💪",

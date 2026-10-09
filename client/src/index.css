@@ -158,7 +158,7 @@
     --safe-bottom-web: 0.5rem;
     --safe-top: var(--safe-top-native);
     --safe-bottom: var(--safe-bottom-native);
-    --bottom-nav-height: 4rem;
+    --bottom-nav-height: 4.5rem;
     --back-header-height: 3.75rem;
   }
 

@@ -1,12 +1,10 @@
 import { ExerciseImage } from "@/components/ExerciseImage";
 import { ExerciseTitle } from "@/components/ExerciseTitle";
 import { RankBadge } from "@/components/RankBadge";
-import { ReactionBubbles } from "@/components/session/ReactionBubbles";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatPerfLabel, type HistoryEntryInsight } from "@/lib/history-entries";
 import { hapticImpact } from "@/lib/haptics";
-import type { ReactionBubble } from "@/lib/session-api";
 import type { LeagueInfo } from "@/lib/strength-standards";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
@@ -22,7 +20,6 @@ export type HomeExerciseListGroup = {
   exercise: TrackedExercise | undefined;
   league: LeagueInfo | null;
   seriesLabel: string;
-  reactions?: ReactionBubble[];
 };
 
 export type HomeExerciseListProps = {
@@ -32,8 +29,6 @@ export type HomeExerciseListProps = {
   onOpenExercise: (trackedExerciseId: string) => void;
   onAddSet?: (trackedExerciseId: string) => void;
   onEditEntry?: (entry: PerformanceEntry) => void;
-  currentUserId?: string | null;
-  onToggleReaction?: (trackedExerciseId: string, emoji: string) => void;
 };
 
 export function HomeExerciseList({
@@ -43,8 +38,6 @@ export function HomeExerciseList({
   onOpenExercise,
   onAddSet,
   onEditEntry,
-  currentUserId,
-  onToggleReaction,
 }: HomeExerciseListProps) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
 
@@ -68,7 +61,6 @@ export function HomeExerciseList({
             exercise,
             league,
             seriesLabel,
-            reactions,
           }) => {
             const name = exercise?.name ?? UI.exerciseNotFound;
             const isOpen = expanded.has(trackedExerciseId);
@@ -183,18 +175,6 @@ export function HomeExerciseList({
                       );
                     })}
                   </ol>
-                ) : null}
-
-                {reactions?.length ? (
-                  <ReactionBubbles
-                    reactions={reactions}
-                    currentUserId={currentUserId}
-                    disabled={!onToggleReaction}
-                    onToggle={(emoji) =>
-                      onToggleReaction?.(trackedExerciseId, emoji)
-                    }
-                    className="pt-2"
-                  />
                 ) : null}
               </li>
             );
