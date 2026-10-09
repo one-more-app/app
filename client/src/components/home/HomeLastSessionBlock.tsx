@@ -44,7 +44,7 @@ export function HomeLastSessionBlock({
     : formatHomeDayShort(dayKey);
 
   return (
-    <section className="mt-8" aria-label={UI.homeLastSession}>
+    <section className="mt-6" aria-label={UI.homeLastSession}>
       <HomeDayTitle
         right={
           <button

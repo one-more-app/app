@@ -82,7 +82,7 @@ export function HomeFirstSessionCard() {
           className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/15 from-20% to-[#0a0a0a]"
         />
         <div className="absolute inset-x-3 top-3 flex items-center justify-between gap-2">
-          <h2 className="font-one-more text-sm font-semibold uppercase italic tracking-tight [text-shadow:0_1px_4px_rgba(0,0,0,0.5)]">
+          <h2 className="font-one-more text-xs font-normal uppercase italic leading-[1.1] tracking-tight [text-shadow:0_1px_4px_rgba(0,0,0,0.5)]">
             {UI.homeFirstSessionTitle}
           </h2>
           <span
@@ -104,7 +104,7 @@ export function HomeFirstSessionCard() {
           <br />
           <span className="accent-text">{title[1]}</span>
         </p>
-        <p className="text-[13px] leading-snug text-white/75">{body}</p>
+        <p className="text-[13px] leading-[1.45] text-white/75">{body}</p>
         {active ? (
           <Button
             type="button"
