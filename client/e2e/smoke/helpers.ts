@@ -149,6 +149,10 @@ export function trackPageErrors(page: Page): string[] {
     if (/_leaflet_pos/.test(error.message)) {
       return;
     }
+    // Preview Vite / PWA : sw.js parfois absent (serveur stale ou build partiel).
+    if (/Failed to register a ServiceWorker/.test(error.message)) {
+      return;
+    }
     pageErrors.push(error.message);
   });
   return pageErrors;

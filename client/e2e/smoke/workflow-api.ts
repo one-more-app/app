@@ -4,7 +4,7 @@ import {
   e2eCatalogExercise,
   e2eTrackedId,
 } from "../fixtures/exercises";
-import { mockCoreAuthenticatedApi } from "./helpers";
+import { mockCoreAuthenticatedApi, mockSession } from "./helpers";
 
 type TrackedRow = ReturnType<typeof buildTrackedExercise>;
 type PerfRow = {
@@ -75,9 +75,14 @@ export async function mockExerciseWorkflowApi(
     : [];
   const performanceEntries: PerfRow[] = [];
 
+  let seededPerfCreatedAt: string | null = null;
+  let seededPerfDate: string | null = null;
+
   if (options?.seedPerformance && options?.seedTrackedExercise) {
     const now = new Date().toISOString();
     const today = now.slice(0, 10);
+    seededPerfCreatedAt = now;
+    seededPerfDate = today;
     performanceEntries.push({
       id: "e2e-perf-1",
       trackedExerciseId: e2eTrackedId,
@@ -92,6 +97,84 @@ export async function mockExerciseWorkflowApi(
   }
 
   await mockCoreAuthenticatedApi(page);
+
+  // Séances first-class : sans mock JSON, le preview Vite renvoie du HTML 200
+  // et useLiveSession croit qu'il n'y a plus de séance live.
+  if (seededPerfCreatedAt && seededPerfDate) {
+    const startedAt = seededPerfCreatedAt;
+    const date = seededPerfDate;
+    const tracked = buildTrackedExercise();
+    await page.route("**/sessions/**", async (route) => {
+      const url = route.request().url();
+      const method = route.request().method();
+
+      if (method === "GET" && url.includes("/day/")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            items: [
+              {
+                id: E2E_WORKOUT_SESSION_ID,
+                date,
+                startedAt,
+                endedAt: null,
+                isLive: true,
+              },
+            ],
+          }),
+        });
+        return;
+      }
+
+      if (method === "GET" && !url.includes("/comments")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: E2E_WORKOUT_SESSION_ID,
+            owner: {
+              userId: mockSession.user.id,
+              firstName: null,
+              lastName: null,
+              username: null,
+              avatarUrl: null,
+            },
+            date,
+            isLive: true,
+            endedAt: null,
+            xpEarned: 0,
+            exercises: [
+              {
+                ...tracked,
+                lastPerf: null,
+                personalBest: null,
+                league: null,
+              },
+            ],
+            entries: performanceEntries.map((entry) => ({
+              ...entry,
+              leagueInsight: {
+                isRecord: false,
+                leagueUp: false,
+                prevLeague: null,
+                nextLeague: null,
+              },
+            })),
+            highlights: [],
+            commentCount: 0,
+            exerciseCount: 1,
+            setCount: performanceEntries.length,
+            reactions: [],
+            reactionsByExerciseId: {},
+          }),
+        });
+        return;
+      }
+
+      await route.fallback();
+    });
+  }
 
   await page.route("**/exercises/meta", async (route) => {
     await route.fulfill({

@@ -21,7 +21,10 @@ test("barre de séance : repos, passer, terminer, visible sur la fiche exercice"
 
   await page.goto("/#/home");
 
-  const bar = page.getByRole("region", { name: UI.sessionBarA11y });
+  // `data-session-live-bar` : éviter le `<section>` accueil aussi nommé « Séance en cours ».
+  const bar = page.locator("[data-session-live-bar]").getByRole("region", {
+    name: UI.sessionBarA11y,
+  });
   await expect(bar).toBeVisible({ timeout: 10_000 });
   await expect(
     bar.getByRole("button", {
@@ -53,7 +56,11 @@ test("barre de séance : repos, passer, terminer, visible sur la fiche exercice"
   await expect(
     page.locator("h1").filter({ hasText: e2eCatalogExercise.name }),
   ).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByRole("region", { name: UI.sessionBarA11y })).toBeVisible();
+  await expect(
+    page.locator("[data-session-live-bar]").getByRole("region", {
+      name: UI.sessionBarA11y,
+    }),
+  ).toBeVisible();
 
   expect(pageErrors).toEqual([]);
 });

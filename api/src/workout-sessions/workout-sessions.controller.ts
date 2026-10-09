@@ -239,6 +239,13 @@ export class WorkoutSessionsController {
         body.parentId,
       );
     this.realtime.emitSessionComment(ownerUserId, date, comment);
+    const sessionId = await this.sessionsService.resolveSessionIdForDay(
+      ownerUserId,
+      date,
+    );
+    if (sessionId) {
+      this.realtime.emitSessionCommentById(sessionId, comment);
+    }
     void this.notifications.notifySessionComment({
       ownerUserId,
       sessionDate: date,
@@ -267,6 +274,13 @@ export class WorkoutSessionsController {
       body.body,
     );
     this.realtime.emitSessionComment(ownerUserId, date, comment);
+    const sessionId = await this.sessionsService.resolveSessionIdForDay(
+      ownerUserId,
+      date,
+    );
+    if (sessionId) {
+      this.realtime.emitSessionCommentById(sessionId, comment);
+    }
     return { comment };
   }
 
@@ -303,6 +317,13 @@ export class WorkoutSessionsController {
       body.trackedExerciseId,
     );
     this.realtime.emitSessionReaction(ownerUserId, date, target);
+    const sessionId = await this.sessionsService.resolveSessionIdForDay(
+      ownerUserId,
+      date,
+    );
+    if (sessionId) {
+      this.realtime.emitSessionReactionById(sessionId, target);
+    }
     if (added) {
       void this.notifications.notifySessionReaction({
         ownerUserId,

@@ -249,12 +249,36 @@ describe('WorkoutSessionsService', () => {
     expect(result.endedAt).toBe(endedAt.toISOString());
   });
 
-  it('ne rouvre pas la séance si une série suit endedAt (multi-séances)', async () => {
+  it('facade legacy : rouvre le jour si une série suit endedAt (sans workout_sessions)', async () => {
     const endedAt = new Date(Date.now() - 10 * 60 * 1000);
     const lastSet = new Date(Date.now() - 2 * 60 * 1000);
     mockOwnerWithEntries(lastSet.toISOString());
     presenceService.getPresence.mockResolvedValue({ status: 'offline' });
     endsRepo.findOne.mockResolvedValue({ endedAt });
+    lifecycle.listForDay.mockResolvedValue([]);
+
+    const result = await service.getSession('owner-1', 'owner-1', '2026-07-13');
+
+    expect(result.isLive).toBe(true);
+    expect(result.endedAt).toBeNull();
+  });
+
+  it('avec séance first-class terminée : isLive false même si présence training', async () => {
+    const lastSet = new Date(Date.now() - 5 * 60 * 1000);
+    mockOwnerWithEntries(lastSet.toISOString());
+    presenceService.getPresence.mockResolvedValue({ status: 'training' });
+    const endedAt = new Date(Date.now() - 60 * 1000);
+    lifecycle.listForDay.mockResolvedValue([
+      {
+        id: 'sess-1',
+        ownerUserId: 'owner-1',
+        sessionDate: '2026-07-13',
+        startedAt: new Date(Date.now() - 40 * 60 * 1000),
+        endedAt,
+      },
+    ]);
+    lifecycle.isSessionLive.mockReturnValue(false);
+    lifecycle.getLastSetAt.mockResolvedValue(lastSet);
 
     const result = await service.getSession('owner-1', 'owner-1', '2026-07-13');
 

@@ -15,8 +15,10 @@ import { FriendsService } from '../social/friends.service.js';
 import { TrackedExercisesService } from '../tracked-exercises/tracked-exercises.service.js';
 import { ProgressService } from '../progress/progress.service.js';
 import {
+  getSessionBounds,
   resolveExplicitSessionEnd,
   SESSION_ACTIVE_IDLE_MS,
+  type SessionEntryLike,
 } from '../shared/session-timing.js';
 import { SessionCommentEntity } from './entities/session-comment.entity.js';
 import { SessionEndEntity } from './entities/session-end.entity.js';
@@ -29,6 +31,23 @@ import type { WorkoutSessionEntity } from './entities/workout-session.entity.js'
 import { SessionLifecycleService } from './session-lifecycle.service.js';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Facade jour legacy : une série après endedAt « rouvre » le jour
+ * (compat apps non mises à jour). Le chemin sessionId n'utilise pas ça.
+ */
+function resolveLegacyDayExplicitEnd(
+  entries: SessionEntryLike[],
+  endedAt: string | null | undefined,
+): string | null {
+  if (!endedAt) return null;
+  const bounds = getSessionBounds(entries);
+  if (!bounds) return null;
+  const endedMs = new Date(endedAt).getTime();
+  if (Number.isNaN(endedMs)) return null;
+  if (endedMs < new Date(bounds.last.createdAt).getTime()) return null;
+  return endedAt;
+}
 
 export type SessionCommentAuthorDto = {
   userId: string;
@@ -110,7 +129,9 @@ export class WorkoutSessionsService {
       isLive: boolean;
     }> = [];
     for (const raw of sessions) {
-      const session = await this.lifecycle.lazyCloseIfIdle(raw);
+      const session = isPresenceTraining
+        ? raw
+        : await this.lifecycle.lazyCloseIfIdle(raw);
       const lastSetAt = await this.lifecycle.getLastSetAt(session.id);
       const isLive = this.lifecycle.isSessionLive(session, {
         todayKey: today,
@@ -132,7 +153,13 @@ export class WorkoutSessionsService {
   async getSessionById(viewerId: string, sessionId: string) {
     let session = await this.lifecycle.findById(sessionId);
     await this.assertCanViewSession(viewerId, session.ownerUserId);
-    session = await this.lifecycle.lazyCloseIfIdle(session);
+    const presence = await this.presenceService.getPresence(
+      session.ownerUserId,
+    );
+    const isPresenceTraining = presence?.status === PresenceStatus.TRAINING;
+    if (!isPresenceTraining) {
+      session = await this.lifecycle.lazyCloseIfIdle(session);
+    }
     return await this.buildSessionPayload(viewerId, session);
   }
 
@@ -305,12 +332,17 @@ export class WorkoutSessionsService {
       where: { ownerUserId, sessionDate: date },
     });
 
-    const daySessionsRaw = await this.lifecycle.listForDay(ownerUserId, date);
-    for (const raw of daySessionsRaw) {
-      await this.lifecycle.lazyCloseIfIdle(raw);
-    }
-    const daySessions = await this.lifecycle.listForDay(ownerUserId, date);
     const isPresenceTraining = presence?.status === PresenceStatus.TRAINING;
+    const daySessionsRaw = await this.lifecycle.listForDay(ownerUserId, date);
+    // Présence training : ne pas persister de fin idle (compat vieux clients live).
+    if (!isPresenceTraining) {
+      for (const raw of daySessionsRaw) {
+        await this.lifecycle.lazyCloseIfIdle(raw);
+      }
+    }
+    const daySessions = isPresenceTraining
+      ? daySessionsRaw
+      : await this.lifecycle.listForDay(ownerUserId, date);
     let isLive = false;
     let liveSessionId: string | undefined;
     for (const sessionRow of daySessions) {
@@ -327,9 +359,9 @@ export class WorkoutSessionsService {
         break;
       }
     }
-    // Legacy sans workout_sessions : idle jour, sauf fin explicite déjà posée.
+    // Legacy sans workout_sessions : idle jour + reopen si série après endedAt.
     if (!isLive && daySessions.length === 0 && date === today && lastEntry) {
-      const legacyEnded = resolveExplicitSessionEnd(
+      const legacyEnded = resolveLegacyDayExplicitEnd(
         entries,
         endRow?.endedAt.toISOString() ?? null,
       );
@@ -789,7 +821,8 @@ export class WorkoutSessionsService {
     };
   }
 
-  private async resolveSessionIdForDay(
+  /** Séance ouverte du jour, sinon la plus récente (dual-emit realtime legacy). */
+  async resolveSessionIdForDay(
     ownerUserId: string,
     date: string,
   ): Promise<string | null> {
