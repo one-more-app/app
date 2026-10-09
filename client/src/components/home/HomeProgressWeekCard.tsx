@@ -146,6 +146,7 @@ export function HomeProgressWeekCard({
             canGoPrev={canGoPrev}
             canGoNext={canGoNext}
             todayAtRisk={streak.kind === "risk"}
+            streakLost={streak.kind === "none"}
           />
           <StreakNote streak={streak} />
         </div>

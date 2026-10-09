@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { getWeekdayLabels, type WeekDayCell } from "@/lib/activity-calendar";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Flame } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Flame } from "lucide-react";
 
 type HomeWeekStripProps = {
   cells: WeekDayCell[];
@@ -14,6 +14,7 @@ type HomeWeekStripProps = {
   canGoNext: boolean;
   /** Dernier jour pour sauver la série : aujourd'hui passe en pointillés orange. */
   todayAtRisk?: boolean;
+  streakLost?: boolean;
 };
 
 function dayNumber(dateKey: string): string {
@@ -23,12 +24,22 @@ function dayNumber(dateKey: string): string {
 function DayBubble({
   cell,
   atRisk,
+  lost,
 }: {
   cell: WeekDayCell;
   atRisk: boolean;
+  lost: boolean;
 }) {
   const base =
     "flex size-9 items-center justify-center rounded-full text-xs font-semibold tabular-nums";
+
+  if (cell.active && lost) {
+    return (
+      <span className={cn(base, "bg-accent text-accent-foreground")}>
+        <Check className="size-4" strokeWidth={3} aria-hidden />
+      </span>
+    );
+  }
 
   if (cell.isToday) {
     return (
@@ -94,6 +105,7 @@ export function HomeWeekStrip({
   canGoPrev,
   canGoNext,
   todayAtRisk = false,
+  streakLost = false,
 }: HomeWeekStripProps) {
   const weekdayLabels = getWeekdayLabels();
 
@@ -140,7 +152,11 @@ export function HomeWeekStrip({
               >
                 {cell.isToday ? UI.homeWeekToday : weekday}
               </span>
-              <DayBubble cell={cell} atRisk={todayAtRisk && cell.isToday} />
+              <DayBubble
+                cell={cell}
+                atRisk={todayAtRisk && cell.isToday}
+                lost={streakLost}
+              />
               <span
                 aria-hidden
                 className={cn(
