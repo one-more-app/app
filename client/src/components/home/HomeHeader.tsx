@@ -28,13 +28,14 @@ export function HomeHeader({ ownerUserId }: HomeHeaderProps) {
                         userId={ownerUserId}
                         avatarUrl={avatarUrl}
                         initials={initials}
-                        sizeClassName="size-11"
+                        sizeClassName="size-9"
+                        roundedClassName="rounded-lg"
                         textSizeClassName="text-sm bg-card"
                         linkOptions={{ isSelf: true }}
                     />
                 ) : null}
                 <div className="flex min-w-0 flex-col items-start gap-1">
-                    <p className="max-w-full truncate font-one-more text-sm font-semibold uppercase italic tracking-tight">
+                    <p className="max-w-full truncate font-one-more text-xs font-semibold uppercase italic tracking-tight">
                         {name}
                     </p>
                     {leagueSummary?.globalRank ? (
