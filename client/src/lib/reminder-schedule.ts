@@ -76,6 +76,28 @@ export const DEFAULT_REMINDER_SLOTS: ReminderSlot[] = slotsFromLegacy(
   DEFAULT_REMINDER_MINUTE,
 );
 
+/** Défauts post-inscription C1 : lun 07:00, mer 12:30, ven 18:30. */
+export const FIRST_SESSION_DEFAULT_REMINDER_SLOTS: ReminderSlot[] = [
+  { weekday: 1, hour: 7, minute: 0 },
+  { weekday: 3, hour: 12, minute: 30 },
+  { weekday: 5, hour: 18, minute: 30 },
+];
+
+/** Applique la même heure à tous les créneaux actifs. */
+export function applyReminderTimeToAllSlots(
+  slots: ReminderSlot[],
+  hour: number,
+  minute: number,
+): ReminderSlot[] {
+  return normalizeReminderSlots(
+    slots.map((slot) => ({
+      ...slot,
+      hour: clampReminderHour(hour),
+      minute: clampReminderMinute(minute),
+    })),
+  );
+}
+
 export function reminderSlotsFromPrefs(prefs: {
   reminderSlots?: Array<{ weekday?: number; hour?: number; minute?: number }> | null;
   reminderWeekdays?: number[];
@@ -184,7 +206,7 @@ export function formatReminderSchedule(slots: ReminderSlot[]): string {
     return sorted
       .map(
         (slot) =>
-          `${WEEKDAY_SHORT[slot.weekday]} ${formatReminderTime(slot.hour, slot.minute)}`,
+          `${WEEKDAY_SHORT[slot.weekday]} ${formatReminderClock(slot.hour, slot.minute)}`,
       )
       .join(" · ");
   }

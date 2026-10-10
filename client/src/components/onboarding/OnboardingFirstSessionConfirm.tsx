@@ -8,11 +8,12 @@ import { StepCard } from "@/components/StepCard";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNotificationPreferences } from "@/hooks/use-notification-preferences";
+import { useUserGymData } from "@/hooks/use-user-gym-data";
 import { OnboardingSteps, useOnboardingStepViewed } from "@/lib/analytics";
 import {
   formatNextReminderDay,
   formatReminderClock,
-  formatReminderScheduleShort,
+  formatReminderSchedule,
   reminderSlotsFromPrefs,
   resolveNextReminder,
 } from "@/lib/reminder-schedule";
@@ -27,21 +28,34 @@ const POINTS = [
 ];
 
 type OnboardingFirstSessionConfirmProps = {
+  mode?: "days" | "gym";
   onBack: () => void;
   onStartNow: () => void;
   onHome: () => void;
 };
 
-/** Post-inscription, « C'est noté » : prochain rappel et suite. */
+/** B5 / C3 · « C'est noté » : rappel salle ou créneaux. */
 export function OnboardingFirstSessionConfirm({
+  mode = "days",
   onBack,
   onStartNow,
   onHome,
 }: OnboardingFirstSessionConfirmProps) {
   useOnboardingStepViewed(OnboardingSteps.FIRST_SESSION_CONFIRM);
   const { data: prefs } = useNotificationPreferences();
+  const { data: userGym } = useUserGymData();
 
   const { title, body, schedule } = useMemo(() => {
+    if (mode === "gym") {
+      const gymName = userGym?.name?.trim() || null;
+      return {
+        title: UI.firstSessionNotedTitleGym,
+        body: gymName
+          ? UI.firstSessionNotedBodyGym.replace("{gym}", gymName)
+          : UI.firstSessionNotedBodyGymNoName,
+        schedule: gymName,
+      };
+    }
     const slots = reminderSlotsFromPrefs(prefs ?? {});
     const next = resolveNextReminder(slots);
     if (!next) {
@@ -51,7 +65,7 @@ export function OnboardingFirstSessionConfirm({
           UI.reminderNextTomorrow,
         ),
         body: UI.firstSessionNotedBodyNoNext,
-        schedule: formatReminderScheduleShort(slots),
+        schedule: formatReminderSchedule(slots),
       };
     }
     const day = formatNextReminderDay(next);
@@ -63,9 +77,9 @@ export function OnboardingFirstSessionConfirm({
       body: UI.firstSessionNotedBody
         .replace("{day}", day)
         .replace("{time}", formatReminderClock(next.hour, next.minute)),
-      schedule: formatReminderScheduleShort(slots),
+      schedule: formatReminderSchedule(slots),
     };
-  }, [prefs]);
+  }, [mode, prefs, userGym?.name]);
 
   return (
     <Trackable
@@ -108,7 +122,9 @@ export function OnboardingFirstSessionConfirm({
           </Card>
 
           <Card className="gap-2 p-4">
-            <p className="font-medium">{UI.firstSessionNotedAtGymTitle}</p>
+            <p className="font-one-more text-xs font-bold uppercase italic">
+              {UI.firstSessionNotedAtGymTitle}
+            </p>
             <p className="text-muted-foreground">
               {UI.firstSessionNotedAtGymBody}
             </p>

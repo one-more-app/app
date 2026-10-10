@@ -166,8 +166,20 @@ describe("resolveOnboardingBackTarget", () => {
       resolveOnboardingBackTarget("/onboarding", "?step=first-reminder"),
     ).toEqual({ kind: "path", to: "/onboarding?step=first-session" });
     expect(
-      resolveOnboardingBackTarget("/onboarding", "?step=first-noted"),
+      resolveOnboardingBackTarget("/onboarding", "?step=first-days"),
     ).toEqual({ kind: "path", to: "/onboarding?step=first-reminder" });
+    expect(
+      resolveOnboardingBackTarget("/onboarding", "?step=first-noted"),
+    ).toEqual({ kind: "path", to: "/onboarding?step=first-days" });
+    expect(
+      resolveOnboardingBackTarget(
+        "/onboarding",
+        "?step=first-noted&mode=gym",
+      ),
+    ).toEqual({
+      kind: "path",
+      to: "/onboarding?step=gym-permissions&reselect=1&from=first-session",
+    });
     expect(
       resolveOnboardingBackTarget(
         "/onboarding",
@@ -184,7 +196,7 @@ describe("resolveOnboardingBackTarget", () => {
       resolveOnboardingBackTarget("/onboarding", "?step=first-noted&from=home"),
     ).toEqual({
       kind: "path",
-      to: "/onboarding?step=first-reminder&from=home",
+      to: "/onboarding?step=first-days&from=home",
     });
   });
 });

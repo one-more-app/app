@@ -168,6 +168,8 @@ function AccessGate({ children }: { children: React.ReactNode }) {
         return <Navigate to="/home" replace />
     }
 
+    const gymFromFirstSession = onboardingFrom === 'first-session'
+
     if (
         auth.status === 'authenticated' &&
         isOnboardingRoute &&
@@ -176,7 +178,12 @@ function AccessGate({ children }: { children: React.ReactNode }) {
             // « Ta première séance » : aussi accessible depuis la carte de l'accueil.
             onboardingStep === 'first-session' ||
             onboardingStep === 'first-reminder' ||
-            onboardingStep === 'first-noted')
+            onboardingStep === 'first-days' ||
+            onboardingStep === 'first-noted' ||
+            // Branche salle du rappel post-inscription / carte accueil.
+            (gymFromFirstSession &&
+                (onboardingStep === 'gym' ||
+                    onboardingStep === 'gym-permissions')))
     ) {
         return <>{children}</>
     }
@@ -188,6 +195,7 @@ function AccessGate({ children }: { children: React.ReactNode }) {
         onboardingStep === 'gym' &&
         !gymFromSettings &&
         !gymReselect &&
+        !gymFromFirstSession &&
         !gymDevPreview &&
         gymGateReady &&
         userGym
@@ -202,6 +210,7 @@ function AccessGate({ children }: { children: React.ReactNode }) {
         !gymDevPreview &&
         !gymFromSettings &&
         !gymReselect &&
+        !gymFromFirstSession &&
         gymFlowComplete
     ) {
         return <Navigate to="/home" replace />

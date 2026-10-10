@@ -38,7 +38,6 @@ type GymSearchView = 'list' | 'map'
 
 type OnboardingGymStepProps = {
     onGymSaved: () => void | Promise<void>
-    onSkip?: () => void | Promise<void>
     fromSettings?: boolean
     startAtSearch?: boolean
     onSearchBack?: () => void
@@ -76,7 +75,6 @@ function GymStepShell({
 
 export function OnboardingGymStep({
     onGymSaved,
-    onSkip,
     fromSettings = false,
     startAtSearch = false,
     onSearchBack,
@@ -87,7 +85,6 @@ export function OnboardingGymStep({
     const mutateUserGym = useMutateUserGym()
     const navigate = useNavigate()
     const isNative = Capacitor.isNativePlatform()
-    const canSkip = Boolean(onSkip) && !fromSettings && !embedded
     const [subStep, setSubStep] = useState<GymSubStep>(
         fromSettings || startAtSearch ? 'search' : 'question',
     )
@@ -385,18 +382,6 @@ export function OnboardingGymStep({
                                 return onGymSaved()
                             }}
                         />
-                        {canSkip ? (
-                            <OnboardingReveal delayMs={200}>
-                                <Button
-                                    variant="ghost"
-                                    className="w-full text-muted-foreground"
-                                    data-analytics-label="onboarding_gym_skip"
-                                    onClick={() => void onSkip?.()}
-                                >
-                                    {UI.gymOnboardingSkipNoGym}
-                                </Button>
-                            </OnboardingReveal>
-                        ) : null}
                     </div>
                 </StepCard>
             </GymStepShell>

@@ -57,6 +57,12 @@ const ONBOARDING_RECORD_DESTINATION_KEY =
 const POST_AUTH_FLOW_DESTINATION_KEY =
   "one-more-post-auth-flow-destination-v1";
 const NOTIFICATIONS_EDU_DONE_KEY = "one-more-notifications-edu-done-v1";
+/** Relance Notifications après la 1ʳᵉ séance (hors post-auth). */
+const NOTIFICATIONS_REPROMPT_DONE_KEY =
+  "one-more-notifications-reprompt-done-v1";
+/** Destination après la relance Notifications (récap séance). */
+const POST_NOTIFICATIONS_REPROMPT_PATH_KEY =
+  "one-more-post-notifications-reprompt-path-v1";
 /** Parcours post-inscription « Ta première séance » terminé (ne plus l'afficher). */
 const FIRST_SESSION_FLOW_DONE_KEY = "one-more-first-session-flow-done-v1";
 const ONBOARDING_GYM_PENDING_KEY = "one-more-onboarding-gym-pending-v1";
@@ -381,6 +387,8 @@ export async function savePerformanceAndWait(
     id?: string;
     skipRestTimer?: boolean;
     excludeFromRestTimer?: boolean;
+    /** false : perf seule, sans ouvrir de séance (record pré-inscription). */
+    attachSession?: boolean;
   },
 ): Promise<{ entry: PerformanceEntry; xp?: XpGrantResult }> {
   const today = getLocalDateKey();
@@ -403,7 +411,9 @@ export async function savePerformanceAndWait(
   notifyLocalDataChanged("performance");
 
   try {
-    const { entry: remote, xp } = await upsertPerformanceEntry(entry);
+    const { entry: remote, xp } = await upsertPerformanceEntry(entry, {
+      attachSession: opts?.attachSession,
+    });
     updatePerformanceCache(
       getAllPerformanceEntries().map((e) => (e.id === entry.id ? remote : e)),
     );
@@ -882,6 +892,50 @@ export function setNotificationsEduDone(done: boolean): void {
     } else {
       localStorage.removeItem(NOTIFICATIONS_EDU_DONE_KEY);
     }
+  } catch {
+    // ignore
+  }
+}
+
+export function isNotificationsRepromptDone(): boolean {
+  try {
+    return localStorage.getItem(NOTIFICATIONS_REPROMPT_DONE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setNotificationsRepromptDone(done: boolean): void {
+  try {
+    if (done) {
+      localStorage.setItem(NOTIFICATIONS_REPROMPT_DONE_KEY, "1");
+    } else {
+      localStorage.removeItem(NOTIFICATIONS_REPROMPT_DONE_KEY);
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function peekPostNotificationsRepromptPath(): string | null {
+  try {
+    return sessionStorage.getItem(POST_NOTIFICATIONS_REPROMPT_PATH_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setPostNotificationsRepromptPath(path: string): void {
+  try {
+    sessionStorage.setItem(POST_NOTIFICATIONS_REPROMPT_PATH_KEY, path);
+  } catch {
+    // ignore
+  }
+}
+
+export function clearPostNotificationsRepromptPath(): void {
+  try {
+    sessionStorage.removeItem(POST_NOTIFICATIONS_REPROMPT_PATH_KEY);
   } catch {
     // ignore
   }

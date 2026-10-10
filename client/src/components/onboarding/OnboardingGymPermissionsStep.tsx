@@ -34,16 +34,17 @@ type OnboardingGymPermissionsStepProps = {
     gymName: string
     gymAddress: string | null
     onContinue: () => void
-    onSkip: () => void
     onChangeGym: () => void
+    /** Libellé CTA bas (ex. « Activer » dans le flow post-inscription). */
+    continueLabel?: string
 }
 
 export function OnboardingGymPermissionsStep({
     gymName,
     gymAddress,
     onContinue,
-    onSkip,
     onChangeGym,
+    continueLabel,
 }: OnboardingGymPermissionsStepProps) {
     const isNative = Capacitor.isNativePlatform()
     const isDevWebPreview = isGymPermissionsDevWebPreview()
@@ -134,12 +135,6 @@ export function OnboardingGymPermissionsStep({
         if (!canContinue || continuingRef.current) return
         continuingRef.current = true
         onContinue()
-    }
-
-    const handleSkip = () => {
-        if (continuingRef.current) return
-        continuingRef.current = true
-        onSkip()
     }
 
     const handleNotificationsToggle = async (checked: boolean) => {
@@ -294,30 +289,17 @@ export function OnboardingGymPermissionsStep({
                             </div>
                         </OnboardingReveal>
                     ) : null}
-                    <div className="space-y-2">
-                        <OnboardingReveal delayMs={400}>
-                            <Button
-                                variant="accent"
-                                className="w-full"
-                                data-analytics-label="onboarding_gym_permissions_continue"
-                                disabled={!canContinue || busyNotifications || busyLocation}
-                                onClick={handleContinue}
-                            >
-                                {UI.continue}
-                            </Button>
-                        </OnboardingReveal>
-                        <OnboardingReveal delayMs={480}>
-                            <Button
-                                variant="secondary"
-                                className="w-full"
-                                data-analytics-label="onboarding_gym_permissions_skip"
-                                disabled={busyNotifications || busyLocation}
-                                onClick={handleSkip}
-                            >
-                                {UI.gymOnboardingPermissionsSkip}
-                            </Button>
-                        </OnboardingReveal>
-                    </div>
+                    <OnboardingReveal delayMs={400}>
+                        <Button
+                            variant="accent"
+                            className="w-full"
+                            data-analytics-label="onboarding_gym_permissions_continue"
+                            disabled={!canContinue || busyNotifications || busyLocation}
+                            onClick={handleContinue}
+                        >
+                            {continueLabel ?? UI.continue}
+                        </Button>
+                    </OnboardingReveal>
                 </StepCard>
             </OnboardingStepLayout>
         </Trackable>

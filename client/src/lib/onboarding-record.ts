@@ -8,12 +8,12 @@ import { onboardingExerciseGifUrl } from "@/lib/onboarding-starter-exercises"
 import { UI } from "@/lib/translations"
 import {
   addTrackedExerciseAndWait,
+  clearOnboardingRecordDestination,
   clearPendingOnboardingRecord,
   getAllPerformanceEntries,
   peekPendingOnboardingRecord,
   savePerformanceAndWait,
   setOnboardingFirstExercisePending,
-  setOnboardingRecordDestination,
   setOnboardingTourComplete,
   setPerformanceEntries,
   setTrackedExercises,
@@ -75,16 +75,18 @@ async function commitPendingOnboardingRecordOnce(): Promise<string | null> {
       id: draft.clientPerfId,
       skipRestTimer: true,
       excludeFromRestTimer: true,
+      attachSession: false,
     })
     clearPendingOnboardingRecord()
+    clearOnboardingRecordDestination()
     try {
       await hydrateOnboardingRecordCaches()
     } catch {
       /* Les écritures locales sont déjà là ; la fiche se complétera au refetch. */
     }
+    // Perf historique seulement : le parcours « Ta première séance » prend le relais.
     setOnboardingFirstExercisePending(true)
     setOnboardingTourComplete(true)
-    setOnboardingRecordDestination(`/exercise/${trackedId}`)
     return trackedId
   } catch {
     toast.message(UI.onboardingRecordSaveError)

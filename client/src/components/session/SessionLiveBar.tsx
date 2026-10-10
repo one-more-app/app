@@ -29,6 +29,10 @@ import { resolveTrackedExercise } from "@/lib/history-entries";
 import { notifyPerfMilestones } from "@/lib/perf-notifications";
 import { dismissCurrentRestPeriod } from "@/lib/rest-timer-local-notifications";
 import {
+    ONBOARDING_NOTIFICATIONS_REPROMPT_PATH,
+    shouldShowNotificationsReprompt,
+} from "@/lib/post-auth-navigation";
+import {
     daySessionsSwrKey,
     endSession,
     endSessionById,
@@ -37,7 +41,11 @@ import {
     sessionSwrKeyById,
     type WorkoutSession,
 } from "@/lib/session-api";
-import { getPersonalBest, savePerformanceAndWait } from "@/lib/storage";
+import {
+    getPersonalBest,
+    savePerformanceAndWait,
+    setPostNotificationsRepromptPath,
+} from "@/lib/storage";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { notifyXpGrants } from "@/lib/xp-notifications";
@@ -399,7 +407,15 @@ export function SessionLiveBar({ navVisible }: SessionLiveBarProps) {
             await mutate(daySessionsSwrKey(ownerUserId, live.dayKey));
             setEndStats(null);
             if (nextSessionId) {
-                navigate(sessionPath(nextSessionId));
+                const recapPath = sessionPath(nextSessionId);
+                if (await shouldShowNotificationsReprompt()) {
+                    setPostNotificationsRepromptPath(recapPath);
+                    navigate(ONBOARDING_NOTIFICATIONS_REPROMPT_PATH, {
+                        replace: true,
+                    });
+                } else {
+                    navigate(recapPath);
+                }
             }
         } catch {
             toast.error(UI.endSessionError);

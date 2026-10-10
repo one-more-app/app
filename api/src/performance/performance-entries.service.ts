@@ -134,13 +134,16 @@ export class PerformanceEntriesService {
       relations: { trackedExercise: true },
     });
 
-    const workoutSession = await this.sessionLifecycle.attachOrCreateSession(
-      userId,
-      activityDate,
-      entity.updatedAt,
-    );
-    entity.workoutSessionId = workoutSession.id;
-    await this.perfRepo.save(entity);
+    const attachSession = body.attachSession !== false;
+    if (attachSession) {
+      const workoutSession = await this.sessionLifecycle.attachOrCreateSession(
+        userId,
+        activityDate,
+        entity.updatedAt,
+      );
+      entity.workoutSessionId = workoutSession.id;
+      await this.perfRepo.save(entity);
+    }
 
     const xp = await this.progressService.processPerformanceAdded({
       userId,
@@ -151,7 +154,7 @@ export class PerformanceEntriesService {
       reps: entity.reps,
     });
 
-    if (isFirstPerfOfDay) {
+    if (isFirstPerfOfDay && attachSession) {
       void this.notifications.notifyFriendTraining({
         trainingUserId: userId,
         exerciseName: entity.trackedExercise.name,

@@ -160,13 +160,30 @@ export function resolveOnboardingBackTarget(
     if (fromHome) return { kind: "path", to: "/home" };
     return { kind: "path", to: "/onboarding?step=first-session" };
   }
-  if (step === "first-noted") {
+  if (step === "first-days") {
     return {
       kind: "path",
       to: fromHome
         ? "/onboarding?step=first-reminder&from=home"
         : "/onboarding?step=first-reminder",
     };
+  }
+  if (step === "first-noted") {
+    if (params.get("mode") === "gym") {
+      return {
+        kind: "path",
+        to: "/onboarding?step=gym-permissions&reselect=1&from=first-session",
+      };
+    }
+    return {
+      kind: "path",
+      to: fromHome
+        ? "/onboarding?step=first-days&from=home"
+        : "/onboarding?step=first-days",
+    };
+  }
+  if (step === "notifications" && params.get("from") === "reprompt") {
+    return { kind: "path", to: "/home" };
   }
   if (step === "gym") {
     if (fromSettings) return { kind: "path", to: "/settings" };
@@ -177,6 +194,12 @@ export function resolveOnboardingBackTarget(
     return { kind: "path", to: "/onboarding?step=rank" };
   }
   if (step === "gym-permissions" || step === "gym-wait") {
+    if (fromFirstSession) {
+      return {
+        kind: "path",
+        to: "/onboarding?step=gym&reselect=1&from=first-session",
+      };
+    }
     return { kind: "path", to: "/onboarding?step=gym&reselect=1" };
   }
   return { kind: "stay" };

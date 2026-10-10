@@ -91,6 +91,9 @@ describe("first session steps", () => {
       resolveOnboardingStepFromLocation("/onboarding", "?step=first-reminder"),
     ).toBe(OnboardingSteps.FIRST_SESSION_REMINDER);
     expect(
+      resolveOnboardingStepFromLocation("/onboarding", "?step=first-days"),
+    ).toBe(OnboardingSteps.FIRST_SESSION_DAYS);
+    expect(
       resolveOnboardingStepFromLocation("/onboarding", "?step=first-noted"),
     ).toBe(OnboardingSteps.FIRST_SESSION_CONFIRM);
   });

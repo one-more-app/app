@@ -120,7 +120,7 @@ export function HomeFirstSessionCard({
                     <Button
                         type="button"
                         variant="secondary"
-                        className="w-full gap-2"
+                        className="w-full gap-2 border-0 bg-white/12 text-white hover:bg-white/20"
                         data-analytics-label={`${analyticsPrefix}_edit_reminder`}
                         onClick={() => {
                             void hapticImpact();
