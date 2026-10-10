@@ -4,7 +4,6 @@ import { useAnalytics } from "@/hooks/use-analytics";
 import { usePaywall } from "@/hooks/use-paywall";
 import { AnalyticsEvents } from "@/lib/analytics";
 import { logAppsFlyerCommerce } from "@/lib/appsflyer-events";
-import { UI } from "@/lib/translations";
 import { getFreeTrialLabel } from "@/lib/paywall-free-trial";
 import {
     annualSavingsPercent,
@@ -15,6 +14,7 @@ import {
     purchasePackage,
     type CurrentOffering,
 } from "@/lib/purchases";
+import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { Browser } from "@capacitor/browser";
 import { Capacitor } from "@capacitor/core";
@@ -91,8 +91,8 @@ export function CustomPaywallDrawer() {
     const status: "loading" | "error" | "ready" = hasError
         ? "error"
         : offering
-          ? "ready"
-          : "loading";
+            ? "ready"
+            : "loading";
 
     useEffect(() => {
         if (!open) return;
@@ -297,9 +297,9 @@ function PaywallBody({
     const annualSaveBadge =
         savingsPercent != null
             ? UI.paywallAnnualSaveBadge.replace(
-                  "{percent}",
-                  String(savingsPercent),
-              )
+                "{percent}",
+                String(savingsPercent),
+            )
             : undefined;
 
     return (
@@ -409,8 +409,8 @@ function BilledLine({
             ? UI.paywallBilledYearlyAndroid
             : UI.paywallBilledYearlyIos
         : isAndroid
-          ? UI.paywallBilledMonthlyAndroid
-          : UI.paywallBilledMonthlyIos;
+            ? UI.paywallBilledMonthlyAndroid
+            : UI.paywallBilledMonthlyIos;
     const [before, after] = template.split("{price}");
     return (
         <span>
@@ -471,7 +471,7 @@ function PackageCard({
             onClick={onSelect}
             aria-pressed={selected}
             className={cn(
-                "relative flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-3 text-left text-black transition",
+                "relative flex w-full items-center gap-4 rounded-xl bg-white px-4 py-3 text-left text-black transition",
                 selected
                     ? "shadow-[0_0_0_3px_#0a0a0a]"
                     : "shadow-[0_0_0_1px_rgba(0,0,0,0.06)]",

@@ -231,7 +231,7 @@ const RECAP_HERO_SRC = "/images/first-session-hero.jpg";
 <Link
   to={`/session/${ownerUserId}/${dayKey}`}
   /* …handlers / aria inchangés… */
-  className="dark relative flex min-h-[112px] items-center gap-4 overflow-hidden rounded-2xl bg-[#0a0a0a] p-4 text-white outline-none focus-visible:ring-2 focus-visible:ring-ring"
+  className="dark relative flex min-h-[112px] items-center gap-4 overflow-hidden rounded-xl bg-[#0a0a0a] p-4 text-white outline-none focus-visible:ring-2 focus-visible:ring-ring"
 >
   <img
     src={RECAP_HERO_SRC}

@@ -11,7 +11,7 @@ export function OnboardingSceneStage({
     return (
         <div
             className={cn(
-                "relative h-full min-h-0 overflow-hidden rounded-2xl bg-card",
+                "relative h-full min-h-0 overflow-hidden rounded-xl bg-card",
                 className,
             )}
         >

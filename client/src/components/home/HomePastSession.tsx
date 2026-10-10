@@ -41,6 +41,8 @@ type HomePastSessionProps = {
   /** Titre optionnel (multi-séances le même jour). */
   title?: string;
   recapVariant?: "default" | "compact";
+  /** Titre et méta de la ligne un cran plus petits (accueil). */
+  compactHeading?: boolean;
 };
 
 export function HomePastSession({
@@ -51,6 +53,7 @@ export function HomePastSession({
   allEntries,
   title,
   recapVariant = "default",
+  compactHeading = false,
 }: HomePastSessionProps) {
   const navigate = useNavigate();
   const { mutate } = useSWRConfig();
@@ -174,17 +177,30 @@ export function HomePastSession({
   return (
     <section className="space-y-4">
       <HomeDayTitle
+        size={compactHeading ? "sm" : "md"}
         right={
           timing ? (
             <span className="flex items-baseline gap-2">
               {timing.endedAt ? (
-                <span className="text-xs text-muted-foreground">
+                <span
+                  className={
+                    compactHeading
+                      ? "text-[11px] text-muted-foreground"
+                      : "text-xs text-muted-foreground"
+                  }
+                >
                   {UI.homeSessionTimeRange
                     .replace("{start}", formatTimeOnly(timing.startedAt))
                     .replace("{end}", formatTimeOnly(timing.endedAt))}
                 </span>
               ) : null}
-              <span className="font-one-more text-base italic tabular-nums">
+              <span
+                className={
+                  compactHeading
+                    ? "font-one-more text-sm italic tabular-nums"
+                    : "font-one-more text-base italic tabular-nums"
+                }
+              >
                 {formatCompactDuration(timing.durationMs)}
               </span>
             </span>

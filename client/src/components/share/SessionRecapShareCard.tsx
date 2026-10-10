@@ -96,7 +96,7 @@ function StatsBody({ payload }: { payload: SessionRecapSharePayload }) {
         },
     ]
     return (
-        <div className="space-y-8">
+        <div className="space-y-4">
             <Eyebrow>
                 {UI.recapStorySessionOf.replace('{date}', payload.dateLabel)}
             </Eyebrow>
@@ -137,7 +137,7 @@ function MusclesBody({ payload }: { payload: SessionRecapSharePayload }) {
         },
     }))
     return (
-        <div className="space-y-8">
+        <div className="space-y-4">
             <Eyebrow>{UI.recapStoryMusclesTitle}</Eyebrow>
             <div className="flex justify-center gap-6">
                 {(['front', 'back'] as const).map((side) => (
@@ -169,14 +169,14 @@ function MusclesBody({ payload }: { payload: SessionRecapSharePayload }) {
 
 function RecordsBody({ payload }: { payload: SessionRecapSharePayload }) {
     return (
-        <div className="space-y-8">
+        <div className="space-y-4">
             <p className="font-one-more text-[7rem] font-bold uppercase italic leading-[0.95]">
                 <span className="tabular-nums">{payload.recordCount}</span>{' '}
                 {payload.recordCount === 1
                     ? UI.recapStoryRecordsLeadOne
                     : UI.recapStoryRecordsLead}{' '}
                 <span
-                    className="rounded-2xl px-4 text-black"
+                    className="rounded-xl px-4 text-black"
                     style={{ backgroundColor: ACCENT }}
                 >
                     {payload.recordCount === 1
@@ -209,7 +209,7 @@ function LeagueBody({ payload }: { payload: SessionRecapSharePayload }) {
     const percent = Math.round(league.progressToNext * 100)
     const fill = leagueMapFill(league.tier, true)
     return (
-        <div className="space-y-8">
+        <div className="space-y-4">
             <Eyebrow>{UI.recapStoryLeagueTitle}</Eyebrow>
             <RankBadge
                 league={league}

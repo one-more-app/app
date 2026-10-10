@@ -1,12 +1,17 @@
 import { AddPerfDrawer } from "@/components/AddPerfDrawer";
 import { BackHeader } from "@/components/BackHeader";
 import { HistoryDaySection } from "@/components/history/HistoryDaySection";
+import { ReviewSessionCard } from "@/components/review/ReviewSessionCard";
 import { SessionCommentsThread } from "@/components/session/SessionCommentsThread";
 import { SessionRecapBlocks } from "@/components/session/recap/SessionRecapBlocks";
 import { HistoryPageSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useSessionLiveById } from "@/hooks/use-session-live";
+import {
+    isReviewSessionCardPending,
+    maybeRequestNativeReviewOnRecap,
+} from "@/lib/app-review";
 import { getExerciseImageUrl } from "@/lib/exercisedb";
 import {
     entryInsightsFromPerformances,
@@ -16,6 +21,7 @@ import {
 } from "@/lib/history-entries";
 import { notifyPerfMilestones } from "@/lib/perf-notifications";
 import { getProfileDisplayName } from "@/lib/profile-display";
+import { hadReviewPrToday } from "@/lib/review-pr-today";
 import {
     applySessionReactionTarget,
     fetchSessionById,
@@ -31,16 +37,10 @@ import {
 import { UI } from "@/lib/translations";
 import { notifyXpGrants } from "@/lib/xp-notifications";
 import type { PerformanceEntry } from "@/types";
-import { toast } from "sonner";
 import { Radio } from "lucide-react";
-import { ReviewSessionCard } from "@/components/review/ReviewSessionCard";
-import {
-    isReviewSessionCardPending,
-    maybeRequestNativeReviewOnRecap,
-} from "@/lib/app-review";
-import { hadReviewPrToday } from "@/lib/review-pr-today";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 
 export default function SessionPage() {
@@ -162,8 +162,8 @@ export default function SessionPage() {
     const pageTitle = showRecap
         ? UI.recapTitle
         : isOwner
-          ? UI.sessionTitleMine
-          : UI.sessionTitleFriend.replace("{name}", ownerName);
+            ? UI.sessionTitleMine
+            : UI.sessionTitleFriend.replace("{name}", ownerName);
     const dateLabel = date ? formatDayHeading(date) : "";
 
     const refreshSession = useCallback(async () => {
@@ -232,16 +232,16 @@ export default function SessionPage() {
                         ) : null}
 
                         {isOwner &&
-                        showReviewCard &&
-                        session &&
-                        !session.isLive ? (
+                            showReviewCard &&
+                            session &&
+                            !session.isLive ? (
                             <ReviewSessionCard
                                 onDismissCard={() => setShowReviewCard(false)}
                             />
                         ) : null}
 
                         {dayGroups.length > 0 ? (
-                            <ul className="space-y-8">
+                            <ul className="space-y-4">
                                 {dayGroups.map(({ date: dayKey, exercises: dayExercises }) => (
                                     <HistoryDaySection
                                         key={dayKey}

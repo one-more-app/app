@@ -15,12 +15,12 @@ export function HomeStartSessionCta({ onClick }: HomeStartSessionCtaProps) {
     >
       <div className="mx-auto max-w-2xl">
         <Button
-          className="pointer-events-auto h-11 w-full gap-2 font-one-more font-bold uppercase italic"
+          className="pointer-events-auto h-11 w-full gap-2 font-one-more text-sm font-bold uppercase italic"
           onClick={onClick}
           data-analytics-label="home_start_session"
           data-tour="home-start-session"
         >
-          <Play className="size-3.5 fill-current" aria-hidden />
+          <Play className="size-4 fill-current" aria-hidden />
           {UI.homeStartSession}
         </Button>
       </div>

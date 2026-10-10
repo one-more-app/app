@@ -21,6 +21,10 @@ test("barre de séance : repos, passer, terminer, visible sur la fiche exercice"
 
   await page.goto("/#/home");
 
+  const liveTitle = page.getByRole("heading", { name: UI.homeSessionInProgress });
+  await expect(liveTitle).toBeVisible({ timeout: 10_000 });
+  await expect(liveTitle.locator(".animate-ping")).toBeVisible();
+
   const exerciseRow = page.getByRole("button", {
     name: new RegExp(e2eCatalogExercise.name, "i"),
     expanded: false,

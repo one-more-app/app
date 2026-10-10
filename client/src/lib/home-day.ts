@@ -269,17 +269,3 @@ export function buildRecentVolumeSessions(
 
   return windowed.slice(-maxBars);
 }
-
-/**
- * Volumes seuls des dernières séances jusqu'à `dayKey` inclus.
- * Sert au mini graphique du teaser récap.
- */
-export function buildRecentVolumeBars(
-  entries: PerformanceEntry[],
-  dayKey: string,
-  maxBars = 6,
-): number[] {
-  return buildRecentVolumeSessions(entries, dayKey, maxBars).map(
-    (bar) => bar.volume,
-  );
-}

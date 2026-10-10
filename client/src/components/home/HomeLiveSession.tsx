@@ -87,7 +87,7 @@ function LiveChrono({ startedAt }: { startedAt: number }) {
     }, []);
 
     return (
-        <span className="font-one-more text-lg italic tabular-nums">
+        <span className="font-one-more text-base italic tabular-nums">
             {formatSessionChrono(now - startedAt)}
         </span>
     );
@@ -230,6 +230,7 @@ export function HomeLiveSession({
         <section data-tour="home-today" className="space-y-4">
             <div>
                 <HomeDayTitle
+                    size="sm"
                     right={
                         timing ? (
                             <LiveChrono
@@ -238,7 +239,13 @@ export function HomeLiveSession({
                         ) : null
                     }
                 >
-                    {UI.homeSessionInProgress}
+                    <span className="inline-flex items-center gap-2 leading-none">
+                        <span aria-hidden className="relative flex size-2 shrink-0 items-center justify-center">
+                            <span className="absolute inset-0 animate-ping rounded-full bg-current opacity-70 motion-reduce:animate-none [animation-duration:2.4s]" />
+                            <span className="size-2 rounded-full bg-current" />
+                        </span>
+                        {UI.homeSessionInProgress}
+                    </span>
                 </HomeDayTitle>
 
                 <HomeExerciseList

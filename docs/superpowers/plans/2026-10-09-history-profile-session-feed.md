@@ -327,7 +327,7 @@ Dans le composant (`variant = "default"`) :
 
 - `default` : classes actuelles (`min-h-[112px]`, `p-4`, bars `MAX_BAR_HEIGHT_PX = 52`, headline `text-lg`, etc.)
 - `compact` :
-  - Link : `min-h-[72px] gap-3 p-3` (garder le reste dark / rounded-2xl)
+  - Link : `min-h-[72px] gap-3 p-3` (garder le reste dark / rounded-xl)
   - Label : `text-[10px]`
   - Headline : `text-base`
   - CTA : `text-xs`
@@ -341,7 +341,7 @@ const maxBar = compact ? 32 : 52;
 // bars: Math.max(compact ? 4 : 6, Math.round((volume / max) * maxBar))
 
 className={cn(
-  "dark relative flex items-center overflow-hidden rounded-2xl bg-[#0a0a0a] text-white outline-none focus-visible:ring-2 focus-visible:ring-ring",
+  "dark relative flex items-center overflow-hidden rounded-xl bg-[#0a0a0a] text-white outline-none focus-visible:ring-2 focus-visible:ring-ring",
   compact ? "min-h-[72px] gap-3 p-3" : "min-h-[112px] gap-4 p-4",
 )}
 ```
@@ -448,7 +448,7 @@ export function SessionFeed({
   }
 
   return (
-    <div className={cn("space-y-8", className)}>
+    <div className={cn("space-y-4", className)}>
       {shown.map((item) => {
         const dayEntries = entries.filter(
           (entry) =>

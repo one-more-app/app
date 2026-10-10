@@ -1,7 +1,9 @@
 import { useHomeSessionById } from "@/hooks/use-day-sessions";
+import { getActivityDayKey } from "@/lib/activity-from-performances";
 import { hapticImpact } from "@/lib/haptics";
 import {
-    buildRecentVolumeBars,
+    buildRecentVolumeSessions,
+    entryVolume,
     formatHomeDayTitle,
 } from "@/lib/home-day";
 import { sessionPath } from "@/lib/session-api";
@@ -54,14 +56,36 @@ export function HomeRecapTeaser({
     const { data: session } = useHomeSessionById(sessionId);
     const records = session?.highlights.length ?? 0;
     const exercises = session?.exerciseCount ?? exerciseCount;
+    const resolvedSessionId = sessionId ?? session?.id ?? null;
+    const sessionKey = resolvedSessionId ?? `day:${dayKey}`;
 
     const bars = useMemo(() => {
-        const volumes = buildRecentVolumeBars(entries, dayKey);
-        const max = Math.max(...volumes, 1);
-        return volumes.map((volume) =>
-            Math.max(minBar, Math.round((volume / max) * maxBar)),
-        );
-    }, [entries, dayKey, maxBar, minBar]);
+        const scoped = entries.filter((entry) => {
+            if (entry.deletedAt) return false;
+            if (resolvedSessionId) return entry.workoutSessionId === resolvedSessionId;
+            return getActivityDayKey(entry) === dayKey;
+        });
+        const volume = scoped.reduce((sum, entry) => sum + entryVolume(entry), 0);
+        const startedAt =
+            scoped.reduce<string | null>((min, entry) => {
+                if (!min || entry.createdAt < min) return entry.createdAt;
+                return min;
+            }, null) ?? `${dayKey}T12:00:00.000Z`;
+        const sessions = buildRecentVolumeSessions(entries, dayKey, 6, {
+            throughSessionKey: sessionKey,
+            anchor: {
+                sessionKey,
+                dayKey,
+                volume,
+                startedAt,
+            },
+        });
+        const max = Math.max(...sessions.map((bar) => bar.volume), 1);
+        return sessions.map((bar) => ({
+            key: bar.sessionKey,
+            height: Math.max(minBar, Math.round((bar.volume / max) * maxBar)),
+        }));
+    }, [entries, dayKey, sessionKey, resolvedSessionId, maxBar, minBar]);
 
     const to = sessionId
         ? sessionPath(sessionId)
@@ -85,29 +109,23 @@ export function HomeRecapTeaser({
         >
             <span className="flex min-w-0 flex-1 flex-col gap-1">
                 <span
-                    className={cn(
-                        "accent-text font-one-more font-bold uppercase italic tracking-wide",
-                        compact ? "text-[10px]" : "text-[11px]",
-                    )}
+                    className="accent-text font-one-more text-[10px] font-bold uppercase italic tracking-wide"
                 >
                     {UI.homeRecapLabel}
                 </span>
                 <span
-                    className={cn(
-                        "font-one-more font-bold uppercase italic leading-none",
-                        compact ? "text-sm" : "text-base",
-                    )}
+                    className="font-one-more text-sm font-bold uppercase italic leading-none"
                 >
                     {headline(records, exercises)}
                 </span>
                 <span
-                    className={cn(
-                        "inline-flex items-center gap-0.5 font-semibold",
-                        compact ? "text-[11px]" : "text-xs",
-                    )}
+                    className="inline-flex items-center gap-0.5 text-[11px] font-semibold"
                 >
                     {UI.homeRecapCta}
-                    <ChevronRight className="size-3.5" aria-hidden />
+                    <ChevronRight
+                        className={cn("shrink-0", compact ? "size-3.5" : "size-3")}
+                        aria-hidden
+                    />
                 </span>
             </span>
             {bars.length > 0 ? (
@@ -118,12 +136,12 @@ export function HomeRecapTeaser({
                         compact ? "h-7" : "h-9",
                     )}
                 >
-                    {bars.map((height, index) => (
+                    {bars.map((bar, index) => (
                         <span
-                            key={`${index}-${height}`}
-                            style={{ height }}
+                            key={bar.key}
+                            style={{ height: bar.height }}
                             className={cn(
-                                "w-1.5 rounded-[3px]",
+                                "w-2 rounded-[3px]",
                                 index === bars.length - 1
                                     ? "bg-accent"
                                     : "bg-white/35 dark:bg-foreground/25",

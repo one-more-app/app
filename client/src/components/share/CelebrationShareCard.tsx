@@ -1,5 +1,5 @@
-import { RankBadge } from '@/components/RankBadge'
 import { ExerciseMuscleFallback } from '@/components/ExerciseImage'
+import { RankBadge } from '@/components/RankBadge'
 import { leagueIconDropShadow } from '@/components/celebration-modal-ui'
 import type { CelebrationItem } from '@/lib/celebration-queue'
 import {
@@ -174,10 +174,10 @@ function ShareStoryExerciseThumb({
                 {...(isEmbedded
                     ? { decoding: 'sync' as const }
                     : {
-                          crossOrigin: 'anonymous' as const,
-                          decoding: 'async' as const,
-                          referrerPolicy: 'no-referrer' as const,
-                      })}
+                        crossOrigin: 'anonymous' as const,
+                        decoding: 'async' as const,
+                        referrerPolicy: 'no-referrer' as const,
+                    })}
                 className="size-56 shrink-0 rounded-3xl object-cover ring-2 ring-white/25 shadow-lg"
                 onLoad={(e) => {
                     if (e.currentTarget.naturalWidth === 0) setBroken(true)
@@ -339,7 +339,7 @@ function ShareLeagueCard({
                     {UI.leaguePromotionCelebrationFirst}
                 </p>
             ) : (
-                <div className="flex flex-wrap items-center justify-center gap-4 rounded-2xl bg-black/35 px-8 py-4 ring-1 ring-white/15 backdrop-blur-md">
+                <div className="flex flex-wrap items-center justify-center gap-4 rounded-xl bg-black/35 px-8 py-4 ring-1 ring-white/15 backdrop-blur-md">
                     <RankBadge
                         league={prevLeague}
                         size="xl"

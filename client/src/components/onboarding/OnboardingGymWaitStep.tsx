@@ -1,11 +1,12 @@
+import { Trackable } from '@/components/analytics/Trackable'
 import {
     OnboardingReveal,
     onboardingStepCardClassName,
     OnboardingStepLayout,
 } from '@/components/onboarding/onboarding-motion'
-import { Trackable } from '@/components/analytics/Trackable'
 import { StepCard } from '@/components/StepCard'
 import { Button } from '@/components/ui/button'
+import { OnboardingSteps } from '@/lib/analytics'
 import { subscribeAppStateChange } from '@/lib/app-state-listener'
 import {
     getGymGeofencePermissions,
@@ -19,7 +20,6 @@ import {
     registerPushIfPermitted,
 } from '@/lib/push-notifications'
 import { UI } from '@/lib/translations'
-import { OnboardingSteps } from '@/lib/analytics'
 import { Capacitor } from '@capacitor/core'
 import { Check } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -44,7 +44,7 @@ function GymWaitMonitoringCard({
     const monitoringBody = resolveGymWaitMonitoringBody({ gymName, isNative })
 
     return (
-        <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4">
+        <div className="rounded-xl border border-accent/30 bg-accent/5 p-4">
             <div className="flex items-start gap-3">
                 <div className="relative mt-0.5 flex size-3 shrink-0 items-center justify-center">
                     <span
@@ -76,7 +76,7 @@ function GymWaitMonitoringCard({
 
 function GymWaitChoiceBlock() {
     return (
-        <div className="space-y-2 rounded-2xl border border-border/80 bg-muted/20 p-4">
+        <div className="space-y-2 rounded-xl border border-border/80 bg-muted/20 p-4">
             <p className="text-sm font-medium">{UI.gymOnboardingWaitChoiceIntro}</p>
             <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex gap-2">
@@ -169,85 +169,85 @@ export function OnboardingGymWaitStep({
 
     return (
         <Trackable section="onboarding" feature={OnboardingSteps.GYM_WAIT}>
-        <OnboardingStepLayout>
-            <StepCard
-                className={onboardingStepCardClassName}
-                title={UI.gymOnboardingWaitTitle}
-                onBack={onChangeGym}
-                backLabel={UI.back}
-                headerClassName="space-y-3"
-                contentClassName="space-y-5"
-            >
-                <OnboardingReveal delayMs={120}>
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                        {UI.gymOnboardingWaitValueProp}
-                    </p>
-                </OnboardingReveal>
+            <OnboardingStepLayout>
+                <StepCard
+                    className={onboardingStepCardClassName}
+                    title={UI.gymOnboardingWaitTitle}
+                    onBack={onChangeGym}
+                    backLabel={UI.back}
+                    headerClassName="space-y-3"
+                    contentClassName="space-y-5"
+                >
+                    <OnboardingReveal delayMs={120}>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                            {UI.gymOnboardingWaitValueProp}
+                        </p>
+                    </OnboardingReveal>
 
-                <OnboardingReveal delayMs={180}>
-                    <div className="space-y-2">
-                        <p className="text-sm font-medium">{UI.gymOnboardingWaitGymSection}</p>
-                        {hasGym ? (
-                            <div className="rounded-2xl border border-border/80 bg-muted/20 p-4">
-                                <p className="font-semibold">{gymName}</p>
-                                {gymAddress ? (
-                                    <p className="mt-1 text-sm text-muted-foreground">{gymAddress}</p>
-                                ) : null}
-                                <Button
-                                    type="button"
-                                    variant="secondary"
-                                    size="sm"
-                                    className="mt-3 w-full"
-                                    data-analytics-label="onboarding_gym_change"
-                                    onClick={onChangeGym}
-                                >
-                                    {UI.gymOnboardingWaitGymChange}
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="space-y-3 rounded-2xl border border-border/80 bg-muted/20 p-4">
-                                <p className="text-sm text-muted-foreground">
-                                    {UI.gymOnboardingWaitGymEmpty}
-                                </p>
-                                <Button
-                                    type="button"
-                                    variant="secondary"
-                                    className="w-full"
-                                    data-analytics-label="onboarding_gym_add"
-                                    onClick={onChangeGym}
-                                >
-                                    {UI.gymSettingsAdd}
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                </OnboardingReveal>
+                    <OnboardingReveal delayMs={180}>
+                        <div className="space-y-2">
+                            <p className="text-sm font-medium">{UI.gymOnboardingWaitGymSection}</p>
+                            {hasGym ? (
+                                <div className="rounded-xl border border-border/80 bg-muted/20 p-4">
+                                    <p className="font-semibold">{gymName}</p>
+                                    {gymAddress ? (
+                                        <p className="mt-1 text-sm text-muted-foreground">{gymAddress}</p>
+                                    ) : null}
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        size="sm"
+                                        className="mt-3 w-full"
+                                        data-analytics-label="onboarding_gym_change"
+                                        onClick={onChangeGym}
+                                    >
+                                        {UI.gymOnboardingWaitGymChange}
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="space-y-3 rounded-xl border border-border/80 bg-muted/20 p-4">
+                                    <p className="text-sm text-muted-foreground">
+                                        {UI.gymOnboardingWaitGymEmpty}
+                                    </p>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        className="w-full"
+                                        data-analytics-label="onboarding_gym_add"
+                                        onClick={onChangeGym}
+                                    >
+                                        {UI.gymSettingsAdd}
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </OnboardingReveal>
 
-                <OnboardingReveal delayMs={240}>
-                    <GymWaitMonitoringCard
-                        gymName={gymName}
-                        isNative={isNative}
-                        showLocationRow={showLocationRow}
-                    />
-                </OnboardingReveal>
+                    <OnboardingReveal delayMs={240}>
+                        <GymWaitMonitoringCard
+                            gymName={gymName}
+                            isNative={isNative}
+                            showLocationRow={showLocationRow}
+                        />
+                    </OnboardingReveal>
 
-                <OnboardingReveal delayMs={360}>
-                    <GymWaitChoiceBlock />
-                </OnboardingReveal>
+                    <OnboardingReveal delayMs={360}>
+                        <GymWaitChoiceBlock />
+                    </OnboardingReveal>
 
-                <OnboardingReveal delayMs={420}>
-                    <Button
-                        variant="accent"
-                        className="mt-1 w-full"
-                        data-analytics-label="onboarding_gym_wait_unlock"
-                        disabled={unlocking}
-                        onClick={onUnlock}
-                    >
-                        {UI.gymOnboardingWaitCta}
-                    </Button>
-                </OnboardingReveal>
-            </StepCard>
-        </OnboardingStepLayout>
+                    <OnboardingReveal delayMs={420}>
+                        <Button
+                            variant="accent"
+                            className="mt-1 w-full"
+                            data-analytics-label="onboarding_gym_wait_unlock"
+                            disabled={unlocking}
+                            onClick={onUnlock}
+                        >
+                            {UI.gymOnboardingWaitCta}
+                        </Button>
+                    </OnboardingReveal>
+                </StepCard>
+            </OnboardingStepLayout>
         </Trackable>
     )
 }

@@ -161,7 +161,7 @@ export function BodyMuscleLeagueMap({
             <div
                 className={cn(
                     "relative overflow-hidden rounded-xl p-3",
-                    embedded ? "bg-secondary" : "rounded-2xl border border-border/80",
+                    embedded ? "bg-secondary" : "rounded-xl border border-border/80",
                 )}
             >
                 <div

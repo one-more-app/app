@@ -67,7 +67,7 @@ L'accent sert de **surface**, pas de couleur de texte. Le bloc doit avoir une vr
 <Button variant="accent">Continuer</Button>
 
 // ✅ Gros bloc : fond accent, texte noir dedans
-<div className="rounded-2xl bg-accent px-4 py-3">
+<div className="rounded-xl bg-accent px-4 py-3">
   <p className="font-one-more text-lg font-bold italic text-accent-foreground">
     Nouveau record
   </p>

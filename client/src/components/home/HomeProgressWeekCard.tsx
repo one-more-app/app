@@ -128,7 +128,7 @@ export function HomeProgressWeekCard({
     canGoNext,
 }: HomeProgressWeekCardProps) {
     return (
-        <Card data-tour="home-progress-banner" className="mb-6 py-3">
+        <Card data-tour="home-progress-banner" className="mb-4 py-3">
             <CardContent className="pt-0">
                 <XpProgressBlock
                     level={progress.level}

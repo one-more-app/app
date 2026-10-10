@@ -112,7 +112,7 @@ export function RecapShareSection({ payload, onOpen }: RecapShareSectionProps) {
                                     data-analytics-label={`recap_share_thumb_${variant}`}
                                 >
                                     <span
-                                        className="relative flex aspect-[9/16] w-full flex-col justify-end overflow-hidden rounded-2xl p-2 text-left text-white"
+                                        className="relative flex aspect-[9/16] w-full flex-col justify-end overflow-hidden rounded-xl p-2 text-left text-white"
                                         style={{ background: shareStoryMeshBackground("#dfff5e", true) }}
                                     >
                                         <ThumbContent variant={variant} payload={payload} />

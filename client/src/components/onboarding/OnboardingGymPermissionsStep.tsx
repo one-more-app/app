@@ -1,14 +1,14 @@
+import { Trackable } from '@/components/analytics/Trackable'
 import { GymOnboardingPermissionRow } from '@/components/onboarding/GymOnboardingPermissionRow'
 import {
     OnboardingReveal,
     onboardingStepCardClassName,
     OnboardingStepLayout,
 } from '@/components/onboarding/onboarding-motion'
-import { Trackable } from '@/components/analytics/Trackable'
 import { StepCard } from '@/components/StepCard'
 import { Button } from '@/components/ui/button'
-import { subscribeAppStateChange } from '@/lib/app-state-listener'
 import { AnalyticsEvents, OnboardingSteps, track } from '@/lib/analytics'
+import { subscribeAppStateChange } from '@/lib/app-state-listener'
 import {
     getGymGeofencePermissions,
     openGymGeofenceSettings,
@@ -203,123 +203,123 @@ export function OnboardingGymPermissionsStep({
 
     return (
         <Trackable section="onboarding" feature={OnboardingSteps.GYM_PERMISSIONS}>
-        <OnboardingStepLayout>
-            <StepCard
-                className={onboardingStepCardClassName}
-                title={UI.gymOnboardingPermissionsTitle}
-                onBack={onChangeGym}
-                backLabel={UI.back}
-            >
-                <OnboardingReveal delayMs={80}>
-                    <p className="text-sm text-muted-foreground">
-                        {isNative
-                            ? UI.gymOnboardingPermissionsBody
-                            : isDevWebPreview
+            <OnboardingStepLayout>
+                <StepCard
+                    className={onboardingStepCardClassName}
+                    title={UI.gymOnboardingPermissionsTitle}
+                    onBack={onChangeGym}
+                    backLabel={UI.back}
+                >
+                    <OnboardingReveal delayMs={80}>
+                        <p className="text-sm text-muted-foreground">
+                            {isNative
                                 ? UI.gymOnboardingPermissionsBody
-                                : UI.gymOnboardingPermissionsBodyWeb}
-                    </p>
-                </OnboardingReveal>
-                <OnboardingReveal delayMs={140}>
-                    {displayName.trim() ? (
-                        <div className="rounded-xl border border-border/80 bg-muted/20 px-4 py-3">
-                            <p className="font-semibold">{displayName}</p>
-                            {displayAddress ? (
-                                <p className="mt-1 text-sm text-muted-foreground">{displayAddress}</p>
-                            ) : null}
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                className="mt-3 w-full"
-                                data-analytics-label="onboarding_gym_change"
-                                disabled={busyNotifications || busyLocation}
-                                onClick={onChangeGym}
-                            >
-                                {UI.gymOnboardingWaitGymChange}
-                            </Button>
-                        </div>
-                    ) : null}
-                </OnboardingReveal>
-
-                <div className="space-y-3">
-                    <OnboardingReveal delayMs={200}>
-                        <GymOnboardingPermissionRow
-                            icon={Bell}
-                            label={UI.gymOnboardingPermissionsNotificationsLabel}
-                            hint={UI.gymOnboardingPermissionsNotificationsHint}
-                            checked={notificationsOn}
-                            busy={busyNotifications}
-                            analyticsLabel="onboarding_gym_notifications_toggle"
-                            onCheckedChange={(checked) => void handleNotificationsToggle(checked)}
-                        />
+                                : isDevWebPreview
+                                    ? UI.gymOnboardingPermissionsBody
+                                    : UI.gymOnboardingPermissionsBodyWeb}
+                        </p>
                     </OnboardingReveal>
-                    {showLocationRow ? (
-                        <OnboardingReveal delayMs={280}>
+                    <OnboardingReveal delayMs={140}>
+                        {displayName.trim() ? (
+                            <div className="rounded-xl border border-border/80 bg-muted/20 px-4 py-3">
+                                <p className="font-semibold">{displayName}</p>
+                                {displayAddress ? (
+                                    <p className="mt-1 text-sm text-muted-foreground">{displayAddress}</p>
+                                ) : null}
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    className="mt-3 w-full"
+                                    data-analytics-label="onboarding_gym_change"
+                                    disabled={busyNotifications || busyLocation}
+                                    onClick={onChangeGym}
+                                >
+                                    {UI.gymOnboardingWaitGymChange}
+                                </Button>
+                            </div>
+                        ) : null}
+                    </OnboardingReveal>
+
+                    <div className="space-y-3">
+                        <OnboardingReveal delayMs={200}>
                             <GymOnboardingPermissionRow
-                                icon={MapPin}
-                                label={UI.gymOnboardingPermissionsLocationLabel}
-                                hint={UI.gymOnboardingPermissionsLocationHint}
-                                checked={locationOn}
-                                busy={busyLocation}
-                                analyticsLabel="onboarding_gym_location_toggle"
-                                onCheckedChange={(checked) => void handleLocationToggle(checked)}
+                                icon={Bell}
+                                label={UI.gymOnboardingPermissionsNotificationsLabel}
+                                hint={UI.gymOnboardingPermissionsNotificationsHint}
+                                checked={notificationsOn}
+                                busy={busyNotifications}
+                                analyticsLabel="onboarding_gym_notifications_toggle"
+                                onCheckedChange={(checked) => void handleNotificationsToggle(checked)}
                             />
                         </OnboardingReveal>
-                    ) : (
-                        <OnboardingReveal delayMs={280}>
-                            <p className="text-xs text-muted-foreground">
-                                {UI.gymOnboardingWebOnly}
-                            </p>
-                        </OnboardingReveal>
-                    )}
-                </div>
+                        {showLocationRow ? (
+                            <OnboardingReveal delayMs={280}>
+                                <GymOnboardingPermissionRow
+                                    icon={MapPin}
+                                    label={UI.gymOnboardingPermissionsLocationLabel}
+                                    hint={UI.gymOnboardingPermissionsLocationHint}
+                                    checked={locationOn}
+                                    busy={busyLocation}
+                                    analyticsLabel="onboarding_gym_location_toggle"
+                                    onCheckedChange={(checked) => void handleLocationToggle(checked)}
+                                />
+                            </OnboardingReveal>
+                        ) : (
+                            <OnboardingReveal delayMs={280}>
+                                <p className="text-xs text-muted-foreground">
+                                    {UI.gymOnboardingWebOnly}
+                                </p>
+                            </OnboardingReveal>
+                        )}
+                    </div>
 
-                {showLocationSettings ? (
-                    <OnboardingReveal delayMs={340}>
-                        <div className="space-y-2 rounded-2xl border border-border/80 bg-muted/20 px-4 py-3">
-                            <p className="text-sm text-muted-foreground">
-                                {UI.gymOnboardingLocationDenied}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                {UI.gymOnboardingLocationSettingsHint}
-                            </p>
+                    {showLocationSettings ? (
+                        <OnboardingReveal delayMs={340}>
+                            <div className="space-y-2 rounded-xl border border-border/80 bg-muted/20 px-4 py-3">
+                                <p className="text-sm text-muted-foreground">
+                                    {UI.gymOnboardingLocationDenied}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {UI.gymOnboardingLocationSettingsHint}
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    className="w-full"
+                                    data-analytics-label="onboarding_gym_location_settings"
+                                    onClick={() => void openGymGeofenceSettings()}
+                                >
+                                    {UI.gymOnboardingLocationSettingsCta}
+                                </Button>
+                            </div>
+                        </OnboardingReveal>
+                    ) : null}
+                    <div className="space-y-2">
+                        <OnboardingReveal delayMs={400}>
                             <Button
-                                variant="outline"
+                                variant="accent"
                                 className="w-full"
-                                data-analytics-label="onboarding_gym_location_settings"
-                                onClick={() => void openGymGeofenceSettings()}
+                                data-analytics-label="onboarding_gym_permissions_continue"
+                                disabled={!canContinue || busyNotifications || busyLocation}
+                                onClick={handleContinue}
                             >
-                                {UI.gymOnboardingLocationSettingsCta}
+                                {UI.continue}
                             </Button>
-                        </div>
-                    </OnboardingReveal>
-                ) : null}
-                <div className="space-y-2">
-                    <OnboardingReveal delayMs={400}>
-                        <Button
-                            variant="accent"
-                            className="w-full"
-                            data-analytics-label="onboarding_gym_permissions_continue"
-                            disabled={!canContinue || busyNotifications || busyLocation}
-                            onClick={handleContinue}
-                        >
-                            {UI.continue}
-                        </Button>
-                    </OnboardingReveal>
-                    <OnboardingReveal delayMs={480}>
-                        <Button
-                            variant="secondary"
-                            className="w-full"
-                            data-analytics-label="onboarding_gym_permissions_skip"
-                            disabled={busyNotifications || busyLocation}
-                            onClick={handleSkip}
-                        >
-                            {UI.gymOnboardingPermissionsSkip}
-                        </Button>
-                    </OnboardingReveal>
-                </div>
-            </StepCard>
-        </OnboardingStepLayout>
+                        </OnboardingReveal>
+                        <OnboardingReveal delayMs={480}>
+                            <Button
+                                variant="secondary"
+                                className="w-full"
+                                data-analytics-label="onboarding_gym_permissions_skip"
+                                disabled={busyNotifications || busyLocation}
+                                onClick={handleSkip}
+                            >
+                                {UI.gymOnboardingPermissionsSkip}
+                            </Button>
+                        </OnboardingReveal>
+                    </div>
+                </StepCard>
+            </OnboardingStepLayout>
         </Trackable>
     )
 }
