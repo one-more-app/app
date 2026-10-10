@@ -83,7 +83,7 @@ export function HomeFirstSessionCard({
                 <img
                     src={FIRST_SESSION_HERO_SRC}
                     alt=""
-                    className="absolute inset-0 size-full select-none object-cover object-[50%_35%]"
+                    className="absolute inset-0 size-full select-none object-cover object-[55%_40%]"
                     draggable={false}
                     loading="lazy"
                     decoding="async"
@@ -93,29 +93,29 @@ export function HomeFirstSessionCard({
                     className="absolute inset-0 bg-gradient-to-b from-primary/15 from-20% to-primary"
                 />
                 <div className="absolute inset-x-3 top-3 flex items-center justify-between gap-2">
-                    <h2 className="font-one-more text-xs font-normal uppercase italic leading-[1.1] tracking-tight [text-shadow:0_1px_4px_rgba(0,0,0,0.5)]">
+                    <h2 className="font-one-more text-[10px] font-normal uppercase italic leading-[1.1] tracking-tight [text-shadow:0_1px_4px_rgba(0,0,0,0.5)]">
                         {heading}
                     </h2>
                     <span
                         className={cn(
-                            "inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold",
+                            "inline-flex h-5 items-center gap-1.5 rounded-full px-2 text-[10px] font-semibold",
                             active
                                 ? "bg-accent text-accent-foreground"
                                 : "bg-black/55 text-white",
                         )}
                     >
-                        <Bell className="size-3" aria-hidden />
+                        <Bell className="size-2.5" aria-hidden />
                         {active ? UI.homeFirstSessionTagOn : UI.homeFirstSessionTagOff}
                     </span>
                 </div>
             </div>
             <div className="relative -mt-3.5 flex flex-col gap-3 px-4 pb-4">
-                <p className="font-one-more text-[26px] font-bold uppercase italic leading-none">
+                <p className="font-one-more text-[22px] font-bold uppercase italic leading-none">
                     {title[0]}
                     <br />
                     <span className="accent-text">{title[1]}</span>
                 </p>
-                <p className="text-[13px] leading-[1.45] text-white/75">{body}</p>
+                <p className="text-xs leading-[1.45] text-white/75">{body}</p>
                 {active ? (
                     <Button
                         type="button"

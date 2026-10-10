@@ -1,22 +1,15 @@
-import { RankBadge } from '@/components/RankBadge'
 import {
     shareCardThemeVars,
     shareStoryMeshBackground,
     shareStoryVignette,
 } from '@/lib/celebration-visual'
 import { resolvePublicAssetUrl } from '@/lib/exercise-share-media'
-import { leagueMapFill } from '@/lib/league-colors'
-import type { LeagueInfo } from '@/lib/strength-standards'
 import { UI } from '@/lib/translations'
 import { cn } from '@/lib/utils'
 import type { ReactNode } from 'react'
 import Body, { type ExtendedBodyPart, type Slug } from 'react-muscle-highlighter'
 
-export type SessionRecapShareVariant =
-    | 'stats'
-    | 'muscles'
-    | 'records'
-    | 'league'
+export type SessionRecapShareVariant = 'stats' | 'muscles' | 'records'
 
 export type SessionRecapShareMode = 'photo' | 'sticker'
 
@@ -43,7 +36,6 @@ export type SessionRecapSharePayload = {
     muscles: SessionRecapShareMuscle[]
     /** Au plus 3, les plus lourds en premier. */
     records: SessionRecapShareRecord[]
-    league: { exerciseName: string; league: LeagueInfo } | null
 }
 
 /** Export 9:16 optimisé stories. */
@@ -127,19 +119,68 @@ function StatsBody({ payload }: { payload: SessionRecapSharePayload }) {
     )
 }
 
+/**
+ * La lib bake `color: #3f3f3f` sur chaque partie : `defaultFill` est ignoré.
+ * Il faut donc passer un fill explicite pour toutes les zones.
+ */
+const MANNEQUIN_SLUGS: Slug[] = [
+    'abs',
+    'adductors',
+    'ankles',
+    'biceps',
+    'calves',
+    'chest',
+    'deltoids',
+    'feet',
+    'forearm',
+    'gluteal',
+    'hamstring',
+    'hands',
+    'hair',
+    'head',
+    'knees',
+    'lower-back',
+    'neck',
+    'obliques',
+    'quadriceps',
+    'tibialis',
+    'trapezius',
+    'triceps',
+    'upper-back',
+]
+
+const MANNEQUIN_BASE_FILL = '#6b7280'
+const MANNEQUIN_HEAD_FILL = '#9ca3af'
+const MANNEQUIN_HAIR_FILL = '#4b5563'
+
 function MusclesBody({ payload }: { payload: SessionRecapSharePayload }) {
     const top = payload.muscles.slice(0, 3)
     const maxSets = Math.max(1, ...payload.muscles.map((muscle) => muscle.sets))
-    const data: ExtendedBodyPart[] = payload.muscles.map((muscle) => ({
-        slug: muscle.slug,
-        styles: {
-            fill: `rgba(223,255,94,${(0.45 + 0.55 * (muscle.sets / maxSets)).toFixed(2)})`,
-        },
-    }))
+    const worked = new Map(
+        payload.muscles.map((muscle) => [
+            muscle.slug,
+            `rgba(223,255,94,${(0.55 + 0.45 * (muscle.sets / maxSets)).toFixed(2)})`,
+        ]),
+    )
+    const data: ExtendedBodyPart[] = MANNEQUIN_SLUGS.map((slug) => {
+        const fill =
+            worked.get(slug) ??
+            (slug === 'head'
+                ? MANNEQUIN_HEAD_FILL
+                : slug === 'hair'
+                  ? MANNEQUIN_HAIR_FILL
+                  : MANNEQUIN_BASE_FILL)
+        return { slug, styles: { fill } }
+    })
     return (
         <div className="space-y-4">
             <Eyebrow>{UI.recapStoryMusclesTitle}</Eyebrow>
-            <div className="flex justify-center gap-6">
+            <div
+                className="flex justify-center gap-6"
+                style={{
+                    filter: 'drop-shadow(0 8px 28px rgba(0,0,0,0.55))',
+                }}
+            >
                 {(['front', 'back'] as const).map((side) => (
                     <Body
                         key={side}
@@ -147,8 +188,8 @@ function MusclesBody({ payload }: { payload: SessionRecapSharePayload }) {
                         gender="male"
                         side={side}
                         scale={1.9}
-                        border="rgba(255,255,255,0.28)"
-                        defaultFill="rgba(255,255,255,0.14)"
+                        border="rgba(0,0,0,0.28)"
+                        defaultFill={MANNEQUIN_BASE_FILL}
                         defaultStroke="none"
                     />
                 ))}
@@ -168,75 +209,35 @@ function MusclesBody({ payload }: { payload: SessionRecapSharePayload }) {
 }
 
 function RecordsBody({ payload }: { payload: SessionRecapSharePayload }) {
+    const recordsWord =
+        payload.recordCount === 1
+            ? UI.recapStoryRecordsWordOne
+            : UI.recapStoryRecordsWord
     return (
         <div className="space-y-4">
-            <p className="font-one-more text-[7rem] font-bold uppercase italic leading-[0.95]">
-                <span className="tabular-nums">{payload.recordCount}</span>{' '}
-                {payload.recordCount === 1
-                    ? UI.recapStoryRecordsLeadOne
-                    : UI.recapStoryRecordsLead}{' '}
-                <span
-                    className="rounded-xl px-4 text-black"
-                    style={{ backgroundColor: ACCENT }}
-                >
-                    {payload.recordCount === 1
-                        ? UI.recapStoryRecordsWordOne
-                        : UI.recapStoryRecordsWord}
-                </span>
+            <Eyebrow>{UI.recapStoryRecordsTitle}</Eyebrow>
+            <p className="font-one-more font-bold italic leading-[0.9] tracking-tight tabular-nums">
+                <span className="text-[11rem]">{payload.recordCount}</span>
+                <span className="ml-4 text-[4.5rem] uppercase">{recordsWord}</span>
             </p>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
                 {payload.records.map((record) => (
                     <li
                         key={record.name}
-                        className="flex items-baseline justify-between gap-8 text-[2.75rem]"
+                        className="flex items-baseline justify-between gap-8"
                     >
-                        <span className="min-w-0 truncate text-white/85">
+                        <span className="min-w-0 truncate font-one-more text-[3.5rem] font-bold uppercase italic leading-[1.05]">
                             {record.name}
                         </span>
-                        <span className="shrink-0 font-one-more font-bold italic tabular-nums">
+                        <span
+                            className="shrink-0 font-one-more text-[3.5rem] font-bold italic tabular-nums"
+                            style={{ color: ACCENT }}
+                        >
                             {formatPerf(record.weight, record.reps)}
                         </span>
                     </li>
                 ))}
             </ul>
-        </div>
-    )
-}
-
-function LeagueBody({ payload }: { payload: SessionRecapSharePayload }) {
-    if (!payload.league) return null
-    const { league, exerciseName } = payload.league
-    const percent = Math.round(league.progressToNext * 100)
-    const fill = leagueMapFill(league.tier, true)
-    return (
-        <div className="space-y-4">
-            <Eyebrow>{UI.recapStoryLeagueTitle}</Eyebrow>
-            <RankBadge
-                league={league}
-                size="xl"
-                variant="dark"
-                className="origin-left scale-[2]"
-            />
-            <div className="space-y-5 pt-6">
-                <p className="font-one-more text-[4rem] font-bold uppercase italic leading-[1.05]">
-                    {exerciseName}
-                </p>
-                <div className="h-5 w-full overflow-hidden rounded-full bg-white/20">
-                    <div
-                        className="h-full rounded-full"
-                        style={{
-                            width: `${Math.max(4, percent)}%`,
-                            backgroundColor: fill,
-                        }}
-                    />
-                </div>
-                <p className="text-[2.25rem] font-medium text-white/80">
-                    {UI.recapStoryLeagueProgress.replace(
-                        '{percent}',
-                        String(percent),
-                    )}
-                </p>
-            </div>
         </div>
     )
 }
@@ -253,8 +254,6 @@ function VariantBody({
             return <MusclesBody payload={payload} />
         case 'records':
             return <RecordsBody payload={payload} />
-        case 'league':
-            return <LeagueBody payload={payload} />
         default:
             return <StatsBody payload={payload} />
     }

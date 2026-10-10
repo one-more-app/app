@@ -26,10 +26,6 @@ jest.unstable_mockModule('../../presence/presence.service.js', () => ({
 jest.unstable_mockModule('../../social/friends.service.js', () => ({
   FriendsService: class FriendsService {},
 }));
-jest.unstable_mockModule('../../notifications/lib/timezone.js', () => ({
-  localDateKey: () => '2026-07-13',
-}));
-
 const { WorkoutSessionsService } =
   await import('../workout-sessions.service.js');
 
@@ -108,6 +104,30 @@ describe('WorkoutSessionsService', () => {
     await expect(
       service.getSession('viewer-1', 'owner-2', '2026-07-13'),
     ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('évalue isLive avec le jour demandé (date locale client), pas UTC', async () => {
+    // Après minuit local (ex. FR), le jour demandé peut diverger du jour UTC.
+    presenceService.getPresence.mockResolvedValue({ status: 'offline' });
+    const session = {
+      id: 'sess-1',
+      ownerUserId: 'owner-1',
+      sessionDate: '2026-10-11',
+      startedAt: new Date('2026-10-10T22:30:00Z'),
+      endedAt: null,
+    };
+    lifecycle.listForDay.mockResolvedValue([session]);
+    lifecycle.getLastSetAt.mockResolvedValue(
+      new Date('2026-10-10T22:35:00Z'),
+    );
+    lifecycle.isSessionLive.mockReturnValue(true);
+
+    await service.listDaySessions('owner-1', 'owner-1', '2026-10-11');
+
+    expect(lifecycle.isSessionLive).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ todayKey: '2026-10-11' }),
+    );
   });
 
   it('signale isLive si présence training', async () => {

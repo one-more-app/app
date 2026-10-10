@@ -119,17 +119,20 @@ export function notifyPerfMilestones(params: {
       previousReps: prevPB?.reps,
       leagueTier: nextLeague?.tier,
     })
-    enqueueCelebration({
-      kind: "record",
-      payload: {
-        exerciseName,
-        weight: savedWeight,
-        reps: savedReps,
-        leagueAfter: nextLeague,
-        exerciseImageUrl,
-        bodyPart,
-        target,
-      },
-    })
+    // Passage de palier prime : une seule modale (la promo de ligue).
+    if (!showLeagueCelebration) {
+      enqueueCelebration({
+        kind: "record",
+        payload: {
+          exerciseName,
+          weight: savedWeight,
+          reps: savedReps,
+          leagueAfter: nextLeague,
+          exerciseImageUrl,
+          bodyPart,
+          target,
+        },
+      })
+    }
   }
 }

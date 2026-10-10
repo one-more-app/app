@@ -4,7 +4,6 @@ import { FeedbackKindToggle } from '@/components/settings/FeedbackKindToggle'
 import { GymSettingsCard } from '@/components/settings/GymSettingsCard'
 import { NotificationSettingsCard } from '@/components/settings/NotificationSettingsCard'
 import { PremiumSettingsCard } from '@/components/settings/PremiumSettingsCard'
-import { RestTimeSettingsCard } from '@/components/settings/RestTimeSettingsCard'
 import { SettingsBuildInfo } from '@/components/settings/SettingsBuildInfo'
 import { SettingsReferralLinkCard } from '@/components/settings/SettingsReferralLinkCard'
 import { SettingsProfileSkeleton } from '@/components/skeletons'
@@ -48,13 +47,12 @@ import type {
 } from '@/types'
 import { Capacitor } from '@capacitor/core'
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 
 export function SettingsPage() {
     const auth = useAuth()
     const { isPremium } = useAccess()
-    const [searchParams] = useSearchParams()
     const location = useLocation()
     const { theme, setTheme } = useTheme()
     const { data: profile } = useUserProfileData()
@@ -92,16 +90,6 @@ export function SettingsPage() {
         if (p.sessionsPerWeek) setSessionsPerWeek(p.sessionsPerWeek)
         setProfileHydrated(true)
     }, [profile])
-
-    useEffect(() => {
-        if (searchParams.get('focus') !== 'rest-time') return
-        const el = document.getElementById('rest-time-settings')
-        if (!el) return
-        const timer = window.setTimeout(() => {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        }, 150)
-        return () => window.clearTimeout(timer)
-    }, [searchParams])
 
     const handleSave = () => {
         const w = parseFloat(weightKg)
@@ -261,8 +249,6 @@ export function SettingsPage() {
                 {auth.status === 'authenticated' ? <NotificationSettingsCard /> : null}
 
                 {auth.status === 'authenticated' ? <GymSettingsCard /> : null}
-
-                <RestTimeSettingsCard />
 
                 {auth.status === 'authenticated' ? <PremiumSettingsCard /> : null}
 

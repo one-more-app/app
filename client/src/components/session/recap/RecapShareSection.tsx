@@ -1,4 +1,3 @@
-import { RankBadge } from "@/components/RankBadge";
 import type {
     SessionRecapSharePayload,
     SessionRecapShareVariant,
@@ -17,7 +16,6 @@ const THUMB_LABEL: Record<SessionRecapShareVariant, string> = {
     stats: UI.recapStoryThumbStats,
     muscles: UI.recapStoryThumbMuscles,
     records: UI.recapStoryThumbRecords,
-    league: UI.recapStoryThumbLeague,
 };
 
 function ThumbContent({
@@ -43,24 +41,15 @@ function ThumbContent({
             );
         case "records":
             return (
-                <p className="font-one-more text-[10px] font-bold uppercase italic leading-tight">
-                    <span className="text-base tabular-nums text-accent">
-                        {payload.recordCount}
-                    </span>{" "}
-                    {payload.recordCount === 1
-                        ? UI.recapStoryRecordsWordOne
-                        : UI.recapStoryRecordsWord}
+                <p className="font-one-more font-bold italic leading-none tabular-nums">
+                    <span className="text-lg">{payload.recordCount}</span>
+                    <span className="ml-0.5 text-[9px] uppercase">
+                        {payload.recordCount === 1
+                            ? UI.recapStoryRecordsWordOne
+                            : UI.recapStoryRecordsWord}
+                    </span>
                 </p>
             );
-        case "league":
-            return payload.league ? (
-                <div className="space-y-1">
-                    <RankBadge league={payload.league.league} size="xs" variant="dark" />
-                    <p className="truncate text-[9px] text-white/75">
-                        {payload.league.exerciseName}
-                    </p>
-                </div>
-            ) : null;
         default:
             return (
                 <p className="font-one-more font-bold italic leading-none tabular-nums">
@@ -78,7 +67,7 @@ type RecapShareSectionProps = {
     onOpen: (variant: SessionRecapShareVariant) => void;
 };
 
-/** « Partager en story » : 4 miniatures + « Tout voir » (captures 40 et 41). */
+/** « Partager en story » : 3 miniatures + « Tout voir » (captures 40 et 41). */
 export function RecapShareSection({ payload, onOpen }: RecapShareSectionProps) {
     return (
         <Card>
@@ -96,7 +85,7 @@ export function RecapShareSection({ payload, onOpen }: RecapShareSectionProps) {
                         {UI.recapStorySeeAll}
                     </button>
                 </div>
-                <ul className="grid grid-cols-4 gap-2">
+                <ul className="grid grid-cols-3 gap-2">
                     {RECAP_SHARE_VARIANTS.map((variant) => {
                         const available = isRecapVariantAvailable(payload, variant);
                         return (

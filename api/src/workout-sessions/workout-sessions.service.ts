@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
-import { localDateKey } from '../notifications/lib/timezone.js';
 import { PerformanceEntriesService } from '../performance/performance-entries.service.js';
 import { PresenceService } from '../presence/presence.service.js';
 import { PresenceStatus } from '../presence/entities/presence-status.enum.js';
@@ -92,7 +91,7 @@ export class WorkoutSessionsService {
     this.assertValidDate(date);
     await this.assertCanViewSession(viewerId, ownerUserId);
     const sessions = await this.lifecycle.listForDay(ownerUserId, date);
-    const today = localDateKey('UTC');
+    // Jour demandé = date locale client (pas UTC) : sinon isLive faux après minuit local.
     const presence = await this.presenceService.getPresence(ownerUserId);
     const isPresenceTraining = presence?.status === PresenceStatus.TRAINING;
 
@@ -109,7 +108,7 @@ export class WorkoutSessionsService {
         : await this.lifecycle.lazyCloseIfIdle(raw);
       const lastSetAt = await this.lifecycle.getLastSetAt(session.id);
       const isLive = this.lifecycle.isSessionLive(session, {
-        todayKey: today,
+        todayKey: date,
         isPresenceTraining,
         lastSetAt,
       });
@@ -199,11 +198,10 @@ export class WorkoutSessionsService {
       })
       .map((e) => ({ entryId: e.id, type: 'pr' as const }));
 
-    const today = localDateKey('UTC');
     const presence = await this.presenceService.getPresence(ownerUserId);
     const lastSetAt = await this.lifecycle.getLastSetAt(session.id);
     const isLive = this.lifecycle.isSessionLive(session, {
-      todayKey: today,
+      todayKey: date,
       isPresenceTraining: presence?.status === PresenceStatus.TRAINING,
       lastSetAt,
     });
@@ -291,7 +289,6 @@ export class WorkoutSessionsService {
       })
       .map((e) => ({ entryId: e.id, type: 'pr' as const }));
 
-    const today = localDateKey('UTC');
     const presence = await this.presenceService.getPresence(ownerUserId);
     const lastEntry = entries.reduce<(typeof entries)[number] | null>(
       (latest, entry) => {
@@ -320,7 +317,7 @@ export class WorkoutSessionsService {
       const lastSetAt = await this.lifecycle.getLastSetAt(sessionRow.id);
       if (
         this.lifecycle.isSessionLive(sessionRow, {
-          todayKey: today,
+          todayKey: date,
           isPresenceTraining,
           lastSetAt,
         })
@@ -330,7 +327,7 @@ export class WorkoutSessionsService {
         break;
       }
     }
-    if (!isLive && daySessions.length === 0 && date === today && lastEntry) {
+    if (!isLive && daySessions.length === 0 && lastEntry) {
       const idleMs = Date.now() - new Date(lastEntry.createdAt).getTime();
       isLive = isPresenceTraining || idleMs < SESSION_ACTIVE_IDLE_MS;
     }

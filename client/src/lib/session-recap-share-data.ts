@@ -4,7 +4,6 @@ import type {
   SessionRecapShareVariant,
 } from "@/components/share/SessionRecapShareCard";
 import { muscleTargetToSlug } from "@/lib/muscle-target-to-slug";
-import { rankScore, type LeagueInfo } from "@/lib/strength-standards";
 import type { WorkoutSession } from "@/lib/session-api";
 import { translateTarget } from "@/lib/translations";
 
@@ -57,23 +56,6 @@ function buildMuscles(session: WorkoutSession): SessionRecapShareMuscle[] {
   return [...bySlug.values()].sort((a, b) => b.sets - a.sets);
 }
 
-/** Meilleure ligue atteinte pendant la séance (rang le plus haut). */
-function buildLeague(session: WorkoutSession): SessionRecapSharePayload["league"] {
-  let best: { entry: SessionEntry; league: LeagueInfo } | null = null;
-  for (const entry of session.entries) {
-    const league = entry.leagueInsight?.nextLeague;
-    if (entry.deletedAt || !league) continue;
-    if (!best || rankScore(league) > rankScore(best.league)) {
-      best = { entry, league };
-    }
-  }
-  if (!best) return null;
-  return {
-    exerciseName: exerciseName(session, best.entry.trackedExerciseId),
-    league: best.league,
-  };
-}
-
 export function buildSessionRecapSharePayload(
   session: WorkoutSession,
   extra: { dateLabel: string; volume: number; durationLabel: string },
@@ -91,7 +73,6 @@ export function buildSessionRecapSharePayload(
       weight: entry.weight,
       reps: entry.reps,
     })),
-    league: buildLeague(session),
   };
 }
 
@@ -99,7 +80,6 @@ export const RECAP_SHARE_VARIANTS: SessionRecapShareVariant[] = [
   "stats",
   "muscles",
   "records",
-  "league",
 ];
 
 /** Un sticker n'est proposé que si la séance a de quoi le remplir. */
@@ -112,8 +92,6 @@ export function isRecapVariantAvailable(
       return payload.muscles.length > 0;
     case "records":
       return payload.records.length > 0;
-    case "league":
-      return payload.league !== null;
     default:
       return true;
   }

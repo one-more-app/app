@@ -112,6 +112,10 @@ export class SessionLifecycleService {
     return await this.sessionsRepo.save(created);
   }
 
+  /**
+   * `todayKey` = jour calendaire de la séance côté client (local),
+   * pas le jour UTC serveur.
+   */
   isSessionLive(
     session: WorkoutSessionEntity,
     opts: {

@@ -1,0 +1,39 @@
+---
+description: Chargement UI — toujours un skeleton qui mime taille et forme du contenu final
+globs: client/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Skeletons de chargement (One More)
+
+Quand une page ou un composant affiche des données asynchrones, **ne jamais** laisser un écran vide, un spinner flottant seul, ou un placeholder générique sans forme. Afficher un **skeleton** qui reprend la **taille**, la **forme** et la **hiérarchie** du contenu final.
+
+## Règles
+
+1. **Même layout** — Le skeleton occupe l’espace du composant chargé (mêmes paddings, gaps, colonnes, hauteurs de titres / lignes / boutons / cartes).
+2. **Pas de jump** — Au passage skeleton → données, le layout ne doit pas sauter (éviter `min-h` trop petit ou des blocs absents).
+3. **Composant dédié** — Extraire un `*Skeleton` dans [`client/src/components/skeletons/`](../../client/src/components/skeletons/) et l’exporter via `index.ts` si réutilisable ou lié à une page. Pour un micro-bloc local, le skeleton peut rester colocalisé.
+4. **Primitive** — Utiliser [`Skeleton`](../../client/src/components/ui/skeleton.tsx) (`@/components/ui/skeleton`), pas un `animate-pulse` ad hoc sur un `div` sans raison.
+5. **Accessibilité** — Sur le conteneur skeleton : `aria-busy="true"` et un `aria-label` du type « Chargement » (voir `SettingsProfileSkeleton`).
+6. **État loading explicite** — Tant que les données ne sont pas prêtes (`!data`, `isLoading`, hydratation profil, etc.), rendre le skeleton ; ensuite le contenu réel.
+
+## Exemple
+
+```tsx
+// ❌ BAD — vide ou spinner sans forme
+if (!profile) return null
+if (isLoading) return <Spinner />
+
+// ✅ GOOD — même carte / champs que l’UI finale
+if (!profileHydrated) return <SettingsProfileSkeleton />
+return <ProfileCard profile={profile} />
+```
+
+Référence de forme : [`SettingsProfileSkeleton.tsx`](../../client/src/components/skeletons/SettingsProfileSkeleton.tsx) (titre, description, inputs, bouton aux bonnes hauteurs).
+
+## Interdits
+
+- Écran blanc pendant un fetch de page ou de bloc principal.
+- Skeleton « barre grise unique » qui ne ressemble pas au composant.
+- Remplacer un skeleton existant par un spinner central sans justification UX.
+- Oublier d’exporterer un nouveau skeleton page depuis `@/components/skeletons` quand il est partagé.

@@ -98,4 +98,33 @@ describe('SessionLifecycleService', () => {
     expect(result.endedAt).toBeNull();
     expect(result.startedAt).toEqual(setAt);
   });
+
+  it('isSessionLive : ouverte + récente sur le jour calendaire passé', () => {
+    const session = {
+      id: 's1',
+      ownerUserId: 'u1',
+      sessionDate: '2026-10-11',
+      startedAt: new Date('2026-10-10T22:30:00Z'),
+      endedAt: null,
+    };
+    const now = new Date('2026-10-10T22:40:00Z').getTime();
+
+    expect(
+      service.isSessionLive(session as any, {
+        todayKey: '2026-10-11',
+        isPresenceTraining: false,
+        lastSetAt: new Date('2026-10-10T22:35:00Z'),
+        now,
+      }),
+    ).toBe(true);
+
+    expect(
+      service.isSessionLive(session as any, {
+        todayKey: '2026-10-10',
+        isPresenceTraining: false,
+        lastSetAt: new Date('2026-10-10T22:35:00Z'),
+        now,
+      }),
+    ).toBe(false);
+  });
 });

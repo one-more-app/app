@@ -13,6 +13,7 @@ import {
     DrawerHeader,
     DrawerTitle,
 } from "@/components/ui/drawer";
+import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
     isRecapVariantAvailable,
@@ -20,7 +21,7 @@ import {
 } from "@/lib/session-recap-share-data";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
-import { Camera, Download, Instagram } from "lucide-react";
+import { Camera, Download, Instagram, Layers2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -28,8 +29,12 @@ const TAB_LABEL: Record<SessionRecapShareVariant, string> = {
     stats: UI.recapStoryTabStats,
     muscles: UI.recapStoryTabMuscles,
     records: UI.recapStoryTabRecords,
-    league: UI.recapStoryTabLeague,
 };
+
+const MODE_ITEMS = [
+    { id: "photo" as const, label: UI.recapStoryModePhoto, Icon: Camera },
+    { id: "sticker" as const, label: UI.recapStoryModeSticker, Icon: Layers2 },
+];
 
 const CHECKERBOARD =
     "repeating-conic-gradient(#d4d4d8 0% 25%, #f4f4f5 0% 50%) 50% / 24px 24px";
@@ -204,28 +209,13 @@ export function RecapShareDrawer({
                         ))}
                     </ToggleGroup>
 
-                    <ToggleGroup
-                        type="single"
+                    <SegmentedToggle
                         value={mode}
-                        onValueChange={(next) => {
-                            if (next) setMode(next as SessionRecapShareMode);
-                        }}
-                        aria-label={UI.recapStoryModesAria}
-                        className="w-full rounded-xl bg-secondary p-1"
-                    >
-                        <ToggleGroupItem
-                            value="photo"
-                            className="h-9 flex-1 rounded-lg data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-sm"
-                        >
-                            {UI.recapStoryModePhoto}
-                        </ToggleGroupItem>
-                        <ToggleGroupItem
-                            value="sticker"
-                            className="h-9 flex-1 rounded-lg data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-sm"
-                        >
-                            {UI.recapStoryModeSticker}
-                        </ToggleGroupItem>
-                    </ToggleGroup>
+                        onChange={setMode}
+                        items={MODE_ITEMS}
+                        ariaLabel={UI.recapStoryModesAria}
+                        className="w-full"
+                    />
 
                     <div className="flex w-full gap-3">
                         <Button

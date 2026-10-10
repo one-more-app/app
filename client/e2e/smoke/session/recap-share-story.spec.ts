@@ -104,8 +104,7 @@ test("le récap hybride ouvre le tiroir de partage en story et enregistre un sti
     drawer.getByRole("radio", { name: UI.recapStoryTabRecords }),
   ).toBeChecked();
 
-  await drawer.getByRole("radio", { name: UI.recapStoryTabLeague }).click();
-  await drawer.getByRole("radio", { name: UI.recapStoryModeSticker }).click();
+  await drawer.getByRole("tab", { name: UI.recapStoryModeSticker }).click();
 
   const downloadPromise = page.waitForEvent("download");
   await drawer.getByRole("button", { name: UI.recapStorySave }).click();
