@@ -20,7 +20,6 @@ import { UserPresenceEntity } from '../presence/entities/user-presence.entity.js
 import { WorkoutSessionEntity } from '../workout-sessions/entities/workout-session.entity.js';
 import { SessionCommentEntity } from '../workout-sessions/entities/session-comment.entity.js';
 import { SessionReactionEntity } from '../workout-sessions/entities/session-reaction.entity.js';
-import { SessionEndEntity } from '../workout-sessions/entities/session-end.entity.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -68,7 +67,6 @@ export default new DataSource({
     WorkoutSessionEntity,
     SessionCommentEntity,
     SessionReactionEntity,
-    SessionEndEntity,
   ],
   migrations: [join(__dirname, 'migrations', '*.{js,ts}')],
   migrationsTransactionMode: 'each',

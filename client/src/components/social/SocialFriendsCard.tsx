@@ -1,6 +1,5 @@
 import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallback";
 import { Card } from "@/components/ui/card";
-import { UnreadCountBadge } from "@/components/ui/unread-count-badge";
 import { hapticImpact } from "@/lib/haptics";
 import {
   getProfileDisplayName,
@@ -16,17 +15,18 @@ const MAX_AVATARS = 3;
 export function SocialFriendsCard({
   friends,
   trainingCount,
-  unreadCount,
+  trainingUserIds,
   isLoading,
 }: {
   friends: FriendListItem[];
   trainingCount: number;
-  unreadCount: number;
+  trainingUserIds: readonly string[];
   isLoading: boolean;
 }) {
   const total = friends.length;
   const shown = friends.slice(0, MAX_AVATARS);
   const extra = total - shown.length;
+  const trainingIds = new Set(trainingUserIds);
 
   const countLabel =
     total === 1
@@ -43,16 +43,11 @@ export function SocialFriendsCard({
           void hapticImpact();
         }}
       >
-        <span className="relative flex size-12 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
-          <Users className="size-5" aria-hidden />
-          <UnreadCountBadge
-            count={unreadCount}
-            size="md"
-            className="absolute -right-1 -top-1"
-          />
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-muted text-foreground">
+          <Users className="size-[18px]" aria-hidden />
         </span>
-        <div className="min-w-0 flex-1 space-y-0.5">
-          <p className="font-one-more text-sm font-bold uppercase italic">
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="font-one-more text-xs font-normal uppercase italic leading-none">
             {UI.socialFriendsCardTitle}
           </p>
           <p className="truncate text-xs text-muted-foreground">
@@ -73,24 +68,33 @@ export function SocialFriendsCard({
                 lastName: friend.lastName ?? undefined,
                 username: friend.username ?? undefined,
               };
-              return friend.avatarUrl ? (
+              const avatar = friend.avatarUrl ? (
                 <img
-                  key={friend.userId}
                   src={friend.avatarUrl}
                   alt=""
                   title={getProfileDisplayName(profile, null)}
-                  className="size-8 rounded-full border-2 border-card object-cover"
+                  className="size-[30px] rounded-full border-2 border-card object-cover"
                 />
               ) : (
                 <ProfileAvatarFallback
-                  key={friend.userId}
                   initials={getProfileInitials(profile, null)}
-                  className="size-8 rounded-full border-2 border-card text-[11px]"
+                  className="size-[30px] rounded-full border-2 border-card text-[11px]"
                 />
+              );
+              return (
+                <span key={friend.userId} className="relative">
+                  {avatar}
+                  {trainingIds.has(friend.userId) ? (
+                    <span
+                      className="absolute -bottom-px -right-px size-[9px] rounded-full border-2 border-card bg-accent"
+                      aria-hidden
+                    />
+                  ) : null}
+                </span>
               );
             })}
             {extra > 0 ? (
-              <span className="flex size-8 items-center justify-center rounded-full border-2 border-card bg-foreground text-[10px] font-semibold text-background">
+              <span className="flex size-[30px] items-center justify-center rounded-full border-2 border-card bg-foreground text-[10px] font-semibold text-accent">
                 +{extra}
               </span>
             ) : null}

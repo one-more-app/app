@@ -1,8 +1,5 @@
-import { trainingNowSurfaceClass } from "@/components/friends/TrainingNowBanner";
 import { ProfileAvatarFallback } from "@/components/profile/ProfileAvatarFallback";
 import { ProBadge } from "@/components/profile/ProBadge";
-import { EmptyState } from "@/components/ui/empty-state";
-import { presenceDotClass } from "@/hooks/use-friends-presence";
 import { getLocalDateKey } from "@/lib/local-date";
 import {
   getProfileDisplayName,
@@ -15,15 +12,14 @@ import {
 } from "@/lib/social-feed";
 import { UI } from "@/lib/translations";
 import { cn } from "@/lib/utils";
-import { ChevronRight, Flame, Trophy } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 function ActivityUserRow({
   item,
   subtitle,
   to,
-  surfaceClassName,
-  showLiveDot = false,
+  dotClassName,
 }: {
   item: {
     userId: string;
@@ -36,8 +32,7 @@ function ActivityUserRow({
   };
   subtitle: string;
   to: string;
-  surfaceClassName?: string;
-  showLiveDot?: boolean;
+  dotClassName: string;
 }) {
   const profile = {
     firstName: item.firstName ?? undefined,
@@ -50,21 +45,18 @@ function ActivityUserRow({
   return (
     <Link
       to={to}
-      className={cn(
-        "flex items-center gap-3 rounded-xl px-3.5 py-3 transition-colors",
-        surfaceClassName ?? "border border-border/60 bg-card hover:bg-muted/30",
-      )}
+      className="flex items-center gap-3 rounded-[14px] bg-card px-3.5 py-3 transition-colors hover:bg-muted/30"
     >
       {item.avatarUrl ? (
         <img
           src={item.avatarUrl}
           alt=""
-          className="size-9 shrink-0 rounded-full object-cover"
+          className="size-10 shrink-0 rounded-full object-cover"
         />
       ) : (
         <ProfileAvatarFallback
           initials={initials}
-          className="size-9 rounded-full text-xs"
+          className="size-10 rounded-full text-xs"
         />
       )}
       <div className="min-w-0 flex-1 space-y-0.5">
@@ -75,15 +67,10 @@ function ActivityUserRow({
           ) : null}
         </p>
         <p className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-          {showLiveDot ? (
-            <span
-              className={cn(
-                "size-2 shrink-0 rounded-full",
-                presenceDotClass("training"),
-              )}
-              aria-hidden
-            />
-          ) : null}
+          <span
+            className={cn("size-2 shrink-0 rounded-full", dotClassName)}
+            aria-hidden
+          />
           <span className="truncate">{subtitle}</span>
         </p>
       </div>
@@ -97,82 +84,59 @@ function ActivityUserRow({
 
 export function SocialTrainingNowSection({
   items,
-  emptyLabel = UI.socialTrainingNowEmpty,
 }: {
   items: SocialTrainingNowItem[];
-  emptyLabel?: string;
 }) {
+  if (items.length === 0) return null;
+
   return (
-    <section className="space-y-2" aria-labelledby="social-training-now">
-      <h2
-        id="social-training-now"
-        className="flex items-center gap-1.5 text-sm font-semibold"
-      >
-        <Flame className="size-4 text-amber-500" aria-hidden />
+    <section className="space-y-3" aria-labelledby="social-training-now">
+      <h2 id="social-training-now" className="text-sm font-semibold">
         {UI.socialTrainingNowTitle}
       </h2>
-      {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{emptyLabel}</p>
-      ) : (
-        <div className="space-y-2">
-          {items.map((item) => (
-            <ActivityUserRow
-              key={item.userId}
-              item={item}
-              subtitle={
-                item.exerciseName
-                  ? `${UI.socialSessionLive} · ${item.exerciseName}`
-                  : UI.socialSessionLive
-              }
-              to={item.sessionPath}
-              surfaceClassName={cn(
-                trainingNowSurfaceClass,
-                "hover:bg-accent/15",
-              )}
-              showLiveDot
-            />
-          ))}
-        </div>
-      )}
+      <div className="space-y-3">
+        {items.map((item) => (
+          <ActivityUserRow
+            key={item.userId}
+            item={item}
+            subtitle={
+              item.exerciseName
+                ? `${UI.socialSessionLive} · ${item.exerciseName}`
+                : UI.socialSessionLive
+            }
+            to={item.sessionPath}
+            dotClassName="bg-accent"
+          />
+        ))}
+      </div>
     </section>
   );
 }
 
 export function SocialRecentSessionsSection({
   items,
-  emptyLabel = UI.socialRecentSessionsEmpty,
 }: {
   items: SocialRecentSessionItem[];
-  emptyLabel?: string;
 }) {
   const todayKey = getLocalDateKey();
+  if (items.length === 0) return null;
+
   return (
-    <section className="space-y-2" aria-labelledby="social-recent-sessions">
-      <h2
-        id="social-recent-sessions"
-        className="flex items-center gap-1.5 text-sm font-semibold"
-      >
-        <Trophy className="size-4 text-primary" aria-hidden />
+    <section className="space-y-3" aria-labelledby="social-recent-sessions">
+      <h2 id="social-recent-sessions" className="text-sm font-semibold">
         {UI.socialRecentSessionsTitle}
       </h2>
-      {items.length === 0 ? (
-        <EmptyState
-          variant="plain"
-          description={emptyLabel}
-          contentClassName="py-2"
-        />
-      ) : (
-        <div className="space-y-2">
-          {items.map((item) => (
-            <ActivityUserRow
-              key={`${item.userId}:${item.activityDate}`}
-              item={item}
-              subtitle={formatSocialSessionAgo(item.activityDate, todayKey)}
-              to={item.sessionPath}
-            />
-          ))}
-        </div>
-      )}
+      <div className="space-y-3">
+        {items.map((item) => (
+          <ActivityUserRow
+            key={`${item.userId}:${item.activityDate}`}
+            item={item}
+            subtitle={formatSocialSessionAgo(item.activityDate, todayKey)}
+            to={item.sessionPath}
+            dotClassName="bg-[#b5b5b5]"
+          />
+        ))}
+      </div>
     </section>
   );
 }
@@ -186,8 +150,10 @@ export function SocialActivitySections({
   trainingNow,
   recentSessions,
 }: SocialActivitySectionsProps) {
+  if (trainingNow.length === 0 && recentSessions.length === 0) return null;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <SocialTrainingNowSection items={trainingNow} />
       <SocialRecentSessionsSection items={recentSessions} />
     </div>

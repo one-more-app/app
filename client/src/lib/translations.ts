@@ -745,6 +745,7 @@ export const UI = {
   navSettings: "Réglages",
   socialTitle: "Social",
   socialAddFriendsAria: "Ajouter des amis",
+  socialMessagesAria: "Messages",
   socialRankingCardLabel: "Classement",
   socialRankingCardLabelPlace: "Classement · {place}",
   socialRankingCardAria: "Voir le classement",

@@ -43,7 +43,7 @@ Index : `(ownerUserId, sessionDate)`, `(ownerUserId, endedAt)` pour retrouver la
 - `performance_entries.workoutSessionId` (FK, NOT NULL après backfill des non-deleted)
 - `session_comments.workoutSessionId` (+ conserver `sessionDate` pour legacy / requêtes jour)
 - `session_reactions.workoutSessionId` (idem)
-- `workout_session_ends` : table legacy ; nouvelles fins écrivent `workout_sessions.endedAt`. La facade date peut encore lire/écrire via la session ouverte du jour.
+- Fin de séance : `workout_sessions.endedAt` uniquement. `workout_session_ends` est supprimée.
 
 ## Cycle de vie
 
@@ -59,7 +59,7 @@ GET /sessions/:sessionId
   → si ouverte et idle ≥ 25 min : persist endedAt = lastSetAt (lazy-close)
 ```
 
-`resolveExplicitSessionEnd` (reopen si série après end) **ne s’applique plus** au chemin `sessionId`. La facade jour legacy peut continuer à agréger sans créer de multi pour les vieux clients.
+Une série après une fin crée une nouvelle séance. La façade jour legacy agrège le jour et lit la fin sur `workout_sessions.endedAt`.
 
 ## API
 

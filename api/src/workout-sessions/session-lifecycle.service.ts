@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { PerformanceEntryEntity } from '../performance/performance-entry.entity.js';
 import { SESSION_ACTIVE_IDLE_MS } from '../shared/session-timing.js';
-import { SessionEndEntity } from './entities/session-end.entity.js';
 import { WorkoutSessionEntity } from './entities/workout-session.entity.js';
 
 /**
@@ -17,8 +16,6 @@ export class SessionLifecycleService {
     private readonly sessionsRepo: Repository<WorkoutSessionEntity>,
     @InjectRepository(PerformanceEntryEntity)
     private readonly perfRepo: Repository<PerformanceEntryEntity>,
-    @InjectRepository(SessionEndEntity)
-    private readonly endsRepo: Repository<SessionEndEntity>,
   ) {}
 
   async findById(sessionId: string): Promise<WorkoutSessionEntity> {
@@ -69,9 +66,7 @@ export class SessionLifecycleService {
     const ref = lastSetAt ?? session.startedAt;
     if (now - ref.getTime() < SESSION_ACTIVE_IDLE_MS) return session;
     session.endedAt = ref;
-    const saved = await this.sessionsRepo.save(session);
-    await this.syncLegacyEnd(saved);
-    return saved;
+    return await this.sessionsRepo.save(session);
   }
 
   async endSessionNow(
@@ -80,9 +75,7 @@ export class SessionLifecycleService {
   ): Promise<WorkoutSessionEntity> {
     if (session.endedAt) return session;
     session.endedAt = endedAt;
-    const saved = await this.sessionsRepo.save(session);
-    await this.syncLegacyEnd(saved);
-    return saved;
+    return await this.sessionsRepo.save(session);
   }
 
   /**
@@ -105,7 +98,6 @@ export class SessionLifecycleService {
       ) {
         open.endedAt = ref;
         await this.sessionsRepo.save(open);
-        await this.syncLegacyEnd(open);
       } else {
         return open;
       }
@@ -118,29 +110,6 @@ export class SessionLifecycleService {
       endedAt: null,
     });
     return await this.sessionsRepo.save(created);
-  }
-
-  /** Garde la table ends (legacy) alignée sur la dernière fin du jour. */
-  async syncLegacyEnd(session: WorkoutSessionEntity): Promise<void> {
-    if (!session.endedAt) return;
-    let row = await this.endsRepo.findOne({
-      where: {
-        ownerUserId: session.ownerUserId,
-        sessionDate: session.sessionDate,
-      },
-    });
-    if (!row) {
-      row = this.endsRepo.create({
-        ownerUserId: session.ownerUserId,
-        sessionDate: session.sessionDate,
-        workoutSessionId: session.id,
-        endedAt: session.endedAt,
-      });
-    } else {
-      row.endedAt = session.endedAt;
-      row.workoutSessionId = session.id;
-    }
-    await this.endsRepo.save(row);
   }
 
   isSessionLive(

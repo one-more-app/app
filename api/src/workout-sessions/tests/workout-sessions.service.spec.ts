@@ -65,11 +65,6 @@ describe('WorkoutSessionsService', () => {
     getPresence: jest.fn(),
   };
 
-  const endsRepo = {
-    findOne: jest.fn(),
-    create: jest.fn((value) => value),
-    save: jest.fn(),
-  };
   const progressService = {
     getDailyXpTotal: jest.fn(),
   };
@@ -81,7 +76,6 @@ describe('WorkoutSessionsService', () => {
     lazyCloseIfIdle: jest.fn((s: unknown) => Promise.resolve(s)),
     endSessionNow: jest.fn(),
     attachOrCreateSession: jest.fn(),
-    syncLegacyEnd: jest.fn(),
     isSessionLive: jest.fn(() => false),
   };
 
@@ -90,8 +84,6 @@ describe('WorkoutSessionsService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     reactionsRepo.find.mockResolvedValue([]);
-    endsRepo.findOne.mockResolvedValue(null);
-    endsRepo.save.mockImplementation((value) => Promise.resolve(value));
     progressService.getDailyXpTotal.mockResolvedValue(0);
     lifecycle.listForDay.mockResolvedValue([]);
     lifecycle.findOpenSession.mockResolvedValue(null);
@@ -105,7 +97,6 @@ describe('WorkoutSessionsService', () => {
       performanceEntriesService as any,
       trackedExercisesService as any,
       presenceService as any,
-      endsRepo as any,
       progressService as any,
       lifecycle as any,
     );
@@ -236,33 +227,6 @@ describe('WorkoutSessionsService', () => {
     commentsRepo.count.mockResolvedValue(0);
   }
 
-  it('n est pas isLive si endedAt posé, même avec présence training', async () => {
-    const lastSet = new Date(Date.now() - 5 * 60 * 1000);
-    mockOwnerWithEntries(lastSet.toISOString());
-    presenceService.getPresence.mockResolvedValue({ status: 'training' });
-    const endedAt = new Date(Date.now() - 60 * 1000);
-    endsRepo.findOne.mockResolvedValue({ endedAt });
-
-    const result = await service.getSession('owner-1', 'owner-1', '2026-07-13');
-
-    expect(result.isLive).toBe(false);
-    expect(result.endedAt).toBe(endedAt.toISOString());
-  });
-
-  it('facade legacy : rouvre le jour si une série suit endedAt (sans workout_sessions)', async () => {
-    const endedAt = new Date(Date.now() - 10 * 60 * 1000);
-    const lastSet = new Date(Date.now() - 2 * 60 * 1000);
-    mockOwnerWithEntries(lastSet.toISOString());
-    presenceService.getPresence.mockResolvedValue({ status: 'offline' });
-    endsRepo.findOne.mockResolvedValue({ endedAt });
-    lifecycle.listForDay.mockResolvedValue([]);
-
-    const result = await service.getSession('owner-1', 'owner-1', '2026-07-13');
-
-    expect(result.isLive).toBe(true);
-    expect(result.endedAt).toBeNull();
-  });
-
   it('avec séance first-class terminée : isLive false même si présence training', async () => {
     const lastSet = new Date(Date.now() - 5 * 60 * 1000);
     mockOwnerWithEntries(lastSet.toISOString());
@@ -327,7 +291,7 @@ describe('WorkoutSessionsService', () => {
       expect(result.endedAt).toBe(endedAt.toISOString());
     });
 
-    it('est idempotent si endedAt déjà posé (fallback ends)', async () => {
+    it('est idempotent si la séance du jour est déjà terminée', async () => {
       const lastSet = new Date(Date.now() - 10 * 60 * 1000);
       const endedAt = new Date(Date.now() - 5 * 60 * 1000);
       mockOwnerWithEntries(lastSet.toISOString());
@@ -340,7 +304,6 @@ describe('WorkoutSessionsService', () => {
           endedAt,
         },
       ]);
-      endsRepo.findOne.mockResolvedValue({ endedAt });
 
       const result = await service.endSession(
         'owner-1',
@@ -349,6 +312,36 @@ describe('WorkoutSessionsService', () => {
       );
 
       expect(lifecycle.endSessionNow).not.toHaveBeenCalled();
+      expect(lifecycle.attachOrCreateSession).not.toHaveBeenCalled();
+      expect(result.endedAt).toBe(endedAt.toISOString());
+    });
+
+    it('crée une séance close s il n en existe aucune pour le jour', async () => {
+      mockOwnerWithEntries(new Date(Date.now() - 60 * 1000).toISOString());
+      lifecycle.findOpenSession.mockResolvedValue(null);
+      lifecycle.listForDay.mockResolvedValue([]);
+      const created = {
+        id: 'sess-new',
+        ownerUserId: 'owner-1',
+        sessionDate: '2026-07-13',
+        endedAt: null,
+      };
+      const endedAt = new Date();
+      lifecycle.attachOrCreateSession.mockResolvedValue(created);
+      lifecycle.endSessionNow.mockResolvedValue({ ...created, endedAt });
+
+      const result = await service.endSession(
+        'owner-1',
+        'owner-1',
+        '2026-07-13',
+      );
+
+      expect(lifecycle.attachOrCreateSession).toHaveBeenCalledWith(
+        'owner-1',
+        '2026-07-13',
+        expect.any(Date),
+      );
+      expect(lifecycle.endSessionNow).toHaveBeenCalledWith(created);
       expect(result.endedAt).toBe(endedAt.toISOString());
     });
 

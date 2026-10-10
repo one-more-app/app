@@ -21,6 +21,20 @@ test("barre de séance : repos, passer, terminer, visible sur la fiche exercice"
 
   await page.goto("/#/home");
 
+  const exerciseRow = page.getByRole("button", {
+    name: new RegExp(e2eCatalogExercise.name, "i"),
+    expanded: false,
+  });
+  await expect(exerciseRow).toBeVisible({ timeout: 10_000 });
+  await expect(exerciseRow.locator("svg")).toBeVisible();
+  await exerciseRow.click();
+  await expect(
+    page.getByRole("button", {
+      name: new RegExp(e2eCatalogExercise.name, "i"),
+      expanded: true,
+    }),
+  ).toBeVisible();
+
   // `data-session-live-bar` : éviter le `<section>` accueil aussi nommé « Séance en cours ».
   // Sur l'accueil, la rangée exo n'est pas dans la barre (seulement repos / séance).
   const bar = page.locator("[data-session-live-bar]").getByRole("region", {

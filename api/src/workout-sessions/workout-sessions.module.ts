@@ -9,7 +9,6 @@ import { RealtimeModule } from '../realtime/realtime.module.js';
 import { SocialModule } from '../social/social.module.js';
 import { TrackedExercisesModule } from '../tracked-exercises/tracked-exercises.module.js';
 import { SessionCommentEntity } from './entities/session-comment.entity.js';
-import { SessionEndEntity } from './entities/session-end.entity.js';
 import { SessionReactionEntity } from './entities/session-reaction.entity.js';
 import { WorkoutSessionEntity } from './entities/workout-session.entity.js';
 import { SessionLifecycleModule } from './session-lifecycle.module.js';
@@ -21,7 +20,6 @@ import { WorkoutSessionsService } from './workout-sessions.service.js';
     TypeOrmModule.forFeature([
       SessionCommentEntity,
       SessionReactionEntity,
-      SessionEndEntity,
       WorkoutSessionEntity,
       UserProfileEntity,
     ]),

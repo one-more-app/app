@@ -77,7 +77,7 @@ export function HomeFirstSessionCard({
     return (
         <section
             aria-label={heading}
-            className="dark flex flex-col overflow-hidden rounded-2xl bg-primary text-white"
+            className="dark flex flex-col overflow-hidden rounded-xl bg-primary text-white"
         >
             <div className="relative h-[120px]">
                 <img

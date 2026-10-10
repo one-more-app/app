@@ -173,16 +173,27 @@ function HomeExerciseListItem({
                     onClick={onToggle}
                     aria-expanded={isOpen}
                     aria-controls={panelId}
-                    className="min-w-0 flex-1 text-left"
+                    className="flex min-w-0 flex-1 items-center gap-2 text-left"
                 >
-                    <ExerciseTitle className="block">{name}</ExerciseTitle>
-                    <HistoryCollapsedHighlights
-                        seriesLabel={seriesLabel}
-                        summary={groupHighlights}
-                        trailing={
-                            league ? <RankBadge league={league} size="xs" /> : null
-                        }
-                    />
+                    <span className="min-w-0 flex-1">
+                        <ExerciseTitle className="block">{name}</ExerciseTitle>
+                        <HistoryCollapsedHighlights
+                            seriesLabel={seriesLabel}
+                            summary={groupHighlights}
+                            trailing={
+                                league ? <RankBadge league={league} size="xs" /> : null
+                            }
+                        />
+                    </span>
+                    {mode === "live" ? (
+                        <ChevronDown
+                            className={cn(
+                                "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                                isOpen && "rotate-180",
+                            )}
+                            aria-hidden
+                        />
+                    ) : null}
                 </button>
 
                 {mode === "live" ? (

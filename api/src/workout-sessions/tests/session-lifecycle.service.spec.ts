@@ -12,22 +12,11 @@ describe('SessionLifecycleService', () => {
   const perfRepo = {
     createQueryBuilder: jest.fn(),
   };
-  const endsRepo = {
-    findOne: jest.fn(),
-    create: jest.fn((value) => value),
-    save: jest.fn((value) => Promise.resolve(value)),
-  };
-
   let service: SessionLifecycleService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    endsRepo.findOne.mockResolvedValue(null);
-    service = new SessionLifecycleService(
-      sessionsRepo as any,
-      perfRepo as any,
-      endsRepo as any,
-    );
+    service = new SessionLifecycleService(sessionsRepo as any, perfRepo as any);
   });
 
   function mockLastSetAt(date: Date | null) {

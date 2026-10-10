@@ -255,12 +255,12 @@ function BottomRow({
                 <RestTargetQuickEdit
                     side="top"
                     align="end"
-                    className="relative h-8 gap-1.5 border-transparent bg-white/70 px-3 text-sm font-semibold text-black hover:bg-white/90"
+                    className="relative h-8 gap-1.5 border-transparent bg-primary/10 text-black px-3 text-sm font-semibold hover:bg-white/90"
                 />
                 <Button
                     type="button"
                     variant="secondary"
-                    className="bg-primary/10"
+                    className="bg-primary/10 text-black"
                     onClick={(event) => {
                         event.stopPropagation();
                         trackRestTimerDismissed({
@@ -349,8 +349,8 @@ export function SessionLiveBar({ navVisible }: SessionLiveBarProps) {
     const onCurrentExercisePage = pathname === `/exercise/${currentExerciseId}`;
     const onOtherExercisePage =
         pathname.startsWith("/exercise/") && !onCurrentExercisePage;
-  /** Rangée exo : uniquement sur une autre fiche (retour vers l'exo en cours). */
-  const showExerciseRow = onOtherExercisePage;
+    /** Rangée exo : uniquement sur une autre fiche (retour vers l'exo en cours). */
+    const showExerciseRow = onOtherExercisePage;
 
     const openExercise = () => {
         if (onCurrentExercisePage) return;
@@ -463,7 +463,7 @@ export function SessionLiveBar({ navVisible }: SessionLiveBarProps) {
                 <div
                     role="region"
                     aria-label={UI.sessionBarA11y}
-                    className="session-bar-rise-anim pointer-events-auto mx-auto max-w-2xl overflow-hidden rounded-2xl bg-primary text-primary-foreground ring-1 ring-primary-foreground/10"
+                    className="session-bar-rise-anim pointer-events-auto mx-auto max-w-2xl overflow-hidden rounded-xl bg-primary text-primary-foreground ring-1 ring-primary-foreground/10"
                 >
                     {showExerciseRow ? (
                         <div className="flex items-center gap-3 px-3 py-2.5">
@@ -513,16 +513,16 @@ export function SessionLiveBar({ navVisible }: SessionLiveBarProps) {
                         </div>
                     ) : null}
 
-          <BottomRow
-            key={restCreatedAt ?? "none"}
-            live={live}
-            restCreatedAt={restCreatedAt}
-            restSourceExerciseId={latestGlobalPerf?.exercise?.id}
-            onFinish={openEndDrawer}
-            onOpenHome={onHome ? undefined : openHome}
-            withTopBorder={showExerciseRow}
-            keepSessionAboveRest={onCurrentExercisePage}
-          />
+                    <BottomRow
+                        key={restCreatedAt ?? "none"}
+                        live={live}
+                        restCreatedAt={restCreatedAt}
+                        restSourceExerciseId={latestGlobalPerf?.exercise?.id}
+                        onFinish={openEndDrawer}
+                        onOpenHome={onHome ? undefined : openHome}
+                        withTopBorder={showExerciseRow}
+                        keepSessionAboveRest={onCurrentExercisePage}
+                    />
                 </div>
             </div>
 

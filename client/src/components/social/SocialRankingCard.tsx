@@ -14,7 +14,6 @@ import {
 import { getCurrentRankingMonth } from "@/lib/ranking-month";
 import type { RankId } from "@/lib/strength-standards";
 import { UI } from "@/lib/translations";
-import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import useSWR from "swr";
 
@@ -104,7 +103,7 @@ export function SocialRankingCard() {
           {isLoading ? (
             <Skeleton className="mt-1 h-7 w-16" />
           ) : rank != null ? (
-            <p className="font-one-more text-2xl font-bold italic tabular-nums">
+            <p className="font-one-more text-2xl font-semibold italic tabular-nums">
               {UI.rankingRankLabel.replace("{rank}", String(rank))}
             </p>
           ) : (
@@ -113,7 +112,7 @@ export function SocialRankingCard() {
         </div>
         {data ? (
           <div className="flex shrink-0 flex-col items-end gap-1">
-            <p className="text-sm font-semibold tabular-nums">
+            <p className="text-sm font-medium tabular-nums">
               {UI.rankingXpShort.replace(
                 "{xp}",
                 data.me.xp.toLocaleString("fr-FR"),
@@ -124,10 +123,6 @@ export function SocialRankingCard() {
             ) : null}
           </div>
         ) : null}
-        <ChevronRight
-          className="size-4 shrink-0 text-muted-foreground"
-          aria-hidden
-        />
       </Link>
     </Card>
   );

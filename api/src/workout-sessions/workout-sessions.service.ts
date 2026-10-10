@@ -14,14 +14,8 @@ import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { FriendsService } from '../social/friends.service.js';
 import { TrackedExercisesService } from '../tracked-exercises/tracked-exercises.service.js';
 import { ProgressService } from '../progress/progress.service.js';
-import {
-  getSessionBounds,
-  resolveExplicitSessionEnd,
-  SESSION_ACTIVE_IDLE_MS,
-  type SessionEntryLike,
-} from '../shared/session-timing.js';
+import { SESSION_ACTIVE_IDLE_MS } from '../shared/session-timing.js';
 import { SessionCommentEntity } from './entities/session-comment.entity.js';
-import { SessionEndEntity } from './entities/session-end.entity.js';
 import {
   SESSION_REACTION_EMOJIS,
   SessionReactionEntity,
@@ -31,23 +25,6 @@ import type { WorkoutSessionEntity } from './entities/workout-session.entity.js'
 import { SessionLifecycleService } from './session-lifecycle.service.js';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-
-/**
- * Facade jour legacy : une série après endedAt « rouvre » le jour
- * (compat apps non mises à jour). Le chemin sessionId n'utilise pas ça.
- */
-function resolveLegacyDayExplicitEnd(
-  entries: SessionEntryLike[],
-  endedAt: string | null | undefined,
-): string | null {
-  if (!endedAt) return null;
-  const bounds = getSessionBounds(entries);
-  if (!bounds) return null;
-  const endedMs = new Date(endedAt).getTime();
-  if (Number.isNaN(endedMs)) return null;
-  if (endedMs < new Date(bounds.last.createdAt).getTime()) return null;
-  return endedAt;
-}
 
 export type SessionCommentAuthorDto = {
   userId: string;
@@ -92,8 +69,6 @@ export class WorkoutSessionsService {
     private readonly performanceEntriesService: PerformanceEntriesService,
     private readonly trackedExercisesService: TrackedExercisesService,
     private readonly presenceService: PresenceService,
-    @InjectRepository(SessionEndEntity)
-    private readonly endsRepo: Repository<SessionEndEntity>,
     private readonly progressService: ProgressService,
     private readonly lifecycle: SessionLifecycleService,
   ) {}
@@ -328,10 +303,6 @@ export class WorkoutSessionsService {
       },
       null,
     );
-    const endRow = await this.endsRepo.findOne({
-      where: { ownerUserId, sessionDate: date },
-    });
-
     const isPresenceTraining = presence?.status === PresenceStatus.TRAINING;
     const daySessionsRaw = await this.lifecycle.listForDay(ownerUserId, date);
     // Présence training : ne pas persister de fin idle (compat vieux clients live).
@@ -359,16 +330,9 @@ export class WorkoutSessionsService {
         break;
       }
     }
-    // Legacy sans workout_sessions : idle jour + reopen si série après endedAt.
     if (!isLive && daySessions.length === 0 && date === today && lastEntry) {
-      const legacyEnded = resolveLegacyDayExplicitEnd(
-        entries,
-        endRow?.endedAt.toISOString() ?? null,
-      );
-      if (!legacyEnded) {
-        const idleMs = Date.now() - new Date(lastEntry.createdAt).getTime();
-        isLive = isPresenceTraining || idleMs < SESSION_ACTIVE_IDLE_MS;
-      }
+      const idleMs = Date.now() - new Date(lastEntry.createdAt).getTime();
+      isLive = isPresenceTraining || idleMs < SESSION_ACTIVE_IDLE_MS;
     }
 
     const primary =
@@ -378,13 +342,7 @@ export class WorkoutSessionsService {
       daySessions.find((s) => !s.endedAt) ??
       daySessions[daySessions.length - 1];
 
-    const endedAt = isLive
-      ? null
-      : (primary?.endedAt?.toISOString() ??
-        resolveExplicitSessionEnd(
-          entries,
-          endRow?.endedAt.toISOString() ?? null,
-        ));
+    const endedAt = isLive ? null : (primary?.endedAt?.toISOString() ?? null);
 
     const xpEarned = await this.progressService.getDailyXpTotal(
       ownerUserId,
@@ -457,18 +415,6 @@ export class WorkoutSessionsService {
       return { date, endedAt: closed.endedAt!.toISOString() };
     }
 
-    // Fallback legacy ends table (idempotent si déjà fini).
-    const existing = await this.endsRepo.findOne({
-      where: { ownerUserId, sessionDate: date },
-    });
-    const effective = resolveExplicitSessionEnd(
-      entries,
-      existing?.endedAt.toISOString() ?? null,
-    );
-    if (existing && effective) {
-      return { date, endedAt: effective };
-    }
-
     const daySessions = await this.lifecycle.listForDay(ownerUserId, date);
     const latest = daySessions[daySessions.length - 1];
     if (latest && !latest.endedAt) {
@@ -479,12 +425,13 @@ export class WorkoutSessionsService {
       return { date, endedAt: latest.endedAt.toISOString() };
     }
 
-    const endedAt = new Date();
-    const row =
-      existing ?? this.endsRepo.create({ ownerUserId, sessionDate: date });
-    row.endedAt = endedAt;
-    await this.endsRepo.save(row);
-    return { date, endedAt: endedAt.toISOString() };
+    const created = await this.lifecycle.attachOrCreateSession(
+      ownerUserId,
+      date,
+      new Date(),
+    );
+    const closed = await this.lifecycle.endSessionNow(created);
+    return { date, endedAt: closed.endedAt!.toISOString() };
   }
 
   private aggregateReactionRows(
