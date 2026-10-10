@@ -21,6 +21,7 @@ import {
     UNSPECIFIED_EQUIPMENT,
     filterBrowseableBySearch,
     sortBrowseableByLatestPerf,
+    sortByTrackedThenCatalog,
     type BrowseableExercise,
     type BrowseSearchSort,
     type CatalogBrowseParams,
@@ -155,6 +156,34 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
         }
         return { byZone, byTarget, byEquipment }
     }, [pool, isTracked, browse.zone, browse.target])
+
+    const sortedZoneEntries = useMemo(() => {
+        if (!trackedCounts) return zoneEntries
+        return sortByTrackedThenCatalog(
+            zoneEntries,
+            (entry) => entry.zone,
+            trackedCounts.byZone,
+        )
+    }, [zoneEntries, trackedCounts])
+
+    const sortedTargetEntries = useMemo(() => {
+        if (!trackedCounts) return targetEntries
+        return sortByTrackedThenCatalog(
+            targetEntries,
+            (entry) => entry.target,
+            trackedCounts.byTarget,
+        )
+    }, [targetEntries, trackedCounts])
+
+    const sortedEquipmentEntries = useMemo(() => {
+        if (!trackedCounts) return equipmentEntries
+        return sortByTrackedThenCatalog(
+            equipmentEntries,
+            (entry) => entry.equipment,
+            trackedCounts.byEquipment,
+            { pinLastKey: UNSPECIFIED_EQUIPMENT },
+        )
+    }, [equipmentEntries, trackedCounts])
 
     const leafExercises = useMemo(() => {
         if (browse.step !== 'list' || !browse.zone || !browse.target || !browse.beq) {
@@ -311,7 +340,7 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
 
             {!showingViewAll && browse.step === 'zone' ? (
                 <ul className="space-y-3">
-                    {zoneEntries.map(({ zone, count }) => (
+                    {sortedZoneEntries.map(({ zone, count }) => (
                         <li key={zone}>
                             <BrowseTile
                                 label={translateBodyPart(zone)}
@@ -335,7 +364,7 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
 
             {!showingViewAll && browse.step === 'muscle' && browse.zone ? (
                 <ul className="space-y-3">
-                    {targetEntries.map(({ target, count }) => (
+                    {sortedTargetEntries.map(({ target, count }) => (
                         <li key={target}>
                             <BrowseTile
                                 label={translateTarget(target)}
@@ -362,7 +391,7 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
                 browse.zone &&
                 browse.target ? (
                 <ul className="space-y-3">
-                    {equipmentEntries.map(({ equipment, count }) => (
+                    {sortedEquipmentEntries.map(({ equipment, count }) => (
                         <li key={equipment}>
                             <BrowseTile
                                 label={translateEquipment(equipment)}

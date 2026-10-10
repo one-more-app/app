@@ -26,7 +26,7 @@ Deux filets automatiques pour limiter les régressions sans multiplier les tests
   - onglet Social : classement, amis, en séance, dernières séances (`client/e2e/smoke/social/social-tab.spec.ts`)
   - bottom nav : 4 onglets Accueil · Exercices · Social · Réglages (`client/e2e/smoke/nav/bottom-nav.spec.ts`)
   - cloche notifications sur l'accueil (drawer vide)
-  - accueil : semaine, état vide du jour, CTA « Démarrer une séance » vers le catalogue
+  - accueil : semaine, rappel « Ta prochaine séance » si aujourd'hui ou demain est vide, CTA « Démarrer une séance » vers le catalogue
   - démarrer une séance : pas de paywall si limite d'exercices atteinte (`client/e2e/smoke/home/start-session-no-paywall.spec.ts`)
   - fin de séance : « Terminer » appelle l'API puis ouvre la page séance en mode récap hybride (`client/e2e/smoke/session/session-end-recap.spec.ts`)
   - page séance by id + commentaires / réactions (`client/e2e/smoke/session/session-view.spec.ts`)

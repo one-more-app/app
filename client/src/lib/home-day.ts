@@ -80,23 +80,6 @@ export function findLastSessionDay(
   return last;
 }
 
-/**
- * Jour sélectionné par défaut : aujourd'hui si séance en cours ou nouvel
- * utilisateur (aucun historique), sinon le dernier jour avec séance.
- */
-export function resolveDefaultHomeDay({
-  todayKey,
-  activeDays,
-  hasLiveSession,
-}: {
-  todayKey: string;
-  activeDays: string[];
-  hasLiveSession: boolean;
-}): string {
-  if (hasLiveSession || activeDays.length === 0) return todayKey;
-  return findLastSessionDay(activeDays, todayKey) ?? todayKey;
-}
-
 export function classifyHomeDay({
   dayKey,
   todayKey,

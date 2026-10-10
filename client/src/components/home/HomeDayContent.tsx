@@ -4,7 +4,11 @@ import { HomeDaySessions } from "@/components/home/HomeDaySessions";
 import { HomeLastSessionBlock } from "@/components/home/HomeLastSessionBlock";
 import { HomeLiveSession } from "@/components/home/HomeLiveSession";
 import { EmptyState } from "@/components/ui/empty-state";
-import { formatHomeDayTitle, type HomeDayKind } from "@/lib/home-day";
+import {
+  addDaysToDateKey,
+  formatHomeDayTitle,
+  type HomeDayKind,
+} from "@/lib/home-day";
 import { UI } from "@/lib/translations";
 import type { PerformanceEntry } from "@/types";
 import { CalendarDays, Clock, Dumbbell } from "lucide-react";
@@ -12,6 +16,7 @@ import { CalendarDays, Clock, Dumbbell } from "lucide-react";
 type HomeDayContentProps = {
   kind: HomeDayKind;
   dayKey: string;
+  todayKey: string;
   ownerUserId: string | undefined;
   /** Perfs actives (non supprimées) de l'utilisateur. */
   entries: PerformanceEntry[];
@@ -22,13 +27,14 @@ type HomeDayContentProps = {
   onSelectDay: (dayKey: string) => void;
   /** Ouvre le parcours d'ajout d'un exercice (catalogue ou tiroir parrainage). */
   onAddExercise: () => void;
-  /** Nouvel inscrit (aucun exercice suivi, aucune perf) : carte « Ta première séance ». */
+  /** Nouvel inscrit : titre « Ta première séance ». Sinon « Ta prochaine séance ». */
   isNewUser?: boolean;
 };
 
 export function HomeDayContent({
   kind,
   dayKey,
+  todayKey,
   ownerUserId,
   entries,
   dayEntries,
@@ -69,23 +75,15 @@ export function HomeDayContent({
       />
     ) : null;
 
-  if (kind === "today-empty" && isNewUser) {
-    return <HomeFirstSessionCard />;
-  }
+  const showReminderCard =
+    kind === "today-empty" ||
+    (kind === "future" && dayKey === addDaysToDateKey(todayKey, 1));
 
-  if (kind === "today-empty") {
+  if (showReminderCard) {
     return (
       <>
-        <section>
-          <HomeDayTitle>{UI.homeTodayTitle}</HomeDayTitle>
-          <EmptyState
-            icon={Dumbbell}
-            title={UI.homeTodayEmptyTitle}
-            description={UI.homeTodayEmptyHelp}
-            contentClassName="px-6 py-8"
-          />
-        </section>
-        {lastBlock}
+        <HomeFirstSessionCard variant={isNewUser ? "first" : "next"} />
+        {isNewUser ? null : lastBlock}
       </>
     );
   }

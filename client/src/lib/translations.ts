@@ -1066,6 +1066,7 @@ export const UI = {
   firstSessionNotedStartNow: "Commencer maintenant",
   firstSessionNotedHome: "Aller à l'accueil",
   homeFirstSessionTitle: "Ta première séance",
+  homeNextSessionTitle: "Ta prochaine séance",
   homeFirstSessionTagOn: "Rappel activé",
   homeFirstSessionTagOff: "Pas de rappel",
   homeFirstSessionNoneTitle1: "On te prévient",

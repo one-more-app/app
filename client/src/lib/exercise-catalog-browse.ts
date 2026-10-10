@@ -153,6 +153,32 @@ export function exercisesForBrowsePath<T extends BrowseableExercise>(
   });
 }
 
+/**
+ * Parcours exercices : suivis décroissant, puis taille catalogue, puis nom.
+ * `pinLastKey` garde une clé (matériel non précisé) toujours en bas.
+ */
+export function sortByTrackedThenCatalog<T extends { count: number }>(
+  entries: readonly T[],
+  keyOf: (entry: T) => string,
+  trackedByKey: ReadonlyMap<string, number>,
+  options?: { pinLastKey?: string },
+): T[] {
+  const pin = options?.pinLastKey;
+  return [...entries].sort((a, b) => {
+    const ka = keyOf(a);
+    const kb = keyOf(b);
+    if (pin) {
+      if (ka === pin && kb !== pin) return 1;
+      if (kb === pin && ka !== pin) return -1;
+    }
+    const ta = trackedByKey.get(ka.toLowerCase()) ?? 0;
+    const tb = trackedByKey.get(kb.toLowerCase()) ?? 0;
+    if (tb !== ta) return tb - ta;
+    if (b.count !== a.count) return b.count - a.count;
+    return ka.localeCompare(kb, "fr", { sensitivity: "base" });
+  });
+}
+
 export function countByZone(
   exercises: BrowseableExercise[],
 ): { zone: string; count: number }[] {

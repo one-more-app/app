@@ -4,6 +4,7 @@ import {
   countByEquipment,
   countByTarget,
   countByZone,
+  sortByTrackedThenCatalog,
   type BrowseableExercise,
 } from "./exercise-catalog-browse";
 
@@ -13,6 +14,55 @@ function ex(
 ): BrowseableExercise {
   return { ...partial };
 }
+
+describe("sortByTrackedThenCatalog", () => {
+  it("priorise le nombre de suivis, puis le nombre catalogue", () => {
+    const entries = [
+      { zone: "chest", count: 20 },
+      { zone: "back", count: 4 },
+      { zone: "legs", count: 8 },
+    ];
+    const tracked = new Map([
+      ["back", 3],
+      ["legs", 3],
+      ["chest", 1],
+    ]);
+    expect(
+      sortByTrackedThenCatalog(entries, (e) => e.zone, tracked).map(
+        (e) => e.zone,
+      ),
+    ).toEqual(["legs", "back", "chest"]);
+  });
+
+  it("à égalité de suivis et de catalogue, départage alphabétique fr", () => {
+    const entries = [
+      { zone: "shoulders", count: 2 },
+      { zone: "chest", count: 2 },
+    ];
+    const tracked = new Map([
+      ["shoulders", 1],
+      ["chest", 1],
+    ]);
+    expect(
+      sortByTrackedThenCatalog(entries, (e) => e.zone, tracked).map(
+        (e) => e.zone,
+      ),
+    ).toEqual(["chest", "shoulders"]);
+  });
+
+  it("laisse le matériel non précisé en dernier", () => {
+    const entries = [
+      { equipment: UNSPECIFIED_EQUIPMENT, count: 1 },
+      { equipment: "cable", count: 4 },
+    ];
+    const tracked = new Map([[UNSPECIFIED_EQUIPMENT, 5]]);
+    expect(
+      sortByTrackedThenCatalog(entries, (e) => e.equipment, tracked, {
+        pinLastKey: UNSPECIFIED_EQUIPMENT,
+      }).map((e) => e.equipment),
+    ).toEqual(["cable", UNSPECIFIED_EQUIPMENT]);
+  });
+});
 
 describe("countByZone", () => {
   it("trie par count décroissant (plus d'anatomique imposé)", () => {

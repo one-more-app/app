@@ -28,7 +28,6 @@ import { readStoredSession } from '@/lib/auth'
 import {
     classifyHomeDay,
     findLastSessionDay,
-    resolveDefaultHomeDay,
     resolveHomeStreak,
     resolveLastActiveDate,
 } from '@/lib/home-day'
@@ -105,16 +104,11 @@ function HomePage() {
             ? todayLive != null
             : todayTiming?.isInProgress === true
 
-    const defaultDay = useMemo(
-        () => resolveDefaultHomeDay({ todayKey, activeDays, hasLiveSession }),
-        [todayKey, activeDays, hasLiveSession],
-    )
-
-    // Choix explicite de l'utilisateur ; sinon le jour par défaut suit les données.
+    // Jour J tant que l'utilisateur n'a pas choisi un autre jour.
     const [pickedDay, setPickedDay] = useState<string | null>(null)
     const [weekStartOverride, setWeekStartOverride] = useState<string | null>(null)
 
-    const selectedDay = pickedDay ?? defaultDay
+    const selectedDay = pickedDay ?? todayKey
     const weekStart = weekStartOverride ?? getWeekStartDateKey(selectedDay)
     const currentWeekStart = getWeekStartDateKey(todayKey)
 
@@ -224,6 +218,7 @@ function HomePage() {
                     <HomeDayContent
                         kind={dayKind}
                         dayKey={selectedDay}
+                        todayKey={todayKey}
                         ownerUserId={ownerUserId}
                         entries={entries}
                         dayEntries={dayEntries}

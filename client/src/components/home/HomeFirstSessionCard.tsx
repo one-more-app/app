@@ -22,8 +22,15 @@ type ReminderState =
     | { kind: "days"; day: string; time: string }
     | { kind: "gym"; gymName: string | null };
 
-/** Carte « Ta première séance » : nouvel inscrit, avec 3 états de rappel. */
-export function HomeFirstSessionCard() {
+type HomeFirstSessionCardProps = {
+    /** `first` : nouvel inscrit. `next` : pas de séance aujourd'hui ou demain. */
+    variant?: "first" | "next";
+};
+
+/** Carte rappel : « Ta première séance » ou « Ta prochaine séance ». */
+export function HomeFirstSessionCard({
+    variant = "first",
+}: HomeFirstSessionCardProps) {
     const navigate = useNavigate();
     const { data: prefs } = useNotificationPreferences();
     const { data: userGym } = useUserGymData();
@@ -43,6 +50,10 @@ export function HomeFirstSessionCard() {
     }, [prefs, userGym]);
 
     const active = state.kind !== "none";
+    const heading =
+        variant === "next" ? UI.homeNextSessionTitle : UI.homeFirstSessionTitle;
+    const analyticsPrefix =
+        variant === "next" ? "home_next_session" : "home_first_session";
 
     const title =
         state.kind === "none"
@@ -65,7 +76,7 @@ export function HomeFirstSessionCard() {
 
     return (
         <section
-            aria-label={UI.homeFirstSessionTitle}
+            aria-label={heading}
             className="dark flex flex-col overflow-hidden rounded-2xl bg-primary text-white"
         >
             <div className="relative h-[120px]">
@@ -83,7 +94,7 @@ export function HomeFirstSessionCard() {
                 />
                 <div className="absolute inset-x-3 top-3 flex items-center justify-between gap-2">
                     <h2 className="font-one-more text-xs font-normal uppercase italic leading-[1.1] tracking-tight [text-shadow:0_1px_4px_rgba(0,0,0,0.5)]">
-                        {UI.homeFirstSessionTitle}
+                        {heading}
                     </h2>
                     <span
                         className={cn(
@@ -110,7 +121,7 @@ export function HomeFirstSessionCard() {
                         type="button"
                         variant="secondary"
                         className="w-full gap-2"
-                        data-analytics-label="home_first_session_edit_reminder"
+                        data-analytics-label={`${analyticsPrefix}_edit_reminder`}
                         onClick={() => {
                             void hapticImpact();
                             navigate(EDIT_REMINDER_PATH);
@@ -124,7 +135,7 @@ export function HomeFirstSessionCard() {
                         type="button"
                         variant="accent"
                         className="h-10 w-full gap-2"
-                        data-analytics-label="home_first_session_activate_reminder"
+                        data-analytics-label={`${analyticsPrefix}_activate_reminder`}
                         onClick={() => {
                             void hapticImpact();
                             navigate(EDIT_REMINDER_PATH);
