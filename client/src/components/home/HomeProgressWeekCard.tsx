@@ -10,8 +10,9 @@ import {
     type HomeStreakState,
 } from "@/lib/home-day";
 import { UI } from "@/lib/translations";
+import { cn } from "@/lib/utils";
 import type { UserProgressState } from "@/types";
-import { Clock, Flame } from "lucide-react";
+import { ChevronDown, Clock, Flame } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type HomeProgressWeekCardProps = {
@@ -25,6 +26,8 @@ type HomeProgressWeekCardProps = {
     onNextWeek: () => void;
     canGoPrev: boolean;
     canGoNext: boolean;
+    /** Séance en cours : bande des jours repliée par défaut, dépliable. */
+    hasLiveSession?: boolean;
 };
 
 function useMidnightCountdown(enabled: boolean): number {
@@ -126,7 +129,11 @@ export function HomeProgressWeekCard({
     onNextWeek,
     canGoPrev,
     canGoNext,
+    hasLiveSession = false,
 }: HomeProgressWeekCardProps) {
+    const [weekExpanded, setWeekExpanded] = useState(false);
+    const showWeek = !hasLiveSession || weekExpanded;
+
     return (
         <Card data-tour="home-progress-banner" className="mb-4 py-3">
             <CardContent className="pt-0">
@@ -135,23 +142,54 @@ export function HomeProgressWeekCard({
                     xpIntoLevel={progress.xpIntoLevel}
                     xpForNextLevel={progress.xpForNextLevel}
                     rightSlot={<StreakSummary streak={streak} bonusPercent={bonusPercent} />}
+                    hintRightSlot={
+                        hasLiveSession ? (
+                            <button
+                                type="button"
+                                className={cn(
+                                    "-my-1 -mr-1 shrink-0 rounded-lg p-1 text-muted-foreground outline-none",
+                                    "transition-colors hover:text-foreground",
+                                    "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                                )}
+                                aria-expanded={weekExpanded}
+                                aria-label={
+                                    weekExpanded
+                                        ? UI.homeWeekCollapseAria
+                                        : UI.homeWeekExpandAria
+                                }
+                                data-tour="home-week-toggle"
+                                onClick={() => setWeekExpanded((prev) => !prev)}
+                            >
+                                <ChevronDown
+                                    className={cn(
+                                        "size-4 shrink-0 transition-transform",
+                                        weekExpanded && "rotate-180",
+                                    )}
+                                    aria-hidden
+                                />
+                            </button>
+                        ) : null
+                    }
                 />
-                <div className="mt-3 border-t border-border pt-3">
-                    <HomeWeekStrip
-                        cells={weekCells}
-                        selectedDay={selectedDay}
-                        onSelectDay={onSelectDay}
-                        onPrevWeek={onPrevWeek}
-                        onNextWeek={onNextWeek}
-                        canGoPrev={canGoPrev}
-                        canGoNext={canGoNext}
-                        todayAtRisk={streak.kind === "risk"}
-                        streakLost={
-                            streak.kind === "none" && weekCells.some((cell) => cell.isToday)
-                        }
-                    />
-                    <StreakNote streak={streak} />
-                </div>
+                {showWeek ? (
+                    <div className="mt-3 border-t border-border pt-3">
+                        <HomeWeekStrip
+                            cells={weekCells}
+                            selectedDay={selectedDay}
+                            onSelectDay={onSelectDay}
+                            onPrevWeek={onPrevWeek}
+                            onNextWeek={onNextWeek}
+                            canGoPrev={canGoPrev}
+                            canGoNext={canGoNext}
+                            todayAtRisk={streak.kind === "risk"}
+                            streakLost={
+                                streak.kind === "none" &&
+                                weekCells.some((cell) => cell.isToday)
+                            }
+                        />
+                        <StreakNote streak={streak} />
+                    </div>
+                ) : null}
             </CardContent>
         </Card>
     );

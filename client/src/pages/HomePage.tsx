@@ -209,6 +209,7 @@ function HomePage() {
                         onNextWeek={() => handleShiftWeek(1)}
                         canGoPrev={canGoPrev}
                         canGoNext={canGoNext}
+                        hasLiveSession={hasLiveSession}
                     />
                 ) : null}
 

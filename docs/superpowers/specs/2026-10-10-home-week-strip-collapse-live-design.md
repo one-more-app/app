@@ -1,7 +1,7 @@
 # Accueil · replier la bande des jours en séance live
 
 Date : 2026-10-10  
-Statut : validé (design)
+Statut : implémenté
 
 ## Objectif
 

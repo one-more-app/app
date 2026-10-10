@@ -385,6 +385,8 @@ export const UI = {
   homeDoneTodaySubtitle: "Ta séance du jour",
   homeExercisesTitle: "Tes exercices",
   homeWeekNavLabel: "Séances de la semaine",
+  homeWeekExpandAria: "Afficher les jours de la semaine",
+  homeWeekCollapseAria: "Masquer les jours de la semaine",
   homeWeekToday: "Auj.",
   homeWeekDaySelect: "{day} {date}",
   homeStreakKeptUntil: "Série gardée jusqu'à {day} minuit",

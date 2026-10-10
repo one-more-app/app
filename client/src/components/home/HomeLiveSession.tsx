@@ -227,10 +227,9 @@ export function HomeLiveSession({
     const hasComments = (session?.commentCount ?? 0) > 0;
 
     return (
-        <section data-tour="home-today" className="space-y-4">
+        <section data-tour="home-today" className="space-y-3">
             <div>
                 <HomeDayTitle
-                    size="sm"
                     right={
                         timing ? (
                             <LiveChrono

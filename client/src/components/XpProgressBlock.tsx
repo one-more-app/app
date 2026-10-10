@@ -22,6 +22,8 @@ export type XpProgressBlockProps = {
     xpForNextLevel: number;
     animateFromXpIntoLevel?: number;
     rightSlot?: ReactNode;
+    /** Contenu aligné à droite de la ligne « xp / xp ». */
+    hintRightSlot?: ReactNode;
     footerSlot?: ReactNode;
 };
 
@@ -31,6 +33,7 @@ export function XpProgressBlock({
     xpForNextLevel,
     animateFromXpIntoLevel,
     rightSlot,
+    hintRightSlot,
     footerSlot,
 }: XpProgressBlockProps) {
     const targetPct = xpBarPercent(xpIntoLevel, xpForNextLevel);
@@ -92,11 +95,14 @@ export function XpProgressBlock({
                     style={{ width: `${barPct}%` }}
                 />
             </div>
-            <p className="mt-1.5 text-xs text-muted-foreground">
-                {UI.xpProgressHint
-                    .replace("{current}", String(xpIntoLevel))
-                    .replace("{total}", String(xpForNextLevel))}
-            </p>
+            <div className="mt-1.5 flex items-center justify-between gap-2">
+                <p className="min-w-0 text-xs text-muted-foreground">
+                    {UI.xpProgressHint
+                        .replace("{current}", String(xpIntoLevel))
+                        .replace("{total}", String(xpForNextLevel))}
+                </p>
+                {hintRightSlot}
+            </div>
             {footerSlot}
         </>
     );
