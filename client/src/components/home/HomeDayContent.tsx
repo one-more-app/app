@@ -4,11 +4,7 @@ import { HomeDaySessions } from "@/components/home/HomeDaySessions";
 import { HomeLastSessionBlock } from "@/components/home/HomeLastSessionBlock";
 import { HomeLiveSession } from "@/components/home/HomeLiveSession";
 import { EmptyState } from "@/components/ui/empty-state";
-import {
-  addDaysToDateKey,
-  formatHomeDayTitle,
-  type HomeDayKind,
-} from "@/lib/home-day";
+import { formatHomeDayTitle, type HomeDayKind } from "@/lib/home-day";
 import { UI } from "@/lib/translations";
 import type { PerformanceEntry } from "@/types";
 import { CalendarDays, Clock, Dumbbell } from "lucide-react";
@@ -16,7 +12,6 @@ import { CalendarDays, Clock, Dumbbell } from "lucide-react";
 type HomeDayContentProps = {
   kind: HomeDayKind;
   dayKey: string;
-  todayKey: string;
   ownerUserId: string | undefined;
   /** Perfs actives (non supprimées) de l'utilisateur. */
   entries: PerformanceEntry[];
@@ -34,7 +29,6 @@ type HomeDayContentProps = {
 export function HomeDayContent({
   kind,
   dayKey,
-  todayKey,
   ownerUserId,
   entries,
   dayEntries,
@@ -75,9 +69,7 @@ export function HomeDayContent({
       />
     ) : null;
 
-  const showReminderCard =
-    kind === "today-empty" ||
-    (kind === "future" && dayKey === addDaysToDateKey(todayKey, 1));
+  const showReminderCard = kind === "today-empty" || kind === "future";
 
   if (showReminderCard) {
     return (

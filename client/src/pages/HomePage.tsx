@@ -219,7 +219,6 @@ function HomePage() {
                     <HomeDayContent
                         kind={dayKind}
                         dayKey={selectedDay}
-                        todayKey={todayKey}
                         ownerUserId={ownerUserId}
                         entries={entries}
                         dayEntries={dayEntries}
