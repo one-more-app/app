@@ -22,15 +22,17 @@ Deux filets automatiques pour limiter les régressions sans multiplier les tests
   - post-inscription : discovery, notifications, puis « Ta première séance » (`client/e2e/smoke/onboarding/post-auth-discovery-notifications.spec.ts`)
   - accueil nouvel inscrit : carte « Ta première séance » et modification du rappel (`client/e2e/smoke/home/home-first-session-card.spec.ts`)
   - exercices : zones avec « n suivis / n disponibles » (`client/e2e/smoke/exercises/browse-zone-counts.spec.ts`)
+  - exercices : perf depuis la liste suivis ouvre la fiche (`client/e2e/smoke/exercises/tracked-list-log-perf.spec.ts`)
   - onglet Social : classement, amis, en séance, dernières séances (`client/e2e/smoke/social/social-tab.spec.ts`)
   - bottom nav : 4 onglets Accueil · Exercices · Social · Réglages (`client/e2e/smoke/nav/bottom-nav.spec.ts`)
   - cloche notifications sur l'accueil (drawer vide)
-  - accueil : semaine, état vide du jour, CTA « Démarrer une séance » vers le catalogue
+  - accueil : semaine, rappel « Ta prochaine séance » si aujourd'hui ou demain est vide, CTA « Démarrer une séance » vers le catalogue
   - démarrer une séance : pas de paywall si limite d'exercices atteinte (`client/e2e/smoke/home/start-session-no-paywall.spec.ts`)
   - fin de séance : « Terminer » appelle l'API puis ouvre la page séance en mode récap hybride (`client/e2e/smoke/session/session-end-recap.spec.ts`)
   - page séance by id + commentaires / réactions (`client/e2e/smoke/session/session-view.spec.ts`)
   - partage story depuis le récap hybride (`client/e2e/smoke/session/recap-share-story.spec.ts`)
   - barre de séance live (`client/e2e/smoke/session/session-live-bar.spec.ts`)
+  - fin de séance : « Terminer » appelle l'API puis ouvre le récap de séance
   - landing store web (CTA unique vers le OneLink AppsFlyer)
 
 Durée typique : ~1 à 2 min (typecheck + build API + lint + smoke Playwright).

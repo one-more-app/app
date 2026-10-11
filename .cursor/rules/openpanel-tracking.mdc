@@ -25,7 +25,7 @@ alwaysApply: false
 | Onboarding funnel | `lib/analytics/onboarding-tracking.ts` | `onboarding_step_viewed/completed/skipped`, `onboarding_completed` |
 | Perfs CRUD | `lib/storage.ts` | `performance_logged/edited/deleted` + `exercise_added` |
 | Records / ligue | `lib/perf-notifications.ts` | `personal_record_broken`, `league_promoted` |
-| Repos | `RestSinceLastSetBar` | `rest_timer_dismissed` |
+| Repos | `SessionLiveBar` | `rest_timer_dismissed` |
 | Drawer perf | `AddPerfDrawer` + `ui/drawer` | `perf_drawer_opened`, `drawer_opened/closed` |
 | Picker | `HorizontalWheelPicker` | `wheel_picker_changed` |
 | Overlays | `ui/dialog`, `ui/drawer` | `dialog_opened/closed` via `data-analytics-label` |
@@ -54,6 +54,7 @@ Helper : `trackOnboardingStepViewed` / `Completed` / `Skipped` / `trackOnboardin
 | `account_login` | `AuthPage` | + `user_logged_in` (`method=email\|google\|apple`) |
 | `account_register_*` | `AuthPage` | un substep par carte ; submit → `user_registered` |
 | `discovery` / `notifications` | steps post-auth | viewed / completed / skipped |
+| `first_session` / `first_session_reminder` / `first_session_confirm` | `OnboardingFirstSession*` (`?step=first-session\|first-reminder\|first-noted`) | viewed au mount ; completed avec `action` (`start`, `later`, `start_now`, `home`) ou `reminder_mode` (`days`, `gym`) ; skip du rappel → `onboarding_step_skipped` |
 | `gym_question` / `gym_locating` / `gym_confirm` / `gym_search` | `OnboardingGymStep` | URL gelée, viewed sur le state interne |
 | `gym_permissions` | `OnboardingGymPermissionsStep` | skip → `onboarding_step_skipped` ; toggles push |
 | `gym_wait` | `OnboardingGymWaitStep` | completed sur unlock |

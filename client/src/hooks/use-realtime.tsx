@@ -29,8 +29,14 @@ type RealtimeContextValue = {
     trackedExerciseId?: string;
   }) => void;
   joinConversation: (conversationId: string) => void;
-  joinSession: (ownerUserId: string, date: string) => void;
-  leaveSession: (ownerUserId: string, date: string) => void;
+  joinSession: (
+    ownerUserIdOrSessionId: string,
+    date?: string,
+  ) => void;
+  leaveSession: (
+    ownerUserIdOrSessionId: string,
+    date?: string,
+  ) => void;
 };
 
 const RealtimeContext = createContext<RealtimeContextValue | null>(null);
@@ -209,13 +215,37 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     socketRef.current?.emit("conversation:join", { conversationId });
   }, []);
 
-  const joinSession = useCallback((ownerUserId: string, date: string) => {
-    socketRef.current?.emit("session:join", { ownerUserId, date });
-  }, []);
+  const joinSession = useCallback(
+    (ownerUserIdOrSessionId: string, date?: string) => {
+      if (!date) {
+        socketRef.current?.emit("session:join", {
+          sessionId: ownerUserIdOrSessionId,
+        });
+        return;
+      }
+      socketRef.current?.emit("session:join", {
+        ownerUserId: ownerUserIdOrSessionId,
+        date,
+      });
+    },
+    [],
+  );
 
-  const leaveSession = useCallback((ownerUserId: string, date: string) => {
-    socketRef.current?.emit("session:leave", { ownerUserId, date });
-  }, []);
+  const leaveSession = useCallback(
+    (ownerUserIdOrSessionId: string, date?: string) => {
+      if (!date) {
+        socketRef.current?.emit("session:leave", {
+          sessionId: ownerUserIdOrSessionId,
+        });
+        return;
+      }
+      socketRef.current?.emit("session:leave", {
+        ownerUserId: ownerUserIdOrSessionId,
+        date,
+      });
+    },
+    [],
+  );
 
   const value: RealtimeContextValue = {
     connected,

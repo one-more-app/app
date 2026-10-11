@@ -1,7 +1,6 @@
 import { FriendTrainingBell } from "@/components/friends/FriendTrainingBell";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { Button } from "@/components/ui/button";
-import { useFriendsPresence } from "@/hooks/use-friends-presence";
 import { fetchFriendBadges } from "@/lib/badges-api";
 import { getOrCreateConversation } from "@/lib/messaging-api";
 import {
@@ -18,7 +17,6 @@ import useSWR from "swr";
 export default function FriendProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const { byUserId } = useFriendsPresence();
   const { data, isLoading, error } = useSWR(
     userId ? ["friend-profile", userId] : null,
     () => fetchFriendProfile(userId!),
@@ -28,7 +26,6 @@ export default function FriendProfilePage() {
     () => fetchFriendBadges(userId!),
   );
 
-  const presence = userId ? byUserId.get(userId) : undefined;
   const pageTitle = data?.profile
     ? getProfileDisplayName(data.profile, null)
     : UI.profile;
@@ -89,7 +86,6 @@ export default function FriendProfilePage() {
         error: Boolean(error),
       }}
       sessionOwnerUserId={userId}
-      isFriendPresenceTraining={presence?.status === "training"}
     />
   );
 }

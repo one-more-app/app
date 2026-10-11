@@ -17,16 +17,15 @@ jest.unstable_mockModule(
     TrackedExercisesService: class TrackedExercisesService {},
   }),
 );
+jest.unstable_mockModule('../../progress/progress.service.js', () => ({
+  ProgressService: class ProgressService {},
+}));
 jest.unstable_mockModule('../../presence/presence.service.js', () => ({
   PresenceService: class PresenceService {},
 }));
 jest.unstable_mockModule('../../social/friends.service.js', () => ({
   FriendsService: class FriendsService {},
 }));
-jest.unstable_mockModule('../../notifications/lib/timezone.js', () => ({
-  localDateKey: () => '2026-07-13',
-}));
-
 const { WorkoutSessionsService } =
   await import('../workout-sessions.service.js');
 
@@ -62,11 +61,30 @@ describe('WorkoutSessionsService', () => {
     getPresence: jest.fn(),
   };
 
+  const progressService = {
+    getDailyXpTotal: jest.fn(),
+  };
+  const lifecycle = {
+    listForDay: jest.fn(),
+    findById: jest.fn(),
+    findOpenSession: jest.fn(),
+    getLastSetAt: jest.fn(),
+    lazyCloseIfIdle: jest.fn((s: unknown) => Promise.resolve(s)),
+    endSessionNow: jest.fn(),
+    attachOrCreateSession: jest.fn(),
+    isSessionLive: jest.fn(() => false),
+  };
+
   let service: InstanceType<typeof WorkoutSessionsService>;
 
   beforeEach(() => {
     jest.clearAllMocks();
     reactionsRepo.find.mockResolvedValue([]);
+    progressService.getDailyXpTotal.mockResolvedValue(0);
+    lifecycle.listForDay.mockResolvedValue([]);
+    lifecycle.findOpenSession.mockResolvedValue(null);
+    lifecycle.getLastSetAt.mockResolvedValue(null);
+    lifecycle.isSessionLive.mockReturnValue(false);
     service = new WorkoutSessionsService(
       commentsRepo as any,
       reactionsRepo as any,
@@ -75,6 +93,8 @@ describe('WorkoutSessionsService', () => {
       performanceEntriesService as any,
       trackedExercisesService as any,
       presenceService as any,
+      progressService as any,
+      lifecycle as any,
     );
   });
 
@@ -84,6 +104,30 @@ describe('WorkoutSessionsService', () => {
     await expect(
       service.getSession('viewer-1', 'owner-2', '2026-07-13'),
     ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('évalue isLive avec le jour demandé (date locale client), pas UTC', async () => {
+    // Après minuit local (ex. FR), le jour demandé peut diverger du jour UTC.
+    presenceService.getPresence.mockResolvedValue({ status: 'offline' });
+    const session = {
+      id: 'sess-1',
+      ownerUserId: 'owner-1',
+      sessionDate: '2026-10-11',
+      startedAt: new Date('2026-10-10T22:30:00Z'),
+      endedAt: null,
+    };
+    lifecycle.listForDay.mockResolvedValue([session]);
+    lifecycle.getLastSetAt.mockResolvedValue(
+      new Date('2026-10-10T22:35:00Z'),
+    );
+    lifecycle.isSessionLive.mockReturnValue(true);
+
+    await service.listDaySessions('owner-1', 'owner-1', '2026-10-11');
+
+    expect(lifecycle.isSessionLive).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ todayKey: '2026-10-11' }),
+    );
   });
 
   it('signale isLive si présence training', async () => {
@@ -178,6 +222,168 @@ describe('WorkoutSessionsService', () => {
     const result = await service.getSession('owner-1', 'owner-1', '2026-07-13');
 
     expect(result.isLive).toBe(false);
+  });
+
+  function mockOwnerWithEntries(createdAt: string) {
+    profilesRepo.findOne.mockResolvedValue({
+      userId: 'owner-1',
+      firstName: 'Bob',
+      lastName: null,
+      username: 'bob',
+      avatarUrl: null,
+    });
+    performanceEntriesService.list.mockResolvedValue([
+      {
+        id: 'perf-1',
+        trackedExerciseId: 'te-1',
+        date: '2026-07-13',
+        weight: 60,
+        reps: 8,
+        createdAt,
+        deletedAt: null,
+      },
+    ]);
+    trackedExercisesService.listWithPerformance.mockResolvedValue([]);
+    commentsRepo.count.mockResolvedValue(0);
+  }
+
+  it('avec séance first-class terminée : isLive false même si présence training', async () => {
+    const lastSet = new Date(Date.now() - 5 * 60 * 1000);
+    mockOwnerWithEntries(lastSet.toISOString());
+    presenceService.getPresence.mockResolvedValue({ status: 'training' });
+    const endedAt = new Date(Date.now() - 60 * 1000);
+    lifecycle.listForDay.mockResolvedValue([
+      {
+        id: 'sess-1',
+        ownerUserId: 'owner-1',
+        sessionDate: '2026-07-13',
+        startedAt: new Date(Date.now() - 40 * 60 * 1000),
+        endedAt,
+      },
+    ]);
+    lifecycle.isSessionLive.mockReturnValue(false);
+    lifecycle.getLastSetAt.mockResolvedValue(lastSet);
+
+    const result = await service.getSession('owner-1', 'owner-1', '2026-07-13');
+
+    expect(result.isLive).toBe(false);
+    expect(result.endedAt).toBe(endedAt.toISOString());
+  });
+
+  it('expose l XP du jour', async () => {
+    mockOwnerWithEntries(new Date(Date.now() - 60 * 60 * 1000).toISOString());
+    presenceService.getPresence.mockResolvedValue({ status: 'offline' });
+    progressService.getDailyXpTotal.mockResolvedValue(340);
+
+    const result = await service.getSession('owner-1', 'owner-1', '2026-07-13');
+
+    expect(result.xpEarned).toBe(340);
+    expect(progressService.getDailyXpTotal).toHaveBeenCalledWith(
+      'owner-1',
+      '2026-07-13',
+    );
+  });
+
+  describe('endSession', () => {
+    it('clôture la session ouverte du jour', async () => {
+      mockOwnerWithEntries(new Date(Date.now() - 60 * 1000).toISOString());
+      const endedAt = new Date();
+      lifecycle.findOpenSession.mockResolvedValue({
+        id: 'sess-1',
+        ownerUserId: 'owner-1',
+        sessionDate: '2026-07-13',
+        endedAt: null,
+      });
+      lifecycle.endSessionNow.mockResolvedValue({
+        id: 'sess-1',
+        ownerUserId: 'owner-1',
+        sessionDate: '2026-07-13',
+        endedAt,
+      });
+
+      const result = await service.endSession(
+        'owner-1',
+        'owner-1',
+        '2026-07-13',
+      );
+
+      expect(lifecycle.endSessionNow).toHaveBeenCalled();
+      expect(result.endedAt).toBe(endedAt.toISOString());
+    });
+
+    it('est idempotent si la séance du jour est déjà terminée', async () => {
+      const lastSet = new Date(Date.now() - 10 * 60 * 1000);
+      const endedAt = new Date(Date.now() - 5 * 60 * 1000);
+      mockOwnerWithEntries(lastSet.toISOString());
+      lifecycle.findOpenSession.mockResolvedValue(null);
+      lifecycle.listForDay.mockResolvedValue([
+        {
+          id: 'sess-1',
+          ownerUserId: 'owner-1',
+          sessionDate: '2026-07-13',
+          endedAt,
+        },
+      ]);
+
+      const result = await service.endSession(
+        'owner-1',
+        'owner-1',
+        '2026-07-13',
+      );
+
+      expect(lifecycle.endSessionNow).not.toHaveBeenCalled();
+      expect(lifecycle.attachOrCreateSession).not.toHaveBeenCalled();
+      expect(result.endedAt).toBe(endedAt.toISOString());
+    });
+
+    it('crée une séance close s il n en existe aucune pour le jour', async () => {
+      mockOwnerWithEntries(new Date(Date.now() - 60 * 1000).toISOString());
+      lifecycle.findOpenSession.mockResolvedValue(null);
+      lifecycle.listForDay.mockResolvedValue([]);
+      const created = {
+        id: 'sess-new',
+        ownerUserId: 'owner-1',
+        sessionDate: '2026-07-13',
+        endedAt: null,
+      };
+      const endedAt = new Date();
+      lifecycle.attachOrCreateSession.mockResolvedValue(created);
+      lifecycle.endSessionNow.mockResolvedValue({ ...created, endedAt });
+
+      const result = await service.endSession(
+        'owner-1',
+        'owner-1',
+        '2026-07-13',
+      );
+
+      expect(lifecycle.attachOrCreateSession).toHaveBeenCalledWith(
+        'owner-1',
+        '2026-07-13',
+        expect.any(Date),
+      );
+      expect(lifecycle.endSessionNow).toHaveBeenCalledWith(created);
+      expect(result.endedAt).toBe(endedAt.toISOString());
+    });
+
+    it('refuse un autre utilisateur', async () => {
+      await expect(
+        service.endSession('viewer-1', 'owner-1', '2026-07-13'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('refuse un jour sans série', async () => {
+      performanceEntriesService.list.mockResolvedValue([]);
+
+      await expect(
+        service.endSession('owner-1', 'owner-1', '2026-07-13'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('rejette une date invalide', async () => {
+      await expect(
+        service.endSession('owner-1', 'owner-1', 'nope'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
   });
 
   it('autorise l accès à sa propre séance', async () => {

@@ -158,7 +158,7 @@
     --safe-bottom-web: 0.5rem;
     --safe-top: var(--safe-top-native);
     --safe-bottom: var(--safe-bottom-native);
-    --bottom-nav-height: 4rem;
+    --bottom-nav-height: 4.5rem;
     --back-header-height: 3.75rem;
   }
 
@@ -257,8 +257,13 @@
     pointer-events: none;
   }
 
+  /* `--session-bar-height` : posée par SessionLiveBar (barre de séance en cours), absente sinon. */
   .pb-bottom-nav-host {
-    padding-bottom: var(--bottom-nav-height);
+    padding-bottom: calc(var(--bottom-nav-height) + var(--session-bar-height, 0px));
+  }
+
+  .pb-session-bar {
+    padding-bottom: var(--session-bar-height, 0px);
   }
 
   /* Coquille app mobile : le document ne scroll pas, chaque écran a son viewport. */
@@ -291,7 +296,7 @@
    *   200 : Drawer / Dialog (overlay + content, voir components/ui/{drawer,dialog}.tsx)
    *   210 : Select / Popover portés (components/ui/{select,popover}.tsx), au-dessus des modales
    * Un overlay modal (drawer, dialog) DOIT rester au-dessus des .sticky-top-safe,
-   * sinon un header sticky (ex. RestSinceLastSetBar) passe par-dessus l'overlay
+   * sinon un header sticky passe par-dessus l'overlay
    * une fois qu'il s'ouvre au niveau du header.
    */
   .sticky-top-safe {
@@ -625,6 +630,38 @@
   animation: rank-copy-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* SessionLiveBar : lift court + fade (pro, discret) */
+@keyframes session-bar-rise {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.session-bar-rise-anim {
+  animation: session-bar-rise 0.28s ease-out both;
+}
+
+/* Rangée repos : même geste, un peu plus court */
+@keyframes session-rest-pop {
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.session-rest-pop-anim {
+  animation: session-rest-pop 0.22s ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .streak-flame-anim,
   .streak-count-anim,
@@ -639,7 +676,9 @@
   .event-live-rank-rise,
   .event-leaderboard-ticker,
   .rank-reel-lock,
-  .rank-copy-up {
+  .rank-copy-up,
+  .session-bar-rise-anim,
+  .session-rest-pop-anim {
     animation: none;
   }
 }

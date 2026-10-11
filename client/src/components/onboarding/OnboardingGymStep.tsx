@@ -1,5 +1,5 @@
-import { GymSearchPicker } from '@/components/gyms/GymSearchPicker'
 import { Trackable } from '@/components/analytics/Trackable'
+import { GymSearchPicker } from '@/components/gyms/GymSearchPicker'
 import {
     OnboardingReveal,
     onboardingStepCardClassName,
@@ -14,6 +14,7 @@ import {
     trackOnboardingStepCompleted,
     useOnboardingStepViewed,
 } from '@/lib/analytics'
+import { registerHardwareBackHandler } from '@/lib/app-back-navigation'
 import {
     getCurrentGymCoords,
     requestGymLocationPermission,
@@ -26,7 +27,6 @@ import {
     type GymPlace,
 } from '@/lib/gyms-api'
 import { UI } from '@/lib/translations'
-import { registerHardwareBackHandler } from '@/lib/app-back-navigation'
 import { Capacitor } from '@capacitor/core'
 import { Loader2 } from 'lucide-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
@@ -38,7 +38,6 @@ type GymSearchView = 'list' | 'map'
 
 type OnboardingGymStepProps = {
     onGymSaved: () => void | Promise<void>
-    onSkip?: () => void | Promise<void>
     fromSettings?: boolean
     startAtSearch?: boolean
     onSearchBack?: () => void
@@ -76,7 +75,6 @@ function GymStepShell({
 
 export function OnboardingGymStep({
     onGymSaved,
-    onSkip,
     fromSettings = false,
     startAtSearch = false,
     onSearchBack,
@@ -87,7 +85,6 @@ export function OnboardingGymStep({
     const mutateUserGym = useMutateUserGym()
     const navigate = useNavigate()
     const isNative = Capacitor.isNativePlatform()
-    const canSkip = Boolean(onSkip) && !fromSettings && !embedded
     const [subStep, setSubStep] = useState<GymSubStep>(
         fromSettings || startAtSearch ? 'search' : 'question',
     )
@@ -209,64 +206,64 @@ export function OnboardingGymStep({
     if (subStep === 'question') {
         return (
             <Trackable section="onboarding" feature={OnboardingSteps.GYM_QUESTION}>
-            <GymStepShell embedded={embedded}>
-                <StepCard
-                    className={onboardingStepCardClassName}
-                    title={UI.gymOnboardingTitle}
-                    onBack={
-                        fromSettings
-                            ? onCancel
-                            : () => navigate('/onboarding?step=rank', { replace: true })
-                    }
-                    backLabel={UI.back}
-                >
-                    <OnboardingReveal delayMs={80}>
-                        <p className="text-sm text-muted-foreground">
-                            {UI.gymOnboardingHint}
-                        </p>
-                    </OnboardingReveal>
-                    {error && (
-                        <OnboardingReveal delayMs={120}>
-                            <p className="text-sm text-destructive">{error}</p>
+                <GymStepShell embedded={embedded}>
+                    <StepCard
+                        className={onboardingStepCardClassName}
+                        title={UI.gymOnboardingTitle}
+                        onBack={
+                            fromSettings
+                                ? onCancel
+                                : () => navigate('/onboarding?step=rank', { replace: true })
+                        }
+                        backLabel={UI.back}
+                    >
+                        <OnboardingReveal delayMs={80}>
+                            <p className="text-sm text-muted-foreground">
+                                {UI.gymOnboardingHint}
+                            </p>
                         </OnboardingReveal>
-                    )}
-                    <OnboardingReveal delayMs={160}>
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <Button
-                                variant="accent"
-                                className="w-full"
-                                data-analytics-label="onboarding_gym_yes"
-                                onClick={() => {
-                                    setClaimedAtGym(true)
-                                    trackOnboardingStepCompleted({
-                                        step: OnboardingSteps.GYM_QUESTION,
-                                        claimed_at_gym: true,
-                                    })
-                                    void handleAtGym()
-                                }}
-                            >
-                                {UI.gymOnboardingYes}
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="w-full"
-                                data-analytics-label="onboarding_gym_no"
-                                onClick={() => {
-                                    setClaimedAtGym(false)
-                                    trackOnboardingStepCompleted({
-                                        step: OnboardingSteps.GYM_QUESTION,
-                                        claimed_at_gym: false,
-                                    })
-                                    setSubStep('search')
-                                    setError(null)
-                                }}
-                            >
-                                {UI.gymOnboardingNo}
-                            </Button>
-                        </div>
-                    </OnboardingReveal>
-                </StepCard>
-            </GymStepShell>
+                        {error && (
+                            <OnboardingReveal delayMs={120}>
+                                <p className="text-sm text-destructive">{error}</p>
+                            </OnboardingReveal>
+                        )}
+                        <OnboardingReveal delayMs={160}>
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <Button
+                                    variant="accent"
+                                    className="w-full"
+                                    data-analytics-label="onboarding_gym_yes"
+                                    onClick={() => {
+                                        setClaimedAtGym(true)
+                                        trackOnboardingStepCompleted({
+                                            step: OnboardingSteps.GYM_QUESTION,
+                                            claimed_at_gym: true,
+                                        })
+                                        void handleAtGym()
+                                    }}
+                                >
+                                    {UI.gymOnboardingYes}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="w-full"
+                                    data-analytics-label="onboarding_gym_no"
+                                    onClick={() => {
+                                        setClaimedAtGym(false)
+                                        trackOnboardingStepCompleted({
+                                            step: OnboardingSteps.GYM_QUESTION,
+                                            claimed_at_gym: false,
+                                        })
+                                        setSubStep('search')
+                                        setError(null)
+                                    }}
+                                >
+                                    {UI.gymOnboardingNo}
+                                </Button>
+                            </div>
+                        </OnboardingReveal>
+                    </StepCard>
+                </GymStepShell>
             </Trackable>
         )
     }
@@ -274,23 +271,23 @@ export function OnboardingGymStep({
     if (subStep === 'locating') {
         return (
             <Trackable section="onboarding" feature={OnboardingSteps.GYM_LOCATING}>
-            <GymStepShell embedded={embedded} centered>
-                <StepCard
-                    className={onboardingStepCardClassName}
-                    title={UI.gymOnboardingTitle}
-                    onBack={fromSettings ? onCancel : goGymQuestion}
-                    backLabel={UI.back}
-                >
-                    <OnboardingReveal>
-                        <Loader2 className="size-8 animate-spin text-accent" aria-hidden />
-                    </OnboardingReveal>
-                    <OnboardingReveal delayMs={120}>
-                        <p className="text-sm text-muted-foreground">
-                            {UI.gymOnboardingLocationWhy}
-                        </p>
-                    </OnboardingReveal>
-                </StepCard>
-            </GymStepShell>
+                <GymStepShell embedded={embedded} centered>
+                    <StepCard
+                        className={onboardingStepCardClassName}
+                        title={UI.gymOnboardingTitle}
+                        onBack={fromSettings ? onCancel : goGymQuestion}
+                        backLabel={UI.back}
+                    >
+                        <OnboardingReveal>
+                            <Loader2 className="size-8 animate-spin text-accent" aria-hidden />
+                        </OnboardingReveal>
+                        <OnboardingReveal delayMs={120}>
+                            <p className="text-sm text-muted-foreground">
+                                {UI.gymOnboardingLocationWhy}
+                            </p>
+                        </OnboardingReveal>
+                    </StepCard>
+                </GymStepShell>
             </Trackable>
         )
     }
@@ -298,108 +295,96 @@ export function OnboardingGymStep({
     if (subStep === 'confirm' && candidate) {
         return (
             <Trackable section="onboarding" feature={OnboardingSteps.GYM_CONFIRM}>
-            <GymStepShell embedded={embedded}>
-                <StepCard
-                    className={onboardingStepCardClassName}
-                    title={UI.gymOnboardingConfirmTitle}
-                    onBack={goGymQuestion}
-                    backLabel={UI.back}
-                >
-                    <OnboardingReveal delayMs={80}>
-                        <div className="rounded-2xl border border-border/80 bg-muted/20 p-4">
-                            <p className="font-semibold">{candidate.name}</p>
-                            {candidate.address && (
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                    {candidate.address}
-                                </p>
-                            )}
-                        </div>
-                    </OnboardingReveal>
-                    {error && (
-                        <OnboardingReveal delayMs={120}>
-                            <p className="text-sm text-destructive">{error}</p>
+                <GymStepShell embedded={embedded}>
+                    <StepCard
+                        className={onboardingStepCardClassName}
+                        title={UI.gymOnboardingConfirmTitle}
+                        onBack={goGymQuestion}
+                        backLabel={UI.back}
+                    >
+                        <OnboardingReveal delayMs={80}>
+                            <div className="rounded-xl border border-border/80 bg-muted/20 p-4">
+                                <p className="font-semibold">{candidate.name}</p>
+                                {candidate.address && (
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        {candidate.address}
+                                    </p>
+                                )}
+                            </div>
                         </OnboardingReveal>
-                    )}
-                    <OnboardingReveal delayMs={200}>
-                        <Button
-                            variant="accent"
-                            className="w-full"
-                            data-analytics-label="onboarding_gym_confirm"
-                            onClick={() => void saveGym(candidate, userCoords)}
-                        >
-                            {UI.continue}
-                        </Button>
-                    </OnboardingReveal>
-                    <OnboardingReveal delayMs={280}>
-                        <Button
-                            variant="outline"
-                            className="w-full"
-                            data-analytics-label="onboarding_gym_change"
-                            onClick={() => {
-                                setSearchQuery(candidate.name)
-                                setSearchView('list')
-                                setSelectedPlaceId(candidate.placeId)
-                                setSearchPickerKey((key) => key + 1)
-                                setSubStep('search')
-                            }}
-                        >
-                            {UI.gymSettingsChange}
-                        </Button>
-                    </OnboardingReveal>
-                </StepCard>
-            </GymStepShell>
+                        {error && (
+                            <OnboardingReveal delayMs={120}>
+                                <p className="text-sm text-destructive">{error}</p>
+                            </OnboardingReveal>
+                        )}
+                        <OnboardingReveal delayMs={200}>
+                            <Button
+                                variant="accent"
+                                className="w-full"
+                                data-analytics-label="onboarding_gym_confirm"
+                                onClick={() => void saveGym(candidate, userCoords)}
+                            >
+                                {UI.continue}
+                            </Button>
+                        </OnboardingReveal>
+                        <OnboardingReveal delayMs={280}>
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                data-analytics-label="onboarding_gym_change"
+                                onClick={() => {
+                                    setSearchQuery(candidate.name)
+                                    setSearchView('list')
+                                    setSelectedPlaceId(candidate.placeId)
+                                    setSearchPickerKey((key) => key + 1)
+                                    setSubStep('search')
+                                }}
+                            >
+                                {UI.gymSettingsChange}
+                            </Button>
+                        </OnboardingReveal>
+                    </StepCard>
+                </GymStepShell>
             </Trackable>
         )
     }
 
     return (
         <Trackable section="onboarding" feature={OnboardingSteps.GYM_SEARCH}>
-        <GymStepShell embedded={embedded}>
-            <StepCard
-                className={onboardingStepCardClassName}
-                title={
-                    fromSettings
-                        ? (settingsPickerTitle ?? UI.gymSettingsChange)
-                        : UI.gymOnboardingSearch
-                }
-                onBack={fromSettings ? onCancel : onSearchBack ?? goGymQuestion}
-                backLabel={UI.back}
-            >
-                <div className="space-y-1">
-                    <GymSearchPicker
-                        key={searchPickerKey}
-                        animated
-                        claimedAtGym={claimedAtGym}
-                        fromSettings={fromSettings}
-                        initialSearchQuery={searchQuery}
-                        initialSelectedPlaceId={selectedPlaceId}
-                        initialSearchView={searchView}
-                        inputClassName="bg-card"
-                        onGymSaved={() => {
-                            if (!fromSettings && !embedded) {
-                                trackOnboardingStepCompleted({
-                                    step: OnboardingSteps.GYM_SEARCH,
-                                    claimed_at_gym: claimedAtGym,
-                                })
-                            }
-                            return onGymSaved()
-                        }}
-                    />
-                    {canSkip ? (
-                        <OnboardingReveal delayMs={200}>
-                            <Button
-                                variant="ghost"
-                                className="w-full text-muted-foreground"
-                                data-analytics-label="onboarding_gym_skip"
-                                onClick={() => void onSkip?.()}
-                            >
-                                {UI.gymOnboardingSkipNoGym}
-                            </Button>
-                        </OnboardingReveal>
-                    ) : null}
-                </div>
-            </StepCard>
-        </GymStepShell>
+            <GymStepShell embedded={embedded}>
+                <StepCard
+                    className={onboardingStepCardClassName}
+                    title={
+                        fromSettings
+                            ? (settingsPickerTitle ?? UI.gymSettingsChange)
+                            : UI.gymOnboardingSearch
+                    }
+                    onBack={fromSettings ? onCancel : onSearchBack ?? goGymQuestion}
+                    backLabel={UI.back}
+                >
+                    <div className="space-y-1">
+                        <GymSearchPicker
+                            key={searchPickerKey}
+                            animated
+                            claimedAtGym={claimedAtGym}
+                            fromSettings={fromSettings}
+                            initialSearchQuery={searchQuery}
+                            initialSelectedPlaceId={selectedPlaceId}
+                            initialSearchView={searchView}
+                            inputClassName="bg-card"
+                            onGymSaved={() => {
+                                if (!fromSettings && !embedded) {
+                                    trackOnboardingStepCompleted({
+                                        step: OnboardingSteps.GYM_SEARCH,
+                                        claimed_at_gym: claimedAtGym,
+                                    })
+                                }
+                                return onGymSaved()
+                            }}
+                        />
+                    </div>
+                </StepCard>
+            </GymStepShell>
         </Trackable>
     )
 }

@@ -22,7 +22,7 @@ export function ExerciseTitle({
     return (
         <Component
             className={cn(
-                'block min-w-0',
+                'block min-w-0 font-one-more text-xs uppercase italic',
                 lines === 1 ? 'truncate' : 'line-clamp-2',
                 className,
             )}

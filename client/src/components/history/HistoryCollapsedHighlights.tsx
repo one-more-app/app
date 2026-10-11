@@ -2,13 +2,20 @@ import { Badge } from '@/components/ui/badge'
 import { LeaguePromotionBadges } from '@/components/history/LeaguePromotionBadges'
 import type { ExerciseGroupInsightSummary } from '@/lib/history-entries'
 import { UI } from '@/lib/translations'
+import { cn } from '@/lib/utils'
+import type { ReactNode } from 'react'
 
 export function HistoryCollapsedHighlights({
     seriesLabel,
     summary,
+    className,
+    trailing,
 }: {
     seriesLabel: string
     summary: ExerciseGroupInsightSummary
+    className?: string
+    /** Contenu optionnel après le libellé de séries (ex. RankBadge). */
+    trailing?: ReactNode
 }) {
     const showTags =
         summary.hasNewRecord || summary.leaguePromotion !== null
@@ -18,10 +25,16 @@ export function HistoryCollapsedHighlights({
     const chipClass = `${rowItem} rounded-md px-1.5 text-[10px]`
 
     return (
-        <p className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 leading-none">
+        <p
+            className={cn(
+                'mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 leading-none',
+                className,
+            )}
+        >
             <span className={`${rowItem} text-xs text-muted-foreground`}>
                 {seriesLabel}
             </span>
+            {trailing}
             {showTags ? (
                 <>
                     <span

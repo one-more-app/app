@@ -11,7 +11,7 @@ import { UI } from "../../../src/lib/translations";
 const continueButton = (page: import("@playwright/test").Page) =>
   page.getByRole("button", { name: UI.continue, exact: true });
 
-test("après register : discovery puis notifications, Passer mène à la suite", async ({
+test("après register : discovery, notifications puis première séance", async ({
   page,
 }) => {
   const pageErrors = trackPageErrors(page);
@@ -69,6 +69,26 @@ test("après register : discovery puis notifications, Passer mène à la suite",
     .getByRole("button", { name: UI.onboardingSkip, exact: true })
     .click();
 
-  await expect(page).toHaveURL(/#\/(home|exercises)/, { timeout: 10_000 });
+  await expect(
+    page.getByRole("heading", { name: UI.firstSessionTitleA11y }),
+  ).toBeVisible({ timeout: 10_000 });
+  await page
+    .getByRole("button", { name: UI.firstSessionLater, exact: true })
+    .click();
+
+  await expect(page.getByText(UI.firstSessionReminderTitle)).toBeVisible();
+  await expect(page.getByText(UI.firstSessionReminderGymTitle)).toBeVisible();
+  await page
+    .getByRole("button", { name: UI.firstSessionReminderCta, exact: true })
+    .click();
+
+  await expect(page.getByText(UI.firstSessionNotedCardTitle)).toBeVisible({
+    timeout: 10_000,
+  });
+  await page
+    .getByRole("button", { name: UI.firstSessionNotedStartNow, exact: true })
+    .click();
+
+  await expect(page).toHaveURL(/#\/exercises/, { timeout: 10_000 });
   expect(pageErrors).toEqual([]);
 });

@@ -58,7 +58,7 @@ function DrawerOverlay({
             className={cn(
                 // z-[200] : au-dessus de `.sticky-top-safe` (z-100) et de tout ce qui est
                 // "page-level" (headers sticky, scrim safe-area, popovers). Sinon un header
-                // sticky (ex. RestSinceLastSetBar sur ExerciseDetailPage) passe DEVANT le
+                // sticky (ex. header fiche exo) passe DEVANT le
                 // drawer une fois qu'il est ouvert et le clavier remonte le drawer.
                 "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-[200] bg-black/50",
                 className

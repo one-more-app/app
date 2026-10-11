@@ -197,6 +197,7 @@ type RemotePerformanceCreateResponse = RemotePerformanceEntry & {
 
 export async function upsertPerformanceEntry(
   entry: PerformanceEntry,
+  opts?: { attachSession?: boolean },
 ): Promise<{ entry: PerformanceEntry; xp?: XpGrantResult }> {
   const item = await apiFetch<RemotePerformanceCreateResponse>(
     "/performance-entries",
@@ -208,6 +209,7 @@ export async function upsertPerformanceEntry(
         date: entry.date,
         weight: entry.weight,
         reps: entry.reps,
+        ...(opts?.attachSession === false ? { attachSession: false } : {}),
       }),
     },
   );

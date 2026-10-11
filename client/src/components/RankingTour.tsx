@@ -13,7 +13,7 @@ import { UI } from "@/lib/translations";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Step } from "react-joyride";
 
-const RANKING_TOUR_TARGETS = ['[data-tour="nav-ranking"]'] as const;
+const RANKING_TOUR_TARGETS = ['[data-tour="nav-social"]'] as const;
 
 /**
  * Tour one-shot pour les utilisateurs qui ont déjà vu le home tour
@@ -52,7 +52,7 @@ export function RankingTour({ navVisible }: { navVisible: boolean }) {
   const steps = useMemo<Step[]>(
     () => [
       {
-        target: '[data-tour="nav-ranking"]',
+        target: '[data-tour="nav-social"]',
         title: UI.rankingTourTitle,
         content: UI.rankingTourContent,
         placement: "top",

@@ -26,7 +26,7 @@ import { UI } from "@/lib/translations";
 import { Capacitor } from "@capacitor/core";
 import { Bell, Loader2, MapPin } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 export function GymSettingsCard() {
@@ -306,9 +306,6 @@ export function GymSettingsCard() {
                                 }
                             />
                         </div>
-                        <Button variant="link" className="h-auto p-0" asChild>
-                            <Link to="/ranking?tab=gym">{UI.gymSettingsRankingView}</Link>
-                        </Button>
                     </div>
                 ) : null}
 

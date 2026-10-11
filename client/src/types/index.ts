@@ -38,6 +38,9 @@ export interface PerformanceEntry {
   reps: number;
   createdAt: string; // ISO timestamp
 
+  /** Séance first-class (API récente). */
+  workoutSessionId?: string | null;
+
   /** Dernière modification (ISO). */
   updatedAt?: string;
   /** Suppression douce (ISO). */

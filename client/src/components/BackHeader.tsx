@@ -15,6 +15,7 @@ export function BackHeader({
     embedded = false,
 }: {
     title: ReactNode
+    description?: ReactNode
     right?: ReactNode
     compact?: boolean
     titleClassName?: string

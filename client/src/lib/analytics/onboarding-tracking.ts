@@ -45,6 +45,10 @@ export const OnboardingSteps = {
   GYM_SEARCH: "gym_search",
   GYM_PERMISSIONS: "gym_permissions",
   GYM_WAIT: "gym_wait",
+  FIRST_SESSION: "first_session",
+  FIRST_SESSION_REMINDER: "first_session_reminder",
+  FIRST_SESSION_DAYS: "first_session_days",
+  FIRST_SESSION_CONFIRM: "first_session_confirm",
   FIRST_EXERCISE: "first_exercise",
 } as const;
 
@@ -159,6 +163,12 @@ export function resolveOnboardingStepFromLocation(
   if (rawStep === "account") return OnboardingSteps.PRE_REGISTRATION;
   if (rawStep === "discovery") return OnboardingSteps.DISCOVERY;
   if (rawStep === "notifications") return OnboardingSteps.NOTIFICATIONS;
+  if (rawStep === "first-session") return OnboardingSteps.FIRST_SESSION;
+  if (rawStep === "first-reminder") {
+    return OnboardingSteps.FIRST_SESSION_REMINDER;
+  }
+  if (rawStep === "first-days") return OnboardingSteps.FIRST_SESSION_DAYS;
+  if (rawStep === "first-noted") return OnboardingSteps.FIRST_SESSION_CONFIRM;
   if (rawStep === "gym") return OnboardingSteps.GYM_QUESTION;
   if (
     rawStep === "gym-permissions" ||

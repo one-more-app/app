@@ -152,35 +152,19 @@ async function shareBlobWeb(
   return 'downloaded'
 }
 
-export async function shareCelebrationPng(
-  open: CelebrationShareOpen,
-  isDark: boolean,
+/**
+ * Partage un PNG déjà généré : feuille native (Capacitor) ou Web Share, avec
+ * repli téléchargement. Commun aux célébrations et au récap de séance.
+ */
+export async function shareImageBlob(
+  blob: Blob,
+  text: string,
+  kind: string,
+  trace: ShareTrace,
   presentation?: ShareCelebrationPresentation,
 ): Promise<'shared' | 'downloaded'> {
-  const trace = createShareTrace('shareCelebrationPng', {
-    kind: open.kind,
-    isDark,
-    hasExerciseImage:
-      (open.kind === 'league' || open.kind === 'record') &&
-      !!open.payload.exerciseImageUrl,
-  })
-
-  trace.log('tap:dynamic-import-start')
-  const importT0 = Date.now()
-  // Mesure séparée import chunks (déjà fait côté UI, mais log ici si appel direct).
-  trace.log('tap:get-blob-start')
-  const blobT0 = Date.now()
-  const blob = await getCelebrationShareBlob(open, isDark, trace)
-  trace.log('tap:get-blob-done', {
-    blobMs: Date.now() - blobT0,
-    blobBytes: blob.size,
-    totalSinceImportMs: Date.now() - importT0,
-  })
-
-  const text = shareText(open)
-
   const trackShareResult = (result: 'shared' | 'downloaded') => {
-    trackShareTriggered({ kind: open.kind, result })
+    trackShareTriggered({ kind, result })
   }
 
   if (Capacitor.isNativePlatform()) {
@@ -217,4 +201,53 @@ export async function shareCelebrationPng(
     }
     throw error
   }
+}
+
+/** Télécharge le PNG (web). Sur natif, passe par la feuille de partage. */
+export async function saveImageBlob(
+  blob: Blob,
+  kind: string,
+  trace: ShareTrace,
+): Promise<'shared' | 'downloaded'> {
+  if (Capacitor.isNativePlatform()) {
+    return shareImageBlob(blob, UI.recapStoryShareText, kind, trace)
+  }
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `one-more-${Date.now()}.png`
+  a.click()
+  URL.revokeObjectURL(url)
+  trace.log('web:save-download-done')
+  trackShareTriggered({ kind, result: 'downloaded' })
+  return 'downloaded'
+}
+
+export async function shareCelebrationPng(
+  open: CelebrationShareOpen,
+  isDark: boolean,
+  presentation?: ShareCelebrationPresentation,
+): Promise<'shared' | 'downloaded'> {
+  const trace = createShareTrace('shareCelebrationPng', {
+    kind: open.kind,
+    isDark,
+    hasExerciseImage:
+      (open.kind === 'league' || open.kind === 'record') &&
+      !!open.payload.exerciseImageUrl,
+  })
+
+  trace.log('tap:dynamic-import-start')
+  const importT0 = Date.now()
+  // Mesure séparée import chunks (déjà fait côté UI, mais log ici si appel direct).
+  trace.log('tap:get-blob-start')
+  const blobT0 = Date.now()
+  const blob = await getCelebrationShareBlob(open, isDark, trace)
+  trace.log('tap:get-blob-done', {
+    blobMs: Date.now() - blobT0,
+    blobBytes: blob.size,
+    totalSinceImportMs: Date.now() - importT0,
+  })
+
+  const text = shareText(open)
+  return shareImageBlob(blob, text, open.kind, trace, presentation)
 }

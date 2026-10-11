@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import type { PerformanceEntry } from '@/types'
 
 type PerfEntryListProps = {
+    id?: string
     className?: string
     listClassName?: string
     entries: PerformanceEntry[]
@@ -18,6 +19,7 @@ type PerfEntryListProps = {
 }
 
 export function PerfEntryList({
+    id,
     className,
     listClassName,
     entries,
@@ -29,7 +31,7 @@ export function PerfEntryList({
     onAddSet,
 }: PerfEntryListProps) {
     return (
-        <div className={cn(className)}>
+        <div id={id} className={cn(className)}>
             <ul
                 className={cn(
                     'space-y-2',

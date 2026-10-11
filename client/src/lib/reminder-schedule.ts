@@ -76,6 +76,28 @@ export const DEFAULT_REMINDER_SLOTS: ReminderSlot[] = slotsFromLegacy(
   DEFAULT_REMINDER_MINUTE,
 );
 
+/** Défauts post-inscription C1 : lun 07:00, mer 12:30, ven 18:30. */
+export const FIRST_SESSION_DEFAULT_REMINDER_SLOTS: ReminderSlot[] = [
+  { weekday: 1, hour: 7, minute: 0 },
+  { weekday: 3, hour: 12, minute: 30 },
+  { weekday: 5, hour: 18, minute: 30 },
+];
+
+/** Applique la même heure à tous les créneaux actifs. */
+export function applyReminderTimeToAllSlots(
+  slots: ReminderSlot[],
+  hour: number,
+  minute: number,
+): ReminderSlot[] {
+  return normalizeReminderSlots(
+    slots.map((slot) => ({
+      ...slot,
+      hour: clampReminderHour(hour),
+      minute: clampReminderMinute(minute),
+    })),
+  );
+}
+
 export function reminderSlotsFromPrefs(prefs: {
   reminderSlots?: Array<{ weekday?: number; hour?: number; minute?: number }> | null;
   reminderWeekdays?: number[];
@@ -184,7 +206,7 @@ export function formatReminderSchedule(slots: ReminderSlot[]): string {
     return sorted
       .map(
         (slot) =>
-          `${WEEKDAY_SHORT[slot.weekday]} ${formatReminderTime(slot.hour, slot.minute)}`,
+          `${WEEKDAY_SHORT[slot.weekday]} ${formatReminderClock(slot.hour, slot.minute)}`,
       )
       .join(" · ");
   }
@@ -208,4 +230,63 @@ export function formatReminderSchedule(slots: ReminderSlot[]): string {
 
 export function weekdayFullName(weekday: IsoWeekday): string {
   return WEEKDAY_NAMES[weekday];
+}
+
+/** « 18:30 » (affichage horloge, ex. cartes post-inscription). */
+export function formatReminderClock(hour: number, minute = 0): string {
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+export function isoWeekdayOf(date: Date): IsoWeekday {
+  return (((date.getDay() + 6) % 7) + 1) as IsoWeekday;
+}
+
+export type NextReminder = {
+  weekday: IsoWeekday;
+  hour: number;
+  minute: number;
+  /** 0 = aujourd'hui, 1 = demain, etc. */
+  daysAhead: number;
+};
+
+/** Prochain rappel à venir (strictement après `now`), ou `null` sans créneau. */
+export function resolveNextReminder(
+  slots: ReminderSlot[],
+  now: Date = new Date(),
+): NextReminder | null {
+  const normalized = normalizeReminderSlots(slots);
+  if (normalized.length === 0) return null;
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  for (let daysAhead = 0; daysAhead <= 7; daysAhead += 1) {
+    const date = new Date(now);
+    date.setDate(date.getDate() + daysAhead);
+    const weekday = isoWeekdayOf(date);
+    const slot = normalized.find((item) => item.weekday === weekday);
+    if (!slot) continue;
+    if (daysAhead === 0 && slot.hour * 60 + slot.minute <= nowMinutes) {
+      continue;
+    }
+    return { weekday, hour: slot.hour, minute: slot.minute, daysAhead };
+  }
+  return null;
+}
+
+/** « aujourd'hui », « demain » ou « vendredi ». */
+export function formatNextReminderDay(next: NextReminder): string {
+  if (next.daysAhead === 0) return UI.reminderNextToday;
+  if (next.daysAhead === 1) return UI.reminderNextTomorrow;
+  return WEEKDAY_NAMES[next.weekday];
+}
+
+/** « lun, mer et ven à 18:30 » (jours abrégés). Heures différentes : liste détaillée. */
+export function formatReminderScheduleShort(slots: ReminderSlot[]): string {
+  const sorted = normalizeReminderSlots(slots);
+  if (sorted.length === 0) return "";
+  if (!reminderSlotsShareTime(sorted)) return formatReminderSchedule(sorted);
+  const names = sorted.map((slot) =>
+    WEEKDAY_SHORT[slot.weekday].toLocaleLowerCase("fr-FR"),
+  );
+  return UI.reminderScheduleShortAt
+    .replace("{days}", joinDayNames(names))
+    .replace("{time}", formatReminderClock(sorted[0]!.hour, sorted[0]!.minute));
 }

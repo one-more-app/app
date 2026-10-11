@@ -25,6 +25,10 @@ export class SessionCommentEntity {
   @Column({ type: 'date' })
   sessionDate!: string;
 
+  /** Séance first-class (nullable le temps du legacy / backfill). */
+  @Column({ type: 'uuid', nullable: true })
+  workoutSessionId!: string | null;
+
   @Column({ type: 'uuid' })
   authorUserId!: string;
 

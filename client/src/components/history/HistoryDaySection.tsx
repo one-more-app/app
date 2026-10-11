@@ -2,7 +2,6 @@ import { HistoryExerciseCollapsible } from '@/components/history/HistoryExercise
 import { SessionTimingLabel } from '@/components/session/SessionTimingLabel'
 import type { HistoryEntryInsight } from '@/lib/history-entries'
 import { formatDayHeading } from '@/lib/history-entries'
-import type { ReactionBubble } from '@/lib/session-api'
 import { UI } from '@/lib/translations'
 import type { PerformanceEntry, TrackedExercise } from '@/types'
 import { ChevronRight } from 'lucide-react'
@@ -25,10 +24,6 @@ type HistoryDaySectionProps = {
     hideDayHeading?: boolean
     readOnly?: boolean
     surface?: 'card' | 'profile'
-    reactionsByExerciseId?: Record<string, ReactionBubble[]>
-    onToggleExerciseReaction?: (trackedExerciseId: string, emoji: string) => void
-    reactionsEnabled?: boolean
-    currentUserId?: string | null
 }
 
 export function HistoryDaySection({
@@ -46,10 +41,6 @@ export function HistoryDaySection({
     hideDayHeading = false,
     readOnly = false,
     surface = 'card',
-    reactionsByExerciseId,
-    onToggleExerciseReaction,
-    reactionsEnabled = false,
-    currentUserId = null,
 }: HistoryDaySectionProps) {
     const entriesForTiming = useMemo(
         () =>
@@ -125,15 +116,6 @@ export function HistoryDaySection({
                             }
                             readOnly={readOnly}
                             surface={surface}
-                            reactionsEnabled={reactionsEnabled}
-                            reactions={reactionsByExerciseId?.[trackedExerciseId] ?? []}
-                            currentUserId={currentUserId}
-                            onToggleReaction={
-                                onToggleExerciseReaction
-                                    ? (emoji) =>
-                                          onToggleExerciseReaction(trackedExerciseId, emoji)
-                                    : undefined
-                            }
                         />
                     )
                 })}

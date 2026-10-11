@@ -6,6 +6,7 @@ import { ProgressModule } from '../progress/progress.module.js';
 import { RealtimeModule } from '../realtime/realtime.module.js';
 import { FriendshipEntity } from '../social/entities/friendship.entity.js';
 import { TrackedExerciseEntity } from '../tracked-exercises/tracked-exercise.entity.js';
+import { SessionLifecycleModule } from '../workout-sessions/session-lifecycle.module.js';
 import { PerformanceEntryEntity } from './performance-entry.entity.js';
 import { PerformanceEntriesController } from './performance-entries.controller.js';
 import { PerformanceEntriesService } from './performance-entries.service.js';
@@ -17,6 +18,7 @@ import { PerformanceEntriesService } from './performance-entries.service.js';
       TrackedExerciseEntity,
       FriendshipEntity,
     ]),
+    SessionLifecycleModule,
     ProgressModule,
     LeagueModule,
     RealtimeModule,

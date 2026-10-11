@@ -1,12 +1,17 @@
 import { AddPerfDrawer } from "@/components/AddPerfDrawer";
 import { BackHeader } from "@/components/BackHeader";
 import { HistoryDaySection } from "@/components/history/HistoryDaySection";
+import { ReviewSessionCard } from "@/components/review/ReviewSessionCard";
 import { SessionCommentsThread } from "@/components/session/SessionCommentsThread";
+import { SessionRecapBlocks } from "@/components/session/recap/SessionRecapBlocks";
 import { HistoryPageSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
-import { useSessionLive } from "@/hooks/use-session-live";
-import { useSessionTiming } from "@/hooks/use-session-timing";
+import { useSessionLiveById } from "@/hooks/use-session-live";
+import {
+    isReviewSessionCardPending,
+    maybeRequestNativeReviewOnRecap,
+} from "@/lib/app-review";
 import { getExerciseImageUrl } from "@/lib/exercisedb";
 import {
     entryInsightsFromPerformances,
@@ -16,12 +21,12 @@ import {
 } from "@/lib/history-entries";
 import { notifyPerfMilestones } from "@/lib/perf-notifications";
 import { getProfileDisplayName } from "@/lib/profile-display";
+import { hadReviewPrToday } from "@/lib/review-pr-today";
 import {
     applySessionReactionTarget,
-    fetchSession,
-    sessionSwrKey,
-    toggleSessionReaction,
-    type SessionReactionTargetType,
+    fetchSessionById,
+    sessionSwrKeyById,
+    toggleSessionReactionById,
 } from "@/lib/session-api";
 import {
     deletePerformanceAndWait,
@@ -32,34 +37,29 @@ import {
 import { UI } from "@/lib/translations";
 import { notifyXpGrants } from "@/lib/xp-notifications";
 import type { PerformanceEntry } from "@/types";
-import { toast } from "sonner";
 import { Radio } from "lucide-react";
-import { ReviewSessionCard } from "@/components/review/ReviewSessionCard";
-import {
-    isReviewSessionCardPending,
-    maybeRequestNativeReviewOnRecap,
-} from "@/lib/app-review";
-import { hadReviewPrToday } from "@/lib/review-pr-today";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 
 export default function SessionPage() {
-    const { ownerUserId, date } = useParams<{
-        ownerUserId: string;
-        date: string;
-    }>();
+    const { sessionId } = useParams<{ sessionId: string }>();
     const auth = useAuth();
     const { mutate } = useSWRConfig();
     const currentUserId = auth.status === "authenticated" ? auth.user?.id ?? null : null;
-    const isOwner = Boolean(currentUserId && ownerUserId === currentUserId);
 
     const { data: session, isLoading, error } = useSWR(
-        ownerUserId && date ? sessionSwrKey(ownerUserId, date) : null,
-        () => fetchSession(ownerUserId!, date!),
+        sessionId ? sessionSwrKeyById(sessionId) : null,
+        () => fetchSessionById(sessionId!),
     );
 
-    useSessionLive(ownerUserId, date);
+    const ownerUserId = session?.owner.userId;
+    const date = session?.date;
+    const isOwner = Boolean(currentUserId && ownerUserId === currentUserId);
+    const showRecap = Boolean(isOwner && session && !session.isLive);
+
+    useSessionLiveById(sessionId);
 
     const [editEntry, setEditEntry] = useState<PerformanceEntry | null>(null);
     const [addPerf, setAddPerf] = useState<{
@@ -73,11 +73,6 @@ export default function SessionPage() {
     const entries = session?.entries ?? [];
     const exercises = session?.exercises ?? [];
 
-    const { label: sessionTimingLabel } = useSessionTiming(entries, {
-        dayKey: date ?? "",
-        isPresenceTraining: session?.isLive,
-    });
-
     useEffect(() => {
         if (!isOwner || !date || session?.isLive) return;
         void maybeRequestNativeReviewOnRecap({
@@ -86,15 +81,6 @@ export default function SessionPage() {
             todayDateKey: date,
         });
     }, [isOwner, date, session?.isLive]);
-
-    const sessionSummaryLine = useMemo(() => {
-        if (!session) return "";
-        const base = UI.sessionSummary
-            .replace("{exercises}", String(session.exerciseCount))
-            .replace("{records}", String(session.highlights.length));
-        if (!sessionTimingLabel) return base;
-        return `${base} · ${sessionTimingLabel}`;
-    }, [session, sessionTimingLabel]);
 
     const dayGroups = useMemo(
         () => groupByDayThenExercise(entries),
@@ -173,29 +159,28 @@ export default function SessionPage() {
         )
         : UI.sessionTitle;
 
-    const pageTitle = isOwner ? UI.sessionTitleMine : UI.sessionTitleFriend.replace("{name}", ownerName);
+    const pageTitle = showRecap
+        ? UI.recapTitle
+        : isOwner
+            ? UI.sessionTitleMine
+            : UI.sessionTitleFriend.replace("{name}", ownerName);
     const dateLabel = date ? formatDayHeading(date) : "";
 
     const refreshSession = useCallback(async () => {
-        if (!ownerUserId || !date) return;
-        await mutate(sessionSwrKey(ownerUserId, date));
-    }, [ownerUserId, date, mutate]);
+        if (!sessionId) return;
+        await mutate(sessionSwrKeyById(sessionId));
+    }, [sessionId, mutate]);
 
     const handleToggleReaction = useCallback(
-        async (
-            emoji: string,
-            targetType: SessionReactionTargetType,
-            trackedExerciseId?: string,
-        ) => {
-            if (!ownerUserId || !date) return;
+        async (emoji: string) => {
+            if (!sessionId) return;
             try {
-                const { target } = await toggleSessionReaction(ownerUserId, date, {
+                const { target } = await toggleSessionReactionById(sessionId, {
                     emoji,
-                    targetType,
-                    trackedExerciseId,
+                    targetType: "session",
                 });
                 void mutate(
-                    sessionSwrKey(ownerUserId, date),
+                    sessionSwrKeyById(sessionId),
                     (current) =>
                         current ? applySessionReactionTarget(current, target) : current,
                     { revalidate: false },
@@ -204,10 +189,10 @@ export default function SessionPage() {
                 toast.error(UI.sessionReactionError);
             }
         },
-        [ownerUserId, date, mutate],
+        [sessionId, mutate],
     );
 
-    if (!ownerUserId || !date) {
+    if (!sessionId) {
         return (
             <div className="min-h-screen-app bg-background">
                 <BackHeader title={UI.sessionTitle} />
@@ -240,23 +225,23 @@ export default function SessionPage() {
                     <p className="text-sm text-destructive">{UI.sessionUnavailable}</p>
                 ) : (
                     <>
-                        {session ? (
-                            <p className="text-xs text-muted-foreground">
-                                {sessionSummaryLine}
-                            </p>
+                        {showRecap && session ? (
+                            <div className="space-y-6">
+                                <SessionRecapBlocks session={session} />
+                            </div>
                         ) : null}
 
                         {isOwner &&
-                        showReviewCard &&
-                        session &&
-                        !session.isLive ? (
+                            showReviewCard &&
+                            session &&
+                            !session.isLive ? (
                             <ReviewSessionCard
                                 onDismissCard={() => setShowReviewCard(false)}
                             />
                         ) : null}
 
                         {dayGroups.length > 0 ? (
-                            <ul className="space-y-8">
+                            <ul className="space-y-4">
                                 {dayGroups.map(({ date: dayKey, exercises: dayExercises }) => (
                                     <HistoryDaySection
                                         key={dayKey}
@@ -271,18 +256,6 @@ export default function SessionPage() {
                                         }
                                         entryInsights={entryInsights}
                                         readOnly={!isOwner}
-                                        reactionsEnabled
-                                        currentUserId={currentUserId}
-                                        reactionsByExerciseId={
-                                            session?.reactionsByExerciseId ?? {}
-                                        }
-                                        onToggleExerciseReaction={(trackedExerciseId, emoji) =>
-                                            void handleToggleReaction(
-                                                emoji,
-                                                "exercise",
-                                                trackedExerciseId,
-                                            )
-                                        }
                                         onEditEntry={isOwner ? setEditEntry : () => { }}
                                         onDeleteEntry={
                                             isOwner
@@ -309,11 +282,18 @@ export default function SessionPage() {
                             <p className="text-sm text-muted-foreground">{UI.sessionEmpty}</p>
                         )}
 
-                        <SessionCommentsThread
-                            ownerUserId={ownerUserId}
-                            date={date}
-                            currentUserId={currentUserId}
-                        />
+                        {ownerUserId && date ? (
+                            <SessionCommentsThread
+                                sessionId={sessionId}
+                                ownerUserId={ownerUserId}
+                                date={date}
+                                currentUserId={currentUserId}
+                                reactions={session?.reactions ?? []}
+                                onToggleReaction={(emoji) => {
+                                    void handleToggleReaction(emoji);
+                                }}
+                            />
+                        ) : null}
                     </>
                 )}
             </main>

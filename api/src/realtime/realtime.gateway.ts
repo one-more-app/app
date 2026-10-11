@@ -17,6 +17,7 @@ import { FriendsService } from '../social/friends.service.js';
 import { PresenceHeartbeatDto } from '../presence/dto/presence-heartbeat.dto.js';
 import { PresenceStatus } from '../presence/entities/presence-status.enum.js';
 import { PresenceService } from '../presence/presence.service.js';
+import { WorkoutSessionEntity } from '../workout-sessions/entities/workout-session.entity.js';
 import { RealtimeBroadcaster } from './realtime-broadcaster.service.js';
 import {
   getSocketUser,
@@ -47,6 +48,8 @@ export class RealtimeGateway
     private readonly friendsService: FriendsService,
     @InjectRepository(ConversationEntity)
     private readonly conversationsRepo: Repository<ConversationEntity>,
+    @InjectRepository(WorkoutSessionEntity)
+    private readonly workoutSessionsRepo: Repository<WorkoutSessionEntity>,
   ) {}
 
   afterInit(server: Server) {
@@ -122,9 +125,23 @@ export class RealtimeGateway
   @SubscribeMessage('session:join')
   async onSessionJoin(
     @ConnectedSocket() client: Socket,
-    @MessageBody() body: { ownerUserId: string; date: string },
+    @MessageBody()
+    body: { ownerUserId?: string; date?: string; sessionId?: string },
   ) {
     const userId = requireSocketUser(client).sub;
+    if (body.sessionId) {
+      const session = await this.workoutSessionsRepo.findOne({
+        where: { id: body.sessionId },
+      });
+      if (!session) return { ok: false };
+      if (session.ownerUserId !== userId) {
+        const friendIds =
+          await this.friendsService.getAcceptedFriendIds(userId);
+        if (!friendIds.includes(session.ownerUserId)) return { ok: false };
+      }
+      await client.join(`session:${body.sessionId}`);
+      return { ok: true };
+    }
     if (!body.ownerUserId || !body.date) return { ok: false };
     if (body.ownerUserId !== userId) {
       const friendIds = await this.friendsService.getAcceptedFriendIds(userId);
@@ -138,8 +155,13 @@ export class RealtimeGateway
   @SubscribeMessage('session:leave')
   async onSessionLeave(
     @ConnectedSocket() client: Socket,
-    @MessageBody() body: { ownerUserId: string; date: string },
+    @MessageBody()
+    body: { ownerUserId?: string; date?: string; sessionId?: string },
   ) {
+    if (body.sessionId) {
+      await client.leave(`session:${body.sessionId}`);
+      return { ok: true };
+    }
     if (!body.ownerUserId || !body.date) return { ok: false };
     await client.leave(`session:${body.ownerUserId}:${body.date}`);
     return { ok: true };

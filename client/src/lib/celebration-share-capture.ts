@@ -84,6 +84,7 @@ export async function captureShareElement(
   el: HTMLElement,
   isDark: boolean,
   trace?: ShareTrace,
+  options?: { transparent?: boolean },
 ): Promise<Blob> {
   await waitForShareCaptureReady(el, trace)
   await yieldToMain()
@@ -95,7 +96,11 @@ export async function captureShareElement(
   const blob = await toBlob(el, {
     pixelRatio: 1,
     cacheBust: false,
-    backgroundColor: isDark ? '#0a0a0a' : '#ffffff',
+    backgroundColor: options?.transparent
+      ? undefined
+      : isDark
+        ? '#0a0a0a'
+        : '#ffffff',
   })
   trace?.log('capture:toBlob-done', {
     toBlobMs: Date.now() - toBlobT0,

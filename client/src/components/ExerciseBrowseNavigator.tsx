@@ -17,8 +17,11 @@ import {
     countByZone,
     exercisesForBrowsePath,
     exercisesForBrowseScope,
+    exerciseZone,
+    UNSPECIFIED_EQUIPMENT,
     filterBrowseableBySearch,
     sortBrowseableByLatestPerf,
+    sortByTrackedThenCatalog,
     type BrowseableExercise,
     type BrowseSearchSort,
     type CatalogBrowseParams,
@@ -58,8 +61,21 @@ export interface ExerciseBrowseNavigatorProps<T extends BrowseableExercise> {
     /** Titre principal au-dessus du sous-titre d'étape (ex. accueil, étape zone). */
     pageTitle?: string
     leafSort?: 'popularity' | 'latestPerf' | 'none'
+    /**
+     * Si fourni, les tuiles affichent « n suivis / n disponibles »
+     * (catalogue mélangé avec les exercices suivis).
+     */
+    isTracked?: (exercise: T) => boolean
     /** Paliers médians par étape du parcours (accueil uniquement). */
     browseLeagueLookups?: BrowseLeagueLookups
+}
+
+/** `undefined` si le suivi n'est pas branché (tuile = total simple). */
+function trackedFor(
+    counts: Map<string, number> | undefined,
+    key: string,
+): number | undefined {
+    return counts ? (counts.get(key.toLowerCase()) ?? 0) : undefined
 }
 
 export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
@@ -81,6 +97,7 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
     pageTitle,
     leafSort = 'popularity',
     browseLeagueLookups,
+    isTracked,
 }: ExerciseBrowseNavigatorProps<T>) {
     const isSearchMode = searchQuery.trim().length > 0
 
@@ -113,6 +130,60 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
                 : [],
         [pool, browse.zone, browse.target],
     )
+
+    const trackedCounts = useMemo(() => {
+        if (!isTracked) return null
+        const byZone = new Map<string, number>()
+        const byTarget = new Map<string, number>()
+        const byEquipment = new Map<string, number>()
+        const zoneKey = browse.zone?.toLowerCase() ?? null
+        const targetKey = browse.target?.toLowerCase() ?? null
+        const bump = (map: Map<string, number>, key: string) =>
+            map.set(key, (map.get(key) ?? 0) + 1)
+        for (const ex of pool) {
+            if (!isTracked(ex)) continue
+            const zone = exerciseZone(ex)
+            if (!zone) continue
+            bump(byZone, zone)
+            if (zone !== zoneKey) continue
+            const target = (ex.target ?? '').toLowerCase()
+            if (!target) continue
+            bump(byTarget, target)
+            if (target !== targetKey) continue
+            const equipment =
+                (ex.equipment ?? '').trim().toLowerCase() || UNSPECIFIED_EQUIPMENT
+            bump(byEquipment, equipment)
+        }
+        return { byZone, byTarget, byEquipment }
+    }, [pool, isTracked, browse.zone, browse.target])
+
+    const sortedZoneEntries = useMemo(() => {
+        if (!trackedCounts) return zoneEntries
+        return sortByTrackedThenCatalog(
+            zoneEntries,
+            (entry) => entry.zone,
+            trackedCounts.byZone,
+        )
+    }, [zoneEntries, trackedCounts])
+
+    const sortedTargetEntries = useMemo(() => {
+        if (!trackedCounts) return targetEntries
+        return sortByTrackedThenCatalog(
+            targetEntries,
+            (entry) => entry.target,
+            trackedCounts.byTarget,
+        )
+    }, [targetEntries, trackedCounts])
+
+    const sortedEquipmentEntries = useMemo(() => {
+        if (!trackedCounts) return equipmentEntries
+        return sortByTrackedThenCatalog(
+            equipmentEntries,
+            (entry) => entry.equipment,
+            trackedCounts.byEquipment,
+            { pinLastKey: UNSPECIFIED_EQUIPMENT },
+        )
+    }, [equipmentEntries, trackedCounts])
 
     const leafExercises = useMemo(() => {
         if (browse.step !== 'list' || !browse.zone || !browse.target || !browse.beq) {
@@ -216,45 +287,65 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
             {pageTitle && browse.step === 'zone' && !showingViewAll ? (
                 <BrowsePageTitle className="mb-0.5">{pageTitle}</BrowsePageTitle>
             ) : null}
-            <div className="mb-2 flex flex-wrap items-center justify-between align-center gap-x-2 gap-y-1">
-                <BrowseSectionTitle
-                    className="mb-0"
-                    data-tour="first-exercise-browse-anchor"
-                >
-                    {stepTitle}
-                </BrowseSectionTitle>
-                {canToggleViewAll ? (
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        className="h-6 shrink-0 px-2 text-[10px]"
-                        onClick={onToggleViewAll}
+            {/* Avec séparation suivis / catalogue, les titres de section sont dans la liste. */}
+            {showingViewAll && isTracked ? (
+                canToggleViewAll ? (
+                    <div className="mb-2 flex justify-end">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-6 shrink-0 px-2 text-[10px]"
+                            onClick={onToggleViewAll}
+                            data-tour="first-exercise-browse-anchor"
+                        >
+                            <LayoutGrid className="mr-1 size-3.5" />
+                            {UI.browseViewByCategory}
+                        </Button>
+                    </div>
+                ) : null
+            ) : (
+                <div className="mb-2 flex flex-wrap items-center justify-between align-center gap-x-2 gap-y-1">
+                    <BrowseSectionTitle
+                        className="mb-0"
+                        data-tour="first-exercise-browse-anchor"
                     >
-                        {viewAll ? (
-                            <>
-                                <LayoutGrid className="mr-1 size-3.5" />
-                                {UI.browseViewByCategory}
-                            </>
-                        ) : (
-                            <>
-                                <List className="mr-1 size-3.5" />
-                                {UI.browseViewAll}
-                            </>
-                        )}
-                    </Button>
-                ) : null}
-            </div>
+                        {stepTitle}
+                    </BrowseSectionTitle>
+                    {canToggleViewAll ? (
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-6 shrink-0 px-2 text-[10px]"
+                            onClick={onToggleViewAll}
+                        >
+                            {viewAll ? (
+                                <>
+                                    <LayoutGrid className="mr-1 size-3.5" />
+                                    {UI.browseViewByCategory}
+                                </>
+                            ) : (
+                                <>
+                                    <List className="mr-1 size-3.5" />
+                                    {UI.browseViewAll}
+                                </>
+                            )}
+                        </Button>
+                    ) : null}
+                </div>
+            )}
 
             {showingViewAll ? renderExerciseList(scopeExercises) : null}
 
             {!showingViewAll && browse.step === 'zone' ? (
                 <ul className="space-y-3">
-                    {zoneEntries.map(({ zone, count }) => (
+                    {sortedZoneEntries.map(({ zone, count }) => (
                         <li key={zone}>
                             <BrowseTile
                                 label={translateBodyPart(zone)}
                                 count={count}
+                                trackedCount={trackedFor(trackedCounts?.byZone, zone)}
                                 leagueLevel={browseLeagueLookups?.byZone.get(
                                     zone.toLowerCase(),
                                 )}
@@ -273,11 +364,12 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
 
             {!showingViewAll && browse.step === 'muscle' && browse.zone ? (
                 <ul className="space-y-3">
-                    {targetEntries.map(({ target, count }) => (
+                    {sortedTargetEntries.map(({ target, count }) => (
                         <li key={target}>
                             <BrowseTile
                                 label={translateTarget(target)}
                                 count={count}
+                                trackedCount={trackedFor(trackedCounts?.byTarget, target)}
                                 leagueLevel={browseLeagueLookups?.targetInZone
                                     .get(browse.zone.toLowerCase())
                                     ?.get(target.toLowerCase())}
@@ -299,11 +391,12 @@ export function ExerciseBrowseNavigator<T extends BrowseableExercise>({
                 browse.zone &&
                 browse.target ? (
                 <ul className="space-y-3">
-                    {equipmentEntries.map(({ equipment, count }) => (
+                    {sortedEquipmentEntries.map(({ equipment, count }) => (
                         <li key={equipment}>
                             <BrowseTile
                                 label={translateEquipment(equipment)}
                                 count={count}
+                                trackedCount={trackedFor(trackedCounts?.byEquipment, equipment)}
                                 leagueLevel={browseLeagueLookups?.equipmentInPath.get(
                                     browseEquipmentLeagueKey(
                                         browse.zone,

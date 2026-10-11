@@ -36,7 +36,6 @@ type ProfileViewProps = {
     readOnly?: boolean;
     headerActions?: ReactNode;
     sessionOwnerUserId?: string;
-    isFriendPresenceTraining?: boolean;
 };
 
 export function ProfileView({
@@ -45,7 +44,6 @@ export function ProfileView({
     readOnly = false,
     headerActions,
     sessionOwnerUserId,
-    isFriendPresenceTraining,
 }: ProfileViewProps) {
     const {
         profile,
@@ -116,11 +114,8 @@ export function ProfileView({
 
                 <ProfileRecentHistory
                     entries={performanceEntries}
-                    tracked={exercises}
-                    profile={profile}
                     readOnly={readOnly}
                     sessionOwnerUserId={sessionOwnerUserId}
-                    isFriendPresenceTraining={isFriendPresenceTraining}
                 />
 
                 {!hasTracked && !readOnly ? (

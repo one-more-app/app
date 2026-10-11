@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationsModule } from '../notifications/notifications.module.js';
 import { PerformanceEntriesModule } from '../performance/performance-entries.module.js';
+import { ProgressModule } from '../progress/progress.module.js';
 import { PresenceModule } from '../presence/presence.module.js';
 import { UserProfileEntity } from '../profile/user-profile.entity.js';
 import { RealtimeModule } from '../realtime/realtime.module.js';
@@ -9,6 +10,8 @@ import { SocialModule } from '../social/social.module.js';
 import { TrackedExercisesModule } from '../tracked-exercises/tracked-exercises.module.js';
 import { SessionCommentEntity } from './entities/session-comment.entity.js';
 import { SessionReactionEntity } from './entities/session-reaction.entity.js';
+import { WorkoutSessionEntity } from './entities/workout-session.entity.js';
+import { SessionLifecycleModule } from './session-lifecycle.module.js';
 import { WorkoutSessionsController } from './workout-sessions.controller.js';
 import { WorkoutSessionsService } from './workout-sessions.service.js';
 
@@ -17,17 +20,20 @@ import { WorkoutSessionsService } from './workout-sessions.service.js';
     TypeOrmModule.forFeature([
       SessionCommentEntity,
       SessionReactionEntity,
+      WorkoutSessionEntity,
       UserProfileEntity,
     ]),
+    SessionLifecycleModule,
     SocialModule,
     PerformanceEntriesModule,
     TrackedExercisesModule,
     PresenceModule,
+    ProgressModule,
     RealtimeModule,
     forwardRef(() => NotificationsModule),
   ],
   controllers: [WorkoutSessionsController],
   providers: [WorkoutSessionsService],
-  exports: [WorkoutSessionsService],
+  exports: [WorkoutSessionsService, SessionLifecycleModule],
 })
 export class WorkoutSessionsModule {}

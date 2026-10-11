@@ -11,11 +11,13 @@ import { useEffect, useMemo, useState } from "react";
 type UseSessionTimingOpts = {
   dayKey: string;
   isPresenceTraining?: boolean;
+  /** Fin explicite renvoyée par l'API (`WorkoutSession.endedAt`). */
+  endedAt?: string | null;
 };
 
 export function useSessionTiming(
   entries: PerformanceEntry[],
-  { dayKey, isPresenceTraining }: UseSessionTimingOpts,
+  { dayKey, isPresenceTraining, endedAt }: UseSessionTimingOpts,
 ) {
   const [now, setNow] = useState(() => Date.now());
 
@@ -26,8 +28,9 @@ export function useSessionTiming(
         dayKey,
         todayKey: getLocalDateKey(),
         isPresenceTraining,
+        endedAt,
       }),
-    [entries, now, dayKey, isPresenceTraining],
+    [entries, now, dayKey, isPresenceTraining, endedAt],
   );
 
   useEffect(() => {

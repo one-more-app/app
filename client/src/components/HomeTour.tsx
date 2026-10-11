@@ -15,7 +15,10 @@ import type { Step } from "react-joyride";
 type HomeTourProps = {
   pageReady: boolean;
   progressReady: boolean;
-  hasTodaySection: boolean;
+  /** Séance du jour en cours affichée (cible `home-today`). */
+  hasLiveSession: boolean;
+  /** CTA « Démarrer une séance » affiché (cible `home-start-session`). */
+  hasStartCta: boolean;
 };
 
 function isOtherAppTourActive(): boolean {
@@ -25,7 +28,8 @@ function isOtherAppTourActive(): boolean {
 export function HomeTour({
   pageReady,
   progressReady,
-  hasTodaySection,
+  hasLiveSession,
+  hasStartCta,
 }: HomeTourProps) {
   const [tourComplete, setTourComplete] = useState(isHomeTourComplete);
 
@@ -57,7 +61,18 @@ export function HomeTour({
       },
     ];
 
-    if (hasTodaySection) {
+    nextSteps.push({
+      target: '[data-tour="home-week"]',
+      title: UI.homeTourWeekTitle,
+      content: UI.homeTourWeekContent,
+      placement: "bottom",
+      skipScroll: true,
+      floatingOptions: {
+        shiftOptions: { padding: getJoyrideShiftPadding() },
+      },
+    });
+
+    if (hasLiveSession) {
       nextSteps.push({
         target: '[data-tour="home-today"]',
         title: UI.homeTourTodayTitle,
@@ -67,18 +82,24 @@ export function HomeTour({
       });
     }
 
+    if (hasStartCta) {
+      nextSteps.push({
+        target: '[data-tour="home-start-session"]',
+        title: UI.homeTourCtaTitle,
+        content: UI.homeTourCtaContent,
+        placement: "top",
+        skipScroll: true,
+        floatingOptions: {
+          shiftOptions: { padding: getJoyrideShiftPadding() },
+        },
+      });
+    }
+
     nextSteps.push(
       {
-        target: '[data-tour="home-browse"]',
-        title: UI.homeTourBrowseTitle,
-        content: UI.homeTourBrowseContent,
-        placement: "top",
-        scrollOffset,
-      },
-      {
-        target: '[data-tour="nav-profile"]',
-        title: UI.homeTourNavProfileTitle,
-        content: UI.homeTourNavProfileContent,
+        target: '[data-tour="nav-exercises"]',
+        title: UI.homeTourNavExercisesTitle,
+        content: UI.homeTourNavExercisesContent,
         placement: "top",
         skipScroll: true,
         floatingOptions: {
@@ -86,9 +107,9 @@ export function HomeTour({
         },
       },
       {
-        target: '[data-tour="nav-history"]',
-        title: UI.homeTourNavHistoryTitle,
-        content: UI.homeTourNavHistoryContent,
+        target: '[data-tour="nav-social"]',
+        title: UI.homeTourNavSocialTitle,
+        content: UI.homeTourNavSocialContent,
         placement: "top",
         skipScroll: true,
         floatingOptions: {
@@ -96,19 +117,9 @@ export function HomeTour({
         },
       },
       {
-        target: '[data-tour="nav-ranking"]',
-        title: UI.homeTourNavRankingTitle,
-        content: UI.homeTourNavRankingContent,
-        placement: "top",
-        skipScroll: true,
-        floatingOptions: {
-          shiftOptions: { padding: getJoyrideShiftPadding() },
-        },
-      },
-      {
-        target: '[data-tour="nav-friends"]',
-        title: UI.homeTourNavFriendsTitle,
-        content: UI.homeTourNavFriendsContent,
+        target: '[data-tour="nav-settings"]',
+        title: UI.homeTourNavSettingsTitle,
+        content: UI.homeTourNavSettingsContent,
         placement: "top",
         skipScroll: true,
         floatingOptions: {
@@ -118,7 +129,7 @@ export function HomeTour({
     );
 
     return nextSteps;
-  }, [hasTodaySection]);
+  }, [hasLiveSession, hasStartCta]);
 
   const targets = useMemo(
     () => steps.map((step) => step.target as string),

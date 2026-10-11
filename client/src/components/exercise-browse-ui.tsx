@@ -71,10 +71,13 @@ export function BrowseTile({
     count,
     icon,
     leagueLevel,
+    trackedCount,
     onClick,
 }: {
     label: string
     count: number
+    /** Si défini : affiche « n suivis » + « n disponibles » au lieu du total. */
+    trackedCount?: number
     icon?: ReactNode
     /** Palier médian du groupe (accueil, zones du corps). */
     leagueLevel?: RankId | null
@@ -98,16 +101,14 @@ export function BrowseTile({
                     <span className="size-12 shrink-0 rounded-lg bg-muted" />
                 )}
                 <span className="min-w-0 flex-1">
-                    <CardTitle>
-                        {label}
-                    </CardTitle>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                        <Badge variant="secondary" className="font-normal">
-                            {UI.browseExercisesCount.replace('{count}', String(count))}
-                        </Badge>
+                    <span className="flex flex-wrap items-center gap-2">
+                        <CardTitle>{label}</CardTitle>
                         {leagueLevel ? (
                             <RankBadge rankId={leagueLevel} size="xs" />
                         ) : null}
+                    </span>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <BrowseTileCounts count={count} trackedCount={trackedCount} />
                     </div>
                 </span>
                 <ChevronRight
@@ -116,6 +117,47 @@ export function BrowseTile({
                 />
             </button>
         </Card>
+    )
+}
+
+function BrowseTileCounts({
+    count,
+    trackedCount,
+}: {
+    count: number
+    trackedCount?: number
+}) {
+    if (trackedCount === undefined) {
+        return (
+            <Badge variant="secondary" className="font-normal">
+                {UI.browseExercisesCount.replace('{count}', String(count))}
+            </Badge>
+        )
+    }
+    const tracked = Math.min(trackedCount, count)
+    const available = count - tracked
+    return (
+        <>
+            {tracked > 0 ? (
+                <Badge
+                    variant="secondary"
+                    className="border-transparent bg-accent font-normal text-accent-foreground"
+                >
+                    {(tracked === 1
+                        ? UI.browseTrackedCountOne
+                        : UI.browseTrackedCountMany
+                    ).replace('{count}', String(tracked))}
+                </Badge>
+            ) : null}
+            {available > 0 || tracked === 0 ? (
+                <Badge variant="secondary" className="font-normal">
+                    {(available === 1
+                        ? UI.browseAvailableCountOne
+                        : UI.browseAvailableCountMany
+                    ).replace('{count}', String(available))}
+                </Badge>
+            ) : null}
+        </>
     )
 }
 

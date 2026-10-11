@@ -47,7 +47,28 @@ export type ComputeSessionTimingOpts = {
   dayKey?: string;
   todayKey?: string;
   isPresenceTraining?: boolean;
+  /**
+   * Fin explicite de séance (API end), ISO.
+   * Une série postérieure n'invalide plus cette fin (multi-séances).
+   */
+  endedAt?: string | null;
 };
+
+/**
+ * Retourne la fin explicite si elle est une date ISO valide.
+ * Ne « rouvre » plus la séance quand une série est postérieure :
+ * multi-séances = nouvelle séance, pas de reprise du même id.
+ * `entries` est conservé pour compatibilité d'appel.
+ */
+export function resolveExplicitSessionEnd(
+  _entries: SessionEntryLike[],
+  endedAt: string | null | undefined,
+): string | null {
+  if (!endedAt) return null;
+  const endedMs = new Date(endedAt).getTime();
+  if (Number.isNaN(endedMs)) return null;
+  return endedAt;
+}
 
 export function computeSessionTiming(
   entries: SessionEntryLike[],
@@ -63,6 +84,16 @@ export function computeSessionTiming(
   const lastAt = bounds.last.createdAt;
   const firstMs = new Date(startedAt).getTime();
   const lastMs = new Date(lastAt).getTime();
+
+  const explicitEnd = resolveExplicitSessionEnd(entries, opts.endedAt);
+  if (explicitEnd) {
+    return {
+      isInProgress: false,
+      durationMs: new Date(explicitEnd).getTime() - firstMs,
+      startedAt,
+      endedAt: explicitEnd,
+    };
+  }
 
   const isToday = dayKey != null && dayKey === todayKey;
   const idleMs = now - lastMs;

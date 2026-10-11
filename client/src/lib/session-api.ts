@@ -49,9 +49,15 @@ export type SessionHighlight = {
 };
 
 export type WorkoutSession = {
+  /** Présent sur le nouveau contrat ; absent sur la facade jour legacy. */
+  id?: string;
   owner: SessionOwner;
   date: string;
   isLive: boolean;
+  /** Fin explicite de la séance (ISO), `null` si non terminée. */
+  endedAt: string | null;
+  /** XP (jour pour legacy ; proxy jour pour sessionId tant que non scindé). */
+  xpEarned: number;
   exercises: TrackedExerciseWithPerformance[];
   entries: PerformanceEntryWithLeagueInsight[];
   highlights: SessionHighlight[];
@@ -60,6 +66,14 @@ export type WorkoutSession = {
   setCount: number;
   reactions: ReactionBubble[];
   reactionsByExerciseId: Record<string, ReactionBubble[]>;
+};
+
+export type DaySessionSummary = {
+  id: string;
+  date: string;
+  startedAt: string;
+  endedAt: string | null;
+  isLive: boolean;
 };
 
 export type SessionComment = {
@@ -141,14 +155,60 @@ export function applySessionReactionTarget(
   };
 }
 
+export function sessionPath(sessionId: string) {
+  return `/session/${sessionId}`;
+}
+
+export function sessionSwrKeyById(sessionId: string) {
+  return ["session", sessionId] as const;
+}
+
+export function sessionCommentsSwrKeyById(sessionId: string) {
+  return ["session-comments", sessionId] as const;
+}
+
+export function daySessionsSwrKey(ownerUserId: string, date: string) {
+  return ["session-day", ownerUserId, date] as const;
+}
+
+/** @deprecated Préférer sessionSwrKeyById */
 export function sessionSwrKey(ownerUserId: string, date: string) {
   return ["session", ownerUserId, date] as const;
 }
 
+/** @deprecated Préférer sessionCommentsSwrKeyById */
 export function sessionCommentsSwrKey(ownerUserId: string, date: string) {
   return ["session-comments", ownerUserId, date] as const;
 }
 
+export async function fetchSessionById(
+  sessionId: string,
+): Promise<WorkoutSession> {
+  return await apiFetch<WorkoutSession>(`/sessions/${sessionId}`);
+}
+
+export async function fetchDaySessions(
+  ownerUserId: string,
+  date: string,
+): Promise<{ items: DaySessionSummary[] }> {
+  return await apiFetch<{ items: DaySessionSummary[] }>(
+    `/sessions/${ownerUserId}/day/${encodeURIComponent(date)}`,
+  );
+}
+
+/** Résout la séance live du jour, sinon la dernière. */
+export async function resolveSessionIdForDay(
+  ownerUserId: string,
+  date: string,
+): Promise<string | null> {
+  const { items } = await fetchDaySessions(ownerUserId, date);
+  if (items.length === 0) return null;
+  const live = items.find((item) => item.isLive);
+  if (live) return live.id;
+  return items[items.length - 1]!.id;
+}
+
+/** @deprecated Préférer fetchSessionById */
 export async function fetchSession(
   ownerUserId: string,
   date: string,
@@ -158,6 +218,45 @@ export async function fetchSession(
   );
 }
 
+export type EndSessionResponse = {
+  id?: string;
+  date: string;
+  endedAt: string;
+};
+
+export async function endSessionById(
+  sessionId: string,
+): Promise<EndSessionResponse> {
+  return await apiFetch<EndSessionResponse>(`/sessions/${sessionId}/end`, {
+    method: "POST",
+  });
+}
+
+/** @deprecated Préférer endSessionById */
+export async function endSession(
+  ownerUserId: string,
+  date: string,
+): Promise<EndSessionResponse> {
+  return await apiFetch<EndSessionResponse>(
+    `/sessions/${ownerUserId}/${encodeURIComponent(date)}/end`,
+    { method: "POST" },
+  );
+}
+
+/** @deprecated La page récap est fusionnée dans `/session/:sessionId`. */
+export function sessionRecapPath(ownerUserId: string, date: string) {
+  return `/session/${ownerUserId}/${date}/recap`;
+}
+
+export async function fetchSessionCommentsById(
+  sessionId: string,
+): Promise<{ items: SessionComment[] }> {
+  return await apiFetch<{ items: SessionComment[] }>(
+    `/sessions/${sessionId}/comments`,
+  );
+}
+
+/** @deprecated Préférer fetchSessionCommentsById */
 export async function fetchSessionComments(
   ownerUserId: string,
   date: string,
@@ -167,18 +266,45 @@ export async function fetchSessionComments(
   );
 }
 
+export async function postSessionCommentById(
+  sessionId: string,
+  body: string,
+  parentId?: string,
+): Promise<{ comment: SessionComment }> {
+  return await apiFetch(`/sessions/${sessionId}/comments`, {
+    method: "POST",
+    body: JSON.stringify({ body, parentId }),
+  });
+}
+
+/** @deprecated Préférer postSessionCommentById */
 export async function postSessionComment(
   ownerUserId: string,
   date: string,
   body: string,
   parentId?: string,
 ): Promise<{ comment: SessionComment }> {
-  return await apiFetch(`/sessions/${ownerUserId}/${encodeURIComponent(date)}/comments`, {
-    method: "POST",
-    body: JSON.stringify({ body, parentId }),
+  return await apiFetch(
+    `/sessions/${ownerUserId}/${encodeURIComponent(date)}/comments`,
+    {
+      method: "POST",
+      body: JSON.stringify({ body, parentId }),
+    },
+  );
+}
+
+export async function updateSessionCommentById(
+  sessionId: string,
+  commentId: string,
+  body: string,
+): Promise<{ comment: SessionComment }> {
+  return await apiFetch(`/sessions/${sessionId}/comments/${commentId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ body }),
   });
 }
 
+/** @deprecated Préférer updateSessionCommentById */
 export async function updateSessionComment(
   ownerUserId: string,
   date: string,
@@ -194,6 +320,32 @@ export async function updateSessionComment(
   );
 }
 
+export async function toggleSessionReactionById(
+  sessionId: string,
+  payload: {
+    emoji: string;
+    targetType: SessionReactionTargetType;
+    trackedExerciseId?: string;
+  },
+): Promise<{ target: SessionReactionTarget; added: boolean }> {
+  const body: {
+    emoji: string;
+    targetType: SessionReactionTargetType;
+    trackedExerciseId?: string;
+  } = {
+    emoji: payload.emoji,
+    targetType: payload.targetType,
+  };
+  if (payload.targetType === "exercise" && payload.trackedExerciseId) {
+    body.trackedExerciseId = payload.trackedExerciseId;
+  }
+  return await apiFetch(`/sessions/${sessionId}/reactions`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** @deprecated Préférer toggleSessionReactionById */
 export async function toggleSessionReaction(
   ownerUserId: string,
   date: string,

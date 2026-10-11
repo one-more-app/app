@@ -14,6 +14,7 @@ type ProfileAvatarLinkProps = {
   initials: string;
   sizeClassName?: string;
   textSizeClassName?: string;
+  roundedClassName?: string;
   linkOptions?: UserProfileLinkOptions;
   className?: string;
   onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
@@ -26,6 +27,7 @@ export function ProfileAvatarLink({
   initials,
   sizeClassName = "size-10",
   textSizeClassName = "text-sm",
+  roundedClassName = "rounded-full",
   linkOptions,
   className,
   onClick,
@@ -46,12 +48,12 @@ export function ProfileAvatarLink({
         <img
           src={avatarUrl}
           alt=""
-          className={cn(sizeClassName, "rounded-full object-cover")}
+          className={cn(sizeClassName, roundedClassName, "object-cover")}
         />
       ) : (
         <ProfileAvatarFallback
           initials={initials}
-          className={cn(sizeClassName, "rounded-full", textSizeClassName)}
+          className={cn(sizeClassName, roundedClassName, textSizeClassName)}
         />
       )}
     </Link>

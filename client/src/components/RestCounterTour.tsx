@@ -57,7 +57,7 @@ export function RestCounterTour({ barVisible }: RestCounterTourProps) {
         target: '[data-tour="rest-counter"]',
         title: UI.restCounterTourTitle,
         content: UI.restCounterTourContent,
-        placement: "bottom",
+        placement: "top",
         skipScroll: true,
         floatingOptions: {
           shiftOptions: { padding: getJoyrideShiftPadding() },
@@ -67,7 +67,7 @@ export function RestCounterTour({ barVisible }: RestCounterTourProps) {
         target: '[data-tour="rest-counter-target-zone"]',
         title: UI.restCounterTourQuickEditTitle,
         content: UI.restCounterTourQuickEditContent,
-        placement: "bottom",
+        placement: "top",
         skipScroll: true,
         spotlightPadding: 0,
         blockTargetInteraction: false,

@@ -7,9 +7,12 @@ import {
   seedOnboardingDone,
   trackPageErrors,
 } from "../helpers";
-import { mockExerciseWorkflowApi } from "../workflow-api";
+import {
+  E2E_WORKOUT_SESSION_ID,
+  mockExerciseWorkflowApi,
+} from "../workflow-api";
 
-test("historique vers page séance", async ({ page }) => {
+test("page séance by id (détail + commentaires)", async ({ page }) => {
   const pageErrors = trackPageErrors(page);
   await seedOnboardingDone(page);
   await seedAuthenticatedSession(page);
@@ -23,6 +26,7 @@ test("historique vers page séance", async ({ page }) => {
     Date.now() - 2 * 60 * 60 * 1000,
   ).toISOString();
   const tracked = buildTrackedExercise();
+  const sessionId = E2E_WORKOUT_SESSION_ID;
 
   await page.route("**/sessions/**", async (route) => {
     const url = route.request().url();
@@ -41,11 +45,31 @@ test("historique vers page séance", async ({ page }) => {
       return;
     }
 
+    if (method === "GET" && url.includes("/day/")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          items: [
+            {
+              id: sessionId,
+              date: today,
+              startedAt: finishedPerfCreatedAt,
+              endedAt: finishedPerfCreatedAt,
+              isLive: false,
+            },
+          ],
+        }),
+      });
+      return;
+    }
+
     if (method === "GET") {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
+          id: sessionId,
           owner: {
             userId: mockSession.user.id,
             firstName: null,
@@ -55,6 +79,8 @@ test("historique vers page séance", async ({ page }) => {
           },
           date: today,
           isLive: false,
+          endedAt: finishedPerfCreatedAt,
+          xpEarned: 0,
           exercises: [
             {
               ...tracked,
@@ -77,6 +103,7 @@ test("historique vers page séance", async ({ page }) => {
               id: "e2e-perf-1",
               trackedExerciseId: tracked.id,
               date: today,
+              workoutSessionId: sessionId,
               weight: 60,
               reps: 8,
               createdAt: finishedPerfCreatedAt,
@@ -94,25 +121,23 @@ test("historique vers page séance", async ({ page }) => {
           commentCount: 0,
           exerciseCount: 1,
           setCount: 1,
-          reactions: [],
-          reactionsByExerciseId: {
-            [tracked.id]: [
-              {
-                emoji: "💪",
-                count: 1,
-                reactedByMe: false,
-                users: [
-                  {
-                    userId: "friend-1",
-                    firstName: "Alex",
-                    lastName: null,
-                    username: "alex",
-                    avatarUrl: null,
-                  },
-                ],
-              },
-            ],
-          },
+          reactions: [
+            {
+              emoji: "💪",
+              count: 1,
+              reactedByMe: false,
+              users: [
+                {
+                  userId: "friend-1",
+                  firstName: "Alex",
+                  lastName: null,
+                  username: "alex",
+                  avatarUrl: null,
+                },
+              ],
+            },
+          ],
+          reactionsByExerciseId: {},
         }),
       });
       return;
@@ -125,8 +150,8 @@ test("historique vers page séance", async ({ page }) => {
         body: JSON.stringify({
           added: true,
           target: {
-            targetType: "exercise",
-            trackedExerciseId: tracked.id,
+            targetType: "session",
+            trackedExerciseId: null,
             reactions: [
               {
                 emoji: "💪",
@@ -159,28 +184,10 @@ test("historique vers page séance", async ({ page }) => {
     await route.fallback();
   });
 
-  await page.goto("/#/history");
+  await page.goto(`/#/session/${sessionId}`);
 
-  const perfResponse = await page.waitForResponse(
-    (response) =>
-      response.url().includes("/performance-entries") &&
-      response.request().method() === "GET",
-  );
-  const perfBody = (await perfResponse.json()) as Array<{ date: string }>;
-  expect(perfBody.length).toBeGreaterThan(0);
-  const dayKey = perfBody[0]!.date;
-
-  await page.goto(`/#/session/${mockSession.user.id}/${dayKey}`);
-
-  await page.waitForResponse(
-    (response) =>
-      response.url().includes("/sessions/") &&
-      response.request().method() === "GET" &&
-      !response.url().includes("/comments") &&
-      !response.url().includes("/reactions"),
-  );
-
-  await expect(page.getByText(UI.sessionTitleMine)).toBeVisible({
+  // Séance terminée owner → titre récap hybride
+  await expect(page.getByText(UI.recapTitle, { exact: true })).toBeVisible({
     timeout: 10_000,
   });
   await expect(
@@ -188,11 +195,6 @@ test("historique vers page séance", async ({ page }) => {
   ).toBeVisible({
     timeout: 10_000,
   });
-  await expect(
-    page.getByText(
-      `${UI.sessionSummary.replace("{exercises}", "1").replace("{records}", "0")} · ${UI.sessionDurationMinutes.replace("{count}", "1")}`,
-    ),
-  ).toBeVisible();
   await expect(
     page.getByRole("button", {
       name: UI.sessionReactionToggleAdd.replace("{emoji}", "💪"),

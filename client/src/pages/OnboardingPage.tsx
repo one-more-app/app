@@ -12,6 +12,10 @@ import { OnboardingGymPermissionsStep } from '@/components/onboarding/Onboarding
 import { OnboardingGymStep } from '@/components/onboarding/OnboardingGymStep';
 import { OnboardingGymWaitStep } from '@/components/onboarding/OnboardingGymWaitStep';
 import { OnboardingIntro } from '@/components/onboarding/OnboardingIntro';
+import { OnboardingFirstSessionConfirm } from '@/components/onboarding/OnboardingFirstSessionConfirm';
+import { OnboardingFirstSessionDays } from '@/components/onboarding/OnboardingFirstSessionDays';
+import { OnboardingFirstSessionReminder } from '@/components/onboarding/OnboardingFirstSessionReminder';
+import { OnboardingFirstSessionStart } from '@/components/onboarding/OnboardingFirstSessionStart';
 import { OnboardingNotificationsStep } from '@/components/onboarding/OnboardingNotificationsStep';
 import { OnboardingRankReveal } from '@/components/onboarding/OnboardingRecordResults';
 import { OnboardingRulerPicker } from '@/components/onboarding/OnboardingRulerPicker';
@@ -54,16 +58,26 @@ import {
     type OnboardingStarterExercise,
 } from '@/lib/onboarding-starter-exercises';
 import {
+    ONBOARDING_FIRST_DAYS_PATH,
+    ONBOARDING_FIRST_NOTED_GYM_PATH,
+    ONBOARDING_FIRST_NOTED_PATH,
+    ONBOARDING_FIRST_REMINDER_PATH,
+    ONBOARDING_FIRST_SESSION_GYM_PERMISSIONS_PATH,
+    ONBOARDING_FIRST_SESSION_PATH,
     ONBOARDING_NOTIFICATIONS_STEP_ENABLED,
     continueAfterOnboardingDiscovery,
     continueAfterOnboardingNotifications,
+    finishFirstSessionFlow,
+    finishNotificationsReprompt,
     isPostAuthOnboardingFlowPath,
+    leaveFirstSessionFlowForGym,
     postAuthNavigateOptions,
     resolvePostAuthNavigation,
 } from '@/lib/post-auth-navigation';
 import {
     beginOnboardingDraftSession,
     clearPendingOnboardingRecord,
+    clearPostNotificationsRepromptPath,
     discardPendingOnboardingDrafts,
     getGymOnboardingContext,
     getOnboardingPostAuthRedirect,
@@ -73,6 +87,7 @@ import {
     markOnboardingDone,
     peekPendingOnboardingProfile,
     peekPendingOnboardingRecord,
+    peekPostNotificationsRepromptPath,
     setGymPermissionsPromptDone,
     setOnboardingFirstExercisePending,
     setOnboardingPostAuthRedirect,
@@ -103,7 +118,6 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 import { useSWRConfig } from 'swr';
 
 const BODY_TOTAL = 4
@@ -163,6 +177,14 @@ function OnboardingPage() {
                                     ? 'discovery'
                                     : normalizedStep === 'notifications'
                                         ? 'notifications'
+                                        : normalizedStep === 'first-session'
+                                            ? 'first-session'
+                                            : normalizedStep === 'first-reminder'
+                                                ? 'first-reminder'
+                                                : normalizedStep === 'first-days'
+                                                    ? 'first-days'
+                                                    : normalizedStep === 'first-noted'
+                                                        ? 'first-noted'
                                         : normalizedStep === 'rank'
                                             ? 'rank'
                                             : normalizedStep === '1rm'
@@ -181,6 +203,12 @@ function OnboardingPage() {
         normalizedStep,
         searchParams.get('reselect'),
     )
+    const gymFromFirstSession = searchParams.get('from') === 'first-session'
+    /** Parcours rappel rouvert depuis la carte « Ta première séance » de l'accueil. */
+    const firstSessionFromHome = searchParams.get('from') === 'home'
+    const firstNotedMode =
+        searchParams.get('mode') === 'gym' ? 'gym' : 'days'
+    const notificationsFromReprompt = searchParams.get('from') === 'reprompt'
     const bodyQ = Math.min(
         BODY_TOTAL - 1,
         Math.max(0, Number.parseInt(bodyQRaw ?? '0', 10) || 0),
@@ -218,6 +246,10 @@ function OnboardingPage() {
             step === 'account' ||
             step === 'discovery' ||
             step === 'notifications' ||
+            step === 'first-session' ||
+            step === 'first-reminder' ||
+            step === 'first-days' ||
+            step === 'first-noted' ||
             step === 'intro'
             ? null
             : viewedStep,
@@ -237,10 +269,6 @@ function OnboardingPage() {
 
     const goIntent = (q = 0) => {
         navigate(`/onboarding?step=intent&intentQ=${q}`, { replace: true })
-    }
-
-    const goAccount = () => {
-        navigate('/onboarding?step=account', { replace: true })
     }
 
     const [weightKg, setWeightKg] = useState(75)
@@ -611,14 +639,33 @@ function OnboardingPage() {
             navigate('/settings', { replace: true })
             return
         }
-        navigate('/onboarding?step=gym-permissions', { replace: true })
+        navigate(
+            gymFromFirstSession
+                ? ONBOARDING_FIRST_SESSION_GYM_PERMISSIONS_PATH
+                : '/onboarding?step=gym-permissions',
+            { replace: true },
+        )
     }
 
     const goChangeGym = () => {
-        navigate('/onboarding?step=gym&reselect=1', { replace: true })
+        navigate(
+            gymFromFirstSession
+                ? '/onboarding?step=gym&reselect=1&from=first-session'
+                : '/onboarding?step=gym&reselect=1',
+            { replace: true },
+        )
     }
 
     const completeGymAfterPermissions = async () => {
+        if (gymFromFirstSession) {
+            goFirstSessionPath(
+                firstSessionFromHome
+                    ? `${ONBOARDING_FIRST_NOTED_GYM_PATH}&from=home`
+                    : ONBOARDING_FIRST_NOTED_GYM_PATH,
+            )
+            return
+        }
+
         let gym: Awaited<ReturnType<typeof fetchUserGym>> | null = null
         try {
             gym = await fetchUserGym()
@@ -646,29 +693,6 @@ function OnboardingPage() {
         await completeGymAfterPermissions()
     }
 
-    const skipGymPermissions = async () => {
-        trackOnboardingStepSkipped({
-            step: OnboardingSteps.GYM_PERMISSIONS,
-            reason: 'skipped',
-        })
-        setGymPermissionsPromptDone(true)
-        await unlockGymAccess()
-        setOnboardingFirstExercisePending(true)
-        const nextPath = getOnboardingPostAuthRedirect() ?? '/home'
-        await finishOnboarding(nextPath)
-    }
-
-    const skipGymStep = async () => {
-        trackOnboardingStepSkipped({
-            step: OnboardingSteps.GYM_SEARCH,
-            reason: 'no_gym',
-        })
-        toast.message(UI.gymOnboardingSkipToast)
-        setOnboardingFirstExercisePending(true)
-        const nextPath = getOnboardingPostAuthRedirect() ?? '/home'
-        await finishOnboarding(nextPath)
-    }
-
     const continueAfterGymResolved = async () => {
         const nextPath = getOnboardingPostAuthRedirect() ?? '/home'
         await finishOnboarding(nextPath)
@@ -688,8 +712,79 @@ function OnboardingPage() {
                 reason: 'skipped',
             })
         }
+        if (notificationsFromReprompt) {
+            finishNotificationsReprompt()
+            const nextPath = peekPostNotificationsRepromptPath() ?? '/home'
+            clearPostNotificationsRepromptPath()
+            navigate(nextPath, { replace: true })
+            return
+        }
         const nextPath = continueAfterOnboardingNotifications()
         navigate(nextPath, postAuthNavigateOptions(nextPath))
+    }
+
+    const goFirstSessionPath = (path: string) => {
+        navigate(path, { replace: true })
+    }
+
+    const leaveFirstSession = (to: 'exercises' | 'home') => {
+        const destination = finishFirstSessionFlow(to)
+        navigate(destination, postAuthNavigateOptions(destination))
+    }
+
+    const startFirstSession = () => {
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.FIRST_SESSION,
+            action: 'start',
+        })
+        leaveFirstSession('exercises')
+    }
+
+    const laterFirstSession = () => {
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.FIRST_SESSION,
+            action: 'later',
+        })
+        goFirstSessionPath(ONBOARDING_FIRST_REMINDER_PATH)
+    }
+
+    const skipFirstSessionReminder = () => {
+        leaveFirstSession('home')
+    }
+
+    const pickDaysFromFirstSession = () => {
+        goFirstSessionPath(
+            firstSessionFromHome
+                ? `${ONBOARDING_FIRST_DAYS_PATH}&from=home`
+                : ONBOARDING_FIRST_DAYS_PATH,
+        )
+    }
+
+    const pickGymFromFirstSession = () => {
+        if (firstSessionFromHome) {
+            navigate(
+                '/onboarding?step=gym&reselect=1&from=first-session',
+                { replace: true },
+            )
+            return
+        }
+        goFirstSessionPath(leaveFirstSessionFlowForGym())
+    }
+
+    const startNowFromFirstSessionConfirm = () => {
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.FIRST_SESSION_CONFIRM,
+            action: 'start_now',
+        })
+        leaveFirstSession('exercises')
+    }
+
+    const homeFromFirstSessionConfirm = () => {
+        trackOnboardingStepCompleted({
+            step: OnboardingSteps.FIRST_SESSION_CONFIRM,
+            action: 'home',
+        })
+        leaveFirstSession('home')
     }
 
     const navigateToResolvedGymStep = (
@@ -749,7 +844,11 @@ function OnboardingPage() {
             step === 'gym-wait' ||
             step === 'account' ||
             step === 'discovery' ||
-            step === 'notifications'
+            step === 'notifications' ||
+            step === 'first-session' ||
+            step === 'first-reminder' ||
+            step === 'first-days' ||
+            step === 'first-noted'
         ) {
             return
         }
@@ -807,7 +906,13 @@ function OnboardingPage() {
     }, [step, auth.status, navigate, searchParams])
 
     return (
-        <OnboardingShell bleedTop={step === 'intro' || step === 'account'}>
+        <OnboardingShell
+            bleedTop={
+                step === 'intro' ||
+                step === 'account' ||
+                step === 'first-session'
+            }
+        >
             {step === 'intro' ? (
                 <OnboardingIntro
                     onContinue={() => {
@@ -1078,7 +1183,13 @@ function OnboardingPage() {
                     startAtSearch={gymReselect}
                     onSearchBack={
                         gymReselect
-                            ? () => navigate('/onboarding?step=gym-permissions', { replace: true })
+                            ? () =>
+                                navigate(
+                                    gymFromFirstSession
+                                        ? ONBOARDING_FIRST_REMINDER_PATH
+                                        : '/onboarding?step=gym-permissions',
+                                    { replace: true },
+                                )
                             : undefined
                     }
                     onCancel={
@@ -1087,7 +1198,6 @@ function OnboardingPage() {
                             : undefined
                     }
                     onGymSaved={() => void handleGymSaved()}
-                    onSkip={fromSettings ? undefined : () => void skipGymStep()}
                 />
             ) : step === 'gym-permissions' ? (
                 <OnboardingGymPermissionsStep
@@ -1099,8 +1209,12 @@ function OnboardingPage() {
                     gymAddress={
                         isOnboardingGymDevPreview(step) ? null : (userGym?.address ?? null)
                     }
+                    continueLabel={
+                        gymFromFirstSession
+                            ? UI.gymOnboardingPermissionsActivate
+                            : undefined
+                    }
                     onContinue={() => void completeGymPermissions()}
-                    onSkip={() => void skipGymPermissions()}
                     onChangeGym={goChangeGym}
                 />
             ) : step === 'gym-wait' ? (
@@ -1126,6 +1240,56 @@ function OnboardingPage() {
                 <OnboardingNotificationsStep
                     onContinue={() => completeNotificationsStep('enabled')}
                     onSkip={() => completeNotificationsStep('skipped')}
+                />
+            ) : step === 'first-session' ? (
+                <OnboardingFirstSessionStart
+                    onStart={startFirstSession}
+                    onLater={laterFirstSession}
+                />
+            ) : step === 'first-reminder' ? (
+                <OnboardingFirstSessionReminder
+                    onBack={() =>
+                        goFirstSessionPath(
+                            firstSessionFromHome
+                                ? '/home'
+                                : ONBOARDING_FIRST_SESSION_PATH,
+                        )
+                    }
+                    onSkip={skipFirstSessionReminder}
+                    onPickDays={pickDaysFromFirstSession}
+                    onPickGym={pickGymFromFirstSession}
+                />
+            ) : step === 'first-days' ? (
+                <OnboardingFirstSessionDays
+                    onBack={() =>
+                        goFirstSessionPath(
+                            firstSessionFromHome
+                                ? `${ONBOARDING_FIRST_REMINDER_PATH}&from=home`
+                                : ONBOARDING_FIRST_REMINDER_PATH,
+                        )
+                    }
+                    onSaved={() =>
+                        goFirstSessionPath(
+                            firstSessionFromHome
+                                ? `${ONBOARDING_FIRST_NOTED_PATH}&from=home`
+                                : ONBOARDING_FIRST_NOTED_PATH,
+                        )
+                    }
+                />
+            ) : step === 'first-noted' ? (
+                <OnboardingFirstSessionConfirm
+                    mode={firstNotedMode}
+                    onBack={() =>
+                        goFirstSessionPath(
+                            firstNotedMode === 'gym'
+                                ? ONBOARDING_FIRST_SESSION_GYM_PERMISSIONS_PATH
+                                : firstSessionFromHome
+                                  ? `${ONBOARDING_FIRST_DAYS_PATH}&from=home`
+                                  : ONBOARDING_FIRST_DAYS_PATH,
+                        )
+                    }
+                    onStartNow={startNowFromFirstSessionConfirm}
+                    onHome={homeFromFirstSessionConfirm}
                 />
             ) : null}
         </OnboardingShell>

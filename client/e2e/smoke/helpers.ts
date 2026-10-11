@@ -149,6 +149,10 @@ export function trackPageErrors(page: Page): string[] {
     if (/_leaflet_pos/.test(error.message)) {
       return;
     }
+    // Preview Vite / PWA : sw.js parfois absent (serveur stale ou build partiel).
+    if (/Failed to register a ServiceWorker/.test(error.message)) {
+      return;
+    }
     pageErrors.push(error.message);
   });
   return pageErrors;
@@ -611,12 +615,12 @@ export async function continueWithEmailFlow(
   await page.getByRole("button", { name: "Continuer", exact: true }).click();
 }
 
-/** Après register : passe discovery puis notifs (web) s'ils s'affichent. */
+/** Après register : passe discovery, notifs (web) puis « Ta première séance » s'ils s'affichent. */
 export async function dismissPostAuthDiscoveryAndNotifications(
   page: Page,
 ): Promise<void> {
   const postAuthUrl =
-    /#\/(onboarding\?(?:.*&)?step=(discovery|notifications)|home|exercises|exercise\/)/;
+    /#\/(onboarding\?(?:.*&)?step=(discovery|notifications|first-session)|home|exercises|exercise\/)/;
 
   await expect.poll(() => postAuthUrl.test(page.url()), { timeout: 10_000 }).toBe(
     true,
@@ -629,7 +633,7 @@ export async function dismissPostAuthDiscoveryAndNotifications(
     await expect
       .poll(
         () =>
-          /#\/(onboarding\?(?:.*&)?step=notifications|home|exercises|exercise\/)/.test(
+          /#\/(onboarding\?(?:.*&)?step=(notifications|first-session)|home|exercises|exercise\/)/.test(
             page.url(),
           ),
         { timeout: 10_000 },
@@ -643,9 +647,23 @@ export async function dismissPostAuthDiscoveryAndNotifications(
       .click();
     await expect
       .poll(
-        () => /#\/(home|exercises|exercise\/)/.test(page.url()),
+        () =>
+          /#\/(onboarding\?(?:.*&)?step=first-session|home|exercises|exercise\/)/.test(
+            page.url(),
+          ),
         { timeout: 10_000 },
       )
+      .toBe(true);
+  }
+
+  if (page.url().includes("step=first-session")) {
+    await page
+      .getByRole("button", { name: UI.firstSessionStart, exact: true })
+      .click();
+    await expect
+      .poll(() => /#\/(home|exercises|exercise\/)/.test(page.url()), {
+        timeout: 10_000,
+      })
       .toBe(true);
   }
 }

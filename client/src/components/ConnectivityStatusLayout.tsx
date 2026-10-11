@@ -42,7 +42,7 @@ export function ConnectivityStatusLayout({
             >
                 <div
                     className={cn(
-                        "flex size-14 items-center justify-center rounded-2xl",
+                        "flex size-14 items-center justify-center rounded-xl",
                         iconTone === "accent" ? "bg-accent/15" : "bg-muted",
                     )}
                     aria-hidden

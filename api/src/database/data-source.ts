@@ -17,6 +17,9 @@ import { FriendshipEntity } from '../social/entities/friendship.entity.js';
 import { ConversationEntity } from '../messaging/entities/conversation.entity.js';
 import { MessageEntity } from '../messaging/entities/message.entity.js';
 import { UserPresenceEntity } from '../presence/entities/user-presence.entity.js';
+import { WorkoutSessionEntity } from '../workout-sessions/entities/workout-session.entity.js';
+import { SessionCommentEntity } from '../workout-sessions/entities/session-comment.entity.js';
+import { SessionReactionEntity } from '../workout-sessions/entities/session-reaction.entity.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -61,6 +64,9 @@ export default new DataSource({
     ConversationEntity,
     MessageEntity,
     UserPresenceEntity,
+    WorkoutSessionEntity,
+    SessionCommentEntity,
+    SessionReactionEntity,
   ],
   migrations: [join(__dirname, 'migrations', '*.{js,ts}')],
   migrationsTransactionMode: 'each',

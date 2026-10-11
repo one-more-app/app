@@ -4,6 +4,7 @@ export function routeUsesBackHeader(pathname: string): boolean {
         pathname === '/profile' ||
         pathname === '/friends' ||
         pathname === '/ranking' ||
+        pathname === '/social' ||
         pathname === '/history' ||
         pathname === '/settings' ||
         pathname === '/exercises' ||

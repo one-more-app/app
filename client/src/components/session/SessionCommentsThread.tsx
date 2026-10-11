@@ -1,11 +1,18 @@
 import { SessionCommentComposer } from "@/components/session/SessionCommentComposer";
 import { SessionCommentItem } from "@/components/session/SessionCommentItem";
+import { ReactionBubbles } from "@/components/session/ReactionBubbles";
+import { Card } from "@/components/ui/card";
 import {
   fetchSessionComments,
+  fetchSessionCommentsById,
   mergeSessionComment,
   postSessionComment,
+  postSessionCommentById,
   sessionCommentsSwrKey,
+  sessionCommentsSwrKeyById,
   updateSessionComment,
+  updateSessionCommentById,
+  type ReactionBubble,
   type SessionComment,
 } from "@/lib/session-api";
 import { UI } from "@/lib/translations";
@@ -13,32 +20,44 @@ import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 
 type SessionCommentsThreadProps = {
+  /** Nouveau contrat : commentaires scoped session. */
+  sessionId?: string;
   ownerUserId: string;
-  date: string;
+  /** @deprecated Requis seulement sans sessionId (facade jour). */
+  date?: string;
   currentUserId: string | null;
+  reactions?: ReactionBubble[];
+  onToggleReaction?: (emoji: string) => void;
+  reactionsDisabled?: boolean;
 };
 
 export function SessionCommentsThread({
+  sessionId,
   ownerUserId,
   date,
   currentUserId,
+  reactions = [],
+  onToggleReaction,
+  reactionsDisabled = false,
 }: SessionCommentsThreadProps) {
   const { mutate } = useSWRConfig();
-  const commentsKey = sessionCommentsSwrKey(ownerUserId, date);
+  const useById = Boolean(sessionId);
+  const commentsKey = useById
+    ? sessionCommentsSwrKeyById(sessionId!)
+    : sessionCommentsSwrKey(ownerUserId, date!);
   const { data, isLoading } = useSWR(commentsKey, () =>
-    fetchSessionComments(ownerUserId, date),
+    useById
+      ? fetchSessionCommentsById(sessionId!)
+      : fetchSessionComments(ownerUserId, date!),
   );
 
   const items = data?.items ?? [];
 
   const handleCreate = async (body: string, parentId?: string) => {
     try {
-      const { comment } = await postSessionComment(
-        ownerUserId,
-        date,
-        body,
-        parentId,
-      );
+      const { comment } = useById
+        ? await postSessionCommentById(sessionId!, body, parentId)
+        : await postSessionComment(ownerUserId, date!, body, parentId);
       await mutate(
         commentsKey,
         (current: { items: SessionComment[] } | undefined) => {
@@ -54,12 +73,9 @@ export function SessionCommentsThread({
 
   const handleEdit = async (commentId: string, body: string) => {
     try {
-      const { comment } = await updateSessionComment(
-        ownerUserId,
-        date,
-        commentId,
-        body,
-      );
+      const { comment } = useById
+        ? await updateSessionCommentById(sessionId!, commentId, body)
+        : await updateSessionComment(ownerUserId, date!, commentId, body);
       await mutate(
         commentsKey,
         (current: { items: SessionComment[] } | undefined) => {
@@ -75,34 +91,45 @@ export function SessionCommentsThread({
   };
 
   return (
-    <section className="space-y-4">
-      <h2 className="text-sm font-semibold">{UI.sessionCommentsTitle}</h2>
+    <section className="space-y-2">
+      <h2 className="font-one-more text-sm font-semibold uppercase italic tracking-tight">
+        {UI.sessionCommentsTitle}
+      </h2>
 
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">{UI.loading}</p>
-      ) : items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {UI.sessionCommentsEmptyHint}
-        </p>
-      ) : (
-        <ul className="space-y-4">
-          {items.map((comment) => (
-            <li key={comment.id}>
-              <SessionCommentItem
-                comment={comment}
-                currentUserId={currentUserId}
-                sessionOwnerUserId={ownerUserId}
-                onReply={(parentId, body) => handleCreate(body, parentId)}
-                onEdit={handleEdit}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+      <Card className="gap-0 space-y-3.5 p-4">
+        {onToggleReaction ? (
+          <ReactionBubbles
+            reactions={reactions}
+            currentUserId={currentUserId}
+            disabled={reactionsDisabled}
+            onToggle={onToggleReaction}
+          />
+        ) : null}
 
-      <div className="sticky-bottom-safe -mx-4 border-t border-border bg-background px-4 pt-3">
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">{UI.loading}</p>
+        ) : items.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            {UI.sessionCommentsEmptyHint}
+          </p>
+        ) : (
+          <ul className="space-y-3.5">
+            {items.map((comment) => (
+              <li key={comment.id}>
+                <SessionCommentItem
+                  comment={comment}
+                  currentUserId={currentUserId}
+                  sessionOwnerUserId={ownerUserId}
+                  onReply={(parentId, body) => handleCreate(body, parentId)}
+                  onEdit={handleEdit}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+
         <SessionCommentComposer onSubmit={(body) => handleCreate(body)} />
-      </div>
+      </Card>
     </section>
   );
 }

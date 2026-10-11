@@ -6,6 +6,7 @@ import { ReviewPromptHost } from '@/components/review/ReviewPromptHost'
 import { NativeBackNavigation } from '@/components/NativeBackNavigation'
 import { ProfileUsernameSetupHost } from '@/components/profile/ProfileUsernameSetupHost'
 import { RestTimeFinishedToastHost } from '@/components/RestTimeFinishedToastHost'
+import { SessionLiveBar } from '@/components/session/SessionLiveBar'
 import { Toaster } from '@/components/ui/sonner'
 import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider'
 import { PageSection } from '@/components/analytics/PageSection'
@@ -47,10 +48,12 @@ import { ExerciseDetailPage } from '@/pages/ExerciseDetailPage'
 import { ExerciseListPage } from '@/pages/ExerciseListPage'
 import ChatPage from '@/pages/ChatPage'
 import FriendProfilePage from '@/pages/FriendProfilePage'
+import SessionLegacyRedirectPage from '@/pages/SessionLegacyRedirectPage'
 import SessionPage from '@/pages/SessionPage'
 import FriendSearchPage from '@/pages/FriendSearchPage'
 import FriendsPage from '@/pages/FriendsPage'
 import RankingPage from '@/pages/RankingPage'
+import SocialPage from '@/pages/SocialPage'
 import UserPreviewPage from '@/pages/UserPreviewPage'
 import { HistoryPage } from '@/pages/HistoryPage'
 import HomePage from '@/pages/HomePage'
@@ -165,10 +168,22 @@ function AccessGate({ children }: { children: React.ReactNode }) {
         return <Navigate to="/home" replace />
     }
 
+    const gymFromFirstSession = onboardingFrom === 'first-session'
+
     if (
         auth.status === 'authenticated' &&
         isOnboardingRoute &&
-        (onboardingStep === 'notifications' || onboardingStep === 'discovery')
+        (onboardingStep === 'notifications' ||
+            onboardingStep === 'discovery' ||
+            // « Ta première séance » : aussi accessible depuis la carte de l'accueil.
+            onboardingStep === 'first-session' ||
+            onboardingStep === 'first-reminder' ||
+            onboardingStep === 'first-days' ||
+            onboardingStep === 'first-noted' ||
+            // Branche salle du rappel post-inscription / carte accueil.
+            (gymFromFirstSession &&
+                (onboardingStep === 'gym' ||
+                    onboardingStep === 'gym-permissions')))
     ) {
         return <>{children}</>
     }
@@ -180,6 +195,7 @@ function AccessGate({ children }: { children: React.ReactNode }) {
         onboardingStep === 'gym' &&
         !gymFromSettings &&
         !gymReselect &&
+        !gymFromFirstSession &&
         !gymDevPreview &&
         gymGateReady &&
         userGym
@@ -194,6 +210,7 @@ function AccessGate({ children }: { children: React.ReactNode }) {
         !gymDevPreview &&
         !gymFromSettings &&
         !gymReselect &&
+        !gymFromFirstSession &&
         gymFlowComplete
     ) {
         return <Navigate to="/home" replace />
@@ -281,21 +298,33 @@ function BottomNavHost({ children }: { children: React.ReactNode }) {
     const location = useLocation()
     const show =
         location.pathname === '/home' ||
+        location.pathname === '/exercises' ||
+        location.pathname === '/settings' ||
         location.pathname === '/profile' ||
         location.pathname === '/stats' ||
         location.pathname === '/history' ||
         location.pathname === '/ranking' ||
+        location.pathname === '/social' ||
         location.pathname === '/friends' ||
         location.pathname.startsWith('/friends/preview')
+
+    // Barre "séance en cours" : accueil + fiche exercice (s'affiche seulement si séance live).
+    const showSessionBar =
+        location.pathname === '/home' ||
+        location.pathname.startsWith('/exercise/')
 
     return (
         <div className="flex min-h-0 flex-1 flex-col">
             <div
                 key={location.pathname}
-                className={cn('app-scroll-viewport', show && 'pb-bottom-nav-host')}
+                className={cn(
+                    'app-scroll-viewport',
+                    show ? 'pb-bottom-nav-host' : 'pb-session-bar',
+                )}
             >
                 {children}
             </div>
+            {showSessionBar ? <SessionLiveBar navVisible={show} /> : null}
             {show ? <BottomNav /> : null}
             {show ? <RankingTour navVisible /> : null}
         </div>
@@ -424,7 +453,9 @@ function App() {
                                 <Route path="/stats" element={<StatsRedirect />} />
                                 <Route path="/profile" element={<ProfilePage />} />
                                 <Route path="/history" element={<HistoryPage />} />
-                                <Route path="/session/:ownerUserId/:date" element={<SessionPage />} />
+                                <Route path="/session/:sessionId" element={<SessionPage />} />
+                                <Route path="/session/:ownerUserId/:date" element={<SessionLegacyRedirectPage />} />
+                                <Route path="/session/:ownerUserId/:date/recap" element={<SessionLegacyRedirectPage />} />
                                 <Route path="/auth" element={<AuthPage />} />
                                 <Route path="/exercises" element={<ExerciseListPage />} />
                                 <Route path="/exercise/:id" element={<ExerciseDetailPage />} />
@@ -433,6 +464,7 @@ function App() {
                                 <Route path="/invite/:code" element={<InviteLandingPage />} />
                                 <Route path="/friends" element={<FriendsPage />} />
                                 <Route path="/ranking" element={<RankingPage />} />
+                                <Route path="/social" element={<SocialPage />} />
                                 <Route path="/friends/search" element={<FriendSearchPage />} />
                                 <Route path="/friends/chat/:conversationId" element={<ChatPage />} />
                                 <Route path="/friends/preview/:userId" element={<UserPreviewPage />} />

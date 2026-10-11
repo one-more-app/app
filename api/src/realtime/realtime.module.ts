@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConversationEntity } from '../messaging/entities/conversation.entity.js';
 import { PresenceModule } from '../presence/presence.module.js';
 import { SocialModule } from '../social/social.module.js';
+import { WorkoutSessionEntity } from '../workout-sessions/entities/workout-session.entity.js';
 import { RealtimeBroadcaster } from './realtime-broadcaster.service.js';
 import { RealtimeGateway } from './realtime.gateway.js';
 import { WsJwtGuard } from './ws-jwt.guard.js';
@@ -18,7 +19,7 @@ import { WsJwtGuard } from './ws-jwt.guard.js';
         secret: config.get<string>('JWT_SECRET') ?? 'dev-secret',
       }),
     }),
-    TypeOrmModule.forFeature([ConversationEntity]),
+    TypeOrmModule.forFeature([ConversationEntity, WorkoutSessionEntity]),
     forwardRef(() => SocialModule),
     PresenceModule,
   ],

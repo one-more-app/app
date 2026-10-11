@@ -94,7 +94,7 @@ test("description du parcours", async ({ page }) => {
 - `auth/` : `auth-loads`, `register-no-crash`, `logout-clears-session`, `account-switch-clears-cache`
 - `onboarding/` : intro, record, body-profile, skip-to-account, gym
 - `exercises/` : `add-exercise`, `log-performance`
-- `session/` : `session-view`
+- `session/` : `session-view`, `session-live-bar`, `session-end-recap`, `recap-share-story`
 - `notifications/` : `notifications-feed`
 - `gym/` : `existing-user-gym`
 - `web-store/` : `web-store-landing`

@@ -7,7 +7,6 @@ import { PerfEntryList } from '@/components/history/PerfEntryList'
 import { LeagueBadge } from '@/components/LeagueBadge'
 import { PerformanceChart } from '@/components/PerformanceChart'
 import { RankBadge } from '@/components/RankBadge'
-import { RestSinceLastSetBar } from '@/components/RestSinceLastSetBar'
 import { ExerciseDetailPageSkeleton } from '@/components/skeletons'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -28,7 +27,6 @@ import {
 } from '@/hooks/use-api-data'
 import { useCelebrationQueueActive } from '@/hooks/use-celebration-queue-active'
 import { useExercisePresence } from '@/hooks/use-exercise-presence'
-import { useLatestGlobalPerf } from '@/hooks/use-latest-global-perf'
 import { usePerformance } from '@/hooks/use-performance'
 import { useRestTimerEnabled } from '@/hooks/use-rest-timer-enabled'
 import { useTheme } from '@/hooks/use-theme'
@@ -127,7 +125,6 @@ export function ExerciseDetailPage() {
         refresh,
     } = usePerformance(id ?? null)
     const { data: profile } = useUserProfileData()
-    const latestGlobalPerf = useLatestGlobalPerf()
     const { enabled: restTimerEnabled, setEnabled: setRestTimerEnabled } =
         useRestTimerEnabled()
     const leagueFromApi: LeagueInfo | null =
@@ -499,14 +496,6 @@ export function ExerciseDetailPage() {
                         </Button>
                     }
                 />
-                {detailHeavyReady ? (
-                    <RestSinceLastSetBar
-                        key={latestGlobalPerf?.entry.createdAt ?? 'none'}
-                        createdAt={latestGlobalPerf?.entry.createdAt ?? null}
-                        sourceExercise={latestGlobalPerf?.exercise ?? null}
-                        currentExerciseId={id ?? null}
-                    />
-                ) : null}
             </div>
 
             <main className="mx-auto max-w-2xl px-4 py-4 space-y-4">

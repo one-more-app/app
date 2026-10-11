@@ -118,6 +118,17 @@ export class ProgressService {
     };
   }
 
+  /** Total d'XP gagné par l'utilisateur sur un jour d'activité (`YYYY-MM-DD`). */
+  async getDailyXpTotal(userId: string, activityDate: string): Promise<number> {
+    const row = await this.xpEventRepo
+      .createQueryBuilder('e')
+      .select('COALESCE(SUM(e.amount), 0)', 'total')
+      .where('e.userId = :userId', { userId })
+      .andWhere('e.activityDate = :activityDate', { activityDate })
+      .getRawOne<{ total: string | number }>();
+    return Number(row?.total ?? 0);
+  }
+
   async getLastActiveDatesByUserIds(
     userIds: string[],
   ): Promise<Map<string, string | null>> {
